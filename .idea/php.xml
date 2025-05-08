@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PhpIncludePathManager">
+    <include_path>
+      <path value="$PROJECT_DIR$/be/vendor/markbaker/complex" />
+      <path value="$PROJECT_DIR$/be/vendor/markbaker/matrix" />
+      <path value="$PROJECT_DIR$/be/vendor/psr/http-client" />
+      <path value="$PROJECT_DIR$/be/vendor/phpoffice/phpspreadsheet" />
+      <path value="$PROJECT_DIR$/be/vendor/psr/http-message" />
+      <path value="$PROJECT_DIR$/be/vendor/psr/http-factory" />
+      <path value="$PROJECT_DIR$/be/vendor/sebastian/version" />
+      <path value="$PROJECT_DIR$/be/vendor/sebastian/type" />
+      <path value="$PROJECT_DIR$/be/vendor/symfony/deprecation-contracts" />
+      <path value="$PROJECT_DIR$/be/vendor/theseer/tokenizer" />
+      <path value="$PROJECT_DIR$/be/vendor/maennchen/zipstream-php" />
+      <path value="$PROJECT_DIR$/be/vendor/sebastian/environment" />
+      <path value="$PROJECT_DIR$/be/vendor/sebastian/diff" />
+      <path value="$PROJECT_DIR$/be/vendor/sebastian/global-state" />
+      <path value="$PROJECT_DIR$/be/vendor/sebastian/exporter" />
+      <path value="$PROJECT_DIR$/be/vendor/sebastian/object-enumerator" />
+      <path value="$PROJECT_DIR$/be/vendor/sebastian/lines-of-code" />
+      <path value="$PROJECT_DIR$/be/vendor/sebastian/recursion-context" />
+      <path value="$PROJECT_DIR$/be/vendor/sebastian/object-reflector" />
+      <path value="$PROJECT_DIR$/be/vendor/psr/log" />
+      <path value="$PROJECT_DIR$/be/vendor/sebastian/code-unit" />
+      <path value="$PROJECT_DIR$/be/vendor/sebastian/cli-parser" />
+      <path value="$PROJECT_DIR$/be/vendor/sebastian/comparator" />
+      <path value="$PROJECT_DIR$/be/vendor/sebastian/code-unit-reverse-lookup" />
+      <path value="$PROJECT_DIR$/be/vendor/sebastian/complexity" />
+      <path value="$PROJECT_DIR$/be/vendor/phpunit/php-file-iterator" />
+      <path value="$PROJECT_DIR$/be/vendor/phpunit/php-code-coverage" />
+      <path value="$PROJECT_DIR$/be/vendor/phpunit/php-text-template" />
+      <path value="$PROJECT_DIR$/be/vendor/phpunit/php-invoker" />
+      <path value="$PROJECT_DIR$/be/vendor/phpunit/phpunit" />
+      <path value="$PROJECT_DIR$/be/vendor/phpunit/php-timer" />
+      <path value="$PROJECT_DIR$/be/vendor/psr/container" />
+      <path value="$PROJECT_DIR$/be/vendor/myclabs/deep-copy" />
+      <path value="$PROJECT_DIR$/be/vendor/nikic/php-parser" />
+      <path value="$PROJECT_DIR$/be/vendor/phar-io/manifest" />
+      <path value="$PROJECT_DIR$/be/vendor/phar-io/version" />
+      <path value="$PROJECT_DIR$/be/vendor/composer" />
+      <path value="$PROJECT_DIR$/be/vendor/codeigniter4/framework" />
+      <path value="$PROJECT_DIR$/be/vendor/fakerphp/faker" />
+      <path value="$PROJECT_DIR$/be/vendor/laminas/laminas-escaper" />
+      <path value="$PROJECT_DIR$/be/vendor/mikey179/vfsstream" />
+      <path value="$PROJECT_DIR$/be/vendor/psr/simple-cache" />
+    </include_path>
+  </component>
+  <component name="PhpUnit">
+    <phpunit_settings>
+      <PhpUnitSettings custom_loader_path="$PROJECT_DIR$/be/vendor/autoload.php" />
+    </phpunit_settings>
+  </component>
+</project>
