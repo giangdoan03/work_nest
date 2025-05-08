@@ -97,7 +97,7 @@ const fetchCustomers = async () => {
                 : undefined,
         }
 
-        const response = await axios.get('http://api.giang.test/api/customer', {
+        const response = await axios.get('http://api.worknest.local/api/customer', {
             params,
             withCredentials: true,
         })

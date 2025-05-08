@@ -52,7 +52,7 @@ const toggleCollapsed = () => {
 // Xử lý logout
 const handleLogout = async () => {
     try {
-        await fetch('http://api.giang.test/logout', { credentials: 'include' })
+        await fetch('http://api.worknest.local/logout', { credentials: 'include' })
         user.value = null
         router.push('/')
     } catch (error) {

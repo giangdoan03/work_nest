@@ -24,44 +24,44 @@
                 <span>Tổng quan</span>
             </a-menu-item>
 
-            <a-sub-menu key="quan-ly-doi-tuong">
-                <template #title>
-                      <span>
-                        <AppstoreOutlined/>
-                        <span>Quản lý đối tượng</span>
-                      </span>
-                </template>
+<!--            <a-sub-menu key="quan-ly-doi-tuong">-->
+<!--                <template #title>-->
+<!--                      <span>-->
+<!--                        <AppstoreOutlined/>-->
+<!--                        <span>Quản lý đối tượng</span>-->
+<!--                      </span>-->
+<!--                </template>-->
 
-                <a-menu-item key="san-pham">
-                    <ShoppingOutlined/>
-                    <span>Sản phẩm</span>
-                </a-menu-item>
+<!--                <a-menu-item key="san-pham">-->
+<!--                    <ShoppingOutlined/>-->
+<!--                    <span>Sản phẩm</span>-->
+<!--                </a-menu-item>-->
 
-                <a-menu-item key="doanh-nghiep-ca-nhan">
-                    <BankOutlined/>
-                    <span>Doanh nghiệp</span>
-                </a-menu-item>
+<!--                <a-menu-item key="doanh-nghiep-ca-nhan">-->
+<!--                    <BankOutlined/>-->
+<!--                    <span>Doanh nghiệp</span>-->
+<!--                </a-menu-item>-->
 
-                <a-menu-item key="ca-nhan">
-                    <UserOutlined/>
-                    <span>Cá nhân</span>
-                </a-menu-item>
+<!--                <a-menu-item key="ca-nhan">-->
+<!--                    <UserOutlined/>-->
+<!--                    <span>Cá nhân</span>-->
+<!--                </a-menu-item>-->
 
-                <a-menu-item key="cua-hang">
-                    <ShopOutlined/>
-                    <span>Cửa hàng</span>
-                </a-menu-item>
+<!--                <a-menu-item key="cua-hang">-->
+<!--                    <ShopOutlined/>-->
+<!--                    <span>Cửa hàng</span>-->
+<!--                </a-menu-item>-->
 
-                <a-menu-item key="su-kien">
-                    <CalendarOutlined/>
-                    <span>Sự kiện</span>
-                </a-menu-item>
-            </a-sub-menu>
+<!--                <a-menu-item key="su-kien">-->
+<!--                    <CalendarOutlined/>-->
+<!--                    <span>Sự kiện</span>-->
+<!--                </a-menu-item>-->
+<!--            </a-sub-menu>-->
 
-            <a-menu-item key="qr-code-marketing">
-                <QrcodeOutlined/>
-                <span>QR Code Marketing</span>
-            </a-menu-item>
+<!--            <a-menu-item key="qr-code-marketing">-->
+<!--                <QrcodeOutlined/>-->
+<!--                <span>QR Code Marketing</span>-->
+<!--            </a-menu-item>-->
 
             <a-sub-menu key="chuong-trinh-loyalty">
                 <template #title>
@@ -97,10 +97,10 @@
                 <span>Trang tự thiết kế</span>
             </a-menu-item>
 
-            <a-menu-item key="lich-su-quet">
-                <SearchOutlined/>
-                <span>Lịch sử quét</span>
-            </a-menu-item>
+<!--            <a-menu-item key="lich-su-quet">-->
+<!--                <SearchOutlined/>-->
+<!--                <span>Lịch sử quét</span>-->
+<!--            </a-menu-item>-->
 
 <!--            <a-menu-item key="lich-su-checkin">-->
 <!--                <EnvironmentOutlined/>-->
@@ -153,20 +153,20 @@ const selectedKeys = ref([])
 const openKeys = ref([])
 
 const pathToKeyMap = {
-    '/dashboard': 'dashboard',
-    '/products': 'san-pham',
-    '/businesses': 'doanh-nghiep-ca-nhan',
-    '/persons': 'ca-nhan',
-    '/stores': 'cua-hang',
-    '/events': 'su-kien',
-    '/my-qr-codes': 'qr-code-marketing',
-    '/my-qr-codes/:id/edit': 'qr-code-marketing',
+    // '/dashboard': 'dashboard',
+    // '/products': 'san-pham',
+    // '/businesses': 'doanh-nghiep-ca-nhan',
+    // '/persons': 'ca-nhan',
+    // '/stores': 'cua-hang',
+    // '/events': 'su-kien',
+    // '/my-qr-codes': 'qr-code-marketing',
+    // '/my-qr-codes/:id/edit': 'qr-code-marketing',
     '/loyalty/programs': 'chuong-trinh',
     '/loyalty/gifts': 'qua-tang',
     '/loyalty/voucher-management': 'goi-voucher',
     '/loyalty/history': 'lich-su-nguoi-choi',
     '/custom-pages': 'trang-tu-thiet-ke',
-    '/scan-history': 'lich-su-quet',
+    // '/scan-history': 'lich-su-quet',
     '/checkin-history': 'lich-su-checkin',
     '/customers': 'quan-ly-khach-hang',
     '/settings': 'cau-hinh',
@@ -176,11 +176,11 @@ const pathToKeyMap = {
 
 const keyToParentMap = {
     // Quản lý đối tượng
-    'san-pham': 'quan-ly-doi-tuong',
-    'doanh-nghiep-ca-nhan': 'quan-ly-doi-tuong',
-    'ca-nhan': 'quan-ly-doi-tuong',
-    'cua-hang': 'quan-ly-doi-tuong',
-    'su-kien': 'quan-ly-doi-tuong',
+    // 'san-pham': 'quan-ly-doi-tuong',
+    // 'doanh-nghiep-ca-nhan': 'quan-ly-doi-tuong',
+    // 'ca-nhan': 'quan-ly-doi-tuong',
+    // 'cua-hang': 'quan-ly-doi-tuong',
+    // 'su-kien': 'quan-ly-doi-tuong',
 
     // Chương trình loyalty
     'chuong-trinh': 'chuong-trinh-loyalty',
@@ -191,7 +191,7 @@ const keyToParentMap = {
     // Các menu khác
     'trang-tu-thiet-ke': 'dashboard',
     'lich-su-quet': 'dashboard',
-    'lich-su-checkin': 'dashboard',
+    // 'lich-su-checkin': 'dashboard',
     'quan-ly-khach-hang': 'dashboard',
     'cau-hinh': 'dashboard',
     'lich-su-mua-goi': 'dashboard',
