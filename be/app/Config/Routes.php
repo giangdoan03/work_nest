@@ -5,11 +5,20 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
-$routes->post('/login', 'Auth::login');
-$routes->get('/check', 'Auth::check');
-$routes->get('/logout', 'Auth::logout');
+
 
 $routes->group('api', function ($routes) {
+    $routes->post('login', 'Auth::login');
+    $routes->get('logout', 'Auth::logout');
+    $routes->get('check', 'Auth::check');
+
+    // ➕ CRUD API
+    $routes->post('users', 'Auth::create');            // Thêm mới
+    $routes->get('users', 'Auth::index');              // Danh sách
+    $routes->get('users/(:num)', 'Auth::show/$1');     // Xem chi tiết
+    $routes->put('users/(:num)', 'Auth::update/$1');   // Cập nhật
+    $routes->delete('users/(:num)', 'Auth::delete/$1');// Xoá
+
     $routes->resource('products', ['controller' => 'ProductController']);
     $routes->post('products-import', 'ProductController::import');
     $routes->get('products-export-excel', 'ProductController::exportExcel');
@@ -46,33 +55,10 @@ $routes->group('api', function ($routes) {
     $routes->get('loyalty/participation-history', 'LoyaltyHistoryController::participation');
     $routes->get('loyalty/winning-history', 'LoyaltyHistoryController::winning');
 
-    $routes->resource('landing-pages', ['controller' => 'LandingPageController']);
-    $routes->resource('scan-history', ['controller' => 'ScanHistoryController']);
-    $routes->resource('customer', ['controller' => 'CustomerController']);
-    $routes->resource('setting', ['controller' => 'SettingController']);
-    $routes->resource('purchase-history', ['controller' => 'PurchaseHistoryController']);
 
-    // ✅ QR Code Routes (Dùng qr_id dạng chữ + số, không dùng ID số)
-    $routes->group('qr-codes', function ($routes) {
-        $routes->post('', 'QrCodeController::create');
-        $routes->get('list', 'QrCodeController::list');
-        $routes->get('scan/(:segment)', 'QrCodeController::scan/$1');
-        $routes->get('(:alphanum)', 'QrCodeController::show/$1');
-        $routes->put('(:alphanum)', 'QrCodeController::update/$1');
-        $routes->delete('(:alphanum)', 'QrCodeController::delete/$1');
-    });
+    $routes->resource('departments', ['controller' => 'DepartmentController']);
 
-    // 1. Truy cập QR gốc → sinh tracking_code → redirect
-    $routes->get('(:alphanum)', 'QrCodeController::redirectWithTrack/$1');
-
-// 2. Truy cập sau khi redirect → xử lý tracking + hiển thị
-    $routes->get('scan/(:alphanum)', 'QrCodeController::handleScan/$1');
-
-// 3. API chi tiết QR (dành cho frontend gọi)
-    $routes->get('qr-codes/detail/(:segment)', 'QrCodeController::detail/$1');
-
-// 4. API tracking thủ công (nếu dùng fetch)
-    $routes->post('qr-codes/track', 'QrCodeController::track');
+    $routes->post('users/upload-avatar', 'Auth::uploadAvatar');
 
 
 

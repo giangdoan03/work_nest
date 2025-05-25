@@ -5,8 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/be/app" isTestSource="false" packagePrefix="App\" />
       <sourceFolder url="file://$MODULE_DIR$/be/app/Config" isTestSource="false" packagePrefix="Config\" />
       <sourceFolder url="file://$MODULE_DIR$/be/tests/_support" isTestSource="true" packagePrefix="Tests\Support\" />
-      <sourceFolder url="file://$MODULE_DIR$/spec" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/be/tests" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/be/vendor/codeigniter4/framework" />
       <excludeFolder url="file://$MODULE_DIR$/be/vendor/composer" />
       <excludeFolder url="file://$MODULE_DIR$/be/vendor/fakerphp/faker" />

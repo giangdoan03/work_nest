@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: May 08, 2025 at 10:32 AM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- Host: localhost:3306
+-- Generation Time: May 08, 2025 at 11:10 AM
+-- Server version: 8.0.30
+-- PHP Version: 8.1.10
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -28,35 +28,35 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `businesses` (
-  `id` bigint(20) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `tax_code` varchar(100) DEFAULT NULL,
-  `country` varchar(100) DEFAULT NULL,
-  `city` varchar(100) DEFAULT NULL,
-  `district` varchar(100) DEFAULT NULL,
-  `ward` varchar(100) DEFAULT NULL,
-  `address` varchar(255) DEFAULT NULL,
-  `phone` varchar(50) DEFAULT NULL,
-  `email` varchar(255) DEFAULT NULL,
-  `website` varchar(255) DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `career` varchar(255) DEFAULT NULL,
-  `facebook_link` varchar(255) DEFAULT NULL,
-  `other_links` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `logo` varchar(255) DEFAULT NULL,
-  `cover_image` varchar(255) DEFAULT NULL,
-  `library_images` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `video_intro` varchar(255) DEFAULT NULL,
-  `certificate_file` varchar(255) DEFAULT NULL,
+  `id` bigint NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tax_code` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `country` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `district` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ward` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `website` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `career` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `facebook_link` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `other_links` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `logo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cover_image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `library_images` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `video_intro` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `certificate_file` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `lat` decimal(10,8) DEFAULT NULL,
   `lng` decimal(11,8) DEFAULT NULL,
-  `extra_info` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `status` tinyint(1) DEFAULT 1,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `extra_info` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `status` tinyint(1) DEFAULT '1',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
-  `user_id` int(11) NOT NULL,
-  `display_settings` text DEFAULT NULL
+  `user_id` int NOT NULL,
+  `display_settings` text COLLATE utf8mb4_unicode_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -76,13 +76,13 @@ INSERT INTO `businesses` (`id`, `name`, `tax_code`, `country`, `city`, `district
 --
 
 CREATE TABLE `business_extra_info` (
-  `id` bigint(20) NOT NULL,
-  `business_id` bigint(20) NOT NULL,
-  `title` varchar(255) DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `image` varchar(255) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `id` bigint NOT NULL,
+  `business_id` bigint NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -92,10 +92,10 @@ CREATE TABLE `business_extra_info` (
 --
 
 CREATE TABLE `categories` (
-  `id` bigint(20) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `id` bigint NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -141,16 +141,16 @@ INSERT INTO `categories` (`id`, `name`, `created_at`, `updated_at`) VALUES
 --
 
 CREATE TABLE `customers` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `phone` varchar(20) DEFAULT NULL,
-  `email` varchar(255) DEFAULT NULL,
-  `address` varchar(255) DEFAULT NULL,
-  `city` varchar(100) DEFAULT NULL,
-  `avatar` text DEFAULT NULL,
+  `id` int UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `avatar` text COLLATE utf8mb4_unicode_ci,
   `last_interaction` date DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -160,13 +160,13 @@ CREATE TABLE `customers` (
 --
 
 CREATE TABLE `entity_images` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `entity_type` varchar(50) NOT NULL,
-  `entity_id` int(10) UNSIGNED NOT NULL,
-  `url` varchar(255) NOT NULL,
-  `is_cover` tinyint(1) DEFAULT 0,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `id` int UNSIGNED NOT NULL,
+  `entity_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `entity_id` int UNSIGNED NOT NULL,
+  `url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `is_cover` tinyint(1) DEFAULT '0',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -176,31 +176,31 @@ CREATE TABLE `entity_images` (
 --
 
 CREATE TABLE `events` (
-  `id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `banner` text DEFAULT NULL,
-  `location` varchar(255) DEFAULT NULL,
-  `event_mode` varchar(20) DEFAULT 'online',
-  `is_enabled` tinyint(1) DEFAULT 1,
+  `id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `banner` text COLLATE utf8mb4_unicode_ci,
+  `location` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `event_mode` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT 'online',
+  `is_enabled` tinyint(1) DEFAULT '1',
   `start_time` datetime DEFAULT NULL,
   `end_time` datetime DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `country` varchar(100) DEFAULT NULL,
-  `city` varchar(100) DEFAULT NULL,
-  `district` varchar(100) DEFAULT NULL,
-  `contact_first_name` varchar(100) DEFAULT NULL,
-  `contact_last_name` varchar(100) DEFAULT NULL,
-  `contact_phone` varchar(20) DEFAULT NULL,
-  `contact_email` varchar(100) DEFAULT NULL,
-  `ticket_options` text DEFAULT NULL,
-  `social_links` text DEFAULT NULL,
-  `images` text DEFAULT NULL,
-  `video` text DEFAULT NULL,
-  `format_type` enum('online','offline') DEFAULT 'offline',
-  `display_settings` text DEFAULT NULL
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `country` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `district` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `contact_first_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `contact_last_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `contact_phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `contact_email` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ticket_options` text COLLATE utf8mb4_unicode_ci,
+  `social_links` text COLLATE utf8mb4_unicode_ci,
+  `images` text COLLATE utf8mb4_unicode_ci,
+  `video` text COLLATE utf8mb4_unicode_ci,
+  `format_type` enum('online','offline') COLLATE utf8mb4_unicode_ci DEFAULT 'offline',
+  `display_settings` text COLLATE utf8mb4_unicode_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -221,14 +221,14 @@ INSERT INTO `events` (`id`, `user_id`, `name`, `banner`, `location`, `event_mode
 --
 
 CREATE TABLE `landing_pages` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `user_id` int(10) UNSIGNED NOT NULL,
-  `title` varchar(255) NOT NULL,
-  `content` longtext DEFAULT NULL,
-  `status` enum('draft','published') DEFAULT 'draft',
-  `access_count` int(10) UNSIGNED DEFAULT 0,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `id` int UNSIGNED NOT NULL,
+  `user_id` int UNSIGNED NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` longtext COLLATE utf8mb4_unicode_ci,
+  `status` enum('draft','published') COLLATE utf8mb4_unicode_ci DEFAULT 'draft',
+  `access_count` int UNSIGNED DEFAULT '0',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -238,16 +238,16 @@ CREATE TABLE `landing_pages` (
 --
 
 CREATE TABLE `loyalty_gifts` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `image` varchar(255) DEFAULT NULL,
-  `type` enum('item','vnpoint') DEFAULT 'item',
-  `value` int(11) DEFAULT 0,
-  `description` text DEFAULT NULL,
-  `status` tinyint(1) DEFAULT 1,
-  `user_id` int(10) UNSIGNED DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `id` int UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `type` enum('item','vnpoint') COLLATE utf8mb4_unicode_ci DEFAULT 'item',
+  `value` int DEFAULT '0',
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `status` tinyint(1) DEFAULT '1',
+  `user_id` int UNSIGNED DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -257,13 +257,13 @@ CREATE TABLE `loyalty_gifts` (
 --
 
 CREATE TABLE `loyalty_histories` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `program_id` int(11) DEFAULT NULL,
-  `type` enum('participation','winning') NOT NULL,
-  `description` text DEFAULT NULL,
-  `metadata` text DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp()
+  `id` int UNSIGNED NOT NULL,
+  `user_id` int NOT NULL,
+  `program_id` int DEFAULT NULL,
+  `type` enum('participation','winning') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `metadata` text COLLATE utf8mb4_unicode_ci,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -273,18 +273,18 @@ CREATE TABLE `loyalty_histories` (
 --
 
 CREATE TABLE `loyalty_participation_logs` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `full_name` varchar(255) DEFAULT NULL,
-  `phone` varchar(50) DEFAULT NULL,
-  `address` text DEFAULT NULL,
-  `gift_name` varchar(255) DEFAULT NULL,
-  `program_name` varchar(255) DEFAULT NULL,
-  `target_type` varchar(50) DEFAULT NULL,
-  `product_name` varchar(255) DEFAULT NULL,
-  `is_winner` tinyint(1) DEFAULT 0,
+  `id` int UNSIGNED NOT NULL,
+  `full_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` text COLLATE utf8mb4_unicode_ci,
+  `gift_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `program_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `target_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `product_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_winner` tinyint(1) DEFAULT '0',
   `joined_at` datetime DEFAULT NULL,
-  `user_id` int(10) UNSIGNED DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp()
+  `user_id` int UNSIGNED DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -294,20 +294,20 @@ CREATE TABLE `loyalty_participation_logs` (
 --
 
 CREATE TABLE `loyalty_programs` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `user_id` int(10) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `description` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `banner` varchar(255) DEFAULT NULL,
-  `images` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `video` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `status` tinyint(1) DEFAULT 1,
-  `social_links` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `display_settings` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `id` int UNSIGNED NOT NULL,
+  `user_id` int UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `banner` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `images` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `video` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `status` tinyint(1) DEFAULT '1',
+  `social_links` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `display_settings` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
   `start_time` datetime DEFAULT NULL,
   `end_time` datetime DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -317,25 +317,25 @@ CREATE TABLE `loyalty_programs` (
 --
 
 CREATE TABLE `loyalty_vouchers` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `value` int(11) DEFAULT 0,
-  `quantity` int(11) DEFAULT 0,
-  `issued` int(11) DEFAULT 0,
-  `used` int(11) DEFAULT 0,
-  `max_per_voucher` int(11) DEFAULT 1,
-  `max_per_user` int(11) DEFAULT 1,
+  `id` int UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` int DEFAULT '0',
+  `quantity` int DEFAULT '0',
+  `issued` int DEFAULT '0',
+  `used` int DEFAULT '0',
+  `max_per_voucher` int DEFAULT '1',
+  `max_per_user` int DEFAULT '1',
   `valid_from` datetime DEFAULT NULL,
   `valid_to` datetime DEFAULT NULL,
-  `duration_after_issued` int(11) DEFAULT NULL,
-  `require_owner` tinyint(1) DEFAULT 0,
-  `is_lucky_draw` tinyint(1) DEFAULT 0,
-  `description` text DEFAULT NULL,
-  `image` varchar(255) DEFAULT NULL,
-  `status` tinyint(1) DEFAULT 1,
-  `user_id` int(10) UNSIGNED DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `duration_after_issued` int DEFAULT NULL,
+  `require_owner` tinyint(1) DEFAULT '0',
+  `is_lucky_draw` tinyint(1) DEFAULT '0',
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` tinyint(1) DEFAULT '1',
+  `user_id` int UNSIGNED DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -345,19 +345,19 @@ CREATE TABLE `loyalty_vouchers` (
 --
 
 CREATE TABLE `loyalty_winner_logs` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `full_name` varchar(255) DEFAULT NULL,
-  `phone` varchar(50) DEFAULT NULL,
-  `phone_recharge` varchar(50) DEFAULT NULL,
-  `address` text DEFAULT NULL,
-  `gift_name` varchar(255) DEFAULT NULL,
-  `program_name` varchar(255) DEFAULT NULL,
-  `target_type` varchar(50) DEFAULT NULL,
-  `reason` text DEFAULT NULL,
+  `id` int UNSIGNED NOT NULL,
+  `full_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone_recharge` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` text COLLATE utf8mb4_unicode_ci,
+  `gift_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `program_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `target_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `reason` text COLLATE utf8mb4_unicode_ci,
   `won_at` datetime DEFAULT NULL,
   `received_at` datetime DEFAULT NULL,
-  `user_id` int(10) UNSIGNED DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp()
+  `user_id` int UNSIGNED DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -367,11 +367,11 @@ CREATE TABLE `loyalty_winner_logs` (
 --
 
 CREATE TABLE `permissions` (
-  `id` int(11) NOT NULL,
-  `key_name` varchar(100) NOT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `id` int NOT NULL,
+  `key_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -425,24 +425,24 @@ INSERT INTO `permissions` (`id`, `key_name`, `description`, `created_at`, `updat
 --
 
 CREATE TABLE `persons` (
-  `id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `first_name` varchar(100) DEFAULT NULL,
-  `last_name` varchar(100) DEFAULT NULL,
-  `name` varchar(255) NOT NULL,
-  `avatar` varchar(255) DEFAULT NULL,
-  `video_url` varchar(255) DEFAULT NULL,
-  `phone` varchar(50) DEFAULT NULL,
-  `email` varchar(100) DEFAULT NULL,
-  `website` varchar(255) DEFAULT NULL,
-  `country` varchar(100) DEFAULT NULL,
-  `address` varchar(255) DEFAULT NULL,
-  `social_links` text DEFAULT NULL,
-  `job_title` varchar(100) DEFAULT NULL,
-  `bio` text DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `display_settings` text DEFAULT NULL
+  `id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `first_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `last_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `avatar` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `video_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `website` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `country` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `social_links` text COLLATE utf8mb4_unicode_ci,
+  `job_title` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bio` text COLLATE utf8mb4_unicode_ci,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `display_settings` text COLLATE utf8mb4_unicode_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -461,28 +461,28 @@ INSERT INTO `persons` (`id`, `user_id`, `first_name`, `last_name`, `name`, `avat
 --
 
 CREATE TABLE `products` (
-  `id` bigint(20) NOT NULL,
-  `sku` varchar(100) DEFAULT NULL,
-  `name` varchar(255) NOT NULL,
-  `category_id` bigint(20) DEFAULT NULL,
-  `price_mode` varchar(20) DEFAULT 'single',
-  `price` decimal(15,2) DEFAULT 0.00,
-  `price_from` decimal(15,2) DEFAULT 0.00,
-  `price_to` decimal(15,2) DEFAULT 0.00,
-  `show_contact_price` tinyint(1) DEFAULT 0,
-  `avatar` text DEFAULT NULL,
-  `image` text DEFAULT NULL,
-  `video` text DEFAULT NULL,
-  `certificate_file` text DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `attributes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `status` tinyint(1) DEFAULT 1,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `id` bigint NOT NULL,
+  `sku` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `category_id` bigint DEFAULT NULL,
+  `price_mode` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT 'single',
+  `price` decimal(15,2) DEFAULT '0.00',
+  `price_from` decimal(15,2) DEFAULT '0.00',
+  `price_to` decimal(15,2) DEFAULT '0.00',
+  `show_contact_price` tinyint(1) DEFAULT '0',
+  `avatar` text COLLATE utf8mb4_unicode_ci,
+  `image` text COLLATE utf8mb4_unicode_ci,
+  `video` text COLLATE utf8mb4_unicode_ci,
+  `certificate_file` text COLLATE utf8mb4_unicode_ci,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `attributes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `status` tinyint(1) DEFAULT '1',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
-  `user_id` int(11) NOT NULL,
-  `display_settings` text DEFAULT NULL,
-  `product_links` text DEFAULT NULL
+  `user_id` int NOT NULL,
+  `display_settings` text COLLATE utf8mb4_unicode_ci,
+  `product_links` text COLLATE utf8mb4_unicode_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -509,12 +509,12 @@ INSERT INTO `products` (`id`, `sku`, `name`, `category_id`, `price_mode`, `price
 --
 
 CREATE TABLE `product_attributes` (
-  `id` bigint(20) NOT NULL,
-  `product_id` bigint(20) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `value` varchar(255) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `id` bigint NOT NULL,
+  `product_id` bigint NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -544,16 +544,16 @@ INSERT INTO `product_attributes` (`id`, `product_id`, `name`, `value`, `created_
 --
 
 CREATE TABLE `purchase_histories` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `user_id` int(10) UNSIGNED NOT NULL,
-  `customer_id` int(10) UNSIGNED DEFAULT NULL,
-  `product_name` varchar(255) NOT NULL,
-  `amount` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `quantity` int(11) DEFAULT 1,
-  `note` text DEFAULT NULL,
+  `id` int UNSIGNED NOT NULL,
+  `user_id` int UNSIGNED NOT NULL,
+  `customer_id` int UNSIGNED DEFAULT NULL,
+  `product_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `amount` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `quantity` int DEFAULT '1',
+  `note` text COLLATE utf8mb4_unicode_ci,
   `purchased_at` datetime DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -563,23 +563,23 @@ CREATE TABLE `purchase_histories` (
 --
 
 CREATE TABLE `qr_codes` (
-  `id` int(11) NOT NULL,
-  `short_code` varchar(50) DEFAULT NULL,
-  `user_id` int(11) NOT NULL,
-  `target_type` enum('product','store','business','event','person') NOT NULL,
-  `target_id` int(11) NOT NULL,
-  `qr_name` varchar(255) DEFAULT NULL,
-  `campaign` varchar(100) DEFAULT NULL,
-  `is_active` tinyint(1) DEFAULT 1,
+  `id` int NOT NULL,
+  `short_code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_id` int NOT NULL,
+  `target_type` enum('product','store','business','event','person') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `target_id` int NOT NULL,
+  `qr_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `campaign` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
   `expires_at` datetime DEFAULT NULL,
-  `qr_url` varchar(255) NOT NULL,
-  `scan_count` int(11) DEFAULT 0,
+  `qr_url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `scan_count` int DEFAULT '0',
   `last_scanned_at` datetime DEFAULT NULL,
   `settings_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `note` text DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `qr_id` varchar(100) NOT NULL
+  `note` text COLLATE utf8mb4_unicode_ci,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `qr_id` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -598,31 +598,45 @@ INSERT INTO `qr_codes` (`id`, `short_code`, `user_id`, `target_type`, `target_id
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `qr_links`
+--
+
+CREATE TABLE `qr_links` (
+  `id` int UNSIGNED NOT NULL,
+  `qr_id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `short_code` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `qr_scan_logs`
 --
 
 CREATE TABLE `qr_scan_logs` (
-  `id` int(11) NOT NULL,
-  `qr_id` int(11) DEFAULT NULL,
-  `tracking_code` varchar(100) NOT NULL,
-  `short_code` varchar(50) DEFAULT NULL,
-  `qr_url` varchar(255) DEFAULT NULL,
-  `type` varchar(20) DEFAULT NULL,
-  `target_id` int(11) DEFAULT NULL,
-  `user_agent` text DEFAULT NULL,
-  `os` varchar(50) DEFAULT NULL,
-  `device_type` varchar(50) DEFAULT NULL,
-  `browser` varchar(50) DEFAULT NULL,
-  `ip_address` varchar(50) DEFAULT NULL,
-  `referer` varchar(255) DEFAULT NULL,
-  `scan_source` varchar(100) DEFAULT NULL,
-  `is_unique` tinyint(1) DEFAULT 1,
-  `country` varchar(100) DEFAULT NULL,
-  `city` varchar(100) DEFAULT NULL,
+  `id` int NOT NULL,
+  `qr_id` int DEFAULT NULL,
+  `tracking_code` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `short_code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `qr_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `type` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `target_id` int DEFAULT NULL,
+  `user_agent` text COLLATE utf8mb4_unicode_ci,
+  `os` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `device_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `browser` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ip_address` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `referer` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `scan_source` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_unique` tinyint(1) DEFAULT '1',
+  `country` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `latitude` double DEFAULT NULL,
   `longitude` double DEFAULT NULL,
-  `phone_number` varchar(20) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp()
+  `phone_number` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -851,11 +865,11 @@ INSERT INTO `qr_scan_logs` (`id`, `qr_id`, `tracking_code`, `short_code`, `qr_ur
 --
 
 CREATE TABLE `roles` (
-  `id` int(11) NOT NULL,
-  `name` varchar(50) NOT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `id` int NOT NULL,
+  `name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -874,10 +888,10 @@ INSERT INTO `roles` (`id`, `name`, `description`, `created_at`, `updated_at`) VA
 --
 
 CREATE TABLE `role_permissions` (
-  `id` int(11) NOT NULL,
-  `role_id` int(11) NOT NULL,
-  `permission_id` int(11) NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp()
+  `id` int NOT NULL,
+  `role_id` int NOT NULL,
+  `permission_id` int NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -900,12 +914,12 @@ INSERT INTO `role_permissions` (`id`, `role_id`, `permission_id`, `created_at`) 
 --
 
 CREATE TABLE `settings` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `user_id` int(10) UNSIGNED NOT NULL,
-  `key` varchar(255) NOT NULL,
-  `value` text DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `id` int UNSIGNED NOT NULL,
+  `user_id` int UNSIGNED NOT NULL,
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text COLLATE utf8mb4_unicode_ci,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -923,20 +937,20 @@ INSERT INTO `settings` (`id`, `user_id`, `key`, `value`, `created_at`, `updated_
 --
 
 CREATE TABLE `stores` (
-  `id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `logo` varchar(255) DEFAULT NULL,
-  `address` varchar(255) DEFAULT NULL,
-  `phone` varchar(50) DEFAULT NULL,
-  `email` varchar(100) DEFAULT NULL,
-  `website` varchar(255) DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `display_settings` text DEFAULT NULL,
-  `status` tinyint(1) DEFAULT 1,
-  `product_ids` text DEFAULT NULL
+  `id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `logo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `website` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `display_settings` text COLLATE utf8mb4_unicode_ci,
+  `status` tinyint(1) DEFAULT '1',
+  `product_ids` text COLLATE utf8mb4_unicode_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -959,13 +973,13 @@ INSERT INTO `stores` (`id`, `user_id`, `name`, `logo`, `address`, `phone`, `emai
 --
 
 CREATE TABLE `surveys` (
-  `id` bigint(20) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `group_id` bigint(20) DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `status` tinyint(1) DEFAULT 1,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `id` bigint NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `group_id` bigint DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `status` tinyint(1) DEFAULT '1',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -975,16 +989,16 @@ CREATE TABLE `surveys` (
 --
 
 CREATE TABLE `users` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `name` varchar(255) DEFAULT NULL,
-  `phone` varchar(20) DEFAULT NULL,
-  `avatar` varchar(255) DEFAULT NULL,
-  `role` varchar(50) DEFAULT 'user',
-  `role_id` int(11) DEFAULT NULL
+  `id` int UNSIGNED NOT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `avatar` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `role` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'user',
+  `role_id` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -1116,6 +1130,13 @@ ALTER TABLE `qr_codes`
   ADD UNIQUE KEY `qr_id` (`qr_id`);
 
 --
+-- Indexes for table `qr_links`
+--
+ALTER TABLE `qr_links`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `short_code` (`short_code`);
+
+--
 -- Indexes for table `qr_scan_logs`
 --
 ALTER TABLE `qr_scan_logs`
@@ -1167,157 +1188,163 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `businesses`
 --
 ALTER TABLE `businesses`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `business_extra_info`
 --
 ALTER TABLE `business_extra_info`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `entity_images`
 --
 ALTER TABLE `entity_images`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `events`
 --
 ALTER TABLE `events`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `landing_pages`
 --
 ALTER TABLE `landing_pages`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `loyalty_gifts`
 --
 ALTER TABLE `loyalty_gifts`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `loyalty_histories`
 --
 ALTER TABLE `loyalty_histories`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `loyalty_participation_logs`
 --
 ALTER TABLE `loyalty_participation_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `loyalty_programs`
 --
 ALTER TABLE `loyalty_programs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `loyalty_vouchers`
 --
 ALTER TABLE `loyalty_vouchers`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `loyalty_winner_logs`
 --
 ALTER TABLE `loyalty_winner_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `permissions`
 --
 ALTER TABLE `permissions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `persons`
 --
 ALTER TABLE `persons`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `product_attributes`
 --
 ALTER TABLE `product_attributes`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=133;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=133;
 
 --
 -- AUTO_INCREMENT for table `purchase_histories`
 --
 ALTER TABLE `purchase_histories`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `qr_codes`
 --
 ALTER TABLE `qr_codes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT for table `qr_links`
+--
+ALTER TABLE `qr_links`
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `qr_scan_logs`
 --
 ALTER TABLE `qr_scan_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=230;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=230;
 
 --
 -- AUTO_INCREMENT for table `roles`
 --
 ALTER TABLE `roles`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `role_permissions`
 --
 ALTER TABLE `role_permissions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `settings`
 --
 ALTER TABLE `settings`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `stores`
 --
 ALTER TABLE `stores`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `surveys`
 --
 ALTER TABLE `surveys`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

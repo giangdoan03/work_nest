@@ -16,7 +16,7 @@ class App extends BaseConfig
      *
      * E.g., http://example.com/
      */
-    public string $baseURL = 'http://api.giang.test/';
+    public string $baseURL = 'http://api.worknest.local/';
 
     /**
      * Allowed Hostnames in the Site URL other than the hostname in the baseURL.

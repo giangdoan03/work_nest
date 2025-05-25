@@ -3,8 +3,6 @@
 $allowedOrigins = [
     'http://worknest.local:5173',
     'http://localhost:3000',
-    'https://qrcode.io',  // Phải có dòng này
-    'http://qrcode.io'    // THÊM dòng này nếu dùng HTTP
 ];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
