@@ -178,8 +178,16 @@ router.beforeEach(async (to, from, next) => {
         }
     } catch (error) {
         console.error('Error in router guard:', error)
-        next('/')
+
+        // ✅ Nếu đang vào trang login ("/") thì vẫn cho hiển thị giao diện
+        if (to.path === '/') {
+            next()
+        } else {
+            // ✅ Nếu truy cập trang khác mà không kết nối được -> chuyển về login
+            next('/')
+        }
     }
 })
+
 
 export default router

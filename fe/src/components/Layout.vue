@@ -34,6 +34,7 @@ const userStore = useUserStore()
 const { user } = storeToRefs(userStore)
 
 const router = useRouter()
+import { logout } from '../api/auth'
 
 
 // Toggle menu
@@ -52,9 +53,9 @@ const toggleCollapsed = () => {
 // Xử lý logout
 const handleLogout = async () => {
     try {
-        await fetch('http://api.worknest.local/api/logout', { credentials: 'include' })
-        user.value = null
-        router.push('/')
+        await logout();
+        user.value = null;
+        await router.push('/');
     } catch (error) {
         console.error('Logout error:', error)
     }
