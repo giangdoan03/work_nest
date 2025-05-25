@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: May 08, 2025 at 11:10 AM
+-- Generation Time: May 25, 2025 at 02:39 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -152,6 +152,27 @@ CREATE TABLE `customers` (
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `departments`
+--
+
+CREATE TABLE `departments` (
+  `id` int NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `departments`
+--
+
+INSERT INTO `departments` (`id`, `name`, `description`, `created_at`, `updated_at`) VALUES
+(1, 'Phòng Hành chính - Nhân sự', 'Cập nhật mô tả phòng ban', '2025-05-25 02:55:43', '2025-05-25 02:57:44');
 
 -- --------------------------------------------------------
 
@@ -998,6 +1019,7 @@ CREATE TABLE `users` (
   `phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `avatar` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `role` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'user',
+  `department_id` int DEFAULT NULL,
   `role_id` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1005,9 +1027,9 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `name`, `phone`, `avatar`, `role`, `role_id`) VALUES
-(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-04-20 23:49:00', 'Demo User', '0123456789', 'avatar.png', 'user', 2),
-(3, 'superadmin@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-20 14:02:38', '2025-04-21 00:21:49', 'Super Admin', '0988888888', NULL, 'super admin', 1);
+INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `name`, `phone`, `avatar`, `role`, `department_id`, `role_id`) VALUES
+(1, 'demo@example.com', '$2y$10$3LM/LpefaM6N59rGKkCioe1rdvnCV8wqaXXxuj86byKGpfNeGIYT2', '2025-04-07 18:49:01', '2025-05-25 07:57:10', 'Nguyễn Văn A sửa', '0988888888', 'avatars/1748159830_7ae199f3eb92f7578dcc.png', 'user', 1, 2),
+(3, 'superadmin@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-20 14:02:38', '2025-05-25 09:51:46', 'Super Admin', '0988888888', NULL, 'super admin', 2, 1);
 
 --
 -- Indexes for dumped tables
@@ -1035,6 +1057,12 @@ ALTER TABLE `categories`
 -- Indexes for table `customers`
 --
 ALTER TABLE `customers`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `departments`
+--
+ALTER TABLE `departments`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -1207,6 +1235,12 @@ ALTER TABLE `categories`
 --
 ALTER TABLE `customers`
   MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `departments`
+--
+ALTER TABLE `departments`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `entity_images`
