@@ -99,18 +99,18 @@ class Auth extends Controller
     {
         $session = session();
         $request = service('request');
-    
+
         $data = $request->getJSON();
         $email = $data->email ?? '';
         $password = $data->password ?? '';
-    
+
         log_message('debug', 'Email received: ' . $email);
         log_message('debug', 'Password received: ' . $password);
-    
+
         $userModel = new UserModel();
         $user = $userModel->where('email', $email)->first();
         log_message('debug', 'User from DB: ' . print_r($user, true));
-    
+
         if ($user && password_verify($password, $user['password'])) {
             $session->regenerate();
             $session->set([
@@ -118,12 +118,23 @@ class Auth extends Controller
                 'user_email' => $user['email'],
                 'logged_in'  => true,
             ]);
-    
-            return $this->response->setJSON(['status' => 'success', 'message' => 'Login successful']);
+
+            // Xoá mật khẩu trước khi trả về
+            unset($user['password']);
+
+            return $this->response->setJSON([
+                'status'  => 'success',
+                'message' => 'Login successful',
+                'user'    => $user
+            ]);
         }
-    
-        return $this->response->setJSON(['status' => 'error', 'message' => 'Invalid credentials']);
+
+        return $this->response->setJSON([
+            'status'  => 'error',
+            'message' => 'Invalid credentials'
+        ]);
     }
+
 
 
     /**
@@ -163,17 +174,38 @@ class Auth extends Controller
         $session = session();
 
         if ($session->get('logged_in')) {
+            $userId = $session->get('user_id');
+
+            // Lấy user từ database
+            $userModel = new UserModel();
+            $user = $userModel
+                ->select('users.*, roles.name AS role_name, departments.name AS department_name')
+                ->join('roles', 'roles.id = users.role_id', 'left')
+                ->join('departments', 'departments.id = users.department_id', 'left')
+                ->find($userId);
+
+            if ($user) {
+                unset($user['password']); // không trả về mật khẩu
+
+                return $this->response->setJSON([
+                    'status' => 'success',
+                    'user'   => $user
+                ]);
+            }
+
+            // Trường hợp user_id trong session không tồn tại trong DB
             return $this->response->setJSON([
-                'status' => 'success',
-                'user'   => [
-                    'id'    => $session->get('user_id'),
-                    'email' => $session->get('user_email'),
-                ],
+                'status' => 'error',
+                'message' => 'User not found'
             ]);
         }
 
-        return $this->response->setJSON(['status' => 'error', 'message' => 'Not logged in']);
+        return $this->response->setJSON([
+            'status' => 'error',
+            'message' => 'Not logged in'
+        ]);
     }
+
 
     public function logout(): ResponseInterface
     {

@@ -27,34 +27,38 @@
             </a-breadcrumb>
         </div>
 
+        <!-- User Dropdown -->
         <div style="margin-right: 24px; display: flex; align-items: center;">
-            <span v-if="user" style="margin-right: 12px;">
-                {{ user.email }}
-            </span>
-            <a-button
-                v-if="user"
-                type="text"
-                danger
-                shape="circle"
-                @click="emit('logout')"
-            >
-                <template #icon>
-                    <LogoutOutlined/>
+            <a-dropdown v-if="user" trigger="click">
+                <a @click.prevent style="cursor: pointer;">
+                    {{ user.name }} <DownOutlined />
+                </a>
+                <template #overlay>
+                    <a-menu>
+                        <a-menu-item key="profile">
+                            Thông tin cá nhân
+                        </a-menu-item>
+                        <a-menu-divider />
+                        <a-menu-item key="logout" @click="emit('logout')">
+                            Đăng xuất
+                        </a-menu-item>
+                    </a-menu>
                 </template>
-            </a-button>
+            </a-dropdown>
         </div>
     </a-layout-header>
 </template>
 
 <script setup>
-import {useRoute, useRouter} from 'vue-router'
-import {computed} from 'vue'
-import {storeToRefs} from 'pinia'
-import {useUserStore} from '../stores/user'
+import { useRoute, useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useUserStore } from '../stores/user'
 import {
     MenuUnfoldOutlined,
     MenuFoldOutlined,
-    LogoutOutlined
+    LogoutOutlined,
+    DownOutlined
 } from '@ant-design/icons-vue'
 
 const props = defineProps({
@@ -65,7 +69,7 @@ const props = defineProps({
 const emit = defineEmits(['toggle', 'logout'])
 
 const userStore = useUserStore()
-const {user} = storeToRefs(userStore)
+const { user } = storeToRefs(userStore)
 
 const currentRoute = useRoute()
 const router = useRouter()
@@ -85,16 +89,17 @@ const breadcrumbs = computed(() => {
     return matched
 })
 </script>
-<style scoped>
-    .trigger {
-        font-size: 18px;
-        line-height: 64px;
-        padding: 0 24px;
-        cursor: pointer;
-        transition: color 0.3s;
-    }
 
-    .trigger:hover {
-        color: #1890ff;
-    }
+<style scoped>
+.trigger {
+    font-size: 18px;
+    line-height: 64px;
+    padding: 0 24px;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.trigger:hover {
+    color: #1890ff;
+}
 </style>
