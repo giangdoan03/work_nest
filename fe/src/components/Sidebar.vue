@@ -123,7 +123,11 @@
             </a-menu-item>
             <a-menu-item key="quan-ly-user">
                 <TeamOutlined/>
-                <span>Quản lý người dùng</span>
+                <span>Phân quyền</span>
+            </a-menu-item>
+            <a-menu-item key="list-phong-ban">
+                <ApartmentOutlined />
+                <span>Danh sách phòng ban</span>
             </a-menu-item>
         </a-menu>
     </a-layout-sider>
@@ -134,7 +138,7 @@ import {
     PieChartOutlined, AppstoreOutlined, ShoppingOutlined, BankOutlined, QrcodeOutlined,
     GiftOutlined, TrophyOutlined, ShoppingCartOutlined, HistoryOutlined, EditOutlined,
     SearchOutlined, EnvironmentOutlined, TeamOutlined, SettingOutlined, ClockCircleOutlined,
-    UserOutlined, ShopOutlined, CalendarOutlined
+    UserOutlined, ShopOutlined, CalendarOutlined, ApartmentOutlined
 } from '@ant-design/icons-vue'
 
 import {useRouter, useRoute} from 'vue-router'
@@ -167,11 +171,12 @@ const pathToKeyMap = {
     '/loyalty/history': 'lich-su-nguoi-choi',
     '/custom-pages': 'trang-tu-thiet-ke',
     // '/scan-history': 'lich-su-quet',
-    '/checkin-history': 'lich-su-checkin',
+    '/checkin-history': 'lich-su-checkin', 
     '/customers': 'quan-ly-khach-hang',
     '/settings': 'cau-hinh',
     '/purchase-history': 'lich-su-mua-goi',
-    '/permissions': 'quan-ly-user'
+    '/permissions': 'quan-ly-user',
+    '/departments': 'list-phong-ban'
 }
 
 const keyToParentMap = {
