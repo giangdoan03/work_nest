@@ -38,6 +38,8 @@ import LandingPageList from '../components/LandingPageList.vue'
 
 import UserPermissionManager from '../components/UserPermissionManager.vue'
 
+import DepartmentList from '../page/DepartmentList.vue'
+
 const routes = [
     {
         path: '/',
@@ -97,6 +99,9 @@ const routes = [
 
             // Permissions
             { path: 'permissions', name: 'permissions', component: UserPermissionManager, meta: { breadcrumb: 'Phân quyền' } },
+
+            // Permissions
+            { path: 'departments', name: 'departments', component: DepartmentList, meta: { breadcrumb: 'Phòng ban' } },
 
             // Loyalty Programs
             { path: 'loyalty/programs', name: 'chuong-trinh', component: LoyaltyProgramList, meta: { breadcrumb: 'Chương trình Loyalty', parent: 'dashboard' } },
