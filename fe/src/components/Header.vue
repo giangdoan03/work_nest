@@ -34,8 +34,8 @@
                     {{ user.name }} <DownOutlined />
                 </a>
                 <template #overlay>
-                    <a-menu>
-                        <a-menu-item key="profile">
+                    <a-menu >
+                        <a-menu-item key="profile" @click="redirectToProfile">
                             Thông tin cá nhân
                         </a-menu-item>
                         <a-menu-divider />
@@ -88,6 +88,14 @@ const breadcrumbs = computed(() => {
 
     return matched
 })
+const redirectToProfile = () => {
+    router.push({
+        name: 'persons-edit',
+        params: {
+            id: user.value.id
+        }
+    })
+}
 </script>
 
 <style scoped>
