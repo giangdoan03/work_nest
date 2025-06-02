@@ -129,6 +129,10 @@
                 <ApartmentOutlined />
                 <span>Danh sách phòng ban</span>
             </a-menu-item>
+            <a-menu-item key="user-management">
+                <TeamOutlined />
+                <span>Quản lý người dùng</span>
+            </a-menu-item>
         </a-menu>
     </a-layout-sider>
 </template>
@@ -176,7 +180,8 @@ const pathToKeyMap = {
     '/settings': 'cau-hinh',
     '/purchase-history': 'lich-su-mua-goi',
     '/permissions': 'quan-ly-user',
-    '/departments': 'list-phong-ban'
+    '/departments': 'list-phong-ban',
+    '/user-management': 'user-management',
 }
 
 const keyToParentMap = {

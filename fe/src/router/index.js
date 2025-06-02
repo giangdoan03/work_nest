@@ -40,6 +40,7 @@ import LandingPageList from '../components/LandingPageList.vue'
 import UserPermissionManager from '../components/UserPermissionManager.vue'
 
 import DepartmentList from '../page/DepartmentList.vue'
+import UserManagement from '../page/UserManagement.vue'
 
 const routes = [
     {
@@ -100,6 +101,9 @@ const routes = [
 
             // Permissions
             { path: 'permissions', name: 'permissions', component: UserPermissionManager, meta: { breadcrumb: 'Phân quyền' } },
+
+            // User Management
+            { path: 'user-management', name: 'user-management', component: UserManagement, meta: { breadcrumb: 'Quản lý người dùng' } },
 
             // Permissions
             { path: 'departments', name: 'departments', component: DepartmentList, meta: { breadcrumb: 'Phòng ban' } },

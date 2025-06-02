@@ -11,20 +11,18 @@ export const uploadFile = (file) => {
     return instance.post('/users/upload-avatar', formData)
 }
 
+export const getUsers = () => instance.get('/users')
 
 // Lấy chi tiết của 1 phòng ban 
-export const getDepartmentDetail = (userId) =>
+export const getUserDetail = (userId) =>
     instance.get(`/users/${userId}`, { params: { user_id: userId } })
 
-export const createDepartment = (data) =>
-    instance.post(`/users`, {
-        name: data.name,
-        description: data.description
-})
-export const updateDepartment= (userId, data) =>
+export const createUser = (data) =>
+    instance.post(`/users`, data)
+export const updateUser= (userId, data) =>
     instance.put(`/users/${userId}`, {
     name: data.name,
     description: data.description
 })
-export const deleteDepartment= (userId) =>
+export const deleteUser= (userId) =>
     instance.delete(`/users/${userId}`)

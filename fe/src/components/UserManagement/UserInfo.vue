@@ -56,7 +56,7 @@
 <script setup>
 import {ref, onMounted, computed } from 'vue'
 import {useRoute, useRouter} from 'vue-router'
-import { uploadFile } from '../../api/userv2'
+import { uploadFile } from '../../api/user'
 import {getStores} from '../../api/store'
 import {message} from 'ant-design-vue'
 import {UploadOutlined} from '@ant-design/icons-vue'
