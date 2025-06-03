@@ -18,7 +18,7 @@ import QRCreateForm from '../components/QRCreateForm.vue'
 
 import PersonList from '../components/PersonList.vue'
 import PersonForm from '../components/PersonForm.vue'
-import UserInfo from '../components/UserManagement/UserInfo.vue'
+import UserInfo from '../components/UserInfo/index.vue'
 
 import EventList from '../components/EventList.vue'
 import EventForm from '../components/EventForm.vue'
@@ -86,7 +86,12 @@ const routes = [
 
             // Persons
             { path: 'persons', name: 'persons', component: PersonList, meta: { breadcrumb: 'Cá nhân' } },
-            { path: 'persons/create', name: 'persons-create', component: UserInfo, meta: { breadcrumb: 'Thêm cá nhân', parent: 'persons' } },
+            { path: 'persons/:id/info', name: 'persons-info', component: UserInfo, meta: { breadcrumb: 'Thông tin cá nhân', parent: 'persons' } },
+            { path: 'persons/:id/edit', name: 'persons-edit', component: PersonForm, meta: { breadcrumb: 'Sửa cá nhân', parent: 'persons' } },
+
+            // Persons
+            { path: 'persons', name: 'persons', component: PersonList, meta: { breadcrumb: 'Cá nhân' } },
+            { path: 'persons/:id/info', name: 'persons-info', component: UserInfo, meta: { breadcrumb: 'Thông tin cá nhân', parent: 'persons' } },
             { path: 'persons/:id/edit', name: 'persons-edit', component: PersonForm, meta: { breadcrumb: 'Sửa cá nhân', parent: 'persons' } },
 
             // Events
