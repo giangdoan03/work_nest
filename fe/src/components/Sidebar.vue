@@ -129,6 +129,18 @@
                 <ApartmentOutlined />
                 <span>Danh sách phòng ban</span>
             </a-menu-item>
+            <a-menu-item key="list-phong-ban-1">
+                <ApartmentOutlined />
+                <span>Gói thầu</span>
+            </a-menu-item>
+            <a-menu-item key="list-phong-ban-2">
+                <ApartmentOutlined />
+                <span>Hợp đồng</span>
+            </a-menu-item>
+            <a-menu-item key="list-phong-ban-3">
+                <ApartmentOutlined />
+                <span>Nhiệm vụ nội bộ</span>
+            </a-menu-item>
         </a-menu>
     </a-layout-sider>
 </template>

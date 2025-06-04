@@ -110,7 +110,7 @@ const getDepartment = async () => {
     }
 }
 
-const createDrawerCreate = async () => {
+const createDrawerCreate = async (type, ) => {
     if(loadingCreate.value){
         return;
     }

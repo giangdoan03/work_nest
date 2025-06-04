@@ -69,8 +69,15 @@ $routes->group('api', function ($routes) {
     $routes->put('step-templates/(:num)', 'StepTemplateController::update/$1');
     $routes->delete('step-templates/(:num)', 'StepTemplateController::delete/$1');
 
-    $routes->resource('tasks', ['controller' => 'TaskController']);
+    // 🧩 Comment API cho task — phải đặt TRƯỚC
+    $routes->get('tasks/(:num)/comments', 'CommentController::byTask/$1');
+    $routes->post('tasks/(:num)/comments', 'CommentController::create/$1');
 
+    $routes->put('comments/(:num)', 'CommentController::update/$1');
+    $routes->delete('comments/(:num)', 'CommentController::delete/$1');
+
+    // Cuối cùng mới khai báo resource
+    $routes->resource('tasks', ['controller' => 'TaskController']);
 
 
 });
