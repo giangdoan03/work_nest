@@ -63,39 +63,39 @@
 <!--                <span>QR Code Marketing</span>-->
 <!--            </a-menu-item>-->
 
-            <a-sub-menu key="chuong-trinh-loyalty">
-                <template #title>
-                      <span>
-                        <GiftOutlined/>
-                        <span>Chương trình loyalty</span>
-                      </span>
-                </template>
+<!--            <a-sub-menu key="chuong-trinh-loyalty">-->
+<!--                <template #title>-->
+<!--                      <span>-->
+<!--                        <GiftOutlined/>-->
+<!--                        <span>Chương trình loyalty</span>-->
+<!--                      </span>-->
+<!--                </template>-->
 
-                <a-menu-item key="chuong-trinh">
-                    <TrophyOutlined/>
-                    <span>Chương trình</span>
-                </a-menu-item>
+<!--                <a-menu-item key="chuong-trinh">-->
+<!--                    <TrophyOutlined/>-->
+<!--                    <span>Chương trình</span>-->
+<!--                </a-menu-item>-->
 
-                <a-menu-item key="qua-tang">
-                    <GiftOutlined/>
-                    <span>Quà tặng</span>
-                </a-menu-item>
+<!--                <a-menu-item key="qua-tang">-->
+<!--                    <GiftOutlined/>-->
+<!--                    <span>Quà tặng</span>-->
+<!--                </a-menu-item>-->
 
-                <a-menu-item key="goi-voucher">
-                    <ShoppingCartOutlined/>
-                    <span>Gói voucher</span>
-                </a-menu-item>
+<!--                <a-menu-item key="goi-voucher">-->
+<!--                    <ShoppingCartOutlined/>-->
+<!--                    <span>Gói voucher</span>-->
+<!--                </a-menu-item>-->
 
-                <a-menu-item key="lich-su-nguoi-choi">
-                    <HistoryOutlined/>
-                    <span>Lịch sử người chơi</span>
-                </a-menu-item>
-            </a-sub-menu>
+<!--                <a-menu-item key="lich-su-nguoi-choi">-->
+<!--                    <HistoryOutlined/>-->
+<!--                    <span>Lịch sử người chơi</span>-->
+<!--                </a-menu-item>-->
+<!--            </a-sub-menu>-->
 
-            <a-menu-item key="trang-tu-thiet-ke">
-                <EditOutlined/>
-                <span>Trang tự thiết kế</span>
-            </a-menu-item>
+<!--            <a-menu-item key="trang-tu-thiet-ke">-->
+<!--                <EditOutlined/>-->
+<!--                <span>Trang tự thiết kế</span>-->
+<!--            </a-menu-item>-->
 
 <!--            <a-menu-item key="lich-su-quet">-->
 <!--                <SearchOutlined/>-->
@@ -117,10 +117,10 @@
                 <span>Cấu hình</span>
             </a-menu-item>
 
-            <a-menu-item key="lich-su-mua-goi">
-                <ClockCircleOutlined/>
-                <span>Lịch sử mua gói</span>
-            </a-menu-item>
+<!--            <a-menu-item key="lich-su-mua-goi">-->
+<!--                <ClockCircleOutlined/>-->
+<!--                <span>Lịch sử mua gói</span>-->
+<!--            </a-menu-item>-->
             <a-menu-item key="quan-ly-user">
                 <TeamOutlined/>
                 <span>Phân quyền</span>
