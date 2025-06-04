@@ -69,6 +69,8 @@ $routes->group('api', function ($routes) {
     $routes->put('step-templates/(:num)', 'StepTemplateController::update/$1');
     $routes->delete('step-templates/(:num)', 'StepTemplateController::delete/$1');
 
+    $routes->resource('tasks', ['controller' => 'TaskController']);
+
 
 
 });

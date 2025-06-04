@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: May 26, 2025 at 11:29 AM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- Host: localhost:3306
+-- Generation Time: Jun 04, 2025 at 09:17 AM
+-- Server version: 8.4.3
+-- PHP Version: 8.3.16
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `worknest`
+-- Database: `work_nest`
 --
 
 -- --------------------------------------------------------
@@ -28,10 +28,10 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `categories` (
-  `id` bigint(20) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `id` bigint NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -77,12 +77,12 @@ INSERT INTO `categories` (`id`, `name`, `created_at`, `updated_at`) VALUES
 --
 
 CREATE TABLE `comments` (
-  `id` int(11) NOT NULL,
-  `module` varchar(50) NOT NULL,
-  `module_id` int(11) NOT NULL,
-  `user_id` int(10) UNSIGNED NOT NULL,
-  `comment` text NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp()
+  `id` int NOT NULL,
+  `module` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `module_id` int NOT NULL,
+  `user_id` int UNSIGNED NOT NULL,
+  `comment` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -92,16 +92,16 @@ CREATE TABLE `comments` (
 --
 
 CREATE TABLE `contracts` (
-  `id` int(11) NOT NULL,
-  `title` varchar(255) NOT NULL,
-  `content` text DEFAULT NULL,
-  `status` enum('draft','in_progress','pending_review','approved','completed','canceled') DEFAULT 'draft',
-  `department_id` int(11) DEFAULT NULL,
-  `assigned_to` int(11) DEFAULT NULL,
+  `id` int NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` text COLLATE utf8mb4_unicode_ci,
+  `status` enum('draft','in_progress','pending_review','approved','completed','canceled') COLLATE utf8mb4_unicode_ci DEFAULT 'draft',
+  `department_id` int DEFAULT NULL,
+  `assigned_to` int DEFAULT NULL,
   `start_date` date DEFAULT NULL,
   `end_date` date DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -119,17 +119,17 @@ INSERT INTO `contracts` (`id`, `title`, `content`, `status`, `department_id`, `a
 --
 
 CREATE TABLE `contract_steps` (
-  `id` int(11) NOT NULL,
-  `contract_id` int(11) NOT NULL,
-  `step_no` int(11) DEFAULT NULL,
-  `name` varchar(255) NOT NULL,
-  `status` enum('pending','in_progress','done') DEFAULT 'pending',
-  `assigned_to` int(11) DEFAULT NULL,
+  `id` int NOT NULL,
+  `contract_id` int NOT NULL,
+  `step_no` int DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` enum('pending','in_progress','done') COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
+  `assigned_to` int DEFAULT NULL,
   `start_date` date DEFAULT NULL,
   `due_date` date DEFAULT NULL,
   `completed_at` date DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -156,12 +156,12 @@ INSERT INTO `contract_steps` (`id`, `contract_id`, `step_no`, `name`, `status`, 
 --
 
 CREATE TABLE `contract_step_files` (
-  `id` int(11) NOT NULL,
-  `step_id` int(11) NOT NULL,
-  `file_name` varchar(255) DEFAULT NULL,
-  `file_path` varchar(500) DEFAULT NULL,
-  `uploaded_by` int(11) DEFAULT NULL,
-  `uploaded_at` datetime DEFAULT current_timestamp()
+  `id` int NOT NULL,
+  `step_id` int NOT NULL,
+  `file_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `file_path` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `uploaded_by` int DEFAULT NULL,
+  `uploaded_at` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -171,16 +171,16 @@ CREATE TABLE `contract_step_files` (
 --
 
 CREATE TABLE `customers` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `phone` varchar(20) DEFAULT NULL,
-  `email` varchar(255) DEFAULT NULL,
-  `address` varchar(255) DEFAULT NULL,
-  `city` varchar(100) DEFAULT NULL,
-  `avatar` text DEFAULT NULL,
+  `id` int UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `avatar` text COLLATE utf8mb4_unicode_ci,
   `last_interaction` date DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -190,11 +190,11 @@ CREATE TABLE `customers` (
 --
 
 CREATE TABLE `departments` (
-  `id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `id` int NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -202,7 +202,11 @@ CREATE TABLE `departments` (
 --
 
 INSERT INTO `departments` (`id`, `name`, `description`, `created_at`, `updated_at`) VALUES
-(1, 'Phòng Hành chính - Nhân sự', 'Cập nhật mô tả phòng ban', '2025-05-25 02:55:43', '2025-05-25 02:57:44');
+(1, 'Phòng Hành chính - Nhân sự', 'Cập nhật mô tả phòng ban', '2025-05-25 02:55:43', '2025-05-25 02:57:44'),
+(2, 'Phòng Tài chính - Kế toán', 'Quản lý tài chính và kế toán', '2025-06-04 09:01:59', '2025-06-04 09:01:59'),
+(3, 'Phòng Kinh doanh', 'Phụ trách phát triển kinh doanh', '2025-06-04 09:02:11', '2025-06-04 09:02:11'),
+(4, 'Phòng Thương mại', 'Quản lý hợp đồng và thương mại', '2025-06-04 09:02:29', '2025-06-04 09:02:29'),
+(5, 'Phòng Dịch vụ - Kỹ thuật', 'Hỗ trợ kỹ thuật và dịch vụ khách hàng', '2025-06-04 09:02:38', '2025-06-04 09:02:38');
 
 -- --------------------------------------------------------
 
@@ -211,11 +215,11 @@ INSERT INTO `departments` (`id`, `name`, `description`, `created_at`, `updated_a
 --
 
 CREATE TABLE `permissions` (
-  `id` int(11) NOT NULL,
-  `key_name` varchar(100) NOT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `id` int NOT NULL,
+  `key_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -269,24 +273,24 @@ INSERT INTO `permissions` (`id`, `key_name`, `description`, `created_at`, `updat
 --
 
 CREATE TABLE `persons` (
-  `id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `first_name` varchar(100) DEFAULT NULL,
-  `last_name` varchar(100) DEFAULT NULL,
-  `name` varchar(255) NOT NULL,
-  `avatar` varchar(255) DEFAULT NULL,
-  `video_url` varchar(255) DEFAULT NULL,
-  `phone` varchar(50) DEFAULT NULL,
-  `email` varchar(100) DEFAULT NULL,
-  `website` varchar(255) DEFAULT NULL,
-  `country` varchar(100) DEFAULT NULL,
-  `address` varchar(255) DEFAULT NULL,
-  `social_links` text DEFAULT NULL,
-  `job_title` varchar(100) DEFAULT NULL,
-  `bio` text DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `display_settings` text DEFAULT NULL
+  `id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `first_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `last_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `avatar` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `video_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `website` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `country` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `social_links` text COLLATE utf8mb4_unicode_ci,
+  `job_title` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bio` text COLLATE utf8mb4_unicode_ci,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `display_settings` text COLLATE utf8mb4_unicode_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -305,11 +309,11 @@ INSERT INTO `persons` (`id`, `user_id`, `first_name`, `last_name`, `name`, `avat
 --
 
 CREATE TABLE `roles` (
-  `id` int(11) NOT NULL,
-  `name` varchar(50) NOT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `id` int NOT NULL,
+  `name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -328,10 +332,10 @@ INSERT INTO `roles` (`id`, `name`, `description`, `created_at`, `updated_at`) VA
 --
 
 CREATE TABLE `role_permissions` (
-  `id` int(11) NOT NULL,
-  `role_id` int(11) NOT NULL,
-  `permission_id` int(11) NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp()
+  `id` int NOT NULL,
+  `role_id` int NOT NULL,
+  `permission_id` int NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -354,12 +358,12 @@ INSERT INTO `role_permissions` (`id`, `role_id`, `permission_id`, `created_at`) 
 --
 
 CREATE TABLE `settings` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `user_id` int(10) UNSIGNED NOT NULL,
-  `key` varchar(255) NOT NULL,
-  `value` text DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `id` int UNSIGNED NOT NULL,
+  `user_id` int UNSIGNED NOT NULL,
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text COLLATE utf8mb4_unicode_ci,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -377,11 +381,11 @@ INSERT INTO `settings` (`id`, `user_id`, `key`, `value`, `created_at`, `updated_
 --
 
 CREATE TABLE `step_templates` (
-  `id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `step_no` int(11) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `id` int NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `step_no` int DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -396,21 +400,100 @@ INSERT INTO `step_templates` (`id`, `name`, `step_no`, `created_at`, `updated_at
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `tasks`
+--
+
+CREATE TABLE `tasks` (
+  `id` int NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `assigned_to` int NOT NULL,
+  `due_date` date DEFAULT NULL,
+  `status` enum('todo','doing','done','overdue') COLLATE utf8mb4_unicode_ci DEFAULT 'todo',
+  `linked_type` enum('bidding','contract','internal') COLLATE utf8mb4_unicode_ci DEFAULT 'internal',
+  `linked_id` int DEFAULT NULL,
+  `step_code` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_by` int NOT NULL,
+  `priority` enum('low','normal','high') COLLATE utf8mb4_unicode_ci DEFAULT 'normal',
+  `comments_count` int DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `tasks`
+--
+
+INSERT INTO `tasks` (`id`, `title`, `description`, `assigned_to`, `due_date`, `status`, `linked_type`, `linked_id`, `step_code`, `created_by`, `priority`, `comments_count`, `created_at`, `updated_at`) VALUES
+(1, 'Thiết kế hồ sơ thầu', 'Chuẩn bị file bản vẽ và hồ sơ năng lực', 5, '2025-06-15', 'doing', 'bidding', 3, 'bidding_step_02', 1, 'normal', 0, '2025-06-04 01:23:15', '2025-06-04 01:24:15'),
+(2, 'Thiết kế hồ sơ thầu', 'Mô tả công việc thiết kế hồ sơ thầu', 3, '2025-06-16', 'doing', 'bidding', 1, 'contract_step_01', 2, 'high', 1, '2025-06-04 01:37:15', '2025-06-04 01:37:15'),
+(3, 'Nghiên cứu yêu cầu khách hàng', 'Mô tả công việc nghiên cứu yêu cầu khách hàng', 9, '2025-06-15', 'todo', 'contract', 1, 'internal_step_04', 1, 'high', 3, '2025-06-04 01:37:24', '2025-06-04 01:37:24'),
+(4, 'Gửi báo giá', 'Mô tả công việc gửi báo giá', 8, '2025-06-17', 'overdue', 'internal', 1, 'contract_step_05', 2, 'normal', 1, '2025-06-04 01:37:33', '2025-06-04 01:37:33'),
+(5, 'Làm rõ kỹ thuật', 'Mô tả công việc làm rõ kỹ thuật', 1, '2025-06-16', 'todo', 'bidding', 2, 'contract_step_06', 3, 'normal', 5, '2025-06-04 01:37:42', '2025-06-04 01:37:42'),
+(6, 'Ký hợp đồng nguyên tắc', 'Mô tả công việc ký hợp đồng nguyên tắc', 1, '2025-06-17', 'doing', 'internal', 1, 'contract_step_06', 1, 'high', 0, '2025-06-04 01:37:52', '2025-06-04 01:37:52'),
+(7, 'Chuẩn bị hồ sơ thanh toán', 'Mô tả công việc chuẩn bị hồ sơ thanh toán', 10, '2025-06-19', 'todo', 'bidding', 2, 'contract_step_02', 2, 'normal', 1, '2025-06-04 01:38:01', '2025-06-04 01:38:01'),
+(8, 'Lên kế hoạch triển khai', 'Mô tả công việc lên kế hoạch triển khai', 5, '2025-06-21', 'overdue', 'internal', 5, 'contract_step_01', 1, 'high', 3, '2025-06-04 01:38:09', '2025-06-04 01:38:09'),
+(9, 'Phân công nhiệm vụ', 'Mô tả công việc phân công nhiệm vụ', 10, '2025-06-17', 'doing', 'internal', 4, 'bidding_step_05', 1, 'high', 4, '2025-06-04 01:38:16', '2025-06-04 01:38:16'),
+(10, 'Mua sắm vật tư', 'Mô tả công việc mua sắm vật tư', 10, '2025-06-14', 'overdue', 'bidding', 3, 'contract_step_06', 2, 'high', 5, '2025-06-04 01:38:26', '2025-06-04 01:38:26'),
+(11, 'Lắp đặt thiết bị', 'Mô tả công việc lắp đặt thiết bị', 4, '2025-06-11', 'doing', 'bidding', 4, 'internal_step_04', 2, 'low', 1, '2025-06-04 01:38:34', '2025-06-04 01:38:34'),
+(12, 'Nghiệm thu nội bộ', 'Mô tả công việc nghiệm thu nội bộ', 8, '2025-06-11', 'overdue', 'contract', 2, 'bidding_step_04', 1, 'high', 0, '2025-06-04 01:38:43', '2025-06-04 01:38:43'),
+(13, 'Bàn giao cho khách hàng', 'Mô tả công việc bàn giao cho khách hàng', 2, '2025-06-23', 'overdue', 'contract', 2, 'bidding_step_03', 3, 'normal', 4, '2025-06-04 01:38:51', '2025-06-04 01:38:51'),
+(14, 'Bảo trì định kỳ', 'Mô tả công việc bảo trì định kỳ', 7, '2025-06-09', 'todo', 'internal', 2, 'bidding_step_02', 2, 'low', 0, '2025-06-04 01:38:59', '2025-06-04 01:38:59'),
+(15, 'Tổng hợp hồ sơ hoàn công', 'Mô tả công việc tổng hợp hồ sơ hoàn công', 3, '2025-06-14', 'doing', 'contract', 3, 'internal_step_01', 1, 'normal', 3, '2025-06-04 01:39:07', '2025-06-04 01:39:07'),
+(16, 'Đối soát công nợ', 'Mô tả công việc đối soát công nợ', 9, '2025-06-19', 'doing', 'bidding', 5, 'contract_step_06', 1, 'low', 2, '2025-06-04 01:39:15', '2025-06-04 01:39:15'),
+(17, 'Đánh giá nội bộ', 'Mô tả công việc đánh giá nội bộ', 5, '2025-06-17', 'overdue', 'contract', 2, 'contract_step_05', 1, 'low', 2, '2025-06-04 01:39:24', '2025-06-04 01:39:24'),
+(18, 'Gửi báo cáo tiến độ', 'Mô tả công việc gửi báo cáo tiến độ', 4, '2025-06-22', 'overdue', 'internal', 1, 'bidding_step_03', 3, 'normal', 4, '2025-06-04 01:39:30', '2025-06-04 01:39:30'),
+(19, 'Tiếp nhận phản hồi', 'Mô tả công việc tiếp nhận phản hồi', 8, '2025-06-23', 'done', 'contract', 1, 'internal_step_02', 2, 'normal', 2, '2025-06-04 01:39:40', '2025-06-04 01:39:40'),
+(20, 'Cập nhật hồ sơ kỹ thuật', 'Mô tả công việc cập nhật hồ sơ kỹ thuật', 10, '2025-06-19', 'done', 'bidding', 5, 'bidding_step_01', 3, 'normal', 4, '2025-06-04 01:39:48', '2025-06-04 01:39:48'),
+(21, 'Đăng ký bảo hành', 'Mô tả công việc đăng ký bảo hành', 1, '2025-06-14', 'overdue', 'bidding', 2, 'contract_step_04', 3, 'high', 0, '2025-06-04 01:39:57', '2025-06-04 01:39:57');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `task_comments`
+--
+
+CREATE TABLE `task_comments` (
+  `id` int NOT NULL,
+  `task_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `content` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `task_files`
+--
+
+CREATE TABLE `task_files` (
+  `id` int NOT NULL,
+  `task_id` int NOT NULL,
+  `file_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `file_path` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `uploaded_by` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `users`
 --
 
 CREATE TABLE `users` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `name` varchar(255) DEFAULT NULL,
-  `phone` varchar(20) DEFAULT NULL,
-  `avatar` varchar(255) DEFAULT NULL,
-  `role` varchar(50) DEFAULT 'user',
-  `department_id` int(11) DEFAULT NULL,
-  `role_id` int(11) DEFAULT NULL
+  `id` int UNSIGNED NOT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `avatar` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `role` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'user',
+  `department_id` int DEFAULT NULL,
+  `role_id` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -420,7 +503,27 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `name`, `phone`, `avatar`, `role`, `department_id`, `role_id`) VALUES
 (1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-05-26 11:23:50', 'Nguyễn Văn A sửa', '0988888888', 'avatars/1748159830_7ae199f3eb92f7578dcc.png', 'user', 1, 2),
 (3, 'superadmin@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-20 14:02:38', '2025-05-25 09:51:46', 'Super Admin', '0988888888', NULL, 'super admin', 2, 1),
-(4, 'nguyenvana@example.com', '$2y$10$NrYPWmcRo3yBFGYmTzh4pumJyQQ0zBAOHejM59sZlJj1wCtyCUpBO', '2025-05-26 04:33:21', '2025-05-26 04:33:21', 'Nguyễn Văn A', '0909123456', NULL, 'customer', NULL, NULL);
+(4, 'nguyenvana@example.com', '$2y$10$NrYPWmcRo3yBFGYmTzh4pumJyQQ0zBAOHejM59sZlJj1wCtyCUpBO', '2025-05-26 04:33:21', '2025-05-26 04:33:21', 'Nguyễn Văn A', '0909123456', NULL, 'customer', NULL, NULL),
+(5, 'a@worknest.vn', '$2y$10$y9WQWckMJCEVQbqG0PNSCum.x7fNlxAJK7RqwxZvlaxBVZRtre96W', '2025-06-04 09:10:50', '2025-06-04 09:10:50', 'Nguyễn Văn A', '0911111111', NULL, 'customer', 1, NULL),
+(6, 'b@worknest.vn', '$2y$10$1LWsovHhrQhpuY3tvcl5Bu6nu8cWhi4U51LIHhlp7pTD3yBeY/Gz.', '2025-06-04 09:11:21', '2025-06-04 09:11:21', 'Trần Thị B', '0911111112', NULL, 'customer', 1, NULL),
+(7, 'c@worknest.vn', '$2y$10$0M2AJM7k/CXzGKJCeeEh1.g2tFjFCZfeOLDGKqGgm3dUHqqpNtciW', '2025-06-04 09:11:44', '2025-06-04 09:11:44', 'Lê Văn C', '0911111113', NULL, 'customer', 2, NULL),
+(8, 'd@worknest.vn', '$2y$10$Myza0k5wayRch9i2Vxxit.i26Uauc7mPyPMUJpARLSnLzQ8H79fi2', '2025-06-04 09:12:07', '2025-06-04 09:12:07', 'Phạm Thị D', '0911111114', NULL, 'customer', 2, NULL),
+(9, 't@worknest.vn', '$2y$10$hGqQg.IGey/1/3a6Dt/3rOQKKdPgz2U787lWDghxeDqCmCk30v7SW', '2025-06-04 09:12:52', '2025-06-04 09:12:52', 'Bùi Minh T', '0911111115', NULL, 'customer', 3, NULL),
+(10, 'l@worknest.vn', '$2y$10$In9Y8TToyh9hICfylJG.Iesgd1mvrE4L./GTSwgcuXX8zXe.tGqM2', '2025-06-04 09:13:10', '2025-06-04 09:13:10', 'Nguyễn Thị L', '0911111116', NULL, 'customer', 3, NULL),
+(11, 'h@worknest.vn', '$2y$10$HVsxejThJCOYfidLz.xreOCpRGZp8QI001kHhekDGq9tVFW0TWv0K', '2025-06-04 09:13:37', '2025-06-04 09:13:37', 'Vũ Văn H', '0911111117', NULL, 'customer', 4, NULL),
+(12, 'hq@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Đào Quang H', '0911111118', NULL, 'user', 4, NULL),
+(13, 'bich@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Trần Thị Bích', '0911111119', NULL, 'user', 5, NULL),
+(14, 'tuan@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Mai Văn Tuấn', '0911111120', NULL, 'user', 5, NULL),
+(15, 'phuc@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Lê Hồng Phúc', '0911111121', NULL, 'user', 1, NULL),
+(16, 'hiep@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Nguyễn Văn Hiệp', '0911111122', NULL, 'user', 1, NULL),
+(17, 'huong@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Trần Thanh Hương', '0911111123', NULL, 'user', 2, NULL),
+(18, 'thang@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Đinh Hữu Thắng', '0911111124', NULL, 'user', 2, NULL),
+(19, 'trang@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Phạm Thu Trang', '0911111125', NULL, 'user', 3, NULL),
+(20, 'hai@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Ngô Minh Hải', '0911111126', NULL, 'user', 3, NULL),
+(21, 'mai@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Vũ Thị Mai', '0911111127', NULL, 'user', 4, NULL),
+(22, 'huy@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Nguyễn Khắc Huy', '0911111128', NULL, 'user', 4, NULL),
+(23, 'loan@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Bùi Thị Loan', '0911111129', NULL, 'user', 5, NULL),
+(24, 'tri@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Lê Minh Trí', '0911111130', NULL, 'user', 5, NULL);
 
 --
 -- Indexes for dumped tables
@@ -508,6 +611,24 @@ ALTER TABLE `step_templates`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `tasks`
+--
+ALTER TABLE `tasks`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `task_comments`
+--
+ALTER TABLE `task_comments`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `task_files`
+--
+ALTER TABLE `task_files`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -522,85 +643,103 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT for table `comments`
 --
 ALTER TABLE `comments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `contracts`
 --
 ALTER TABLE `contracts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `contract_steps`
 --
 ALTER TABLE `contract_steps`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `contract_step_files`
 --
 ALTER TABLE `contract_step_files`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `departments`
 --
 ALTER TABLE `departments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `permissions`
 --
 ALTER TABLE `permissions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `persons`
 --
 ALTER TABLE `persons`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `roles`
 --
 ALTER TABLE `roles`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `role_permissions`
 --
 ALTER TABLE `role_permissions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `settings`
 --
 ALTER TABLE `settings`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `step_templates`
 --
 ALTER TABLE `step_templates`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `tasks`
+--
+ALTER TABLE `tasks`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+
+--
+-- AUTO_INCREMENT for table `task_comments`
+--
+ALTER TABLE `task_comments`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `task_files`
+--
+ALTER TABLE `task_files`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- Constraints for dumped tables
