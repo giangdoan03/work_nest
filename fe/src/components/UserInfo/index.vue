@@ -19,7 +19,7 @@
             </a-col>
             <a-col flex="1">
                 <div class="user-info-content">
-                    <UserInfo /> 
+                    <component :is="currentComponent" :data-user="dataUser" @reload="getUser" /> 
                 </div>
             </a-col>
         </a-row>
@@ -28,7 +28,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted} from 'vue';
+import { ref, computed, onMounted, shallowRef} from 'vue';
 import UserInfo from './UserInfo.vue';
 import ChangePassword from './ChangePassword.vue';
 import { getUserDetail } from '../../api/user';
@@ -37,31 +37,43 @@ import { useRoute, useRouter } from 'vue-router';
 const route = useRoute()
 const router = useRouter()
 
-const selectedKeys = ref(['user-info']);
+const selectedKeys = ref(['UserInfo']);
 const openKeys = ref();
+const dataUser = ref();
 
-const items = ref([
+const items = shallowRef([
     {
         key: 'UserInfo',
         label: 'Thông tin cá nhân',
+        component: UserInfo,
     },
     {
         key: 'ChangePassword',
         label: 'Thay đổi mật khẩu',
+        component: ChangePassword,
     },
     // {
     //     key: 'logout',
     //     label: 'Đăng xuất',
     // },
 ]);
+const currentComponent = computed(() => {
+    return items.value.find(item => item.key === selectedKeys.value[0])?.component;
+});
 
 const handleClick = (e) => {
     selectedKeys.value = [e.key]
-    console.log(111,e);
 };
+const getUser = async () => {
+    const res = await getUserDetail(route.params.id);
+    
+    if(res.status && res.data.id){
+        dataUser.value = res.data;
+    }
+}
 
 onMounted(() => {
-
+    getUser();
 });
 </script>
 

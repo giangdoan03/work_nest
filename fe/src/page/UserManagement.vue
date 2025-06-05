@@ -236,6 +236,9 @@ const setDefaultData = () =>{
 onMounted(getUser)
 </script>
 <style scoped>
+:deep(.ant-pagination){
+    margin-bottom: 0 !important;
+}
 .icon-action {
     font-size: 18px;
     margin-right: 24px;
