@@ -27,7 +27,7 @@ class UploadController extends ResourceController
         }
 
         // ✅ Lấy upload dir từ .env, fallback mặc định nếu chưa khai báo
-        $customUploadDir = getenv('UPLOAD_DIR') ?: 'C:/php82/htdocs/assets/image/';
+        $customUploadDir = getenv('UPLOAD_DIR') ?: 'C:/laragon/www/work_nest/assets/image/';
         if (!is_dir($customUploadDir)) {
             mkdir($customUploadDir, 0777, true);
         }
@@ -71,7 +71,7 @@ class UploadController extends ResourceController
         $filename = uniqid() . '.' . $extension;
 
         // Lưu file
-        $uploadDir = getenv('UPLOAD_DIR') ?: 'C:/php82/htdocs/assets/image/';
+        $uploadDir = getenv('UPLOAD_DIR') ?: 'C:/laragon/www/work_nest/assets/image/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }
