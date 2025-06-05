@@ -27,6 +27,7 @@ fe/.gitignore
 # Ignore specific files
 fe/vite.config.js
 be/public/index.php
+be/app/Config/Database.php
 # System files
 .DS_Store
 

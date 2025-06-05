@@ -38,8 +38,6 @@ $routes->group('api', function ($routes) {
     $routes->post('permissions/save', 'PermissionController::save');
     $routes->get('permissions/matrix', 'PermissionController::matrix');
 
-
-
     $routes->resource('departments', ['controller' => 'DepartmentController']);
 
     $routes->post('users/upload-avatar', 'Auth::uploadAvatar');
@@ -51,8 +49,6 @@ $routes->group('api', function ($routes) {
 
     $routes->resource('contracts', ['controller' => 'ContractController']);
 
-
-
     // Contract Step routes
     $routes->get('contracts/(:num)/steps', 'ContractStepController::index/$1');     // Lấy danh sách bước của 1 hợp đồng
     $routes->post('contracts/(:num)/steps', 'ContractStepController::create/$1');   // Tạo bước mới cho hợp đồng
@@ -62,13 +58,22 @@ $routes->group('api', function ($routes) {
     $routes->delete('contract-steps/(:num)', 'ContractStepController::delete/$1');  // Xoá bước theo ID
     $routes->post('contracts/(:num)/add-steps-from-templates', 'ContractStepController::addStepsFromTemplates/$1');
 
-
     // Step template routes
     $routes->get('step-templates', 'StepTemplateController::index');
     $routes->post('step-templates', 'StepTemplateController::create');
     $routes->put('step-templates/(:num)', 'StepTemplateController::update/$1');
     $routes->delete('step-templates/(:num)', 'StepTemplateController::delete/$1');
 
+    // 🧩 Comment API cho task — phải đặt TRƯỚC
+    $routes->get('tasks/(:num)/comments', 'CommentController::byTask/$1');
+    $routes->post('tasks/(:num)/comments', 'CommentController::create/$1');
+    $routes->get('tasks/(:num)/subtasks', 'TaskController::subtasks/$1');
+
+    $routes->put('comments/(:num)', 'CommentController::update/$1');
+    $routes->delete('comments/(:num)', 'CommentController::delete/$1');
+
+    // Cuối cùng mới khai báo resource
+    $routes->resource('tasks', ['controller' => 'TaskController']);
 
 
 });

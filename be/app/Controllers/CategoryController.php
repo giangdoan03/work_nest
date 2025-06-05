@@ -62,18 +62,17 @@ class CategoryController extends ResourceController
      */
     public function update($id = null)
     {
-        $categoryModel = new CategoryModel();
+        $data = [
+            'content' => $this->request->getVar('content')
+        ];
 
-        $data = $this->request->getJSON(true);
-
-        if (empty($data['name'])) {
-            return $this->failValidationErrors('Tên danh mục là bắt buộc');
+        if (!$this->model->update($id, $data)) {
+            return $this->failValidationErrors($this->model->errors());
         }
 
-        $categoryModel->update($id, ['name' => $data['name']]);
-
-        return $this->respond(['message' => 'Cập nhật danh mục thành công']);
+        return $this->respond(['message' => 'Comment updated']);
     }
+
 
     /**
      * Xoá danh mục
