@@ -93,4 +93,10 @@ class TaskController extends ResourceController
         $tasks = $this->model->where('parent_id', $parent_id)->findAll();
         return $this->respond($tasks);
     }
+
+    public function byBiddingStep($step_id)
+    {
+        $tasks = $this->model->where('bidding_step_id', $step_id)->findAll();
+        return $this->respond($tasks);
+    }
 }
