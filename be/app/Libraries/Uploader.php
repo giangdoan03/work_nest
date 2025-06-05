@@ -13,17 +13,17 @@ class Uploader
 
         switch ($type) {
             case 'avatar':
-                $uploadDir = getenv('UPLOAD_PATH_AVATAR') ?: 'D:/laragon/www/work_nest/assets/avatars/';
+                $uploadDir = getenv('UPLOAD_PATH_AVATAR') ?: 'C:/laragon/www/work_nest/assets/avatars/';
                 $baseUrl   = getenv('AVATAR_BASE_URL') ?: 'http://assets.worknest.local/avatars/';
                 break;
 
             case 'file':
-                $uploadDir = getenv('UPLOAD_PATH_FILES') ?: 'D:/laragon/www/work_nest/assets/files/';
+                $uploadDir = getenv('UPLOAD_PATH_FILES') ?: 'C:/laragon/www/work_nest/assets/files/';
                 $baseUrl   = getenv('FILES_BASE_URL') ?: 'http://assets.worknest.local/files/';
                 break;
 
             default:
-                $uploadDir = getenv('UPLOAD_DIR') ?: 'D:/laragon/www/work_nest/assets/image/';
+                $uploadDir = getenv('UPLOAD_DIR') ?: 'C:/laragon/www/work_nest/assets/image/';
                 $baseUrl   = getenv('ASSETS_DOMAIN') ?: 'http://assets.worknest.local/image/';
                 break;
         }
@@ -83,7 +83,7 @@ class Uploader
 
         $filename = uniqid() . '.' . $extension;
 
-        $uploadDir = getenv('UPLOAD_DIR') ?: 'D:/laragon/www/work_nest/image/';
+        $uploadDir = getenv('UPLOAD_DIR') ?: 'C:/laragon/www/work_nest/image/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }

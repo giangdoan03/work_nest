@@ -87,4 +87,10 @@ class TaskController extends ResourceController
         $this->model->delete($id);
         return $this->respondDeleted(['message' => 'Task deleted']);
     }
+
+    public function subtasks($parent_id)
+    {
+        $tasks = $this->model->where('parent_id', $parent_id)->findAll();
+        return $this->respond($tasks);
+    }
 }

@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jun 04, 2025 at 05:39 PM
--- Server version: 8.0.30
--- PHP Version: 8.1.10
+-- Generation Time: Jun 05, 2025 at 02:54 AM
+-- Server version: 8.4.3
+-- PHP Version: 8.3.16
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -405,6 +405,7 @@ INSERT INTO `step_templates` (`id`, `name`, `step_no`, `created_at`, `updated_at
 
 CREATE TABLE `tasks` (
   `id` int NOT NULL,
+  `parent_id` int DEFAULT NULL,
   `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `assigned_to` int NOT NULL,
@@ -424,28 +425,30 @@ CREATE TABLE `tasks` (
 -- Dumping data for table `tasks`
 --
 
-INSERT INTO `tasks` (`id`, `title`, `description`, `assigned_to`, `due_date`, `status`, `linked_type`, `linked_id`, `step_code`, `created_by`, `priority`, `comments_count`, `created_at`, `updated_at`) VALUES
-(1, 'Thiết kế hồ sơ thầu', 'Chuẩn bị file bản vẽ và hồ sơ năng lực', 5, '2025-06-15', 'doing', 'bidding', 3, 'bidding_step_02', 1, 'normal', 0, '2025-06-04 01:23:15', '2025-06-04 01:24:15'),
-(2, 'Thiết kế hồ sơ thầu', 'Mô tả công việc thiết kế hồ sơ thầu', 3, '2025-06-16', 'doing', 'bidding', 1, 'contract_step_01', 2, 'high', 1, '2025-06-04 01:37:15', '2025-06-04 01:37:15'),
-(3, 'Nghiên cứu yêu cầu khách hàng', 'Mô tả công việc nghiên cứu yêu cầu khách hàng', 9, '2025-06-15', 'todo', 'contract', 1, 'internal_step_04', 1, 'high', 3, '2025-06-04 01:37:24', '2025-06-04 01:37:24'),
-(4, 'Gửi báo giá', 'Mô tả công việc gửi báo giá', 8, '2025-06-17', 'overdue', 'internal', 1, 'contract_step_05', 2, 'normal', 1, '2025-06-04 01:37:33', '2025-06-04 01:37:33'),
-(5, 'Làm rõ kỹ thuật', 'Mô tả công việc làm rõ kỹ thuật', 1, '2025-06-16', 'todo', 'bidding', 2, 'contract_step_06', 3, 'normal', 5, '2025-06-04 01:37:42', '2025-06-04 01:37:42'),
-(6, 'Ký hợp đồng nguyên tắc', 'Mô tả công việc ký hợp đồng nguyên tắc', 1, '2025-06-17', 'doing', 'internal', 1, 'contract_step_06', 1, 'high', 0, '2025-06-04 01:37:52', '2025-06-04 01:37:52'),
-(7, 'Chuẩn bị hồ sơ thanh toán', 'Mô tả công việc chuẩn bị hồ sơ thanh toán', 10, '2025-06-19', 'todo', 'bidding', 2, 'contract_step_02', 2, 'normal', 1, '2025-06-04 01:38:01', '2025-06-04 01:38:01'),
-(8, 'Lên kế hoạch triển khai', 'Mô tả công việc lên kế hoạch triển khai', 5, '2025-06-21', 'overdue', 'internal', 5, 'contract_step_01', 1, 'high', 3, '2025-06-04 01:38:09', '2025-06-04 01:38:09'),
-(9, 'Phân công nhiệm vụ', 'Mô tả công việc phân công nhiệm vụ', 10, '2025-06-17', 'doing', 'internal', 4, 'bidding_step_05', 1, 'high', 4, '2025-06-04 01:38:16', '2025-06-04 01:38:16'),
-(10, 'Mua sắm vật tư', 'Mô tả công việc mua sắm vật tư', 10, '2025-06-14', 'overdue', 'bidding', 3, 'contract_step_06', 2, 'high', 5, '2025-06-04 01:38:26', '2025-06-04 01:38:26'),
-(11, 'Lắp đặt thiết bị', 'Mô tả công việc lắp đặt thiết bị', 4, '2025-06-11', 'doing', 'bidding', 4, 'internal_step_04', 2, 'low', 1, '2025-06-04 01:38:34', '2025-06-04 01:38:34'),
-(12, 'Nghiệm thu nội bộ', 'Mô tả công việc nghiệm thu nội bộ', 8, '2025-06-11', 'overdue', 'contract', 2, 'bidding_step_04', 1, 'high', 0, '2025-06-04 01:38:43', '2025-06-04 01:38:43'),
-(13, 'Bàn giao cho khách hàng', 'Mô tả công việc bàn giao cho khách hàng', 2, '2025-06-23', 'overdue', 'contract', 2, 'bidding_step_03', 3, 'normal', 4, '2025-06-04 01:38:51', '2025-06-04 01:38:51'),
-(14, 'Bảo trì định kỳ', 'Mô tả công việc bảo trì định kỳ', 7, '2025-06-09', 'todo', 'internal', 2, 'bidding_step_02', 2, 'low', 0, '2025-06-04 01:38:59', '2025-06-04 01:38:59'),
-(15, 'Tổng hợp hồ sơ hoàn công', 'Mô tả công việc tổng hợp hồ sơ hoàn công', 3, '2025-06-14', 'doing', 'contract', 3, 'internal_step_01', 1, 'normal', 3, '2025-06-04 01:39:07', '2025-06-04 01:39:07'),
-(16, 'Đối soát công nợ', 'Mô tả công việc đối soát công nợ', 9, '2025-06-19', 'doing', 'bidding', 5, 'contract_step_06', 1, 'low', 2, '2025-06-04 01:39:15', '2025-06-04 01:39:15'),
-(17, 'Đánh giá nội bộ', 'Mô tả công việc đánh giá nội bộ', 5, '2025-06-17', 'overdue', 'contract', 2, 'contract_step_05', 1, 'low', 2, '2025-06-04 01:39:24', '2025-06-04 01:39:24'),
-(18, 'Gửi báo cáo tiến độ', 'Mô tả công việc gửi báo cáo tiến độ', 4, '2025-06-22', 'overdue', 'internal', 1, 'bidding_step_03', 3, 'normal', 4, '2025-06-04 01:39:30', '2025-06-04 01:39:30'),
-(19, 'Tiếp nhận phản hồi', 'Mô tả công việc tiếp nhận phản hồi', 8, '2025-06-23', 'done', 'contract', 1, 'internal_step_02', 2, 'normal', 2, '2025-06-04 01:39:40', '2025-06-04 01:39:40'),
-(20, 'Cập nhật hồ sơ kỹ thuật', 'Mô tả công việc cập nhật hồ sơ kỹ thuật', 10, '2025-06-19', 'done', 'bidding', 5, 'bidding_step_01', 3, 'normal', 4, '2025-06-04 01:39:48', '2025-06-04 01:39:48'),
-(21, 'Đăng ký bảo hành', 'Mô tả công việc đăng ký bảo hành', 1, '2025-06-14', 'overdue', 'bidding', 2, 'contract_step_04', 3, 'high', 0, '2025-06-04 01:39:57', '2025-06-04 01:39:57');
+INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `due_date`, `status`, `linked_type`, `linked_id`, `step_code`, `created_by`, `priority`, `comments_count`, `created_at`, `updated_at`) VALUES
+(1, NULL, 'Thiết kế hồ sơ thầu', 'Chuẩn bị file bản vẽ và hồ sơ năng lực', 5, '2025-06-15', 'doing', 'bidding', 3, 'bidding_step_02', 1, 'normal', 0, '2025-06-04 01:23:15', '2025-06-04 01:24:15'),
+(2, NULL, 'Thiết kế hồ sơ thầu', 'Mô tả công việc thiết kế hồ sơ thầu', 3, '2025-06-16', 'doing', 'bidding', 1, 'contract_step_01', 2, 'high', 1, '2025-06-04 01:37:15', '2025-06-04 01:37:15'),
+(3, NULL, 'Nghiên cứu yêu cầu khách hàng', 'Mô tả công việc nghiên cứu yêu cầu khách hàng', 9, '2025-06-15', 'todo', 'contract', 1, 'internal_step_04', 1, 'high', 3, '2025-06-04 01:37:24', '2025-06-04 01:37:24'),
+(4, NULL, 'Gửi báo giá', 'Mô tả công việc gửi báo giá', 8, '2025-06-17', 'overdue', 'internal', 1, 'contract_step_05', 2, 'normal', 1, '2025-06-04 01:37:33', '2025-06-04 01:37:33'),
+(5, NULL, 'Làm rõ kỹ thuật', 'Mô tả công việc làm rõ kỹ thuật', 1, '2025-06-16', 'todo', 'bidding', 2, 'contract_step_06', 3, 'normal', 5, '2025-06-04 01:37:42', '2025-06-04 01:37:42'),
+(6, NULL, 'Ký hợp đồng nguyên tắc', 'Mô tả công việc ký hợp đồng nguyên tắc', 1, '2025-06-17', 'doing', 'internal', 1, 'contract_step_06', 1, 'high', 0, '2025-06-04 01:37:52', '2025-06-04 01:37:52'),
+(7, NULL, 'Chuẩn bị hồ sơ thanh toán', 'Mô tả công việc chuẩn bị hồ sơ thanh toán', 10, '2025-06-19', 'todo', 'bidding', 2, 'contract_step_02', 2, 'normal', 1, '2025-06-04 01:38:01', '2025-06-04 01:38:01'),
+(8, NULL, 'Lên kế hoạch triển khai', 'Mô tả công việc lên kế hoạch triển khai', 5, '2025-06-21', 'overdue', 'internal', 5, 'contract_step_01', 1, 'high', 3, '2025-06-04 01:38:09', '2025-06-04 01:38:09'),
+(9, NULL, 'Phân công nhiệm vụ', 'Mô tả công việc phân công nhiệm vụ', 10, '2025-06-17', 'doing', 'internal', 4, 'bidding_step_05', 1, 'high', 4, '2025-06-04 01:38:16', '2025-06-04 01:38:16'),
+(10, NULL, 'Mua sắm vật tư', 'Mô tả công việc mua sắm vật tư', 10, '2025-06-14', 'overdue', 'bidding', 3, 'contract_step_06', 2, 'high', 5, '2025-06-04 01:38:26', '2025-06-04 01:38:26'),
+(11, NULL, 'Lắp đặt thiết bị', 'Mô tả công việc lắp đặt thiết bị', 4, '2025-06-11', 'doing', 'bidding', 4, 'internal_step_04', 2, 'low', 1, '2025-06-04 01:38:34', '2025-06-04 01:38:34'),
+(12, NULL, 'Nghiệm thu nội bộ', 'Mô tả công việc nghiệm thu nội bộ', 8, '2025-06-11', 'overdue', 'contract', 2, 'bidding_step_04', 1, 'high', 0, '2025-06-04 01:38:43', '2025-06-04 01:38:43'),
+(13, NULL, 'Bàn giao cho khách hàng', 'Mô tả công việc bàn giao cho khách hàng', 2, '2025-06-23', 'overdue', 'contract', 2, 'bidding_step_03', 3, 'normal', 4, '2025-06-04 01:38:51', '2025-06-04 01:38:51'),
+(14, NULL, 'Bảo trì định kỳ', 'Mô tả công việc bảo trì định kỳ', 7, '2025-06-09', 'todo', 'internal', 2, 'bidding_step_02', 2, 'low', 0, '2025-06-04 01:38:59', '2025-06-04 01:38:59'),
+(15, NULL, 'Tổng hợp hồ sơ hoàn công', 'Mô tả công việc tổng hợp hồ sơ hoàn công', 3, '2025-06-14', 'doing', 'contract', 3, 'internal_step_01', 1, 'normal', 3, '2025-06-04 01:39:07', '2025-06-04 01:39:07'),
+(16, NULL, 'Đối soát công nợ', 'Mô tả công việc đối soát công nợ', 9, '2025-06-19', 'doing', 'bidding', 5, 'contract_step_06', 1, 'low', 2, '2025-06-04 01:39:15', '2025-06-04 01:39:15'),
+(17, NULL, 'Đánh giá nội bộ', 'Mô tả công việc đánh giá nội bộ', 5, '2025-06-17', 'overdue', 'contract', 2, 'contract_step_05', 1, 'low', 2, '2025-06-04 01:39:24', '2025-06-04 01:39:24'),
+(18, NULL, 'Gửi báo cáo tiến độ', 'Mô tả công việc gửi báo cáo tiến độ', 4, '2025-06-22', 'overdue', 'internal', 1, 'bidding_step_03', 3, 'normal', 4, '2025-06-04 01:39:30', '2025-06-04 01:39:30'),
+(19, NULL, 'Tiếp nhận phản hồi', 'Mô tả công việc tiếp nhận phản hồi', 8, '2025-06-23', 'done', 'contract', 1, 'internal_step_02', 2, 'normal', 2, '2025-06-04 01:39:40', '2025-06-04 01:39:40'),
+(20, NULL, 'Cập nhật hồ sơ kỹ thuật', 'Mô tả công việc cập nhật hồ sơ kỹ thuật', 10, '2025-06-19', 'done', 'bidding', 5, 'bidding_step_01', 3, 'normal', 4, '2025-06-04 01:39:48', '2025-06-04 01:39:48'),
+(21, NULL, 'Đăng ký bảo hành', 'Mô tả công việc đăng ký bảo hành', 1, '2025-06-14', 'overdue', 'bidding', 2, 'contract_step_04', 3, 'high', 0, '2025-06-04 01:39:57', '2025-06-04 01:39:57'),
+(22, 3, 'Thiết kế giao diện phụ', 'Thiết kế giao diện cho phần chi tiết', 9, '2025-06-15', 'todo', 'internal', NULL, NULL, 1, '', 0, '2025-06-04 19:29:35', '2025-06-04 19:29:35'),
+(23, NULL, 'Đăng ký bảo hành - test task cha', 'Mô tả công việc đăng ký bảo hành', 1, '2025-06-14', 'overdue', 'bidding', 2, 'contract_step_04', 3, 'high', 0, '2025-06-04 19:32:24', '2025-06-04 19:32:24');
 
 -- --------------------------------------------------------
 
@@ -477,7 +480,9 @@ INSERT INTO `task_comments` (`id`, `task_id`, `user_id`, `content`, `created_at`
 (9, 3, 8, 'Đây là comment kèm file 2222', '2025-06-04 10:30:41', '2025-06-04 10:30:41'),
 (10, 3, 8, 'Đây là comment kèm file 2222 66666', '2025-06-04 10:31:08', '2025-06-04 10:31:08'),
 (11, 3, 8, 'Đây là comment kèm file 3333333', '2025-06-04 10:35:20', '2025-06-04 10:35:20'),
-(12, 3, 8, 'Đây là comment kèm file 8888', '2025-06-04 10:38:15', '2025-06-04 10:38:15');
+(12, 3, 8, 'Đây là comment kèm file 8888', '2025-06-04 10:38:15', '2025-06-04 10:38:15'),
+(13, 3, 8, 'Đây là comment kèm file 9999', '2025-06-04 19:03:31', '2025-06-04 19:03:31'),
+(14, 3, 8, 'Đây là comment kèm file 9999', '2025-06-04 19:03:59', '2025-06-04 19:03:59');
 
 -- --------------------------------------------------------
 
@@ -506,7 +511,8 @@ INSERT INTO `task_files` (`id`, `task_id`, `file_name`, `file_path`, `uploaded_b
 (4, 3, '無題ファイル.pdf', 'http://assets.worknest.local/image/1749058241_48f3df4fabac26fd662e.pdf', 8, '2025-06-04 10:30:41', '2025-06-04 17:30:41'),
 (5, 3, '無題ファイル.pdf', 'http://assets.worknest.local/image/1749058268_452e37c0690b378d55fe.pdf', 8, '2025-06-04 10:31:08', '2025-06-04 17:31:08'),
 (6, 3, '20250521805.pdf', 'http://assets.worknest.local/image/1749058520_d76b25ed4c6df7e81de9.pdf', 8, '2025-06-04 10:35:20', '2025-06-04 17:35:20'),
-(7, 3, 'youtube.png', 'http://assets.worknest.local/files/1749058695_5d6e504e75601e256df4.png', 8, '2025-06-04 10:38:15', '2025-06-04 17:38:15');
+(7, 3, 'youtube.png', 'http://assets.worknest.local/files/1749058695_5d6e504e75601e256df4.png', 8, '2025-06-04 10:38:15', '2025-06-04 17:38:15'),
+(8, 3, 'youtube.png', 'http://assets.worknest.local/files/1749089039_9852f7169f0d58483621.png', 8, '2025-06-04 19:03:59', '2025-06-05 02:03:59');
 
 -- --------------------------------------------------------
 
@@ -753,19 +759,19 @@ ALTER TABLE `step_templates`
 -- AUTO_INCREMENT for table `tasks`
 --
 ALTER TABLE `tasks`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `task_comments`
 --
 ALTER TABLE `task_comments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `task_files`
 --
 ALTER TABLE `task_files`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `users`

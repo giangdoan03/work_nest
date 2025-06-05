@@ -72,9 +72,11 @@ $routes->group('api', function ($routes) {
     // 🧩 Comment API cho task — phải đặt TRƯỚC
     $routes->get('tasks/(:num)/comments', 'CommentController::byTask/$1');
     $routes->post('tasks/(:num)/comments', 'CommentController::create/$1');
+    $routes->get('tasks/(:num)/subtasks', 'TaskController::subtasks/$1');
 
     $routes->put('comments/(:num)', 'CommentController::update/$1');
     $routes->delete('comments/(:num)', 'CommentController::delete/$1');
+
 
     // Cuối cùng mới khai báo resource
     $routes->resource('tasks', ['controller' => 'TaskController']);
