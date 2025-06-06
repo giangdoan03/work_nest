@@ -25,7 +25,7 @@
 
             <!-- Email -->
             <a-form-item label="Email" name="email">
-                <a-input v-model:value="form.email" placeholder="example@mail.com" :disabled="!isEditMode"/>
+                <a-input v-model:value="form.email" placeholder="example@mail.com" disabled/>
             </a-form-item>
 
             <!-- Số điện thoại -->
@@ -35,7 +35,7 @@
 
             <!-- Chức danh -->
             <a-form-item label="Phòng ban" name="department">
-                <a-input v-model:value="form.department_id" placeholder="VD: Phòng hành chính nhân sự" :disabled="!isEditMode"/>
+                <a-input :value="getNameDepartments" placeholder="VD: Phòng hành chính nhân sự" disabled/>
             </a-form-item>
 
             <!-- Nút hành động -->
@@ -62,13 +62,13 @@
 <script setup>
 import {ref, onMounted, computed } from 'vue'
 import {useRoute, useRouter} from 'vue-router'
-import { uploadFile, getUserDetail } from '../../api/user'
-import {getStores} from '../../api/store'
+import { uploadFile, updateUser } from '../../api/user'
 import {message} from 'ant-design-vue'
 import {UploadOutlined} from '@ant-design/icons-vue'
+import cloneDeep from 'lodash/cloneDeep'
 
 import {useUserStore} from '../../stores/user'
-import { log } from 'node:console'
+import { getDepartments } from '@/api/department'
 
 const userStore = useUserStore()
 
@@ -82,6 +82,7 @@ const props = defineProps({
         default: () => ({})
     }
 })
+const emit = defineEmits(['reload'])
 
 const form = ref({
     id: null, // 👈 Thêm dòng này
@@ -99,24 +100,68 @@ const avatarFileList = ref([])
 const previewImage = ref('')
 const previewVisible = ref(false)
 const previewTitle = ref('')
-
+const departments = ref([])
 
 const isEditMode = ref(false)
 
-const rules = {
-    name: [{ required: true, message: 'Họ và tên là bắt buộc', trigger: 'change' }],
-    email: [{ required: true, message: 'Email là bắt buộc', trigger: 'change' }],
-    phone: [{ required: true, message: 'Số điện thoại là bắt buộc', trigger: 'change' }],
-    department: [{ required: true, message: 'Phòng ban là bắt buộc', trigger: 'change' }]
+const validateName = async (_rule, value) => {    
+    if (value === '') {
+        return Promise.reject('Vui lòng nhập họ và tên');
+    } else if(value.length > 200){
+        return Promise.reject('Họ và tên không vượt quá 200 ký tự');
+    } else {
+        return Promise.resolve();
+    }
+};
+const validatePhone = async (_rule, value) => {    
+    if (value === '') {
+        return Promise.reject('Vui lòng nhập số điện thoại');
+    } else if(value.length > 20){
+        return Promise.reject('Số điện thoại không vượt quá 20 ký tự');
+    } else if(value.length > 20){
+        return Promise.reject('Số điện thoại không vượt quá 20 ký tự');
+    } else {
+        return Promise.resolve();
+    }
+};
+function isValidPhoneNumber(phone) {
+  const regex = /^(0|\+84)(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-5]|9[0-9])[0-9]{7}$/;
+  return regex.test(phone);
 }
 
+const rules = computed(() => {
+    if (isEditMode.value) {
+        return {
+            name: [{ required: true, validator: validateName, message: 'Họ và tên là bắt buộc', trigger: 'change' }],
+            phone: [{ required: true, validator: validatePhone, message: 'Số điện thoại là bắt buộc', trigger: 'change' }],
+        }
+    }else{
+        return {}
+    }
+})
 
-
+const getNameDepartments = computed(() => {
+    const department = departments.value.find(item => item.id === form.value.department_id)
+    return department ? department.name : form.value.department_id
+})
 
 const handleSubmit = async () => {
-    console.log(form.value);
+    let params = {
+        name: form.value.name,
+        phone: form.value.phone,
+    }
+    await updateUser(form.value.id, params).then(res => {
+        if(res.data.status == "success"){
+            message.destroy();
+            message.success('Cập nhật thông tin thành công')
+            emit('reload');
+            isEditMode.value = false;
+        }else{
+            message.destroy();
+            message.error('Cập nhật thông tin thất bại')
+        }
+    })
 }
-
 
 const handlePreview = (file) => {
     previewImage.value = file.url || file.thumbUrl
@@ -127,19 +172,11 @@ const handlePreview = (file) => {
 const handleBeforeUpload = async (field, file) => {
     const hide = message.loading('Đang tải lên...', 0)
     try {
-        console.log();
-        
         let params = {
             file: file,
             user_id: route.params.id
         }
-        const formData = new FormData();
-        Object.entries(params).forEach(([key, value]) => {
-            formData.append(key, value);
-        });
-        params = formData;
-        return
-        const response = await uploadFile(file)
+        const response = await uploadFile(params)
         const url = response.data.url
         form.value.avatar = url
         avatarFileList.value = [
@@ -171,17 +208,25 @@ const goBack = () => {
 }
 const changeEditMode = () => {
     isEditMode.value = true;
+    formSaved.value = cloneDeep(form.value)
 }
 const resetFormValidate = () => {
     formRef.value.resetFields();
 };
-
+const getListDepartments = async () => {
+    await getDepartments().then(res => {
+        if (res.data) {
+            departments.value = res.data;
+        }
+    });
+}
 onMounted(async () => {
     if(props.dataUser){
         isEditMode.value = false;
-        form.value = props.dataUser;
-        formSaved.value = props.dataUser;
+        form.value = cloneDeep(props.dataUser);
+        formSaved.value = cloneDeep(props.dataUser);
     }
+    await getListDepartments();
 })
 
 </script>

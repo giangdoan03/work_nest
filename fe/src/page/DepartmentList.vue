@@ -29,28 +29,23 @@
         </a-table>
         <a-drawer title="Tạo phòng ban mới" :width="450" :open="openDrawer" :body-style="{ paddingBottom: '80px' }"
             :footer-style="{ textAlign: 'right' }" @close="onCloseDrawer">
-            <a-form :model="formData" :rules="rules" layout="vertical">
-                <a-row :gutter="16">
-                    <a-col :span="24">
-                        <a-form-item label="Tên phòng ban" name="name">
-                            <a-input v-model:value="formData.name" placeholder="Nhập tên phòng ban" />
-                        </a-form-item>
-                    </a-col>
-                </a-row>
-                <a-row :gutter="16">
-                    <a-col :span="24">
-                        <a-form-item label="Mô tả" name="description">
-                            <a-textarea v-model:value="formData.description" :rows="6"
-                                placeholder="Nhập mô tả " />
-                        </a-form-item>
-                    </a-col>
-                </a-row>
+            <a-form :model="formData" :rules="rules" layout="vertical" @finish="handleCreateDepartment">
+                <a-form-item label="Tên phòng ban" name="name">
+                    <a-input v-model:value="formData.name" placeholder="Nhập tên phòng ban" />
+                </a-form-item>
+                <a-form-item label="Mô tả" name="description">
+                    <a-textarea v-model:value="formData.description" :rows="6"
+                        placeholder="Nhập mô tả " />
+                </a-form-item>
+                <a-form-item>
+                    <button html-type="submit" ref="btnSubmit"></button>
+                </a-form-item>
             </a-form>
             <template #extra>
                 <a-space>
                     <a-button @click="onCloseDrawer">Hủy</a-button>
                     <a-button v-if="selectedDepartment" type="primary" @click="updateDrawerCreate" :loading="loadingCreate" >Cập nhật</a-button>
-                    <a-button v-else type="primary" @click="createDrawerCreate" :loading="loadingCreate" >Thêm mới</a-button>
+                    <a-button v-else type="primary" @click="submitDepartment" :loading="loadingCreate" >Thêm mới</a-button>
                 </a-space>
             </template>
         </a-drawer>
@@ -73,6 +68,7 @@ const formData = ref({
     name: "",
     description: "",
 })
+const btnSubmit = ref()
 
 const columns = [
     { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
@@ -109,8 +105,10 @@ const getDepartment = async () => {
         loading.value = false
     }
 }
-
-const createDrawerCreate = async () => {
+const submitDepartment = () => {
+    btnSubmit.click();
+}
+const handleCreateDepartment = async () => {
     if(loadingCreate.value){
         return;
     }

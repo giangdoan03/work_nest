@@ -84,14 +84,11 @@ const routes = [
             { path: 'businesses/create', name: 'businesses-create', component: BusinessForm, meta: { breadcrumb: 'Thêm doanh nghiệp', parent: 'businesses' } },
             { path: 'businesses/:id/edit', name: 'businesses-edit', component: BusinessForm, meta: { breadcrumb: 'Sửa doanh nghiệp', parent: 'businesses' } },
 
-            // Persons
-            { path: 'persons', name: 'persons', component: PersonList, meta: { breadcrumb: 'Cá nhân' } },
-            { path: 'persons/:id/info', name: 'persons-info', component: UserInfo, meta: { breadcrumb: 'Thông tin cá nhân', parent: 'persons' } },
-            { path: 'persons/:id/edit', name: 'persons-edit', component: PersonForm, meta: { breadcrumb: 'Sửa cá nhân', parent: 'persons' } },
+            // user
+            { path: 'user/:id/info', name: 'persons-info', component: UserInfo, meta: { breadcrumb: 'Thông tin cá nhân' } },
 
             // Persons
             { path: 'persons', name: 'persons', component: PersonList, meta: { breadcrumb: 'Cá nhân' } },
-            { path: 'persons/:id/info', name: 'persons-info', component: UserInfo, meta: { breadcrumb: 'Thông tin cá nhân', parent: 'persons' } },
             { path: 'persons/:id/edit', name: 'persons-edit', component: PersonForm, meta: { breadcrumb: 'Sửa cá nhân', parent: 'persons' } },
 
             // Events
