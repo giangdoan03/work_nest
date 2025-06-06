@@ -9,7 +9,7 @@ class TaskModel extends Model
     protected $primaryKey = 'id';
 
     protected $allowedFields = [
-        'title', 'description', 'assigned_to', 'due_date', 'status',
+        'title', 'description', 'assigned_to', 'start_date', 'end_date', 'status',
         'linked_type', 'linked_id', 'step_code', 'created_by',
         'priority', 'comments_count', 'parent_id', 'bidding_step_id'
     ];

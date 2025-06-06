@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Controllers;
+
 use App\Models\TaskModel;
 use CodeIgniter\RESTful\ResourceController;
 
@@ -9,7 +10,7 @@ class TaskController extends ResourceController
     protected $modelName = TaskModel::class;
     protected $format    = 'json';
 
-    // Danh sách
+    // ✅ Danh sách task (lọc nâng cao)
     public function index()
     {
         $db = \Config\Database::connect();
@@ -32,11 +33,10 @@ class TaskController extends ResourceController
             $builder->where('status', $status);
         }
 
-        if ($due_date = $this->request->getGet('due_date')) {
-            $builder->where('due_date <=', $due_date);
+        if ($end_date = $this->request->getGet('end_date')) {
+            $builder->where('end_date <=', $end_date);
         }
 
-        // Phòng ban (nếu bạn có bảng users, và gắn user vào phòng ban)
         if ($department = $this->request->getGet('department_id')) {
             $builder->join('users', 'users.id = tasks.assigned_to', 'left');
             $builder->where('users.department_id', $department);
@@ -50,50 +50,92 @@ class TaskController extends ResourceController
         ]);
     }
 
-
-    // Chi tiết
+    // ✅ Chi tiết 1 task
     public function show($id = null)
     {
         $data = $this->model->find($id);
         return $data ? $this->respond($data) : $this->failNotFound('Task not found');
     }
 
-    // Tạo mới
+    // ✅ Tạo task mới
     public function create()
     {
         $data = $this->request->getJSON(true);
+
         if (!$this->model->insert($data)) {
             return $this->failValidationErrors($this->model->errors());
         }
-        return $this->respondCreated(['message' => 'Task created', 'id' => $this->model->insertID()]);
+
+        return $this->respondCreated([
+            'message' => 'Task created',
+            'id' => $this->model->insertID()
+        ]);
     }
 
-    // Cập nhật
+    // ✅ Cập nhật task
     public function update($id = null)
     {
         $data = $this->request->getJSON(true);
+
         if (!$this->model->update($id, $data)) {
             return $this->failValidationErrors($this->model->errors());
         }
+
         return $this->respond(['message' => 'Task updated']);
     }
 
-    // Xoá
+    // ✅ Xoá task
     public function delete($id = null)
     {
         if (!$this->model->find($id)) {
             return $this->failNotFound('Task not found');
         }
+
         $this->model->delete($id);
+
         return $this->respondDeleted(['message' => 'Task deleted']);
     }
 
+    // ✅ Danh sách subtask theo task cha
     public function subtasks($parent_id)
     {
         $tasks = $this->model->where('parent_id', $parent_id)->findAll();
         return $this->respond($tasks);
     }
 
+    // ✅ Cập nhật subtask
+    public function updateSubtask($id = null)
+    {
+        $subtask = $this->model->find($id);
+
+        if (!$subtask || !$subtask['parent_id']) {
+            return $this->failNotFound('Subtask không tồn tại hoặc không hợp lệ');
+        }
+
+        $data = $this->request->getJSON(true);
+
+        if (!$this->model->update($id, $data)) {
+            return $this->failValidationErrors($this->model->errors());
+        }
+
+        return $this->respond(['message' => 'Subtask updated']);
+    }
+
+    // ✅ Xoá subtask
+    public function deleteSubtask($id = null)
+    {
+        $subtask = $this->model->find($id);
+
+        if (!$subtask || !$subtask['parent_id']) {
+            return $this->failNotFound('Subtask không tồn tại hoặc không hợp lệ');
+        }
+
+        $this->model->delete($id);
+
+        return $this->respondDeleted(['message' => 'Subtask deleted']);
+    }
+
+    // ✅ Lấy danh sách task theo bước đấu thầu
     public function byBiddingStep($step_id)
     {
         $tasks = $this->model->where('bidding_step_id', $step_id)->findAll();
