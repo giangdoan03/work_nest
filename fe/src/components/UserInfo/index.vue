@@ -69,6 +69,9 @@ const getUser = async () => {
     
     if(res.status && res.data.id){
         dataUser.value = res.data;
+        if(dataUser.value.avatar){
+            dataUser.value.avatar = "http://assets.worknest.local/" + dataUser.value.avatar
+        }
     }
 }
 

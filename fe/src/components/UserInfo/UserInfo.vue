@@ -3,19 +3,40 @@
         <a-typography-title :level="4" style="margin-bottom: 24px;">Thông tin cá nhân</a-typography-title>
         <a-form :model="form" :rules="rules" layout="vertical" @finish="handleSubmit" ref="formRef">
             <!-- Ảnh đại diện -->
-            <a-form-item label="Ảnh đại diện" name="avatar">
+            <a-form-item label="Ảnh đại diện" name="avatar" v-if="!form.avatar">
                 <a-upload
                     list-type="picture-card"
                     :file-list="avatarFileList"
-                    :on-preview="handlePreview"
+                    :show-upload-list="false"
+                    :maxCount="1"
+                    :multiple="true"
                     :on-remove="(file) => handleRemoveFile('avatar', file)"
                     :before-upload="(file) => handleBeforeUpload('avatar', file)"
+                    ref="uploadAvatar"
                 >
                     <div>
                         <upload-outlined/>
-                        <div style="margin-top: 8px">Upload</div>
+                        <div style="margin-top: 8px">Tải ảnh lên</div>
                     </div>
                 </a-upload>
+            </a-form-item>
+            <a-form-item label="Ảnh đại diện" name="avatar_isset" v-else>
+                <div class="avatar" @mouseover="isHoverAvatar = true" @mouseleave="isHoverAvatar = false">
+                    <a-avatar :size="110" shape="square" :src="form.avatar">
+                    </a-avatar>
+                    <div class="action-icon" v-if="isHoverAvatar && isEditMode">
+                        <a-button type="link" style="margin-right: 16px;" @click="handleChangeAvatar">
+                            <template #icon>
+                                <EditOutlined style="font-size: 22px; color: rgba(0, 0, 0, 0.85);"/>
+                            </template>
+                        </a-button>
+                        <a-button  type="link" @click="handlePreview">
+                            <template #icon>
+                                <EyeOutlined style="font-size: 22px; color: rgba(0, 0, 0, 0.85);"/>
+                            </template>
+                        </a-button>
+                    </div>
+                </div>
             </a-form-item>
 
             <!-- Họ tên -->
@@ -53,28 +74,26 @@
         </a-form>
 
         <!-- Modal xem ảnh -->
-        <a-modal v-model:open="previewVisible" :title="previewTitle" footer={null}>
-            <img :src="previewImage" alt="Preview" style="width: 100%"/>
+        <a-modal :open="previewVisible" :footer="null" @cancel="cancelPreview">
+            <img alt="example" style="width: 100%; max-width: 600px; max-height: 600px;" :src="form.avatar" />
         </a-modal>
     </div>
 </template>
 
 <script setup>
-import {ref, onMounted, computed } from 'vue'
+import {ref, onMounted, computed, watch } from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import { uploadFile, updateUser } from '../../api/user'
 import {message} from 'ant-design-vue'
-import {UploadOutlined} from '@ant-design/icons-vue'
+import {UploadOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons-vue'
 import cloneDeep from 'lodash/cloneDeep'
 
 import {useUserStore} from '../../stores/user'
 import { getDepartments } from '@/api/department'
 
 const userStore = useUserStore()
-
 const route = useRoute()
 const router = useRouter()
-
 
 const props = defineProps({
     dataUser: {
@@ -94,14 +113,13 @@ const form = ref({
 })
 const formSaved = ref()
 const formRef = ref()
-
+const uploadAvatar = ref(null);
 
 const avatarFileList = ref([])
-const previewImage = ref('')
 const previewVisible = ref(false)
-const previewTitle = ref('')
 const departments = ref([])
 
+const isHoverAvatar = ref(false);
 const isEditMode = ref(false)
 
 const validateName = async (_rule, value) => {    
@@ -163,10 +181,19 @@ const handleSubmit = async () => {
     })
 }
 
-const handlePreview = (file) => {
-    previewImage.value = file.url || file.thumbUrl
-    previewVisible.value = true
-    previewTitle.value = file.name || ''
+const handlePreview = async file => {    
+    previewVisible.value = true;
+};
+const cancelPreview = () =>{
+    previewVisible.value = false;
+}
+const handleChangeAvatar = () => {
+    if (uploadAvatar.value) {
+    const inputElement = uploadAvatar.value.$el.querySelector('input[type="file"]');
+    if (inputElement) {
+      inputElement.click();
+    }
+  }
 }
 
 const handleBeforeUpload = async (field, file) => {
@@ -177,7 +204,7 @@ const handleBeforeUpload = async (field, file) => {
             user_id: route.params.id
         }
         const response = await uploadFile(params)
-        const url = response.data.url
+        const url = response.data.avatar_url        
         form.value.avatar = url
         avatarFileList.value = [
             {
@@ -228,6 +255,14 @@ onMounted(async () => {
     }
     await getListDepartments();
 })
+watch(() => 
+props.dataUser, function (value) {
+    if(value){
+        isEditMode.value = false;
+        form.value = cloneDeep(props.dataUser);
+        formSaved.value = cloneDeep(props.dataUser);
+    }
+}, {deep: true})
 
 </script>
 
@@ -238,5 +273,25 @@ onMounted(async () => {
     .margin-bot-0 {
         margin-bottom: 0 !important;
     }
-
+    .avatar{
+        position: relative;
+        z-index: 1;
+        width: 110px;
+        height: 110px;
+    }
+    
+    .action-icon{
+        display: none;
+        position: absolute;
+        top: 0;
+        width: 110px;
+        height: 110px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2;
+    }
+    .action-icon:hover {
+        background: rgba(255, 255, 255, 0.397);
+    }
 </style>
