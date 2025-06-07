@@ -13,6 +13,7 @@
                     :on-remove="(file) => handleRemoveFile('avatar', file)"
                     :before-upload="(file) => handleBeforeUpload('avatar', file)"
                     ref="uploadAvatar"
+                    :customRequest="({ file }) => handleBeforeUpload('avatar', file)"
                 >
                     <div>
                         <upload-outlined/>
@@ -188,12 +189,16 @@ const cancelPreview = () =>{
     previewVisible.value = false;
 }
 const handleChangeAvatar = () => {
-    if (uploadAvatar.value) {
-    const inputElement = uploadAvatar.value.$el.querySelector('input[type="file"]');
-    if (inputElement) {
-      inputElement.click();
-    }
-  }
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            handleBeforeUpload('avatar', file);
+        }
+    };
+    input.click();
 }
 
 const handleBeforeUpload = async (field, file) => {
