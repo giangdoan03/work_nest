@@ -25,7 +25,7 @@
                 <div class="avatar" @mouseover="isHoverAvatar = true" @mouseleave="isHoverAvatar = false">
                     <a-avatar :size="110" shape="square" :src="form.avatar">
                     </a-avatar>
-                    <div class="action-icon" v-if="isHoverAvatar && isEditMode">
+                    <div class="action-icon" v-if="isHoverAvatar">
                         <a-button type="link" style="margin-right: 16px;" @click="handleChangeAvatar">
                             <template #icon>
                                 <EditOutlined style="font-size: 22px; color: rgba(0, 0, 0, 0.85);"/>
@@ -137,8 +137,8 @@ const validatePhone = async (_rule, value) => {
         return Promise.reject('Vui lòng nhập số điện thoại');
     } else if(value.length > 20){
         return Promise.reject('Số điện thoại không vượt quá 20 ký tự');
-    } else if(value.length > 20){
-        return Promise.reject('Số điện thoại không vượt quá 20 ký tự');
+    } else if(!isValidPhoneNumber(value)){
+        return Promise.reject('Vui lòng nhập đúng số điện thoại');
     } else {
         return Promise.resolve();
     }
@@ -166,6 +166,7 @@ const getNameDepartments = computed(() => {
 
 const handleSubmit = async () => {
     let params = {
+        // avatar: form.value.avatar,
         name: form.value.name,
         phone: form.value.phone,
     }

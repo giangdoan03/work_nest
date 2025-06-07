@@ -27,7 +27,7 @@
                 </template>
             </template>
         </a-table>
-        <a-drawer title="Tạo phòng ban mới" :width="450" :open="openDrawer" :body-style="{ paddingBottom: '80px' }"
+        <a-drawer title="Tạo phòng ban mới" :width="550" :open="openDrawer" :body-style="{ paddingBottom: '80px' }"
             :footer-style="{ textAlign: 'right' }" @close="onCloseDrawer">
             <a-form ref="formRef" :model="formData" :rules="rules" layout="vertical" @finish="handleCreateDepartment">
                 <a-form-item label="Tên phòng ban" name="name">
@@ -172,7 +172,11 @@ const onCloseDrawer = () => {
         description: "",
     }
     selectedDepartment.value = null
+    resetFormValidate()
 }
+const resetFormValidate = () => {
+    formRef.value.resetFields();
+};
 
 onMounted(getDepartment)
 </script>

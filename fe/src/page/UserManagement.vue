@@ -27,9 +27,9 @@
                 </template>
             </template>
         </a-table>
-        <a-drawer title="Tạo người dùng mới" :width="450" :open="openDrawer" :body-style="{ paddingBottom: '80px' }"
+        <a-drawer title="Tạo người dùng mới" :width="700" :open="openDrawer" :body-style="{ paddingBottom: '80px' }"
             :footer-style="{ textAlign: 'right' }" @close="onCloseDrawer">
-            <a-form :model="formData" :rules="rules" layout="vertical">
+            <a-form ref="formRef" :model="formData" :rules="rules" layout="vertical">
                 <a-row :gutter="16">
                     <a-col :span="24">
                         <a-form-item label="Tên người dùng" name="name">
@@ -65,8 +65,7 @@
             <template #extra>
                 <a-space>
                     <a-button @click="onCloseDrawer">Hủy</a-button>
-                    <a-button v-if="selectedUser" type="primary" @click="updateDrawerUser" html-type="submit" :loading="loadingCreate" >Cập nhật</a-button>
-                    <a-button v-else type="primary" @click="createDrawerUser" html-type="submit" :loading="loadingCreate" >Thêm mới</a-button>
+                    <a-button type="primary" @click="submitForm" html-type="submit" :loading="loadingCreate" >{{ selectedUser ? 'Cập nhật' : 'Thêm mới' }}</a-button>
                 </a-space>
             </template>
         </a-drawer>
@@ -74,12 +73,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { getUsers, getUserDetail, createUser, updateUser, deleteUser } from '../api/user'
+import { ref, onMounted, computed } from 'vue'
+import { getUsers, createUser, updateUser, deleteUser } from '../api/user'
 import { message } from 'ant-design-vue'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons-vue';
 
-
+const formRef = ref(null);
 const selectedUser = ref(null)
 const tableData = ref([])
 const loading = ref(false)
@@ -101,48 +100,71 @@ const columns = [
     { title: 'Cập nhật gần nhất', dataIndex: 'updated_at', key: 'updated_at' },
     { title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px' },
 ]
-const rules = {
-    name: [
-        {
-        required: true,
-        message: 'Vui lòng nhập tên người dùng',
-        },
-    ],
-    email: [
-        {
-        required: true,
-        message: 'Vui lòng nhập email',
-        },
-    ],
-    phone: [
-        {
-        required: true,
-        message: 'Vui lòng nhập số điện thoại',
-        },
-    ],
-    password: [
-        {
-        required: true,
-        message: 'Vui lòng nhập mật khẩu',
-        },
-    ],
-    confirm_password: [
-        {
-        required: true,
-        trigger: 'change',
-        message: 'Vui lòng nhập lại mật khẩu',
-        },
-    ],
+
+function validateEmailtype(email) {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
 }
+function isValidPhoneNumber(phone) {
+  const regex = /^(0|\+84)(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-5]|9[0-9])[0-9]{7}$/;
+  return regex.test(phone);
+}
+const validateName = async (_rule, value) => {    
+    if (value === '') {
+        return Promise.reject('Vui lòng nhập họ và tên');
+    } else if(value.length > 200){
+        return Promise.reject('Họ và tên không vượt quá 200 ký tự');
+    } else {
+        return Promise.resolve();
+    }
+};
+const validateEmail = async (_rule, value) => {
+    if (value === '') {
+        return Promise.reject('Vui lòng nhập Email');
+    } else if(value.length > 200){
+        return Promise.reject('Email không vượt quá 200 ký tự');
+    } else if(!validateEmailtype(value)){
+        return Promise.reject('Vui lòng nhập đúng định dạng email');
+    } else {
+        return Promise.resolve();
+    }
+};
+const validatePhone = async (_rule, value) => {    
+    if (value === '') {
+        return Promise.reject('Vui lòng nhập số điện thoại');
+    } else if(value.length > 20){
+        return Promise.reject('Số điện thoại không vượt quá 20 ký tự');
+    } else if(!isValidPhoneNumber(value)){
+        return Promise.reject('Vui lòng nhập đúng số điện thoại');
+    } else {
+        return Promise.resolve();
+    }
+};
 const validatePass = async (_rule, value) => {
   if (value === '') {
     return Promise.reject('Vui lòng nhập lại');
-  } else if (value !== formData.value.password) {
-    return Promise.reject("Two inputs don't match!");
   } else {
     return Promise.resolve();
   }
 };
+const validateConfirmPassword = async (_rule, value) => {    
+    if (value === '') {
+        return Promise.reject('Vui lòng nhập lại mật khẩu mới');
+    } else if (value !== formData.value.password) {
+        return Promise.reject("Mật khẩu không khớp");
+    } else {
+        return Promise.resolve();
+    }
+};
+const rules = computed(() => {
+    return {
+        name: [{ required: true, validator: validateName, trigger: 'change' }],
+        email: [{ required: true, validator: validateEmail, trigger: 'change' }],
+        phone: [{ required: true, validator: validatePhone, trigger: 'change' }],
+        password: [{ required: true, validator: validatePass, trigger: 'change' }],
+        confirm_password: [{ required: true, validator: validateConfirmPassword,  trigger: 'change' }],
+    }
+})
 
 const getUser = async () => {
     loading.value = true
@@ -156,7 +178,18 @@ const getUser = async () => {
         loading.value = false
     }
 }
-
+const submitForm = async() => {
+    try {
+        await formRef.value?.validate()
+        if(selectedUser.value){
+            updateDrawerUser();
+        }else{
+            createDrawerUser();
+        }
+    } catch (error) {
+        
+    }
+}
 const createDrawerUser = async () => {
     if(loadingCreate.value){
         return;
@@ -167,8 +200,6 @@ const createDrawerUser = async () => {
         return;
     }
     try {
-        console.log(1231,formData.value);
-        
         await createUser(formData.value);
         getUser();
         onCloseDrawer();
@@ -179,6 +210,7 @@ const createDrawerUser = async () => {
     }
 }
 const updateDrawerUser = async () => {
+    await formRef.value?.validate()
     if(loadingCreate.value){
         return;
     }
@@ -221,7 +253,8 @@ const showPopupCreate = () => {
 const onCloseDrawer = () => {
     openDrawer.value = false;
     setDefaultData();
-    selectedUser.value = null
+    selectedUser.value = null;
+    resetFormValidate()
 }
 const setDefaultData = () =>{
     formData.value = {
@@ -232,6 +265,9 @@ const setDefaultData = () =>{
         confirm_password: "",
     }
 }
+const resetFormValidate = () => {
+    formRef.value.resetFields();
+};
 
 onMounted(getUser)
 </script>
