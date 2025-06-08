@@ -27,30 +27,22 @@
                 </template>
             </template>
         </a-table>
-        <a-drawer title="Tạo phòng ban mới" :width="450" :open="openDrawer" :body-style="{ paddingBottom: '80px' }"
+        <a-drawer title="Tạo phòng ban mới" :width="550" :open="openDrawer" :body-style="{ paddingBottom: '80px' }"
             :footer-style="{ textAlign: 'right' }" @close="onCloseDrawer">
-            <a-form :model="formData" :rules="rules" layout="vertical">
-                <a-row :gutter="16">
-                    <a-col :span="24">
-                        <a-form-item label="Tên phòng ban" name="name">
-                            <a-input v-model:value="formData.name" placeholder="Nhập tên phòng ban" />
-                        </a-form-item>
-                    </a-col>
-                </a-row>
-                <a-row :gutter="16">
-                    <a-col :span="24">
-                        <a-form-item label="Mô tả" name="description">
-                            <a-textarea v-model:value="formData.description" :rows="6"
-                                placeholder="Nhập mô tả " />
-                        </a-form-item>
-                    </a-col>
-                </a-row>
+            <a-form ref="formRef" :model="formData" :rules="rules" layout="vertical" @finish="handleCreateDepartment">
+                <a-form-item label="Tên phòng ban" name="name">
+                    <a-input v-model:value="formData.name" placeholder="Nhập tên phòng ban" />
+                </a-form-item>
+                <a-form-item label="Mô tả" name="description">
+                    <a-textarea v-model:value="formData.description" :rows="6"
+                        placeholder="Nhập mô tả " />
+                </a-form-item>
             </a-form>
             <template #extra>
                 <a-space>
                     <a-button @click="onCloseDrawer">Hủy</a-button>
                     <a-button v-if="selectedDepartment" type="primary" @click="updateDrawerCreate" :loading="loadingCreate" >Cập nhật</a-button>
-                    <a-button v-else type="primary" @click="createDrawerCreate" :loading="loadingCreate" >Thêm mới</a-button>
+                    <a-button v-else type="primary" @click="submitDepartment" :loading="loadingCreate" >Thêm mới</a-button>
                 </a-space>
             </template>
         </a-drawer>
@@ -73,6 +65,8 @@ const formData = ref({
     name: "",
     description: "",
 })
+const btnSubmit = ref()
+const formRef = ref(null)
 
 const columns = [
     { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
@@ -109,20 +103,28 @@ const getDepartment = async () => {
         loading.value = false
     }
 }
-
-const createDrawerCreate = async (type, ) => {
+const submitDepartment = async () => {
+    try {
+        await formRef.value?.validate()
+        if (selectedDepartment.value) {
+            await updateDrawerCreate()
+        } else {
+            await handleCreateDepartment()
+        }
+    } catch (error) {
+        // Validation failed
+    }
+}
+const handleCreateDepartment = async () => {
     if(loadingCreate.value){
         return;
     }
     loadingCreate.value = true;
-    if(!formData.value.name || !formData.value.description){
-        message.error('Vui lòng nhập đủ thông tin');
-        return;
-    }
     try {
         await createDepartment(formData.value);
+        message.success('Thêm mới phòng ban thành công');
         getDepartment();
-        onCloseDrawer
+        onCloseDrawer();
     } catch (e) {
         message.error('Thêm mới phòng ban không thành công')
     } finally {
@@ -134,14 +136,11 @@ const updateDrawerCreate = async () => {
         return;
     }
     loadingCreate.value = true;
-    if(!formData.value.name || !formData.value.description){
-        message.error('Vui lòng nhập đủ thông tin phòng ban');
-        return;
-    }
     try {
         await updateDepartment(selectedDepartment.value.id, formData.value);
+        message.success('Cập nhật phòng ban thành công');
         getDepartment();
-        onCloseDrawer()
+        onCloseDrawer();
     } catch (e) {
         message.error('Cập nhật phòng ban không thành công')
     } finally {
@@ -173,7 +172,11 @@ const onCloseDrawer = () => {
         description: "",
     }
     selectedDepartment.value = null
+    resetFormValidate()
 }
+const resetFormValidate = () => {
+    formRef.value.resetFields();
+};
 
 onMounted(getDepartment)
 </script>

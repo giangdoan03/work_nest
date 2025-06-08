@@ -30,12 +30,15 @@
         <!-- User Dropdown -->
         <div style="margin-right: 24px; display: flex; align-items: center;">
             <a-dropdown v-if="user" trigger="click">
-                <a @click.prevent style="cursor: pointer;">
+                <!-- <a @click.prevent style="cursor: pointer;">
                     {{ user.name }} <DownOutlined />
-                </a>
+                </a> -->
+                <a-avatar  @click.prevent style="cursor: pointer;">
+                    <template #icon><UserOutlined /></template>
+                </a-avatar>
                 <template #overlay>
-                    <a-menu>
-                        <a-menu-item key="profile">
+                    <a-menu >
+                        <a-menu-item key="profile" @click="redirectToProfile">
                             Thông tin cá nhân
                         </a-menu-item>
                         <a-menu-divider />
@@ -58,7 +61,8 @@ import {
     MenuUnfoldOutlined,
     MenuFoldOutlined,
     LogoutOutlined,
-    DownOutlined
+    DownOutlined,
+    UserOutlined
 } from '@ant-design/icons-vue'
 
 const props = defineProps({
@@ -88,6 +92,14 @@ const breadcrumbs = computed(() => {
 
     return matched
 })
+const redirectToProfile = () => {
+    router.push({
+        name: 'persons-info',
+        params: {
+            id: user.value.id
+        }
+    })
+}
 </script>
 
 <style scoped>

@@ -18,6 +18,7 @@ import QRCreateForm from '../components/QRCreateForm.vue'
 
 import PersonList from '../components/PersonList.vue'
 import PersonForm from '../components/PersonForm.vue'
+import UserInfo from '../components/UserInfo/index.vue'
 
 import EventList from '../components/EventList.vue'
 import EventForm from '../components/EventForm.vue'
@@ -39,6 +40,7 @@ import LandingPageList from '../components/LandingPageList.vue'
 import UserPermissionManager from '../components/UserPermissionManager.vue'
 
 import DepartmentList from '../page/DepartmentList.vue'
+import UserManagement from '../page/UserManagement.vue'
 
 const routes = [
     {
@@ -82,9 +84,11 @@ const routes = [
             { path: 'businesses/create', name: 'businesses-create', component: BusinessForm, meta: { breadcrumb: 'Thêm doanh nghiệp', parent: 'businesses' } },
             { path: 'businesses/:id/edit', name: 'businesses-edit', component: BusinessForm, meta: { breadcrumb: 'Sửa doanh nghiệp', parent: 'businesses' } },
 
+            // user
+            { path: 'user/:id/info', name: 'persons-info', component: UserInfo, meta: { breadcrumb: 'Thông tin cá nhân' } },
+
             // Persons
             { path: 'persons', name: 'persons', component: PersonList, meta: { breadcrumb: 'Cá nhân' } },
-            { path: 'persons/create', name: 'persons-create', component: PersonForm, meta: { breadcrumb: 'Thêm cá nhân', parent: 'persons' } },
             { path: 'persons/:id/edit', name: 'persons-edit', component: PersonForm, meta: { breadcrumb: 'Sửa cá nhân', parent: 'persons' } },
 
             // Events
@@ -99,6 +103,9 @@ const routes = [
 
             // Permissions
             { path: 'permissions', name: 'permissions', component: UserPermissionManager, meta: { breadcrumb: 'Phân quyền' } },
+
+            // User Management
+            { path: 'user-management', name: 'user-management', component: UserManagement, meta: { breadcrumb: 'Quản lý người dùng' } },
 
             // Permissions
             { path: 'departments', name: 'departments', component: DepartmentList, meta: { breadcrumb: 'Phòng ban' } },
