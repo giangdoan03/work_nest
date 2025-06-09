@@ -121,7 +121,7 @@
 <!--                <ClockCircleOutlined/>-->
 <!--                <span>Lịch sử mua gói</span>-->
 <!--            </a-menu-item>-->
-            <a-menu-item key="quan-ly-user">
+            <a-menu-item key="permission">
                 <TeamOutlined/>
                 <span>Phân quyền</span>
             </a-menu-item>
@@ -137,11 +137,11 @@
                 <ApartmentOutlined />
                 <span>Gói thầu</span>
             </a-menu-item>
-            <a-menu-item key="list-phong-ban-2">
+            <a-menu-item key="contracts-tasks">
                 <ApartmentOutlined />
                 <span>Hợp đồng</span>
             </a-menu-item>
-            <a-menu-item key="list-phong-ban-3">
+            <a-menu-item key="internal-tasks">
                 <ApartmentOutlined />
                 <span>Nhiệm vụ nội bộ</span>
             </a-menu-item>
@@ -154,7 +154,7 @@ import {
     PieChartOutlined, AppstoreOutlined, ShoppingOutlined, BankOutlined, QrcodeOutlined,
     GiftOutlined, TrophyOutlined, ShoppingCartOutlined, HistoryOutlined, EditOutlined,
     SearchOutlined, EnvironmentOutlined, TeamOutlined, SettingOutlined, ClockCircleOutlined,
-    UserOutlined, ShopOutlined, CalendarOutlined, ApartmentOutlined
+    UserOutlined, ShopOutlined, CalendarOutlined, ApartmentOutlined, FileTextOutlined
 } from '@ant-design/icons-vue'
 
 import {useRouter, useRoute} from 'vue-router'
@@ -191,9 +191,11 @@ const pathToKeyMap = {
     '/customers': 'quan-ly-khach-hang',
     '/settings': 'cau-hinh',
     '/purchase-history': 'lich-su-mua-goi',
-    '/permissions': 'quan-ly-user',
+    '/permissions': 'permission',
     '/departments': 'list-phong-ban',
     '/user-management': 'user-management',
+    '/internal-tasks': 'internal-tasks',
+    '/contracts-tasks': 'contracts-tasks',
 }
 
 const keyToParentMap = {
@@ -217,7 +219,11 @@ const keyToParentMap = {
     'quan-ly-khach-hang': 'dashboard',
     'cau-hinh': 'dashboard',
     'lich-su-mua-goi': 'dashboard',
-    'quan-ly-user': 'dashboard',
+    'permission': 'permission',
+    'list-phong-ban': 'list-phong-ban',
+    'user-management': 'user-management',
+    'internal-tasks': 'internal-tasks',
+    'contracts-tasks': 'contracts-tasks',
 }
 
 

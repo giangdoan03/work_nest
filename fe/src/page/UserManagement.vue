@@ -171,7 +171,6 @@ const getUser = async () => {
     try {
         const response = await getUsers();
         tableData.value = response.data;
-        showPopupCreate.value 
     } catch (e) {
         message.error('Không thể tải người dùng')
     } finally {

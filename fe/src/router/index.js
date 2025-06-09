@@ -41,6 +41,8 @@ import UserPermissionManager from '../components/UserPermissionManager.vue'
 
 import DepartmentList from '../page/DepartmentList.vue'
 import UserManagement from '../page/UserManagement.vue'
+import InternalTasks from '../page/InternalTasks.vue'
+import ContractsTasks from '../page/ContractsTasks.vue'
 
 const routes = [
     {
@@ -106,6 +108,12 @@ const routes = [
 
             // User Management
             { path: 'user-management', name: 'user-management', component: UserManagement, meta: { breadcrumb: 'Quản lý người dùng' } },
+
+            // Internal Tasks
+            { path: 'internal-tasks', name: 'internal-tasks', component: InternalTasks, meta: { breadcrumb: 'Nhiệm vụ nội bộ' } },
+
+            // Contracts Tasks
+            { path: 'contracts-tasks', name: 'contracts-tasks', component: ContractsTasks, meta: { breadcrumb: 'Hợp đồng và công việc' } },
 
             // Permissions
             { path: 'departments', name: 'departments', component: DepartmentList, meta: { breadcrumb: 'Phòng ban' } },
