@@ -26,16 +26,35 @@
                     {{ getStepById(text) }}
                 </template>
                 <template v-else-if="column.dataIndex == 'action'">
-                    <EditOutlined class="icon-action" style="color: blue;" @click="showPopupDetail(record)"/>
-                    <a-popconfirm
-                        title="Bạn chắc chắn muốn xóa nhiệm vụ này?"
-                        ok-text="Xóa"
-                        cancel-text="Hủy"
-                        @confirm="deleteConfirm(record.id)"
-                        placement="topRight"
-                    >
-                        <DeleteOutlined class="icon-action" style="margin: 0; color: red;"/>
-                    </a-popconfirm>
+                    <a-dropdown placement="left">
+                        <a-button>
+                            <template #icon>
+                                <MoreOutlined />
+                            </template>
+                        </a-button>
+                        <template #overlay>
+                        <a-menu>
+                            <a-menu-item @click="showPopupDetail(record)">
+                                <InfoCircleOutlined class="icon-action" style="color: blue;" />
+                                Chi tiết
+                            </a-menu-item>
+                            <a-menu-item>
+                                <a-popconfirm
+                                    title="Bạn chắc chắn muốn xóa nhiệm vụ này?"
+                                    ok-text="Xóa"
+                                    cancel-text="Hủy"
+                                    @confirm="deleteConfirm(record.id)"
+                                    placement="topRight"
+                                >
+                                    <div>
+                                        <DeleteOutlined class="icon-action" style="color: red;"/>
+                                        Xóa
+                                    </div>
+                                </a-popconfirm>
+                            </a-menu-item>
+                        </a-menu>
+                        </template>
+                    </a-dropdown>
                 </template>
             </template>
         </a-table>
@@ -89,9 +108,12 @@ import { ref, onMounted, computed } from 'vue'
 import { getTasks, createTask, updateTask, deleteTask } from '../api/internal'
 import { getUsers } from '@/api/user';
 import { message } from 'ant-design-vue'
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons-vue';
+import { useRoute, useRouter } from 'vue-router';
+import { InfoCircleOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons-vue';
 import { CONTRACTS_STEPS } from '@/common'
 
+const route = useRoute()
+const router = useRouter()
 const formRef = ref(null);
 const selectedInternal = ref(null)
 const tableData = ref([])
@@ -117,7 +139,7 @@ const columns = [
     { title: 'Người được giao', dataIndex: 'assigned_to', key: 'assigned_to' },
     { title: 'Loại Task', dataIndex: 'linked_type', key: 'linked_type' },
     { title: 'Tiến trình', dataIndex: 'step_code', key: 'step_code' },
-    { title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px' },
+    { title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px', align:'center' },
 ]
 
 function validateEmailtype(email) {
@@ -249,13 +271,18 @@ const deleteConfirm = async (internalId) => {
     }
 }
 const showPopupDetail = async (record) => {    
-    selectedInternal.value = record;
-    formData.value.title = record.title;
-    formData.value.created_by = record.created_by;
-    formData.value.priority = record.priority;
-    formData.value.step_code = record.step_code;
-    formData.value.linked_type = record.linked_type;
-    openDrawer.value = true;
+    router.push({
+        name: "internal-tasks-info",
+        params: { id: record.id, task_name: record.name}
+    })
+
+    // selectedInternal.value = record;
+    // formData.value.title = record.title;
+    // formData.value.created_by = record.created_by;
+    // formData.value.priority = record.priority;
+    // formData.value.step_code = record.step_code;
+    // formData.value.linked_type = record.linked_type;
+    // openDrawer.value = true;
 }
 const showPopupCreate = () => {
     openDrawer.value = true;
@@ -341,7 +368,7 @@ onMounted(() => {
 }
 .icon-action {
     font-size: 18px;
-    margin-right: 24px;
+    margin-right: 8px;
     cursor: pointer;
 }
 

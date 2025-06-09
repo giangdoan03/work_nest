@@ -9,21 +9,45 @@
 
         <a-table :columns="columns" :data-source="tableData" :loading="loading"
             style="margin-top: 12px;" row-key="module" :scroll="{ y: 'calc( 100vh - 330px )' }">
-            <template #bodyCell="{ column, record, index }">
+            <template #bodyCell="{ column, record, index, text }">
                 <template v-if="column.dataIndex == 'stt'">
                     {{ index+1 }}
                 </template>
+                <template v-if="column.dataIndex == 'name'">
+                    <a-typography-text strong style="cursor: pointer;" @click="showPopupDetail(record)">{{ text }}</a-typography-text>
+                </template>
                 <template v-else-if="column.dataIndex == 'action'">
-                    <EditOutlined class="icon-action" style="color: blue;" @click="showPopupDetail(record)"/>
-                    <a-popconfirm
-                        title="Bạn chắc chắn muốn xóa phòng ban này?"
-                        ok-text="Xóa"
-                        cancel-text="Hủy"
-                        @confirm="deleteConfirm(record.id)"
-                        placement="topRight"
-                    >
-                        <DeleteOutlined class="icon-action" style="margin: 0; color: red;"/>
-                    </a-popconfirm>
+                    <a-dropdown placement="left">
+                        <a-button>
+                            <template #icon>
+                                <MoreOutlined />
+                            </template>
+                        </a-button>
+                        <template #overlay>
+                        <a-menu>
+                            <a-menu-item @click="showPopupDetail(record)">
+                                <div>
+                                    <EditOutlined class="icon-action" style="color: blue;" />
+                                    Chỉnh sửa
+                                </div>
+                            </a-menu-item>
+                            <a-menu-item>
+                                <a-popconfirm
+                                    title="Bạn chắc chắn muốn xóa phòng ban này?"
+                                    ok-text="Xóa"
+                                    cancel-text="Hủy"
+                                    @confirm="deleteConfirm(record.id)"
+                                    placement="topRight"
+                                >
+                                    <div>
+                                        <DeleteOutlined class="icon-action" style="color: red;"/>
+                                        Xóa
+                                    </div>
+                                </a-popconfirm>
+                            </a-menu-item>
+                        </a-menu>
+                        </template>
+                    </a-dropdown>
                 </template>
             </template>
         </a-table>
@@ -53,7 +77,7 @@
 import { ref, onMounted } from 'vue'
 import { getDepartments, getDepartmentDetail, createDepartment, updateDepartment, deleteDepartment } from '../api/department'
 import { message } from 'ant-design-vue'
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons-vue';
+import { EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons-vue';
 
 
 const selectedDepartment = ref(null)
@@ -74,7 +98,7 @@ const columns = [
     { title: 'Mô tả', dataIndex: 'description', key: 'description' },
     { title: 'Thời gian tạo', dataIndex: 'created_at', key: 'created_at' },
     { title: 'Cập nhật gần nhất', dataIndex: 'updated_at', key: 'updated_at' },
-    { title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px' },
+    { title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px', align:'center' },
 ]
 const rules = {
     name: [
@@ -183,7 +207,7 @@ onMounted(getDepartment)
 <style scoped>
 .icon-action {
     font-size: 18px;
-    margin-right: 24px;
+    margin-right: 8px;
     cursor: pointer;
 }
 
