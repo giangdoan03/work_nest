@@ -69,14 +69,21 @@
                     </a-col>
                 </a-row>
                 <a-row :gutter="16">
+                    <a-col :span="24">
+                        <a-form-item label="Tên nhiệm vụ" name="title">
+                            <a-range-picker></a-range-picker>
+                        </a-form-item>
+                    </a-col>
+                </a-row>
+                <a-row :gutter="16">
                     <a-col :span="12">
-                        <a-form-item label="Tạo bởi" name="created_by">
-                            <a-input v-model:value="formData.created_by" placeholder="Nhập created_by" />
+                        <a-form-item label="Gắn tới người dùng" name="assigned_to">
+                            <a-select v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng" />
                         </a-form-item>
                     </a-col>
                     <a-col :span="12">
                         <a-form-item label="Độ Ưu tiên" name="priority">
-                            <a-input v-model:value="formData.priority" placeholder="Nhập số điện thoại" />
+                            <a-select v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên" />
                         </a-form-item>
                     </a-col>
                 </a-row>
@@ -87,8 +94,14 @@
                         </a-form-item>
                     </a-col>
                     <a-col :span="12">
-                        <a-form-item label="Nhập lại mật khẩu" name="linked_type">
-                            <a-input v-model:value="formData.linked_type" placeholder="Nhập lại mật khẩu" />
+                        <a-form-item label="Loại nhiệm vụ" name="linked_type">
+                            <a-select v-model:value="formData.linked_type" :options="linkedTypeOption" placeholder="Chọn loại nhiệm vụ" />
+                        </a-form-item>
+                    </a-col>
+                    <a-col :span="24">
+                        <a-form-item label="Mô tả" name="description">
+                            <a-textarea v-model:value="formData.description" :rows="4"
+                                placeholder="Nhập mô tả " />
                         </a-form-item>
                     </a-col>
                 </a-row>
@@ -110,7 +123,7 @@ import { getUsers } from '@/api/user';
 import { message } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router';
 import { InfoCircleOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons-vue';
-import { CONTRACTS_STEPS } from '@/common'
+import { CONTRACTS_STEPS, BIDDING_STEPS } from '@/common'
 
 const route = useRoute()
 const router = useRouter()
@@ -124,11 +137,17 @@ const listUser = ref([])
 const formData = ref({
     title: "",
     created_by: "",
-    description: "",
     step_code: "",
-    linked_type: "",
+    linked_type: null,
     description: "",
     linked_id: "",
+    assigned_to: null,
+    start_date: "",
+    end_date: "",
+    status: "",
+    priority: null,
+    parent_id: null,
+    bidding_step_id: null,
 })
 
 const columns = [
@@ -204,6 +223,30 @@ const rules = computed(() => {
         priority: [{ required: true, validator: validatePhone, trigger: 'change' }],
         step_code: [{ required: true, validator: validatePass, trigger: 'change' }],
         linked_type: [{ required: true, validator: validateConfirmPassword,  trigger: 'change' }],
+    }
+})
+const priorityOption = ref([
+    {value: "low", label: "Thấp"},
+    {value: "normal", label: "Thường"},
+    {value: "hight", label: "Cao"},
+])
+const linkedTypeOption = ref([
+    {value: "bidding", label: "Gói thầu"},
+    {value: "contract", label: "Hợp đồng"},
+    {value: "internal", label: "Nhiệm vụ nội bộ"},
+])
+
+
+const userOption =  computed(()=>{
+    if(!listUser.value || !listUser.value.length){
+        return[]
+    }else {
+        return listUser.value.map(ele => {
+            return {
+                value: ele.id,
+                label: ele.name,
+            }
+        })
     }
 })
 
@@ -296,12 +339,18 @@ const onCloseDrawer = () => {
 const setDefaultData = () =>{
     formData.value = {
         title: "",
-        email: "",
-        priority: "",
+        created_by: "",
         step_code: "",
-        linked_type: "",
+        linked_type: null,
         description: "",
         linked_id: "",
+        assigned_to: null,
+        start_date: "",
+        end_date: "",
+        status: "",
+        priority: null,
+        parent_id: null,
+        bidding_step_id: null,
     }
 }
 const resetFormValidate = () => {
@@ -352,7 +401,10 @@ const getUser = async () => {
 const getStepById = (text) =>  {
     let data = CONTRACTS_STEPS.find(ele => ele.step_no == text);
     if(!data){
-        return "" ;
+        data = BIDDING_STEPS.find(ele => ele.step_no == text);
+        if(!data){
+            return "" ;
+        }
     }
     return data.name;
 }
