@@ -23,107 +23,9 @@
                 <PieChartOutlined/>
                 <span>Tổng quan</span>
             </a-menu-item>
-
-<!--            <a-sub-menu key="quan-ly-doi-tuong">-->
-<!--                <template #title>-->
-<!--                      <span>-->
-<!--                        <AppstoreOutlined/>-->
-<!--                        <span>Quản lý đối tượng</span>-->
-<!--                      </span>-->
-<!--                </template>-->
-
-<!--                <a-menu-item key="san-pham">-->
-<!--                    <ShoppingOutlined/>-->
-<!--                    <span>Sản phẩm</span>-->
-<!--                </a-menu-item>-->
-
-<!--                <a-menu-item key="doanh-nghiep-ca-nhan">-->
-<!--                    <BankOutlined/>-->
-<!--                    <span>Doanh nghiệp</span>-->
-<!--                </a-menu-item>-->
-
-<!--                <a-menu-item key="ca-nhan">-->
-<!--                    <UserOutlined/>-->
-<!--                    <span>Cá nhân</span>-->
-<!--                </a-menu-item>-->
-
-<!--                <a-menu-item key="cua-hang">-->
-<!--                    <ShopOutlined/>-->
-<!--                    <span>Cửa hàng</span>-->
-<!--                </a-menu-item>-->
-
-<!--                <a-menu-item key="su-kien">-->
-<!--                    <CalendarOutlined/>-->
-<!--                    <span>Sự kiện</span>-->
-<!--                </a-menu-item>-->
-<!--            </a-sub-menu>-->
-
-<!--            <a-menu-item key="qr-code-marketing">-->
-<!--                <QrcodeOutlined/>-->
-<!--                <span>QR Code Marketing</span>-->
-<!--            </a-menu-item>-->
-
-<!--            <a-sub-menu key="chuong-trinh-loyalty">-->
-<!--                <template #title>-->
-<!--                      <span>-->
-<!--                        <GiftOutlined/>-->
-<!--                        <span>Chương trình loyalty</span>-->
-<!--                      </span>-->
-<!--                </template>-->
-
-<!--                <a-menu-item key="chuong-trinh">-->
-<!--                    <TrophyOutlined/>-->
-<!--                    <span>Chương trình</span>-->
-<!--                </a-menu-item>-->
-
-<!--                <a-menu-item key="qua-tang">-->
-<!--                    <GiftOutlined/>-->
-<!--                    <span>Quà tặng</span>-->
-<!--                </a-menu-item>-->
-
-<!--                <a-menu-item key="goi-voucher">-->
-<!--                    <ShoppingCartOutlined/>-->
-<!--                    <span>Gói voucher</span>-->
-<!--                </a-menu-item>-->
-
-<!--                <a-menu-item key="lich-su-nguoi-choi">-->
-<!--                    <HistoryOutlined/>-->
-<!--                    <span>Lịch sử người chơi</span>-->
-<!--                </a-menu-item>-->
-<!--            </a-sub-menu>-->
-
-<!--            <a-menu-item key="trang-tu-thiet-ke">-->
-<!--                <EditOutlined/>-->
-<!--                <span>Trang tự thiết kế</span>-->
-<!--            </a-menu-item>-->
-
-<!--            <a-menu-item key="lich-su-quet">-->
-<!--                <SearchOutlined/>-->
-<!--                <span>Lịch sử quét</span>-->
-<!--            </a-menu-item>-->
-
-<!--            <a-menu-item key="lich-su-checkin">-->
-<!--                <EnvironmentOutlined/>-->
-<!--                <span>Lịch sử checkin</span>-->
-<!--            </a-menu-item>-->
-
             <a-menu-item key="quan-ly-khach-hang">
                 <TeamOutlined/>
                 <span>Quản lý khách hàng</span>
-            </a-menu-item>
-
-            <a-menu-item key="cau-hinh">
-                <SettingOutlined/>
-                <span>Cấu hình</span>
-            </a-menu-item>
-
-<!--            <a-menu-item key="lich-su-mua-goi">-->
-<!--                <ClockCircleOutlined/>-->
-<!--                <span>Lịch sử mua gói</span>-->
-<!--            </a-menu-item>-->
-            <a-menu-item key="permission">
-                <TeamOutlined/>
-                <span>Phân quyền</span>
             </a-menu-item>
             <a-menu-item key="list-phong-ban">
                 <ApartmentOutlined />
@@ -133,28 +35,37 @@
                 <TeamOutlined />
                 <span>Quản lý người dùng</span>
             </a-menu-item>
-            <a-menu-item key="list-phong-ban-1">
-                <ApartmentOutlined />
+            <a-menu-item key="bid-tasks">
+                <FileSearchOutlined />
                 <span>Gói thầu</span>
             </a-menu-item>
+
             <a-menu-item key="contracts-tasks">
-                <ApartmentOutlined />
+                <FileTextOutlined />
                 <span>Hợp đồng</span>
             </a-menu-item>
+
             <a-menu-item key="internal-tasks">
-                <ApartmentOutlined />
+                <ToolOutlined />
                 <span>Nhiệm vụ nội bộ</span>
             </a-menu-item>
+
+            <a-menu-item key="cau-hinh">
+                <SettingOutlined/>
+                <span>Cấu hình</span>
+            </a-menu-item>
+            <a-menu-item key="permission">
+                <TeamOutlined/>
+                <span>Phân quyền</span>
+            </a-menu-item>
+
         </a-menu>
     </a-layout-sider>
 </template>
 
 <script setup>
 import {
-    PieChartOutlined, AppstoreOutlined, ShoppingOutlined, BankOutlined, QrcodeOutlined,
-    GiftOutlined, TrophyOutlined, ShoppingCartOutlined, HistoryOutlined, EditOutlined,
-    SearchOutlined, EnvironmentOutlined, TeamOutlined, SettingOutlined, ClockCircleOutlined,
-    UserOutlined, ShopOutlined, CalendarOutlined, ApartmentOutlined, FileTextOutlined
+    PieChartOutlined, TeamOutlined, SettingOutlined, ApartmentOutlined, FileSearchOutlined, FileTextOutlined, ToolOutlined
 } from '@ant-design/icons-vue'
 
 import {useRouter, useRoute} from 'vue-router'
@@ -174,13 +85,7 @@ const openKeys = ref([])
 
 const pathToKeyMap = {
     // '/dashboard': 'dashboard',
-    // '/products': 'san-pham',
-    // '/businesses': 'doanh-nghiep-ca-nhan',
     // '/persons': 'ca-nhan',
-    // '/stores': 'cua-hang',
-    // '/events': 'su-kien',
-    // '/my-qr-codes': 'qr-code-marketing',
-    // '/my-qr-codes/:id/edit': 'qr-code-marketing',
     '/loyalty/programs': 'chuong-trinh',
     '/loyalty/gifts': 'qua-tang',
     '/loyalty/voucher-management': 'goi-voucher',
@@ -196,16 +101,10 @@ const pathToKeyMap = {
     '/user-management': 'user-management',
     '/internal-tasks': 'internal-tasks',
     '/contracts-tasks': 'contracts-tasks',
+    '/bid-tasks': 'bid-tasks',
 }
 
 const keyToParentMap = {
-    // Quản lý đối tượng
-    // 'san-pham': 'quan-ly-doi-tuong',
-    // 'doanh-nghiep-ca-nhan': 'quan-ly-doi-tuong',
-    // 'ca-nhan': 'quan-ly-doi-tuong',
-    // 'cua-hang': 'quan-ly-doi-tuong',
-    // 'su-kien': 'quan-ly-doi-tuong',
-
     // Chương trình loyalty
     'chuong-trinh': 'chuong-trinh-loyalty',
     'qua-tang': 'chuong-trinh-loyalty',
@@ -224,6 +123,7 @@ const keyToParentMap = {
     'user-management': 'user-management',
     'internal-tasks': 'internal-tasks',
     'contracts-tasks': 'contracts-tasks',
+    'bid-tasks': 'bid-tasks',
 }
 
 

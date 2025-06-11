@@ -11,7 +11,7 @@ class ContractModel extends Model
     protected $primaryKey = 'id';
     protected $allowedFields = [
         'title', 'content', 'status', 'department_id', 'assigned_to',
-        'start_date', 'end_date', 'created_at', 'updated_at'
+        'start_date', 'end_date', 'created_at', 'updated_at', 'id_customer'
     ];
     protected $useTimestamps = true;
 }

@@ -151,4 +151,10 @@ class ContractController extends ResourceController
 
         return $this->respond($stepList);
     }
+
+    public function byCustomer($customerId)
+    {
+        $contracts = $this->model->where('id_customer', $customerId)->findAll();
+        return $this->respond($contracts);
+    }
 }

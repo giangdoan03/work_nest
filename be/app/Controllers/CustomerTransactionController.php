@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\CustomerTransactionModel;
+use App\Models\CustomerModel; // ✅ Thêm dòng này
 use CodeIgniter\RESTful\ResourceController;
 
 class CustomerTransactionController extends ResourceController
@@ -40,8 +41,15 @@ class CustomerTransactionController extends ResourceController
             return $this->failValidationErrors($this->validator->getErrors());
         }
 
+        // Lưu tương tác
         $this->model->insert($data);
         $data['id'] = $this->model->getInsertID();
+
+        // ✅ Cập nhật last_interaction bằng model
+        $customerModel = new CustomerModel();
+        $customerModel->update($data['customer_id'], [
+            'last_interaction' => $data['interaction_time']
+        ]);
 
         return $this->respondCreated($data);
     }

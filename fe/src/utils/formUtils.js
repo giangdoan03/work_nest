@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 export const normalizeProductData = (data) => {
     const fieldsToParse = ['avatar', 'image', 'video', 'certificate_file']
 
@@ -41,6 +43,12 @@ export const formatDate = (value) => {
         second: '2-digit',
         hour12: false
     })
+}
+
+
+export const formatDateForSave = (value) => {
+    if (!value) return null
+    return dayjs(value).format('YYYY-MM-DD HH:mm:ss') // format chuẩn cho backend PHP/MySQL
 }
 
 
