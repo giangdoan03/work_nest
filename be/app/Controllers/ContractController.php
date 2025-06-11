@@ -6,7 +6,7 @@ use App\Models\ContractModel;
 use CodeIgniter\RESTful\ResourceController;
 use App\Models\ContractStepModel;
 use App\Models\UserModel;
-
+use App\Models\BiddingModel;
 
 class ContractController extends ResourceController
 {
@@ -53,10 +53,27 @@ class ContractController extends ResourceController
             return $this->failValidationErrors(['title' => 'Title is required']);
         }
 
+        // Nếu tạo từ gói thầu, kiểm tra trạng thái gói thầu
+        if (!empty($data['bidding_id'])) {
+            $biddingModel = new BiddingModel();
+            $bidding = $biddingModel->find($data['bidding_id']);
+
+            if (!$bidding) {
+                return $this->failNotFound('Gói thầu không tồn tại');
+            }
+
+            if ($bidding['status'] !== 'awarded') {
+                return $this->failValidationErrors(['bidding_id' => 'Gói thầu chưa được trúng']);
+            }
+
+            $data['customer_id'] = $bidding['customer_id'];
+            $data['title'] = $data['title'] ?? $bidding['title'];
+        }
+
         $id = $this->model->insert($data);
 
         if (!$id) {
-            return $this->failServerError('Could not create contract');
+            return $this->failServerError('Không thể tạo hợp đồng');
         }
 
         return $this->respondCreated(['status' => 'success', 'id' => $id]);
@@ -101,6 +118,7 @@ class ContractController extends ResourceController
             'step_count'  => $count
         ]);
     }
+
     public function stepDetails($id = null)
     {
         $contract = $this->model->find($id);
@@ -111,12 +129,12 @@ class ContractController extends ResourceController
         $stepModel = new ContractStepModel();
         $steps = $stepModel
             ->where('contract_id', $id)
-            ->orderBy('step_no', 'ASC') // đảm bảo đúng thứ tự
+            ->orderBy('step_no', 'ASC')
             ->findAll();
 
-        $userModel = new UserModel();
-
+        $userModel = new     UserModel();
         $stepList = [];
+
         foreach ($steps as $step) {
             $assignedUser = $step['assigned_to'] ? $userModel->find($step['assigned_to']) : null;
 
@@ -126,7 +144,7 @@ class ContractController extends ResourceController
                 'name'          => $step['name'],
                 'status'        => $step['status'],
                 'assigned_to'   => $assignedUser['name'] ?? null,
-                'file_count'    => 0, // sau này thay bằng count thực tế
+                'file_count'    => 0,
                 'comment_count' => 0
             ];
         }
