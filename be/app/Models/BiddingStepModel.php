@@ -8,6 +8,6 @@ class BiddingStepModel extends Model
 {
     protected $table = 'bidding_steps';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['step_number', 'title', 'department'];
+    protected $allowedFields = ['step_number', 'title', 'department', 'status'];
     protected $useTimestamps = true;
 }
