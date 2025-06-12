@@ -88,4 +88,13 @@ $routes->group('api', function ($routes) {
     $routes->resource('tasks', ['controller' => 'TaskController']);
 
 
+    $routes->get('customers/(:num)/transactions', 'CustomerTransactionController::byCustomer/$1');
+    $routes->post('customers/transactions', 'CustomerTransactionController::create');
+    $routes->get('customers/(:num)/contracts', 'ContractController::byCustomer/$1');
+    $routes->resource('customers', ['controller' => 'CustomerController']);
+
+    // chức năng gói thầu
+    $routes->resource('biddings', ['controller' => 'BiddingController']);
+
+
 });

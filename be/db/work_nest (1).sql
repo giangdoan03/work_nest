@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jun 05, 2025 at 01:22 PM
+-- Generation Time: Jun 11, 2025 at 04:51 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -24,6 +24,42 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `biddings`
+--
+
+CREATE TABLE `biddings` (
+  `id` int NOT NULL,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `customer_id` int NOT NULL,
+  `estimated_cost` decimal(18,2) DEFAULT NULL,
+  `status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `biddings`
+--
+
+INSERT INTO `biddings` (`id`, `title`, `description`, `customer_id`, `estimated_cost`, `status`, `start_date`, `end_date`, `created_at`, `updated_at`) VALUES
+(1, 'Gói thầu hệ thống điều hòa không khí', 'Dành cho khu vực sản xuất nhà máy B', 2, 950000000.00, 'submitted', '2025-06-20', '2025-07-25', '2025-06-11 04:13:42', '2025-06-11 04:13:42'),
+(2, 'Gói thầu cung cấp turbine cho Nhiệt điện Quảng Ninh', 'Turbine hơi công suất 300MW cho tổ máy số 3', 1, 4500000000.00, 'pending', '2025-06-15', '2025-07-30', '2025-06-11 04:16:44', '2025-06-11 04:16:44'),
+(3, 'Gói thầu xây dựng nhà điều hành Nhiệt điện Duyên Hải', 'Thi công hoàn thiện trụ sở ban quản lý nhà máy', 2, 1200000000.00, 'submitted', '2025-06-20', '2025-08-10', '2025-06-11 04:16:50', '2025-06-11 04:16:50'),
+(4, 'Cung cấp hệ thống điều khiển trung tâm cho Nhiệt điện Hải Phòng', 'SCADA & HMI cho toàn nhà máy', 3, 2500000000.00, 'awarded', '2025-06-10', '2025-07-15', '2025-06-11 04:16:56', '2025-06-11 04:16:56'),
+(5, 'Cung cấp ống khói chịu nhiệt cao', 'Ống khói chịu nhiệt độ trên 1000°C cho Nhiệt điện Vĩnh Tân', 4, 1750000000.00, 'pending', '2025-06-25', '2025-07-30', '2025-06-11 04:17:01', '2025-06-11 04:17:01'),
+(6, 'Gói thầu bảo trì định kỳ năm 2025 – Nhiệt điện Mông Dương', 'Bảo trì tổ máy số 2 theo tiêu chuẩn EVN', 5, 980000000.00, 'submitted', '2025-06-20', '2025-07-05', '2025-06-11 04:17:10', '2025-06-11 04:17:10'),
+(7, 'Cung cấp vật tư phòng cháy chữa cháy – Nhiệt điện Ô Môn', 'Thiết bị PCCC tiêu chuẩn châu Âu', 6, 800000000.00, 'pending', '2025-06-22', '2025-07-10', '2025-06-11 04:17:15', '2025-06-11 04:17:15'),
+(8, 'Cải tạo hệ thống cấp than – Nhiệt điện Na Dương', 'Băng tải và phễu tiếp nhận than đá', 7, 1350000000.00, 'pending', '2025-06-24', '2025-08-05', '2025-06-11 04:17:20', '2025-06-11 04:17:20'),
+(9, 'Lắp đặt hệ thống điện chiếu sáng – Nhiệt điện Sông Hậu', 'Chiếu sáng toàn khu vực sân và hành lang', 8, 460000000.00, 'awarded', '2025-06-28', '2025-07-25', '2025-06-11 04:17:26', '2025-06-11 04:17:26'),
+(10, 'Cung cấp hệ thống xử lý nước thải công nghiệp – Nhiệt điện Phú Mỹ', 'Thiết bị xử lý hóa lý và sinh học', 9, 2600000000.00, 'pending', '2025-07-01', '2025-08-15', '2025-06-11 04:17:31', '2025-06-11 04:17:31'),
+(11, 'Gói thầu thuê ngoài dịch vụ an ninh – Nhiệt điện Thái Bình 2', 'Thuê bảo vệ 24/7 trong 12 tháng', 10, 500000000.00, 'submitted', '2025-06-15', '2025-07-15', '2025-06-11 04:17:36', '2025-06-11 04:17:36');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `bidding_steps`
 --
 
@@ -34,24 +70,25 @@ CREATE TABLE `bidding_steps` (
   `department` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `is_active` tinyint(1) DEFAULT '0',
-  `is_done` tinyint(1) DEFAULT '0'
+  `status` tinyint NOT NULL DEFAULT '0' COMMENT '0: Chưa bắt đầu, 1: Đang xử lý, 2: Đã hoàn thành, 3: Bị hủy/bỏ qua',
+  `customer_id` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `bidding_steps`
 --
 
-INSERT INTO `bidding_steps` (`id`, `step_number`, `title`, `department`, `created_at`, `updated_at`, `is_active`, `is_done`) VALUES
-(1, 1, 'Nhận nhu cầu của khách hàng', 'Khách hàng', '2025-06-05 03:50:22', '2025-06-05 03:50:22', 0, 0),
-(2, 2, 'Đánh giá tính khả thi', 'P.KD, P.DVKT', '2025-06-05 03:51:59', '2025-06-05 03:51:59', 0, 0),
-(3, 3, 'Chỉnh sửa tiêu đề bước', 'P.KD', '2025-06-05 03:52:32', '2025-06-05 03:54:47', 0, 0),
-(4, 4, 'Duyệt kế hoạch', 'Ban Giám đốc', '2025-06-05 03:52:39', '2025-06-05 03:52:39', 0, 0),
-(5, 5, 'Triển khai hồ sơ dự thầu', 'Ban Giám đốc, P.KD, P.DVKT, P.KHNS, P.TCKT', '2025-06-05 03:52:46', '2025-06-05 03:52:46', 0, 0),
-(6, 6, 'Chấm thầu', 'Khách hàng', '2025-06-05 03:52:53', '2025-06-05 03:52:53', 0, 0),
-(7, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', 'P.KD', '2025-06-05 03:53:00', '2025-06-05 03:53:00', 0, 0),
-(8, 8, 'Triển khai ký hợp đồng bán', 'P.KD, P.TCKT, P.DVKT', '2025-06-05 03:53:07', '2025-06-05 03:53:07', 0, 0),
-(9, 9, 'Duyệt hợp đồng bán', 'Ban Giám đốc', '2025-06-05 03:53:14', '2025-06-05 03:53:14', 0, 0);
+INSERT INTO `bidding_steps` (`id`, `step_number`, `title`, `department`, `created_at`, `updated_at`, `status`, `customer_id`) VALUES
+(1, 1, 'Nhận nhu cầu của khách hàng', 'Khách hàng', '2025-06-05 03:50:22', '2025-06-11 10:10:37', 0, 1),
+(2, 2, 'Đánh giá tính khả thi', 'P.KD, P.DVKT', '2025-06-05 03:51:59', '2025-06-11 10:10:37', 0, 4),
+(3, 3, 'Chỉnh sửa tiêu đề bước', 'P.KD', '2025-06-05 03:52:32', '2025-06-11 10:10:37', 2, 10),
+(4, 4, 'Duyệt kế hoạch', 'Ban Giám đốc', '2025-06-05 03:52:39', '2025-06-11 10:10:37', 2, 2),
+(5, 5, 'Triển khai hồ sơ dự thầu', 'Ban Giám đốc, P.KD, P.DVKT, P.KHNS, P.TCKT', '2025-06-05 03:52:46', '2025-06-11 10:10:37', 1, 1),
+(6, 6, 'Chấm thầu', 'Khách hàng', '2025-06-05 03:52:53', '2025-06-11 10:10:37', 0, 4),
+(7, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', 'P.KD', '2025-06-05 03:53:00', '2025-06-11 10:10:37', 0, 4),
+(8, 8, 'Triển khai ký hợp đồng bán', 'P.KD, P.TCKT, P.DVKT', '2025-06-05 03:53:07', '2025-06-11 10:10:37', 0, 5),
+(9, 9, 'Duyệt hợp đồng bán', 'Ban Giám đốc', '2025-06-05 03:53:14', '2025-06-11 10:10:37', 0, 3),
+(10, 10, 'Duyệt hợp đồng bán', 'Ban Giám đốc', '2025-06-10 15:18:36', '2025-06-11 10:10:37', 1, 10);
 
 -- --------------------------------------------------------
 
@@ -130,6 +167,7 @@ CREATE TABLE `contracts` (
   `status` enum('draft','in_progress','pending_review','approved','completed','canceled') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'draft',
   `department_id` int DEFAULT NULL,
   `assigned_to` int DEFAULT NULL,
+  `id_customer` int DEFAULT NULL,
   `start_date` date DEFAULT NULL,
   `end_date` date DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
@@ -140,9 +178,12 @@ CREATE TABLE `contracts` (
 -- Dumping data for table `contracts`
 --
 
-INSERT INTO `contracts` (`id`, `title`, `content`, `status`, `department_id`, `assigned_to`, `start_date`, `end_date`, `created_at`, `updated_at`) VALUES
-(1, 'Hợp đồng đã cập nhật', 'Chi tiết hợp đồng cung cấp dịch vụ A...', 'in_progress', 1, 3, '2025-06-01', '2025-12-31', '2025-05-26 04:37:38', '2025-05-26 04:38:33'),
-(2, 'Hợp đồng cung cấp dịch vụ A2', 'Chi tiết hợp đồng cung cấp dịch vụ A2...', 'draft', 1, 3, '2025-06-01', '2025-12-31', '2025-05-26 04:42:49', '2025-05-26 04:42:49');
+INSERT INTO `contracts` (`id`, `title`, `content`, `status`, `department_id`, `assigned_to`, `id_customer`, `start_date`, `end_date`, `created_at`, `updated_at`) VALUES
+(1, 'Hợp đồng đã cập nhật', 'Chi tiết hợp đồng cung cấp dịch vụ A...', 'in_progress', 1, 3, 1, '2025-06-01', '2025-12-31', '2025-05-26 04:37:38', '2025-06-11 23:03:03'),
+(2, 'Hợp đồng cung cấp dịch vụ A2', 'Chi tiết hợp đồng cung cấp dịch vụ A2...', 'draft', 1, 3, 1, '2025-06-01', '2025-12-31', '2025-05-26 04:42:49', '2025-06-11 23:03:09'),
+(3, 'Hợp đồng cung cấp dịch vụ A2 test test', 'Chi tiết hợp đồng cung cấp dịch vụ A2...', '', 1, 3, 2, '2025-06-01', '2025-12-31', '2025-06-11 04:39:42', '2025-06-11 23:03:12'),
+(4, 'Hợp đồng cung cấp dịch vụ A2 test test', 'Chi tiết hợp đồng cung cấp dịch vụ A2...', '', 1, 3, 3, '2025-06-01', '2025-12-31', '2025-06-11 14:27:03', '2025-06-11 23:03:16'),
+(5, 'Hợp đồng cung cấp dịch vụ A2 test test', 'Chi tiết hợp đồng cung cấp dịch vụ A2...', '', 1, 3, 4, '2025-06-01', '2025-12-31', '2025-06-11 14:27:25', '2025-06-11 23:03:19');
 
 -- --------------------------------------------------------
 
@@ -153,6 +194,7 @@ INSERT INTO `contracts` (`id`, `title`, `content`, `status`, `department_id`, `a
 CREATE TABLE `contract_steps` (
   `id` int NOT NULL,
   `contract_id` int NOT NULL,
+  `customer_id` int DEFAULT NULL,
   `step_no` int DEFAULT NULL,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `status` enum('pending','in_progress','done') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
@@ -168,18 +210,18 @@ CREATE TABLE `contract_steps` (
 -- Dumping data for table `contract_steps`
 --
 
-INSERT INTO `contract_steps` (`id`, `contract_id`, `step_no`, `name`, `status`, `assigned_to`, `start_date`, `due_date`, `completed_at`, `created_at`, `updated_at`) VALUES
-(1, 1, 3, 'Cập nhật tài liệu xx', 'done', NULL, NULL, NULL, NULL, '2025-05-26 08:26:50', '2025-05-26 09:28:17'),
-(3, 1, 2, 'Gửi báo giá mới', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 08:56:43', '2025-05-26 09:28:17'),
-(4, 1, 7, 'Gửi báo giá 3', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 08:56:43', '2025-05-26 09:28:17'),
-(5, 1, 5, 'Gửi báo giá 4', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 08:56:43', '2025-05-26 09:28:17'),
-(6, 1, 1, 'Gửi báo giá mới', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 09:06:00', '2025-05-26 09:28:17'),
-(7, 1, 10, 'Gửi báo giá 3', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 09:06:00', '2025-05-26 09:28:17'),
-(8, 1, 9, 'Gửi báo giá 4', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 09:06:00', '2025-05-26 09:28:17'),
-(9, 1, 6, 'Gửi báo giá 3', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 09:17:23', '2025-05-26 09:28:17'),
-(10, 1, 8, 'Gửi báo giá mới', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 09:17:23', '2025-05-26 09:28:17'),
-(11, 1, 11, 'Gửi báo giá 3', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 09:21:56', '2025-05-26 09:28:17'),
-(12, 1, 4, 'Gửi báo giá mới', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 09:21:56', '2025-05-26 09:28:17');
+INSERT INTO `contract_steps` (`id`, `contract_id`, `customer_id`, `step_no`, `name`, `status`, `assigned_to`, `start_date`, `due_date`, `completed_at`, `created_at`, `updated_at`) VALUES
+(1, 1, 9, 3, 'Cập nhật tài liệu xx', 'done', NULL, NULL, NULL, NULL, '2025-05-26 08:26:50', '2025-06-11 10:10:54'),
+(3, 1, 6, 2, 'Gửi báo giá mới', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 08:56:43', '2025-06-11 10:10:54'),
+(4, 1, 9, 7, 'Gửi báo giá 3', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 08:56:43', '2025-06-11 10:10:54'),
+(5, 1, 4, 5, 'Gửi báo giá 4', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 08:56:43', '2025-06-11 10:10:54'),
+(6, 1, 4, 1, 'Gửi báo giá mới', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 09:06:00', '2025-06-11 10:10:54'),
+(7, 1, 7, 10, 'Gửi báo giá 3', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 09:06:00', '2025-06-11 10:10:54'),
+(8, 1, 5, 9, 'Gửi báo giá 4', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 09:06:00', '2025-06-11 10:10:54'),
+(9, 1, 2, 6, 'Gửi báo giá 3', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 09:17:23', '2025-06-11 10:10:54'),
+(10, 1, 1, 8, 'Gửi báo giá mới', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 09:17:23', '2025-06-11 10:10:54'),
+(11, 1, 2, 11, 'Gửi báo giá 3', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 09:21:56', '2025-06-11 10:10:54'),
+(12, 1, 2, 4, 'Gửi báo giá mới', 'pending', NULL, NULL, NULL, NULL, '2025-05-26 09:21:56', '2025-06-11 10:10:54');
 
 -- --------------------------------------------------------
 
@@ -209,11 +251,72 @@ CREATE TABLE `customers` (
   `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `city` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `customer_group` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `avatar` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `assigned_to` int DEFAULT NULL,
   `last_interaction` date DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `customers`
+--
+
+INSERT INTO `customers` (`id`, `name`, `phone`, `email`, `address`, `city`, `customer_group`, `avatar`, `assigned_to`, `last_interaction`, `created_at`, `updated_at`) VALUES
+(1, 'Tập đoàn Điện lực Việt Nam (EVN) 111', '02422210000', 'contact@evn.com.vn', '11 Cửa Bắc, Ba Đình', 'Hà Nội', 'khách cũ', '/uploads/evn.jpg', 2, '2025-06-13', '2025-06-11 02:10:10', '2025-06-11 16:50:57'),
+(2, 'Công ty Nhiệt điện Phả Lại', '02203713901', 'info@plaipower.vn', 'Phả Lại, Chí Linh', 'Hải Dương', 'tiềm năng', '/uploads/phalai.jpg', 5, '2025-06-18', '2025-06-11 02:10:22', '2025-06-11 16:18:23'),
+(3, 'Nguyễn Văn B - đã sửa', '02033855600', 'ubpower@evn.com.vn', 'Uông Bí, Quảng Ninh', 'Đà Nẵng', 'thử nghiệm', '/uploads/uongbi.jpg', 5, '2025-06-19', '2025-06-11 02:10:29', '2025-06-11 16:20:11'),
+(4, 'Công ty Nhiệt điện Cần Thơ', '02923836411', 'cantho@evn.com.vn', 'Ô Môn, Cần Thơ', 'Cần Thơ', 'tiềm năng', '/uploads/cantho.jpg', 2, '2025-06-20', '2025-06-11 02:10:35', '2025-06-11 16:24:45'),
+(5, 'Công ty Nhiệt điện Quảng Ninh', '02033655355', 'qnpower@evn.com.vn', 'Cẩm Phả, Quảng Ninh', 'Quảng Ninh', 'vip', '/uploads/quangninh.jpg', 1, '2025-06-21', '2025-06-11 02:10:41', '2025-06-11 16:44:52'),
+(6, 'Nhà máy nhiệt điện Duyên Hải', '02943923999', 'duyenhai@evn.com.vn', 'Duyên Hải, Trà Vinh', 'Trà Vinh', 'khách mới', '/uploads/duyenhai.jpg', 1, '2025-06-12', '2025-06-11 02:10:47', '2025-06-11 16:45:59'),
+(7, 'Công ty Nhiệt điện Vĩnh Tân', '02523695252', 'vinhtan@evn.com.vn', 'Tuy Phong, Bình Thuận', 'Bình Thuận', 'tiềm năng', '/uploads/vinhtan.jpg', 2, '2025-06-30', '2025-06-11 02:10:53', '2025-06-11 16:46:15'),
+(8, 'Công ty Nhiệt điện Nghi Sơn 1', '02373898888', 'nghison1@evn.com.vn', 'Hải Hà, Thanh Hóa', 'Thanh Hóa', 'khách cũ', '/uploads/nghison1.jpg', 4, '2025-06-14', '2025-06-11 02:10:58', '2025-06-11 16:51:18'),
+(9, 'Công ty Nhiệt điện Hải Phòng', '02253717171', 'haiphongpower@evn.com.vn', 'Thủy Nguyên, Hải Phòng', 'Hải Phòng', 'vip', '/uploads/haiphong.jpg', 1, NULL, '2025-06-11 02:11:04', '2025-06-11 09:22:51'),
+(10, 'Công ty Nhiệt điện Mông Dương', '02033933777', 'mongduong@evn.com.vn', 'Cẩm Phả, Quảng Ninh', 'Quảng Ninh', 'khách mới', '/uploads/mongduong.jpg', 5, NULL, '2025-06-11 02:11:09', '2025-06-11 09:22:51');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `customer_transactions`
+--
+
+CREATE TABLE `customer_transactions` (
+  `id` int NOT NULL,
+  `customer_id` int NOT NULL,
+  `type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `interaction_time` datetime DEFAULT NULL,
+  `created_by` int DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `customer_transactions`
+--
+
+INSERT INTO `customer_transactions` (`id`, `customer_id`, `type`, `content`, `interaction_time`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 5, 'call', 'Gọi điện trao đổi gói dịch vụ', '2025-06-10 10:30:00', 2, '2025-06-11 02:43:50', '2025-06-11 02:43:50'),
+(2, 5, 'call', 'Gọi điện trao đổi gói dịch vụ', '2025-06-10 10:30:00', 2, '2025-06-11 03:12:06', '2025-06-11 03:12:06'),
+(3, 2, 'call', 'trao đổi kỹ thuật', '2025-06-11 22:53:03', 2, '2025-06-11 15:53:17', '2025-06-11 15:53:17'),
+(4, 1, 'call', 'trao đổi kxy thuật', '2025-06-11 22:54:38', 2, '2025-06-11 15:54:52', '2025-06-11 15:54:52'),
+(5, 1, 'email', 'trao đổi mua hàng', '2025-06-19 22:54:53', 2, '2025-06-11 15:55:16', '2025-06-11 15:55:16'),
+(6, 1, 'meeting', 'gặp mặt lãnh đạo', '2025-06-26 22:55:16', 2, '2025-06-11 15:55:33', '2025-06-11 15:55:33'),
+(7, 2, 'meeting', 'xxxxxx', '2025-06-26 23:09:56', 2, '2025-06-11 16:10:05', '2025-06-11 16:10:05'),
+(8, 1, 'call', 'trao đổi 2', '2025-06-12 23:17:06', 2, '2025-06-11 16:17:17', '2025-06-11 16:17:17'),
+(9, 2, 'call', 'trao đổi 2', '2025-06-18 23:18:07', 2, '2025-06-11 16:18:20', '2025-06-11 16:18:20'),
+(10, 3, 'call', 'trao đổi 3', '2025-06-19 23:18:34', 2, '2025-06-11 16:18:46', '2025-06-11 16:18:46'),
+(11, 3, 'email', 'đã trao đổi', '2025-06-11 23:19:12', 2, '2025-06-11 16:19:28', '2025-06-11 16:19:28'),
+(12, 3, 'meeting', '', '2025-06-19 23:20:07', 2, '2025-06-11 16:20:11', '2025-06-11 16:20:11'),
+(13, 4, 'email', 'trao đổi ok', '2025-06-11 23:24:19', 2, '2025-06-11 16:24:28', '2025-06-11 16:24:28'),
+(14, 4, 'meeting', '', '2025-06-20 23:24:38', 2, '2025-06-11 16:24:44', '2025-06-11 16:24:44'),
+(15, 5, 'email', 'ok', '2025-06-21 23:44:47', 2, '2025-06-11 16:44:52', '2025-06-11 16:44:52'),
+(16, 6, 'email', 'ok', '2025-06-12 23:45:54', 2, '2025-06-11 16:45:59', '2025-06-11 16:45:59'),
+(17, 7, 'call', 'ok2', '2025-06-30 23:46:04', 2, '2025-06-11 16:46:15', '2025-06-11 16:46:15'),
+(18, 1, 'meeting', '', '2025-06-25 23:49:35', 2, '2025-06-11 16:49:40', '2025-06-11 16:49:40'),
+(19, 1, 'call', 'we', '2025-06-13 23:50:47', 2, '2025-06-11 16:50:57', '2025-06-11 16:50:57'),
+(20, 8, 'email', 'ok', '2025-06-14 23:51:05', 2, '2025-06-11 16:51:18', '2025-06-11 16:51:18');
 
 -- --------------------------------------------------------
 
@@ -599,13 +702,20 @@ INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `nam
 (19, 'trang@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Phạm Thu Trang', '0911111125', NULL, 'user', 3, NULL),
 (20, 'hai@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Ngô Minh Hải', '0911111126', NULL, 'user', 3, NULL),
 (21, 'mai@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Vũ Thị Mai', '0911111127', NULL, 'user', 4, NULL),
-(22, 'huy@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Nguyễn Khắc Huy', '0911111128', NULL, 'user', 4, NULL),
+(22, 'huy@worknest.vn', '$2y$10$8qPYhSpBnDSx5t9admiFmO92DYr/yXNseT4b/qd6sBxxnv2n8r9Iq', '2025-06-04 16:15:57', '2025-06-08 09:26:31', 'Nguyễn Khắc Huy', '0911111128', NULL, 'user', 4, NULL),
 (23, 'loan@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Bùi Thị Loan', '0911111129', NULL, 'user', 5, NULL),
-(24, 'tri@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Lê Minh Trí', '0911111130', NULL, 'user', 5, NULL);
+(24, 'tri@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-06-04 16:15:57', 'Lê Minh Trí', '0911111130', NULL, 'user', 5, NULL),
+(25, 'testuser@gmail.com', '$2y$10$HOa3vdg9C.Xhs92CPRvMPOdSWMgctBsukYFiRwsJY6OhYnE6XDLK2', '2025-06-08 09:27:07', '2025-06-08 09:27:07', 'user1', '0912345688', NULL, 'customer', NULL, NULL);
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `biddings`
+--
+ALTER TABLE `biddings`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `bidding_steps`
@@ -650,6 +760,12 @@ ALTER TABLE `contract_step_files`
 -- Indexes for table `customers`
 --
 ALTER TABLE `customers`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `customer_transactions`
+--
+ALTER TABLE `customer_transactions`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -724,10 +840,16 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `biddings`
+--
+ALTER TABLE `biddings`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
 -- AUTO_INCREMENT for table `bidding_steps`
 --
 ALTER TABLE `bidding_steps`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `categories`
@@ -745,7 +867,7 @@ ALTER TABLE `comments`
 -- AUTO_INCREMENT for table `contracts`
 --
 ALTER TABLE `contracts`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `contract_steps`
@@ -763,7 +885,13 @@ ALTER TABLE `contract_step_files`
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT for table `customer_transactions`
+--
+ALTER TABLE `customer_transactions`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `departments`
@@ -829,7 +957,7 @@ ALTER TABLE `task_files`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- Constraints for dumped tables

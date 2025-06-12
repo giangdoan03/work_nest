@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\BiddingStepModel;
+use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 
 class BiddingStepController extends ResourceController
@@ -24,6 +25,7 @@ class BiddingStepController extends ResourceController
     public function create()
     {
         $data = $this->request->getJSON(true);
+        $data['status'] = 0; // Mặc định là 'chưa bắt đầu'
         if (!$this->model->insert($data)) {
             return $this->failValidationErrors($this->model->errors());
         }
@@ -47,15 +49,14 @@ class BiddingStepController extends ResourceController
         return $this->respondDeleted(['message' => 'Đã xoá bước.']);
     }
 
-    public function completeStep($id)
+    public function completeStep($id): ResponseInterface
     {
         // Đánh dấu bước hiện tại là hoàn tất
         $this->model->update($id, [
-            'is_done' => 1,
-            'is_active' => 0
+            'status' => 2 // Hoàn thành
         ]);
 
-        // Tìm bước tiếp theo
+        // Tìm bước hiện tại
         $current = $this->model->find($id);
         if ($current) {
             $next = $this->model
@@ -64,7 +65,7 @@ class BiddingStepController extends ResourceController
                 ->first();
 
             if ($next) {
-                $this->model->update($next['id'], ['is_active' => 1]);
+                $this->model->update($next['id'], ['status' => 1]); // Mở bước tiếp theo
             }
         }
 

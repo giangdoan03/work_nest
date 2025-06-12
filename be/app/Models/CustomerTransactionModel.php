@@ -1,15 +1,14 @@
 <?php
 
 namespace App\Models;
-
 use CodeIgniter\Model;
 
-class BiddingStepModel extends Model
+class CustomerTransactionModel extends Model
 {
-    protected $table = 'bidding_steps';
+    protected $table = 'customer_transactions';
     protected $primaryKey = 'id';
     protected $allowedFields = [
-        'step_number', 'title', 'department', 'status', 'customer_id'
+        'customer_id', 'type', 'content', 'interaction_time', 'created_by'
     ];
     protected $useTimestamps = true;
 }
