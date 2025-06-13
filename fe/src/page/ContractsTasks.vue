@@ -8,7 +8,7 @@
         </a-flex>
 
         <a-table :columns="columns" :data-source="tableData" :loading="loading"
-            style="margin-top: 12px;" row-key="id" :scroll="{ y: 'calc( 100vh - 330px )' }">
+            style="margin-top: 12px;" row-key="id" :scroll="{y: 'calc( 100vh - 330px )' }">
             <template #bodyCell="{ column, record, index }">
                 <template v-if="column.dataIndex == 'stt'">
                     {{ index+1 }}
