@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jun 11, 2025 at 04:51 PM
--- Server version: 8.0.30
--- PHP Version: 8.1.10
+-- Generation Time: Jun 13, 2025 at 09:29 AM
+-- Server version: 8.4.3
+-- PHP Version: 8.3.16
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -342,6 +342,66 @@ INSERT INTO `departments` (`id`, `name`, `description`, `created_at`, `updated_a
 (3, 'Phòng Kinh doanh', 'Phụ trách phát triển kinh doanh', '2025-06-04 09:02:11', '2025-06-04 09:02:11'),
 (4, 'Phòng Thương mại', 'Quản lý hợp đồng và thương mại', '2025-06-04 09:02:29', '2025-06-04 09:02:29'),
 (5, 'Phòng Dịch vụ - Kỹ thuật', 'Hỗ trợ kỹ thuật và dịch vụ khách hàng', '2025-06-04 09:02:38', '2025-06-04 09:02:38');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `documents`
+--
+
+CREATE TABLE `documents` (
+  `id` int NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_path` varchar(512) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `department_id` int DEFAULT NULL,
+  `uploaded_by` int NOT NULL,
+  `visibility` enum('private','department','public') COLLATE utf8mb4_unicode_ci DEFAULT 'private',
+  `file_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `file_size` int DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `tags` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `documents`
+--
+
+INSERT INTO `documents` (`id`, `title`, `file_path`, `department_id`, `uploaded_by`, `visibility`, `file_type`, `file_size`, `created_at`, `updated_at`, `tags`) VALUES
+(1, 'Báo cáo Q2 đã cập nhật', 'documents/1749798305_37045c936642c36152e8.png', 3, 1, 'public', 'image/png', 528057, '2025-06-13 07:05:05', '2025-06-13 07:27:04', 'báo cáo, quý 2'),
+(2, 'Báo cáo tài chính', 'documents/1749799608_3bbef2158709ab8061f4.png', 3, 1, 'public', 'image/png', 528057, '2025-06-13 07:26:48', '2025-06-13 07:26:48', 'tài chính, 2025');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `document_permissions`
+--
+
+CREATE TABLE `document_permissions` (
+  `id` int NOT NULL,
+  `document_id` int NOT NULL,
+  `shared_with_type` enum('user','department') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `shared_with_id` int NOT NULL,
+  `permission_type` enum('view','edit','download') COLLATE utf8mb4_unicode_ci DEFAULT 'view',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `document_permissions`
+--
+
+INSERT INTO `document_permissions` (`id`, `document_id`, `shared_with_type`, `shared_with_id`, `permission_type`, `created_at`, `updated_at`) VALUES
+(3, 1, 'user', 5, 'edit', '2025-06-13 07:14:22', '2025-06-13 09:14:57'),
+(4, 1, 'department', 2, 'download', '2025-06-13 07:14:22', '2025-06-13 07:14:22'),
+(5, 1, 'user', 5, 'view', '2025-06-13 07:20:13', '2025-06-13 07:20:13'),
+(6, 1, 'department', 1, 'download', '2025-06-13 07:20:13', '2025-06-13 07:20:13'),
+(7, 1, 'user', 1, 'view', '2025-06-13 07:20:31', '2025-06-13 07:20:31'),
+(9, 1, 'user', 133, 'view', '2025-06-13 07:23:20', '2025-06-13 07:23:20'),
+(10, 1, 'department', 1, 'download', '2025-06-13 07:23:20', '2025-06-13 07:23:20'),
+(11, 1, 'user', 1, 'view', '2025-06-13 07:26:53', '2025-06-13 07:26:53'),
+(12, 1, 'department', 1, 'download', '2025-06-13 07:26:53', '2025-06-13 07:26:53'),
+(13, 1, 'user', 12, 'view', '2025-06-13 09:04:00', '2025-06-13 09:04:00');
 
 -- --------------------------------------------------------
 
@@ -775,6 +835,19 @@ ALTER TABLE `departments`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `documents`
+--
+ALTER TABLE `documents`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `document_permissions`
+--
+ALTER TABLE `document_permissions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `document_id` (`document_id`);
+
+--
 -- Indexes for table `permissions`
 --
 ALTER TABLE `permissions`
@@ -900,6 +973,18 @@ ALTER TABLE `departments`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
+-- AUTO_INCREMENT for table `documents`
+--
+ALTER TABLE `documents`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `document_permissions`
+--
+ALTER TABLE `document_permissions`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+--
 -- AUTO_INCREMENT for table `permissions`
 --
 ALTER TABLE `permissions`
@@ -980,6 +1065,12 @@ ALTER TABLE `contract_steps`
 --
 ALTER TABLE `contract_step_files`
   ADD CONSTRAINT `contract_step_files_ibfk_1` FOREIGN KEY (`step_id`) REFERENCES `contract_steps` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `document_permissions`
+--
+ALTER TABLE `document_permissions`
+  ADD CONSTRAINT `document_permissions_ibfk_1` FOREIGN KEY (`document_id`) REFERENCES `documents` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

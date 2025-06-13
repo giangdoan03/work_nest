@@ -50,6 +50,46 @@
                 <span>Nhiệm vụ nội bộ</span>
             </a-menu-item>
 
+            <a-sub-menu key="documents">
+                <template #title>
+                    <span>
+                      <FileTextOutlined />
+                      <span> Tài liệu</span>
+                    </span>
+                </template>
+
+                <!-- Bắt buộc - Tất cả người dùng -->
+                <a-menu-item key="documents-my">
+                    <template #icon><FileOutlined /></template>
+                    <span>Tài liệu của tôi</span>
+                </a-menu-item>
+
+                <a-menu-item key="documents-shared">
+                    <template #icon><InboxOutlined /></template>
+                    <span>Được chia sẻ với tôi</span>
+                </a-menu-item>
+
+                <!-- Tuỳ chọn - Tất cả người dùng -->
+                <a-menu-item key="documents-department">
+                    <template #icon><ApartmentOutlined /></template>
+                    <span>Theo phòng ban</span>
+                </a-menu-item>
+
+                <!-- Nên có nếu nhiều người dùng - Quản lý/Admin -->
+                <a-menu-item key="documents-permission">
+                    <template #icon><LockOutlined /></template>
+                    <span>Phân quyền tài liệu</span>
+                </a-menu-item>
+
+                <!-- Nên có - Chỉ dành cho Admin -->
+                <a-menu-item key="documents-settings">
+                    <template #icon><SettingOutlined /></template>
+                    <span>Cấu hình tài liệu</span>
+                </a-menu-item>
+            </a-sub-menu>
+
+
+
             <a-menu-item key="cau-hinh">
                 <SettingOutlined/>
                 <span>Cấu hình</span>
@@ -65,8 +105,13 @@
 
 <script setup>
 import {
-    PieChartOutlined, TeamOutlined, SettingOutlined, ApartmentOutlined, FileSearchOutlined, FileTextOutlined, ToolOutlined
+    PieChartOutlined, TeamOutlined, SettingOutlined, FileSearchOutlined, FileTextOutlined, ToolOutlined,
+    FileOutlined,
+    InboxOutlined,
+    LockOutlined,
+    ApartmentOutlined,
 } from '@ant-design/icons-vue'
+import { h } from 'vue'
 
 import {useRouter, useRoute} from 'vue-router'
 import {ref, watch, onMounted} from 'vue'
@@ -84,15 +129,12 @@ const selectedKeys = ref([])
 const openKeys = ref([])
 
 const pathToKeyMap = {
-    // '/dashboard': 'dashboard',
-    // '/persons': 'ca-nhan',
     '/loyalty/programs': 'chuong-trinh',
     '/loyalty/gifts': 'qua-tang',
     '/loyalty/voucher-management': 'goi-voucher',
     '/loyalty/history': 'lich-su-nguoi-choi',
     '/custom-pages': 'trang-tu-thiet-ke',
-    // '/scan-history': 'lich-su-quet',
-    '/checkin-history': 'lich-su-checkin', 
+    '/checkin-history': 'lich-su-checkin',
     '/customers': 'quan-ly-khach-hang',
     '/settings': 'cau-hinh',
     '/purchase-history': 'lich-su-mua-goi',
@@ -102,19 +144,21 @@ const pathToKeyMap = {
     '/internal-tasks': 'internal-tasks',
     '/contracts-tasks': 'contracts-tasks',
     '/bid-tasks': 'bid-tasks',
+
+    // Tài liệu (sub menu)
+    '/documents/my': 'documents-my',
+    '/documents/shared': 'documents-shared',
+    '/documents/department': 'documents-department',
+    '/documents/permission': 'documents-permission',
+    '/documents/settings': 'documents-settings',
 }
 
-const keyToParentMap = {
-    // Chương trình loyalty
-    'chuong-trinh': 'chuong-trinh-loyalty',
-    'qua-tang': 'chuong-trinh-loyalty',
-    'goi-voucher': 'chuong-trinh-loyalty',
-    'lich-su-nguoi-choi': 'chuong-trinh-loyalty',
 
-    // Các menu khác
+const keyToParentMap = {
+
+    // Các menu chính
     'trang-tu-thiet-ke': 'dashboard',
     'lich-su-quet': 'dashboard',
-    // 'lich-su-checkin': 'dashboard',
     'quan-ly-khach-hang': 'dashboard',
     'cau-hinh': 'dashboard',
     'lich-su-mua-goi': 'dashboard',
@@ -124,7 +168,15 @@ const keyToParentMap = {
     'internal-tasks': 'internal-tasks',
     'contracts-tasks': 'contracts-tasks',
     'bid-tasks': 'bid-tasks',
+
+    // Tài liệu
+    'documents-my': 'documents',
+    'documents-shared': 'documents',
+    'documents-department': 'documents',
+    'documents-permission': 'documents',
+    'documents-settings': 'documents',
 }
+
 
 
 const updateSelectedAndOpenKeys = () => {

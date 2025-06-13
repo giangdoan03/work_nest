@@ -96,5 +96,21 @@ $routes->group('api', function ($routes) {
     // chức năng gói thầu
     $routes->resource('biddings', ['controller' => 'BiddingController']);
 
+    $routes->get('documents', 'DocumentController::index');
+    $routes->post('documents/upload', 'DocumentController::upload');
+    $routes->post('documents/share', 'DocumentController::share');
+    $routes->get('documents/shared/me', 'DocumentController::sharedWithMe');
+    $routes->put('documents/(:num)', 'DocumentController::update/$1');
+    $routes->delete('documents/(:num)', 'DocumentController::delete/$1');
+
+    $routes->get('documents/by-department', 'DocumentController::byDepartment');
+
+
+    $routes->get('document-permissions', 'DocumentController::getPermissions');
+    $routes->post('document-permissions', 'DocumentController::createPermission');
+    $routes->put('document-permissions/(:num)', 'DocumentController::updatePermission/$1');
+    $routes->delete('document-permissions/(:num)', 'DocumentController::deletePermission/$1');
+
+
 
 });
