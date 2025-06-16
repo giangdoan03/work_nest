@@ -21,6 +21,10 @@ import DepartmentDocumentList from '../page/DepartmentDocumentList.vue'
 import DocumentSharedList from '../page/DocumentSharedList.vue'
 import DocumentPermissionList from '../page/DocumentPermissionList.vue'
 import DocumentSettingForm from '../page/DocumentSettingForm.vue'
+import BiddingStepTemplateList from '../page/BiddingStepTemplateList.vue'
+import ContractsStepTemplateList from '../page/ContractsStepTemplateList.vue'
+import BidsTasks from '../page/BidsTasks.vue'
+import BiddingDetailView from '../page/BiddingDetailView.vue'
 
 const routes = [
     {
@@ -49,6 +53,14 @@ const routes = [
 
             // Contracts Tasks
             { path: 'contracts-tasks', name: 'contracts-tasks', component: ContractsTasks, meta: { breadcrumb: 'Hợp đồng và công việc' } },
+
+            { path: 'bids-tasks', name: 'bids-tasks', component: BidsTasks, meta: { breadcrumb: 'Đấu thầu' } },
+
+            {
+                path: '/biddings/:id',
+                name: 'bidding-detail',
+                component: BiddingDetailView
+            },
 
             // Permissions
             { path: 'departments', name: 'departments', component: DepartmentList, meta: { breadcrumb: 'Phòng ban' } },
@@ -103,7 +115,18 @@ const routes = [
                 component: DocumentSettingForm,
                 meta: { breadcrumb: 'Cấu hình tài liệu', parent: 'documents' },
             },
-
+            {
+                path: '/settings/bidding',
+                name: 'settings-bidding',
+                component: BiddingStepTemplateList,
+                meta: { breadcrumb: 'Cấu hình Đấu thầu', parent: 'cau-hinh' },
+            },
+            {
+                path: '/settings/contract',
+                name: 'settings-contract',
+                component: ContractsStepTemplateList, // nhớ sửa nếu đang là chuỗi string
+                meta: { breadcrumb: 'Cấu hình Hợp đồng', parent: 'cau-hinh' },
+            }
 
         ]
     }

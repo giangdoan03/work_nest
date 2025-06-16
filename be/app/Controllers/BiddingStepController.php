@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\BiddingStepModel;
+use App\Models\BiddingStepTemplateModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 
@@ -71,4 +72,26 @@ class BiddingStepController extends ResourceController
 
         return $this->respond(['message' => 'Bước đã hoàn tất và bước tiếp theo đã được mở.']);
     }
+
+    public function cloneFromTemplates($biddingId)
+    {
+        $templateModel = new BiddingStepTemplateModel();
+        $steps = $templateModel->orderBy('step_number')->findAll();
+
+        $newSteps = [];
+        foreach ($steps as $step) {
+            $newSteps[] = [
+                'bidding_id' => $biddingId,
+                'step_number' => $step['step_number'],
+                'title' => $step['title'],
+                'department' => $step['department'] ?? null,
+                'status' => $step['step_number'] === 1 ? 1 : 0, // mở bước đầu
+                'customer_id' => null
+            ];
+        }
+
+        $this->model->insertBatch($newSteps);
+        return $this->respond(['message' => 'Đã khởi tạo các bước từ mẫu']);
+    }
+
 }

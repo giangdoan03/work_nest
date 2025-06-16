@@ -5,8 +5,10 @@ const instance = axios.create({
     withCredentials: true,
 })
 
-export const getSettings = () => instance.get('/setting')
-export const getSetting = (id) => instance.get(`/setting/${id}`)
-export const createSetting = (data) => instance.post('/setting', data)
-export const updateSetting = (id, data) => instance.put(`/setting/${id}`, data)
-export const deleteSetting = (id) => instance.delete(`/setting/${id}`)
+// 🔧 Đúng với route nhóm: /api/settings
+export const getSettings = () => instance.get('/settings')
+export const getSetting = (id) => instance.get(`/settings/${id}`)
+export const getSettingByKey = (key) => instance.get(`/settings/key/${key}`)
+export const createSetting = (data) => instance.post('/settings', data)
+export const updateSetting = (id, data) => instance.put(`/settings/${id}`, data)
+export const deleteSetting = (id) => instance.delete(`/settings/${id}`)

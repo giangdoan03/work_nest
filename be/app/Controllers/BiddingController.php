@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Models\BiddingModel;
+use App\Models\BiddingStepModel;
+use App\Models\SettingModel;
 use CodeIgniter\RESTful\ResourceController;
 
 class BiddingController extends ResourceController
@@ -10,6 +12,13 @@ class BiddingController extends ResourceController
     protected $modelName = BiddingModel::class;
     protected $format = 'json';
 
+    protected $validStatuses = [
+        'pending', 'submitted', 'shortlisted', 'awarded', 'lost', 'cancelled'
+    ];
+
+    /**
+     * Lấy danh sách gói thầu có lọc + phân trang
+     */
     public function index()
     {
         $filters = $this->request->getGet();
@@ -54,24 +63,33 @@ class BiddingController extends ResourceController
         ]);
     }
 
+    /**
+     * Lấy chi tiết 1 gói thầu
+     */
     public function show($id = null)
     {
         $bidding = $this->model->find($id);
-        return $bidding ? $this->respond($bidding) : $this->failNotFound("Không tìm thấy gói thầu.");
+        return $bidding
+            ? $this->respond($bidding)
+            : $this->failNotFound("Không tìm thấy gói thầu.");
     }
 
+    /**
+     * Tạo mới gói thầu và sinh bước mặc định từ setting
+     */
     public function create()
     {
         $data = $this->request->getJSON(true);
 
-        if (empty($data['title']) || empty($data['customer_id'])) {
-            return $this->failValidationErrors([
-                'title' => 'Tiêu đề bắt buộc',
-                'customer_id' => 'Khách hàng bắt buộc'
-            ]);
+        // Validate bắt buộc
+        $requiredFields = ['title', 'customer_id', 'status'];
+        foreach ($requiredFields as $field) {
+            if (empty($data[$field])) {
+                return $this->failValidationErrors(["{$field}" => "Trường {$field} là bắt buộc."]);
+            }
         }
 
-        if (!in_array($data['status'], ['pending', 'submitted', 'shortlisted', 'awarded', 'lost', 'cancelled'])) {
+        if (!in_array($data['status'], $this->validStatuses)) {
             return $this->failValidationErrors(['status' => 'Trạng thái không hợp lệ']);
         }
 
@@ -80,9 +98,16 @@ class BiddingController extends ResourceController
         }
 
         $data['id'] = $this->model->getInsertID();
+
+        // ✅ Tự động tạo bước mẫu nếu có setting "bidding_steps"
+        $this->generateStepsFromTemplate($data['id'], $data['customer_id']);
+
         return $this->respondCreated($data);
     }
 
+    /**
+     * Cập nhật gói thầu
+     */
     public function update($id = null)
     {
         $data = $this->request->getJSON(true);
@@ -92,11 +117,40 @@ class BiddingController extends ResourceController
         return $this->respond(['message' => 'Cập nhật thành công']);
     }
 
+    /**
+     * Xoá gói thầu
+     */
     public function delete($id = null)
     {
         if (!$this->model->delete($id)) {
             return $this->failNotFound("Không tìm thấy gói thầu để xoá.");
         }
         return $this->respondDeleted(['message' => 'Đã xoá gói thầu.']);
+    }
+
+    /**
+     * Tạo các bước mẫu từ setting `bidding_steps`
+     */
+    protected function generateStepsFromTemplate($biddingId, $customerId)
+    {
+        $settingModel = new SettingModel();
+        $stepModel = new BiddingStepModel();
+
+        $setting = $settingModel->where('key', 'bidding_steps')->first();
+        if (!$setting) return;
+
+        $value = json_decode($setting['value'], true);
+        if (!isset($value['steps']) || !is_array($value['steps'])) return;
+
+        foreach ($value['steps'] as $step) {
+            $stepModel->insert([
+                'bidding_id'   => $biddingId,
+                'step_number'  => $step['step_number'],
+                'title'        => $step['title'],
+                'department'   => $step['department'] ?? '',
+                'status'       => 0,
+                'customer_id'  => $customerId
+            ]);
+        }
     }
 }

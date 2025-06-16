@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jun 16, 2025 at 04:52 AM
--- Server version: 8.0.30
--- PHP Version: 8.1.10
+-- Generation Time: Jun 16, 2025 at 09:43 AM
+-- Server version: 8.4.3
+-- PHP Version: 8.3.16
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -65,6 +65,7 @@ INSERT INTO `biddings` (`id`, `title`, `description`, `customer_id`, `estimated_
 
 CREATE TABLE `bidding_steps` (
   `id` int NOT NULL,
+  `bidding_id` int DEFAULT NULL,
   `step_number` int NOT NULL,
   `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `department` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -78,17 +79,56 @@ CREATE TABLE `bidding_steps` (
 -- Dumping data for table `bidding_steps`
 --
 
-INSERT INTO `bidding_steps` (`id`, `step_number`, `title`, `department`, `created_at`, `updated_at`, `status`, `customer_id`) VALUES
-(1, 1, 'Nhận nhu cầu của khách hàng', 'Khách hàng', '2025-06-05 03:50:22', '2025-06-11 10:10:37', 0, 1),
-(2, 2, 'Đánh giá tính khả thi', 'P.KD, P.DVKT', '2025-06-05 03:51:59', '2025-06-11 10:10:37', 0, 4),
-(3, 3, 'Chỉnh sửa tiêu đề bước', 'P.KD', '2025-06-05 03:52:32', '2025-06-11 10:10:37', 2, 10),
-(4, 4, 'Duyệt kế hoạch', 'Ban Giám đốc', '2025-06-05 03:52:39', '2025-06-11 10:10:37', 2, 2),
-(5, 5, 'Triển khai hồ sơ dự thầu', 'Ban Giám đốc, P.KD, P.DVKT, P.KHNS, P.TCKT', '2025-06-05 03:52:46', '2025-06-11 10:10:37', 1, 1),
-(6, 6, 'Chấm thầu', 'Khách hàng', '2025-06-05 03:52:53', '2025-06-11 10:10:37', 0, 4),
-(7, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', 'P.KD', '2025-06-05 03:53:00', '2025-06-11 10:10:37', 0, 4),
-(8, 8, 'Triển khai ký hợp đồng bán', 'P.KD, P.TCKT, P.DVKT', '2025-06-05 03:53:07', '2025-06-11 10:10:37', 0, 5),
-(9, 9, 'Duyệt hợp đồng bán', 'Ban Giám đốc', '2025-06-05 03:53:14', '2025-06-11 10:10:37', 0, 3),
-(10, 10, 'Duyệt hợp đồng bán', 'Ban Giám đốc', '2025-06-10 15:18:36', '2025-06-11 10:10:37', 1, 10);
+INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `department`, `created_at`, `updated_at`, `status`, `customer_id`) VALUES
+(1, NULL, 1, 'Nhận nhu cầu của khách hàng', 'Khách hàng', '2025-06-05 03:50:22', '2025-06-11 10:10:37', 0, 1),
+(2, NULL, 2, 'Đánh giá tính khả thi', 'P.KD, P.DVKT', '2025-06-05 03:51:59', '2025-06-11 10:10:37', 0, 4),
+(3, NULL, 3, 'Chỉnh sửa tiêu đề bước', 'P.KD', '2025-06-05 03:52:32', '2025-06-11 10:10:37', 2, 10),
+(4, NULL, 4, 'Duyệt kế hoạch', 'Ban Giám đốc', '2025-06-05 03:52:39', '2025-06-11 10:10:37', 2, 2),
+(5, NULL, 5, 'Triển khai hồ sơ dự thầu', 'Ban Giám đốc, P.KD, P.DVKT, P.KHNS, P.TCKT', '2025-06-05 03:52:46', '2025-06-11 10:10:37', 1, 1),
+(6, NULL, 6, 'Chấm thầu', 'Khách hàng', '2025-06-05 03:52:53', '2025-06-11 10:10:37', 0, 4),
+(7, NULL, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', 'P.KD', '2025-06-05 03:53:00', '2025-06-11 10:10:37', 0, 4),
+(8, NULL, 8, 'Triển khai ký hợp đồng bán', 'P.KD, P.TCKT, P.DVKT', '2025-06-05 03:53:07', '2025-06-11 10:10:37', 0, 5),
+(9, NULL, 9, 'Duyệt hợp đồng bán', 'Ban Giám đốc', '2025-06-05 03:53:14', '2025-06-11 10:10:37', 0, 3),
+(10, NULL, 10, 'Duyệt hợp đồng bán', 'Ban Giám đốc', '2025-06-10 15:18:36', '2025-06-11 10:10:37', 1, 10),
+(11, 1, 1, 'Nhận nhu cầu khách hàng', 'Khách hàng', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL),
+(12, 1, 2, 'Đánh giá tính khả thi', 'P.KD, P.DVKT', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL),
+(13, 1, 3, 'Lập kế hoạch triển khai', 'P.KD, P.DVKT', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL),
+(14, 1, 4, 'Duyệt kế hoạch', 'Ban Giám đốc', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL),
+(15, 1, 5, 'Triển khai hồ sơ dự thầu', 'Ban Giám đốc, P.KD, P.DVKT, P.KHNS, P.TCKT', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL),
+(16, 1, 6, 'Chấm thầu', 'Khách hàng', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL),
+(17, 1, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', 'P.KD', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL),
+(18, 1, 8, 'Triển khai ký hợp đồng bán', 'P.KD, P.TCKT, P.DVKT', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL),
+(19, 1, 9, 'Duyệt hợp đồng bán', 'Ban Giám đốc', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `bidding_step_templates`
+--
+
+CREATE TABLE `bidding_step_templates` (
+  `id` int NOT NULL,
+  `step_number` int NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `department` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `bidding_step_templates`
+--
+
+INSERT INTO `bidding_step_templates` (`id`, `step_number`, `title`, `department`, `created_at`, `updated_at`) VALUES
+(1, 1, 'Nhận nhu cầu khách hàng', 'Khách hàng', '2025-06-16 16:06:14', '2025-06-16 16:06:14'),
+(2, 2, 'Đánh giá tính khả thi', 'P.KD, P.DVKT', '2025-06-16 16:06:14', '2025-06-16 16:06:14'),
+(3, 3, 'Lập kế hoạch triển khai', 'P.KD, P.DVKT', '2025-06-16 16:06:14', '2025-06-16 16:06:14'),
+(4, 4, 'Duyệt kế hoạch', 'Ban Giám đốc', '2025-06-16 16:06:14', '2025-06-16 16:06:14'),
+(5, 5, 'Triển khai hồ sơ dự thầu', 'Ban Giám đốc, P.KD, P.DVKT, P.KHNS, P.TCKT', '2025-06-16 16:06:14', '2025-06-16 16:06:14'),
+(6, 6, 'Chấm thầu', 'Khách hàng', '2025-06-16 16:06:14', '2025-06-16 16:06:14'),
+(7, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', 'P.KD', '2025-06-16 16:06:14', '2025-06-16 16:06:14'),
+(8, 8, 'Triển khai ký hợp đồng bán', 'P.KD, P.TCKT, P.DVKT', '2025-06-16 16:06:14', '2025-06-16 16:06:14'),
+(9, 9, 'Duyệt hợp đồng bán', 'Ban Giám đốc', '2025-06-16 16:06:14', '2025-06-16 16:06:14');
 
 -- --------------------------------------------------------
 
@@ -411,8 +451,8 @@ INSERT INTO `document_permissions` (`id`, `document_id`, `shared_with_type`, `sh
 
 CREATE TABLE `document_settings` (
   `id` int NOT NULL,
-  `key` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `value` text COLLATE utf8mb4_unicode_ci,
+  `key` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -594,7 +634,8 @@ CREATE TABLE `settings` (
 
 INSERT INTO `settings` (`id`, `user_id`, `key`, `value`, `created_at`, `updated_at`) VALUES
 (1, 1, 'xxxxx', '2222', '2025-05-04 15:10:39', '2025-05-04 15:10:39'),
-(2, 1, 'vvvvv', '222211111', '2025-05-04 15:10:48', '2025-05-04 15:10:48');
+(2, 1, 'vvvvv', '222211111', '2025-05-04 15:10:48', '2025-05-04 15:10:48'),
+(3, 1, 'bidding_steps', '{\"steps\":[{\"step_number\":1,\"title\":\"Nhận nhu cầu khách hàng  Khách hàng\",\"department\":\"KT\",\"department_ids\":[\"2\",\"3\",\"4\"]},{\"step_number\":2,\"title\":\"Đánh giá tính khả thi\",\"department_ids\":[\"2\",\"3\"]}]}', '2025-06-16 07:01:08', '2025-06-16 08:24:24');
 
 -- --------------------------------------------------------
 
@@ -811,6 +852,12 @@ ALTER TABLE `bidding_steps`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `bidding_step_templates`
+--
+ALTER TABLE `bidding_step_templates`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `categories`
 --
 ALTER TABLE `categories`
@@ -955,7 +1002,13 @@ ALTER TABLE `biddings`
 -- AUTO_INCREMENT for table `bidding_steps`
 --
 ALTER TABLE `bidding_steps`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+
+--
+-- AUTO_INCREMENT for table `bidding_step_templates`
+--
+ALTER TABLE `bidding_step_templates`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `categories`
@@ -1051,7 +1104,7 @@ ALTER TABLE `role_permissions`
 -- AUTO_INCREMENT for table `settings`
 --
 ALTER TABLE `settings`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `step_templates`
