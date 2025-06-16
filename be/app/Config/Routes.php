@@ -111,6 +111,12 @@ $routes->group('api', function ($routes) {
     $routes->put('document-permissions/(:num)', 'DocumentController::updatePermission/$1');
     $routes->delete('document-permissions/(:num)', 'DocumentController::deletePermission/$1');
 
+    // ✅ Route cấu hình hệ thống tài liệu
+    $routes->get('document-settings', 'DocumentController::getSettings');
+    $routes->post('document-settings', 'DocumentController::saveSetting');
+    $routes->put('document-settings/(:num)', 'DocumentController::updateSetting/$1');
+    $routes->delete('document-settings/(:num)', 'DocumentController::deleteSetting/$1');
+
 
 
 });

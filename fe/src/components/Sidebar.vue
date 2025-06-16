@@ -90,10 +90,10 @@
 
 
 
-            <a-menu-item key="cau-hinh">
-                <SettingOutlined/>
-                <span>Cấu hình</span>
-            </a-menu-item>
+<!--            <a-menu-item key="cau-hinh">-->
+<!--                <SettingOutlined/>-->
+<!--                <span>Cấu hình</span>-->
+<!--            </a-menu-item>-->
             <a-menu-item key="permission">
                 <TeamOutlined/>
                 <span>Phân quyền</span>

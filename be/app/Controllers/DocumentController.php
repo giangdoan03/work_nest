@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Models\DocumentSettingModel;
+use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use App\Models\DocumentModel;
 use App\Models\DocumentPermissionModel;
@@ -40,7 +42,7 @@ class DocumentController extends ResourceController
         return $this->respond($query->findAll());
     }
 
-    public function sharedWithMe()
+    public function sharedWithMe(): ResponseInterface
     {
         $userId  = session()->get('user_id');
         $deptId  = session()->get('department_id');
@@ -75,7 +77,7 @@ class DocumentController extends ResourceController
         return $this->respond($docs);
     }
 
-    public function upload()
+    public function upload(): ResponseInterface
     {
         $uploadResult = UploadHelper::uploadDocumentFile($this->request);
 
@@ -107,7 +109,7 @@ class DocumentController extends ResourceController
         ]);
     }
 
-    public function share()
+    public function share(): ResponseInterface
     {
         $data = $this->request->getJSON(true);
 
@@ -161,7 +163,7 @@ class DocumentController extends ResourceController
         return $this->respondDeleted(['status' => 'deleted']);
     }
 
-    public function byDepartment()
+    public function byDepartment(): ResponseInterface
     {
         $departmentId = $this->request->getGet('department_id'); // optional filter
 
@@ -180,7 +182,7 @@ class DocumentController extends ResourceController
         return $this->respond(['data' => $documents]);
     }
 
-    public function getPermissions()
+    public function getPermissions(): ResponseInterface
     {
         $documentId = $this->request->getGet('document_id');
         $model = new DocumentPermissionModel();
@@ -197,7 +199,7 @@ class DocumentController extends ResourceController
     }
 
 
-    public function createPermission()
+    public function createPermission(): ResponseInterface
     {
         $data = $this->request->getJSON(true);
 
@@ -218,7 +220,7 @@ class DocumentController extends ResourceController
         return $this->respondCreated(['status' => 'created']);
     }
 
-    public function updatePermission($id = null)
+    public function updatePermission($id = null): ResponseInterface
     {
         if (!$id) return $this->failValidationErrors('Thiếu ID');
 
@@ -248,7 +250,7 @@ class DocumentController extends ResourceController
     }
 
 
-    public function deletePermission($id = null)
+    public function deletePermission($id = null): ResponseInterface
     {
         if (!$id) return $this->failValidationErrors('Thiếu ID');
 
@@ -262,7 +264,99 @@ class DocumentController extends ResourceController
         return $this->respondDeleted(['status' => 'deleted']);
     }
 
+    public function getSettings(): ResponseInterface
+    {
+        $model = new DocumentSettingModel();
+        $settings = $model->findAll();
 
+        $data = [];
+        foreach ($settings as $setting) {
+            $key = $setting['key'];
+            $value = $setting['value'];
+
+            // Giải mã các field JSON
+            if (in_array($key, ['upload_roles', 'view_roles'])) {
+                $data[$key] = json_decode($value, true);
+            } else {
+                $data[$key] = is_numeric($value) ? (int) $value : $value;
+            }
+        }
+
+        return $this->respond($data);
+    }
+
+    /**
+     * @throws \ReflectionException
+     */
+    public function updateSetting($id): ResponseInterface
+    {
+        $data = $this->request->getJSON(true);
+
+        if (empty($data) || !is_array($data)) {
+            return $this->failValidationErrors('Dữ liệu cấu hình không hợp lệ');
+        }
+
+        $model = new DocumentSettingModel();
+
+        $existing = $model->find($id);
+        if ($existing) {
+            $model->update($id, $data);
+            return $this->respond(['status' => 'updated']);
+        }
+
+        return $this->failNotFound('Cấu hình không tồn tại');
+    }
+
+
+    /**
+     * @throws \ReflectionException
+     */
+    public function saveSetting(): ResponseInterface
+    {
+        $data = $this->request->getJSON(true);
+        $model = new DocumentSettingModel();
+
+        if (!is_array($data)) {
+            return $this->failValidationErrors('Dữ liệu không hợp lệ');
+        }
+
+        foreach ($data as $key => $value) {
+            if (!$key) {
+                return $this->failValidationErrors('Thiếu key hoặc value.');
+            }
+
+            // Convert array to JSON nếu là roles
+            $value = in_array($key, ['upload_roles', 'view_roles']) ? json_encode($value) : $value;
+
+            $existing = $model->where('key', $key)->first();
+            if ($existing) {
+                $model->update($existing['id'], ['value' => $value]);
+            } else {
+                $model->insert(['key' => $key, 'value' => $value]);
+            }
+        }
+
+        return $this->respond(['status' => 'saved']);
+    }
+
+
+    public function deleteSetting($id = null): ResponseInterface
+    {
+        if (!$id || !is_numeric($id)) {
+            return $this->failValidationErrors('ID không hợp lệ');
+        }
+
+        $model = new DocumentSettingModel();
+
+        $setting = $model->find($id);
+        if (!$setting) {
+            return $this->failNotFound('Cấu hình không tồn tại');
+        }
+
+        $model->delete($id);
+
+        return $this->respondDeleted(['status' => 'deleted', 'id' => $id]);
+    }
 
 
 

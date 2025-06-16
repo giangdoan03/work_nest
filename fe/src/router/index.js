@@ -20,6 +20,7 @@ import DocumentList from '../page/DocumentList.vue'
 import DepartmentDocumentList from '../page/DepartmentDocumentList.vue'
 import DocumentSharedList from '../page/DocumentSharedList.vue'
 import DocumentPermissionList from '../page/DocumentPermissionList.vue'
+import DocumentSettingForm from '../page/DocumentSettingForm.vue'
 
 const routes = [
     {
@@ -96,12 +97,12 @@ const routes = [
                 component: DocumentPermissionList,
                 meta: { breadcrumb: 'Phân quyền tài liệu', parent: 'documents' },
             },
-            // {
-            //     path: '/documents/settings',
-            //     name: 'documents-settings',
-            //     component: () => import('../components/DocumentSetting.vue'),
-            //     meta: { breadcrumb: 'Cấu hình tài liệu', parent: 'documents' },
-            // },
+            {
+                path: '/documents/settings',
+                name: 'documents-settings',
+                component: DocumentSettingForm,
+                meta: { breadcrumb: 'Cấu hình tài liệu', parent: 'documents' },
+            },
 
 
         ]

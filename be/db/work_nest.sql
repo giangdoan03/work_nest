@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jun 13, 2025 at 09:29 AM
--- Server version: 8.4.3
--- PHP Version: 8.3.16
+-- Generation Time: Jun 16, 2025 at 04:52 AM
+-- Server version: 8.0.30
+-- PHP Version: 8.1.10
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -351,16 +351,16 @@ INSERT INTO `departments` (`id`, `name`, `description`, `created_at`, `updated_a
 
 CREATE TABLE `documents` (
   `id` int NOT NULL,
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `file_path` varchar(512) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_path` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `department_id` int DEFAULT NULL,
   `uploaded_by` int NOT NULL,
-  `visibility` enum('private','department','public') COLLATE utf8mb4_unicode_ci DEFAULT 'private',
-  `file_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `visibility` enum('private','department','public') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'private',
+  `file_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `file_size` int DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `tags` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL
+  `tags` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -380,9 +380,9 @@ INSERT INTO `documents` (`id`, `title`, `file_path`, `department_id`, `uploaded_
 CREATE TABLE `document_permissions` (
   `id` int NOT NULL,
   `document_id` int NOT NULL,
-  `shared_with_type` enum('user','department') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `shared_with_type` enum('user','department') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `shared_with_id` int NOT NULL,
-  `permission_type` enum('view','edit','download') COLLATE utf8mb4_unicode_ci DEFAULT 'view',
+  `permission_type` enum('view','edit','download') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'view',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -402,6 +402,33 @@ INSERT INTO `document_permissions` (`id`, `document_id`, `shared_with_type`, `sh
 (11, 1, 'user', 1, 'view', '2025-06-13 07:26:53', '2025-06-13 07:26:53'),
 (12, 1, 'department', 1, 'download', '2025-06-13 07:26:53', '2025-06-13 07:26:53'),
 (13, 1, 'user', 12, 'view', '2025-06-13 09:04:00', '2025-06-13 09:04:00');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `document_settings`
+--
+
+CREATE TABLE `document_settings` (
+  `id` int NOT NULL,
+  `key` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text COLLATE utf8mb4_unicode_ci,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `document_settings`
+--
+
+INSERT INTO `document_settings` (`id`, `key`, `value`, `updated_at`) VALUES
+(1, 'default_visibility', 'pdf,docx,xlsx,pptx', '2025-06-13 22:39:39'),
+(2, 'max_file_size_mb', '10', '2025-06-13 21:43:35'),
+(3, 'allowed_file_types', 'pdf,docx,xlsx,png,jpg', '2025-06-13 21:43:35'),
+(4, 'max_file_size', '5', '2025-06-13 22:48:25'),
+(5, 'allowed_types', 'pdf,docx,xlsx,zip', '2025-06-13 22:47:45'),
+(6, 'folder_structure', 'year_month', '2025-06-13 22:51:47'),
+(7, 'upload_roles', '[\"admin\",\"manager\",\"staff\"]', '2025-06-13 22:48:41'),
+(8, 'view_roles', '[\"admin\",\"manager\",\"staff\"]', '2025-06-13 22:48:41');
 
 -- --------------------------------------------------------
 
@@ -848,6 +875,12 @@ ALTER TABLE `document_permissions`
   ADD KEY `document_id` (`document_id`);
 
 --
+-- Indexes for table `document_settings`
+--
+ALTER TABLE `document_settings`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `permissions`
 --
 ALTER TABLE `permissions`
@@ -983,6 +1016,12 @@ ALTER TABLE `documents`
 --
 ALTER TABLE `document_permissions`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+--
+-- AUTO_INCREMENT for table `document_settings`
+--
+ALTER TABLE `document_settings`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `permissions`
