@@ -167,9 +167,8 @@
     }
 
     const goToDetail = (id) => {
-        router.push({ name: 'bidding-detail', params: { id } })
+        router.push({ name: 'bid-detail', params: { id } })
     }
-
 
     const createBidding = async () => {
         loadingCreate.value = true

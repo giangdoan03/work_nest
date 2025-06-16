@@ -35,7 +35,7 @@
                 <TeamOutlined />
                 <span>Quản lý người dùng</span>
             </a-menu-item>
-            <a-menu-item key="bids-tasks">
+            <a-menu-item key="bid-list">
                 <FileSearchOutlined />
                 <span>Gói thầu</span>
             </a-menu-item>
@@ -161,7 +161,8 @@ const pathToKeyMap = {
     '/user-management': 'user-management',
     '/internal-tasks': 'internal-tasks',
     '/contracts-tasks': 'contracts-tasks',
-    '/bids-tasks': 'bids-tasks',
+    '/bid-list': 'bid-list',
+    '/bid-detail/:id': 'bid-detail',
 
     // Tài liệu (sub menu)
     '/documents/my': 'documents-my',
@@ -188,7 +189,8 @@ const keyToParentMap = {
     'user-management': 'user-management',
     'internal-tasks': 'internal-tasks',
     'contracts-tasks': 'contracts-tasks',
-    'bids-tasks': 'bids-tasks',
+    'bid-list': 'bid-list',
+    'bid-detail': 'bid-list',
 
     // Tài liệu
     'documents-my': 'documents',

@@ -78,7 +78,7 @@ $routes->group('api', function ($routes) {
     $routes->delete('task-files/(:num)', 'TaskFileController::delete/$1');
 
     $routes->get('bidding-steps/(:num)/tasks', 'TaskController::byBiddingStep/$1');
-    $routes->post('bidding-steps/(:num)/complete', 'BiddingStepController::completeStep/$1');
+    $routes->put('bidding-steps/(:num)/complete', 'BiddingStepController::completeStep/$1');
     $routes->resource('bidding-steps', ['controller' => 'BiddingStepController']);
 
     $routes->put('comments/(:num)', 'CommentController::update/$1');
