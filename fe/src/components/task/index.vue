@@ -19,56 +19,70 @@
                                     </a-form-item>
                                 </a-col>
                                 <a-col :span="12">
-                                    <a-form-item label="Độ Ưu tiên" name="priority">
-                                        <a-typography-text v-if="!isEditMode">{{ getPriorityName(formData.priority) }}</a-typography-text>
-                                        <a-select v-else v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên" />
-                                    </a-form-item>
-                                </a-col>
-                                <a-col :span="12">
-                                    <a-form-item label="Thời gian" name="time">
-                                        <a-typography-text v-if="!isEditMode">{{ formData.start_date + " → " + formData.end_date}}</a-typography-text>
-                                        <a-config-provider :locale="locale">
-                                            <a-range-picker  v-if="isEditMode" format="DD-MM-YYYY" @change="changeDateTime" style="width: 100%;"></a-range-picker>
-                                        </a-config-provider>
-                                    </a-form-item>
-                                </a-col>
-                                
-                                <a-col :span="12">
-                                    <a-form-item label="Gắn tới người dùng" name="assigned_to">
-                                        <a-typography-text v-if="!isEditMode">{{ getUserById(formData.assigned_to) }}</a-typography-text>
-                                        <a-select v-else v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng" />
-                                    </a-form-item>
-                                </a-col>
-                                <a-col :span="12">
                                     <a-form-item label="Loại nhiệm vụ" name="linked_type">
                                         <a-typography-text v-if="!isEditMode">{{ formData.title }}</a-typography-text>
                                         <a-select v-else v-model:value="formData.linked_type" :options="linkedTypeOption" placeholder="Chọn loại nhiệm vụ" />
                                     </a-form-item>
                                 </a-col>
                                 <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
-                                    <a-form-item :label="formData.linked_type == 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'" name="linked_id">
+                                    <a-form-item :label=" !formData.linked_type ? 'Trống' : formData.linked_type == 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'" name="linked_type">
                                         <a-typography-text v-if="!isEditMode">{{ formData.title }}</a-typography-text>
                                         <a-select v-else v-model:value="formData.linked_id" :options="linkedIdOption" :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'" />
                                     </a-form-item>
                                 </a-col>
-                                <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
-                                    <a-form-item label="Bước tiến trình" name="bidding_step_id" >
-                                        <a-typography-text v-if="!isEditMode">{{ formData.title }}</a-typography-text>
-                                        <a-input v-else v-model:value="formData.bidding_step_id" placeholder="Chọn bước tiến trình" />
-                                    </a-form-item>
-                                </a-col>
-                                
-                                <a-col :span="24">
-                                    <a-form-item label="Mô tả" name="description">
-                                        <a-typography-text v-if="!isEditMode">{{ formData.description }}</a-typography-text>
-                                        <a-textarea v-else v-model:value="formData.description" :rows="4"
-                                            placeholder="Nhập mô tả " />
+                                <a-col :span="12">
+                                    <a-form-item label="Độ Ưu tiên" name="priority">
+                                        <a-typography-text v-if="!isEditMode">{{ getPriorityName(formData.priority) }}</a-typography-text>
+                                        <a-select v-else v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên" />
                                     </a-form-item>
                                 </a-col>
                             </a-row>
                         </div>
-                        <div class="task-in">Content</div>
-                        <div class="task-in-end">Content</div>
+                        <div class="task-in">
+                            <a-row :gutter="16">
+                                <a-col :span="12">
+                                    <a-form-item label="Thời gian" name="time">
+                                        <a-typography-text v-if="!isEditMode">{{ (formData.start_date ? formData.start_date : "Trống") + " → " + (formData.end_date ? formData.end_date : "Trống") }}</a-typography-text>
+                                        <a-config-provider :locale="locale">
+                                            <a-range-picker  v-if="isEditMode" format="DD-MM-YYYY" @change="changeDateTime" style="width: 100%;"></a-range-picker>
+                                        </a-config-provider>
+                                    </a-form-item>
+                                </a-col>
+                            </a-row>
+                                                            
+                            <a-col :span="12">
+                                <a-form-item label="Gắn tới người dùng" name="assigned_to">
+                                    <a-typography-text v-if="!isEditMode">{{ getUserById(formData.assigned_to) }}</a-typography-text>
+                                    <a-select v-else v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng" />
+                                </a-form-item>
+                            </a-col>
+                        </div>
+                        <div class="task-in-end">
+                            <a-row :gutter="16">
+                                <a-col :span="24">
+                                    <a-form-item label="Mô tả" name="description">
+                                        <a-typography-text v-if="!isEditMode">{{ formData.description ? formData.description : "Trống" }}</a-typography-text>
+                                        <a-textarea 
+                                            v-else 
+                                            v-model:value="formData.description" 
+                                            :rows="4"
+                                            placeholder="Nhập mô tả " 
+                                        />
+                                    </a-form-item>
+                                </a-col>
+                                <a-col :span="24">
+                                    <a-form-item label="Tài liệu" name="document">
+                                        <a-typography-text v-if="!isEditMode">{{ formData.description ? formData.description : "Trống" }}</a-typography-text>
+                                        <a-textarea 
+                                            v-else 
+                                            v-model:value="formData.description" 
+                                            :rows="4"
+                                            placeholder="Nhập mô tả " 
+                                        />
+                                    </a-form-item>
+                                </a-col>
+                            </a-row>
+                        </div>
                     </a-form>
                 </div>
             </div>
@@ -263,6 +277,7 @@ onMounted(() => {
 .task-in{
     border-bottom: 1px solid #bebebece;
     padding: 14px;
+    padding-bottom: 0;
 }
 .task-in-end{
     padding: 14px;
@@ -273,6 +288,9 @@ onMounted(() => {
     color: #999999 !important;
 }
 :deep(.ant-form-item){
-
+    margin-bottom: 14px;
+}
+:deep(.ant-form-item-label){
+    padding-bottom: 0;
 }
 </style>
