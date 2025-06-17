@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\BiddingStepModel;
+use App\Models\BiddingStepTemplateModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 
@@ -51,24 +52,53 @@ class BiddingStepController extends ResourceController
 
     public function completeStep($id): ResponseInterface
     {
-        // Đánh dấu bước hiện tại là hoàn tất
-        $this->model->update($id, [
-            'status' => 2 // Hoàn thành
-        ]);
-
         // Tìm bước hiện tại
         $current = $this->model->find($id);
-        if ($current) {
-            $next = $this->model
-                ->where('step_number >', $current['step_number'])
-                ->orderBy('step_number', 'asc')
-                ->first();
+        if (!$current) {
+            return $this->failNotFound("Không tìm thấy bước.");
+        }
 
-            if ($next) {
-                $this->model->update($next['id'], ['status' => 1]); // Mở bước tiếp theo
-            }
+        // ✅ Gửi đúng dữ liệu khi update
+        $updateData = ['status' => 2];
+        if (!$this->model->update($id, $updateData)) {
+            return $this->failValidationErrors($this->model->errors());
+        }
+
+        // Mở bước tiếp theo nếu có
+        $next = $this->model
+            ->where('bidding_id', $current['bidding_id'])
+            ->where('step_number >', $current['step_number'])
+            ->orderBy('step_number', 'asc')
+            ->first();
+
+        if ($next) {
+            $this->model->update($next['id'], ['status' => 1]);
         }
 
         return $this->respond(['message' => 'Bước đã hoàn tất và bước tiếp theo đã được mở.']);
     }
+
+
+
+    public function cloneFromTemplates($biddingId)
+    {
+        $templateModel = new BiddingStepTemplateModel();
+        $steps = $templateModel->orderBy('step_number')->findAll();
+
+        $newSteps = [];
+        foreach ($steps as $step) {
+            $newSteps[] = [
+                'bidding_id' => $biddingId,
+                'step_number' => $step['step_number'],
+                'title' => $step['title'],
+                'department' => $step['department'] ?? null,
+                'status' => $step['step_number'] === 1 ? 1 : 0, // mở bước đầu
+                'customer_id' => null
+            ];
+        }
+
+        $this->model->insertBatch($newSteps);
+        return $this->respond(['message' => 'Đã khởi tạo các bước từ mẫu']);
+    }
+
 }

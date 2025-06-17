@@ -78,7 +78,7 @@ $routes->group('api', function ($routes) {
     $routes->delete('task-files/(:num)', 'TaskFileController::delete/$1');
 
     $routes->get('bidding-steps/(:num)/tasks', 'TaskController::byBiddingStep/$1');
-    $routes->post('bidding-steps/(:num)/complete', 'BiddingStepController::completeStep/$1');
+    $routes->put('bidding-steps/(:num)/complete', 'BiddingStepController::completeStep/$1');
     $routes->resource('bidding-steps', ['controller' => 'BiddingStepController']);
 
     $routes->put('comments/(:num)', 'CommentController::update/$1');
@@ -94,7 +94,10 @@ $routes->group('api', function ($routes) {
     $routes->resource('customers', ['controller' => 'CustomerController']);
 
     // chức năng gói thầu
+    $routes->post('biddings/(:num)/init-steps', 'BiddingStepController::cloneFromTemplates/$1');
     $routes->resource('biddings', ['controller' => 'BiddingController']);
+    $routes->resource('bidding-steps', ['controller' => 'BiddingStepController']);
+    $routes->get('biddings/(:num)/steps', 'BiddingStepController::byBidding/$1');
 
     $routes->get('documents', 'DocumentController::index');
     $routes->post('documents/upload', 'DocumentController::upload');
@@ -110,6 +113,22 @@ $routes->group('api', function ($routes) {
     $routes->post('document-permissions', 'DocumentController::createPermission');
     $routes->put('document-permissions/(:num)', 'DocumentController::updatePermission/$1');
     $routes->delete('document-permissions/(:num)', 'DocumentController::deletePermission/$1');
+
+    // ✅ Route cấu hình hệ thống tài liệu
+    $routes->get('document-settings', 'DocumentController::getSettings');
+    $routes->post('document-settings', 'DocumentController::saveSetting');
+    $routes->put('document-settings/(:num)', 'DocumentController::updateSetting/$1');
+    $routes->delete('document-settings/(:num)', 'DocumentController::deleteSetting/$1');
+
+    // Settings CRUD
+    $routes->get('settings', 'SettingController::index');            // Danh sách setting theo user
+    $routes->get('settings/(:num)', 'SettingController::show/$1');   // Chi tiết theo ID
+    $routes->get('settings/key/(:segment)', 'SettingController::key/$1');
+    $routes->post('settings', 'SettingController::create');          // Tạo mới
+    $routes->put('settings/(:num)', 'SettingController::update/$1'); // Cập nhật
+    $routes->delete('settings/(:num)', 'SettingController::delete/$1'); // Xoá
+
+
 
 
 

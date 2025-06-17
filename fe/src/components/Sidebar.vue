@@ -35,7 +35,7 @@
                 <TeamOutlined />
                 <span>Quản lý người dùng</span>
             </a-menu-item>
-            <a-menu-item key="bid-tasks">
+            <a-menu-item key="bid-list">
                 <FileSearchOutlined />
                 <span>Gói thầu</span>
             </a-menu-item>
@@ -88,12 +88,28 @@
                 </a-menu-item>
             </a-sub-menu>
 
+            <!-- MENU CHA: CẤU HÌNH CHUNG -->
+            <a-sub-menu key="cau-hinh">
+                <template #title>
+                <span>
+                  <SettingOutlined />
+                  <span> Cấu hình chung</span>
+                </span>
+                </template>
 
+                <!-- CON: Cấu hình Đấu thầu -->
+                <a-menu-item key="cau-hinh-dau-thau">
+                    <template #icon><FileDoneOutlined /></template>
+                    <span>Đấu thầu</span>
+                </a-menu-item>
 
-            <a-menu-item key="cau-hinh">
-                <SettingOutlined/>
-                <span>Cấu hình</span>
-            </a-menu-item>
+                <!-- CON: Cấu hình Hợp đồng -->
+                <a-menu-item key="cau-hinh-hop-dong">
+                    <template #icon><ProfileOutlined /></template>
+                    <span>Hợp đồng</span>
+                </a-menu-item>
+            </a-sub-menu>
+
             <a-menu-item key="permission">
                 <TeamOutlined/>
                 <span>Phân quyền</span>
@@ -110,6 +126,8 @@ import {
     InboxOutlined,
     LockOutlined,
     ApartmentOutlined,
+    FileDoneOutlined,
+    ProfileOutlined
 } from '@ant-design/icons-vue'
 import { h } from 'vue'
 
@@ -143,7 +161,8 @@ const pathToKeyMap = {
     '/user-management': 'user-management',
     '/internal-tasks': 'internal-tasks',
     '/contracts-tasks': 'contracts-tasks',
-    '/bid-tasks': 'bid-tasks',
+    '/bid-list': 'bid-list',
+    '/bid-detail/:id': 'bid-detail',
 
     // Tài liệu (sub menu)
     '/documents/my': 'documents-my',
@@ -151,6 +170,9 @@ const pathToKeyMap = {
     '/documents/department': 'documents-department',
     '/documents/permission': 'documents-permission',
     '/documents/settings': 'documents-settings',
+
+    '/settings/bidding': 'cau-hinh-dau-thau',
+    '/settings/contract': 'cau-hinh-hop-dong',
 }
 
 
@@ -167,7 +189,8 @@ const keyToParentMap = {
     'user-management': 'user-management',
     'internal-tasks': 'internal-tasks',
     'contracts-tasks': 'contracts-tasks',
-    'bid-tasks': 'bid-tasks',
+    'bid-list': 'bid-list',
+    'bid-detail': 'bid-list',
 
     // Tài liệu
     'documents-my': 'documents',
@@ -175,6 +198,9 @@ const keyToParentMap = {
     'documents-department': 'documents',
     'documents-permission': 'documents',
     'documents-settings': 'documents',
+
+    'cau-hinh-dau-thau': 'cau-hinh',
+    'cau-hinh-hop-dong': 'cau-hinh',
 }
 
 

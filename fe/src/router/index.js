@@ -20,6 +20,11 @@ import DocumentList from '../page/DocumentList.vue'
 import DepartmentDocumentList from '../page/DepartmentDocumentList.vue'
 import DocumentSharedList from '../page/DocumentSharedList.vue'
 import DocumentPermissionList from '../page/DocumentPermissionList.vue'
+import DocumentSettingForm from '../page/DocumentSettingForm.vue'
+import BiddingStepTemplateList from '../page/BiddingStepTemplateList.vue'
+import ContractsStepTemplateList from '../page/ContractsStepTemplateList.vue'
+import BidList from '../page/BidList.vue'
+import BidDetail from '../page/BidDetail.vue'
 
 const routes = [
     {
@@ -48,6 +53,21 @@ const routes = [
 
             // Contracts Tasks
             { path: 'contracts-tasks', name: 'contracts-tasks', component: ContractsTasks, meta: { breadcrumb: 'Hợp đồng và công việc' } },
+
+            {
+                path: '/bid-list',
+                name: 'bid-list',
+                component: BidList,
+                meta: { breadcrumb: 'Đấu thầu' }
+            },
+            {
+                path: '/bid-detail/:id',
+                name: 'bid-detail',
+                component: BidDetail,
+                meta: { breadcrumb: 'Chi tiết gói thầu', parent: 'bid-list' }
+            },
+
+
 
             // Permissions
             { path: 'departments', name: 'departments', component: DepartmentList, meta: { breadcrumb: 'Phòng ban' } },
@@ -96,13 +116,24 @@ const routes = [
                 component: DocumentPermissionList,
                 meta: { breadcrumb: 'Phân quyền tài liệu', parent: 'documents' },
             },
-            // {
-            //     path: '/documents/settings',
-            //     name: 'documents-settings',
-            //     component: () => import('../components/DocumentSetting.vue'),
-            //     meta: { breadcrumb: 'Cấu hình tài liệu', parent: 'documents' },
-            // },
-
+            {
+                path: '/documents/settings',
+                name: 'documents-settings',
+                component: DocumentSettingForm,
+                meta: { breadcrumb: 'Cấu hình tài liệu', parent: 'documents' },
+            },
+            {
+                path: '/settings/bidding',
+                name: 'settings-bidding',
+                component: BiddingStepTemplateList,
+                meta: { breadcrumb: 'Cấu hình Đấu thầu', parent: 'cau-hinh' },
+            },
+            {
+                path: '/settings/contract',
+                name: 'settings-contract',
+                component: ContractsStepTemplateList, // nhớ sửa nếu đang là chuỗi string
+                meta: { breadcrumb: 'Cấu hình Hợp đồng', parent: 'cau-hinh' },
+            }
 
         ]
     }
