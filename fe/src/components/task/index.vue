@@ -9,7 +9,7 @@
         <div class="task-info">
             <div class="task-info-left">
                 <div class="task-info-content">
-                    <a-form ref="formRef" :model="formData" :rules="isEditMode ? rules : ''" layout="vertical">
+                    <a-form ref="formRef" :model="formData" :rules="isEditMode ? rules : {}" layout="vertical">
                         <div class="task-in">
                             <a-row :gutter="16">
                                 <a-col :span="12">
@@ -20,7 +20,7 @@
                                 </a-col>
                                 <a-col :span="12">
                                     <a-form-item label="Loại nhiệm vụ" name="linked_type">
-                                        <a-typography-text v-if="!isEditMode">{{ formData.title }}</a-typography-text>
+                                        <a-typography-text v-if="!isEditMode">{{ getTextLinkedType }}</a-typography-text>
                                         <a-select v-else v-model:value="formData.linked_type" :options="linkedTypeOption" placeholder="Chọn loại nhiệm vụ" />
                                     </a-form-item>
                                 </a-col>
@@ -30,10 +30,10 @@
                                         <a-select v-else v-model:value="formData.linked_id" :options="linkedIdOption" :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'" />
                                     </a-form-item>
                                 </a-col>
-                                <a-col :span="12">
-                                    <a-form-item label="Độ Ưu tiên" name="priority">
-                                        <a-typography-text v-if="!isEditMode">{{ getPriorityName(formData.priority) }}</a-typography-text>
-                                        <a-select v-else v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên" />
+                                <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
+                                    <a-form-item :label=" !formData.linked_type ? 'Trống' : formData.linked_type == 'bidding' ? 'Tiến trình gói thầu' : 'Tiến trình hợp đồng'" name="step_code">
+                                        <a-typography-text v-if="!isEditMode">{{ getStepByStepNo(formData.step_code) }}</a-typography-text>
+                                        <a-select v-else v-model:value="formData.step_code" :options="stepOption" :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'" />
                                     </a-form-item>
                                 </a-col>
                             </a-row>
@@ -42,20 +42,26 @@
                             <a-row :gutter="16">
                                 <a-col :span="12">
                                     <a-form-item label="Thời gian" name="time">
-                                        <a-typography-text v-if="!isEditMode">{{ (formData.start_date ? formData.start_date : "Trống") + " → " + (formData.end_date ? formData.end_date : "Trống") }}</a-typography-text>
+                                        <a-typography-text v-if="!isEditMode">{{ (formData.start_date ? convertDateFormat(formData.start_date) : "Trống") + " → " + (formData.end_date ? convertDateFormat(formData.end_date) : "Trống") }}</a-typography-text>
                                         <a-config-provider :locale="locale">
                                             <a-range-picker  v-if="isEditMode" format="DD-MM-YYYY" @change="changeDateTime" style="width: 100%;"></a-range-picker>
                                         </a-config-provider>
                                     </a-form-item>
                                 </a-col>
+                                <a-col :span="12">
+                                    <a-form-item label="Độ ưu tiên" name="priority">
+                                        <a-tag v-if="!isEditMode" :color="checkPriority(formData.priority).color">{{ checkPriority(formData.priority).label }}</a-tag>
+                                        <a-select v-else v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên" />
+                                    </a-form-item>
+                                </a-col>
+                                <a-col :span="12">
+                                    <a-form-item label="Gắn tới người dùng" name="assigned_to">
+                                        <a-typography-text v-if="!isEditMode">{{ getUserById(formData.assigned_to) }}</a-typography-text>
+                                        <a-select v-else v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng" />
+                                    </a-form-item>
+                                </a-col>
                             </a-row>
                                                             
-                            <a-col :span="12">
-                                <a-form-item label="Gắn tới người dùng" name="assigned_to">
-                                    <a-typography-text v-if="!isEditMode">{{ getUserById(formData.assigned_to) }}</a-typography-text>
-                                    <a-select v-else v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng" />
-                                </a-form-item>
-                            </a-col>
                         </div>
                         <div class="task-in-end">
                             <a-row :gutter="16">
@@ -103,6 +109,7 @@ import viVN from 'ant-design-vue/es/locale/vi_VN';
 import { getUsers } from '@/api/user';
 import { useRoute, useRouter } from 'vue-router';
 import { getTaskDetail } from '@/api/internal';
+import { CONTRACTS_STEPS, BIDDING_STEPS } from '@/common'
 
 
 const route = useRoute();
@@ -128,15 +135,23 @@ const formData = ref({
     bidding_step_id: null,
 });
 const priorityOption = ref([
-    {value: "low", label: "Thấp"},
-    {value: "normal", label: "Thường"},
-    {value: "hight", label: "Cao"},
+    {value: "low", label: "Thấp", color: "success"},
+    {value: "normal", label: "Thường", color: "warning"},
+    {value: "hight", label: "Cao", color: "error"},
 ])
 const linkedTypeOption = ref([
     {value: "bidding", label: "Gói thầu"},
     {value: "contract", label: "Hợp đồng"},
     {value: "internal", label: "Nhiệm vụ nội bộ"},
 ])
+const getTextLinkedType = computed(()=>{
+    let data = linkedTypeOption.value.find(ele => ele.value == formData.value.linked_type)
+    if(data){
+        return data.label;
+    }else {
+        return "Nhiệm vụ nội bộ"
+    }
+})
 const userOption =  computed(()=>{
     if(!listUser.value || !listUser.value.length){
         return[]
@@ -207,7 +222,44 @@ const rules = computed(() => {
         description: [{ required: true, validator: validateDescription,  trigger: 'change' }],
     }
 })
+const stepOption = computed(()=>{
+    switch (formData.value.linked_type) {
+        case 'bidding':
+            return BIDDING_STEPS.map(ele => {
+                return { value: ele.step_code, label: ele.name}
+            })
+        case 'contract':
+            return CONTRACTS_STEPS.map(ele => {
+                return { value: ele.step_code, label: ele.name}
+            })
+        default:
+            return [];
+    }
+})
 
+// Method
+const getStepByStepNo = (step) =>  {
+    let data = CONTRACTS_STEPS.find(ele => ele.step_code == step);
+    if(!data){
+        data = BIDDING_STEPS.find(ele => ele.step_code == step);
+        if(!data){
+            return "Trống" ;
+        }
+    }
+    return data.name;
+}
+const convertDateFormat = (dateStr) =>  {
+    const [year, month, day] = dateStr.split('-');    
+    return `${day}/${month}/${year}`;
+}
+const checkPriority = (text) => {
+    let data = priorityOption.value.find(ele => ele.value == text);
+    if(data){
+        return data 
+    }else {
+        return {value: "", label: "", color: ""}
+    }
+};
 const getUser = async () => {
     loading.value = true
     try {
@@ -225,13 +277,6 @@ const getUserById = (userId) =>  {
         return "" ;
     }
     return data.name;
-}
-const getPriorityName = (priorityId) =>  {
-    let data = priorityOption.value.find(ele => ele.value == priorityId);
-    if(!data){
-        return "" ;
-    }
-    return data.label;
 }
 const changeDateTime = (day, date) => {
     if(day){

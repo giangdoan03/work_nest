@@ -23,7 +23,7 @@
                     {{ getLinkedType(text) }}
                 </template>
                 <template v-if="column.dataIndex == 'step_code'">
-                    {{ getStepById(text) }}
+                    {{ getStepByStepNo(text) }}
                 </template>
                 <template v-else-if="column.dataIndex == 'action'">
                     <a-dropdown placement="left">
@@ -381,14 +381,16 @@ const resetFormValidate = () => {
 };
 
 const checkPriority = (text) => {
-    if(text == 'low'){
-        return { title: "Thấp", color: "success"};
-    }else if(text == 'normal'){
-        return { title: "Thường", color: "warning"};
-    }else if(text == 'high'){
-        return { title: "Cao", color: "error"};
+    switch (text) {
+        case 'low':
+            return { title: "Thấp", color: "success"};
+        case 'normal':
+            return { title: "Thường", color: "warning"};
+        case 'high':
+            return { title: "Cao", color: "error"};    
+        default:
+            return { title: "", color: ""};
     }
-    return { title: "", color: ""};
 };
 
 const getUserById = (userId) =>  {
@@ -421,12 +423,12 @@ const getUser = async () => {
     }
 }
 
-const getStepById = (text) =>  {
-    let data = CONTRACTS_STEPS.find(ele => ele.step_no == text);
+const getStepByStepNo = (step) =>  {
+    let data = CONTRACTS_STEPS.find(ele => ele.step_code == step);
     if(!data){
-        data = BIDDING_STEPS.find(ele => ele.step_no == text);
+        data = BIDDING_STEPS.find(ele => ele.step_code == step);
         if(!data){
-            return "" ;
+            return "Trống" ;
         }
     }
     return data.name;
