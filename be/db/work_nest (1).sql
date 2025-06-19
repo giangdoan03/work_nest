@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jun 16, 2025 at 09:43 AM
--- Server version: 8.4.3
--- PHP Version: 8.3.16
+-- Generation Time: Jun 19, 2025 at 04:37 PM
+-- Server version: 8.0.30
+-- PHP Version: 8.1.10
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -83,22 +83,22 @@ INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `depart
 (1, NULL, 1, 'Nhận nhu cầu của khách hàng', 'Khách hàng', '2025-06-05 03:50:22', '2025-06-11 10:10:37', 0, 1),
 (2, NULL, 2, 'Đánh giá tính khả thi', 'P.KD, P.DVKT', '2025-06-05 03:51:59', '2025-06-11 10:10:37', 0, 4),
 (3, NULL, 3, 'Chỉnh sửa tiêu đề bước', 'P.KD', '2025-06-05 03:52:32', '2025-06-11 10:10:37', 2, 10),
-(4, NULL, 4, 'Duyệt kế hoạch', 'Ban Giám đốc', '2025-06-05 03:52:39', '2025-06-11 10:10:37', 2, 2),
-(5, NULL, 5, 'Triển khai hồ sơ dự thầu', 'Ban Giám đốc, P.KD, P.DVKT, P.KHNS, P.TCKT', '2025-06-05 03:52:46', '2025-06-11 10:10:37', 1, 1),
+(4, NULL, 4, 'Duyệt kế hoạch', 'Ban Giám đốc', '2025-06-05 03:52:39', '2025-06-16 16:05:11', 2, 2),
+(5, NULL, 5, 'Triển khai hồ sơ dự thầu', 'Ban Giám đốc, P.KD, P.DVKT, P.KHNS, P.TCKT', '2025-06-05 03:52:46', '2025-06-16 16:05:11', 1, 1),
 (6, NULL, 6, 'Chấm thầu', 'Khách hàng', '2025-06-05 03:52:53', '2025-06-11 10:10:37', 0, 4),
 (7, NULL, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', 'P.KD', '2025-06-05 03:53:00', '2025-06-11 10:10:37', 0, 4),
 (8, NULL, 8, 'Triển khai ký hợp đồng bán', 'P.KD, P.TCKT, P.DVKT', '2025-06-05 03:53:07', '2025-06-11 10:10:37', 0, 5),
 (9, NULL, 9, 'Duyệt hợp đồng bán', 'Ban Giám đốc', '2025-06-05 03:53:14', '2025-06-11 10:10:37', 0, 3),
 (10, NULL, 10, 'Duyệt hợp đồng bán', 'Ban Giám đốc', '2025-06-10 15:18:36', '2025-06-11 10:10:37', 1, 10),
-(11, 1, 1, 'Nhận nhu cầu khách hàng', 'Khách hàng', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL),
-(12, 1, 2, 'Đánh giá tính khả thi', 'P.KD, P.DVKT', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL),
-(13, 1, 3, 'Lập kế hoạch triển khai', 'P.KD, P.DVKT', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL),
-(14, 1, 4, 'Duyệt kế hoạch', 'Ban Giám đốc', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL),
-(15, 1, 5, 'Triển khai hồ sơ dự thầu', 'Ban Giám đốc, P.KD, P.DVKT, P.KHNS, P.TCKT', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL),
-(16, 1, 6, 'Chấm thầu', 'Khách hàng', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL),
-(17, 1, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', 'P.KD', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL),
-(18, 1, 8, 'Triển khai ký hợp đồng bán', 'P.KD, P.TCKT, P.DVKT', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL),
-(19, 1, 9, 'Duyệt hợp đồng bán', 'Ban Giám đốc', '2025-06-16 09:06:25', '2025-06-16 09:06:25', 0, NULL);
+(11, 1, 1, 'Nhận nhu cầu khách hàng', 'Khách hàng', '2025-06-16 09:06:25', '2025-06-16 16:09:12', 2, NULL),
+(12, 1, 2, 'Đánh giá tính khả thi', 'P.KD, P.DVKT', '2025-06-16 09:06:25', '2025-06-16 16:09:18', 2, NULL),
+(13, 1, 3, 'Lập kế hoạch triển khai', 'P.KD, P.DVKT', '2025-06-16 09:06:25', '2025-06-16 16:14:41', 2, NULL),
+(14, 1, 4, 'Duyệt kế hoạch', 'Ban Giám đốc', '2025-06-16 09:06:25', '2025-06-16 16:14:54', 2, NULL),
+(15, 1, 5, 'Triển khai hồ sơ dự thầu', 'Ban Giám đốc, P.KD, P.DVKT, P.KHNS, P.TCKT', '2025-06-16 09:06:25', '2025-06-16 16:14:54', 1, NULL),
+(16, 1, 6, 'Chấm thầu', 'Khách hàng', '2025-06-16 09:06:25', '2025-06-16 16:08:52', 0, NULL),
+(17, 1, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', 'P.KD', '2025-06-16 09:06:25', '2025-06-16 16:08:55', 0, NULL),
+(18, 1, 8, 'Triển khai ký hợp đồng bán', 'P.KD, P.TCKT, P.DVKT', '2025-06-16 09:06:25', '2025-06-16 16:08:58', 0, NULL),
+(19, 1, 9, 'Duyệt hợp đồng bán', 'Ban Giám đốc', '2025-06-16 09:06:25', '2025-06-16 16:09:01', 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -109,8 +109,8 @@ INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `depart
 CREATE TABLE `bidding_step_templates` (
   `id` int NOT NULL,
   `step_number` int NOT NULL,
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `department` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `department` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
