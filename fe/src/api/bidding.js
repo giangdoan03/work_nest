@@ -14,15 +14,12 @@ export const deleteBiddingAPI = (id) => instance.delete(`/biddings/${id}`)
 export const cloneFromTemplatesAPI = (biddingId) => instance.post(`/biddings/${biddingId}/init-steps`)
 
 // Lấy danh sách bước theo bidding_id
-export const getBiddingStepsAPI = (biddingId) =>
-    instance.get(`/bidding-steps`, { params: { bidding_id: biddingId } })
+export const getBiddingStepsAPI = (biddingId) => instance.get(`/bidding-steps`, { params: { bidding_id: biddingId } })
 
 // Cập nhật trạng thái bước
-export const updateBiddingStepAPI = (stepId, data) =>
-    instance.put(`/bidding-steps/${stepId}`, data)
+export const updateBiddingStepAPI = (stepId, data) => instance.put(`/bidding-steps/${stepId}`, data)
 
-export const completeBiddingStepAPI = (stepId) =>
-    instance.put(`/bidding-steps/${stepId}/complete`)
+export const completeBiddingStepAPI = (stepId) => instance.put(`/bidding-steps/${stepId}/complete`)
 
 
 
