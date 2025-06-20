@@ -49,35 +49,28 @@
                     <a-typography-text strong style="cursor: pointer" @click="showPopupDetail(record)">{{ text }}</a-typography-text>
                 </template>
                 <template v-else-if="column.key === 'action'">
-                    <a-dropdown placement="left">
-                        <a-button>
-                            <template #icon>
-                                <MoreOutlined />
-                            </template>
-                        </a-button>
-                        <template #overlay>
-                            <a-menu>
-                                <a-menu-item @click="showPopupDetail(record)">
-                                    <EditOutlined class="icon-action" style="color: blue;" />
-                                    Chỉnh sửa
-                                </a-menu-item>
-                                <a-menu-item>
-                                    <a-popconfirm
-                                        title="Bạn chắc chắn muốn xóa khách hàng này?"
-                                        ok-text="Xóa"
-                                        cancel-text="Hủy"
-                                        @confirm="deleteConfirm(record.id)"
-                                        placement="topRight"
-                                    >
-                                        <div>
-                                            <DeleteOutlined class="icon-action" style="color: red;" />
-                                            Xóa
-                                        </div>
-                                    </a-popconfirm>
-                                </a-menu-item>
-                            </a-menu>
-                        </template>
-                    </a-dropdown>
+                    <EyeOutlined
+                            class="icon-action"
+                            style="color: green;"
+                            @click="goToCustomerDetail(record)"
+                    />
+                    <EditOutlined
+                            class="icon-action"
+                            style="color: blue;"
+                            @click="showPopupDetail(record)"
+                    />
+                    <a-popconfirm
+                            title="Bạn chắc chắn muốn xóa khách hàng này?"
+                            ok-text="Xóa"
+                            cancel-text="Hủy"
+                            @confirm="deleteConfirm(record.id)"
+                            placement="topRight"
+                    >
+                        <DeleteOutlined
+                                class="icon-action"
+                                style="color: red;"
+                        />
+                    </a-popconfirm>
                 </template>
             </template>
         </a-table>
@@ -195,8 +188,13 @@ import { ref, computed, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { getCustomers, getCustomer, createCustomer, updateCustomer, deleteCustomer, getCustomerTransactions, createCustomerTransaction, getCustomerContracts } from '@/api/customer'
-import { EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons-vue'
+import { EditOutlined, DeleteOutlined, MoreOutlined, EyeOutlined } from '@ant-design/icons-vue'
 import { formatDate, formatDateForSave  } from '@/utils/formUtils'
+import CustomerDetail from '../page/CustomerDetail.vue'
+const customerDetail = ref({})
+
+import { useRouter } from 'vue-router'
+const router = useRouter()
 
 const customers = ref([])
 const loading = ref(false)
@@ -208,6 +206,8 @@ const selectedCustomer = ref(null)
 
 const interactionLogs = ref([])
 const contracts = ref([])
+
+const detailDrawerVisible = ref(false)
 
 const interactionForm = ref({
     type: '',
@@ -230,6 +230,7 @@ const pagination = ref({
     showSizeChanger: true,
     pageSizeOptions: ['10', '20', '50', '100']
 })
+
 
 const formData = ref({
     name: '',
@@ -276,6 +277,10 @@ const fetchCustomers = async () => {
     } finally {
         loading.value = false
     }
+}
+
+const goToCustomerDetail = (record) => {
+    router.push({ name: 'customer-detail', params: { id: record.id.toString() } })
 }
 
 const handleTableChange = (pag) => {
@@ -412,3 +417,11 @@ onMounted(() => {
     fetchCustomers()
 })
 </script>
+
+<style>
+    .icon-action {
+        font-size: 18px;
+        margin-right: 16px;
+        cursor: pointer;
+    }
+</style>

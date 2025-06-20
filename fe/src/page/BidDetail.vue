@@ -3,11 +3,17 @@
         <a-descriptions bordered :column="2">
             <a-descriptions-item label="Tên">{{ bidding?.title }}</a-descriptions-item>
             <a-descriptions-item label="Trạng thái">
-                <a-tag :color="getStatusColor(bidding?.status)">{{ bidding?.status }}</a-tag>
+                <a-tag :color="getStatusColor(bidding?.status)">
+                    {{ getStatusText(bidding?.status) }}
+                </a-tag>
             </a-descriptions-item>
 
             <a-descriptions-item label="Chi phí">{{ formatCurrency(bidding?.estimated_cost) }}</a-descriptions-item>
-            <a-descriptions-item label="Khách hàng">{{ getCustomerName(bidding?.customer_id) }}</a-descriptions-item>
+            <a-descriptions-item label="Khách hàng">
+                <a @click="goToCustomerDetail(bidding?.customer_id)" style="color: #1890ff; cursor: pointer;">
+                    {{ getCustomerName(bidding?.customer_id) }}
+                </a>
+            </a-descriptions-item>
 
             <a-descriptions-item label="Ngày bắt đầu">{{ formatDate(bidding?.start_date) }}</a-descriptions-item>
             <a-descriptions-item label="Ngày kết thúc">{{ formatDate(bidding?.end_date) }}</a-descriptions-item>
@@ -15,7 +21,6 @@
             <!-- Dòng này dùng span=2, nên không được thêm item nào -->
             <a-descriptions-item label="Mô tả" :span="2">{{ bidding?.description }}</a-descriptions-item>
         </a-descriptions>
-
 
         <a-typography-title :level="5" class="mt-30 mb-30">Tiến trình xử lý</a-typography-title>
 
@@ -95,15 +100,16 @@ import { message } from 'ant-design-vue'
 
 // ✅ Import thêm các hàm định dạng
 import { formatDate, formatCurrency } from '@/utils/formUtils'
-import { getCustomers } from '@/api/customer' // file API của bạn
-
+import { getCustomers } from '../api/customer' // file API của bạn
+import { useRouter } from 'vue-router'
+const router = useRouter()
 const route = useRoute()
 const id = route.params.id
 const bidding = ref({})
 const steps = ref([])
 const loadingSteps = ref(false)
 
-const drawerVisible = ref(false)
+let drawerVisible = ref(false)
 const selectedStep = ref(null)
 const customers = ref([])
 
@@ -181,6 +187,11 @@ const updateStepStatus = async (newStatus, step) => {
     }
 }
 
+const goToCustomerDetail = (customerId) => {
+    if (!customerId) return
+    router.push({ name: 'customer-detail', params: { id: customerId.toString() } })
+}
+
 const fetchCustomers = async () => {
     try {
         const res = await getCustomers()
@@ -220,6 +231,20 @@ const fetchData = async () => {
         loadingSteps.value = false
     }
 }
+
+const getStatusText = (status) => {
+    const map = {
+        pending: 'Chưa nộp',
+        submitted: 'Đã nộp hồ sơ',
+        shortlisted: 'Vào vòng sau',
+        awarded: 'Đã trúng thầu',
+        lost: 'Không trúng',
+        cancelled: 'Hủy thầu',
+    }
+    return map[status] || status
+}
+
+
 
 onMounted(async () => {
     await Promise.all([

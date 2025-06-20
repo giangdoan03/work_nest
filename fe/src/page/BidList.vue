@@ -20,14 +20,18 @@
                     {{ index + 1 }}
                 </template>
                 <template v-else-if="column.dataIndex === 'status'">
-                    <a-tag :color="getStatusColor(record.status)">{{ record.status }}</a-tag>
+                    <a-tag :color="getStatusColor(record.status)">
+                        {{ getStatusText(record.status) }}
+                    </a-tag>
+                </template>
+                <template v-else-if="column.dataIndex === 'estimated_cost'">
+                    {{ formatCurrency(record.estimated_cost) }}
+                </template>
+                <template v-else-if="column.dataIndex === 'start_date' || column.dataIndex === 'end_date'">
+                    {{ formatDate(record[column.dataIndex]) }}
                 </template>
                 <template v-else-if="column.dataIndex === 'action'">
-                    <EyeOutlined
-                            class="icon-action"
-                            style="color: green;"
-                            @click="goToDetail(record.id)"
-                    />
+                    <EyeOutlined class="icon-action" style="color: green;" @click="goToDetail(record.id)" />
                     <EditOutlined class="icon-action" style="color: blue;" @click="showPopupDetail(record)" />
                     <a-popconfirm
                             title="Bạn chắc chắn muốn xoá gói thầu này?"
@@ -39,7 +43,6 @@
                         <DeleteOutlined class="icon-action" style="color: red;" />
                     </a-popconfirm>
                 </template>
-
             </template>
         </a-table>
 
@@ -105,6 +108,7 @@
         cloneFromTemplatesAPI
     } from '@/api/bidding'
     import {updateBiddingAPI} from "../api/bidding";
+    import { formatDate } from '@/utils/formUtils' // nếu bạn đã có
 
     import { useRouter } from 'vue-router'
     const router = useRouter()
@@ -152,6 +156,23 @@
         end_date: [{ required: true, message: 'Chọn ngày kết thúc' }],
         estimated_cost: [{ required: true, message: 'Nhập chi phí dự toán' }],
         status: [{ required: true, message: 'Chọn trạng thái' }]
+    }
+
+    const formatCurrency = (value) => {
+        if (!value) return '0 đ'
+        return Number(value).toLocaleString('vi-VN') + ' đ'
+    }
+
+    const getStatusText = (status) => {
+        const map = {
+            pending: 'Chưa nộp',
+            submitted: 'Đã nộp hồ sơ',
+            shortlisted: 'Vào vòng sau',
+            awarded: 'Đã trúng thầu',
+            lost: 'Không trúng',
+            cancelled: 'Hủy thầu'
+        }
+        return map[status] || status
     }
 
     const getBiddings = async () => {

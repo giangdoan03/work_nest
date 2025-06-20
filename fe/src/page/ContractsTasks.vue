@@ -207,9 +207,9 @@ const submitForm = async() => {
     try {
         await formRef.value?.validate()
         if(selectedContract.value){
-            updateContract();
+            await updateContract();
         } else {
-            createContract();
+            await createContract();
         }
     } catch (error) {
         // Validation failed
@@ -222,7 +222,7 @@ const createContract = async () => {
     try {
         // await createContractAPI(formData.value);
         message.success('Thêm mới hợp đồng thành công');
-        getContracts();
+        await getContracts();
         onCloseDrawer();
     } catch (e) {
         message.error('Thêm mới hợp đồng không thành công')
@@ -237,7 +237,7 @@ const updateContract = async () => {
     try {
         // await updateContractAPI(selectedContract.value.id, formData.value);
         message.success('Cập nhật hợp đồng thành công');
-        getContracts();
+        await getContracts();
         onCloseDrawer()
     } catch (e) {
         message.error('Cập nhật hợp đồng không thành công')
@@ -250,7 +250,7 @@ const deleteConfirm = async (contractId) => {
     try {
         // await deleteContractAPI(contractId);
         message.success('Xóa hợp đồng thành công');
-        getContracts();
+        await getContracts();
     } catch (e) {
         message.error('Xóa hợp đồng không thành công')
     }

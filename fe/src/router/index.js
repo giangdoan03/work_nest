@@ -25,6 +25,7 @@ import BiddingStepTemplateList from '../page/BiddingStepTemplateList.vue'
 import ContractsStepTemplateList from '../page/ContractsStepTemplateList.vue'
 import BidList from '../page/BidList.vue'
 import BidDetail from '../page/BidDetail.vue'
+import CustomerDetail from '../page/CustomerDetail.vue'
 
 const routes = [
     {
@@ -77,6 +78,13 @@ const routes = [
                 name: 'customers',
                 component: () => import('../components/CustomerList.vue'),
                 meta: { breadcrumb: 'Khách hàng', parent: 'dashboard' }
+            },
+
+            {
+                path: '/customers/:id',
+                name: 'customer-detail',
+                component: CustomerDetail,
+                meta: { breadcrumb: 'Chi tiết khách hàng', parent: 'customer-list' }
             },
 
             {
