@@ -246,7 +246,7 @@ const rules = computed(() => ({
 }))
 
 const columns = [
-    { title: 'STT', key: 'stt' },
+    { title: 'STT', key: 'stt', width: '60px' },
     // { title: 'Avatar', key: 'avatar', dataIndex: 'avatar' },
     { title: 'Tên khách hàng', key: 'name', dataIndex: 'name' },
     { title: 'Email', key: 'email', dataIndex: 'email' },
