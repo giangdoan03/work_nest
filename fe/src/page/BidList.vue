@@ -13,7 +13,7 @@
                 :loading="loading"
                 style="margin-top: 12px"
                 row-key="id"
-                :scroll="{ y: 'calc(100vh - 330px)' }"
+                :scroll="{ y: 'calc(100vh - 400px)' }"
         >
             <template #bodyCell="{ column, record, index }">
                 <template v-if="column.dataIndex === 'stt'">
@@ -130,6 +130,7 @@
     })
 
     const columns = [
+        { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
         { title: 'Tên gói thầu', dataIndex: 'title', key: 'title' },
         { title: 'Chi phí dự toán', dataIndex: 'estimated_cost', key: 'estimated_cost' },
         { title: 'Trạng thái', dataIndex: 'status', key: 'status' },

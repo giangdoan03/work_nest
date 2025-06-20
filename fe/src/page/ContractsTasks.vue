@@ -61,6 +61,21 @@
                     </a-col>
                 </a-row>
                 <a-row :gutter="16">
+                    <a-col :span="24">
+                        <a-form-item label="Gói thầu đã trúng" name="bidding_id">
+                            <a-select
+                                    v-model:value="formData.bidding_id"
+                                    :options="awardedBiddings"
+                                    placeholder="Chọn gói thầu đã trúng"
+                                    allow-clear
+                                    show-search
+                                    :filter-option="(input, option) =>
+          option.label.toLowerCase().includes(input.toLowerCase())"
+                            />
+                        </a-form-item>
+                    </a-col>
+                </a-row>
+                <a-row :gutter="16">
                     <a-col :span="12">
                         <a-form-item label="Ngày bắt đầu" name="start_date">
                             <a-date-picker v-model:value="formData.start_date" style="width: 100%" />
@@ -97,6 +112,9 @@ import { ref, onMounted, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons-vue';
 import dayjs from 'dayjs';
+import { getBiddingsAPI } from '../api/bidding'
+import { getContractsAPI ,createContractAPI} from "../api/contract"; // ✅ đảm bảo đúng path
+import { formatDate } from '@/utils' // đường dẫn tuỳ theo vị trí thực tế
 
 const formRef = ref(null);
 const selectedContract = ref(null)
@@ -111,7 +129,10 @@ const formData = ref({
     start_date: null,
     end_date: null,
     description: "",
+    bidding_id: null,
 })
+
+const awardedBiddings = ref([])
 
 const columns = [
     { title: 'Tên hợp đồng', dataIndex: 'name', key: 'name' },
@@ -131,6 +152,21 @@ const getStatusColor = (status) => {
         cancelled: 'red'
     }
     return colors[status] || 'default'
+}
+
+const fetchAwardedBiddings = async () => {
+    try {
+        const res = await getBiddingsAPI()
+        awardedBiddings.value = res.data.data
+            .filter(bid => bid.status === 'awarded')
+            .map(bid => ({
+                label: bid.title,
+                value: parseInt(bid.id)
+            }))
+    } catch (e) {
+        console.error(e)
+        message.error('Không thể tải gói thầu đã trúng')
+    }
 }
 
 const validateName = async (_rule, value) => {    
@@ -174,6 +210,7 @@ const rules = computed(() => {
             { validator: validateDates, trigger: 'change' }
         ],
         description: [{ required: true, message: 'Vui lòng nhập mô tả', trigger: 'change' }],
+        bidding_id: [{ required: true, message: 'Vui lòng chọn gói thầu đã trúng', trigger: 'change' }],
     }
 })
 
@@ -181,28 +218,24 @@ const rules = computed(() => {
 const getContracts = async () => {
     loading.value = true
     try {
-        // const response = await getContractsAPI();
-        // tableData.value = response.data;
-        // Temporary mock data
-        tableData.value = [
-            {
-                id: 1,
-                name: 'Hợp đồng mẫu',
-                code: 'HD001',
-                status: 'pending',
-                start_date: '2024-03-20',
-                end_date: '2024-04-20',
-                created_at: '2024-03-20',
-                description: 'Mô tả hợp đồng mẫu'
-            }
-        ]
+        const response = await getContractsAPI()
+        tableData.value = response.data.map(item => ({
+            id: item.id,
+            name: item.name || item.title, // fallback nếu API dùng 'title'
+            code: item.code,
+            status: item.status,
+            start_date: item.start_date,
+            end_date: item.end_date,
+            created_at: item.created_at,
+            description: item.description
+        }))
     } catch (e) {
+        console.error(e)
         message.error('Không thể tải danh sách hợp đồng')
     } finally {
         loading.value = false
     }
 }
-
 const submitForm = async() => {
     try {
         await formRef.value?.validate()
@@ -217,19 +250,25 @@ const submitForm = async() => {
 }
 
 const createContract = async () => {
-    if(loadingCreate.value) return;
+    if (loadingCreate.value) return;
     loadingCreate.value = true;
     try {
-        // await createContractAPI(formData.value);
+        const payload = {
+            ...formData.value,
+            title: formData.value.name // 👈 Bổ sung dòng này để thỏa mãn yêu cầu API
+        }
+        await createContractAPI(payload);
         message.success('Thêm mới hợp đồng thành công');
         await getContracts();
         onCloseDrawer();
     } catch (e) {
+        console.error(e);
         message.error('Thêm mới hợp đồng không thành công')
     } finally {
         loadingCreate.value = false
     }
 }
+
 
 const updateContract = async () => {
     if(loadingCreate.value) return;
@@ -256,8 +295,8 @@ const deleteConfirm = async (contractId) => {
     }
 }
 
-const showPopupDetail = (record) => {    
-    selectedContract.value = record;
+const showPopupDetail = (record) => {
+    selectedContract.value = record
     formData.value = {
         name: record.name,
         code: record.code,
@@ -265,12 +304,15 @@ const showPopupDetail = (record) => {
         start_date: dayjs(record.start_date),
         end_date: dayjs(record.end_date),
         description: record.description,
+        bidding_id: record.bidding_id || null // nếu có
     }
-    openDrawer.value = true;
+    openDrawer.value = true
+    fetchAwardedBiddings()
 }
 
 const showPopupCreate = () => {
-    openDrawer.value = true;
+    openDrawer.value = true
+    fetchAwardedBiddings()
 }
 
 const onCloseDrawer = () => {

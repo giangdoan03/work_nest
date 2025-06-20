@@ -10,6 +10,9 @@
         <a-table :columns="columns" :data-source="tableData" :loading="loading"
             style="margin-top: 12px;" row-key="module" :scroll="{ y: 'calc( 100vh - 330px )' }">
             <template #bodyCell="{ column, record, index, text }">
+                <template v-if="column.dataIndex == 'stt'">
+                    {{ index+1 }}
+                </template>
                 <template v-if="column.dataIndex == 'name'">
                     <a-typography-text strong style="cursor: pointer;" @click="showPopupDetail(record)">{{ text }}</a-typography-text>
                 </template>
@@ -125,7 +128,7 @@ const formData = ref({
 })
 
 const columns = [
-    // { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
+    { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
     { title: 'Tên người dùng', dataIndex: 'name', key: 'name' },
     { title: 'Email', dataIndex: 'email', key: 'email' },
     { title: 'Số điện thoại', dataIndex: 'phone', key: 'phone' },

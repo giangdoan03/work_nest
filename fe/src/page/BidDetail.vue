@@ -1,5 +1,11 @@
 <template>
     <div>
+        <a-page-header
+                title="Chi tiết gói thầu"
+                sub-title="Xem thông tin và tiến trình xử lý"
+                @back="goBack"
+                style="padding-left: 0"
+        />
         <a-descriptions bordered :column="2">
             <a-descriptions-item label="Tên">{{ bidding?.title }}</a-descriptions-item>
             <a-descriptions-item label="Trạng thái">
@@ -243,8 +249,9 @@ const getStatusText = (status) => {
     }
     return map[status] || status
 }
-
-
+const goBack = () => {
+    router.push('/bid-list')
+}
 
 onMounted(async () => {
     await Promise.all([

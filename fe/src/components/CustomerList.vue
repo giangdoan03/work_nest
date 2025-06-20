@@ -1,6 +1,6 @@
 <template>
     <div>
-        <a-page-header title="Quản lý khách hàng" />
+        <a-page-header title="Quản lý khách hàng" style="padding-left: 0; padding-top: 0"/>
 
         <!-- Bộ lọc -->
         <a-form layout="inline" @submit.prevent>
@@ -14,11 +14,19 @@
                         <a-select-option value="regular">Đối tác thường</a-select-option>
                     </a-select>
                 </a-col>
-                <a-col :span="6">
+                <a-col :span="5">
                     <a-range-picker v-model:value="filters.dateRange" style="width: 100%" />
                 </a-col>
-                <a-col :span="3">
-                    <a-input-number v-model:value="filters.assigned_to" :min="1" placeholder="Người phụ trách ID" style="width: 100%" />
+                <a-col :span="4">
+                        <a-select
+                                v-model:value="filters.assigned_to"
+                                :options="userOptions"
+                                placeholder="Người phụ trách"
+                                allow-clear
+                                show-search
+                                option-filter-prop="label"
+                                style="width: 100%"
+                        />
                 </a-col>
                 <a-col :span="3">
                     <a-button type="primary" @click="fetchCustomers">Tìm kiếm</a-button>
@@ -36,11 +44,16 @@
             row-key="id"
             :pagination="pagination"
             @change="handleTableChange"
-            :scroll="{ y: 'calc( 100vh - 330px )' }"
+            :scroll="{ y: 'calc( 100vh - 430px )' }"
         >
             <template #bodyCell="{ column, record, index, text }">
                 <template v-if="column.key === 'stt'">
                     {{ (pagination.current - 1) * pagination.pageSize + index + 1 }}
+                </template>
+                <template v-if="column.key === 'assigned_to'">
+                    <a-tag color="blue">
+                        {{ getUserName(record.assigned_to) }}
+                    </a-tag>
                 </template>
                 <template v-else-if="column.key === 'avatar'">
                     <img v-if="record.avatar" :src="record.avatar" alt="avatar" style="width: 50px; height: 50px; object-fit: cover" />
@@ -89,6 +102,21 @@
                     <a-col :span="24">
                         <a-form-item label="Tên khách hàng" name="name">
                             <a-input v-model:value="formData.name" placeholder="Nhập tên khách hàng" />
+                        </a-form-item>
+                    </a-col>
+                </a-row>
+                <a-row :gutter="16">
+                    <a-col :span="24">
+                        <a-form-item label="Người phụ trách" name="assigned_to">
+                            <a-select
+                                    v-model:value="formData.assigned_to"
+                                    :options="userOptions"
+                                    :key="userOptions.length"
+                                    placeholder="Chọn người phụ trách"
+                                    show-search
+                                    :filter-option="(input, option) => option.label.toLowerCase().includes(input.toLowerCase())"
+                            />
+
                         </a-form-item>
                     </a-col>
                 </a-row>
@@ -194,6 +222,7 @@ import CustomerDetail from '../page/CustomerDetail.vue'
 const customerDetail = ref({})
 
 import { useRouter } from 'vue-router'
+import {getUsers} from "../api/user";
 const router = useRouter()
 
 const customers = ref([])
@@ -220,8 +249,11 @@ const filters = ref({
     search: '',
     customer_group: undefined,
     dateRange: [],
-    assigned_to: undefined
+    assigned_to: null
 })
+
+const assignees = ref([])
+const userOptions = ref([])
 
 const pagination = ref({
     current: 1,
@@ -236,7 +268,8 @@ const formData = ref({
     name: '',
     email: '',
     phone: '',
-    address: ''
+    address: '',
+    assigned_to: null
 })
 
 const rules = computed(() => ({
@@ -253,6 +286,7 @@ const columns = [
     { title: 'SĐT', key: 'phone', dataIndex: 'phone' },
     { title: 'Địa chỉ', key: 'address', dataIndex: 'address' },
     { title: 'Tỉnh/TP', key: 'city', dataIndex: 'city' },
+    { title: 'Người phụ trách', key: 'assigned_to', dataIndex: 'assigned_to' },
     { title: 'Ngày tương tác mới nhất', key: 'last_interaction', dataIndex: 'last_interaction', customRender: ({ text }) => formatDate(text)},
     { title: 'Thao tác', key: 'action' }
 ]
@@ -279,6 +313,24 @@ const fetchCustomers = async () => {
     }
 }
 
+
+const getUser = async () => {
+    try {
+        const response = await getUsers()
+        // Convert sang định dạng mà <a-select> hiểu: { label, value }
+        userOptions.value = response.data.map(user => ({
+            label: user.name,
+            value: Number(user.id)
+        }))
+    } catch (e) {
+        console.error('Không thể tải người dùng')
+    }
+}
+
+const getUserName = (id) => {
+    const user = userOptions.value.find(u => u.value === Number(id))
+    return user ? user.label : 'Không rõ'
+}
 const goToCustomerDetail = (record) => {
     router.push({ name: 'customer-detail', params: { id: record.id.toString() } })
 }
@@ -303,7 +355,8 @@ const showPopupDetail = async (record) => {
         name: record.name,
         email: record.email,
         phone: record.phone,
-        address: record.address
+        address: record.address,
+        assigned_to: record.assigned_to ? parseInt(record.assigned_to) : null
     }
     openDrawer.value = true
     await fetchInteractionLogs(record.id)
@@ -334,7 +387,7 @@ const deleteConfirm = async (id) => {
     try {
         await deleteCustomer(id)
         message.success('Đã xoá khách hàng')
-        fetchCustomers()
+        await fetchCustomers()
     } catch (err) {
         message.error('Không thể xoá khách hàng')
     }
@@ -399,7 +452,8 @@ const resetForm = () => {
         name: '',
         email: '',
         phone: '',
-        address: ''
+        address: '',
+        assigned_to: null
     }
     formRef.value?.resetFields()
 }
@@ -415,6 +469,7 @@ const onCloseDrawer = () => {
 
 onMounted(() => {
     fetchCustomers()
+    getUser()
 })
 </script>
 
