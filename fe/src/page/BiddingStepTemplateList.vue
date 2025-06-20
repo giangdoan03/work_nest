@@ -2,7 +2,7 @@
     <div>
         <a-flex justify="space-between">
             <div>
-                <a-typography-title :level="4">Quy trình đấu thầu mẫu</a-typography-title>
+                <a-typography-title :level="4">Quy trình đấu thầu (mẫu)</a-typography-title>
             </div>
             <a-button type="primary" @click="showPopupCreate">Thêm bước mới</a-button>
         </a-flex>
