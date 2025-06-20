@@ -1,18 +1,23 @@
 <template>
     <div>
-        <a-descriptions bordered :column="2" title="Thông tin gói thầu">
+        <a-descriptions bordered :column="2">
             <a-descriptions-item label="Tên">{{ bidding?.title }}</a-descriptions-item>
             <a-descriptions-item label="Trạng thái">
                 <a-tag :color="getStatusColor(bidding?.status)">{{ bidding?.status }}</a-tag>
             </a-descriptions-item>
-            <a-descriptions-item label="Chi phí">{{ bidding?.estimated_cost?.toLocaleString() }} đ</a-descriptions-item>
-            <a-descriptions-item label="Khách hàng ID">{{ bidding?.customer_id }}</a-descriptions-item>
-            <a-descriptions-item label="Ngày bắt đầu">{{ bidding?.start_date }}</a-descriptions-item>
-            <a-descriptions-item label="Ngày kết thúc">{{ bidding?.end_date }}</a-descriptions-item>
+
+            <a-descriptions-item label="Chi phí">{{ formatCurrency(bidding?.estimated_cost) }}</a-descriptions-item>
+            <a-descriptions-item label="Khách hàng">{{ getCustomerName(bidding?.customer_id) }}</a-descriptions-item>
+
+            <a-descriptions-item label="Ngày bắt đầu">{{ formatDate(bidding?.start_date) }}</a-descriptions-item>
+            <a-descriptions-item label="Ngày kết thúc">{{ formatDate(bidding?.end_date) }}</a-descriptions-item>
+
+            <!-- Dòng này dùng span=2, nên không được thêm item nào -->
             <a-descriptions-item label="Mô tả" :span="2">{{ bidding?.description }}</a-descriptions-item>
         </a-descriptions>
 
-        <a-typography-title :level="5">Tiến trình xử lý</a-typography-title>
+
+        <a-typography-title :level="5" class="mt-30 mb-30">Tiến trình xử lý</a-typography-title>
 
         <a-spin :spinning="loadingSteps">
             <a-steps direction="vertical" :current="currentStepIndex()">
@@ -68,12 +73,11 @@
                             <a-select-option value="3">Bỏ qua</a-select-option>
                         </a-select>
                     </a-descriptions-item>
-                    <a-descriptions-item label="Ngày tạo">{{ selectedStep.created_at }}</a-descriptions-item>
-                    <a-descriptions-item label="Ngày cập nhật">{{ selectedStep.updated_at }}</a-descriptions-item>
+                    <a-descriptions-item label="Ngày tạo">{{ formatDate(selectedStep.created_at) }}</a-descriptions-item>
+                    <a-descriptions-item label="Ngày cập nhật">{{ formatDate(selectedStep.updated_at) }}</a-descriptions-item>
                 </a-descriptions>
             </template>
         </a-drawer>
-
     </div>
 </template>
 
@@ -86,19 +90,22 @@ import {
     updateBiddingStepAPI,
     completeBiddingStepAPI
 } from '@/api/bidding'
-import axios from 'axios'
 import { useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 
+// ✅ Import thêm các hàm định dạng
+import { formatDate, formatCurrency } from '@/utils/formUtils'
+import { getCustomers } from '@/api/customer' // file API của bạn
+
 const route = useRoute()
 const id = route.params.id
-const bidding = ref(null)
-bidding.value = {}
+const bidding = ref({})
 const steps = ref([])
 const loadingSteps = ref(false)
 
 const drawerVisible = ref(false)
 const selectedStep = ref(null)
+const customers = ref([])
 
 const openStepDrawer = (step) => {
     selectedStep.value = { ...step }
@@ -174,6 +181,24 @@ const updateStepStatus = async (newStatus, step) => {
     }
 }
 
+const fetchCustomers = async () => {
+    try {
+        const res = await getCustomers()
+        customers.value = res.data?.data || [] // fix ở đây
+        console.log('✅ Loaded customers:', customers.value)
+    } catch (e) {
+        console.error(e)
+        message.error('Không thể tải danh sách khách hàng')
+    }
+}
+
+const getCustomerName = (id) => {
+    if (!id || !customers.value.length) return 'Đang tải...'
+    const customer = customers.value.find(c => String(c.id) === String(id))
+    return customer ? customer.name : `Khách hàng #${id}`
+}
+
+
 const fetchData = async () => {
     try {
         const res = await getBiddingAPI(id)
@@ -196,7 +221,13 @@ const fetchData = async () => {
     }
 }
 
-onMounted(fetchData)
+onMounted(async () => {
+    await Promise.all([
+        fetchData(),
+        fetchCustomers()
+    ])
+})
+
 </script>
 
 <style scoped>
@@ -208,5 +239,11 @@ onMounted(fetchData)
     color: rgba(0, 0, 0, 0.85) !important;
     font-weight: 500;
     cursor: pointer;
+}
+.mt-30 {
+    margin-top: 30px;
+}
+.mb-30 {
+    margin-bottom: 30px;
 }
 </style>
