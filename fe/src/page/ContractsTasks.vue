@@ -14,7 +14,7 @@
                     {{ index+1 }}
                 </template>
                 <template v-if="column.dataIndex === 'name'">
-                    <strong>{{ record.name }}</strong>
+                    <a-typography-text  @click="goToContractDetail(record.id)" strong style="cursor: pointer">{{ record.name }}</a-typography-text>
                 </template>
                 <template v-else-if="column.dataIndex === 'status'">
                     <a-tag :color="getStatusColor(record.status)">

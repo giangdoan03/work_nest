@@ -19,6 +19,9 @@
                 <template v-if="column.dataIndex === 'stt'">
                     {{ index + 1 }}
                 </template>
+                <template v-else-if="column.key === 'title'">
+                    <a-typography-text strong style="cursor: pointer" @click="goToDetail(record.id)">{{ record.title }}</a-typography-text>
+                </template>
                 <template v-else-if="column.dataIndex === 'status'">
                     <a-tag :color="getStatusColor(record.status)">
                         {{ getStatusText(record.status) }}
