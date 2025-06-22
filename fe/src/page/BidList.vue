@@ -75,6 +75,9 @@
                 <a-form-item label="Chi phí dự toán" name="estimated_cost">
                     <a-input-number v-model:value="formData.estimated_cost" style="width: 100%" :min="0" />
                 </a-form-item>
+                <a-form-item label="Người phụ trách" name="assigned_to">
+                    <a-select v-model:value="formData.assigned_to" :options="userOptions" placeholder="Chọn người phụ trách" />
+                </a-form-item>
                 <a-form-item label="Trạng thái" name="status">
                     <a-select v-model:value="formData.status" placeholder="Chọn trạng thái">
                         <a-select-option value="pending">Chưa xử lý</a-select-option>
@@ -105,10 +108,11 @@
     import {
         getBiddingsAPI,
         createBiddingAPI,
-        cloneFromTemplatesAPI
+        cloneFromTemplatesAPI, deleteBiddingAPI
     } from '@/api/bidding'
     import {updateBiddingAPI} from "../api/bidding";
     import { formatDate } from '@/utils/formUtils' // nếu bạn đã có
+    import {getUsers} from '@/api/user.js'
 
     import { useRouter } from 'vue-router'
     const router = useRouter()
@@ -126,8 +130,13 @@
         estimated_cost: 0,
         status: 'pending',
         start_date: null,
-        end_date: null
+        end_date: null,
+        assigned_to: null
     })
+
+    const userOptions = ref([])
+
+    const currentPage = ref(1)
 
     const columns = [
         { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
@@ -164,6 +173,14 @@
         return Number(value).toLocaleString('vi-VN') + ' đ'
     }
 
+    const fetchUsers = async () => {
+        const res = await getUsers()
+        userOptions.value = res.data.map(user => ({
+            label: user.name,
+            value: user.id
+        }))
+    }
+
     const getStatusText = (status) => {
         const map = {
             pending: 'Chưa nộp',
@@ -179,8 +196,8 @@
     const getBiddings = async () => {
         loading.value = true
         try {
-            const res = await getBiddingsAPI()
-            tableData.value = res.data.data // ✅ chỉ lấy mảng `data`
+            const res = await getBiddingsAPI({ page: currentPage.value, per_page: 20 }) // hoặc 100
+            tableData.value = res.data.data
         } catch (e) {
             message.error('Không thể tải gói thầu')
         } finally {
@@ -192,23 +209,47 @@
         router.push({ name: 'bid-detail', params: { id } })
     }
 
-    const createBidding = async () => {
-        loadingCreate.value = true
+    const submitForm = async () => {
         try {
+            await formRef.value?.validate()
+
             const formatted = {
                 ...formData.value,
                 start_date: dayjs(formData.value.start_date).format('YYYY-MM-DD'),
                 end_date: dayjs(formData.value.end_date).format('YYYY-MM-DD')
             }
-            const res = await createBiddingAPI(formatted)
-            await cloneFromTemplatesAPI(res.data.id)
-            message.success('Tạo gói thầu thành công')
+
+            if (selectedBidding.value) {
+                await updateBiddingAPI(selectedBidding.value.id, formatted)
+                message.success('Cập nhật thành công')
+            } else {
+                const res = await createBiddingAPI(formatted)
+                await cloneFromTemplatesAPI(res.data.id)
+                message.success('Tạo gói thầu thành công')
+            }
+
             onCloseDrawer()
-            getBiddings()
+            await getBiddings()
         } catch (e) {
-            message.error('Không thể tạo gói thầu')
+            // Log lỗi chi tiết
+            console.error('Lỗi submitForm:', e?.response?.data || e)
+            const errMsg = e?.response?.data?.message || 'Có lỗi xảy ra'
+            message.error(errMsg)
         } finally {
             loadingCreate.value = false
+        }
+    }
+
+
+
+    const deleteConfirm = async (id) => {
+        try {
+            // Gọi API xoá (bạn cần có API deleteBiddingAPI tương ứng)
+            await deleteBiddingAPI(id)
+            message.success('Xoá gói thầu thành công')
+            await getBiddings()
+        } catch (e) {
+            message.error('Xoá gói thầu thất bại')
         }
     }
 
@@ -222,34 +263,6 @@
         openDrawer.value = true
     }
 
-
-    const submitForm = async () => {
-        try {
-            await formRef.value?.validate()
-
-            if (selectedBidding.value) {
-                await updateBiddingAPI(selectedBidding.value.id, {
-                    ...formData.value,
-                    start_date: dayjs(formData.value.start_date).format('YYYY-MM-DD'),
-                    end_date: dayjs(formData.value.end_date).format('YYYY-MM-DD'),
-                })
-                message.success('Cập nhật thành công')
-            } else {
-                const res = await createBiddingAPI(formData.value)
-                await cloneFromTemplatesAPI(res.data.id)
-                message.success('Tạo gói thầu thành công')
-            }
-
-            onCloseDrawer()
-            await getBiddings()
-        } catch (e) {
-            message.error('Có lỗi xảy ra')
-        } finally {
-            loadingCreate.value = false
-        }
-    }
-
-
     const onCloseDrawer = () => {
         openDrawer.value = false
         selectedBidding.value = null
@@ -260,7 +273,11 @@
         openDrawer.value = true
     }
 
-    onMounted(getBiddings)
+    onMounted(() => {
+        fetchUsers()
+        getBiddings()
+    })
+
 </script>
 
 <style scoped>

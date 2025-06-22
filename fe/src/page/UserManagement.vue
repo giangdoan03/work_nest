@@ -10,50 +10,55 @@
         <a-table :columns="columns" :data-source="tableData" :loading="loading"
             style="margin-top: 12px;" row-key="module" :scroll="{ y: 'calc( 100vh - 330px )' }">
             <template #bodyCell="{ column, record, index, text }">
-                <template v-if="column.dataIndex == 'stt'">
+                <template v-if="column.dataIndex === 'stt'">
                     {{ index+1 }}
                 </template>
-                <template v-if="column.dataIndex == 'name'">
+                <template v-if="column.dataIndex === 'name'">
                     <a-typography-text strong style="cursor: pointer;" @click="showPopupDetail(record)">{{ text }}</a-typography-text>
                 </template>
-                <template v-if="column.dataIndex == 'department'">
+                <template v-if="column.dataIndex === 'department'">
                     {{ getNameDepartments(record.department_id) }}
                 </template>
-                <template v-else-if="column.dataIndex == 'action'">
-                    <a-dropdown placement="left">
-                        <a-button>
-                            <template #icon>
-                                <MoreOutlined />
-                            </template>
-                        </a-button>
-                        <template #overlay>
-                        <a-menu>
-                            <a-menu-item @click="showPopupDetail(record)">
-                                <EditOutlined class="icon-action" style="color: blue;" />
-                                Chỉnh sửa
-                            </a-menu-item>
-                            <a-menu-item>
-                                <a-popconfirm
-                                    title="Bạn chắc chắn muốn xóa người dùng này?"
-                                    ok-text="Xóa"
-                                    cancel-text="Hủy"
-                                    @confirm="deleteConfirm(record.id)"
-                                    placement="topRight"
-                                >
-                                    <div>
-                                        <DeleteOutlined class="icon-action" style="color: red;"/>
-                                        Xóa
-                                    </div>
-                                </a-popconfirm>
-                            </a-menu-item>
-                        </a-menu>
-                        </template>
-                    </a-dropdown>
+                <template v-else-if="column.dataIndex === 'action'">
+                    <a-space>
+                        <!-- Xem chi tiết -->
+                        <EyeOutlined
+                            class="icon-action"
+                            style="color: #1890ff;"
+                            @click="goToUserDetail(record.id)"
+                        />
+
+                        <!-- Chỉnh sửa -->
+                        <EditOutlined
+                            class="icon-action"
+                            style="color: blue;"
+                            @click="showPopupDetail(record)"
+                        />
+
+                        <!-- Xóa -->
+                        <a-popconfirm
+                            title="Bạn chắc chắn muốn xóa người dùng này?"
+                            ok-text="Xóa"
+                            cancel-text="Hủy"
+                            @confirm="deleteConfirm(record.id)"
+                            placement="topRight"
+                        >
+                            <DeleteOutlined class="icon-action" style="color: red;" />
+                        </a-popconfirm>
+                    </a-space>
+
                 </template>
+
             </template>
         </a-table>
-        <a-drawer title="Tạo người dùng mới" :width="700" :open="openDrawer" :body-style="{ paddingBottom: '80px' }"
-            :footer-style="{ textAlign: 'right' }" @close="onCloseDrawer">
+        <a-drawer
+            :title="selectedUser ? 'Sửa người dùng' : 'Tạo người dùng mới'"
+            :width="700"
+            :open="openDrawer"
+            :body-style="{ paddingBottom: '80px' }"
+            :footer-style="{ textAlign: 'right' }"
+            @close="onCloseDrawer"
+        >
             <a-form ref="formRef" :model="formData" :rules="rules" layout="vertical">
                 <a-row :gutter="16">
                     <a-col :span="24">
@@ -109,7 +114,9 @@ import { ref, onMounted, computed } from 'vue'
 import { getUsers, createUser, updateUser, deleteUser } from '../api/user'
 import { getDepartments } from '@/api/department'
 import { message } from 'ant-design-vue'
-import { EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons-vue';
+import { EditOutlined, DeleteOutlined, MoreOutlined, EyeOutlined } from '@ant-design/icons-vue';
+import { useRouter } from 'vue-router'
+const router = useRouter()
 
 const formRef = ref(null);
 const selectedUser = ref(null)
@@ -136,7 +143,6 @@ const columns = [
     { title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px', align:'center' },
 ]
 
-////validate các trường
 
 function validateEmailtype(email) {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -239,13 +245,17 @@ const getUser = async () => {
     }
 }
 
+const goToUserDetail = (id) => {
+    router.push(`/users/${id}`)
+}
+
 const submitForm = async() => {
     try {
         await formRef.value?.validate()
         if(selectedUser.value){
-            updateDrawerUser();
+            await updateDrawerUser();
         }else{
-            createDrawerUser();
+            await createDrawerUser();
         }
     } catch (error) {
         

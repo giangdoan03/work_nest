@@ -46,8 +46,9 @@ $routes->group('api', function ($routes) {
     $routes->get('contracts/(:num)/step-count', 'ContractController::stepCount/$1');
     $routes->get('contracts/(:num)/steps/details', 'ContractController::stepDetails/$1');
     $routes->post('contracts/(:num)/steps/resequence', 'ContractStepController::resequence/$1');
+    $routes->post('contracts/(:num)/clone-from-template', 'ContractStepController::cloneFromTemplate/$1');
 
-    $routes->resource('contracts', ['controller' => 'ContractController']);
+
 
     // Contract Step routes
     $routes->get('contracts/(:num)/steps', 'ContractStepController::index/$1');     // Lấy danh sách bước của 1 hợp đồng
@@ -57,6 +58,9 @@ $routes->group('api', function ($routes) {
     $routes->put('contract-steps/(:num)', 'ContractStepController::update/$1');     // Cập nhật bước theo ID
     $routes->delete('contract-steps/(:num)', 'ContractStepController::delete/$1');  // Xoá bước theo ID
     $routes->post('contracts/(:num)/add-steps-from-templates', 'ContractStepController::addStepsFromTemplates/$1');
+    $routes->get('contracts/can-complete/(:num)', 'ContractController::canMarkAsComplete/$1');
+
+    $routes->resource('contracts', ['controller' => 'ContractController']);
 
     // Step template routes
     $routes->get('step-templates', 'StepTemplateController::index');
@@ -127,6 +131,13 @@ $routes->group('api', function ($routes) {
     $routes->post('settings', 'SettingController::create');          // Tạo mới
     $routes->put('settings/(:num)', 'SettingController::update/$1'); // Cập nhật
     $routes->delete('settings/(:num)', 'SettingController::delete/$1'); // Xoá
+
+    $routes->get('contract-step-templates', 'ContractStepTemplateController::index');
+    $routes->post('contract-step-templates', 'ContractStepTemplateController::create');
+    $routes->put('contract-step-templates/(:num)', 'ContractStepTemplateController::update/$1');
+    $routes->delete('contract-step-templates/(:num)', 'ContractStepTemplateController::delete/$1');
+    $routes->put('contract-steps/(:num)/complete', 'ContractStepController::complete/$1');
+
 
 
 

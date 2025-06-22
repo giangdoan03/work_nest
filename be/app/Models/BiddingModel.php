@@ -11,7 +11,7 @@ class BiddingModel extends Model
 
     protected $allowedFields = [
         'title', 'description', 'customer_id', 'estimated_cost', 'status',
-        'start_date', 'end_date', 'created_at', 'updated_at'
+        'start_date', 'end_date', 'created_at', 'updated_at', 'assigned_to'
     ];
 
     protected $useTimestamps = true;

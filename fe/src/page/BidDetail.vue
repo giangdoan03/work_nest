@@ -4,7 +4,7 @@
                 title="Chi tiết gói thầu"
                 sub-title="Xem thông tin và tiến trình xử lý"
                 @back="goBack"
-                style="padding-left: 0"
+                style="padding: 0 0 20px;"
         />
         <a-descriptions bordered :column="2">
             <a-descriptions-item label="Tên">{{ bidding?.title }}</a-descriptions-item>
@@ -41,12 +41,21 @@
                 >
                     <template #description>
                         <div style="background: #fafafa; padding: 12px; border: 1px solid #f0f0f0; border-radius: 6px;">
-                            <p>Phòng ban: {{ step.department ?? '-' }}</p>
+                            <p>Phòng ban:
+                                <a-tag
+                                    v-for="(dep, i) in parseDepartment(step.department)"
+                                    :key="i"
+                                    color="blue"
+                                    style="margin-right: 5px;"
+                                >
+                                    {{ dep }}
+                                </a-tag>
+                            </p>
                             <p>
                                 Trạng thái:
-                                <span :style="{ color: getStepStatusColor(step.status) }">
+                                <a-tag :color="getStepStatusColor(step.status)">
                                     {{ statusText(step.status) }}
-                                </span>
+                                </a-tag>
                             </p>
                         </div>
                     </template>
@@ -103,8 +112,6 @@ import {
 } from '@/api/bidding'
 import { useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
-
-// ✅ Import thêm các hàm định dạng
 import { formatDate, formatCurrency } from '@/utils/formUtils'
 import { getCustomers } from '../api/customer' // file API của bạn
 import { useRouter } from 'vue-router'
@@ -175,11 +182,21 @@ const currentStepIndex = () => {
     return next >= steps.value.length ? steps.value.length - 1 : next
 }
 
+const parseDepartment = (val) => {
+    try {
+        const parsed = JSON.parse(val)
+        return Array.isArray(parsed) ? parsed : [val]
+    } catch (e) {
+        return val ? [val] : []
+    }
+}
+
+
 const updateStepStatus = async (newStatus, step) => {
     try {
         if (newStatus === '2') {
             await completeBiddingStepAPI(step.id)
-            message.success('Đã hoàn thành và mở bước kế tiếp')
+            message.success('Bước đã hoàn thành và bước kế tiếp đã được mở')
         } else {
             await updateBiddingStepAPI(step.id, { status: newStatus })
             message.success('Đã cập nhật trạng thái bước')
@@ -188,10 +205,23 @@ const updateStepStatus = async (newStatus, step) => {
         drawerVisible.value = false
         await fetchData()
     } catch (e) {
-        console.error(e)
-        message.error('Lỗi khi cập nhật bước')
+        console.warn('⚠️ Lỗi cập nhật bước:', e)
+
+        // Ưu tiên lấy thông báo cụ thể từ server nếu có
+        const errMsg =
+            e?.response?.data?.messages?.error || // CodeIgniter 4 style
+            e?.response?.data?.message ||         // Generic REST error
+            '❌ Đã xảy ra lỗi khi cập nhật bước'
+
+        if (e?.response?.status === 400) {
+            message.warning(errMsg) // Lỗi logic (ví dụ: chưa hoàn thành bước trước)
+        } else {
+            message.error(errMsg)   // Lỗi nghiêm trọng (server, network,...)
+        }
     }
 }
+
+
 
 const goToCustomerDetail = (customerId) => {
     if (!customerId) return
@@ -202,7 +232,6 @@ const fetchCustomers = async () => {
     try {
         const res = await getCustomers()
         customers.value = res.data?.data || [] // fix ở đây
-        console.log('✅ Loaded customers:', customers.value)
     } catch (e) {
         console.error(e)
         message.error('Không thể tải danh sách khách hàng')

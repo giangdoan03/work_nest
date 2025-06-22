@@ -20,3 +20,9 @@ export const getContractStepCountAPI = (id) => instance.get(`/contracts/${id}/st
 export const getContractStepDetailsAPI = (id) => instance.get(`/contracts/${id}/step-details`)
 
 export const getContractsByCustomerAPI = (customerId) => instance.get(`/contracts/by-customer/${customerId}`)
+
+export const cloneStepsFromTemplateAPI = (contractId) =>
+    instance.post(`/contracts/${contractId}/clone-from-template`);
+
+export const canMarkContractAsCompleteAPI = (contractId) =>
+    instance.get(`/contracts/can-complete/${contractId}`);

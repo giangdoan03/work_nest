@@ -131,7 +131,7 @@ class BiddingController extends ResourceController
     /**
      * Tạo các bước mẫu từ setting `bidding_steps`
      */
-    protected function generateStepsFromTemplate($biddingId, $customerId)
+    protected function generateStepsFromTemplate($biddingId, $customerId): void
     {
         $settingModel = new SettingModel();
         $stepModel = new BiddingStepModel();

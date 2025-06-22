@@ -154,7 +154,6 @@ const pathToKeyMap = {
     '/custom-pages': 'trang-tu-thiet-ke',
     '/checkin-history': 'lich-su-checkin',
     '/customers': 'quan-ly-khach-hang',
-    '/settings': 'cau-hinh',
     '/purchase-history': 'lich-su-mua-goi',
     '/permissions': 'permission',
     '/departments': 'list-phong-ban',
@@ -173,6 +172,7 @@ const pathToKeyMap = {
 
     '/settings/bidding': 'cau-hinh-dau-thau',
     '/settings/contract': 'cau-hinh-hop-dong',
+    '/settings': 'cau-hinh',
 }
 
 
@@ -200,7 +200,7 @@ const keyToParentMap = {
     'documents-settings': 'documents',
 
     'cau-hinh-dau-thau': 'cau-hinh',
-    'cau-hinh-hop-dong': 'cau-hinh',
+    'cau-hinh-hop-dong': 'cau-hinh'
 }
 
 

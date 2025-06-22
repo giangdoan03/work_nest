@@ -6,7 +6,7 @@ const instance = axios.create({
 })
 
 // API bidding
-export const getBiddingsAPI = () => instance.get('/biddings')
+export const getBiddingsAPI = (params = {}) => instance.get('/biddings', { params })
 export const getBiddingAPI = (id) => instance.get(`/biddings/${id}`)
 export const createBiddingAPI = (data) => instance.post('/biddings', data)
 export const updateBiddingAPI = (id, data) => instance.put(`/biddings/${id}`, data)
