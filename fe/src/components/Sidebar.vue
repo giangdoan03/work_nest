@@ -27,14 +27,6 @@
                 <TeamOutlined/>
                 <span>Quản lý khách hàng</span>
             </a-menu-item>
-            <a-menu-item key="list-phong-ban">
-                <ApartmentOutlined />
-                <span>Danh sách phòng ban</span>
-            </a-menu-item>
-            <a-menu-item key="user-management">
-                <TeamOutlined />
-                <span>Quản lý người dùng</span>
-            </a-menu-item>
             <a-menu-item key="bid-list">
                 <FileSearchOutlined />
                 <span>Gói thầu</span>
@@ -48,6 +40,15 @@
             <a-menu-item key="internal-tasks">
                 <ToolOutlined />
                 <span>Nhiệm vụ nội bộ</span>
+            </a-menu-item>
+
+            <a-menu-item key="list-phong-ban">
+                <ApartmentOutlined />
+                <span>Danh sách phòng ban</span>
+            </a-menu-item>
+            <a-menu-item key="user-management">
+                <TeamOutlined />
+                <span>Quản lý người dùng</span>
             </a-menu-item>
 
             <a-sub-menu key="documents">
@@ -160,8 +161,9 @@ const pathToKeyMap = {
     '/user-management': 'user-management',
     '/internal-tasks': 'internal-tasks',
     '/contracts-tasks': 'contracts-tasks',
+    '/contracts': 'contracts-tasks',
     '/bid-list': 'bid-list',
-    '/bid-detail/:id': 'bid-detail',
+    '/bid-detail': 'bid-list',
 
     // Tài liệu (sub menu)
     '/documents/my': 'documents-my',
@@ -208,7 +210,7 @@ const keyToParentMap = {
 const updateSelectedAndOpenKeys = () => {
     const currentPath = route.path
 
-    // Tìm path phù hợp nhất bằng startsWith
+    // Tìm path phù hợp nhất
     const matchedEntry = Object.entries(pathToKeyMap).find(([path]) =>
         currentPath.startsWith(path)
     )

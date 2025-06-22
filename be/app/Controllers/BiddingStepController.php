@@ -45,11 +45,18 @@ class BiddingStepController extends ResourceController
     public function update($id = null)
     {
         $data = $this->request->getJSON(true);
+
+        if (empty($data)) {
+            return $this->failValidationErrors("Không có dữ liệu để cập nhật.");
+        }
+
         if (!$this->model->update($id, $data)) {
             return $this->failValidationErrors($this->model->errors());
         }
+
         return $this->respond(['message' => 'Cập nhật thành công']);
     }
+
 
     public function delete($id = null)
     {

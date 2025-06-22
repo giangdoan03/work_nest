@@ -21,5 +21,5 @@ export const updateBiddingStepAPI = (stepId, data) => instance.put(`/bidding-ste
 
 export const completeBiddingStepAPI = (stepId) => instance.put(`/bidding-steps/${stepId}/complete`)
 
-
+export const canMarkBiddingAsCompleteAPI = (biddingId) => instance.get(`/biddings/${biddingId}/can-complete`)
 

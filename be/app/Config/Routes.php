@@ -98,6 +98,7 @@ $routes->group('api', function ($routes) {
     $routes->resource('customers', ['controller' => 'CustomerController']);
 
     // chức năng gói thầu
+    $routes->get('biddings/(:num)/can-complete', 'BiddingController::canMarkAsComplete/$1');
     $routes->post('biddings/(:num)/init-steps', 'BiddingStepController::cloneFromTemplates/$1');
     $routes->resource('biddings', ['controller' => 'BiddingController']);
     $routes->resource('bidding-steps', ['controller' => 'BiddingStepController']);

@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\BiddingModel;
 use App\Models\BiddingStepModel;
 use App\Models\SettingModel;
+use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 
 class BiddingController extends ResourceController
@@ -12,9 +13,7 @@ class BiddingController extends ResourceController
     protected $modelName = BiddingModel::class;
     protected $format = 'json';
 
-    protected $validStatuses = [
-        'pending', 'submitted', 'shortlisted', 'awarded', 'lost', 'cancelled'
-    ];
+    protected array $validStatuses = [0, 1, 2, 3, 4, 5];
 
     /**
      * Lấy danh sách gói thầu có lọc + phân trang
@@ -24,8 +23,8 @@ class BiddingController extends ResourceController
         $filters = $this->request->getGet();
         $builder = $this->model;
 
-        if (!empty($filters['status'])) {
-            $builder = $builder->where('status', $filters['status']);
+        if (isset($filters['status']) && $filters['status'] !== '') {
+            $builder = $builder->where('status', (int) $filters['status']);
         }
 
         if (!empty($filters['customer_id'])) {
@@ -76,6 +75,7 @@ class BiddingController extends ResourceController
 
     /**
      * Tạo mới gói thầu và sinh bước mặc định từ setting
+     * @throws \ReflectionException
      */
     public function create()
     {
@@ -130,6 +130,7 @@ class BiddingController extends ResourceController
 
     /**
      * Tạo các bước mẫu từ setting `bidding_steps`
+     * @throws \ReflectionException
      */
     protected function generateStepsFromTemplate($biddingId, $customerId): void
     {
@@ -153,4 +154,23 @@ class BiddingController extends ResourceController
             ]);
         }
     }
+
+    public function canMarkAsComplete($biddingId = null): ResponseInterface
+    {
+        if (!$biddingId || !$this->model->find($biddingId)) {
+            return $this->failNotFound("Gói thầu không tồn tại");
+        }
+
+        $stepModel = new BiddingStepModel();
+        $unfinished = $stepModel
+            ->where('bidding_id', $biddingId)
+            ->where('status !=', 2) // 2 = Hoàn thành
+            ->countAllResults();
+
+        return $this->respond([
+            'allow' => $unfinished === 0
+        ]);
+    }
+
+
 }

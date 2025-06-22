@@ -47,6 +47,13 @@ const routes = [
                 path: '/users/:id',
                 name: 'UserDetail',
                 component: UserDetail,
+                meta: { breadcrumb: 'Thông tin cá nhân' },
+            },
+
+            {
+                path: '/users/:id',
+                name: 'user-detail',
+                component: UserDetail,
                 meta: { breadcrumb: 'Thông tin cá nhân' }
             },
 

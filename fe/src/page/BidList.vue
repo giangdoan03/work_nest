@@ -80,11 +80,12 @@
                 </a-form-item>
                 <a-form-item label="Trạng thái" name="status">
                     <a-select v-model:value="formData.status" placeholder="Chọn trạng thái">
-                        <a-select-option value="pending">Chưa xử lý</a-select-option>
-                        <a-select-option value="submitted">Đã nộp</a-select-option>
-                        <a-select-option value="awarded">Đã trúng thầu</a-select-option>
-                        <a-select-option value="lost">Không trúng</a-select-option>
-                        <a-select-option value="cancelled">Đã huỷ</a-select-option>
+                        <a-select-option :value="0">Chưa nộp</a-select-option>
+                        <a-select-option :value="1">Đã nộp hồ sơ</a-select-option>
+                        <a-select-option :value="2">Vào vòng sau</a-select-option>
+                        <a-select-option :value="3">Đã trúng thầu</a-select-option>
+                        <a-select-option :value="4">Không trúng</a-select-option>
+                        <a-select-option :value="5">Hủy thầu</a-select-option>
                     </a-select>
                 </a-form-item>
             </a-form>
@@ -110,7 +111,7 @@
         createBiddingAPI,
         cloneFromTemplatesAPI, deleteBiddingAPI
     } from '@/api/bidding'
-    import {updateBiddingAPI} from "../api/bidding";
+    import {updateBiddingAPI, canMarkBiddingAsCompleteAPI } from "../api/bidding";
     import { formatDate } from '@/utils/formUtils' // nếu bạn đã có
     import {getUsers} from '@/api/user.js'
 
@@ -128,7 +129,7 @@
         description: '',
         customer_id: 1,
         estimated_cost: 0,
-        status: 'pending',
+        status: 0,
         start_date: null,
         end_date: null,
         assigned_to: null
@@ -149,15 +150,29 @@
     ]
 
     const getStatusColor = (status) => {
-        const colors = {
-            pending: 'orange',
-            submitted: 'blue',
-            awarded: 'green',
-            lost: 'red',
-            cancelled: 'gray'
+        const map = {
+            0: 'orange',   // Chưa nộp
+            1: 'blue',     // Đã nộp
+            2: 'purple',   // Vào vòng sau
+            3: 'green',    // Trúng thầu
+            4: 'red',      // Không trúng
+            5: 'gray'      // Hủy
         }
-        return colors[status] || 'default'
+        return map[status] || 'default'
     }
+
+    const getStatusText = (status) => {
+        const map = {
+            0: 'Chưa nộp',
+            1: 'Đã nộp hồ sơ',
+            2: 'Vào vòng sau',
+            3: 'Đã trúng thầu',
+            4: 'Không trúng',
+            5: 'Hủy thầu',
+        }
+        return map[status] ?? 'Không rõ'
+    }
+
 
     const rules = {
         title: [{ required: true, message: 'Nhập tên gói thầu' }],
@@ -179,18 +194,6 @@
             label: user.name,
             value: user.id
         }))
-    }
-
-    const getStatusText = (status) => {
-        const map = {
-            pending: 'Chưa nộp',
-            submitted: 'Đã nộp hồ sơ',
-            shortlisted: 'Vào vòng sau',
-            awarded: 'Đã trúng thầu',
-            lost: 'Không trúng',
-            cancelled: 'Hủy thầu'
-        }
-        return map[status] || status
     }
 
     const getBiddings = async () => {
@@ -219,6 +222,15 @@
                 end_date: dayjs(formData.value.end_date).format('YYYY-MM-DD')
             }
 
+            // 🚫 Nếu chọn trạng thái "Hoàn thành" (status === 4), kiểm tra trước
+            if (formatted.status === 3 && selectedBidding.value?.id) {
+                const res = await canMarkBiddingAsCompleteAPI(selectedBidding.value.id)
+                if (!res?.data?.allow) {
+                    message.warning('Bạn cần hoàn thành tất cả các bước trước khi chuyển trạng thái gói thầu sang "Đã trúng thầu".')
+                    return
+                }
+            }
+
             if (selectedBidding.value) {
                 await updateBiddingAPI(selectedBidding.value.id, formatted)
                 message.success('Cập nhật thành công')
@@ -231,7 +243,6 @@
             onCloseDrawer()
             await getBiddings()
         } catch (e) {
-            // Log lỗi chi tiết
             console.error('Lỗi submitForm:', e?.response?.data || e)
             const errMsg = e?.response?.data?.message || 'Có lỗi xảy ra'
             message.error(errMsg)
@@ -257,6 +268,7 @@
         selectedBidding.value = record
         formData.value = {
             ...record,
+            status: Number(record.status),
             start_date: dayjs(record.start_date),
             end_date: dayjs(record.end_date),
         }

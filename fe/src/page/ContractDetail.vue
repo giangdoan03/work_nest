@@ -82,6 +82,13 @@
                                     {{ statusText(step.status) }}
                                 </a-tag>
                             </p>
+                            <p>
+                                Người phụ trách:
+                                <a v-if="step.assigned_to" @click.stop="goToUserDetail(step.assigned_to)">
+                                    {{ getAssignedUserName(step.assigned_to) }}
+                                </a>
+                                <span v-else>Không xác định</span>
+                            </p>
                         </div>
                     </template>
                 </a-step>
@@ -121,6 +128,23 @@
                             <a-select-option value="1">Đang xử lý</a-select-option>
                             <a-select-option value="2">Hoàn thành</a-select-option>
                             <a-select-option value="3">Bỏ qua</a-select-option>
+                        </a-select>
+                    </a-descriptions-item>
+                    <a-descriptions-item label="Người phụ trách">
+                        <a-select
+                            v-model:value="selectedStep.assigned_to"
+                            style="width: 100%"
+                            placeholder="Chọn người phụ trách"
+                            @change="(value) => updateStepAssignedTo(value, selectedStep)"
+                            :allowClear="true"
+                        >
+                            <a-select-option
+                                v-for="user in users"
+                                :key="user.id"
+                                :value="user.id"
+                            >
+                                {{ user.name }}
+                            </a-select-option>
                         </a-select>
                     </a-descriptions-item>
                     <a-descriptions-item label="Ngày tạo">{{ formatDate(selectedStep.created_at) }}</a-descriptions-item>
@@ -263,6 +287,19 @@ const updateStepStatus = async (newStatus, step) => {
             message.error(msg) // ❌ Lỗi khác thì vẫn báo lỗi đỏ
         }
         console.warn('Lỗi cập nhật bước:', msg)
+    }
+}
+
+const updateStepAssignedTo = async (newUserId, step) => {
+    try {
+        await updateContractStepAPI(step.id, { assigned_to: newUserId })
+        message.success('Cập nhật người phụ trách thành công')
+        drawerVisible.value = false
+        await fetchSteps()
+    } catch (e) {
+        const msg = e?.response?.data?.messages?.error || 'Không thể cập nhật người phụ trách'
+        message.error(msg)
+        console.warn('Lỗi cập nhật người phụ trách:', msg)
     }
 }
 
