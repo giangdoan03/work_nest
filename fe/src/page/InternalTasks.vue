@@ -401,14 +401,16 @@ const getUserById = (userId) =>  {
     return data.name;
 }
 const getLinkedType = (text) =>  {
-    if(text == 'bidding'){
-        return "Gói thầu";
-    }else if(text == 'contract'){
-        return "Hợp đồng";
-    }else if(text == 'internal'){
-        return "Nhiệm vụ";
+    switch (text) {
+        case 'bidding':
+            return "Gói thầu";
+        case 'bidding':
+            return "Gói thầu";
+        case 'bidding':
+            return "Gói thầu";
+        default:
+            return ""
     }
-    return "";
 }
 
 const getUser = async () => {

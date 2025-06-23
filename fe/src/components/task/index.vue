@@ -21,12 +21,12 @@
                                 <a-col :span="12">
                                     <a-form-item label="Loại nhiệm vụ" name="linked_type">
                                         <a-typography-text v-if="!isEditMode">{{ getTextLinkedType }}</a-typography-text>
-                                        <a-select v-else v-model:value="formData.linked_type" :options="linkedTypeOption" placeholder="Chọn loại nhiệm vụ" />
+                                        <a-select v-else v-model:value="formData.linked_type" :options="linkedTypeOption" @change="handleChangeLinkedType()" placeholder="Chọn loại nhiệm vụ" />
                                     </a-form-item>
                                 </a-col>
                                 <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
                                     <a-form-item :label=" !formData.linked_type ? 'Trống' : formData.linked_type == 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'" name="linked_type">
-                                        <a-typography-text v-if="!isEditMode">{{ formData.title }}</a-typography-text>
+                                        <a-typography-text v-if="!isEditMode">{{ getNameLinked(formData.linked_id) }}</a-typography-text>
                                         <a-select v-else v-model:value="formData.linked_id" :options="linkedIdOption" :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'" />
                                     </a-form-item>
                                 </a-col>
@@ -44,7 +44,7 @@
                                     <a-form-item label="Thời gian" name="time">
                                         <a-typography-text v-if="!isEditMode">{{ (formData.start_date ? convertDateFormat(formData.start_date) : "Trống") + " → " + (formData.end_date ? convertDateFormat(formData.end_date) : "Trống") }}</a-typography-text>
                                         <a-config-provider :locale="locale">
-                                            <a-range-picker  v-if="isEditMode" format="DD-MM-YYYY" @change="changeDateTime" style="width: 100%;"></a-range-picker>
+                                            <a-range-picker v-model:value="dateRange"  v-if="isEditMode" format="DD-MM-YYYY" @change="changeDateTime" style="width: 100%;"></a-range-picker>
                                         </a-config-provider>
                                     </a-form-item>
                                 </a-col>
@@ -77,14 +77,12 @@
                                     </a-form-item>
                                 </a-col>
                                 <a-col :span="24">
-                                    <a-form-item label="Tài liệu" name="document">
-                                        <a-typography-text v-if="!isEditMode">{{ formData.description ? formData.description : "Trống" }}</a-typography-text>
-                                        <a-textarea 
-                                            v-else 
-                                            v-model:value="formData.description" 
-                                            :rows="4"
-                                            placeholder="Nhập mô tả " 
-                                        />
+                                    <a-form-item label="Tài liệu" name="file">
+                                        <a-button size="large" style="margin-top: 12px;">
+                                            <template #icon>
+                                                <PaperClipOutlined />
+                                            </template>
+                                        </a-button>
                                     </a-form-item>
                                 </a-col>
                             </a-row>
@@ -99,7 +97,7 @@
     </div>
 </template>
 <script setup>
-import { EllipsisOutlined } from '@ant-design/icons-vue';
+import { EllipsisOutlined, PaperClipOutlined } from '@ant-design/icons-vue';
 import { ref, computed, onMounted } from 'vue';
 import { message } from 'ant-design-vue'
 import 'dayjs/locale/vi';
@@ -109,6 +107,8 @@ import viVN from 'ant-design-vue/es/locale/vi_VN';
 import { getUsers } from '@/api/user';
 import { useRoute, useRouter } from 'vue-router';
 import { getTaskDetail } from '@/api/internal';
+import { getBiddingsAPI } from "@/api/bidding";
+import { getContractsAPI } from "@/api/contract";
 import { CONTRACTS_STEPS, BIDDING_STEPS } from '@/common'
 
 
@@ -118,6 +118,9 @@ const isEditMode = ref(false);
 
 const listUser = ref([])
 const loading = ref(false)
+const listContract = ref([]);
+const listBidding = ref([]);
+const dateRange = ref([]);
 
 const formData = ref({
     title: "",
@@ -164,7 +167,27 @@ const userOption =  computed(()=>{
         })
     }
 })
+const getNameLinked = (id)=>{
+    if(formData.value.linked_type == 'bidding' && listBidding.value.length){
+        return listBidding.value.find(ele => ele.id == id).title
+    }else if(formData.value.linked_type == 'contract' && listBidding.value.length){
+        return listBidding.value.find(ele => ele.id == id).title
+    }
+    return "Trống"
+}
 const linkedIdOption = computed(()=>{
+    if(formData.value.linked_type == 'bidding'){
+        return listBidding.value.map(ele => {
+            return { value: ele.id, label: ele.title}
+        })
+    }else if(formData.value.linked_type == 'contract'){
+        console.log(555,listContract.value.map(ele => {
+            return { value: ele.id, label: ele.title}
+        }));
+        return listContract.value.map(ele => {
+            return { value: ele.id, label: ele.title}
+        })
+    }
     return [];
 })
 const validateTitle = async (_rule, value) => {    
@@ -238,6 +261,10 @@ const stepOption = computed(()=>{
 })
 
 // Method
+const handleChangeLinkedType = () => {
+    formData.value.linked_id = null;
+    formData.value.step_code = null;
+}
 const getStepByStepNo = (step) =>  {
     let data = CONTRACTS_STEPS.find(ele => ele.step_code == step);
     if(!data){
@@ -299,15 +326,32 @@ const cancelEditTask = () => {
 }
 const getDetailTaskById = async () => {
     await getTaskDetail(route.params.id).then(res => {
-        console.log(res);
-        formData.value = res.data
+        formData.value = res.data;
+        dateRange.value = [ formData.value.start_date, formData.value.end ]
+    }).catch(err => {
+
+    })
+}
+const getListBidding = async () => {
+    await getBiddingsAPI().then(res =>{
+        listBidding.value = res.data.data
+    }).catch(err => {
+
+    })
+}
+const getListContract = async () => {
+    await getContractsAPI().then(res =>{
+
+        listContract.value = res.data;
     }).catch(err => {
 
     })
 }
 onMounted(() => {
     getDetailTaskById();
-    getUser();    
+    getUser();
+    getListBidding();
+    getListContract();
 })
 
 </script>
