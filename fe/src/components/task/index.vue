@@ -91,13 +91,76 @@
                 </div>
             </div>
             <div class="task-info-left">
-    
+                <div class="task-info-content">
+                    <div class="task-in-end">
+                        <a-row justify="space-between">
+                            <a-col>
+                                <a-typography-title :level="5" style="color: #7c7c7c;"> Sub-Tasks</a-typography-title>
+                            </a-col>
+                            <a-col>
+                                <PlusOutlined style="font-size: 16px;cursor: pointer;" @click="showPopupCreate"/>
+                            </a-col>
+                        </a-row>
+                        <div v-if="!listSubTask.length" style="margin-bottom: 16px;">
+                            Không có dữ liệu
+                        </div>
+                        <div v-else>
+                            <a-table
+                                :columns="columns"
+                                :data-source="listSubTask"
+                                :loading="loadingSubTask"
+                                row-key="id"
+                                :pagination="false"
+                            >
+                                <template #bodyCell="{ column, record, text }">
+                                    <template v-if="column.key === 'title'">
+                                        <a-typography-link strong>{{ text }}</a-typography-link>
+                                    </template>
+                                    <template v-if="column.key === 'assigned_to'">
+                                        <a-typography-text>{{ getUserById(record.assigned_to) }}</a-typography-text>
+                                    </template>
+                                    <template v-if="column.key === 'date'">
+                                        <a-typography-text v-if="!isEditMode">{{ record.end_date }}</a-typography-text>
+                                    </template>
+                                    <template v-if="column.key === 'action'">
+                                        <a-dropdown>
+                                            <CaretDownOutlined />
+                                            <template #overlay>
+                                                <a-menu>
+                                                    <a-menu-item>
+                                                        Chi tiết
+                                                    </a-menu-item>
+                                                    <a-menu-item>
+                                                        Xóa
+                                                    </a-menu-item>
+                                                </a-menu>
+                                            </template>
+                                        </a-dropdown>
+                                    </template>
+                                </template>
+                            </a-table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="task-info-left">
+                <div class="task-info-content">
+                    <div class="task-in-end">
+                        <Comment />
+                    </div>
+                </div>
             </div>
         </div>
+        <DrawerCreateTask 
+            v-model:open-drawer="openDrawerCreateTask"
+            :list-user="listUser"
+            :task-parent="route.params.id"
+            @submitForm="submitForm"
+        />
     </div>
 </template>
 <script setup>
-import { EllipsisOutlined, PaperClipOutlined } from '@ant-design/icons-vue';
+import { EllipsisOutlined, PaperClipOutlined, PlusOutlined, CaretDownOutlined } from '@ant-design/icons-vue';
 import { ref, computed, onMounted } from 'vue';
 import { message } from 'ant-design-vue'
 import 'dayjs/locale/vi';
@@ -106,10 +169,12 @@ import dayjs from 'dayjs';
 import viVN from 'ant-design-vue/es/locale/vi_VN';
 import { getUsers } from '@/api/user';
 import { useRoute, useRouter } from 'vue-router';
-import { getTaskDetail } from '@/api/internal';
+import { getTaskDetail, getSubTasks } from '@/api/internal';
 import { getBiddingsAPI } from "@/api/bidding";
 import { getContractsAPI } from "@/api/contract";
 import { CONTRACTS_STEPS, BIDDING_STEPS } from '@/common'
+import DrawerCreateTask from "../common/DrawerCreateTask.vue";
+import Comment from './Comment.vue';
 
 
 const route = useRoute();
@@ -118,35 +183,44 @@ const isEditMode = ref(false);
 
 const listUser = ref([])
 const loading = ref(false)
+const loadingSubTask = ref(false)
 const listContract = ref([]);
 const listBidding = ref([]);
 const dateRange = ref([]);
+const openDrawerCreateTask = ref(false);
+const listSubTask = ref([])
 
 const formData = ref({
     title: "",
     created_by: "",
-    step_code: "",
+    step_code: null,
     linked_type: null,
     description: "",
-    linked_id: "",
+    linked_id: null,
     assigned_to: null,
     start_date: "",
     end_date: "",
     status: "",
     priority: null,
     parent_id: null,
-    bidding_step_id: null,
 });
 const priorityOption = ref([
     {value: "low", label: "Thấp", color: "success"},
     {value: "normal", label: "Thường", color: "warning"},
-    {value: "hight", label: "Cao", color: "error"},
+    {value: "high", label: "Cao", color: "error"},
 ])
 const linkedTypeOption = ref([
     {value: "bidding", label: "Gói thầu"},
     {value: "contract", label: "Hợp đồng"},
     {value: "internal", label: "Nhiệm vụ nội bộ"},
 ])
+const columns = ref([
+    { title: 'Tên task', key: 'title', dataIndex: 'title' },
+    { title: 'Gắn người dùng', key: 'assigned_to', dataIndex: 'assigned_to' },
+    { title: 'Thời hạn', key: 'date', dataIndex: 'date' },
+    { title: '', key: 'action', dataIndex: 'action', width:"60px" },
+])
+
 const getTextLinkedType = computed(()=>{
     let data = linkedTypeOption.value.find(ele => ele.value == formData.value.linked_type)
     if(data){
@@ -168,10 +242,16 @@ const userOption =  computed(()=>{
     }
 })
 const getNameLinked = (id)=>{
-    if(formData.value.linked_type == 'bidding' && listBidding.value.length){
-        return listBidding.value.find(ele => ele.id == id).title
-    }else if(formData.value.linked_type == 'contract' && listBidding.value.length){
-        return listBidding.value.find(ele => ele.id == id).title
+    console.log(2,listBidding.value);
+    
+    if(formData.value.linked_type == 'bidding' && listBidding.value && listBidding.value.length){
+        let check = listBidding.value.find(ele => ele.id == id)
+        if(check) return check.title
+        else return 'Gói thầu không tồn tại'
+    }else if(formData.value.linked_type == 'contract' && listContract.value && listContract.value.length){
+        let check = listContract.value.find(ele => ele.id == id)
+        if(check) return check.title
+        else return 'Hợp đồng không tồn tại'
     }
     return "Trống"
 }
@@ -261,6 +341,12 @@ const stepOption = computed(()=>{
 })
 
 // Method
+const showPopupCreate = () => {
+    openDrawerCreateTask.value = true;
+}
+const submitForm = () => {
+    getSubTask();
+}
 const handleChangeLinkedType = () => {
     formData.value.linked_id = null;
     formData.value.step_code = null;
@@ -347,8 +433,24 @@ const getListContract = async () => {
 
     })
 }
+const getSubTask = async() => {
+    if(loadingSubTask.value){
+        return
+    }
+    loadingSubTask.value = true;
+    try {
+        let res =  await getSubTasks(route.params.id);        
+        listSubTask.value = res.data;
+    } catch (error) {
+        console.log(error);
+    } finally {
+        loadingSubTask.value = false;
+    } 
+
+}
 onMounted(() => {
     getDetailTaskById();
+    getSubTask();
     getUser();
     getListBidding();
     getListContract();
@@ -358,6 +460,9 @@ onMounted(() => {
 <style scoped>
 .task-info{
     margin-top: 16px;
+}
+.task-info-left{
+    margin-bottom: 20px;
 }
 .task-info-content{
     border: 1px solid #bebebece;
