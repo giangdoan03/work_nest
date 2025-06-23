@@ -19,9 +19,13 @@
             @openChange="val => openKeys = val"
             @select="handleSelect"
         >
-            <a-menu-item key="dashboard">
-                <PieChartOutlined/>
-                <span>Tổng quan</span>
+            <a-menu-item key="project-overview">
+                <BarChartOutlined />
+                <span>Tổng quan dự án</span>
+            </a-menu-item>
+            <a-menu-item key="my-tasks">
+                <ScheduleOutlined />
+                <span>Nhiệm vụ của tôi</span>
             </a-menu-item>
             <a-menu-item key="quan-ly-khach-hang">
                 <TeamOutlined/>
@@ -128,7 +132,9 @@ import {
     LockOutlined,
     ApartmentOutlined,
     FileDoneOutlined,
-    ProfileOutlined
+    ProfileOutlined,
+    ScheduleOutlined,
+    BarChartOutlined
 } from '@ant-design/icons-vue'
 import { h } from 'vue'
 
@@ -148,14 +154,10 @@ const selectedKeys = ref([])
 const openKeys = ref([])
 
 const pathToKeyMap = {
-    '/loyalty/programs': 'chuong-trinh',
-    '/loyalty/gifts': 'qua-tang',
-    '/loyalty/voucher-management': 'goi-voucher',
-    '/loyalty/history': 'lich-su-nguoi-choi',
-    '/custom-pages': 'trang-tu-thiet-ke',
-    '/checkin-history': 'lich-su-checkin',
+    '/dashboard': 'dashboard',
+    '/project-overview': 'project-overview',
+    '/my-tasks': 'my-tasks',
     '/customers': 'quan-ly-khach-hang',
-    '/purchase-history': 'lich-su-mua-goi',
     '/permissions': 'permission',
     '/departments': 'list-phong-ban',
     '/user-management': 'user-management',
@@ -181,8 +183,9 @@ const pathToKeyMap = {
 const keyToParentMap = {
 
     // Các menu chính
-    'trang-tu-thiet-ke': 'dashboard',
-    'lich-su-quet': 'dashboard',
+    'project-overview': 'project-overview',
+    'my-tasks': 'my-tasks',
+    'dashboard': 'dashboard',
     'quan-ly-khach-hang': 'dashboard',
     'cau-hinh': 'dashboard',
     'lich-su-mua-goi': 'dashboard',

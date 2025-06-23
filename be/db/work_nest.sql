@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jun 22, 2025 at 03:34 PM
+-- Generation Time: Jun 23, 2025 at 05:09 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -340,7 +340,7 @@ CREATE TABLE `bidding_step_templates` (
 
 INSERT INTO `bidding_step_templates` (`id`, `step_number`, `title`, `department`, `created_at`, `updated_at`) VALUES
 (1, 1, 'Nhận nhu cầu khách hàng', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-16 16:06:14', '2025-06-16 16:06:14'),
-(2, 2, 'Đánh giá tính khả thi xxx', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-16 16:06:14', '2025-06-16 16:06:14'),
+(2, 2, 'Đánh giá tính khả thi', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-16 16:06:14', '2025-06-16 16:06:14'),
 (3, 3, 'Lập kế hoạch triển khai', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-16 16:06:14', '2025-06-16 16:06:14'),
 (4, 4, 'Duyệt kế hoạch', '[\"Phòng Kinh doanh\"]', '2025-06-16 16:06:14', '2025-06-16 16:06:14'),
 (5, 5, 'Triển khai hồ sơ dự thầu', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-16 16:06:14', '2025-06-16 16:06:14'),
@@ -1128,7 +1128,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `name`, `phone`, `avatar`, `role`, `department_id`, `role_id`) VALUES
-(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-06-04 15:09:55', 'Nguyễn Văn A sửa', '0988888888', 'avatars/1749049795_4087ec00b95ac222533a.png', 'user', 1, 2),
+(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-06-23 22:34:43', 'Nguyễn Văn A', '0988888888', 'avatars/1749049795_4087ec00b95ac222533a.png', 'user', 1, 2),
 (3, 'superadmin@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-20 14:02:38', '2025-05-25 09:51:46', 'Super Admin', '0988888888', NULL, 'super admin', 2, 1),
 (4, 'nguyenvana@example.com', '$2y$10$n65TNehIFvx11oCJ2IbjXeiyDXWe9haW0VMv6UvFhMzctFOu1Ptd.', '2025-05-26 04:33:21', '2025-06-21 15:32:53', 'Nguyễn Văn A', '0909123456', NULL, 'customer', 2, NULL),
 (5, 'a@worknest.vn', '$2y$10$y9WQWckMJCEVQbqG0PNSCum.x7fNlxAJK7RqwxZvlaxBVZRtre96W', '2025-06-04 09:10:50', '2025-06-04 09:10:50', 'Nguyễn Văn A', '0911111111', NULL, 'customer', 1, NULL),

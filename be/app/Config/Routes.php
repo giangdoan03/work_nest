@@ -19,6 +19,11 @@ $routes->group('api', function ($routes) {
     $routes->put('users/(:num)', 'Auth::update/$1');   // Cập nhật
     $routes->delete('users/(:num)', 'Auth::delete/$1');// Xoá
 
+    $routes->get('my-tasks', 'MyTaskController::index');
+
+    // Tổng quan dự án (cho trưởng phòng)
+    $routes->get('project-overview', 'ProjectOverviewController::index');  // Tổng hợp theo khách hàng/gói thầu/hợp đồng
+
     $routes->resource('categories', ['controller' => 'CategoryController']);
     $routes->resource('persons', ['controller' => 'PersonController']);
 

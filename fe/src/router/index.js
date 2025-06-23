@@ -28,6 +28,8 @@ import BidDetail from '../page/BidDetail.vue'
 import CustomerDetail from '../page/CustomerDetail.vue'
 import ContractDetail from '../page/ContractDetail.vue' // 👈 đảm bảo file này tồn tại
 import UserDetail from '../page/UserDetail.vue' // 👈 đảm bảo file này tồn tại
+import MyTasks from '../page/MyTasks.vue' // 👈 đảm bảo file này tồn tại
+import ProjectOverview from '../page/ProjectOverview.vue' // 👈 đảm bảo file này tồn tại
 
 const routes = [
     {
@@ -38,6 +40,12 @@ const routes = [
         path: '/',
         component: Layout,
         children: [
+            {
+                path: '/project-overview',
+                name: 'project-overview',
+                component: ProjectOverview,
+                meta: { breadcrumb: 'Tổng quan dự án' }
+            },
             { path: 'dashboard', name: 'dashboard', component: Dashboard, meta: { breadcrumb: 'Trang chủ' } },
 
             // user
@@ -164,6 +172,12 @@ const routes = [
                     breadcrumb: 'Hợp đồng',
                     parent: 'cau-hinh'
                 }
+            },
+            {
+                path: '/my-tasks',
+                name: 'my-tasks',
+                component: MyTasks,
+                meta: { breadcrumb: 'Nhiệm vụ của tôi' }
             }
 
         ]
