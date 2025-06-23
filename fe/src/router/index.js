@@ -25,6 +25,11 @@ import BiddingStepTemplateList from '../page/BiddingStepTemplateList.vue'
 import ContractsStepTemplateList from '../page/ContractsStepTemplateList.vue'
 import BidList from '../page/BidList.vue'
 import BidDetail from '../page/BidDetail.vue'
+import CustomerDetail from '../page/CustomerDetail.vue'
+import ContractDetail from '../page/ContractDetail.vue' // 👈 đảm bảo file này tồn tại
+import UserDetail from '../page/UserDetail.vue' // 👈 đảm bảo file này tồn tại
+import MyTasks from '../page/MyTasks.vue' // 👈 đảm bảo file này tồn tại
+import ProjectOverview from '../page/ProjectOverview.vue' // 👈 đảm bảo file này tồn tại
 
 const routes = [
     {
@@ -35,11 +40,30 @@ const routes = [
         path: '/',
         component: Layout,
         children: [
+            {
+                path: '/project-overview',
+                name: 'project-overview',
+                component: ProjectOverview,
+                meta: { breadcrumb: 'Tổng quan dự án' }
+            },
             { path: 'dashboard', name: 'dashboard', component: Dashboard, meta: { breadcrumb: 'Trang chủ' } },
-
 
             // user
             { path: 'user/:id/info', name: 'persons-info', component: UserInfo, meta: { breadcrumb: 'Thông tin cá nhân' } },
+
+            {
+                path: '/users/:id',
+                name: 'UserDetail',
+                component: UserDetail,
+                meta: { breadcrumb: 'Thông tin cá nhân' },
+            },
+
+            {
+                path: '/users/:id',
+                name: 'user-detail',
+                component: UserDetail,
+                meta: { breadcrumb: 'Thông tin cá nhân' }
+            },
 
             // Permissions
             { path: 'permissions', name: 'permissions', component: UserPermissionManager, meta: { breadcrumb: 'Phân quyền' } },
@@ -52,7 +76,14 @@ const routes = [
             { path: 'internal-tasks/:id/info', name: 'internal-tasks-info', component: TaskDetail, meta: { breadcrumb: 'Nhiệm vụ nội bộ', parent: 'internal-tasks' } },
 
             // Contracts Tasks
-            { path: 'contracts-tasks', name: 'contracts-tasks', component: ContractsTasks, meta: { breadcrumb: 'Hợp đồng và công việc' } },
+            { path: 'contracts-tasks', name: 'contracts-tasks', component: ContractsTasks, meta: { breadcrumb: 'Danh sách hợp đồng' } },
+
+            {
+                path: 'contracts/:id',
+                name: 'contract-detail',
+                component: ContractDetail,
+                meta: { breadcrumb: 'Chi tiết hợp đồng'},
+            },
 
             {
                 path: '/bid-list',
@@ -67,8 +98,6 @@ const routes = [
                 meta: { breadcrumb: 'Chi tiết gói thầu', parent: 'bid-list' }
             },
 
-
-
             // Permissions
             { path: 'departments', name: 'departments', component: DepartmentList, meta: { breadcrumb: 'Phòng ban' } },
 
@@ -77,6 +106,13 @@ const routes = [
                 name: 'customers',
                 component: () => import('../components/CustomerList.vue'),
                 meta: { breadcrumb: 'Khách hàng', parent: 'dashboard' }
+            },
+
+            {
+                path: '/customers/:id',
+                name: 'customer-detail',
+                component: CustomerDetail,
+                meta: { breadcrumb: 'Chi tiết khách hàng', parent: 'customer-list' }
             },
 
             {
@@ -124,15 +160,24 @@ const routes = [
             },
             {
                 path: '/settings/bidding',
-                name: 'settings-bidding',
+                name: 'cau-hinh-dau-thau',
                 component: BiddingStepTemplateList,
                 meta: { breadcrumb: 'Cấu hình Đấu thầu', parent: 'cau-hinh' },
             },
             {
                 path: '/settings/contract',
-                name: 'settings-contract',
-                component: ContractsStepTemplateList, // nhớ sửa nếu đang là chuỗi string
-                meta: { breadcrumb: 'Cấu hình Hợp đồng', parent: 'cau-hinh' },
+                name: 'cau-hinh-hop-dong',
+                component: ContractsStepTemplateList,
+                meta: {
+                    breadcrumb: 'Hợp đồng',
+                    parent: 'cau-hinh'
+                }
+            },
+            {
+                path: '/my-tasks',
+                name: 'my-tasks',
+                component: MyTasks,
+                meta: { breadcrumb: 'Nhiệm vụ của tôi' }
             }
 
         ]

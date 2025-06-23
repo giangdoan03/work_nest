@@ -11,8 +11,8 @@ class ContractStepModel extends Model
     protected $primaryKey = 'id';
 
     protected $allowedFields = [
-        'contract_id', 'customer_id', 'step_no', 'name', 'status',
-        'assigned_to', 'start_date', 'due_date', 'completed_at'
+        'contract_id', 'customer_id', 'step_number', 'title', 'status',
+        'assigned_to', 'start_date', 'due_date', 'completed_at', 'department'
     ];
     protected $useTimestamps = true;
 }

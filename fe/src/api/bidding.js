@@ -6,7 +6,7 @@ const instance = axios.create({
 })
 
 // API bidding
-export const getBiddingsAPI = () => instance.get('/biddings')
+export const getBiddingsAPI = (params = {}) => instance.get('/biddings', { params })
 export const getBiddingAPI = (id) => instance.get(`/biddings/${id}`)
 export const createBiddingAPI = (data) => instance.post('/biddings', data)
 export const updateBiddingAPI = (id, data) => instance.put(`/biddings/${id}`, data)
@@ -14,15 +14,12 @@ export const deleteBiddingAPI = (id) => instance.delete(`/biddings/${id}`)
 export const cloneFromTemplatesAPI = (biddingId) => instance.post(`/biddings/${biddingId}/init-steps`)
 
 // Lấy danh sách bước theo bidding_id
-export const getBiddingStepsAPI = (biddingId) =>
-    instance.get(`/bidding-steps`, { params: { bidding_id: biddingId } })
+export const getBiddingStepsAPI = (biddingId) => instance.get(`/bidding-steps`, { params: { bidding_id: biddingId } })
 
 // Cập nhật trạng thái bước
-export const updateBiddingStepAPI = (stepId, data) =>
-    instance.put(`/bidding-steps/${stepId}`, data)
+export const updateBiddingStepAPI = (stepId, data) => instance.put(`/bidding-steps/${stepId}`, data)
 
-export const completeBiddingStepAPI = (stepId) =>
-    instance.put(`/bidding-steps/${stepId}/complete`)
+export const completeBiddingStepAPI = (stepId) => instance.put(`/bidding-steps/${stepId}/complete`)
 
-
+export const canMarkBiddingAsCompleteAPI = (biddingId) => instance.get(`/biddings/${biddingId}/can-complete`)
 

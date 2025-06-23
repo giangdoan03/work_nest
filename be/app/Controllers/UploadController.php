@@ -2,11 +2,12 @@
 
 namespace App\Controllers;
 
+use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 
 class UploadController extends ResourceController
 {
-    public function upload()
+    public function upload(): ResponseInterface
     {
         // Giới hạn chỉ upload từ domain api.giang.test
         $allowedOrigins = [
@@ -44,7 +45,7 @@ class UploadController extends ResourceController
         ]);
     }
 
-    public function uploadFromUrl()
+    public function uploadFromUrl(): ResponseInterface
     {
         $url = $this->request->getJSON()->url ?? null;
 

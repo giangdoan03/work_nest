@@ -2,12 +2,12 @@
 
 namespace App\Controllers;
 
-use App\Models\StepTemplateModel;
+use App\Models\ContractStepTemplateModel;
 use CodeIgniter\RESTful\ResourceController;
 
-class StepTemplateController extends ResourceController
+class ContractStepTemplateController extends ResourceController
 {
-    protected $modelName = StepTemplateModel::class;
+    protected $modelName = ContractStepTemplateModel::class;
     protected $format    = 'json';
 
     public function index()
@@ -19,8 +19,8 @@ class StepTemplateController extends ResourceController
     {
         $data = $this->request->getJSON(true);
 
-        if (empty($data['name'])) {
-            return $this->failValidationErrors(['name' => 'Tên bước không được để trống']);
+        if (empty($data['title'])) {
+            return $this->failValidationErrors(['title' => 'Tên bước không được để trống']);
         }
 
         $id = $this->model->insert($data);
@@ -31,7 +31,7 @@ class StepTemplateController extends ResourceController
     {
         $data = $this->request->getJSON(true);
         if (!$this->model->find($id)) {
-            return $this->failNotFound('Không tìm thấy bước mẫu');
+            return $this->failNotFound('Không tìm thấy bước mẫu hợp đồng');
         }
 
         $this->model->update($id, $data);
@@ -41,7 +41,7 @@ class StepTemplateController extends ResourceController
     public function delete($id = null)
     {
         if (!$this->model->find($id)) {
-            return $this->failNotFound('Không tìm thấy bước mẫu');
+            return $this->failNotFound('Không tìm thấy bước mẫu hợp đồng');
         }
 
         $this->model->delete($id);

@@ -5,6 +5,8 @@ namespace App\Controllers;
 
 use App\Models\ContractStepModel;
 use App\Models\ContractModel;
+use App\Models\ContractStepTemplateModel;
+use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use App\Models\StepTemplateModel;
 
@@ -15,11 +17,14 @@ class ContractStepController extends ResourceController
 
     public function index($contractId = null)
     {
-        return $this->respond($this->model
-            ->where('contract_id', $contractId)
-            ->orderBy('step_no', 'ASC')
-            ->findAll());
+        return $this->respond(
+            $this->model
+                ->where('contract_id', $contractId)
+                ->orderBy('step_number', 'ASC')
+                ->findAll()
+        );
     }
+
 
     public function create($contractId = null)
     {
@@ -38,13 +43,31 @@ class ContractStepController extends ResourceController
     public function update($id = null)
     {
         $data = $this->request->getJSON(true);
-        if (!$this->model->find($id)) {
+        $current = $this->model->find($id);
+
+        if (!$current) {
             return $this->failNotFound('Step not found');
+        }
+
+        // Nếu người dùng cố cập nhật thành "Hoàn thành" -> kiểm tra logic
+        if (isset($data['status']) && (int)$data['status'] === 2) {
+            $unfinishedBefore = $this->model
+                ->where('contract_id', $current['contract_id'])
+                ->where('step_number <', $current['step_number'])
+                ->where('status !=', 2)
+                ->countAllResults();
+
+            if ($unfinishedBefore > 0) {
+                return $this->fail('Bạn cần hoàn thành tất cả các bước trước.');
+            }
+
+            $data['completed_at'] = date('Y-m-d H:i:s');
         }
 
         $this->model->update($id, $data);
         return $this->respond(['status' => 'success', 'message' => 'Step updated']);
     }
+
 
     public function delete($id = null)
     {
@@ -55,7 +78,7 @@ class ContractStepController extends ResourceController
         $this->model->delete($id);
         return $this->respondDeleted(['status' => 'success', 'message' => 'Step deleted']);
     }
-    public function addStepsFromTemplates($contractId = null)
+    public function addStepsFromTemplates($contractId = null): ResponseInterface
     {
         $contractModel = new ContractModel();
         if (!$contractModel->find($contractId)) {
@@ -79,27 +102,7 @@ class ContractStepController extends ResourceController
         }
 
         // Lấy step_no lớn nhất hiện tại trong hợp đồng
-        $maxStepNo = $this->model
-                ->where('contract_id', $contractId)
-                ->selectMax('step_no')
-                ->first()['step_no'] ?? 0;
-
-        $currentStepNo = (int) $maxStepNo;
-        $insertedIds = [];
-
-        foreach ($templates as $template) {
-            $currentStepNo++;
-
-            $stepData = [
-                'contract_id' => $contractId,
-                'name'        => $template['name'],
-                'step_no'     => $currentStepNo,
-                'status'      => 'pending'
-            ];
-
-            $id = $this->model->insert($stepData);
-            $insertedIds[] = $id;
-        }
+        $insertedIds = $this->getArr($contractId, $templates);
 
         return $this->respond([
             'status'    => 'success',
@@ -109,7 +112,7 @@ class ContractStepController extends ResourceController
     }
 
 
-    public function reorder($contractId = null)
+    public function reorder($contractId = null): ResponseInterface
     {
         $contractModel = new ContractModel();
         if (!$contractModel->find($contractId)) {
@@ -132,7 +135,7 @@ class ContractStepController extends ResourceController
         ]);
     }
 
-    public function resequence($contractId = null)
+    public function resequence($contractId = null): ResponseInterface
     {
         $steps = $this->model
             ->where('contract_id', $contractId)
@@ -151,5 +154,115 @@ class ContractStepController extends ResourceController
             'total' => count($steps)
         ]);
     }
+
+    public function cloneFromTemplate($contractId = null): ResponseInterface
+    {
+        $contractModel = new ContractModel();
+        if (!$contractModel->find($contractId)) {
+            return $this->failNotFound("Không tìm thấy hợp đồng với ID $contractId");
+        }
+
+        $templateModel = new ContractStepTemplateModel();
+        $templates = $templateModel->orderBy('step_number')->findAll(); // ✅ Sửa đúng tên cột
+
+        $insertedIds = $this->getArr($contractId, $templates);
+
+        return $this->respond([
+            'status'    => 'success',
+            'message'   => 'Đã clone các bước từ mẫu',
+            'step_ids'  => $insertedIds
+        ]);
+    }
+
+
+    /**
+     * @param mixed $contractId
+     * @param array $templates
+     * @return array
+     */
+    public function getArr(mixed $contractId, array $templates): array
+    {
+        $max = $this->model
+            ->where('contract_id', $contractId)
+            ->selectMax('step_number')
+            ->first();
+
+        $currentStepNo = isset($max['step_number']) ? (int)$max['step_number'] : 0;
+        $insertedIds = [];
+
+        foreach ($templates as $template) {
+            $currentStepNo++;
+
+            $stepData = [
+                'contract_id'   => $contractId,
+                'step_number'   => $template['step_number'] ?? $currentStepNo,
+                'title'         => $template['title'] ?? 'Không tên',
+                'department'    => $template['department'] ?? null,
+                'status'        => '0', // ✔️ để đúng với UI
+                'customer_id'   => null,
+                'assigned_to'   => null,
+                'start_date'    => null,
+                'due_date'      => null,
+                'completed_at'  => null,
+            ];
+
+
+            $id = $this->model->insert($stepData);
+            $insertedIds[] = $id;
+        }
+
+        return $insertedIds;
+    }
+
+    /**
+     * @throws \ReflectionException
+     */
+    public function complete($id = null): ResponseInterface
+    {
+        $current = $this->model->find($id);
+        if (!$current) {
+            return $this->failNotFound("Không tìm thấy bước với ID $id");
+        }
+
+        // 🔒 Kiểm tra các bước trước đã hoàn thành chưa
+        $unfinishedBefore = $this->model
+            ->where('contract_id', $current['contract_id'])
+            ->where('step_number <', $current['step_number'])
+            ->where('status !=', 2) // 2 = hoàn thành
+            ->countAllResults();
+
+        if ($unfinishedBefore > 0) {
+            return $this->fail('Bạn cần hoàn thành tất cả các bước trước đó.');
+        }
+
+        // ✅ Cập nhật bước hiện tại thành hoàn thành
+        $updateData = [
+            'status' => 2,
+            'completed_at' => date('Y-m-d H:i:s'),
+        ];
+
+        if (!$this->model->update($id, $updateData)) {
+            return $this->failValidationErrors($this->model->errors());
+        }
+
+        // ✅ Mở bước kế tiếp (nếu có)
+        $next = $this->model
+            ->where('contract_id', $current['contract_id'])
+            ->where('step_number >', $current['step_number'])
+            ->orderBy('step_number', 'asc')
+            ->first();
+
+        if ($next) {
+            $this->model->update($next['id'], ['status' => 1]); // 1 = đang xử lý
+        }
+
+        return $this->respond([
+            'message' => 'Bước đã hoàn thành và bước kế tiếp đã được mở.',
+            'step_id' => $id,
+            'next_step_id' => $next['id'] ?? null,
+        ]);
+    }
+
+
 
 }

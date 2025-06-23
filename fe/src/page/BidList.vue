@@ -13,21 +13,28 @@
                 :loading="loading"
                 style="margin-top: 12px"
                 row-key="id"
-                :scroll="{ y: 'calc(100vh - 330px)' }"
+                :scroll="{ y: 'calc(100vh - 400px)' }"
         >
             <template #bodyCell="{ column, record, index }">
                 <template v-if="column.dataIndex === 'stt'">
                     {{ index + 1 }}
                 </template>
+                <template v-else-if="column.key === 'title'">
+                    <a-typography-text strong style="cursor: pointer" @click="goToDetail(record.id)">{{ record.title }}</a-typography-text>
+                </template>
                 <template v-else-if="column.dataIndex === 'status'">
-                    <a-tag :color="getStatusColor(record.status)">{{ record.status }}</a-tag>
+                    <a-tag :color="getStatusColor(record.status)">
+                        {{ getStatusText(record.status) }}
+                    </a-tag>
+                </template>
+                <template v-else-if="column.dataIndex === 'estimated_cost'">
+                    {{ formatCurrency(record.estimated_cost) }}
+                </template>
+                <template v-else-if="column.dataIndex === 'start_date' || column.dataIndex === 'end_date'">
+                    {{ formatDate(record[column.dataIndex]) }}
                 </template>
                 <template v-else-if="column.dataIndex === 'action'">
-                    <EyeOutlined
-                            class="icon-action"
-                            style="color: green;"
-                            @click="goToDetail(record.id)"
-                    />
+                    <EyeOutlined class="icon-action" style="color: green;" @click="goToDetail(record.id)" />
                     <EditOutlined class="icon-action" style="color: blue;" @click="showPopupDetail(record)" />
                     <a-popconfirm
                             title="Bạn chắc chắn muốn xoá gói thầu này?"
@@ -39,7 +46,6 @@
                         <DeleteOutlined class="icon-action" style="color: red;" />
                     </a-popconfirm>
                 </template>
-
             </template>
         </a-table>
 
@@ -72,13 +78,17 @@
                 <a-form-item label="Chi phí dự toán" name="estimated_cost">
                     <a-input-number v-model:value="formData.estimated_cost" style="width: 100%" :min="0" />
                 </a-form-item>
+                <a-form-item label="Người phụ trách" name="assigned_to">
+                    <a-select v-model:value="formData.assigned_to" :options="userOptions" placeholder="Chọn người phụ trách" />
+                </a-form-item>
                 <a-form-item label="Trạng thái" name="status">
                     <a-select v-model:value="formData.status" placeholder="Chọn trạng thái">
-                        <a-select-option value="pending">Chưa xử lý</a-select-option>
-                        <a-select-option value="submitted">Đã nộp</a-select-option>
-                        <a-select-option value="awarded">Đã trúng thầu</a-select-option>
-                        <a-select-option value="lost">Không trúng</a-select-option>
-                        <a-select-option value="cancelled">Đã huỷ</a-select-option>
+                        <a-select-option :value="0">Chưa nộp</a-select-option>
+                        <a-select-option :value="1">Đã nộp hồ sơ</a-select-option>
+                        <a-select-option :value="2">Vào vòng sau</a-select-option>
+                        <a-select-option :value="3">Đã trúng thầu</a-select-option>
+                        <a-select-option :value="4">Không trúng</a-select-option>
+                        <a-select-option :value="5">Hủy thầu</a-select-option>
                     </a-select>
                 </a-form-item>
             </a-form>
@@ -102,9 +112,11 @@
     import {
         getBiddingsAPI,
         createBiddingAPI,
-        cloneFromTemplatesAPI
+        cloneFromTemplatesAPI, deleteBiddingAPI
     } from '@/api/bidding'
-    import {updateBiddingAPI} from "../api/bidding";
+    import {updateBiddingAPI, canMarkBiddingAsCompleteAPI } from "../api/bidding";
+    import { formatDate } from '@/utils/formUtils' // nếu bạn đã có
+    import {getUsers} from '@/api/user.js'
 
     import { useRouter } from 'vue-router'
     const router = useRouter()
@@ -120,12 +132,18 @@
         description: '',
         customer_id: 1,
         estimated_cost: 0,
-        status: 'pending',
+        status: 0,
         start_date: null,
-        end_date: null
+        end_date: null,
+        assigned_to: null
     })
 
+    const userOptions = ref([])
+
+    const currentPage = ref(1)
+
     const columns = [
+        { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
         { title: 'Tên gói thầu', dataIndex: 'title', key: 'title' },
         { title: 'Chi phí dự toán', dataIndex: 'estimated_cost', key: 'estimated_cost' },
         { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
@@ -135,15 +153,29 @@
     ]
 
     const getStatusColor = (status) => {
-        const colors = {
-            pending: 'orange',
-            submitted: 'blue',
-            awarded: 'green',
-            lost: 'red',
-            cancelled: 'gray'
+        const map = {
+            0: 'orange',   // Chưa nộp
+            1: 'blue',     // Đã nộp
+            2: 'purple',   // Vào vòng sau
+            3: 'green',    // Trúng thầu
+            4: 'red',      // Không trúng
+            5: 'gray'      // Hủy
         }
-        return colors[status] || 'default'
+        return map[status] || 'default'
     }
+
+    const getStatusText = (status) => {
+        const map = {
+            0: 'Chưa nộp',
+            1: 'Đã nộp hồ sơ',
+            2: 'Vào vòng sau',
+            3: 'Đã trúng thầu',
+            4: 'Không trúng',
+            5: 'Hủy thầu',
+        }
+        return map[status] ?? 'Không rõ'
+    }
+
 
     const rules = {
         title: [{ required: true, message: 'Nhập tên gói thầu' }],
@@ -154,11 +186,24 @@
         status: [{ required: true, message: 'Chọn trạng thái' }]
     }
 
+    const formatCurrency = (value) => {
+        if (!value) return '0 đ'
+        return Number(value).toLocaleString('vi-VN') + ' đ'
+    }
+
+    const fetchUsers = async () => {
+        const res = await getUsers()
+        userOptions.value = res.data.map(user => ({
+            label: user.name,
+            value: user.id
+        }))
+    }
+
     const getBiddings = async () => {
         loading.value = true
         try {
-            const res = await getBiddingsAPI()
-            tableData.value = res.data.data // ✅ chỉ lấy mảng `data`
+            const res = await getBiddingsAPI({ page: currentPage.value, per_page: 20 }) // hoặc 100
+            tableData.value = res.data.data
         } catch (e) {
             message.error('Không thể tải gói thầu')
         } finally {
@@ -170,50 +215,30 @@
         router.push({ name: 'bid-detail', params: { id } })
     }
 
-    const createBidding = async () => {
-        loadingCreate.value = true
+    const submitForm = async () => {
         try {
+            await formRef.value?.validate()
+
             const formatted = {
                 ...formData.value,
                 start_date: dayjs(formData.value.start_date).format('YYYY-MM-DD'),
                 end_date: dayjs(formData.value.end_date).format('YYYY-MM-DD')
             }
-            const res = await createBiddingAPI(formatted)
-            await cloneFromTemplatesAPI(res.data.id)
-            message.success('Tạo gói thầu thành công')
-            onCloseDrawer()
-            getBiddings()
-        } catch (e) {
-            message.error('Không thể tạo gói thầu')
-        } finally {
-            loadingCreate.value = false
-        }
-    }
 
-    const showPopupDetail = (record) => {
-        selectedBidding.value = record
-        formData.value = {
-            ...record,
-            start_date: dayjs(record.start_date),
-            end_date: dayjs(record.end_date),
-        }
-        openDrawer.value = true
-    }
-
-
-    const submitForm = async () => {
-        try {
-            await formRef.value?.validate()
+            // 🚫 Nếu chọn trạng thái "Hoàn thành" (status === 4), kiểm tra trước
+            if (formatted.status === 3 && selectedBidding.value?.id) {
+                const res = await canMarkBiddingAsCompleteAPI(selectedBidding.value.id)
+                if (!res?.data?.allow) {
+                    message.warning('Bạn cần hoàn thành tất cả các bước trước khi chuyển trạng thái gói thầu sang "Đã trúng thầu".')
+                    return
+                }
+            }
 
             if (selectedBidding.value) {
-                await updateBiddingAPI(selectedBidding.value.id, {
-                    ...formData.value,
-                    start_date: dayjs(formData.value.start_date).format('YYYY-MM-DD'),
-                    end_date: dayjs(formData.value.end_date).format('YYYY-MM-DD'),
-                })
+                await updateBiddingAPI(selectedBidding.value.id, formatted)
                 message.success('Cập nhật thành công')
             } else {
-                const res = await createBiddingAPI(formData.value)
+                const res = await createBiddingAPI(formatted)
                 await cloneFromTemplatesAPI(res.data.id)
                 message.success('Tạo gói thầu thành công')
             }
@@ -221,12 +246,37 @@
             onCloseDrawer()
             await getBiddings()
         } catch (e) {
-            message.error('Có lỗi xảy ra')
+            console.error('Lỗi submitForm:', e?.response?.data || e)
+            const errMsg = e?.response?.data?.message || 'Có lỗi xảy ra'
+            message.error(errMsg)
         } finally {
             loadingCreate.value = false
         }
     }
 
+
+
+    const deleteConfirm = async (id) => {
+        try {
+            // Gọi API xoá (bạn cần có API deleteBiddingAPI tương ứng)
+            await deleteBiddingAPI(id)
+            message.success('Xoá gói thầu thành công')
+            await getBiddings()
+        } catch (e) {
+            message.error('Xoá gói thầu thất bại')
+        }
+    }
+
+    const showPopupDetail = (record) => {
+        selectedBidding.value = record
+        formData.value = {
+            ...record,
+            status: Number(record.status),
+            start_date: dayjs(record.start_date),
+            end_date: dayjs(record.end_date),
+        }
+        openDrawer.value = true
+    }
 
     const onCloseDrawer = () => {
         openDrawer.value = false
@@ -238,7 +288,11 @@
         openDrawer.value = true
     }
 
-    onMounted(getBiddings)
+    onMounted(() => {
+        fetchUsers()
+        getBiddings()
+    })
+
 </script>
 
 <style scoped>
