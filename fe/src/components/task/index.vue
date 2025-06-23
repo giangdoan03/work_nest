@@ -9,7 +9,7 @@
         <div class="task-info">
             <div class="task-info-left">
                 <div class="task-info-content">
-                    <a-form ref="formRef" :model="formData" :rules="isEditMode ? rules : ''" layout="vertical">
+                    <a-form ref="formRef" :model="formData" :rules="isEditMode ? rules : {}" layout="vertical">
                         <div class="task-in">
                             <a-row :gutter="16">
                                 <a-col :span="12">
@@ -19,67 +19,148 @@
                                     </a-form-item>
                                 </a-col>
                                 <a-col :span="12">
-                                    <a-form-item label="Độ Ưu tiên" name="priority">
-                                        <a-typography-text v-if="!isEditMode">{{ getPriorityName(formData.priority) }}</a-typography-text>
-                                        <a-select v-else v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên" />
+                                    <a-form-item label="Loại nhiệm vụ" name="linked_type">
+                                        <a-typography-text v-if="!isEditMode">{{ getTextLinkedType }}</a-typography-text>
+                                        <a-select v-else v-model:value="formData.linked_type" :options="linkedTypeOption" @change="handleChangeLinkedType()" placeholder="Chọn loại nhiệm vụ" />
                                     </a-form-item>
                                 </a-col>
+                                <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
+                                    <a-form-item :label=" !formData.linked_type ? 'Trống' : formData.linked_type == 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'" name="linked_type">
+                                        <a-typography-text v-if="!isEditMode">{{ getNameLinked(formData.linked_id) }}</a-typography-text>
+                                        <a-select v-else v-model:value="formData.linked_id" :options="linkedIdOption" :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'" />
+                                    </a-form-item>
+                                </a-col>
+                                <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
+                                    <a-form-item :label=" !formData.linked_type ? 'Trống' : formData.linked_type == 'bidding' ? 'Tiến trình gói thầu' : 'Tiến trình hợp đồng'" name="step_code">
+                                        <a-typography-text v-if="!isEditMode">{{ getStepByStepNo(formData.step_code) }}</a-typography-text>
+                                        <a-select v-else v-model:value="formData.step_code" :options="stepOption" :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'" />
+                                    </a-form-item>
+                                </a-col>
+                            </a-row>
+                        </div>
+                        <div class="task-in">
+                            <a-row :gutter="16">
                                 <a-col :span="12">
                                     <a-form-item label="Thời gian" name="time">
-                                        <a-typography-text v-if="!isEditMode">{{ formData.start_date + " → " + formData.end_date}}</a-typography-text>
+                                        <a-typography-text v-if="!isEditMode">{{ (formData.start_date ? convertDateFormat(formData.start_date) : "Trống") + " → " + (formData.end_date ? convertDateFormat(formData.end_date) : "Trống") }}</a-typography-text>
                                         <a-config-provider :locale="locale">
-                                            <a-range-picker  v-if="isEditMode" format="DD-MM-YYYY" @change="changeDateTime" style="width: 100%;"></a-range-picker>
+                                            <a-range-picker v-model:value="dateRange"  v-if="isEditMode" format="DD-MM-YYYY" @change="changeDateTime" style="width: 100%;"></a-range-picker>
                                         </a-config-provider>
                                     </a-form-item>
                                 </a-col>
-                                
+                                <a-col :span="12">
+                                    <a-form-item label="Độ ưu tiên" name="priority">
+                                        <a-tag v-if="!isEditMode" :color="checkPriority(formData.priority).color">{{ checkPriority(formData.priority).label }}</a-tag>
+                                        <a-select v-else v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên" />
+                                    </a-form-item>
+                                </a-col>
                                 <a-col :span="12">
                                     <a-form-item label="Gắn tới người dùng" name="assigned_to">
                                         <a-typography-text v-if="!isEditMode">{{ getUserById(formData.assigned_to) }}</a-typography-text>
                                         <a-select v-else v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng" />
                                     </a-form-item>
                                 </a-col>
-                                <a-col :span="12">
-                                    <a-form-item label="Loại nhiệm vụ" name="linked_type">
-                                        <a-typography-text v-if="!isEditMode">{{ formData.title }}</a-typography-text>
-                                        <a-select v-else v-model:value="formData.linked_type" :options="linkedTypeOption" placeholder="Chọn loại nhiệm vụ" />
-                                    </a-form-item>
-                                </a-col>
-                                <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
-                                    <a-form-item :label="formData.linked_type == 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'" name="linked_id">
-                                        <a-typography-text v-if="!isEditMode">{{ formData.title }}</a-typography-text>
-                                        <a-select v-else v-model:value="formData.linked_id" :options="linkedIdOption" :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'" />
-                                    </a-form-item>
-                                </a-col>
-                                <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
-                                    <a-form-item label="Bước tiến trình" name="bidding_step_id" >
-                                        <a-typography-text v-if="!isEditMode">{{ formData.title }}</a-typography-text>
-                                        <a-input v-else v-model:value="formData.bidding_step_id" placeholder="Chọn bước tiến trình" />
-                                    </a-form-item>
-                                </a-col>
-                                
+                            </a-row>
+                                                            
+                        </div>
+                        <div class="task-in-end">
+                            <a-row :gutter="16">
                                 <a-col :span="24">
                                     <a-form-item label="Mô tả" name="description">
-                                        <a-typography-text v-if="!isEditMode">{{ formData.description }}</a-typography-text>
-                                        <a-textarea v-else v-model:value="formData.description" :rows="4"
-                                            placeholder="Nhập mô tả " />
+                                        <a-typography-text v-if="!isEditMode">{{ formData.description ? formData.description : "Trống" }}</a-typography-text>
+                                        <a-textarea 
+                                            v-else 
+                                            v-model:value="formData.description" 
+                                            :rows="4"
+                                            placeholder="Nhập mô tả " 
+                                        />
+                                    </a-form-item>
+                                </a-col>
+                                <a-col :span="24">
+                                    <a-form-item label="Tài liệu" name="file">
+                                        <a-button size="large" style="margin-top: 12px;">
+                                            <template #icon>
+                                                <PaperClipOutlined />
+                                            </template>
+                                        </a-button>
                                     </a-form-item>
                                 </a-col>
                             </a-row>
                         </div>
-                        <div class="task-in">Content</div>
-                        <div class="task-in-end">Content</div>
                     </a-form>
                 </div>
             </div>
             <div class="task-info-left">
-    
+                <div class="task-info-content">
+                    <div class="task-in-end">
+                        <a-row justify="space-between">
+                            <a-col>
+                                <a-typography-title :level="5" style="color: #7c7c7c;"> Sub-Tasks</a-typography-title>
+                            </a-col>
+                            <a-col>
+                                <PlusOutlined style="font-size: 16px;cursor: pointer;" @click="showPopupCreate"/>
+                            </a-col>
+                        </a-row>
+                        <div v-if="!listSubTask.length" style="margin-bottom: 16px;">
+                            Không có dữ liệu
+                        </div>
+                        <div v-else>
+                            <a-table
+                                :columns="columns"
+                                :data-source="listSubTask"
+                                :loading="loadingSubTask"
+                                row-key="id"
+                                :pagination="false"
+                            >
+                                <template #bodyCell="{ column, record, text }">
+                                    <template v-if="column.key === 'title'">
+                                        <a-typography-link strong>{{ text }}</a-typography-link>
+                                    </template>
+                                    <template v-if="column.key === 'assigned_to'">
+                                        <a-typography-text>{{ getUserById(record.assigned_to) }}</a-typography-text>
+                                    </template>
+                                    <template v-if="column.key === 'date'">
+                                        <a-typography-text v-if="!isEditMode">{{ record.end_date }}</a-typography-text>
+                                    </template>
+                                    <template v-if="column.key === 'action'">
+                                        <a-dropdown>
+                                            <CaretDownOutlined />
+                                            <template #overlay>
+                                                <a-menu>
+                                                    <a-menu-item>
+                                                        Chi tiết
+                                                    </a-menu-item>
+                                                    <a-menu-item>
+                                                        Xóa
+                                                    </a-menu-item>
+                                                </a-menu>
+                                            </template>
+                                        </a-dropdown>
+                                    </template>
+                                </template>
+                            </a-table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="task-info-left">
+                <div class="task-info-content">
+                    <div class="task-in-end">
+                        <Comment />
+                    </div>
+                </div>
             </div>
         </div>
+        <DrawerCreateTask 
+            v-model:open-drawer="openDrawerCreateTask"
+            :list-user="listUser"
+            :task-parent="route.params.id"
+            @submitForm="submitForm"
+        />
     </div>
 </template>
 <script setup>
-import { EllipsisOutlined } from '@ant-design/icons-vue';
+import { EllipsisOutlined, PaperClipOutlined, PlusOutlined, CaretDownOutlined } from '@ant-design/icons-vue';
 import { ref, computed, onMounted } from 'vue';
 import { message } from 'ant-design-vue'
 import 'dayjs/locale/vi';
@@ -88,7 +169,12 @@ import dayjs from 'dayjs';
 import viVN from 'ant-design-vue/es/locale/vi_VN';
 import { getUsers } from '@/api/user';
 import { useRoute, useRouter } from 'vue-router';
-import { getTaskDetail } from '@/api/internal';
+import { getTaskDetail, getSubTasks } from '@/api/internal';
+import { getBiddingsAPI } from "@/api/bidding";
+import { getContractsAPI } from "@/api/contract";
+import { CONTRACTS_STEPS, BIDDING_STEPS } from '@/common'
+import DrawerCreateTask from "../common/DrawerCreateTask.vue";
+import Comment from './Comment.vue';
 
 
 const route = useRoute();
@@ -97,32 +183,52 @@ const isEditMode = ref(false);
 
 const listUser = ref([])
 const loading = ref(false)
+const loadingSubTask = ref(false)
+const listContract = ref([]);
+const listBidding = ref([]);
+const dateRange = ref([]);
+const openDrawerCreateTask = ref(false);
+const listSubTask = ref([])
 
 const formData = ref({
     title: "",
     created_by: "",
-    step_code: "",
+    step_code: null,
     linked_type: null,
     description: "",
-    linked_id: "",
+    linked_id: null,
     assigned_to: null,
     start_date: "",
     end_date: "",
     status: "",
     priority: null,
     parent_id: null,
-    bidding_step_id: null,
 });
 const priorityOption = ref([
-    {value: "low", label: "Thấp"},
-    {value: "normal", label: "Thường"},
-    {value: "hight", label: "Cao"},
+    {value: "low", label: "Thấp", color: "success"},
+    {value: "normal", label: "Thường", color: "warning"},
+    {value: "high", label: "Cao", color: "error"},
 ])
 const linkedTypeOption = ref([
     {value: "bidding", label: "Gói thầu"},
     {value: "contract", label: "Hợp đồng"},
     {value: "internal", label: "Nhiệm vụ nội bộ"},
 ])
+const columns = ref([
+    { title: 'Tên task', key: 'title', dataIndex: 'title' },
+    { title: 'Gắn người dùng', key: 'assigned_to', dataIndex: 'assigned_to' },
+    { title: 'Thời hạn', key: 'date', dataIndex: 'date' },
+    { title: '', key: 'action', dataIndex: 'action', width:"60px" },
+])
+
+const getTextLinkedType = computed(()=>{
+    let data = linkedTypeOption.value.find(ele => ele.value == formData.value.linked_type)
+    if(data){
+        return data.label;
+    }else {
+        return "Nhiệm vụ nội bộ"
+    }
+})
 const userOption =  computed(()=>{
     if(!listUser.value || !listUser.value.length){
         return[]
@@ -135,7 +241,33 @@ const userOption =  computed(()=>{
         })
     }
 })
+const getNameLinked = (id)=>{
+    console.log(2,listBidding.value);
+    
+    if(formData.value.linked_type == 'bidding' && listBidding.value && listBidding.value.length){
+        let check = listBidding.value.find(ele => ele.id == id)
+        if(check) return check.title
+        else return 'Gói thầu không tồn tại'
+    }else if(formData.value.linked_type == 'contract' && listContract.value && listContract.value.length){
+        let check = listContract.value.find(ele => ele.id == id)
+        if(check) return check.title
+        else return 'Hợp đồng không tồn tại'
+    }
+    return "Trống"
+}
 const linkedIdOption = computed(()=>{
+    if(formData.value.linked_type == 'bidding'){
+        return listBidding.value.map(ele => {
+            return { value: ele.id, label: ele.title}
+        })
+    }else if(formData.value.linked_type == 'contract'){
+        console.log(555,listContract.value.map(ele => {
+            return { value: ele.id, label: ele.title}
+        }));
+        return listContract.value.map(ele => {
+            return { value: ele.id, label: ele.title}
+        })
+    }
     return [];
 })
 const validateTitle = async (_rule, value) => {    
@@ -193,7 +325,54 @@ const rules = computed(() => {
         description: [{ required: true, validator: validateDescription,  trigger: 'change' }],
     }
 })
+const stepOption = computed(()=>{
+    switch (formData.value.linked_type) {
+        case 'bidding':
+            return BIDDING_STEPS.map(ele => {
+                return { value: ele.step_code, label: ele.name}
+            })
+        case 'contract':
+            return CONTRACTS_STEPS.map(ele => {
+                return { value: ele.step_code, label: ele.name}
+            })
+        default:
+            return [];
+    }
+})
 
+// Method
+const showPopupCreate = () => {
+    openDrawerCreateTask.value = true;
+}
+const submitForm = () => {
+    getSubTask();
+}
+const handleChangeLinkedType = () => {
+    formData.value.linked_id = null;
+    formData.value.step_code = null;
+}
+const getStepByStepNo = (step) =>  {
+    let data = CONTRACTS_STEPS.find(ele => ele.step_code == step);
+    if(!data){
+        data = BIDDING_STEPS.find(ele => ele.step_code == step);
+        if(!data){
+            return "Trống" ;
+        }
+    }
+    return data.name;
+}
+const convertDateFormat = (dateStr) =>  {
+    const [year, month, day] = dateStr.split('-');    
+    return `${day}/${month}/${year}`;
+}
+const checkPriority = (text) => {
+    let data = priorityOption.value.find(ele => ele.value == text);
+    if(data){
+        return data 
+    }else {
+        return {value: "", label: "", color: ""}
+    }
+};
 const getUser = async () => {
     loading.value = true
     try {
@@ -211,13 +390,6 @@ const getUserById = (userId) =>  {
         return "" ;
     }
     return data.name;
-}
-const getPriorityName = (priorityId) =>  {
-    let data = priorityOption.value.find(ele => ele.value == priorityId);
-    if(!data){
-        return "" ;
-    }
-    return data.label;
 }
 const changeDateTime = (day, date) => {
     if(day){
@@ -240,21 +412,57 @@ const cancelEditTask = () => {
 }
 const getDetailTaskById = async () => {
     await getTaskDetail(route.params.id).then(res => {
-        console.log(res);
-        formData.value = res.data
+        formData.value = res.data;
+        dateRange.value = [ formData.value.start_date, formData.value.end ]
     }).catch(err => {
 
     })
 }
+const getListBidding = async () => {
+    await getBiddingsAPI().then(res =>{
+        listBidding.value = res.data.data
+    }).catch(err => {
+
+    })
+}
+const getListContract = async () => {
+    await getContractsAPI().then(res =>{
+
+        listContract.value = res.data;
+    }).catch(err => {
+
+    })
+}
+const getSubTask = async() => {
+    if(loadingSubTask.value){
+        return
+    }
+    loadingSubTask.value = true;
+    try {
+        let res =  await getSubTasks(route.params.id);        
+        listSubTask.value = res.data;
+    } catch (error) {
+        console.log(error);
+    } finally {
+        loadingSubTask.value = false;
+    } 
+
+}
 onMounted(() => {
     getDetailTaskById();
-    getUser();    
+    getSubTask();
+    getUser();
+    getListBidding();
+    getListContract();
 })
 
 </script>
 <style scoped>
 .task-info{
     margin-top: 16px;
+}
+.task-info-left{
+    margin-bottom: 20px;
 }
 .task-info-content{
     border: 1px solid #bebebece;
@@ -263,6 +471,7 @@ onMounted(() => {
 .task-in{
     border-bottom: 1px solid #bebebece;
     padding: 14px;
+    padding-bottom: 0;
 }
 .task-in-end{
     padding: 14px;
@@ -273,6 +482,9 @@ onMounted(() => {
     color: #999999 !important;
 }
 :deep(.ant-form-item){
-
+    margin-bottom: 14px;
+}
+:deep(.ant-form-item-label){
+    padding-bottom: 0;
 }
 </style>

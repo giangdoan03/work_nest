@@ -21,5 +21,10 @@ export const deleteTask= (taskId) =>
 export const getTaskDetail = (taskId) =>
     instance.get(`/tasks/${taskId}`, { params: { task_id: taskId } })
 
+// API SUB task
+export const getSubTasks = (taskId) =>
+    instance.get(`/tasks/${taskId}/subtasks`)
+
+
 
 
