@@ -2,79 +2,60 @@
     <div>
         <a-flex justify="space-between">
             <div>
-                <a-typography-title :level="4">Quy trình đấu thầu (mẫu)</a-typography-title>
+                <a-typography-title :level="4">Danh sách bước mẫu đấu thầu</a-typography-title>
             </div>
             <a-button type="primary" @click="showPopupCreate">Thêm bước mới</a-button>
         </a-flex>
 
         <a-table
-                :columns="columns"
-                :data-source="tableData"
-                :loading="loading"
-                style="margin-top: 12px"
-                row-key="step_number"
-                :scroll="{ y: 'calc(100vh - 330px)' }"
+            :columns="columns"
+            :data-source="tableData"
+            :loading="loading"
+            style="margin-top: 12px"
+            row-key="id"
+            :scroll="{ y: 'calc(100vh - 330px)' }"
         >
-            <template #bodyCell="{ column, record, index, text }">
+            <template #bodyCell="{ column, record, index }">
                 <template v-if="column.dataIndex === 'stt'">
                     {{ index + 1 }}
                 </template>
-                <template v-if="column.dataIndex === 'step_number'">
+                <template v-else-if="column.dataIndex === 'step_number'">
                     <a-tag color="blue">Bước {{ record.step_number }}</a-tag>
                 </template>
-                <template v-if="column.dataIndex === 'title'">
+                <template v-else-if="column.dataIndex === 'title'">
                     <a-typography-text strong style="cursor: pointer;" @click="editStep(record)">
-                        {{ text }}
+                        {{ record.title }}
                     </a-typography-text>
                 </template>
-                <template v-if="column.dataIndex === 'department_ids'">
+                <template v-else-if="column.dataIndex === 'department'">
                     <a-space wrap>
-                        <a-tag v-for="id in record.department_ids" :key="id">
-                            {{ getDepartmentName(id) }}
-                        </a-tag>
+                        <a-tag v-for="dept in record.department" :key="dept">{{ dept }}</a-tag>
                     </a-space>
                 </template>
-
                 <template v-else-if="column.dataIndex === 'action'">
-                    <a-dropdown placement="left">
-                        <a-button>
-                            <template #icon><MoreOutlined /></template>
-                        </a-button>
-                        <template #overlay>
-                            <a-menu>
-                                <a-menu-item @click="editStep(record)">
-                                    <EditOutlined class="icon-action" style="color: blue;" />
-                                    Chỉnh sửa
-                                </a-menu-item>
-                                <a-menu-item>
-                                    <a-popconfirm
-                                            title="Xoá bước này?"
-                                            ok-text="Xoá"
-                                            cancel-text="Hủy"
-                                            @confirm="deleteStep(record.step_number)"
-                                            placement="topRight"
-                                    >
-                                        <div>
-                                            <DeleteOutlined class="icon-action" style="color: red;" />
-                                            Xoá
-                                        </div>
-                                    </a-popconfirm>
-                                </a-menu-item>
-                            </a-menu>
-                        </template>
-                    </a-dropdown>
+                    <a-space>
+                        <EditOutlined class="icon-action" @click="editStep(record)" />
+                        <a-popconfirm
+                            title="Xoá bước này?"
+                            ok-text="Xoá"
+                            cancel-text="Hủy"
+                            @confirm="deleteStep(record.id)"
+                        >
+                            <DeleteOutlined class="icon-action" style="color: red;" />
+                        </a-popconfirm>
+                    </a-space>
                 </template>
             </template>
         </a-table>
 
         <a-drawer
-                title="Thêm/Sửa bước đấu thầu"
-                :width="550"
-                :open="openDrawer"
-                @close="onCloseDrawer"
-                :footer-style="{ textAlign: 'right' }"
+            :title="selectedStep ? 'Chỉnh sửa bước mẫu' : 'Thêm bước mẫu'"
+            :width="500"
+            :open="openDrawer"
+            @close="onCloseDrawer"
+            :footer-style="{ textAlign: 'right' }"
         >
-            <a-form ref="formRef" :model="formData" :rules="rules" layout="vertical" @finish="submitStep">
+            <a-form ref="formRef" :model="formData" :rules="rules" layout="vertical">
                 <a-form-item label="Số bước (STT)" name="step_number">
                     <a-input-number v-model:value="formData.step_number" min="1" style="width: 100%" />
                 </a-form-item>
@@ -83,15 +64,13 @@
                     <a-input v-model:value="formData.title" placeholder="Nhập tên bước" />
                 </a-form-item>
 
-                <a-form-item label="Phòng ban phụ trách" name="department_ids">
+                <a-form-item label="Phòng ban phụ trách" name="department">
                     <a-select
-                            v-model:value="formData.department_ids"
-                            :options="departmentOptions"
-                            mode="multiple"
-                            placeholder="Chọn phòng ban"
-                            show-search
-                            allow-clear
-                            option-filter-prop="label"
+                        v-model:value="formData.department"
+                        mode="multiple"
+                        :options="departmentOptions"
+                        placeholder="Chọn phòng ban phụ trách"
+                        allow-clear
                     />
                 </a-form-item>
             </a-form>
@@ -99,7 +78,7 @@
             <template #extra>
                 <a-space>
                     <a-button @click="onCloseDrawer">Hủy</a-button>
-                    <a-button type="primary" @click="submitStep" :loading="loadingCreate">
+                    <a-button type="primary" :loading="loadingCreate" @click="submitStep">
                         {{ selectedStep ? 'Cập nhật' : 'Thêm mới' }}
                     </a-button>
                 </a-space>
@@ -109,178 +88,160 @@
 </template>
 
 <script setup>
-    import { ref, onMounted, computed  } from 'vue'
-    import {
-        getSettingByKey,
-        updateSetting,
-        createSetting
-    } from '../api/setting'
-    import { getDepartments } from '../api/department'
-    import { message } from 'ant-design-vue'
-    import { EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons-vue'
+import { ref, onMounted, computed } from 'vue'
+import { message } from 'ant-design-vue'
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons-vue'
+import {
+    getStepTemplatesAPI,
+    createStepTemplateAPI,
+    updateStepTemplateAPI,
+    deleteStepTemplateAPI
+} from '@/api/step-template'
+import { getDepartments } from '@/api/department'
 
-    const loading = ref(false)
-    const loadingCreate = ref(false)
-    const openDrawer = ref(false)
+const loading = ref(false)
+const loadingCreate = ref(false)
+const openDrawer = ref(false)
+const selectedStep = ref(null)
+const formRef = ref(null)
+const tableData = ref([])
 
-    const selectedStep = ref(null)
-    const tableData = ref([])
+const departmentList = ref([])
+const departmentOptions = computed(() =>
+    departmentList.value.map(d => ({ label: d.name, value: d.name }))
+)
 
-    const departments = ref([])
+const formData = ref({
+    step_number: null,
+    title: '',
+    department: []
+})
 
-    const departmentOptions = computed(() =>
-        departments.value.map(d => ({
-            label: d.name,
-            value: d.id
-        }))
-    )
+const columns = [
+    { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
+    { title: 'Bước số', dataIndex: 'step_number', key: 'step_number',  width: '100px'},
+    { title: 'Tên bước', dataIndex: 'title', key: 'title' },
+    { title: 'Phòng ban', dataIndex: 'department', key: 'department' },
+    { title: 'Hành động', dataIndex: 'action', key: 'action' }
+]
 
-    const formData = ref({
-        step_number: null,
-        title: '',
-        department_ids: []
-    })
+const rules = {
+    step_number: [{ required: true, message: 'Vui lòng nhập số bước' }],
+    title: [{ required: true, message: 'Vui lòng nhập tên bước' }],
+    department: [{ required: true, type: 'array', message: 'Vui lòng chọn ít nhất 1 phòng ban' }]
+}
 
-    const formRef = ref(null)
-
-    const columns = [
-        { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
-        {
-            title: 'Bước số',
-            dataIndex: 'step_number',
-            key: 'step_number',
-            width: '100px',
-            align: 'center'
-        },
-        { title: 'Tên bước', dataIndex: 'title', key: 'title' },
-        {
-            title: 'Phòng ban phụ trách',
-            dataIndex: 'department_ids', // ✅ sửa lại đúng key
-            key: 'department_ids'
-        },
-        { title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px', align: 'center' }
-    ]
-
-
-    const rules = {
-        step_number: [{ required: true, message: 'Vui lòng nhập STT' }],
-        title: [{ required: true, message: 'Vui lòng nhập tên bước' }],
-        department_ids: [{ required: true, type: 'array', min: 1, message: 'Chọn ít nhất 1 phòng ban' }]
+const fetchStepTemplates = async () => {
+    loading.value = true
+    try {
+        const res = await getStepTemplatesAPI()
+        tableData.value = Array.isArray(res.data)
+            ? res.data.map(item => ({
+                ...item,
+                department: (() => {
+                    try {
+                        const parsed = JSON.parse(item.department)
+                        return Array.isArray(parsed) ? parsed : []
+                    } catch {
+                        return []
+                    }
+                })()
+            }))
+            : []
+    } catch (err) {
+        console.error(err)
+        message.error('Không thể tải danh sách bước mẫu')
+    } finally {
+        loading.value = false
     }
+}
 
-    const fetchSteps = async () => {
-        loading.value = true
-        try {
-            const res = await getSettingByKey('bidding_steps')
-            const parsed = JSON.parse(res.data.value)
-            tableData.value = parsed.steps || []
-            settingId.value = res.data.id
-        } catch (err) {
-            tableData.value = []
-            settingId.value = null
-        } finally {
-            loading.value = false
+const fetchDepartments = async () => {
+    try {
+        const res = await getDepartments()
+        departmentList.value = res.data || []
+    } catch (err) {
+        console.error(err)
+        message.error('Không thể tải phòng ban')
+    }
+}
+
+const showPopupCreate = () => {
+    formData.value = { step_number: null, title: '', department: [] }
+    selectedStep.value = null
+    openDrawer.value = true
+}
+
+const editStep = (record) => {
+    selectedStep.value = record
+    formData.value = {
+        ...record,
+        department: Array.isArray(record.department)
+            ? record.department
+            : (() => {
+                try {
+                    return JSON.parse(record.department)
+                } catch {
+                    return []
+                }
+            })()
+    }
+    openDrawer.value = true
+}
+
+const submitStep = async () => {
+    try {
+        await formRef.value.validate()
+        loadingCreate.value = true
+        const payload = {
+            ...formData.value,
+            department: JSON.stringify(formData.value.department)
         }
-    }
-
-    const settingId = ref(null)
-
-    const showPopupCreate = () => {
-        openDrawer.value = true
-    }
-
-    const getDepartmentName = (id) => {
-        const dept = departments.value.find(d => d.id === id)
-        return dept ? dept.name : ''
-    }
-
-    const fetchDepartments = async () => {
-        try {
-            const res = await getDepartments()
-            console.log('Phòng ban:', res)
-
-            if (Array.isArray(res.data)) {
-                departments.value = res.data
-            } else {
-                throw new Error('Dữ liệu không hợp lệ')
-            }
-        } catch (err) {
-            console.error(err)
-            message.error('Không thể tải danh sách phòng ban')
-        }
-    }
-
-
-    const editStep = (record) => {
-        formData.value = { ...record }
-        selectedStep.value = record
-        openDrawer.value = true
-    }
-
-    const submitStep = async () => {
-        try {
-            await formRef.value?.validate()
-            loadingCreate.value = true
-
-            // Nếu sửa thì cập nhật
-            const existingIndex = tableData.value.findIndex(s => s.step_number === formData.value.step_number)
-
-            if (existingIndex !== -1 && selectedStep.value) {
-                tableData.value.splice(existingIndex, 1, { ...formData.value })
-            } else {
-                tableData.value.push({ ...formData.value })
-            }
-
-            await saveSettingToServer()
-            message.success('Lưu bước thành công')
-            onCloseDrawer()
-        } catch (e) {
-            message.error('Không thể lưu bước')
-        } finally {
-            loadingCreate.value = false
-        }
-    }
-
-    const deleteStep = async (stepNumber) => {
-        tableData.value = tableData.value.filter(s => s.step_number !== stepNumber)
-        await saveSettingToServer()
-        message.success('Đã xoá bước')
-    }
-
-    const saveSettingToServer = async () => {
-        const data = {
-            key: 'bidding_steps',
-            value: JSON.stringify({ steps: tableData.value })
-        }
-        if (settingId.value) {
-            await updateSetting(settingId.value, data)
+        if (selectedStep.value) {
+            await updateStepTemplateAPI(selectedStep.value.id, payload)
+            message.success('Cập nhật thành công')
         } else {
-            const res = await createSetting(data)
-            settingId.value = res.data.id
+            await createStepTemplateAPI(payload)
+            message.success('Thêm mới thành công')
         }
+        await fetchStepTemplates()
+        onCloseDrawer()
+    } catch (e) {
+        console.error(e)
+        message.error('Không thể lưu bước')
+    } finally {
+        loadingCreate.value = false
     }
+}
 
-    const onCloseDrawer = () => {
-        openDrawer.value = false
-        selectedStep.value = null
-        formData.value = {
-            step_number: null,
-            title: '',
-            department_id: null
-        }
-        formRef.value?.resetFields()
+const deleteStep = async (id) => {
+    try {
+        await deleteStepTemplateAPI(id)
+        message.success('Đã xoá bước')
+        await fetchStepTemplates()
+    } catch (e) {
+        console.error(e)
+        message.error('Xoá thất bại')
     }
+}
 
-    onMounted(() => {
-        fetchSteps()
-        fetchDepartments()
-    })
+const onCloseDrawer = () => {
+    openDrawer.value = false
+    selectedStep.value = null
+    formData.value = { step_number: null, title: '', department: [] }
+    formRef.value?.resetFields()
+}
+
+onMounted(() => {
+    fetchStepTemplates()
+    fetchDepartments()
+})
 </script>
 
 <style scoped>
-    .icon-action {
-        font-size: 18px;
-        margin-right: 8px;
-        cursor: pointer;
-    }
+.icon-action {
+    font-size: 18px;
+    margin-right: 8px;
+    cursor: pointer;
+}
 </style>

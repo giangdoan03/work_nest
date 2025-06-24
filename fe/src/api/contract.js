@@ -5,24 +5,24 @@ const instance = axios.create({
     withCredentials: true
 })
 
-// API bidding
 export const getContractsAPI = () => instance.get('/contracts')
+
 export const getContractAPI = (id) => instance.get(`/contracts/${id}`)
+
 export const createContractAPI = (data) => instance.post('/contracts', data)
+
 export const updateContractAPI = (id, data) => instance.put(`/contracts/${id}`, data)
+
 export const deleteContractAPI = (id) => instance.delete(`/contracts/${id}`)
-export const cloneFromTemplatesAPI = (biddingId) => instance.post(`/contracts/${biddingId}/init-steps`)
 
-// Lấy danh sách bước theo bidding_id
-export const getContractStepsAPI = (biddingId) =>
-    instance.get(`/bidding-steps`, { params: { bidding_id: biddingId } })
+export const getContractStepCountAPI = (id) => instance.get(`/contracts/${id}/step-count`)
 
-// Cập nhật trạng thái bước
-export const updateContractStepAPI = (stepId, data) =>
-    instance.put(`/bidding-steps/${stepId}`, data)
+export const getContractStepDetailsAPI = (id) => instance.get(`/contracts/${id}/step-details`)
 
-export const completeContractStepAPI = (stepId) =>
-    instance.put(`/bidding-steps/${stepId}/complete`)
+export const getContractsByCustomerAPI = (customerId) => instance.get(`/contracts/by-customer/${customerId}`)
 
+export const cloneStepsFromTemplateAPI = (contractId) =>
+    instance.post(`/contracts/${contractId}/clone-from-template`);
 
-
+export const canMarkContractAsCompleteAPI = (contractId) =>
+    instance.get(`/contracts/can-complete/${contractId}`);

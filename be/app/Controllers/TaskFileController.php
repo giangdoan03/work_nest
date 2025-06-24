@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\TaskFileModel;
+use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use App\Libraries\Uploader;
 
@@ -12,7 +13,7 @@ class TaskFileController extends ResourceController
     protected $format    = 'json';
 
     // ✅ Upload file cho task (cha hoặc con)
-    public function upload($task_id = null)
+    public function upload($task_id = null): ResponseInterface
     {
         $file = $this->request->getFile('file');
         $user_id = $this->request->getPost('user_id');
@@ -41,7 +42,7 @@ class TaskFileController extends ResourceController
     }
 
     // ✅ Lấy danh sách file theo task
-    public function byTask($task_id)
+    public function byTask($task_id): ResponseInterface
     {
         $files = $this->model->where('task_id', $task_id)->findAll();
         return $this->respond($files);

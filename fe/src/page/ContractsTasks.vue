@@ -2,7 +2,7 @@
     <div>
         <a-flex justify="space-between">
             <div>
-                <a-typography-title :level="4">Danh sách hợp đồng và công việc</a-typography-title>
+                <a-typography-title :level="4">Danh sách hợp đồng</a-typography-title>
             </div>
             <a-button type="primary" @click="showPopupCreate">Thêm hợp đồng mới</a-button>
         </a-flex>
@@ -10,16 +10,28 @@
         <a-table :columns="columns" :data-source="tableData" :loading="loading"
             style="margin-top: 12px;" row-key="id" :scroll="{y: 'calc( 100vh - 330px )' }">
             <template #bodyCell="{ column, record, index }">
-                <template v-if="column.dataIndex == 'stt'">
+                <template v-if="column.dataIndex === 'stt'">
                     {{ index+1 }}
                 </template>
-                <template v-else-if="column.dataIndex == 'status'">
+                <template v-if="column.dataIndex === 'name'">
+                    <a-typography-text  @click="goToContractDetail(record.id)" strong style="cursor: pointer">{{ record.name }}</a-typography-text>
+                </template>
+                <template v-else-if="column.dataIndex === 'status'">
                     <a-tag :color="getStatusColor(record.status)">
-                        {{ record.status }}
+                        {{ getStatusLabel(record.status) }}
                     </a-tag>
                 </template>
-                <template v-else-if="column.dataIndex == 'action'">
-                    <EditOutlined class="icon-action" style="color: blue;" @click="showPopupDetail(record)"/>
+                <template v-else-if="column.dataIndex === 'action'">
+                    <EyeOutlined
+                        class="icon-action"
+                        style="color: #1890ff;"
+                        @click="goToContractDetail(record.id)"
+                    />
+                    <EditOutlined
+                        class="icon-action"
+                        style="color: blue;"
+                        @click="showPopupDetail(record)"
+                    />
                     <a-popconfirm
                         title="Bạn chắc chắn muốn xóa hợp đồng này?"
                         ok-text="Xóa"
@@ -27,13 +39,14 @@
                         @confirm="deleteConfirm(record.id)"
                         placement="topRight"
                     >
-                        <DeleteOutlined class="icon-action" style="margin: 0; color: red;"/>
+                        <DeleteOutlined class="icon-action" style="margin: 0; color: red;" />
                     </a-popconfirm>
                 </template>
+
             </template>
         </a-table>
 
-        <a-drawer title="Tạo hợp đồng mới" :width="700" :open="openDrawer" :body-style="{ paddingBottom: '80px' }"
+        <a-drawer :title="selectedContract ? 'Sửa hợp đồng' : 'Tạo hợp đồng mới'" :width="700" :open="openDrawer" :body-style="{ paddingBottom: '80px' }"
             :footer-style="{ textAlign: 'right' }" @close="onCloseDrawer">
             <a-form ref="formRef" :model="formData" :rules="rules" layout="vertical">
                 <a-row :gutter="16">
@@ -52,11 +65,48 @@
                     <a-col :span="12">
                         <a-form-item label="Trạng thái" name="status">
                             <a-select v-model:value="formData.status" placeholder="Chọn trạng thái">
-                                <a-select-option value="pending">Chờ xử lý</a-select-option>
-                                <a-select-option value="in_progress">Đang thực hiện</a-select-option>
-                                <a-select-option value="completed">Hoàn thành</a-select-option>
-                                <a-select-option value="cancelled">Đã hủy</a-select-option>
+                                <a-select-option :value="0">Nháp</a-select-option>
+                                <a-select-option :value="1">Đang thực hiện</a-select-option>
+                                <a-select-option :value="2">Chờ duyệt</a-select-option>
+                                <a-select-option :value="3">Đã duyệt</a-select-option>
+                                <a-select-option :value="4">Hoàn thành</a-select-option>
+                                <a-select-option :value="5">Đã hủy</a-select-option>
                             </a-select>
+                        </a-form-item>
+                    </a-col>
+                </a-row>
+                <a-row :gutter="16">
+                    <a-col :span="24">
+                        <a-form-item label="Gói thầu đã trúng" name="bidding_id">
+                            <a-select
+                                    v-model:value="formData.bidding_id"
+                                    :options="awardedBiddings"
+                                    placeholder="Chọn gói thầu đã trúng"
+                                    allow-clear
+                                    show-search
+                                    :filter-option="(input, option) =>option.label.toLowerCase().includes(input.toLowerCase())"
+                            />
+                        </a-form-item>
+                    </a-col>
+                </a-row>
+                <a-row :gutter="16">
+                    <a-col :span="24">
+                        <a-form-item label="Khách hàng liên quan">
+                            <a-input :value="selectedCustomerName" disabled />
+                        </a-form-item>
+                    </a-col>
+                </a-row>
+                <a-row :gutter="16">
+                    <a-col :span="24">
+                        <a-form-item label="Người phụ trách" name="assigned_to">
+                            <a-select
+                                v-model:value="formData.assigned_to"
+                                :options="userOptions"
+                                placeholder="Chọn người phụ trách"
+                                allow-clear
+                                show-search
+                                :filter-option="(input, option) => option.label.toLowerCase().includes(input.toLowerCase())"
+                            />
                         </a-form-item>
                     </a-col>
                 </a-row>
@@ -93,10 +143,28 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { message } from 'ant-design-vue'
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons-vue';
+import {computed, onMounted, ref, watch} from 'vue'
+import {message} from 'ant-design-vue'
+import {DeleteOutlined, EditOutlined, EyeOutlined} from '@ant-design/icons-vue';
 import dayjs from 'dayjs';
+import {getBiddingAPI, getBiddingsAPI} from '../api/bidding'
+import {getCustomers} from '../api/customer' // đảm bảo bạn có API này
+import {
+    cloneStepsFromTemplateAPI,
+    createContractAPI,
+    deleteContractAPI,
+    getContractsAPI,
+    updateContractAPI
+} from "../api/contract"; // ✅ đảm bảo đúng path
+import {canMarkContractAsCompleteAPI} from '@/api/contract'
+
+import {formatDate} from '@/utils/formUtils'
+import {useRouter} from 'vue-router'
+import {getUsers} from "@/api/user.js";
+
+const selectedCustomerName = ref('')
+
+const router = useRouter()
 
 const formRef = ref(null);
 const selectedContract = ref(null)
@@ -107,13 +175,26 @@ const openDrawer = ref(false)
 const formData = ref({
     name: "",
     code: "",
-    status: "pending",
+    status: 0, // ✅ sửa từ "pending" → 0 (tương ứng "Nháp")
     start_date: null,
     end_date: null,
     description: "",
+    bidding_id: null,
+    assigned_to: null,
 })
 
+const steps = ref([]) // hoặc dữ liệu thực tế từ API
+const userOptions = ref([])
+
+
+const goToContractDetail = (id) => {
+    router.push(`/contracts/${id}`)
+}
+
+const awardedBiddings = ref([])
+
 const columns = [
+    { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
     { title: 'Tên hợp đồng', dataIndex: 'name', key: 'name' },
     { title: 'Mã hợp đồng', dataIndex: 'code', key: 'code' },
     { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
@@ -125,13 +206,65 @@ const columns = [
 
 const getStatusColor = (status) => {
     const colors = {
-        pending: 'orange',
-        in_progress: 'blue',
-        completed: 'green',
-        cancelled: 'red'
+        0: 'gray',
+        1: 'blue',
+        2: 'orange',
+        3: 'cyan',
+        4: 'green',
+        5: 'red'
     }
+
     return colors[status] || 'default'
 }
+
+const getStatusLabel = (status) => {
+    const map = {
+        0: 'Nháp',
+        1: 'Đang thực hiện',
+        2: 'Chờ duyệt',
+        3: 'Đã duyệt',
+        4: 'Hoàn thành',
+        5: 'Đã hủy',
+    }
+
+    if (!(status in map)) {
+        console.warn('⚠️ Status không hợp lệ:', status)
+        return 'Không xác định'
+    }
+
+    return map[status]
+}
+
+
+const fetchAwardedBiddings = async () => {
+    try {
+        const res = await getBiddingsAPI({ status: 'awarded', per_page: 1000 })
+
+        awardedBiddings.value = res.data.data.map(bid => ({
+            label: bid.title,
+            value: String(bid.id)
+        }))
+    } catch (e) {
+        console.error(e)
+        message.error('Không thể tải gói thầu đã trúng')
+    }
+}
+
+
+const fetchUsers = async () => {
+    try {
+        const res = await getUsers()
+        // Nếu là mảng phẳng
+        const rawUsers = Array.isArray(res.data) ? res.data : res.data?.data || []
+        userOptions.value = rawUsers.map(u => ({
+            label: u.name,
+            value: String(u.id)
+        }))
+    } catch (e) {
+        console.error('Không thể tải danh sách người dùng', e)
+    }
+}
+
 
 const validateName = async (_rule, value) => {    
     if (value === '') {
@@ -174,103 +307,184 @@ const rules = computed(() => {
             { validator: validateDates, trigger: 'change' }
         ],
         description: [{ required: true, message: 'Vui lòng nhập mô tả', trigger: 'change' }],
+        bidding_id: [{ required: true, message: 'Vui lòng chọn gói thầu đã trúng', trigger: 'change' }],
+        customer_id: [{ required: true, message: 'Không tìm thấy khách hàng', trigger: 'change' }],
     }
 })
 
-// TODO: Implement these API functions in your api folder
 const getContracts = async () => {
     loading.value = true
     try {
-        // const response = await getContractsAPI();
-        // tableData.value = response.data;
-        // Temporary mock data
-        tableData.value = [
-            {
-                id: 1,
-                name: 'Hợp đồng mẫu',
-                code: 'HD001',
-                status: 'pending',
-                start_date: '2024-03-20',
-                end_date: '2024-04-20',
-                created_at: '2024-03-20',
-                description: 'Mô tả hợp đồng mẫu'
-            }
-        ]
+        const response = await getContractsAPI()
+        tableData.value = response.data.map(item => ({
+            id: item.id,
+            name: item.name || item.title,
+            code: item.code,
+            status: item.status,
+            start_date: item.start_date || null,
+            end_date: item.end_date || null,
+            created_at: formatDate(item.created_at),
+            description: item.description,
+            bidding_id: item.bidding_id || null,
+            customer_id: item.customer_id || null,
+            assigned_to: item.assigned_to || null // ✅ THÊM DÒNG NÀY
+        }))
     } catch (e) {
+        console.error(e)
         message.error('Không thể tải danh sách hợp đồng')
     } finally {
         loading.value = false
     }
 }
-
-const submitForm = async() => {
+const submitForm = async () => {
     try {
         await formRef.value?.validate()
-        if(selectedContract.value){
-            updateContract();
+
+        const values = formRef.value?.getFieldsValue()
+
+        // Nếu đang sửa hợp đồng và muốn chuyển sang "Hoàn thành"
+        if (values.status === 4 && selectedContract.value?.id) {
+            const res = await canMarkContractAsCompleteAPI(selectedContract.value.id)
+
+            if (!res?.data?.allow) {
+                message.warning('Bạn cần hoàn thành tất cả các bước trước khi chuyển trạng thái hợp đồng sang "Hoàn thành".')
+                return
+            }
+        }
+
+        if (selectedContract.value) {
+            await updateContract()
         } else {
-            createContract();
+            await createContract()
         }
     } catch (error) {
-        // Validation failed
+        console.warn('Lỗi validate:', error)
     }
 }
+
+
+
+const isFinalStep = (step) => {
+    if (!step) return false
+    const maxStepNo = Math.max(...steps.value.map(s => Number(s.step_number)))
+    return Number(step.step_number) === maxStepNo
+}
+
+const isStepAllowedToComplete = (step) => {
+    return isFinalStep(step) && areAllStepsCompleted()
+}
+const areAllStepsCompleted = () => {
+    if (!steps.value || !Array.isArray(steps.value)) return false
+    return steps.value.every(step => Number(step.status) === 2)
+}
+// const isStepAllowedToComplete = (step) => {
+//     const index = steps.value.findIndex(s => s.id === step.id)
+//     if (index === -1) return false
+//     // ✅ Kiểm tra tất cả bước trước đã status = 2 (hoàn thành)
+//     return steps.value.slice(0, index).every(s => s.status === '2')
+// }
 
 const createContract = async () => {
-    if(loadingCreate.value) return;
+    if (loadingCreate.value) return;
     loadingCreate.value = true;
     try {
-        // await createContractAPI(formData.value);
+        const payload = {
+            ...formData.value,
+            title: formData.value.name
+        };
+
+        const res = await createContractAPI(payload);
+        const newContractId = res.data?.id;
+
+        if (newContractId) {
+            // ✅ Gọi API clone bước mẫu
+            await cloneStepsFromTemplateAPI(newContractId);
+        }
+
         message.success('Thêm mới hợp đồng thành công');
-        getContracts();
+        await getContracts();
         onCloseDrawer();
     } catch (e) {
-        message.error('Thêm mới hợp đồng không thành công')
+        console.error(e);
+        message.error('Thêm mới hợp đồng không thành công');
     } finally {
-        loadingCreate.value = false
+        loadingCreate.value = false;
     }
 }
 
+
 const updateContract = async () => {
-    if(loadingCreate.value) return;
+    if (loadingCreate.value) return;
     loadingCreate.value = true;
+
     try {
-        // await updateContractAPI(selectedContract.value.id, formData.value);
+        await updateContractAPI(selectedContract.value.id, {
+            ...formData.value,
+            title: formData.value.name
+        })
         message.success('Cập nhật hợp đồng thành công');
-        getContracts();
-        onCloseDrawer()
+        await getContracts(); // Làm mới danh sách sau khi cập nhật
+        onCloseDrawer();      // Đóng form
     } catch (e) {
-        message.error('Cập nhật hợp đồng không thành công')
+        console.error(e);
+        const msg = e?.response?.data?.messages?.error || 'Cập nhật hợp đồng không thành công';
+        message.error(msg);
     } finally {
-        loadingCreate.value = false
+        loadingCreate.value = false;
     }
 }
 
 const deleteConfirm = async (contractId) => {
     try {
-        // await deleteContractAPI(contractId);
+        await deleteContractAPI(contractId);
         message.success('Xóa hợp đồng thành công');
-        getContracts();
+        await getContracts(); // Làm mới danh sách sau khi xóa
     } catch (e) {
-        message.error('Xóa hợp đồng không thành công')
+        console.error(e);
+        const msg = e?.response?.data?.messages?.error || 'Xóa hợp đồng không thành công';
+        message.error(msg);
     }
 }
 
-const showPopupDetail = (record) => {    
-    selectedContract.value = record;
+const showPopupDetail = async (record) => {
+    console.log("📌 RECORD TRUYỀN VÀO:", record)
+    selectedContract.value = record
+
+    openDrawer.value = true
+    await fetchAwardedBiddings()
+    await fetchUsers() // ✅ Bổ sung dòng này để đảm bảo userOptions có dữ liệu
+
     formData.value = {
         name: record.name,
         code: record.code,
-        status: record.status,
-        start_date: dayjs(record.start_date),
-        end_date: dayjs(record.end_date),
+        status: Number(record.status),
+        start_date: record.start_date ? dayjs(record.start_date) : null,
+        end_date: record.end_date ? dayjs(record.end_date) : null,
         description: record.description,
+        bidding_id: record.bidding_id || null,
+        assigned_to: record.assigned_to !== null && record.assigned_to !== undefined
+            ? String(record.assigned_to)
+            : null
     }
-    openDrawer.value = true;
+
+    // // ✅ CHÈN LOG SAU KHI GÁN
+    // console.log("assigned_to (formData):", formData.value.assigned_to)
+    // console.log("userOptions:", userOptions.value.map(x => typeof x.value + ':' + x.value))
+
+    if (record.customer_id) {
+        getCustomers({ id: record.customer_id }).then(res => {
+            const matched = res.data?.data?.find(c => c.id === record.customer_id)
+            selectedCustomerName.value = matched?.name || 'Không xác định'
+        }).catch(() => {
+            selectedCustomerName.value = 'Không thể tải khách hàng'
+        })
+    }
 }
 
+
 const showPopupCreate = () => {
-    openDrawer.value = true;
+    openDrawer.value = true
+    fetchAwardedBiddings()
 }
 
 const onCloseDrawer = () => {
@@ -288,6 +502,7 @@ const setDefaultData = () => {
         start_date: null,
         end_date: null,
         description: "",
+        bidding_id: null, // ✅ thêm dòng này
     }
 }
 
@@ -295,7 +510,40 @@ const resetFormValidate = () => {
     formRef.value?.resetFields();
 };
 
-onMounted(getContracts)
+watch(() => formData.value.bidding_id, async (newVal) => {
+    if (!newVal) {
+        selectedCustomerName.value = ''
+        formData.value.customer_id = null
+        return
+    }
+
+    try {
+        const biddingRes = await getBiddingAPI(newVal)
+        const customerId = biddingRes.data.customer_id
+
+        formData.value.customer_id = customerId // ✅ Gán customer_id để lưu vào backend
+
+        if (!customerId) {
+            selectedCustomerName.value = 'Không có khách hàng'
+            return
+        }
+
+        const customerRes = await getCustomers({ id: customerId })
+        const matched = customerRes.data?.data?.find(cus => cus.id === customerId)
+
+        selectedCustomerName.value = matched?.name || 'Không xác định'
+    } catch (e) {
+        console.error(e)
+        selectedCustomerName.value = 'Lỗi tải khách hàng'
+        formData.value.customer_id = null
+    }
+})
+
+onMounted(() => {
+    getContracts();
+    fetchUsers()
+})
+
 </script>
 
 <style scoped>
@@ -310,5 +558,10 @@ onMounted(getContracts)
 
 &:last-child {
     margin-right: 0;
+}
+.icon-action {
+    font-size: 18px;
+    margin-right: 16px;
+    cursor: pointer;
 }
 </style> 

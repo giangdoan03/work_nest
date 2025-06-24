@@ -19,21 +19,17 @@
             @openChange="val => openKeys = val"
             @select="handleSelect"
         >
-            <a-menu-item key="dashboard">
-                <PieChartOutlined/>
-                <span>Tổng quan</span>
+            <a-menu-item key="project-overview">
+                <BarChartOutlined />
+                <span>Tổng quan dự án</span>
+            </a-menu-item>
+            <a-menu-item key="my-tasks">
+                <ScheduleOutlined />
+                <span>Nhiệm vụ của tôi</span>
             </a-menu-item>
             <a-menu-item key="quan-ly-khach-hang">
                 <TeamOutlined/>
                 <span>Quản lý khách hàng</span>
-            </a-menu-item>
-            <a-menu-item key="list-phong-ban">
-                <ApartmentOutlined />
-                <span>Danh sách phòng ban</span>
-            </a-menu-item>
-            <a-menu-item key="user-management">
-                <TeamOutlined />
-                <span>Quản lý người dùng</span>
             </a-menu-item>
             <a-menu-item key="bid-list">
                 <FileSearchOutlined />
@@ -48,6 +44,15 @@
             <a-menu-item key="internal-tasks">
                 <ToolOutlined />
                 <span>Nhiệm vụ nội bộ</span>
+            </a-menu-item>
+
+            <a-menu-item key="list-phong-ban">
+                <ApartmentOutlined />
+                <span>Danh sách phòng ban</span>
+            </a-menu-item>
+            <a-menu-item key="user-management">
+                <TeamOutlined />
+                <span>Quản lý người dùng</span>
             </a-menu-item>
 
             <a-sub-menu key="documents">
@@ -127,7 +132,9 @@ import {
     LockOutlined,
     ApartmentOutlined,
     FileDoneOutlined,
-    ProfileOutlined
+    ProfileOutlined,
+    ScheduleOutlined,
+    BarChartOutlined
 } from '@ant-design/icons-vue'
 import { h } from 'vue'
 
@@ -147,22 +154,18 @@ const selectedKeys = ref([])
 const openKeys = ref([])
 
 const pathToKeyMap = {
-    '/loyalty/programs': 'chuong-trinh',
-    '/loyalty/gifts': 'qua-tang',
-    '/loyalty/voucher-management': 'goi-voucher',
-    '/loyalty/history': 'lich-su-nguoi-choi',
-    '/custom-pages': 'trang-tu-thiet-ke',
-    '/checkin-history': 'lich-su-checkin',
+    '/dashboard': 'dashboard',
+    '/project-overview': 'project-overview',
+    '/my-tasks': 'my-tasks',
     '/customers': 'quan-ly-khach-hang',
-    '/settings': 'cau-hinh',
-    '/purchase-history': 'lich-su-mua-goi',
     '/permissions': 'permission',
     '/departments': 'list-phong-ban',
     '/user-management': 'user-management',
     '/internal-tasks': 'internal-tasks',
     '/contracts-tasks': 'contracts-tasks',
+    '/contracts': 'contracts-tasks',
     '/bid-list': 'bid-list',
-    '/bid-detail/:id': 'bid-detail',
+    '/bid-detail': 'bid-list',
 
     // Tài liệu (sub menu)
     '/documents/my': 'documents-my',
@@ -173,14 +176,16 @@ const pathToKeyMap = {
 
     '/settings/bidding': 'cau-hinh-dau-thau',
     '/settings/contract': 'cau-hinh-hop-dong',
+    '/settings': 'cau-hinh',
 }
 
 
 const keyToParentMap = {
 
     // Các menu chính
-    'trang-tu-thiet-ke': 'dashboard',
-    'lich-su-quet': 'dashboard',
+    'project-overview': 'project-overview',
+    'my-tasks': 'my-tasks',
+    'dashboard': 'dashboard',
     'quan-ly-khach-hang': 'dashboard',
     'cau-hinh': 'dashboard',
     'lich-su-mua-goi': 'dashboard',
@@ -200,7 +205,7 @@ const keyToParentMap = {
     'documents-settings': 'documents',
 
     'cau-hinh-dau-thau': 'cau-hinh',
-    'cau-hinh-hop-dong': 'cau-hinh',
+    'cau-hinh-hop-dong': 'cau-hinh'
 }
 
 
@@ -208,7 +213,7 @@ const keyToParentMap = {
 const updateSelectedAndOpenKeys = () => {
     const currentPath = route.path
 
-    // Tìm path phù hợp nhất bằng startsWith
+    // Tìm path phù hợp nhất
     const matchedEntry = Object.entries(pathToKeyMap).find(([path]) =>
         currentPath.startsWith(path)
     )

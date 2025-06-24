@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\ContractModel;
+use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use App\Models\ContractStepModel;
 use App\Models\UserModel;
@@ -31,7 +32,14 @@ class ContractController extends ResourceController
                 ->where('created_at <=', $filters['created_to']);
         }
 
-        return $this->respond($builder->findAll());
+        $data = $builder->findAll();
+
+        foreach ($data as &$row) {
+            $row['bidding_id'] = $row['bidding_id'] ?? null;
+            $row['customer_id'] = $row['id_customer'] ?? null;
+        }
+
+        return $this->respond($data);
     }
 
     public function show($id = null)
@@ -49,11 +57,20 @@ class ContractController extends ResourceController
     {
         $data = $this->request->getJSON(true);
 
-        if (empty($data['title'])) {
-            return $this->failValidationErrors(['title' => 'Title is required']);
+        // Bắt buộc nhập tên hợp đồng (có thể ở 'title' hoặc 'name')
+        if (empty($data['title']) && empty($data['name'])) {
+            return $this->failValidationErrors(['title' => 'Vui lòng nhập tên hợp đồng']);
         }
 
-        // Nếu tạo từ gói thầu, kiểm tra trạng thái gói thầu
+        // Ưu tiên title từ form
+        $data['title'] = $data['title'] ?? $data['name'];
+
+        // Nếu chưa có mã hợp đồng, sinh mã tự động
+        if (empty($data['code'])) {
+            $data['code'] = $this->generateContractCode();
+        }
+
+        // Nếu tạo từ gói thầu → kiểm tra & gán id_customer
         if (!empty($data['bidding_id'])) {
             $biddingModel = new BiddingModel();
             $bidding = $biddingModel->find($data['bidding_id']);
@@ -66,30 +83,67 @@ class ContractController extends ResourceController
                 return $this->failValidationErrors(['bidding_id' => 'Gói thầu chưa được trúng']);
             }
 
-            $data['customer_id'] = $bidding['customer_id'];
+            $data['id_customer'] = $bidding['customer_id'];
             $data['title'] = $data['title'] ?? $bidding['title'];
         }
 
+        // Tiến hành insert
         $id = $this->model->insert($data);
 
         if (!$id) {
             return $this->failServerError('Không thể tạo hợp đồng');
         }
 
-        return $this->respondCreated(['status' => 'success', 'id' => $id]);
+        return $this->respondCreated([
+            'status' => 'success',
+            'id'     => $id,
+            'code'   => $data['code'],
+            'title'  => $data['title']
+        ]);
     }
+
+
+    private function generateContractCode(): string
+    {
+        $prefix = 'HD-' . date('Y');
+        $last = $this->model
+            ->like('code', $prefix, 'after')
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        $lastNumber = 0;
+        if ($last && isset($last['code'])) {
+            $parts = explode('-', $last['code']);
+            $lastNumber = (int) end($parts);
+        }
+
+        $nextNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+        return "{$prefix}-{$nextNumber}";
+    }
+
+
 
     public function update($id = null)
     {
         $data = $this->request->getJSON(true);
 
-        if (!$this->model->find($id)) {
-            return $this->failNotFound('Contract not found');
+        if (!$id || !$this->model->find($id)) {
+            return $this->failNotFound('Hợp đồng không tồn tại');
         }
 
-        $this->model->update($id, $data);
+        // ✅ Nếu có bidding_id và chưa có id_customer → tự động gán từ bảng bidding
+        if (!empty($data['bidding_id'])) {
+            $bidding = (new BiddingModel())->find($data['bidding_id']);
+            if ($bidding && empty($data['id_customer'])) {
+                $data['id_customer'] = $bidding['customer_id'];
+            }
+        }
 
-        return $this->respond(['status' => 'success', 'message' => 'Contract updated']);
+        if (!$this->model->update($id, $data)) {
+            return $this->failServerError('Không thể cập nhật hợp đồng');
+        }
+
+        return $this->respondUpdated(['status' => 'success']);
     }
 
     public function delete($id = null)
@@ -103,7 +157,7 @@ class ContractController extends ResourceController
         return $this->respondDeleted(['status' => 'success', 'message' => 'Contract deleted']);
     }
 
-    public function stepCount($id = null)
+    public function stepCount($id = null): ResponseInterface
     {
         $contract = $this->model->find($id);
         if (!$contract) {
@@ -119,7 +173,7 @@ class ContractController extends ResourceController
         ]);
     }
 
-    public function stepDetails($id = null)
+    public function stepDetails($id = null): ResponseInterface
     {
         $contract = $this->model->find($id);
         if (!$contract) {
@@ -152,9 +206,27 @@ class ContractController extends ResourceController
         return $this->respond($stepList);
     }
 
-    public function byCustomer($customerId)
+    public function byCustomer($customerId): ResponseInterface
     {
         $contracts = $this->model->where('id_customer', $customerId)->findAll();
         return $this->respond($contracts);
     }
+
+    public function canMarkAsComplete($contractId = null): ResponseInterface
+    {
+        if (!$contractId || !$this->model->find($contractId)) {
+            return $this->failNotFound("Hợp đồng không tồn tại");
+        }
+
+        $stepModel = new ContractStepModel();
+        $unfinished = $stepModel
+            ->where('contract_id', $contractId)
+            ->where('status !=', 2) // 2 = Hoàn thành
+            ->countAllResults();
+
+        return $this->respond([
+            'allow' => $unfinished === 0
+        ]);
+    }
+
 }

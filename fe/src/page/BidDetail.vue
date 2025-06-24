@@ -1,19 +1,47 @@
 <template>
     <div>
+        <a-page-header
+                title="Chi tiết gói thầu"
+                sub-title="Xem thông tin và tiến trình xử lý"
+                @back="goBack"
+                style="padding: 0 0 20px;"
+        />
         <a-descriptions bordered :column="2">
+            <!-- Hàng 1 -->
             <a-descriptions-item label="Tên">{{ bidding?.title }}</a-descriptions-item>
             <a-descriptions-item label="Trạng thái">
-                <a-tag :color="getStatusColor(bidding?.status)">{{ bidding?.status }}</a-tag>
+                <a-tag :color="getStatusColor(bidding?.status)">
+                    {{ getStatusText(bidding?.status) }}
+                </a-tag>
             </a-descriptions-item>
 
+            <!-- Hàng 2 -->
             <a-descriptions-item label="Chi phí">{{ formatCurrency(bidding?.estimated_cost) }}</a-descriptions-item>
-            <a-descriptions-item label="Khách hàng">{{ getCustomerName(bidding?.customer_id) }}</a-descriptions-item>
+            <a-descriptions-item label="Khách hàng">
+                <a @click="goToCustomerDetail(bidding?.customer_id)" style="color: #1890ff; cursor: pointer;">
+                    {{ getCustomerName(bidding?.customer_id) }}
+                </a>
+            </a-descriptions-item>
+
+            <!-- Hàng 3 -->
+            <a-descriptions-item label="Phụ trách gói thầu">
+                <a
+                    v-if="bidding?.assigned_to"
+                    @click="goToUserDetail(bidding.assigned_to)"
+                    style="color: #1890ff; cursor: pointer;"
+                >
+                    {{ getAssignedUserName(bidding?.assigned_to) }}
+                </a>
+                <span v-else>Không xác định</span>
+            </a-descriptions-item>
 
             <a-descriptions-item label="Ngày bắt đầu">{{ formatDate(bidding?.start_date) }}</a-descriptions-item>
-            <a-descriptions-item label="Ngày kết thúc">{{ formatDate(bidding?.end_date) }}</a-descriptions-item>
 
-            <!-- Dòng này dùng span=2, nên không được thêm item nào -->
-            <a-descriptions-item label="Mô tả" :span="2">{{ bidding?.description }}</a-descriptions-item>
+            <!-- Hàng 4 -->
+            <a-descriptions-item label="Ngày kết thúc">{{ formatDate(bidding?.end_date) }}</a-descriptions-item>
+            <a-descriptions-item label="Mô tả">
+                {{ bidding?.description }}
+            </a-descriptions-item>
         </a-descriptions>
 
 
@@ -30,18 +58,39 @@
                 >
                     <template #description>
                         <div style="background: #fafafa; padding: 12px; border: 1px solid #f0f0f0; border-radius: 6px;">
-                            <p>Phòng ban: {{ step.department ?? '-' }}</p>
+                            <p>Phòng ban:
+                                <a-tag
+                                    v-for="(dep, i) in parseDepartment(step.department)"
+                                    :key="i"
+                                    color="blue"
+                                    style="margin-right: 5px;"
+                                >
+                                    {{ dep }}
+                                </a-tag>
+                            </p>
                             <p>
                                 Trạng thái:
-                                <span :style="{ color: getStepStatusColor(step.status) }">
+                                <a-tag :color="getStepStatusColor(step.status)">
                                     {{ statusText(step.status) }}
-                                </span>
+                                </a-tag>
+                            </p>
+                            <p>
+                                Phụ trách bước:
+                                <a
+                                    v-if="step.assigned_to"
+                                    @click.stop="goToUserDetail(step.assigned_to)"
+                                    style="color: #1890ff; cursor: pointer;"
+                                >
+                                    {{ getAssignedUserName(step.assigned_to) }}
+                                </a>
+                                <span v-else>Không xác định</span>
                             </p>
                         </div>
                     </template>
                 </a-step>
             </a-steps>
         </a-spin>
+
 
         <!-- Drawer hiển thị chi tiết bước -->
         <a-drawer
@@ -60,7 +109,18 @@
                 >
                     <a-descriptions-item label="Bước số">{{ selectedStep.step_number }}</a-descriptions-item>
                     <a-descriptions-item label="Tiêu đề">{{ selectedStep.title }}</a-descriptions-item>
-                    <a-descriptions-item label="Phòng ban">{{ selectedStep.department }}</a-descriptions-item>
+                    <a-descriptions-item label="Phòng ban">
+                        <template #default>
+                            <a-tag
+                                v-for="(dep, index) in parseDepartment(selectedStep.department)"
+                                :key="index"
+                                color="blue"
+                                style="margin-right: 4px;"
+                            >
+                                {{ dep }}
+                            </a-tag>
+                        </template>
+                    </a-descriptions-item>
                     <a-descriptions-item label="Trạng thái">
                         <a-select
                             v-model:value="selectedStep.status"
@@ -73,6 +133,24 @@
                             <a-select-option value="3">Bỏ qua</a-select-option>
                         </a-select>
                     </a-descriptions-item>
+                    <a-descriptions-item label="Người phụ trách">
+                        <a-select
+                            v-model:value="selectedStep.assigned_to"
+                            style="width: 100%"
+                            placeholder="Chọn người phụ trách"
+                            @change="(value) => updateStepAssignedTo(value, selectedStep)"
+                            :allowClear="true"
+                        >
+                            <a-select-option
+                                v-for="user in users"
+                                :key="user.id"
+                                :value="user.id"
+                            >
+                                {{ user.name }}
+                            </a-select-option>
+                        </a-select>
+                    </a-descriptions-item>
+
                     <a-descriptions-item label="Ngày tạo">{{ formatDate(selectedStep.created_at) }}</a-descriptions-item>
                     <a-descriptions-item label="Ngày cập nhật">{{ formatDate(selectedStep.updated_at) }}</a-descriptions-item>
                 </a-descriptions>
@@ -90,22 +168,23 @@ import {
     updateBiddingStepAPI,
     completeBiddingStepAPI
 } from '@/api/bidding'
+import { getUsers } from '@/api/user.js'
 import { useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
-
-// ✅ Import thêm các hàm định dạng
 import { formatDate, formatCurrency } from '@/utils/formUtils'
-import { getCustomers } from '@/api/customer' // file API của bạn
-
+import { getCustomers } from '../api/customer' // file API của bạn
+import { useRouter } from 'vue-router'
+const router = useRouter()
 const route = useRoute()
 const id = route.params.id
 const bidding = ref({})
 const steps = ref([])
 const loadingSteps = ref(false)
 
-const drawerVisible = ref(false)
+let drawerVisible = ref(false)
 const selectedStep = ref(null)
 const customers = ref([])
+const users = ref([])
 
 const openStepDrawer = (step) => {
     selectedStep.value = { ...step }
@@ -114,11 +193,12 @@ const openStepDrawer = (step) => {
 
 const getStatusColor = (status) => {
     const map = {
-        pending: 'orange',
-        submitted: 'blue',
-        awarded: 'green',
-        lost: 'red',
-        cancelled: 'gray',
+        0: 'orange',   // Chưa nộp
+        1: 'blue',     // Đã nộp
+        2: 'purple',   // Vào vòng sau
+        3: 'green',    // Trúng thầu
+        4: 'red',      // Không trúng
+        5: 'gray'      // Hủy
     }
     return map[status] || 'default'
 }
@@ -163,11 +243,21 @@ const currentStepIndex = () => {
     return next >= steps.value.length ? steps.value.length - 1 : next
 }
 
+const parseDepartment = (val) => {
+    try {
+        const parsed = JSON.parse(val)
+        return Array.isArray(parsed) ? parsed : [val]
+    } catch (e) {
+        return val ? [val] : []
+    }
+}
+
+
 const updateStepStatus = async (newStatus, step) => {
     try {
         if (newStatus === '2') {
             await completeBiddingStepAPI(step.id)
-            message.success('Đã hoàn thành và mở bước kế tiếp')
+            message.success('Bước đã hoàn thành và bước kế tiếp đã được mở')
         } else {
             await updateBiddingStepAPI(step.id, { status: newStatus })
             message.success('Đã cập nhật trạng thái bước')
@@ -176,16 +266,89 @@ const updateStepStatus = async (newStatus, step) => {
         drawerVisible.value = false
         await fetchData()
     } catch (e) {
-        console.error(e)
-        message.error('Lỗi khi cập nhật bước')
+        console.warn('⚠️ Lỗi cập nhật bước:', e)
+
+        // Ưu tiên lấy thông báo cụ thể từ server nếu có
+        const errMsg =
+            e?.response?.data?.messages?.error || // CodeIgniter 4 style
+            e?.response?.data?.message ||         // Generic REST error
+            '❌ Đã xảy ra lỗi khi cập nhật bước'
+
+        if (e?.response?.status === 400) {
+            message.warning(errMsg) // Lỗi logic (ví dụ: chưa hoàn thành bước trước)
+        } else {
+            message.error(errMsg)   // Lỗi nghiêm trọng (server, network,...)
+        }
     }
+}
+
+const fetchUsers = async () => {
+    try {
+        const res = await getUsers()
+        users.value = res.data
+    } catch (e) {
+        console.error('Không thể tải danh sách người dùng:', e)
+    }
+}
+
+const getAssignedUserName = (userId) => {
+    if (!userId || !users.value.length) return 'Không xác định'
+    const found = users.value.find(u => String(u.id) === String(userId))
+    return found?.name || `Người dùng #${userId}`
+}
+
+const goToUserDetail = (userId) => {
+    if (!userId) return
+    router.push({ name: 'user-detail', params: { id: userId } })
+}
+
+
+const fetchSteps = async () => {
+    try {
+        loadingSteps.value = true
+        const stepRes = await getBiddingStepsAPI(id)
+        steps.value = stepRes.data.filter(step => step.bidding_id === id)
+    } catch (e) {
+        console.error('Lỗi khi tải bước:', e)
+        message.error('Không thể tải tiến trình xử lý')
+    } finally {
+        loadingSteps.value = false
+    }
+}
+
+
+const updateStepAssignedTo = async (userId, step) => {
+    try {
+        if (!userId) {
+            message.warning('Vui lòng chọn người phụ trách hợp lệ')
+            return
+        }
+
+        await updateBiddingStepAPI(step.id, { assigned_to: userId })
+        message.success('Đã cập nhật người phụ trách')
+        await fetchSteps()
+    } catch (e) {
+        console.error('Lỗi khi cập nhật người phụ trách:', e)
+        const msg =
+            e?.response?.data?.messages?.error ||
+            e?.response?.data?.message ||
+            'Cập nhật người phụ trách thất bại'
+        message.error(msg)
+    }
+}
+
+
+
+
+const goToCustomerDetail = (customerId) => {
+    if (!customerId) return
+    router.push({ name: 'customer-detail', params: { id: customerId.toString() } })
 }
 
 const fetchCustomers = async () => {
     try {
         const res = await getCustomers()
         customers.value = res.data?.data || [] // fix ở đây
-        console.log('✅ Loaded customers:', customers.value)
     } catch (e) {
         console.error(e)
         message.error('Không thể tải danh sách khách hàng')
@@ -221,11 +384,29 @@ const fetchData = async () => {
     }
 }
 
+const getStatusText = (status) => {
+    const map = {
+        0: 'Chưa nộp',
+        1: 'Đã nộp hồ sơ',
+        2: 'Vào vòng sau',
+        3: 'Đã trúng thầu',
+        4: 'Không trúng',
+        5: 'Hủy thầu',
+    }
+    return map[status] ?? `Không rõ`
+}
+const goBack = () => {
+    router.push('/bid-list')
+}
+
 onMounted(async () => {
     await Promise.all([
         fetchData(),
-        fetchCustomers()
+        fetchCustomers(),
+        fetchUsers()
     ])
+    const res = await getUsers()
+    users.value = res.data
 })
 
 </script>

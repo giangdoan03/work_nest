@@ -3,7 +3,9 @@
 namespace App\Controllers;
 
 use App\Models\TaskModel;
+use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use Config\Database;
 
 class TaskController extends ResourceController
 {
@@ -13,7 +15,7 @@ class TaskController extends ResourceController
     // ✅ Danh sách task (lọc nâng cao)
     public function index()
     {
-        $db = \Config\Database::connect();
+        $db = Database::connect();
         $builder = $db->table('tasks');
 
         // Lọc nâng cao
@@ -97,14 +99,14 @@ class TaskController extends ResourceController
     }
 
     // ✅ Danh sách subtask theo task cha
-    public function subtasks($parent_id)
+    public function subtasks($parent_id): ResponseInterface
     {
         $tasks = $this->model->where('parent_id', $parent_id)->findAll();
         return $this->respond($tasks);
     }
 
     // ✅ Cập nhật subtask
-    public function updateSubtask($id = null)
+    public function updateSubtask($id = null): ResponseInterface
     {
         $subtask = $this->model->find($id);
 
@@ -122,7 +124,7 @@ class TaskController extends ResourceController
     }
 
     // ✅ Xoá subtask
-    public function deleteSubtask($id = null)
+    public function deleteSubtask($id = null): ResponseInterface
     {
         $subtask = $this->model->find($id);
 
@@ -136,7 +138,7 @@ class TaskController extends ResourceController
     }
 
     // ✅ Lấy danh sách task theo bước đấu thầu
-    public function byBiddingStep($step_id)
+    public function byBiddingStep($step_id): ResponseInterface
     {
         $tasks = $this->model->where('bidding_step_id', $step_id)->findAll();
         return $this->respond($tasks);
