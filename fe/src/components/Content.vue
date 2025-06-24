@@ -8,6 +8,6 @@
       overflow: 'auto',
     }"
     >
-        <router-view />
+        <router-view :key="$route.fullPath"/>
     </a-layout-content>
 </template>
