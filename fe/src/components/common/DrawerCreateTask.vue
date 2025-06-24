@@ -14,7 +14,7 @@
                     <a-col :span="12">
                         <a-form-item label="Thời gian" name="time">
                             <a-config-provider :locale="locale">
-                                <a-range-picker format="DD-MM-YYYY" @change="changeDateTime" style="width: 100%;"></a-range-picker>
+                                <a-range-picker v-model:value="dateRange" format="DD-MM-YYYY" @change="changeDateTime" style="width: 100%;"></a-range-picker>
                             </a-config-provider>
                         </a-form-item>
                     </a-col>
@@ -66,7 +66,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import {useUserStore} from '../../../src/stores/user'
-import { createTask, updateTask } from '../../api/internal'
+import { createTask, updateTask } from '../../api/task'
 import { getBiddingsAPI } from '../../api/bidding'
 import { getContractsAPI } from '../../api/contract'
 import { message } from 'ant-design-vue'
@@ -99,7 +99,7 @@ const tableData = ref([])
 const loading = ref(false)
 const listBidding = ref([])
 const listContract = ref([])
-
+const dateRange = ref()
 
 const formData = ref({
     title: "",
@@ -125,7 +125,7 @@ const setDefaultData = () =>{
         step_code: null,
         linked_type: null,
         description: "",
-        linked_id: "",
+        linked_id: null,
         assigned_to: null,
         start_date: "",
         end_date: "",
@@ -133,6 +133,7 @@ const setDefaultData = () =>{
         priority: null,
         parent_id: props.taskParent ? props.taskParent  : null,
     }
+    dateRange.value = null
 }
 
 const validateTitle = async (_rule, value) => {    

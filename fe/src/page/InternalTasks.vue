@@ -68,7 +68,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { getTasks, createTask, updateTask, deleteTask } from '../api/internal'
+import { getTasks, deleteTask } from '../api/task'
 import { getUsers } from '@/api/user';
 import { message } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router';

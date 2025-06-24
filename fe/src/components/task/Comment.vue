@@ -109,7 +109,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { UserOutlined, PaperClipOutlined, FileTextOutlined, EllipsisOutlined } from '@ant-design/icons-vue'; 
-import { getComments, createComment, deleteComment, updateComment } from '@/api/comment';
+import { getComments, createComment, deleteComment, updateComment } from '@/api/task';
 import { getUsers } from '@/api/user';
 import { useRoute } from 'vue-router';
 import { useUserStore } from "../../stores/user";

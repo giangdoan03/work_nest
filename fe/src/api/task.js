@@ -6,19 +6,19 @@ const instance = axios.create({
 })
 
 // 🔹 Lấy danh sách tất cả task
-export const getTasksAPI = (params = {}) => instance.get('/tasks', { params })
+export const getTasks = (params = {}) => instance.get('/tasks', { params })
 
 // 🔹 Lấy chi tiết task theo ID
-export const getTaskAPI = (id) => instance.get(`/tasks/${id}`)
+export const getTaskDetail = (id) => instance.get(`/tasks/${id}`)
 
 // 🔹 Tạo task mới
-export const createTaskAPI = (data) => instance.post('/tasks', data)
+export const createTask = (data) => instance.post('/tasks', data)
 
 // 🔹 Cập nhật task
-export const updateTaskAPI = (id, data) => instance.put(`/tasks/${id}`, data)
+export const updateTask = (id, data) => instance.put(`/tasks/${id}`, data)
 
 // 🔹 Xoá task
-export const deleteTaskAPI = (id) => instance.delete(`/tasks/${id}`)
+export const deleteTask = (id) => instance.delete(`/tasks/${id}`)
 
 // 🔹 Hoàn thành task (nếu có route này)
 export const completeTaskAPI = (id) => instance.put(`/tasks/${id}/complete`)
@@ -32,10 +32,18 @@ export const uploadTaskFileAPI = (taskId, formData) =>
         headers: { 'Content-Type': 'multipart/form-data' }
     })
 
+// 🔹 Lấy bình luận cho task
+export const getComments = (task_id) =>  instance.get(`/tasks/${task_id}/comments`)
+
 // 🔹 Gửi bình luận cho task
-export const addTaskCommentAPI = (taskId, data) =>
-    instance.post(`/tasks/${taskId}/comments`, data)
+export const createComment = (task_id, data={}) =>  instance.post(`/tasks/${task_id}/comments`, data)
+
+// 🔹 xóa bình luận cho task
+export const deleteComment = (comment_id, data={}) =>  instance.delete(`/comments/${comment_id}`)
+
+// 🔹 cập nhật bình luận cho task
+export const updateComment = ( comment_id, data={}) =>  instance.put(`/comments/${comment_id}`, data)
 
 // 🔹 Lấy danh sách comment của task
-export const getTaskCommentsAPI = (taskId) =>
-    instance.get(`/tasks/${taskId}/comments`)
+export const getSubTasks = (taskId) =>
+    instance.get(`/tasks/${taskId}/subtasks`)
