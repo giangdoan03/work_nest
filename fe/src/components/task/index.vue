@@ -55,13 +55,18 @@
                                     </a-form-item>
                                 </a-col>
                                 <a-col :span="12">
+                                    <a-form-item label="Trạng thái" name="status">
+                                        <a-tag v-if="!isEditMode" :color="checkStatus(formData.status).color">{{ checkStatus(formData.status).label }}</a-tag>
+                                        <a-select v-else v-model:value="formData.status" :options="statusOption" placeholder="Chọn trạng thái" />
+                                    </a-form-item>
+                                </a-col>
+                                <a-col :span="12">
                                     <a-form-item label="Gắn tới người dùng" name="assigned_to">
                                         <a-typography-text v-if="!isEditMode">{{ getUserById(formData.assigned_to) }}</a-typography-text>
                                         <a-select v-else v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng" />
                                     </a-form-item>
                                 </a-col>
                             </a-row>
-                                                            
                         </div>
                         <div class="task-in-end">
                             <a-row :gutter="16">
@@ -159,6 +164,14 @@ const priorityOption = ref([
     {value: "normal", label: "Thường", color: "warning"},
     {value: "high", label: "Cao", color: "error"},
 ])
+const statusOption = computed(() => {
+    return [
+        {value: 'todo', label: "Việc cần làm", color: "warning"},
+        {value: 'doing', label: "Đang thực hiện", color: "processing"},
+        {value: 'done', label: "Hoàn thành", color: "success"},
+        {value: 'overdue', label: "Quá hạn", color: "error"},
+    ]
+})
 const linkedTypeOption = ref([
     {value: "bidding", label: "Gói thầu"},
     {value: "contract", label: "Hợp đồng"},
@@ -303,6 +316,14 @@ const convertDateFormat = (dateStr) =>  {
 }
 const checkPriority = (text) => {
     let data = priorityOption.value.find(ele => ele.value == text);
+    if(data){
+        return data 
+    }else {
+        return {value: "", label: "", color: ""}
+    }
+};
+const checkStatus = (text) => {
+    let data = statusOption.value.find(ele => ele.value == text);
     if(data){
         return data 
     }else {
