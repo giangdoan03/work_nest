@@ -39,17 +39,17 @@
                 <a-row :gutter="16">
                     <a-col :span="12">
                         <a-form-item label="Loại nhiệm vụ" name="linked_type">
-                            <a-select v-model:value="formData.linked_type" :options="linkedTypeOption" placeholder="Chọn loại nhiệm vụ" />
+                            <a-select v-model:value="formData.linked_type" :options="linkedTypeOption" @change="handleChangeLinkedType" placeholder="Chọn loại nhiệm vụ" />
                         </a-form-item>
                     </a-col>
                     <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
                         <a-form-item :label="formData.linked_type == 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'" name="linked_id">
-                            <a-select v-model:value="formData.linked_id" :options="linkedIdOption" :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'" />
+                            <a-select v-model:value="formData.linked_id" :options="linkedIdOption" @change="handleChangeLinkedId" :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'" />
                         </a-form-item>
                     </a-col>
                     <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
                         <a-form-item label="Bước tiến trình" name="step_code" >
-                            <a-select v-model:value="formData.step_code" :options="stepCodeOption" :placeholder="formData.linked_type == 'bidding' ? 'Chọn bước gói thầu' : 'Chọn bước hợp đồng'" />
+                            <a-select v-model:value="formData.step_code" :options="stepOption" :disabled="!formData.linked_id" :placeholder="formData.linked_type == 'bidding' ? 'Chọn bước gói thầu' : 'Chọn bước hợp đồng'" />
                         </a-form-item>
                     </a-col>
                     
@@ -78,7 +78,8 @@ import { getBiddingsAPI } from '@/api/bidding.js'
 import { getContractsAPI } from '@/api/contract.js'
 import { message } from 'ant-design-vue'
 import { useRoute } from 'vue-router';
-import { CONTRACTS_STEPS, BIDDING_STEPS } from '@/common'
+import { getContractStepsAPI } from '@/api/contract-steps';
+import { getBiddingStepsAPI } from '@/api/bidding';
 
 
 import dayjs from 'dayjs';
@@ -217,18 +218,7 @@ const linkedTypeOption = ref([
     {value: "contract", label: "Hợp đồng"},
     {value: "internal", label: "Nhiệm vụ nội bộ"},
 ])
-const stepCodeOption = computed(()=>{
-    if(formData.value.linked_type == 'bidding'){
-        return BIDDING_STEPS.map(ele => {
-            return { value: ele.step_code, label: ele.name}
-        })
-    }else if(formData.value.linked_type == 'contract'){
-        return CONTRACTS_STEPS.map(ele => {
-            return { value: ele.step_code, label: ele.name}
-        })
-    }else return [];
-
-})
+const stepOption = ref([])
 const linkedIdOption = computed(()=>{
     if(formData.value.linked_type == 'bidding'){
         return listBidding.value.map(ele => {
@@ -254,6 +244,35 @@ const userOption =  computed(()=>{
 })
 
 //METHOD
+const handleChangeLinkedType = () => {
+    formData.value.linked_id = null;
+    formData.value.step_code = null;
+};
+const handleChangeLinkedId = () => {
+    if(formData.value.linked_type == 'bidding'){
+        getBiddingStep()
+    }else if(formData.value.linked_type == 'contract'){
+        getContractStep()
+    }
+};
+const getContractStep = async () => {
+    await getContractStepsAPI(formData.value.linked_id).then(res => {
+        stepOption.value = res.data ? res.data.map(ele => {
+            return { value: ele.step_number, label: ele.title}
+        }) : []
+    }).catch(err => {
+
+    })
+}
+const getBiddingStep = async () => {
+    await getBiddingStepsAPI(formData.value.linked_id).then(res => {
+        stepOption.value = res.data ? res.data.map(ele => {
+            return { value: ele.step_number, label: ele.title}
+        }) : []
+    }).catch(err => {
+
+    })
+}
 const createDrawerInternal = async () => {
     if(loadingCreate.value){
         return;
@@ -332,6 +351,7 @@ onMounted(() => {
     }
     getBiddingTask()
     getContractTask()
+    handleChangeLinkedId()
 })
 
 </script>

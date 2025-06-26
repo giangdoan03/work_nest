@@ -186,12 +186,20 @@ const createNewComment = async() => {
         console.log(error);
     }
 }
-const getListComment = async() => {
+const getListComment = async(page=1) => {
     loadingComment.value = true;
     try {
-        let res = await getComments(route.params.id)
-        
-        listComment.value = res.data
+        let params = {
+            page: page,
+        }
+        let res = await getComments(route.params.id, params)
+        if (page === 1) {
+            listComment.value = res.data.data
+        } else {
+            listComment.value = [...listComment.value, ...res.data.data]
+        }
+        totalPage.value = res.data.pagination.totalPages
+        currentPage.value = res.data.current_page
     } catch (error) {
         console.log(error);
     } finally {

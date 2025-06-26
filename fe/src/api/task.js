@@ -28,12 +28,12 @@ export const getMyTasksAPI = (params = {}) => instance.get('/my-tasks', { params
 
 // 🔹 Đính kèm file vào task
 export const uploadTaskFileAPI = (taskId, formData) =>
-    instance.post(`/tasks/${taskId}/files`, formData, {
+    instance.post(`/tasks/${taskId}/upload-file`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     })
 
 // 🔹 Lấy bình luận cho task
-export const getComments = (task_id) =>  instance.get(`/tasks/${task_id}/comments`)
+export const getComments = (task_id, data={}) =>  instance.get(`/tasks/${task_id}/comments`, {params: data})
 
 // 🔹 Gửi bình luận cho task
 export const createComment = (task_id, data={}) =>  instance.post(`/tasks/${task_id}/comments`, data)
@@ -47,3 +47,9 @@ export const updateComment = ( comment_id, data={}) =>  instance.put(`/comments/
 // 🔹 Lấy danh sách comment của task
 export const getSubTasks = (taskId) =>
     instance.get(`/tasks/${taskId}/subtasks`)
+
+// 🔹 Lấy file đính kèm của task
+export const getTaskFilesAPI = (taskId) => instance.get(`/tasks/${taskId}/files`)
+
+// 🔹 Xoá file đính kèm của task
+export const deleteTaskFilesAPI = (taskId) => instance.delete(`/task-files/${taskId}`)

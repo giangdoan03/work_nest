@@ -27,13 +27,13 @@
                                 <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
                                     <a-form-item :label=" !formData.linked_type ? 'Trống' : formData.linked_type == 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'" name="linked_type">
                                         <a-typography-text v-if="!isEditMode">{{ getNameLinked(formData.linked_id) }}</a-typography-text>
-                                        <a-select v-else v-model:value="formData.linked_id" :options="linkedIdOption" :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'" />
+                                        <a-select v-else v-model:value="formData.linked_id" :options="linkedIdOption" @change="handleChangeLinkedId" :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'" />
                                     </a-form-item>
                                 </a-col>
                                 <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
                                     <a-form-item :label=" !formData.linked_type ? 'Trống' : formData.linked_type == 'bidding' ? 'Tiến trình gói thầu' : 'Tiến trình hợp đồng'" name="step_code">
                                         <a-typography-text v-if="!isEditMode">{{ getStepByStepNo(formData.step_code) }}</a-typography-text>
-                                        <a-select v-else v-model:value="formData.step_code" :options="stepOption" :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'" />
+                                        <a-select v-else v-model:value="formData.step_code" :options="stepOption" :disabled="!formData.linked_id" :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'" />
                                     </a-form-item>
                                 </a-col>
                             </a-row>
@@ -83,11 +83,34 @@
                                 </a-col>
                                 <a-col :span="24">
                                     <a-form-item label="Tài liệu" name="file">
-                                        <a-button size="large" style="margin-top: 12px;">
-                                            <template #icon>
-                                                <PaperClipOutlined />
-                                            </template>
-                                        </a-button>
+                                        <a-upload
+                                            v-if="isEditMode"
+                                            :file-list="fileList.concat(pendingFiles.map((f, idx) => ({ uid: 'pending-' + idx, name: f.name, status: 'ready' })) )"
+                                            :show-upload-list="true"
+                                            :before-upload="handleBeforeUpload"
+                                            :on-remove="handleRemoveFile"
+                                            :multiple="true"
+                                            :disabled="loadingUploadFile"
+                                            list-type="text"
+                                        >
+                                            <a-button size="large" style="margin-top: 12px;">
+                                                <template #icon>
+                                                    <PaperClipOutlined />
+                                                </template>
+                                            </a-button>
+                                        </a-upload>
+                                        <template v-else>
+                                            <div v-if="fileList.length" style="margin-top: 10px;">
+                                                <a-list bordered size="small">
+                                                    <template #default>
+                                                        <a-list-item v-for="item in fileList" :key="item.uid">
+                                                            <a :href="item.url" target="_blank">{{ item.name }}</a>
+                                                        </a-list-item>
+                                                    </template>
+                                                </a-list>
+                                            </div>
+                                            <div v-else>Chưa có tài liệu</div>
+                                        </template>
                                     </a-form-item>
                                 </a-col>
                             </a-row>
@@ -122,12 +145,14 @@ import dayjs from 'dayjs';
 import viVN from 'ant-design-vue/es/locale/vi_VN';
 import { getUsers } from '@/api/user';
 import { useRoute, useRouter } from 'vue-router';
-import { getTaskDetail, updateTask } from '@/api/task';
+import { getTaskDetail, updateTask, uploadTaskFileAPI, getTaskFilesAPI, deleteTaskFilesAPI } from '@/api/task';
 import { getBiddingsAPI } from "@/api/bidding";
 import { getContractsAPI } from "@/api/contract";
-import { CONTRACTS_STEPS, BIDDING_STEPS } from '@/common'
+import { getContractStepsAPI } from '@/api/contract-steps';
+import { getBiddingStepsAPI } from '@/api/bidding';
 import Comment from './Comment.vue';
 import SubTasks from './SubTasks.vue'
+import { useUserStore } from '@/stores/user';
 
 
 const route = useRoute();
@@ -277,43 +302,45 @@ const rules = computed(() => {
         description: [{ required: true, validator: validateDescription,  trigger: 'change' }],
     }
 })
-const stepOption = computed(()=>{
-    switch (formData.value.linked_type) {
-        case 'bidding':
-            return BIDDING_STEPS.map(ele => {
-                return { value: ele.step_code, label: ele.name}
-            })
-        case 'contract':
-            return CONTRACTS_STEPS.map(ele => {
-                return { value: ele.step_code, label: ele.name}
-            })
-        default:
-            return [];
-    }
-})
+const stepOption = ref([])
 
 // Method
-const submitForm = () => {
-    getSubTask();
-}
 const handleChangeLinkedType = () => {
-    const options = linkedIdOption.value;
-    formData.value.linked_id = options.length ? options[0].value : null;
+    formData.value.linked_id = null;
     formData.value.step_code = null;
 };
-const getStepByStepNo = (step) =>  {
-    let data = CONTRACTS_STEPS.find(ele => ele.step_code == step);
-    if(!data){
-        data = BIDDING_STEPS.find(ele => ele.step_code == step);
-        if(!data){
-            return "Trống" ;
-        }
+const handleChangeLinkedId = () => {    
+    if(formData.value.linked_type == 'bidding'){
+        getBiddingStep()
+    }else if(formData.value.linked_type == 'contract'){
+        getContractStep()
     }
-    return data.name;
+};
+const getContractStep = async () => {
+    await getContractStepsAPI(formData.value.linked_id).then(res => {
+        stepOption.value = res.data ? res.data.map(ele => {
+            return { value: ele.step_number, label: ele.title}
+        }) : []
+    }).catch(err => {
+
+    })
 }
-const convertDateFormat = (dateStr) =>  {
-    const [year, month, day] = dateStr.split('-');    
-    return `${day}-${month}-${year}`;
+const getBiddingStep = async () => {
+    await getBiddingStepsAPI(formData.value.linked_id).then(res => {
+        stepOption.value = res.data ? res.data.map(ele => {
+            return { value: ele.step_number, label: ele.title}
+        }) : []
+    }).catch(err => {
+
+    })
+}
+const getStepByStepNo = (step) =>  {
+    let data = stepOption.value.find(ele => ele.value == step);    
+    if(!data){
+        return "Trống" ;
+    }else {
+        return data.label;
+    }
 }
 const checkPriority = (text) => {
     let data = priorityOption.value.find(ele => ele.value == text);
@@ -371,6 +398,15 @@ const saveEditTask = async() => {
     }
     try {
         let res = await updateTask(route.params.id, formData.value)
+        // Sau khi lưu task, upload file
+        for (const file of pendingFiles.value) {
+            const formDataFile = new FormData();
+            formDataFile.append('file', file);
+            formDataFile.append('user_id', store.currentUser.id);
+            await uploadTaskFileAPI(route.params.id, formDataFile);
+        }
+        pendingFiles.value = [];
+        await fetchTaskFiles();
         await getDetailTaskById()
         message.success("Cập nhật thành công")
     } catch (error) {
@@ -408,11 +444,57 @@ const getListContract = async () => {
     })
 }
 
-onMounted(() => {
-    getDetailTaskById();
+const store = useUserStore();
+const fileList = ref([]);
+const loadingUploadFile = ref(false);
+const pendingFiles = ref([]);
+
+const fetchTaskFiles = async () => {
+    try {
+        const res = await getTaskFilesAPI(route.params.id);
+        fileList.value = (res.data || []).map(f => ({
+            uid: f.id || f.file_name,
+            name: f.file_name,
+            status: 'done',
+            url: f.file_path,
+            ...f
+        }));
+    } catch (e) {
+        fileList.value = [];
+    }
+};
+
+const handleBeforeUpload = (file) => {
+    pendingFiles.value.push(file);
+    return false; // Không upload ngay
+};
+
+const handleRemoveFile = async (file) => {
+    if (file.uid && file.uid.toString().startsWith('pending-')) {
+        // Xóa khỏi pendingFiles
+        const idx = Number(file.uid.replace('pending-', ''));
+        pendingFiles.value.splice(idx, 1);
+        return true;
+    } else {
+        // Xóa file đã upload trên server
+        try {
+            await deleteTaskFilesAPI(file.id);
+            await fetchTaskFiles();
+            message.success('Xóa file thành công');
+        } catch (e) {
+            message.error('Xóa file thất bại');
+        }
+        return true;
+    }
+};
+
+onMounted(async() => {
+    await getDetailTaskById();
     getUser();
     getListBidding();
     getListContract();
+    fetchTaskFiles();
+    handleChangeLinkedId();
 })
 
 </script>
