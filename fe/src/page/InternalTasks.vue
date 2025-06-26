@@ -245,7 +245,7 @@ const getBiddings = async () => {
 const getContracts = async () => {
     try {
         const res = await getContractsAPI()
-        listContract.value = res.data.data
+        listContract.value = res.data
         console.log('listContract.value ', listContract.value )
     } catch (e) {
         message.error('Không thể tải hợp đồng')
