@@ -207,8 +207,9 @@ const columns = [
     { title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority' },
     { title: 'Người phụ trách', dataIndex: 'assigned_to', key: 'assigned_to' },
     { title: 'Loại Task', dataIndex: 'linked_type', key: 'linked_type' },
-    { title: 'Thuộc về', dataIndex: 'linked_id', key: 'linked_id' },
+    { title: 'Gói thầu || Hợp đồng', dataIndex: 'linked_id', key: 'linked_id' },
     { title: 'Tiến trình', dataIndex: 'step_code', key: 'step_code' },
+    { title: 'Thuộc bước số', dataIndex: 'step_number', key: 'step_number' },
     { title: 'Người tạo nhiệm vụ', dataIndex: 'created_by', key: 'created_by' },
     { title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px', align:'center' },
 ]

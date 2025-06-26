@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Models\BiddingStepModel;
+use App\Models\ContractStepModel;
 use App\Models\TaskModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
@@ -17,7 +19,7 @@ class TaskController extends ResourceController
     {
         $builder = $this->model->builder();
 
-        // Lọc nâng cao
+        // --- Lọc nâng cao ---
         if ($assigned = $this->request->getGet('assigned_to')) {
             $builder->where('assigned_to', $assigned);
         }
@@ -47,11 +49,11 @@ class TaskController extends ResourceController
             $builder->where('users.department_id', $department);
         }
 
-        // Clone builder để đếm tổng số bản ghi
+        // --- Đếm tổng ---
         $totalBuilder = clone $builder;
         $total = $totalBuilder->countAllResults(false);
 
-        // Phân trang
+        // --- Phân trang ---
         $page     = (int) ($this->request->getGet('page') ?? 1);
         $perPage  = (int) ($this->request->getGet('per_page') ?? 10);
         $offset   = ($page - 1) * $perPage;
@@ -59,6 +61,59 @@ class TaskController extends ResourceController
         $builder->limit($perPage, $offset);
         $tasks = $builder->get()->getResultArray();
 
+        // --- Lấy step_number từ bảng liên quan ---
+        $contractIds = [];
+        $biddingIds = [];
+
+        foreach ($tasks as $task) {
+            if ($task['linked_type'] === 'contract' && !empty($task['linked_id'])) {
+                $contractIds[] = $task['linked_id'];
+            } elseif ($task['linked_type'] === 'bidding' && !empty($task['linked_id'])) {
+                $biddingIds[] = $task['linked_id'];
+            }
+        }
+
+        $contractStepMap = [];
+        $biddingStepMap = [];
+
+        if (!empty($contractIds)) {
+            $contractStepModel = new ContractStepModel();
+            $contractSteps = $contractStepModel->whereIn('contract_id', $contractIds)->findAll();
+            foreach ($contractSteps as $step) {
+                $key = $step['contract_id'] . '|' . str_pad($step['step_number'], 2, '0', STR_PAD_LEFT);
+                $contractStepMap[$key] = $step['step_number'];
+            }
+        }
+
+        if (!empty($biddingIds)) {
+            $biddingStepModel = new BiddingStepModel();
+            $biddingSteps = $biddingStepModel->whereIn('bidding_id', $biddingIds)->findAll();
+            foreach ($biddingSteps as $step) {
+                $key = $step['bidding_id'] . '|' . str_pad($step['step_number'], 2, '0', STR_PAD_LEFT);
+                $biddingStepMap[$key] = $step['step_number'];
+            }
+        }
+
+        // Gán step_number vào kết quả
+        foreach ($tasks as &$task) {
+            if (!isset($task['step_code']) || !isset($task['linked_id'])) {
+                $task['step_number'] = null;
+                continue;
+            }
+
+            $stepNumberCode = substr($task['step_code'], -2); // "contract_step_05" → "05"
+            $key = $task['linked_id'] . '|' . $stepNumberCode;
+
+            if ($task['linked_type'] === 'contract') {
+                $task['step_number'] = $contractStepMap[$key] ?? null;
+            } elseif ($task['linked_type'] === 'bidding') {
+                $task['step_number'] = $biddingStepMap[$key] ?? null;
+            } else {
+                $task['step_number'] = null;
+            }
+        }
+
+        // --- Trả kết quả ---
         return $this->response->setJSON([
             'status' => 'success',
             'data' => $tasks,
