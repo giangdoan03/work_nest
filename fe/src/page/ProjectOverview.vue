@@ -50,7 +50,35 @@
             </a-table-column>
 
 
-            <a-table-column title="Task đang chạy" dataIndex="task_count" />
+            <a-table-column title="Task đang chạy">
+                <template #default="{ record }">
+                    <ul style="padding-left: 16px; margin: 0;">
+                        <li
+                            v-for="task in record.tasks"
+                            :key="task.id"
+                        >
+                            <router-link :to="`/internal-tasks/${task.id}/info`">
+                                {{ task.title }}
+                            </router-link>
+                            <a-tag
+                                :color="task.status === 'done' ? 'green' : task.status === 'doing' ? 'blue' : 'orange'"
+                                style="margin-left: 8px"
+                            >
+                                {{
+                                    task.status === 'done'
+                                        ? 'Hoàn thành'
+                                        : task.status === 'doing'
+                                            ? 'Đang làm'
+                                            : 'Chưa làm'
+                                }}
+                            </a-tag>
+
+                        </li>
+                    </ul>
+                </template>
+            </a-table-column>
+
+
 
             <a-table-column title="Tiến độ (%)" dataIndex="progress">
                 <template #default="{ record }">

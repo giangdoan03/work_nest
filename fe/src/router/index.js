@@ -79,6 +79,20 @@ const routes = [
             { path: 'contracts-tasks', name: 'contracts-tasks', component: ContractsTasks, meta: { breadcrumb: 'Danh sách hợp đồng' } },
 
             {
+                path: 'contract-tasks/:id/info',
+                name: 'contract-task-info',
+                component: TaskDetail,
+                meta: { breadcrumb: 'Chi tiết nhiệm vụ hợp đồng' }
+            },
+
+            {
+                path: 'bidding-tasks/:id/info',
+                name: 'bidding-task-info',
+                component: TaskDetail,
+                meta: { breadcrumb: 'Chi tiết nhiệm vụ đấu thầu' }
+            },
+
+            {
                 path: 'contracts/:id',
                 name: 'contract-detail',
                 component: ContractDetail,
