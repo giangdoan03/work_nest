@@ -53,7 +53,7 @@
                     style="width: 100%" 
                     v-model:value="dataFilter.assigned_to" 
                     :options="optionsAssigned" 
-                    placeholder="Chọn độ người dùng" 
+                    placeholder="Người phụ trách"
                     @change="getInternalTask()"
                 />
             </a-col>
@@ -77,7 +77,9 @@
                     {{ getUserById(text) }}
                 </template>
                 <template v-if="column.dataIndex === 'linked_type'">
-                    {{ getLinkedType(text) }}
+                    <a-tag :color="getLinkedTypeTag(text).color">
+                        {{ getLinkedTypeTag(text).label }}
+                    </a-tag>
                 </template>
                 <template v-if="column.dataIndex === 'linked_id'">
                       <span
@@ -203,11 +205,11 @@ const columns = [
     // { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
     { title: 'Tên nhiệm vụ', dataIndex: 'title', key: 'title' },
     { title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority' },
-    { title: 'Người tạo', dataIndex: 'created_by', key: 'created_by' },
-    { title: 'Người được giao', dataIndex: 'assigned_to', key: 'assigned_to' },
+    { title: 'Người phụ trách', dataIndex: 'assigned_to', key: 'assigned_to' },
     { title: 'Loại Task', dataIndex: 'linked_type', key: 'linked_type' },
     { title: 'Thuộc về', dataIndex: 'linked_id', key: 'linked_id' },
     { title: 'Tiến trình', dataIndex: 'step_code', key: 'step_code' },
+    { title: 'Người tạo nhiệm vụ', dataIndex: 'created_by', key: 'created_by' },
     { title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px', align:'center' },
 ]
 const changeDateTime = (day, date) => {
@@ -261,6 +263,20 @@ const getLinkedName = (type, id) => {
         return found ? found.title : '—'
     }
     return '—'
+}
+
+
+const getLinkedTypeTag = (type) => {
+    switch (type) {
+        case 'bidding':
+            return { label: 'Gói thầu', color: 'blue' }
+        case 'contract':
+            return { label: 'Hợp đồng', color: 'green' }
+        case 'internal':
+            return { label: 'Nội bộ', color: 'default' }
+        default:
+            return { label: 'Không rõ', color: 'red' }
+    }
 }
 
 
