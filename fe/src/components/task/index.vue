@@ -297,9 +297,10 @@ const submitForm = () => {
     getSubTask();
 }
 const handleChangeLinkedType = () => {
-    formData.value.linked_id = null;
+    const options = linkedIdOption.value;
+    formData.value.linked_id = options.length ? options[0].value : null;
     formData.value.step_code = null;
-}
+};
 const getStepByStepNo = (step) =>  {
     let data = CONTRACTS_STEPS.find(ele => ele.step_code == step);
     if(!data){
@@ -370,7 +371,7 @@ const saveEditTask = async() => {
     }
     try {
         let res = await updateTask(route.params.id, formData.value)
-        getDetailTaskById()
+        await getDetailTaskById()
         message.success("Cập nhật thành công")
     } catch (error) {
         formData.value = formDataSave.value;

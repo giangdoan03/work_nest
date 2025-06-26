@@ -72,10 +72,10 @@
 </template>
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import {useUserStore} from '../../../src/stores/user'
-import { createTask, updateTask } from '../../api/task'
-import { getBiddingsAPI } from '../../api/bidding'
-import { getContractsAPI } from '../../api/contract'
+import {useUserStore} from '@/stores/user.js'
+import { createTask, updateTask } from '@/api/task.js'
+import { getBiddingsAPI } from '@/api/bidding.js'
+import { getContractsAPI } from '@/api/contract.js'
 import { message } from 'ant-design-vue'
 import { useRoute } from 'vue-router';
 import { CONTRACTS_STEPS, BIDDING_STEPS } from '@/common'

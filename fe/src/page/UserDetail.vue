@@ -1,6 +1,6 @@
 <template>
     <div>
-        <a-page-header title="Chi tiết người dùng" @back="() => router.back()" />
+        <a-page-header style="padding-left: 0; padding-top: 0" title="Chi tiết người dùng" @back="() => router.back()" />
 
         <a-descriptions bordered :column="1" v-if="user">
             <a-descriptions-item label="Họ tên">{{ user.name }}</a-descriptions-item>

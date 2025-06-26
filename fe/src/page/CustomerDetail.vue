@@ -1,6 +1,6 @@
 <template>
     <div>
-        <a-page-header title="Chi tiết khách hàng" @back="$router.back()" />
+        <a-page-header style="padding-left: 10px; padding-top: 0" title="Chi tiết khách hàng" @back="$router.back()" />
 
         <a-descriptions v-if="customer" bordered :column="1" size="small" title="Thông tin khách hàng">
             <a-descriptions-item label="Tên khách hàng">{{ customer.name }}</a-descriptions-item>

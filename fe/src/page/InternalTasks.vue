@@ -67,22 +67,33 @@
         <a-table :columns="columns" :data-source="tableData" :loading="loading"
             style="margin-top: 8px;" row-key="module" :scroll="{ y: 'calc( 100vh - 360px )' }">
             <template #bodyCell="{ column, record, index, text }">
-                <template v-if="column.dataIndex == 'title'">
+                <template v-if="column.dataIndex === 'title'">
                     <a-typography-text strong style="cursor: pointer;" @click="showPopupDetail(record)">{{ text }}</a-typography-text>
                 </template>
-                <template v-if="column.dataIndex == 'priority'">
+                <template v-if="column.dataIndex === 'priority'">
                     <a-tag v-if="text" :color="checkPriority(text).color">{{ checkPriority(text).title }}</a-tag>
                 </template>
                 <template v-if="['created_by', 'assigned_to'].includes(column.dataIndex)">
                     {{ getUserById(text) }}
                 </template>
-                <template v-if="column.dataIndex == 'linked_type'">
+                <template v-if="column.dataIndex === 'linked_type'">
                     {{ getLinkedType(text) }}
                 </template>
-                <template v-if="column.dataIndex == 'step_code'">
+                <template v-if="column.dataIndex === 'linked_id'">
+                      <span
+                          v-if="record.linked_type === 'bidding' || record.linked_type === 'contract'"
+                          style="color: #1890ff; cursor: pointer;"
+                          @click="goToLinkedDetail(record)"
+                      >
+                        {{ getLinkedName(record.linked_type, text) }}
+                      </span>
+                    <span v-else>—</span>
+                </template>
+
+                <template v-if="column.dataIndex === 'step_code'">
                     {{ getStepByStepNo(text) }}
                 </template>
-                <template v-else-if="column.dataIndex == 'action'">
+                <template v-else-if="column.dataIndex === 'action'">
                     <a-dropdown placement="left">
                         <a-button>
                             <template #icon>
@@ -115,7 +126,7 @@
                 </template>
             </template>
         </a-table>
-        <DrawerCreateTask 
+        <DrawerCreateTask
             v-model:open-drawer="openDrawer"
             :list-user="listUser"
             @submitForm="submitForm"
@@ -134,6 +145,10 @@ import { InfoCircleOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/ic
 import { CONTRACTS_STEPS, BIDDING_STEPS } from '@/common'
 import DrawerCreateTask from "../components/common/DrawerCreateTask.vue";
 import viVN from 'ant-design-vue/es/locale/vi_VN';
+
+import { getBiddingsAPI } from '@/api/bidding.js'
+import { getContractsAPI } from '@/api/contract.js'
+
 
 const locale = ref(viVN);
 const router = useRouter()
@@ -191,6 +206,7 @@ const columns = [
     { title: 'Người tạo', dataIndex: 'created_by', key: 'created_by' },
     { title: 'Người được giao', dataIndex: 'assigned_to', key: 'assigned_to' },
     { title: 'Loại Task', dataIndex: 'linked_type', key: 'linked_type' },
+    { title: 'Thuộc về', dataIndex: 'linked_id', key: 'linked_id' },
     { title: 'Tiến trình', dataIndex: 'step_code', key: 'step_code' },
     { title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px', align:'center' },
 ]
@@ -214,19 +230,61 @@ const getInternalTask = async () => {
     }
 }
 
+const listBidding = ref([])
+const listContract = ref([])
+
+const getBiddings = async () => {
+    try {
+        const res = await getBiddingsAPI()
+        listBidding.value = res.data.data
+    } catch (e) {
+        message.error('Không thể tải gói thầu')
+    }
+}
+
+const getContracts = async () => {
+    try {
+        const res = await getContractsAPI()
+        listContract.value = res.data.data
+        console.log('listContract.value ', listContract.value )
+    } catch (e) {
+        message.error('Không thể tải hợp đồng')
+    }
+}
+
+const getLinkedName = (type, id) => {
+    if (type === 'bidding' && Array.isArray(listBidding.value)) {
+        const found = listBidding.value.find(ele => ele.id === id)
+        return found ? found.title : '—'
+    } else if (type === 'contract' && Array.isArray(listContract.value)) {
+        const found = listContract.value.find(ele => ele.id === id)
+        return found ? found.title : '—'
+    }
+    return '—'
+}
+
+
+const goToLinkedDetail = (record) => {
+    if (record.linked_type === 'bidding') {
+        router.push(`/bid-detail/${record.linked_id}`)
+    } else if (record.linked_type === 'contract') {
+        router.push(`/contracts/${record.linked_id}`)
+    }
+}
+
 const deleteConfirm = async (internalId) => {
     try {
         await deleteTask(internalId);
-        getInternalTask();
+        await getInternalTask();
     } catch (e) {
         message.error('Xóa nhiệm vụ không thành công')
     } finally {
     }
 }
 const showPopupDetail = async (record) => {    
-    router.push({
+    await router.push({
         name: "internal-tasks-info",
-        params: { id: record.id, task_name: record.name}
+        params: {id: record.id, task_name: record.name}
     })
 }
 const showPopupCreate = () => {
@@ -303,7 +361,9 @@ const getDepartment = async () => {
 onMounted(() => {
     getInternalTask();
     getUser();
-    getDepartment(); 
+    getDepartment();
+    getBiddings()
+    getContracts()
 })
 </script>
 <style scoped>
