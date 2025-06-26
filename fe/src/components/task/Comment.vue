@@ -43,7 +43,7 @@
             </a-upload>
         </div>
         <div class="list-comment" v-if="listComment">
-            <a-spin :spinning="loadingComment && currentPage == 1">
+            <a-spin :spinning="loadingComment">
                 <div class="comment-content" v-for="(item, index) in listComment">
                     <a-row :gutter="[12,12]">
                         <a-col>
@@ -88,15 +88,6 @@
                 </div>
             </a-spin>
         </div>
-        <div style="margin-top: 20px; text-align: center;">
-            <a-button
-                v-if="currentPage < totalPage"
-                @click="loadMoreComments"
-                :loading="loadingComment && currentPage != 1"
-            >
-                Xem thêm
-            </a-button>
-        </div>
         <a-modal
             v-model:open="openModalEditComment"
             title="Chỉnh sửa thông tin bình luận"
@@ -136,8 +127,6 @@ const loadingComment = ref(false)
 const loadingUpdate = ref(false)
 const openModalEditComment = ref(false)
 const selectedComment = ref()
-const currentPage = ref(1)
-const totalPage = ref(0)
 
 const getUserById = (userId) =>  {
     let data = listUser.value.find(ele => ele.id == userId);
@@ -197,7 +186,7 @@ const createNewComment = async() => {
         console.log(error);
     }
 }
-const getListComment = async(page = 1) => {
+const getListComment = async(page=1) => {
     loadingComment.value = true;
     try {
         let params = {
@@ -224,9 +213,6 @@ const getUser = async () => {
     } catch (e) {
         message.error('Không thể tải người dùng')
     }
-}
-const loadMoreComments = () => {
-    getListComment(currentPage.value + 1);
 }
 
 onMounted(() => {
