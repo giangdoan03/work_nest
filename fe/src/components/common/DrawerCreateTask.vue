@@ -26,10 +26,17 @@
                 </a-row>
                 <a-row :gutter="16">
                     <a-col :span="12">
+                        <a-form-item label="Trạng thái" name="status">
+                            <a-select v-model:value="formData.status" :options="statusOption" placeholder="Chọn trạng thái" />
+                        </a-form-item>
+                    </a-col>
+                    <a-col :span="12">
                         <a-form-item label="Gắn tới người dùng" name="assigned_to">
                             <a-select v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng" />
                         </a-form-item>
                     </a-col>
+                </a-row>
+                <a-row :gutter="16">
                     <a-col :span="12">
                         <a-form-item label="Loại nhiệm vụ" name="linked_type">
                             <a-select v-model:value="formData.linked_type" :options="linkedTypeOption" placeholder="Chọn loại nhiệm vụ" />
@@ -111,7 +118,7 @@ const formData = ref({
     assigned_to: null,
     start_date: "",
     end_date: "",
-    status: "",
+    status: null,
     priority: null,
     parent_id: null,
 })
@@ -197,6 +204,14 @@ const priorityOption = ref([
     {value: "normal", label: "Thường"},
     {value: "hight", label: "Cao"},
 ])
+const statusOption = computed(() => {
+    return [
+        {value: 'todo', label: "Việc cần làm"},
+        {value: 'doing', label: "Đang thực hiện"},
+        {value: 'done', label: "Hoàn thành"},
+        {value: 'overdue', label: "Quá hạn"},
+    ]
+})
 const linkedTypeOption = ref([
     {value: "bidding", label: "Gói thầu"},
     {value: "contract", label: "Hợp đồng"},
