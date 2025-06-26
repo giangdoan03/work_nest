@@ -71,7 +71,7 @@ class ProjectOverviewController extends ResourceController
             LEFT JOIN contracts ct ON ct.id_customer = c.id
             LEFT JOIN tasks t ON t.linked_type IN ('contract', 'bidding') 
                 AND (t.linked_id = ct.id OR t.linked_id = b.id)
-            WHERE t.status IS NOT NULL AND t.status != 'done'
+            WHERE t.status IS NOT NULL
         ");
 
         $rawTasks = $taskQuery->getResultArray();
