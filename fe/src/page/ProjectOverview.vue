@@ -86,14 +86,14 @@
             </a-table-column>
 
             <!-- Tiến độ -->
-            <a-table-column title="Tiến độ (%)" dataIndex="progress">
+            <a-table-column title="Tiến độ (%)" dataIndex="progress" :width="150">
                 <template #default="{ record }">
                     <a-progress :percent="+record.progress" size="small" />
                 </template>
             </a-table-column>
 
             <!-- Người phụ trách -->
-            <a-table-column title="Người phụ trách" :width="180">
+            <a-table-column title="Người phụ trách" :width="160">
                 <template #default="{ record }">
                     <ul style="padding-left: 0; margin: 0; list-style: none;">
                         <li
