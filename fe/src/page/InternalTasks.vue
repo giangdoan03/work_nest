@@ -6,9 +6,66 @@
             </div>
             <a-button type="primary" @click="showPopupCreate">Thêm nhiệm vụ mới</a-button>
         </a-flex>
+        <a-row :gutter="[14,14]" style="margin-top: 10px;">
+            <a-col :span="4">
+                <a-select
+                    :allowClear="true"
+                    style="width: 100%" 
+                    v-model:value="dataFilter.linked_type" 
+                    :options="optionsLinkType" 
+                    placeholder="Loại nhiệm vụ" 
+                    @change="getInternalTask()"
+                />
+            </a-col>
+            <a-col :span="4">
+                <a-select
+                    :allowClear="true"
+                    style="width: 100%" 
+                    v-model:value="dataFilter.department_id" 
+                    :options="optionsDepartment" 
+                    placeholder="Chọn phòng ban" 
+                    @change="getInternalTask()"
+                />
+            </a-col>
+            <a-col :span="4">
+                <a-select
+                    :allowClear="true"
+                    style="width: 100%" 
+                    v-model:value="dataFilter.priority" 
+                    :options="priorityOption" 
+                    placeholder="Chọn độ ưu tiên" 
+                    @change="getInternalTask()"
+                />
+            </a-col>
+            <a-col :span="4">
+                <a-select
+                    :allowClear="true"
+                    style="width: 100%" 
+                    v-model:value="dataFilter.status" 
+                    :options="statusOption" 
+                    placeholder="Chọn trạng thái" 
+                    @change="getInternalTask()"
+                />
+            </a-col>
+            <a-col :span="4">
+                <a-select
+                    :allowClear="true"
+                    style="width: 100%" 
+                    v-model:value="dataFilter.assigned_to" 
+                    :options="optionsAssigned" 
+                    placeholder="Chọn độ người dùng" 
+                    @change="getInternalTask()"
+                />
+            </a-col>
+            <a-col :span="4">
+                <a-config-provider :locale="locale">
+                    <a-date-picker format="YYYY-MM-DD" @change="changeDateTime" style="width: 100%;"></a-date-picker>
+                </a-config-provider>
+            </a-col>
+        </a-row>
 
         <a-table :columns="columns" :data-source="tableData" :loading="loading"
-            style="margin-top: 12px;" row-key="module" :scroll="{ y: 'calc( 100vh - 330px )' }">
+            style="margin-top: 8px;" row-key="module" :scroll="{ y: 'calc( 100vh - 360px )' }">
             <template #bodyCell="{ column, record, index, text }">
                 <template v-if="column.dataIndex == 'title'">
                     <a-typography-text strong style="cursor: pointer;" @click="showPopupDetail(record)">{{ text }}</a-typography-text>
@@ -68,20 +125,64 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { getTasks, createTask, updateTask, deleteTask } from '../api/internal'
+import { getTasks, deleteTask } from '../api/task'
+import { getDepartments } from '../api/department'
 import { getUsers } from '@/api/user';
 import { message } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router';
 import { InfoCircleOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons-vue';
 import { CONTRACTS_STEPS, BIDDING_STEPS } from '@/common'
 import DrawerCreateTask from "../components/common/DrawerCreateTask.vue";
+import viVN from 'ant-design-vue/es/locale/vi_VN';
 
+const locale = ref(viVN);
 const router = useRouter()
 const tableData = ref([])
 const loading = ref(false)
 const openDrawer = ref(false)
 const listUser = ref([])
+const listDepartment = ref([])
+const dataFilter = ref({
+    linked_type: null,
+    department_id: null,
+    status: null,
+    priority: null,
+    assigned_to: null,
+    due_date: null,
+})
 
+const optionsLinkType = computed(() => {
+    return [
+        {value: 'bidding', label: "Gói thầu"},
+        {value: 'contract', label: "Hợp đồng"},
+        {value: 'internal', label: "Nhiệm vụ nội bộ"},
+    ]
+})
+const priorityOption = computed(() => {
+    return [
+        {value: 'low', label: "Thấp"},
+        {value: 'normal', label: "Thường"},
+        {value: 'high', label: "Cao"},
+    ]
+})
+const statusOption = computed(() => {
+    return [
+        {value: 'todo', label: "Việc cần làm"},
+        {value: 'doing', label: "Đang thực hiện"},
+        {value: 'done', label: "Hoàn thành"},
+        {value: 'overdue', label: "Quá hạn"},
+    ]
+})
+const optionsAssigned = computed(() => {
+    return listUser.value.map(ele => {
+        return { value: ele.id, label: ele.name }
+    })
+})
+const optionsDepartment = computed(() => {
+    return listDepartment.value.map(ele => {
+        return { value: ele.id, label: ele.name }
+    })
+})
 
 const columns = [
     // { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
@@ -93,11 +194,18 @@ const columns = [
     { title: 'Tiến trình', dataIndex: 'step_code', key: 'step_code' },
     { title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px', align:'center' },
 ]
-
+const changeDateTime = (day, date) => {
+    if(date){
+        dataFilter.value.due_date = date;
+    }else {
+        dataFilter.value.due_date = "";
+    }
+    getInternalTask()
+}
 const getInternalTask = async () => {
     loading.value = true
     try {
-        const response = await getTasks();        
+        const response = await getTasks(dataFilter.value);        
         tableData.value = response.data.data ? response.data.data : [];
     } catch (e) {
         message.error('Không thể tải nhiệm vụ')
@@ -181,10 +289,21 @@ const getUser = async () => {
         loading.value = false
     }
 }
+const getDepartment = async () => {
+    loading.value = true
+    try {
+        const response = await getDepartments();
+        listDepartment.value = response.data;
+    } catch (e) {
+        message.error('Không thể tải người dùng')
+    } finally {
+        loading.value = false
+    }
+}
 onMounted(() => {
     getInternalTask();
-    getUser();    
-
+    getUser();
+    getDepartment(); 
 })
 </script>
 <style scoped>

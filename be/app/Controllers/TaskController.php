@@ -15,8 +15,7 @@ class TaskController extends ResourceController
     // ✅ Danh sách task (lọc nâng cao)
     public function index()
     {
-        $db = Database::connect();
-        $builder = $db->table('tasks');
+        $builder = $this->model->builder();
 
         // Lọc nâng cao
         if ($assigned = $this->request->getGet('assigned_to')) {
@@ -39,18 +38,40 @@ class TaskController extends ResourceController
             $builder->where('end_date <=', $end_date);
         }
 
+        if ($linked_type = $this->request->getGet('linked_type')) {
+            $builder->where('linked_type', $linked_type);
+        }
+
         if ($department = $this->request->getGet('department_id')) {
             $builder->join('users', 'users.id = tasks.assigned_to', 'left');
             $builder->where('users.department_id', $department);
         }
 
+        // Clone builder để đếm tổng số bản ghi
+        $totalBuilder = clone $builder;
+        $total = $totalBuilder->countAllResults(false);
+
+        // Phân trang
+        $page     = (int) ($this->request->getGet('page') ?? 1);
+        $perPage  = (int) ($this->request->getGet('per_page') ?? 10);
+        $offset   = ($page - 1) * $perPage;
+
+        $builder->limit($perPage, $offset);
         $tasks = $builder->get()->getResultArray();
 
         return $this->response->setJSON([
             'status' => 'success',
-            'data' => $tasks
+            'data' => $tasks,
+            'pagination' => [
+                'total' => $total,
+                'page' => $page,
+                'per_page' => $perPage,
+                'last_page' => ceil($total / $perPage)
+            ]
         ]);
     }
+
+
 
     // ✅ Chi tiết 1 task
     public function show($id = null)

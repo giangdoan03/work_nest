@@ -42,9 +42,9 @@
                             <a-row :gutter="16">
                                 <a-col :span="12">
                                     <a-form-item label="Thời gian" name="time">
-                                        <a-typography-text v-if="!isEditMode">{{ (formData.start_date ? convertDateFormat(formData.start_date) : "Trống") + " → " + (formData.end_date ? convertDateFormat(formData.end_date) : "Trống") }}</a-typography-text>
-                                        <a-config-provider :locale="locale">
-                                            <a-range-picker v-model:value="dateRange"  v-if="isEditMode" format="DD-MM-YYYY" @change="changeDateTime" style="width: 100%;"></a-range-picker>
+                                        <a-typography-text v-if="!isEditMode">{{ (formData.start_date ? (formData.start_date) : "Trống") + " → " + (formData.end_date ? (formData.end_date) : "Trống") }}</a-typography-text>
+                                        <a-config-provider :locale="locale" v-else>
+                                            <a-range-picker v-model:value="dateRange" format="YYYY-MM-DD" @change="changeDateTime" style="width: 100%;"></a-range-picker>
                                         </a-config-provider>
                                     </a-form-item>
                                 </a-col>
@@ -90,56 +90,10 @@
                     </a-form>
                 </div>
             </div>
-            <div class="task-info-left">
+            <div class="task-info-left" v-if="!formData.parent_id">
                 <div class="task-info-content">
                     <div class="task-in-end">
-                        <a-row justify="space-between">
-                            <a-col>
-                                <a-typography-title :level="5" style="color: #7c7c7c;"> Sub-Tasks</a-typography-title>
-                            </a-col>
-                            <a-col>
-                                <PlusOutlined style="font-size: 16px;cursor: pointer;" @click="showPopupCreate"/>
-                            </a-col>
-                        </a-row>
-                        <div v-if="!listSubTask.length" style="margin-bottom: 16px;">
-                            Không có dữ liệu
-                        </div>
-                        <div v-else>
-                            <a-table
-                                :columns="columns"
-                                :data-source="listSubTask"
-                                :loading="loadingSubTask"
-                                row-key="id"
-                                :pagination="false"
-                            >
-                                <template #bodyCell="{ column, record, text }">
-                                    <template v-if="column.key === 'title'">
-                                        <a-typography-link strong>{{ text }}</a-typography-link>
-                                    </template>
-                                    <template v-if="column.key === 'assigned_to'">
-                                        <a-typography-text>{{ getUserById(record.assigned_to) }}</a-typography-text>
-                                    </template>
-                                    <template v-if="column.key === 'date'">
-                                        <a-typography-text v-if="!isEditMode">{{ record.end_date }}</a-typography-text>
-                                    </template>
-                                    <template v-if="column.key === 'action'">
-                                        <a-dropdown>
-                                            <CaretDownOutlined />
-                                            <template #overlay>
-                                                <a-menu>
-                                                    <a-menu-item>
-                                                        Chi tiết
-                                                    </a-menu-item>
-                                                    <a-menu-item>
-                                                        Xóa
-                                                    </a-menu-item>
-                                                </a-menu>
-                                            </template>
-                                        </a-dropdown>
-                                    </template>
-                                </template>
-                            </a-table>
-                        </div>
+                        <SubTasks :list-user="listUser" />
                     </div>
                 </div>
             </div>
@@ -151,12 +105,6 @@
                 </div>
             </div>
         </div>
-        <DrawerCreateTask 
-            v-model:open-drawer="openDrawerCreateTask"
-            :list-user="listUser"
-            :task-parent="route.params.id"
-            @submitForm="submitForm"
-        />
     </div>
 </template>
 <script setup>
@@ -169,27 +117,29 @@ import dayjs from 'dayjs';
 import viVN from 'ant-design-vue/es/locale/vi_VN';
 import { getUsers } from '@/api/user';
 import { useRoute, useRouter } from 'vue-router';
-import { getTaskDetail, getSubTasks } from '@/api/internal';
+import { getTaskDetail, updateTask } from '@/api/task';
 import { getBiddingsAPI } from "@/api/bidding";
 import { getContractsAPI } from "@/api/contract";
 import { CONTRACTS_STEPS, BIDDING_STEPS } from '@/common'
-import DrawerCreateTask from "../common/DrawerCreateTask.vue";
 import Comment from './Comment.vue';
+import SubTasks from './SubTasks.vue'
 
 
 const route = useRoute();
+const router = useRouter();
 const locale = ref(viVN);
 const isEditMode = ref(false);
 
 const listUser = ref([])
 const loading = ref(false)
 const loadingSubTask = ref(false)
+const loadingUpdate = ref(false)
 const listContract = ref([]);
 const listBidding = ref([]);
 const dateRange = ref([]);
-const openDrawerCreateTask = ref(false);
 const listSubTask = ref([])
 
+const formDataSave = ref()
 const formData = ref({
     title: "",
     created_by: "",
@@ -214,12 +164,6 @@ const linkedTypeOption = ref([
     {value: "contract", label: "Hợp đồng"},
     {value: "internal", label: "Nhiệm vụ nội bộ"},
 ])
-const columns = ref([
-    { title: 'Tên task', key: 'title', dataIndex: 'title' },
-    { title: 'Gắn người dùng', key: 'assigned_to', dataIndex: 'assigned_to' },
-    { title: 'Thời hạn', key: 'date', dataIndex: 'date' },
-    { title: '', key: 'action', dataIndex: 'action', width:"60px" },
-])
 
 const getTextLinkedType = computed(()=>{
     let data = linkedTypeOption.value.find(ele => ele.value == formData.value.linked_type)
@@ -242,8 +186,6 @@ const userOption =  computed(()=>{
     }
 })
 const getNameLinked = (id)=>{
-    console.log(2,listBidding.value);
-    
     if(formData.value.linked_type == 'bidding' && listBidding.value && listBidding.value.length){
         let check = listBidding.value.find(ele => ele.id == id)
         if(check) return check.title
@@ -261,9 +203,6 @@ const linkedIdOption = computed(()=>{
             return { value: ele.id, label: ele.title}
         })
     }else if(formData.value.linked_type == 'contract'){
-        console.log(555,listContract.value.map(ele => {
-            return { value: ele.id, label: ele.title}
-        }));
         return listContract.value.map(ele => {
             return { value: ele.id, label: ele.title}
         })
@@ -341,9 +280,6 @@ const stepOption = computed(()=>{
 })
 
 // Method
-const showPopupCreate = () => {
-    openDrawerCreateTask.value = true;
-}
 const submitForm = () => {
     getSubTask();
 }
@@ -363,7 +299,7 @@ const getStepByStepNo = (step) =>  {
 }
 const convertDateFormat = (dateStr) =>  {
     const [year, month, day] = dateStr.split('-');    
-    return `${day}/${month}/${year}`;
+    return `${day}-${month}-${year}`;
 }
 const checkPriority = (text) => {
     let data = priorityOption.value.find(ele => ele.value == text);
@@ -393,8 +329,8 @@ const getUserById = (userId) =>  {
 }
 const changeDateTime = (day, date) => {
     if(day){
-        formData.value.start_date = convertDateFormat(date[0]);
-        formData.value.end_date = convertDateFormat(date[1]);
+        formData.value.start_date = date[0]
+        formData.value.end_date = date[1]
     }else {
         formData.value.start_date = "";
         formData.value.end_date = "";
@@ -402,10 +338,27 @@ const changeDateTime = (day, date) => {
     
 }
 const editTask = () => {
+    formDataSave.value = {...formData.value}
     isEditMode.value = true;
 }
-const saveEditTask = () => {
-    isEditMode.value = false;
+const saveEditTask = async() => {
+    loadingUpdate.value = true
+    if(!formData.value.start_date && !formData.value.end_date){
+        formData.value.start_date = (formDataSave.value.start_date)
+        formData.value.end_date = (formDataSave.value.end_date)
+    }
+    try {
+        let res = await updateTask(route.params.id, formData.value)
+        getDetailTaskById()
+        message.success("Cập nhật thành công")
+    } catch (error) {
+        formData.value = formDataSave.value;
+        message.destroy()
+        message.error("Không thể cập nhật chỉnh sửa")
+    } finally {
+        loadingUpdate.value = false
+        isEditMode.value = false;
+    }
 }
 const cancelEditTask = () => {
     isEditMode.value = false;
@@ -413,7 +366,6 @@ const cancelEditTask = () => {
 const getDetailTaskById = async () => {
     await getTaskDetail(route.params.id).then(res => {
         formData.value = res.data;
-        dateRange.value = [ formData.value.start_date, formData.value.end ]
     }).catch(err => {
 
     })
@@ -433,24 +385,9 @@ const getListContract = async () => {
 
     })
 }
-const getSubTask = async() => {
-    if(loadingSubTask.value){
-        return
-    }
-    loadingSubTask.value = true;
-    try {
-        let res =  await getSubTasks(route.params.id);        
-        listSubTask.value = res.data;
-    } catch (error) {
-        console.log(error);
-    } finally {
-        loadingSubTask.value = false;
-    } 
 
-}
 onMounted(() => {
     getDetailTaskById();
-    getSubTask();
     getUser();
     getListBidding();
     getListContract();
@@ -458,6 +395,10 @@ onMounted(() => {
 
 </script>
 <style scoped>
+.task{
+    max-height: calc( 100vh - 160px);
+    overflow-y: auto;
+}
 .task-info{
     margin-top: 16px;
 }
