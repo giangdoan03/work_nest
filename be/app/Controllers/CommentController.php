@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\CommentModel;
+use App\Models\TaskCommentModel;
 use App\Models\TaskFileModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
@@ -13,7 +14,7 @@ use Config\Services;
 
 class CommentController extends ResourceController
 {
-    protected $modelName = CommentModel::class;
+    protected $modelName = TaskCommentModel::class;
     protected $format    = 'json';
 
     // ✅ Danh sách comment theo task
@@ -22,22 +23,26 @@ class CommentController extends ResourceController
         $page  = (int) $this->request->getGet('page') ?: 1;
         $limit = 10;
 
-        // Lấy comment có phân trang
+        // Lấy comment có phân trang (mới nhất lên đầu)
         $comments = $this->model
             ->select('task_comments.*, users.name as user_name')
             ->join('users', 'users.id = task_comments.user_id', 'left')
             ->where('task_comments.task_id', $task_id)
-            ->orderBy('task_comments.created_at', 'ASC')
+            ->orderBy('task_comments.created_at', 'DESC')
             ->paginate($limit, 'default', $page);
 
         $pager = Services::pager();
 
-        // Gắn file cho từng comment
-        $fileModel = new TaskFileModel();
+        // Gắn mảng files nếu comment có file
         foreach ($comments as &$comment) {
-            $comment['files'] = $fileModel
-                ->where('comment_id', $comment['id'])
-                ->findAll();
+            if (!empty($comment['file_path']) && !empty($comment['file_name'])) {
+                $comment['files'] = [[
+                    'file_name' => $comment['file_name'],
+                    'file_path' => $comment['file_path'],
+                ]];
+            } else {
+                $comment['files'] = [];
+            }
         }
 
         return $this->respond([
@@ -50,6 +55,7 @@ class CommentController extends ResourceController
             ]
         ]);
     }
+
 
 
 
@@ -68,41 +74,35 @@ class CommentController extends ResourceController
             'content' => $json['content'] ?? null,
         ];
 
-        // Lưu comment
+        // ✅ Nếu có file upload thì xử lý
+        $file = $this->request->getFile('attachment');
+        if ($file && $file->isValid() && !$file->hasMoved()) {
+            $uploadResult = Uploader::saveFile($file, 'file');
+
+            if ($uploadResult) {
+                $data['file_name']   = $uploadResult['file_name'];
+                $data['file_path']   = $uploadResult['file_path'];
+                $data['uploaded_by'] = $json['user_id'] ?? null;
+            }
+        }
+
+        // ✅ Lưu comment (bao gồm cả file nếu có)
         if (!$this->model->insert($data)) {
             return $this->failValidationErrors($this->model->errors());
         }
 
         $comment_id = $this->model->getInsertID();
 
-        // ✅ Chỉ cho phép 1 file duy nhất (từ field 'attachment')
-        $file = $this->request->getFile('attachment');
-        if (is_array($file)) {
-            return $this->failValidationErrors('Chỉ được phép upload 1 file.');
-        }
-
-        if ($file && $file->isValid() && !$file->hasMoved()) {
-            $uploadResult = Uploader::saveFile($file, 'file');
-
-            if ($uploadResult) {
-                $fileModel = new TaskFileModel();
-                $fileModel->insert([
-                    'task_id'     => $task_id,
-                    'comment_id'  => $comment_id,
-                    'file_name'   => $uploadResult['file_name'],
-                    'file_path'   => $uploadResult['file_path'],
-                    'uploaded_by' => $json['user_id'] ?? null,
-                ]);
-            }
-        }
-
         return $this->respondCreated([
             'id'        => $comment_id,
             'task_id'   => $task_id,
-            'user_id'   => $json['user_id'] ?? null,
-            'content'   => $json['content'] ?? null
+            'user_id'   => $data['user_id'],
+            'content'   => $data['content'],
+            'file_name' => $data['file_name'] ?? null,
+            'file_path' => $data['file_path'] ?? null,
         ]);
     }
+
 
 
 
