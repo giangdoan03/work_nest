@@ -175,7 +175,7 @@ const handleUpdateComment = async() => {
         }
         let res = await updateComment(route.params.id,params)
         openModalEditComment.value = false;
-        getListComment()
+        await getListComment()
         message.success('Cập nhật comment thành công')
     } catch (error) {
         message.error('Không thể cập nhật comment')
@@ -186,7 +186,7 @@ const handleUpdateComment = async() => {
 const handleDeleteComment = async(commentId) => {
     try {
         let res = await deleteComment(commentId)
-        getListComment()
+        await getListComment()
         message.success('Đã xóa comment thành công')
     } catch (error) {
         message.error('Không thể xóa comment')
