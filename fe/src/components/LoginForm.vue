@@ -81,7 +81,7 @@ const onFinish = async () => {
 
         if (response.data.status === 'success') {
             userStore.setUser(response.data.user)
-            await router.push('/dashboard')
+            await router.push('/project-overview')
         } else {
             showError(response.data.message || 'Đăng nhập thất bại')
         }

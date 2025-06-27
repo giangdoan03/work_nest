@@ -217,7 +217,7 @@ router.beforeEach(async (to, from, next) => {
         if (!isLoggedIn && to.path !== '/') {
             next('/')
         } else if (isLoggedIn && to.path === '/') {
-            next('/dashboard')
+            next('/project-overview')
         } else {
             next()
         }
