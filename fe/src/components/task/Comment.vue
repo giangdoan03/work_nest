@@ -47,14 +47,26 @@
                 <div class="comment-content" v-for="(item, index) in listComment">
                     <a-row :gutter="[12,12]">
                         <a-col>
-                            <a-avatar :url="getUserById(item.user_id).avatar"><template #icon><UserOutlined /></template></a-avatar>
+                            <a-avatar :src="getUserById(item.user_id)?.avatar"><template #icon><UserOutlined /></template></a-avatar>
                         </a-col>
                         <a-col flex="1" style="margin-top: 6px;">
-                            <a-typography-text style="color: #5c5c5c;">{{ getUserById(item.user_id).name }}</a-typography-text>
+                            <a-typography-text style="color: #5c5c5c;">{{ getUserById(item.user_id)?.name || 'Không rõ' }}</a-typography-text>
                             <div class="content">
                                 {{ item.content }}
                             </div>
+
+                            <!-- Nếu comment có file đính kèm thì hiện danh sách -->
+                            <div v-if="item.files && item.files.length" style="margin-top: 10px;">
+                                <a-list bordered size="small">
+                                    <template #default>
+                                        <a-list-item v-for="file in item.files" :key="file.id">
+                                            <a :href="file.file_path" target="_blank">{{ file.file_name }}</a>
+                                        </a-list-item>
+                                    </template>
+                                </a-list>
+                            </div>
                         </a-col>
+
                         <a-col>
                             <a-dropdown>
                                 <EllipsisOutlined />
@@ -87,6 +99,15 @@
                      <a-divider style="height: 1px; background-color: #e0e2e3; margin: 18px 0 10px;" v-if="index != listComment.length-1" />
                 </div>
             </a-spin>
+            <a-button
+                    type="default"
+                    block
+                    style="margin-top: 12px;"
+                    v-if="currentPage < totalPage && !loadingComment"
+                    @click="getListComment(currentPage + 1)"
+            >
+                Tải thêm
+            </a-button>
         </div>
         <a-modal
             v-model:open="openModalEditComment"
@@ -127,6 +148,8 @@ const loadingComment = ref(false)
 const loadingUpdate = ref(false)
 const openModalEditComment = ref(false)
 const selectedComment = ref()
+const totalPage = ref(1)
+const currentPage = ref(1)
 
 const getUserById = (userId) =>  {
     let data = listUser.value.find(ele => ele.id == userId);
@@ -181,31 +204,34 @@ const createNewComment = async() => {
         let res = await createComment(route.params.id, formData)
         inputValue.value = '';
         selectedFile.value = null;
-        getListComment()
+        await getListComment()
     } catch (error) {
         console.log(error);
     }
 }
-const getListComment = async(page=1) => {
+const getListComment = async (page = 1) => {
     loadingComment.value = true;
     try {
-        let params = {
-            page: page,
-        }
-        let res = await getComments(route.params.id, params)
+        const params = { page };
+        const res = await getComments(route.params.id, params);
+        console.log('res', res);
+
         if (page === 1) {
-            listComment.value = res.data.data
+            listComment.value = res.data.comments;
         } else {
-            listComment.value = [...listComment.value, ...res.data.data]
+            listComment.value = [...listComment.value, ...res.data.comments];
         }
-        totalPage.value = res.data.pagination.totalPages
-        currentPage.value = res.data.current_page
+
+        totalPage.value = res.data.pagination.totalPages;
+        currentPage.value = page;
     } catch (error) {
         console.log(error);
     } finally {
         loadingComment.value = false;
     }
-}
+};
+
+
 const getUser = async () => {
     try {
         const response = await getUsers();
@@ -216,8 +242,8 @@ const getUser = async () => {
 }
 
 onMounted(() => {
-    getListComment()
     getUser()
+    getListComment()
 })
 </script>
 <style scoped>
