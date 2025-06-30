@@ -11,7 +11,7 @@ class TaskModel extends Model
     protected $allowedFields = [
         'title', 'description', 'assigned_to', 'start_date', 'end_date', 'status',
         'linked_type', 'linked_id', 'step_code', 'created_by',
-        'priority', 'comments_count', 'parent_id', 'bidding_step_id'
+        'priority', 'comments_count', 'parent_id', 'step_id'
     ];
 
     protected $useTimestamps = true;

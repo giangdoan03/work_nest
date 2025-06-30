@@ -85,9 +85,13 @@ $routes->group('api', function ($routes) {
     $routes->post('tasks/(:num)/upload-file', 'TaskFileController::upload/$1');
     $routes->get('tasks/(:num)/files', 'TaskFileController::byTask/$1');
     $routes->delete('task-files/(:num)', 'TaskFileController::delete/$1');
+    $routes->get('bidding-steps/(:num)/task', 'BiddingStepController::getTaskByBiddingStep/$1');
 
     $routes->get('bidding-steps/(:num)/tasks', 'TaskController::byBiddingStep/$1');
+    $routes->get('contract-steps/(:num)/tasks', 'TaskController::byContractStep/$1');
+
     $routes->put('bidding-steps/(:num)/complete', 'BiddingStepController::completeStep/$1');
+//    $routes->get('bidding-steps/(:num)/tasks', 'BiddingStepController::tasksByStep/$1');
     $routes->resource('bidding-steps', ['controller' => 'BiddingStepController']);
 
     $routes->put('comments/(:num)', 'CommentController::update/$1');

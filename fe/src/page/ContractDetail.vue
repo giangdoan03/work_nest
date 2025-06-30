@@ -100,7 +100,7 @@
             placement="right"
             :visible="drawerVisible"
             @close="drawerVisible = false"
-            width="480"
+            width="580"
         >
             <template v-if="selectedStep">
                 <a-descriptions bordered size="small" :column="1" title="Thông tin bước">
@@ -150,6 +150,40 @@
                     <a-descriptions-item label="Ngày tạo">{{ formatDate(selectedStep.created_at) }}</a-descriptions-item>
                     <a-descriptions-item label="Ngày cập nhật">{{ formatDate(selectedStep.updated_at) }}</a-descriptions-item>
                 </a-descriptions>
+
+                <a-divider>Danh sách công việc thuộc bước này</a-divider>
+
+                <a-empty v-if="relatedTasks.length === 0" description="Không có công việc" />
+
+                <a-list
+                    v-else
+                    :dataSource="relatedTasks"
+                    :rowKey="task => task.id"
+                >
+                    <template #renderItem="{ item }">
+                        <a-list-item>
+                            <a-list-item-meta>
+                                <template #title>
+                                    <router-link :to="`/internal-tasks/${item.id}/info`">
+                                        {{ item.title }}
+                                    </router-link>
+                                </template>
+                                <template #description>
+                                    {{ item.description }} | Phụ trách: {{ getAssignedUserName(item.assigned_to) }}
+                                </template>
+                            </a-list-item-meta>
+
+                            <template #actions>
+                                <a-tag :color="getTaskStatusColor(item.status)">
+                                    {{ getTaskStatusText(item.status) }}
+                                </a-tag>
+                            </template>
+                        </a-list-item>
+                    </template>
+                </a-list>
+
+
+
             </template>
         </a-drawer>
     </div>
@@ -170,6 +204,7 @@ import {
     getContractStepsAPI,
     updateContractStepAPI
 } from '@/api/contract-steps'
+import {getTaskDetail, getTasks, getTasksByBiddingStep, getTasksByContractStep} from '@/api/task' // giả sử bạn có API như vậy
 
 import {getCustomers} from '@/api/customer'
 import {getUsers} from '@/api/user.js'
@@ -189,6 +224,8 @@ const drawerVisible = ref(false)
 const selectedStep = ref(null)
 const customers = ref([])
 const customerName = ref('Đang tải...')
+const allTasks = ref([])
+const relatedTasks = ref([])
 
 
 const fetchBiddings = async () => {
@@ -205,10 +242,34 @@ const getBiddingTitle = (id) => {
     return found?.title || `Gói thầu #${id}`
 }
 
-const openStepDrawer = (step) => {
+const openStepDrawer = async (step) => {
     selectedStep.value = { ...step }
     drawerVisible.value = true
+
+    try {
+        const res = await getTasksByContractStep(step.id)
+        console.log('res', step.id)
+        relatedTasks.value = res.data || []
+    } catch (e) {
+        console.error('Không thể tải công việc của bước', e)
+        message.error('Không thể tải danh sách công việc')
+        relatedTasks.value = []
+    }
 }
+
+const getTaskStatusText = (status) => ({
+    todo: 'Chưa bắt đầu',
+    doing: 'Đang làm',
+    done: 'Hoàn thành',
+    overdue: 'Trễ hạn',
+}[status] || 'Không rõ')
+
+const getTaskStatusColor = (status) => ({
+    todo: 'default',
+    doing: 'blue',
+    done: 'green',
+    overdue: 'red',
+}[status] || 'default')
 
 const getStatusColor = (status) => {
     const map = {
@@ -355,12 +416,8 @@ const fetchData = async () => {
         // 1. Lấy thông tin hợp đồng
         const res = await getContractAPI(id)
         contract.value = res.data
-
-        console.log('contract.value ',contract.value )
-
         // 2. Lấy tên khách hàng nếu có
         if (contract.value.id_customer) {
-            console.log('contract.value.customer_id', contract.value.id_customer)
             try {
                 const customerRes = await getCustomers({ id: contract.value.id_customer })
                 const matched = customerRes.data?.data?.find(c => String(c.id) === String(contract.value.id_customer))
@@ -415,6 +472,17 @@ const getBiddingCost = (id) => {
     return bidding ? formatCurrency(bidding.estimated_cost) : 'Không có dữ liệu'
 }
 
+
+const fetchTasks = async () => {
+    try {
+        const res = await getTasks({ linked_type: 'contract' }) // ✅ đúng format
+        allTasks.value = res.data?.data || []
+    } catch (e) {
+        console.error('Không thể tải danh sách task', e)
+    }
+}
+
+
 const goToUserDetail = (userId) => {
     if (!userId) return
     router.push(`/users/${userId}`)
@@ -434,6 +502,7 @@ onMounted(() => {
     fetchCustomers()
     fetchUsers()
     fetchBiddings()
+    fetchTasks() // 👈 Thêm dòng này
 })
 </script>
 

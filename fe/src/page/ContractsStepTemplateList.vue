@@ -22,6 +22,9 @@
                 <template v-else-if="column.dataIndex === 'step_number'">
                     <a-tag color="blue">Bước {{ record.step_number }}</a-tag>
                 </template>
+                <template v-else-if="column.dataIndex === 'step_code'">
+                    <a-typography-text>{{ record.step_code }}</a-typography-text>
+                </template>
                 <template v-else-if="column.dataIndex === 'title'">
                     <a-typography-text strong style="cursor: pointer;" @click="editStep(record)">
                         {{ record.title }}
@@ -58,6 +61,10 @@
             <a-form ref="formRef" :model="formData" :rules="rules" layout="vertical">
                 <a-form-item label="Số bước (STT)" name="step_number">
                     <a-input-number v-model:value="formData.step_number" min="1" style="width: 100%" />
+                </a-form-item>
+
+                <a-form-item label="Mã bước (step_code)" name="step_code">
+                    <a-input v-model:value="formData.step_code" placeholder="Nhập mã step_code (VD: bidding_step_01)" />
                 </a-form-item>
 
                 <a-form-item label="Tên bước" name="title">
@@ -115,12 +122,14 @@ const departmentOptions = computed(() =>
 const formData = ref({
     step_number: null,
     title: '',
+    step_code: '',
     department: []
 })
 
 const columns = [
     { title: 'STT', dataIndex: 'stt', key: 'stt',  width: '60px' },
     { title: 'Bước số', dataIndex: 'step_number', key: 'step_number',  width: '100px' },
+    { title: 'Mã bước', dataIndex: 'step_code', key: 'step_code', width: 300 },
     { title: 'Tên bước', dataIndex: 'title', key: 'title' },
     { title: 'Phòng ban', dataIndex: 'department', key: 'department' },
     { title: 'Hành động', dataIndex: 'action', key: 'action' }
@@ -129,6 +138,7 @@ const columns = [
 const rules = {
     step_number: [{ required: true, message: 'Vui lòng nhập số bước' }],
     title: [{ required: true, message: 'Vui lòng nhập tên bước' }],
+    step_code: [{ required: true, message: 'Vui lòng nhập mã bước (step_code)' }],
     department: [{ required: true, type: 'array', message: 'Vui lòng chọn ít nhất 1 phòng ban' }]
 }
 
@@ -167,7 +177,12 @@ const fetchDepartments = async () => {
 }
 
 const showPopupCreate = () => {
-    formData.value = { step_number: null, title: '', department: [] }
+    formData.value = {
+        step_number: null,
+        step_code: '',
+        title: '',
+        department: []
+    }
     selectedStep.value = null
     openDrawer.value = true
 }
@@ -220,7 +235,12 @@ const deleteStep = async (id) => {
 const onCloseDrawer = () => {
     openDrawer.value = false
     selectedStep.value = null
-    formData.value = { step_number: null, title: '', department: [] }
+    formData.value = {
+        step_number: null,
+        step_code: '',
+        title: '',
+        department: []
+    }
     formRef.value?.resetFields()
 }
 

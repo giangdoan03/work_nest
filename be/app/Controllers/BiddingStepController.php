@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\BiddingModel;
 use App\Models\BiddingStepModel;
 use App\Models\BiddingStepTemplateModel;
+use App\Models\TaskModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 
@@ -151,6 +152,22 @@ class BiddingStepController extends ResourceController
 
         return $this->respond(['message' => 'Đã khởi tạo các bước từ mẫu']);
     }
+
+    public function tasksByStep($stepId): ResponseInterface
+    {
+        $taskModel = new TaskModel();
+
+        $tasks = $taskModel
+            ->where('linked_type', 'bidding')
+            ->where('step_id', $stepId)
+            ->findAll();
+
+        return $this->respond([
+            'step_id' => $stepId,
+            'tasks' => $tasks
+        ]);
+    }
+
 
 
 

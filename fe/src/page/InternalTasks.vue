@@ -64,7 +64,7 @@
             </a-col>
         </a-row>
 
-        <a-table :columns="columns" :data-source="tableData" :loading="loading"
+        <a-table :columns="columns" :data-source="tableData" :loading="loading" @change="handleTableChange" :pagination="pagination"
             style="margin-top: 8px;" row-key="module" :scroll="{ y: 'calc( 100vh - 360px )' }">
             <template #bodyCell="{ column, record, index, text }">
                 <template v-if="column.dataIndex === 'title'">
@@ -92,8 +92,8 @@
                     <span v-else>—</span>
                 </template>
 
-                <template v-if="column.dataIndex === 'step_code'">
-                    {{ getStepByStepNo(text) }}
+                <template v-if="column.dataIndex === 'step_name'">
+                    {{ text || '—' }}
                 </template>
                 <template v-else-if="column.dataIndex === 'action'">
                     <a-dropdown placement="left">
@@ -151,7 +151,6 @@ import viVN from 'ant-design-vue/es/locale/vi_VN';
 import { getBiddingsAPI } from '@/api/bidding.js'
 import { getContractsAPI } from '@/api/contract.js'
 
-
 const locale = ref(viVN);
 const router = useRouter()
 const tableData = ref([])
@@ -166,6 +165,8 @@ const dataFilter = ref({
     priority: null,
     assigned_to: null,
     due_date: null,
+    page: 1,
+    per_page: 10
 })
 
 const optionsLinkType = computed(() => {
@@ -201,6 +202,15 @@ const optionsDepartment = computed(() => {
     })
 })
 
+const pagination = ref({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+    showSizeChanger: true,
+    showQuickJumper: true,
+    showTotal: total => `Tổng ${total} nhiệm vụ`
+})
+
 const columns = [
     // { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
     { title: 'Tên nhiệm vụ', dataIndex: 'title', key: 'title' },
@@ -208,8 +218,8 @@ const columns = [
     { title: 'Người phụ trách', dataIndex: 'assigned_to', key: 'assigned_to' },
     { title: 'Loại Task', dataIndex: 'linked_type', key: 'linked_type' },
     { title: 'Gói thầu || Hợp đồng', dataIndex: 'linked_id', key: 'linked_id' },
-    { title: 'Tiến trình', dataIndex: 'step_code', key: 'step_code' },
-    { title: 'Thuộc bước số', dataIndex: 'step_number', key: 'step_number' },
+    { title: 'Tên bước tiến trình', dataIndex: 'step_name', key: 'step_name' },
+    { title: 'Thuộc bước số', dataIndex: 'step_code', key: 'step_code' },
     { title: 'Người tạo nhiệm vụ', dataIndex: 'created_by', key: 'created_by' },
     { title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px', align:'center' },
 ]
@@ -219,20 +229,29 @@ const changeDateTime = (day, date) => {
     }else {
         dataFilter.value.due_date = "";
     }
+    dataFilter.value.page = 1
     getInternalTask()
 }
 const getInternalTask = async () => {
     loading.value = true
     try {
-        const response = await getTasks(dataFilter.value);        
-        tableData.value = response.data.data ? response.data.data : [];
+        const response = await getTasks(dataFilter.value)
+
+        tableData.value = response.data.data ?? []
+
+        const pg = response.data.pagination
+        pagination.value = {
+            ...pagination.value,
+            current: pg.page,
+            total: pg.total,
+            pageSize: pg.per_page
+        }
     } catch (e) {
         message.error('Không thể tải nhiệm vụ')
     } finally {
         loading.value = false
     }
 }
-
 const listBidding = ref([])
 const listContract = ref([])
 
@@ -249,7 +268,6 @@ const getContracts = async () => {
     try {
         const res = await getContractsAPI()
         listContract.value = res.data
-        console.log('listContract.value ', listContract.value )
     } catch (e) {
         message.error('Không thể tải hợp đồng')
     }
@@ -374,6 +392,12 @@ const getDepartment = async () => {
     } finally {
         loading.value = false
     }
+}
+
+const handleTableChange = (pager) => {
+    dataFilter.value.page = pager.current
+    dataFilter.value.per_page = pager.pageSize
+    getInternalTask()
 }
 onMounted(() => {
     getInternalTask();

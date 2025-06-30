@@ -238,7 +238,7 @@ const getStatusLabel = (status) => {
 
 const fetchAwardedBiddings = async () => {
     try {
-        const res = await getBiddingsAPI({ status: 'awarded', per_page: 1000 })
+        const res = await getBiddingsAPI({ status: '3', per_page: 1000 })
 
         awardedBiddings.value = res.data.data.map(bid => ({
             label: bid.title,

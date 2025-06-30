@@ -61,55 +61,39 @@ class TaskController extends ResourceController
         $builder->limit($perPage, $offset);
         $tasks = $builder->get()->getResultArray();
 
-        // --- Lấy step_number từ bảng liên quan ---
-        $contractIds = [];
-        $biddingIds = [];
+        // --- Load step templates ---
+        $contractStepTemplates = [];
+        $biddingStepTemplates = [];
 
-        foreach ($tasks as $task) {
-            if ($task['linked_type'] === 'contract' && !empty($task['linked_id'])) {
-                $contractIds[] = $task['linked_id'];
-            } elseif ($task['linked_type'] === 'bidding' && !empty($task['linked_id'])) {
-                $biddingIds[] = $task['linked_id'];
-            }
+        if (!empty($tasks)) {
+            $contractTemplateModel = new \App\Models\ContractStepTemplateModel();
+            $contractStepTemplates = $contractTemplateModel->findAll();
+
+            $biddingTemplateModel = new \App\Models\BiddingStepTemplateModel();
+            $biddingStepTemplates = $biddingTemplateModel->findAll();
         }
 
-        $contractStepMap = [];
-        $biddingStepMap = [];
-
-        if (!empty($contractIds)) {
-            $contractStepModel = new ContractStepModel();
-            $contractSteps = $contractStepModel->whereIn('contract_id', $contractIds)->findAll();
-            foreach ($contractSteps as $step) {
-                $key = $step['contract_id'] . '|' . str_pad($step['step_number'], 2, '0', STR_PAD_LEFT);
-                $contractStepMap[$key] = $step['step_number'];
-            }
+        // --- Build map ---
+        $contractMap = [];
+        foreach ($contractStepTemplates as $row) {
+            $contractMap[$row['step_number']] = $row['title'];
         }
 
-        if (!empty($biddingIds)) {
-            $biddingStepModel = new BiddingStepModel();
-            $biddingSteps = $biddingStepModel->whereIn('bidding_id', $biddingIds)->findAll();
-            foreach ($biddingSteps as $step) {
-                $key = $step['bidding_id'] . '|' . str_pad($step['step_number'], 2, '0', STR_PAD_LEFT);
-                $biddingStepMap[$key] = $step['step_number'];
-            }
+        $biddingMap = [];
+        foreach ($biddingStepTemplates as $row) {
+            $biddingMap[$row['step_number']] = $row['title'];
         }
 
-        // Gán step_number vào kết quả
+        // --- Gán step_name ---
         foreach ($tasks as &$task) {
-            if (!isset($task['step_code']) || !isset($task['linked_id'])) {
-                $task['step_number'] = null;
-                continue;
-            }
-
-            $stepNumberCode = substr($task['step_code'], -2); // "contract_step_05" → "05"
-            $key = $task['linked_id'] . '|' . $stepNumberCode;
+            $stepCode = (int) ($task['step_code'] ?? 0);
 
             if ($task['linked_type'] === 'contract') {
-                $task['step_number'] = $contractStepMap[$key] ?? null;
+                $task['step_name'] = $contractMap[$stepCode] ?? null;
             } elseif ($task['linked_type'] === 'bidding') {
-                $task['step_number'] = $biddingStepMap[$key] ?? null;
+                $task['step_name'] = $biddingMap[$stepCode] ?? null;
             } else {
-                $task['step_number'] = null;
+                $task['step_name'] = null;
             }
         }
 
@@ -216,7 +200,30 @@ class TaskController extends ResourceController
     // ✅ Lấy danh sách task theo bước đấu thầu
     public function byBiddingStep($step_id): ResponseInterface
     {
-        $tasks = $this->model->where('bidding_step_id', $step_id)->findAll();
+        $tasks = $this->model->where('step_id', $step_id)->findAll();
         return $this->respond($tasks);
+    }
+
+
+    // ✅ Lấy danh sách task theo bước hợp đồng
+    public function byContractStep($step_id): ResponseInterface
+    {
+        $tasks = $this->model->where('step_id', $step_id)->findAll();
+        return $this->respond($tasks);
+    }
+
+    public function getTaskByBiddingStep($stepId): ResponseInterface
+    {
+        $stepModel = new \App\Models\BiddingStepModel();
+        $step = $stepModel->find($stepId);
+
+        if (!$step || !$step['task_id']) {
+            return $this->failNotFound("Không tìm thấy bước hoặc bước chưa gán task.");
+        }
+
+        $taskModel = new \App\Models\TaskModel();
+        $task = $taskModel->find($step['task_id']);
+
+        return $task ? $this->respond($task) : $this->failNotFound("Task không tồn tại.");
     }
 }

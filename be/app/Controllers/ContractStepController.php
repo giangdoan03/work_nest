@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Models\ContractStepModel;
 use App\Models\ContractModel;
 use App\Models\ContractStepTemplateModel;
+use App\Models\TaskModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use App\Models\StepTemplateModel;
@@ -260,6 +261,21 @@ class ContractStepController extends ResourceController
             'message' => 'Bước đã hoàn thành và bước kế tiếp đã được mở.',
             'step_id' => $id,
             'next_step_id' => $next['id'] ?? null,
+        ]);
+    }
+
+    public function tasksByStep($stepId): ResponseInterface
+    {
+        $taskModel = new TaskModel();
+
+        $tasks = $taskModel
+            ->where('linked_type', 'contract')
+            ->where('step_id', $stepId)
+            ->findAll();
+
+        return $this->respond([
+            'step_id' => $stepId,
+            'tasks' => $tasks
         ]);
     }
 

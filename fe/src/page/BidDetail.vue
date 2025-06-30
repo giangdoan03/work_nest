@@ -98,7 +98,7 @@
             placement="right"
             :visible="drawerVisible"
             @close="drawerVisible = false"
-            width="480"
+            width="680"
         >
             <template v-if="selectedStep">
                 <a-descriptions
@@ -154,6 +154,40 @@
                     <a-descriptions-item label="Ngày tạo">{{ formatDate(selectedStep.created_at) }}</a-descriptions-item>
                     <a-descriptions-item label="Ngày cập nhật">{{ formatDate(selectedStep.updated_at) }}</a-descriptions-item>
                 </a-descriptions>
+
+
+                <a-divider>Danh sách công việc của bước này</a-divider>
+
+                <a-empty v-if="relatedTasks.length === 0" description="Không có công việc" />
+
+                <a-list
+                    v-else
+                    :dataSource="relatedTasks"
+                    :rowKey="task => task.id"
+                >
+                    <template #renderItem="{ item }">
+                        <a-list-item>
+                            <a-list-item-meta>
+                                <template #title>
+                                    <router-link :to="`/internal-tasks/${item.id}/info`">
+                                        {{ item.title }}
+                                    </router-link>
+                                </template>
+                                <template #description>
+                                    {{ item.description }} | Phụ trách: {{ getAssignedUserName(item.assigned_to) }}
+                                </template>
+                            </a-list-item-meta>
+
+                            <template #actions>
+                                <a-tag :color="getTaskStatusColor(item.status)">
+                                    {{ getTaskStatusText(item.status) }}
+                                </a-tag>
+                            </template>
+                        </a-list-item>
+                    </template>
+                </a-list>
+
+
             </template>
         </a-drawer>
     </div>
@@ -186,11 +220,25 @@ const selectedStep = ref(null)
 const customers = ref([])
 const users = ref([])
 
-const openStepDrawer = (step) => {
+import { getTasksByBiddingStep } from '@/api/task' // nếu chưa import
+
+const allTasks = ref([])
+const relatedTasks = ref([])
+
+const openStepDrawer = async (step) => {
     selectedStep.value = { ...step }
     drawerVisible.value = true
-}
 
+    try {
+        const res = await getTasksByBiddingStep(step.id)
+        console.log('res', step.id)
+        relatedTasks.value = res.data || []
+    } catch (e) {
+        console.error('Không thể tải công việc của bước', e)
+        message.error('Không thể tải danh sách công việc')
+        relatedTasks.value = []
+    }
+}
 const getStatusColor = (status) => {
     const map = {
         0: 'orange',   // Chưa nộp
@@ -252,6 +300,20 @@ const parseDepartment = (val) => {
     }
 }
 
+
+const getTaskStatusText = (status) => ({
+    todo: 'Chưa bắt đầu',
+    doing: 'Đang làm',
+    done: 'Hoàn thành',
+    overdue: 'Trễ hạn'
+}[status] || 'Không rõ')
+
+const getTaskStatusColor = (status) => ({
+    todo: 'default',
+    doing: 'blue',
+    done: 'green',
+    overdue: 'red'
+}[status] || 'default')
 
 const updateStepStatus = async (newStatus, step) => {
     try {

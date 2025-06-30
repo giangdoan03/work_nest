@@ -15,7 +15,13 @@
 
         <!-- Bảng nhiệm vụ -->
         <a-table :dataSource="tasks" :loading="loading" :rowKey="record => record.id" bordered>
-            <a-table-column title="Tiêu đề" dataIndex="title" key="title" />
+            <a-table-column title="Tiêu đề" key="title">
+                <template #default="{ record }">
+                    <router-link :to="`/internal-tasks/${record.id}/info`" style="color: #1890ff;">
+                        {{ record.title }}
+                    </router-link>
+                </template>
+            </a-table-column>
             <a-table-column title="Mô tả" dataIndex="description" key="description" :ellipsis="true" />
             <a-table-column title="Liên kết" key="linked_type">
                 <template #default="{ record }">

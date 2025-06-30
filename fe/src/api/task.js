@@ -17,6 +17,15 @@ export const createTask = (data) => instance.post('/tasks', data)
 // 🔹 Cập nhật task
 export const updateTask = (id, data) => instance.put(`/tasks/${id}`, data)
 
+// 🔹 Lấy danh sách task theo step của bidding
+export const getTasksByBiddingStep = (biddingStepId, params = {}) =>
+    instance.get(`/bidding-steps/${biddingStepId}/tasks`, { params })
+
+
+// 🔹 Lấy danh sách task theo step của contract
+export const getTasksByContractStep = (contractStepId, params = {}) =>
+    instance.get(`/contract-steps/${contractStepId}/tasks`, { params })
+
 // 🔹 Xoá task
 export const deleteTask = (id) => instance.delete(`/tasks/${id}`)
 

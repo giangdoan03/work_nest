@@ -1,12 +1,12 @@
 <template>
     <div class="draw-create-task">
         <a-drawer title="Tạo nhiệm vụ mới" :width="700" :open="props.openDrawer" :body-style="{ paddingBottom: '80px' }"
-            :footer-style="{ textAlign: 'right' }" @close="onCloseDrawer">
+                  :footer-style="{ textAlign: 'right' }" @close="onCloseDrawer">
             <a-form ref="formRef" :model="formData" :rules="rules" layout="vertical">
                 <a-row :gutter="16">
                     <a-col :span="24">
                         <a-form-item label="Tên nhiệm vụ" name="title">
-                            <a-input v-model:value="formData.title" placeholder="Nhập tên nhiệm vụ" />
+                            <a-input v-model:value="formData.title" placeholder="Nhập tên nhiệm vụ"/>
                         </a-form-item>
                     </a-col>
                 </a-row>
@@ -14,49 +14,60 @@
                     <a-col :span="12">
                         <a-form-item label="Thời gian" name="time">
                             <a-config-provider :locale="locale">
-                                <a-range-picker v-model:value="dateRange" format="DD-MM-YYYY" @change="changeDateTime" style="width: 100%;"></a-range-picker>
+                                <a-range-picker v-model:value="dateRange" format="DD-MM-YYYY" @change="changeDateTime"
+                                                style="width: 100%;"></a-range-picker>
                             </a-config-provider>
                         </a-form-item>
                     </a-col>
                     <a-col :span="12">
                         <a-form-item label="Độ Ưu tiên" name="priority">
-                            <a-select v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên" />
+                            <a-select v-model:value="formData.priority" :options="priorityOption"
+                                      placeholder="Chọn độ ưu tiên"/>
                         </a-form-item>
                     </a-col>
                 </a-row>
                 <a-row :gutter="16">
                     <a-col :span="12">
                         <a-form-item label="Trạng thái" name="status">
-                            <a-select v-model:value="formData.status" :options="statusOption" placeholder="Chọn trạng thái" />
+                            <a-select v-model:value="formData.status" :options="statusOption"
+                                      placeholder="Chọn trạng thái"/>
                         </a-form-item>
                     </a-col>
                     <a-col :span="12">
                         <a-form-item label="Gắn tới người dùng" name="assigned_to">
-                            <a-select v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng" />
+                            <a-select v-model:value="formData.assigned_to" :options="userOption"
+                                      placeholder="Chọn người dùng"/>
                         </a-form-item>
                     </a-col>
                 </a-row>
                 <a-row :gutter="16">
                     <a-col :span="12">
                         <a-form-item label="Loại nhiệm vụ" name="linked_type">
-                            <a-select v-model:value="formData.linked_type" :options="linkedTypeOption" @change="handleChangeLinkedType" placeholder="Chọn loại nhiệm vụ" />
+                            <a-select v-model:value="formData.linked_type" :options="linkedTypeOption"
+                                      @change="handleChangeLinkedType" placeholder="Chọn loại nhiệm vụ"/>
                         </a-form-item>
                     </a-col>
                     <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
-                        <a-form-item :label="formData.linked_type == 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'" name="linked_id">
-                            <a-select v-model:value="formData.linked_id" :options="linkedIdOption" @change="handleChangeLinkedId" :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'" />
+                        <a-form-item
+                            :label="formData.linked_type == 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'"
+                            name="linked_id">
+                            <a-select v-model:value="formData.linked_id" :options="linkedIdOption"
+                                      @change="handleChangeLinkedId"
+                                      :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'"/>
                         </a-form-item>
                     </a-col>
                     <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
-                        <a-form-item label="Bước tiến trình" name="step_code" >
-                            <a-select v-model:value="formData.step_code" :options="stepOption" :disabled="!formData.linked_id" :placeholder="formData.linked_type == 'bidding' ? 'Chọn bước gói thầu' : 'Chọn bước hợp đồng'" />
+                        <a-form-item label="Bước tiến trình" name="step_code">
+                            <a-select v-model:value="formData.step_code" :options="stepOption"
+                                      :disabled="!formData.linked_id"
+                                      :placeholder="formData.linked_type == 'bidding' ? 'Chọn bước gói thầu' : 'Chọn bước hợp đồng'"/>
                         </a-form-item>
                     </a-col>
-                    
+
                     <a-col :span="24">
                         <a-form-item label="Mô tả" name="description">
                             <a-textarea v-model:value="formData.description" :rows="4"
-                                placeholder="Nhập mô tả " />
+                                        placeholder="Nhập mô tả "/>
                         </a-form-item>
                     </a-col>
                 </a-row>
@@ -64,25 +75,27 @@
             <template #extra>
                 <a-space>
                     <a-button @click="onCloseDrawer">Hủy</a-button>
-                    <a-button type="primary" @click="submitForm" html-type="submit" :loading="loadingCreate" >Thêm mới</a-button>
+                    <a-button type="primary" @click="submitForm" html-type="submit" :loading="loadingCreate">Thêm mới
+                    </a-button>
                 </a-space>
             </template>
         </a-drawer>
     </div>
 </template>
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import {ref, onMounted, computed, watch} from 'vue'
 import {useUserStore} from '@/stores/user.js'
-import { createTask, updateTask } from '@/api/task.js'
-import { getBiddingsAPI } from '@/api/bidding.js'
-import { getContractsAPI } from '@/api/contract.js'
-import { message } from 'ant-design-vue'
-import { useRoute } from 'vue-router';
-import { getContractStepsAPI } from '@/api/contract-steps';
-import { getBiddingStepsAPI } from '@/api/bidding';
+import {createTask, updateTask} from '@/api/task.js'
+import {getBiddingsAPI} from '@/api/bidding.js'
+import {getContractsAPI} from '@/api/contract.js'
+import {message} from 'ant-design-vue'
+import {useRoute} from 'vue-router';
+import {getContractStepsAPI} from '@/api/contract-steps';
+import {getBiddingStepsAPI} from '@/api/bidding';
 
 
 import dayjs from 'dayjs';
+
 dayjs.locale('vi');
 import viVN from 'ant-design-vue/es/locale/vi_VN';
 
@@ -126,7 +139,7 @@ const formData = ref({
 
 // //SETUP
 
-const setDefaultData = () =>{
+const setDefaultData = () => {
     formData.value = {
         title: "",
         created_by: "",
@@ -139,29 +152,29 @@ const setDefaultData = () =>{
         end_date: "",
         status: "",
         priority: null,
-        parent_id: props.taskParent ? props.taskParent  : null,
+        parent_id: props.taskParent ? props.taskParent : null,
     }
     dateRange.value = null
 }
 
-const validateTitle = async (_rule, value) => {    
+const validateTitle = async (_rule, value) => {
     if (value === '') {
         return Promise.reject('Vui lòng nhập họ và tên');
-    } else if(value.length > 200){
+    } else if (value.length > 200) {
         return Promise.reject('Họ và tên không vượt quá 200 ký tự');
     } else {
         return Promise.resolve();
     }
 };
 const validateTime = async (_rule, value) => {
-    
+
     if (formData.value.start_date === '') {
         return Promise.reject('Vui lòng nhập thời gian nhiệm vụ');
     } else {
         return Promise.resolve();
     }
 };
-const validatePriority = async (_rule, value) => {    
+const validatePriority = async (_rule, value) => {
     if (!formData.value.priority) {
         return Promise.reject('Vui lòng nhập chọn độ ưu tiên');
     } else {
@@ -169,20 +182,20 @@ const validatePriority = async (_rule, value) => {
     }
 };
 const validateAsigned = async (_rule, value) => {
-  if (!formData.value.assigned_to) {
-    return Promise.reject('Vui lòng chọn người phụ trách');
-  } else {
-    return Promise.resolve();
-  }
+    if (!formData.value.assigned_to) {
+        return Promise.reject('Vui lòng chọn người phụ trách');
+    } else {
+        return Promise.resolve();
+    }
 };
-const validateLinkedType = async (_rule, value) => {    
+const validateLinkedType = async (_rule, value) => {
     if (!formData.value.linked_type) {
         return Promise.reject('Vui lòng chọn loại nhiệm vụ');
     } else {
         return Promise.resolve();
     }
 };
-const validateDescription = async (_rule, value) => {    
+const validateDescription = async (_rule, value) => {
     if (value === '') {
         return Promise.reject('Vui lòng nhập mô tả nhiệm vụ');
     } else {
@@ -191,12 +204,12 @@ const validateDescription = async (_rule, value) => {
 };
 const rules = computed(() => {
     return {
-        title: [{ required: true, validator: validateTitle, trigger: 'change' }],
-        time: [{ required: true, validator: validateTime, trigger: 'change' }],
-        priority: [{ required: true, validator: validatePriority, trigger: 'change' }],
-        assigned_to: [{ required: true, validator: validateAsigned, trigger: 'change' }],
-        linked_type: [{ required: true, validator: validateLinkedType,  trigger: 'change' }],
-        description: [{ required: true, validator: validateDescription,  trigger: 'change' }],
+        title: [{required: true, validator: validateTitle, trigger: 'change'}],
+        time: [{required: true, validator: validateTime, trigger: 'change'}],
+        priority: [{required: true, validator: validatePriority, trigger: 'change'}],
+        assigned_to: [{required: true, validator: validateAsigned, trigger: 'change'}],
+        linked_type: [{required: true, validator: validateLinkedType, trigger: 'change'}],
+        description: [{required: true, validator: validateDescription, trigger: 'change'}],
     }
 })
 
@@ -219,21 +232,21 @@ const linkedTypeOption = ref([
     {value: "internal", label: "Nhiệm vụ nội bộ"},
 ])
 const stepOption = ref([])
-const linkedIdOption = computed(()=>{
-    if(formData.value.linked_type == 'bidding'){
+const linkedIdOption = computed(() => {
+    if (formData.value.linked_type === 'bidding') {
         return listBidding.value.map(ele => {
-            return { value: ele.id, label: ele.title }
+            return {value: ele.id, label: ele.title}
         })
-    }else if(formData.value.linked_type == 'contract'){
+    } else if (formData.value.linked_type === 'contract') {
         return listContract.value.map(ele => {
-            return { value: ele.id, label: ele.title }
+            return {value: ele.id, label: ele.title}
         })
-    }else return [];
+    } else return [];
 })
-const userOption =  computed(()=>{
-    if(!props.listUser || !props.listUser.length){
-        return[]
-    }else {
+const userOption = computed(() => {
+    if (!props.listUser || !props.listUser.length) {
+        return []
+    } else {
         return props.listUser.map(ele => {
             return {
                 value: ele.id,
@@ -249,16 +262,16 @@ const handleChangeLinkedType = () => {
     formData.value.step_code = null;
 };
 const handleChangeLinkedId = () => {
-    if(formData.value.linked_type == 'bidding'){
+    if (formData.value.linked_type === 'bidding') {
         getBiddingStep()
-    }else if(formData.value.linked_type == 'contract'){
+    } else if (formData.value.linked_type === 'contract') {
         getContractStep()
     }
 };
 const getContractStep = async () => {
     await getContractStepsAPI(formData.value.linked_id).then(res => {
         stepOption.value = res.data ? res.data.map(ele => {
-            return { value: ele.step_number, label: ele.title}
+            return {value: ele.step_number, label: ele.title, step_id: ele.id}
         }) : []
     }).catch(err => {
 
@@ -267,14 +280,14 @@ const getContractStep = async () => {
 const getBiddingStep = async () => {
     await getBiddingStepsAPI(formData.value.linked_id).then(res => {
         stepOption.value = res.data ? res.data.map(ele => {
-            return { value: ele.step_number, label: ele.title}
+            return {value: ele.step_number, label: ele.title, step_id: ele.id}
         }) : []
     }).catch(err => {
 
     })
 }
 const createDrawerInternal = async () => {
-    if(loadingCreate.value){
+    if (loadingCreate.value) {
         return;
     }
     formData.value.created_by = store.currentUser.id;
@@ -298,7 +311,7 @@ const onCloseDrawer = () => {
 const getBiddingTask = async () => {
     loading.value = true
     try {
-        const response = await getBiddingsAPI();        
+        const response = await getBiddingsAPI();
         listBidding.value = response.data.data ? response.data.data : [];
     } catch (e) {
         message.error('Không thể tải nhiệm vụ')
@@ -318,35 +331,40 @@ const getContractTask = async () => {
     }
 }
 const changeDateTime = (day, date) => {
-    if(day){
+    if (day) {
         formData.value.start_date = convertDateFormat(date[0]);
         formData.value.end_date = convertDateFormat(date[1]);
-    }else {
+    } else {
         formData.value.start_date = "";
         formData.value.end_date = "";
     }
-    
+
 }
-const convertDateFormat = (dateStr) =>  {
+const convertDateFormat = (dateStr) => {
     const [day, month, year] = dateStr.split('-');
     return `${year}-${month}-${day}`;
 }
 
-const submitForm = async() => {    
+const submitForm = async () => {
     try {
         await formRef.value?.validate()
-        createDrawerInternal();
+        await createDrawerInternal();
     } catch (error) {
-        
+
     }
 }
 const resetFormValidate = () => {
     formRef.value.resetFields();
 };
 
+watch(() => formData.value.step_code, (newCode) => {
+    const found = stepOption.value.find(item => item.value === newCode)
+    formData.value.step_id = found ? found.step_id : null;
+})
+
 //Watch onMounted
 onMounted(() => {
-    if(props.taskParent){
+    if (props.taskParent) {
         formData.value.parent_id = props.taskParent;
     }
     getBiddingTask()
@@ -356,5 +374,5 @@ onMounted(() => {
 
 </script>
 <style scoped>
-    
+
 </style>

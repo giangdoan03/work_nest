@@ -1,5 +1,10 @@
 <template>
     <div class="task">
+        <a-page-header
+            title="Chi tiết nhiệm vụ"
+            @back="goBack"
+            style="padding: 0 0 20px;"
+        />
         <div class="action">
             <a-button type="primary" v-if="!isEditMode" style="margin-right: 8px;" @click="editTask">Chỉnh sửa</a-button>
             <a-button type="primary" v-if="isEditMode" style="margin-right: 8px;" @click="saveEditTask">Lưu</a-button>
@@ -20,7 +25,9 @@
                                 </a-col>
                                 <a-col :span="12">
                                     <a-form-item label="Loại nhiệm vụ" name="linked_type">
-                                        <a-typography-text v-if="!isEditMode">{{ getTextLinkedType }}</a-typography-text>
+                                        <a-tag v-if="!isEditMode">
+                                            <strong>{{ getTextLinkedType }}</strong>
+                                        </a-tag>
                                         <a-select v-else v-model:value="formData.linked_type" :options="linkedTypeOption" @change="handleChangeLinkedType()" placeholder="Chọn loại nhiệm vụ" />
                                     </a-form-item>
                                 </a-col>
@@ -33,7 +40,7 @@
                                 <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
                                     <a-form-item :label=" !formData.linked_type ? 'Trống' : formData.linked_type == 'bidding' ? 'Tiến trình gói thầu' : 'Tiến trình hợp đồng'" name="step_code">
                                         <a-typography-text v-if="!isEditMode">{{ getStepByStepNo(formData.step_code) }}</a-typography-text>
-                                        <a-select v-else v-model:value="formData.step_code" :options="stepOption" :disabled="!formData.linked_id" :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'" />
+                                        <a-select v-else v-model:value="formData.step_code" @change="handleChangeStep()" :options="stepOption" :disabled="!formData.linked_id" :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'" />
                                     </a-form-item>
                                 </a-col>
                             </a-row>
@@ -137,7 +144,7 @@
 </template>
 <script setup>
     import { EllipsisOutlined, PaperClipOutlined, PlusOutlined, CaretDownOutlined } from '@ant-design/icons-vue';
-    import { ref, computed, onMounted } from 'vue';
+    import { ref, computed, onMounted, watch } from 'vue';
     import { message } from 'ant-design-vue'
     import 'dayjs/locale/vi';
     dayjs.locale('vi');
@@ -146,13 +153,14 @@
     import { getUsers } from '@/api/user';
     import { useRoute, useRouter } from 'vue-router';
     import { getTaskDetail, updateTask, uploadTaskFileAPI, getTaskFilesAPI, deleteTaskFilesAPI } from '@/api/task';
-    import { getBiddingsAPI } from "@/api/bidding";
+    import {getBiddingsAPI, updateBiddingStepAPI} from "@/api/bidding";
     import { getContractsAPI } from "@/api/contract";
-    import { getContractStepsAPI } from '@/api/contract-steps';
+    import {getContractStepsAPI, updateContractStepAPI} from '@/api/contract-steps';
     import { getBiddingStepsAPI } from '@/api/bidding';
     import Comment from './Comment.vue';
     import SubTasks from './SubTasks.vue'
     import { useUserStore } from '@/stores/user';
+    import {updateStepTemplateAPI} from "@/api/step-template.js";
 
 
     const route = useRoute();
@@ -204,7 +212,7 @@
     ])
 
     const getTextLinkedType = computed(()=>{
-        let data = linkedTypeOption.value.find(ele => ele.value == formData.value.linked_type)
+        let data = linkedTypeOption.value.find(ele => ele.value === formData.value.linked_type)
         if(data){
             return data.label;
         }else {
@@ -224,11 +232,11 @@
         }
     })
     const getNameLinked = (id)=>{
-        if(formData.value.linked_type == 'bidding' && listBidding.value && listBidding.value.length){
+        if(formData.value.linked_type === 'bidding' && listBidding.value && listBidding.value.length){
             let check = listBidding.value.find(ele => ele.id == id)
             if(check) return check.title
             else return 'Gói thầu không tồn tại'
-        }else if(formData.value.linked_type == 'contract' && listContract.value && listContract.value.length){
+        }else if(formData.value.linked_type === 'contract' && listContract.value && listContract.value.length){
             let check = listContract.value.find(ele => ele.id == id)
             if(check) return check.title
             else return 'Hợp đồng không tồn tại'
@@ -236,11 +244,11 @@
         return "Trống"
     }
     const linkedIdOption = computed(()=>{
-        if(formData.value.linked_type == 'bidding'){
+        if(formData.value.linked_type === 'bidding'){
             return listBidding.value.map(ele => {
                 return { value: ele.id, label: ele.title}
             })
-        }else if(formData.value.linked_type == 'contract'){
+        }else if(formData.value.linked_type === 'contract'){
             return listContract.value.map(ele => {
                 return { value: ele.id, label: ele.title}
             })
@@ -310,16 +318,20 @@
         formData.value.step_code = null;
     };
     const handleChangeLinkedId = () => {
-        if(formData.value.linked_type == 'bidding'){
+        if(formData.value.linked_type === 'bidding'){
             getBiddingStep()
-        }else if(formData.value.linked_type == 'contract'){
+        }else if(formData.value.linked_type === 'contract'){
             getContractStep()
         }
     };
+
+    const handleChangeStep = (e) => {
+        console.log('e',e)
+    }
     const getContractStep = async () => {
         await getContractStepsAPI(formData.value.linked_id).then(res => {
             stepOption.value = res.data ? res.data.map(ele => {
-                return { value: ele.step_number, label: ele.title}
+                return { value: ele.step_number, label: ele.title, step_id: ele.id}
             }) : []
         }).catch(err => {
 
@@ -328,14 +340,14 @@
     const getBiddingStep = async () => {
         await getBiddingStepsAPI(formData.value.linked_id).then(res => {
             stepOption.value = res.data ? res.data.map(ele => {
-                return { value: ele.step_number, label: ele.title}
+                return { value: ele.step_number, label: ele.title, step_id: ele.id}
             }) : []
         }).catch(err => {
 
         })
     }
     const getStepByStepNo = (step) =>  {
-        let data = stepOption.value.find(ele => ele.value == step);
+        let data = stepOption.value.find(ele => ele.value === step);
         if(!data){
             return "Trống" ;
         }else {
@@ -390,34 +402,49 @@
         formDataSave.value = {...formData.value}
         isEditMode.value = true;
     }
-    const saveEditTask = async() => {
-        loadingUpdate.value = true
-        if(!formData.value.start_date && !formData.value.end_date){
-            formData.value.start_date = (formDataSave.value.start_date)
-            formData.value.end_date = (formDataSave.value.end_date)
+    const saveEditTask = async () => {
+        loadingUpdate.value = true;
+
+        // 🔄 Đồng bộ step_id thủ công từ step_code
+        const found = stepOption.value.find(item => item.value === formData.value.step_code)
+        formData.value.step_id = found ? found.step_id : null;
+
+        if (!formData.value.start_date && !formData.value.end_date) {
+            formData.value.start_date = formDataSave.value.start_date;
+            formData.value.end_date = formDataSave.value.end_date;
         }
         try {
-            let res = await updateTask(route.params.id, formData.value)
-            // Sau khi lưu task, upload file
+            const res = await updateTask(route.params.id, formData.value);
+
             for (const file of pendingFiles.value) {
                 const formDataFile = new FormData();
                 formDataFile.append('file', file);
                 formDataFile.append('user_id', store.currentUser.id);
                 await uploadTaskFileAPI(route.params.id, formDataFile);
             }
+
+            if (formData.value.step_id) {
+                console.log('✅ Gọi updateBiddingStepAPI', formData.value.step_id)
+                await updateBiddingStepAPI(formData.value.step_id, {
+                    task_id: route.params.id
+                });
+            }
+
             pendingFiles.value = [];
             await fetchTaskFiles();
-            await getDetailTaskById()
-            message.success("Cập nhật thành công")
+            await getDetailTaskById();
+
+            message.success("Cập nhật thành công");
         } catch (error) {
             formData.value = formDataSave.value;
-            message.destroy()
-            message.error("Không thể cập nhật chỉnh sửa")
+            message.destroy();
+            message.error("Không thể cập nhật chỉnh sửa");
         } finally {
-            loadingUpdate.value = false
+            loadingUpdate.value = false;
             isEditMode.value = false;
         }
     }
+
     const cancelEditTask = () => {
         isEditMode.value = false;
     }
@@ -488,12 +515,23 @@
         }
     };
 
+    const goBack = () => {
+        router.push('/internal-tasks')
+    }
+
+
+    watch(() => formData.value.step_code, (newCode) => {
+        const found = stepOption.value.find(item => item.value === newCode)
+        formData.value.step_id = found ? found.step_id : null;
+        console.log('formData.value', formData.value)
+    })
+
     onMounted(async() => {
         await getDetailTaskById();
-        getUser();
-        getListBidding();
-        getListContract();
-        fetchTaskFiles();
+        await getUser();
+        await getListBidding();
+        await getListContract();
+        await fetchTaskFiles();
         handleChangeLinkedId();
     })
 

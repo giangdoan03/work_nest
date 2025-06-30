@@ -8,6 +8,6 @@ class BiddingStepTemplateModel extends Model
 {
     protected $table = 'bidding_step_templates';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['step_number', 'title', 'department', 'department_ids'];
+    protected $allowedFields = ['step_number', 'title', 'department', 'department_ids', 'step_code'];
     protected $useTimestamps = true;
 }
