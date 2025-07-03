@@ -60,19 +60,20 @@ class ProjectOverviewController extends ResourceController
 
         // 3. Lấy tất cả task đang chạy theo customer
         $taskQuery = $db->query("
-            SELECT
-                c.id AS customer_id,
-                t.id AS task_id,
-                t.title AS task_title,
-                t.status AS task_status,
-                t.linked_type
-            FROM customers c
-            LEFT JOIN biddings b ON b.customer_id = c.id
-            LEFT JOIN contracts ct ON ct.id_customer = c.id
-            LEFT JOIN tasks t ON t.linked_type IN ('contract', 'bidding') 
-                AND (t.linked_id = ct.id OR t.linked_id = b.id)
-            WHERE t.status IS NOT NULL
-        ");
+    SELECT
+        c.id AS customer_id,
+        t.id AS task_id,
+        t.title AS task_title,
+        t.status AS task_status,
+        t.linked_type,
+        t.linked_id
+    FROM tasks t
+    LEFT JOIN customers c 
+        ON (t.linked_type = 'bidding' AND EXISTS (SELECT 1 FROM biddings b WHERE b.id = t.linked_id AND b.customer_id = c.id))
+        OR (t.linked_type = 'contract' AND EXISTS (SELECT 1 FROM contracts ct WHERE ct.id = t.linked_id AND ct.id_customer = c.id))
+    WHERE t.status IS NOT NULL
+");
+
 
         $rawTasks = $taskQuery->getResultArray();
 
@@ -86,7 +87,8 @@ class ProjectOverviewController extends ResourceController
             $tasksByCustomer[$cid][] = [
                 'id' => $task['task_id'],
                 'title' => $task['task_title'],
-                'linked_type' => $task['linked_type'] ?? 'internal',
+                'linked_type' => $task['linked_type'],
+                'linked_id' => $task['linked_id'], // ← Quan trọng
                 'status' => $task['task_status']
             ];
         }
@@ -98,6 +100,20 @@ class ProjectOverviewController extends ResourceController
             $item['contracts']  = json_decode($item['contracts'] ?? '[]', true);
             $item['assignees']  = json_decode($item['assignees'] ?? '[]', true);
             $item['tasks']      = $tasksByCustomer[$cid] ?? [];
+
+            // Gán task vào từng gói thầu
+            foreach ($item['biddings'] as &$bid) {
+                $bid['tasks'] = array_values(array_filter($item['tasks'], function ($t) use ($bid) {
+                    return $t['linked_type'] === 'bidding' && $t['linked_id'] == $bid['id'];
+                }));
+            }
+
+            // Gán task vào từng hợp đồng
+            foreach ($item['contracts'] as &$contract) {
+                $contract['tasks'] = array_values(array_filter($item['tasks'], function ($t) use ($contract) {
+                    return $t['linked_type'] === 'contract' && $t['linked_id'] == $contract['id'];
+                }));
+            }
         }
 
         return $this->respond([
