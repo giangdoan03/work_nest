@@ -1,127 +1,86 @@
 <template>
-    <div class="project_overview">
-        <a-page-header title="Tổng quan dự án" style="padding-top: 0; padding-left: 0" />
-
-        <div style="margin-bottom: 16px">
-            <a-select v-model:value="timeframe" @change="fetchOverview" style="width: 200px">
-                <a-select-option value="all">Tất cả</a-select-option>
-                <a-select-option value="week">Tuần này</a-select-option>
-                <a-select-option value="month">Tháng này</a-select-option>
-                <a-select-option value="year">Năm nay</a-select-option>
-            </a-select>
-        </div>
-
-        <a-table :dataSource="data" :loading="loading" rowKey="customer_id" bordered>
-            <!-- Cột 1: Khách hàng -->
-            <a-table-column title="Khách hàng" :width="200">
-                <template #default="{ record }">
-                    <TeamOutlined style="margin-right: 6px; color: #1890ff" />
-                    <router-link :to="`/customers/${record.customer_id}`" class="link-style">
-                        {{ record.customer_name }}
-                    </router-link>
-                </template>
-            </a-table-column>
-
-            <!-- Cột 2: Gói thầu + Hợp đồng -->
-            <a-table-column title="Gói thầu / Hợp đồng" :width="300">
-                <template #default="{ record }">
-                    <div>
-                        <!-- Gói thầu -->
-                        <div v-if="record.biddings.length">
-                            <strong style="color: #722ed1">Gói thầu:</strong>
-                            <ul>
-                                <li v-for="b in record.biddings.filter(b => b?.id && b?.title)" :key="b.id">
-                                    <ProfileOutlined style="margin-right: 6px; color: #722ed1" />
-                                    <router-link :to="`/bid-detail/${b.id}`">{{ b.title }}</router-link>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <!-- Hợp đồng -->
-                        <div>
-                            <strong style="color: #fa541c">Hợp đồng:</strong>
-                            <ul>
-                                <li
-                                    v-for="c in record.contracts.filter(c => c?.id && c?.title)"
-                                    :key="c.id"
+    <div class="custom-overview">
+        <table class="custom-table">
+            <thead>
+            <tr>
+                <th>Khách hàng</th>
+                <th>Loại</th>
+                <th>Tên</th>
+                <th>Task liên quan</th>
+                <th>Người phụ trách</th>
+                <th>Tiến độ (%)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <template v-for="customer in data" :key="customer.customer_id">
+                <template v-for="(group, groupIdx) in getGroupedRows(customer)" :key="groupIdx">
+                    <template v-for="(item, i) in group.items" :key="i">
+                        <template v-for="(task, taskIdx) in item.tasks.length ? item.tasks : [{}]" :key="taskIdx">
+                            <tr class="row-hover">
+                                <!-- Khách hàng -->
+                                <td
+                                    v-if="groupIdx === 0 && i === 0 && taskIdx === 0"
+                                    :rowspan="getTotalRows(customer)"
+                                    class="customer-cell"
                                 >
-                                    <FileTextOutlined style="margin-right: 6px; color: #fa541c" />
-                                    <router-link :to="`/contracts/${c.id}`">{{ c.title }}</router-link>
-                                </li>
-                                <!-- Nếu không có hợp đồng hợp lệ -->
-                                <li v-if="!record.contracts.some(c => c?.id && c?.title)" style="list-style: none; margin-left: 8px; color: #999">
-                                    Chưa có hợp đồng
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
+                                    {{ customer.customer_name }}
+                                </td>
+
+                                <!-- Loại -->
+                                <td
+                                    v-if="i === 0 && taskIdx === 0"
+                                    :rowspan="group.items.reduce((sum, it) => sum + (it.tasks.length || 1), 0)"
+                                    :class="['type-cell', group.type]"
+                                >
+                                    {{ group.type === 'bidding' ? 'Gói thầu' : 'Hợp đồng' }}
+                                </td>
+
+                                <!-- Tên -->
+                                <td
+                                    v-if="taskIdx === 0"
+                                    :rowspan="item.tasks.length || 1"
+                                    :class="['title-cell', group.type]"
+                                >
+                                    {{ item.title }}
+                                </td>
+
+                                <!-- Task -->
+                                <td :class="['task-cell', group.type]">
+                    <span v-if="task.title">
+                      {{ task.title }}
+                      <span class="task-status" :class="task.status">
+                        {{ task.status }}
+                      </span>
+                    </span>
+                                    <span v-else class="muted">Chưa có nhiệm vụ</span>
+                                </td>
+
+                                <!-- Người phụ trách -->
+                                <td :class="['assignee-cell', group.type]">
+                    <span v-if="task.assignee" class="assignee-badge">
+                      👤 {{ task.assignee.name }}
+                    </span>
+                                    <span v-else class="muted">Chưa có</span>
+                                </td>
+
+                                <!-- Tiến độ -->
+                                <td
+                                    v-if="taskIdx === 0"
+                                    :rowspan="item.tasks.length || 1"
+                                    class="progress-cell"
+                                >
+                    <span v-if="item.progress !== null" class="progress-badge">
+                      📊 {{ item.progress }}%
+                    </span>
+                                    <span v-else class="muted">—</span>
+                                </td>
+                            </tr>
+                        </template>
+                    </template>
                 </template>
-            </a-table-column>
-
-
-
-            <!-- Cột 3: Task gói thầu + hợp đồng -->
-            <!-- Cột 3: Task liên quan -->
-            <a-table-column title="Task liên quan" :width="400">
-                <template #default="{ record }">
-                    <div>
-                        <!-- Task theo gói thầu -->
-                        <div v-if="record.biddings.length">
-                            <strong>Task gói thầu:</strong>
-                            <div v-for="b in record.biddings" :key="'bid_' + b.id" style="margin-bottom: 8px">
-                                <div v-if="b.tasks && b.tasks.length">
-                                    <div style="font-weight: bold; margin-top: 4px; color: #722ed1">
-                                        {{ b.title }}
-                                    </div>
-                                    <ul style="padding-left: 18px; margin: 4px 0">
-                                        <li v-for="t in b.tasks" :key="t.id">{{ t.title }}</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Task theo hợp đồng -->
-                        <div v-if="record.contracts.length">
-                            <strong>Task hợp đồng:</strong>
-                            <div v-for="c in record.contracts" :key="'contract_' + c.id" style="margin-bottom: 8px">
-                                <div v-if="c.tasks && c.tasks.length">
-                                    <div style="font-weight: bold; margin-top: 4px; color: #fa541c">
-                                        {{ c.title }}
-                                    </div>
-                                    <ul style="padding-left: 18px; margin: 4px 0">
-                                        <li v-for="t in c.tasks" :key="t.id">{{ t.title }}</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-            </a-table-column>
-
-
-            <!-- Cột 4: Tiến độ -->
-            <a-table-column title="Tiến độ (%)" dataIndex="progress" :width="150">
-                <template #default="{ record }">
-                    <a-progress :percent="+record.progress" size="small" />
-                </template>
-            </a-table-column>
-
-            <!-- Cột 5: Người phụ trách -->
-            <a-table-column title="Người phụ trách" :width="160">
-                <template #default="{ record }">
-                    <ul style="padding-left: 0; margin: 0; list-style: none">
-                        <li
-                            v-for="u in record.assignees.filter(i => i?.name?.trim())"
-                            :key="u.id"
-                            style="display: flex; align-items: center; margin-bottom: 4px"
-                        >
-                            <UserOutlined style="margin-right: 6px; color: #13c2c2" />
-                            <router-link :to="`/users/${u.id}`">{{ u.name }}</router-link>
-                        </li>
-                    </ul>
-                </template>
-            </a-table-column>
-        </a-table>
+            </template>
+            </tbody>
+        </table>
     </div>
 </template>
 
@@ -130,53 +89,210 @@
 import { ref, onMounted } from 'vue'
 import { getProjectOverviewAPI } from '@/api/project'
 import { message } from 'ant-design-vue'
-import {
-    TeamOutlined,
-    ProfileOutlined,
-    FileTextOutlined,
-    UserOutlined
-} from '@ant-design/icons-vue'
 
-const loading = ref(false)
 const data = ref([])
-const timeframe = ref('all')
 
-const fetchOverview = async () => {
-    loading.value = true
-    try {
-        const res = await getProjectOverviewAPI({ timeframe: timeframe.value })
-        const customers = res.data.data
+const getGroupedRows = (customer) => {
+    const group = (items, type, allTasks, allAssignees) => {
+        return {
+            type,
+            items: items.map(i => {
+                const tasks = allTasks
+                    .filter(t => t.linked_type === type && String(t.linked_id) === String(i.id))
+                    .map(t => ({
+                        title: t.title,
+                        status: t.status,
+                        assigned_to: t.assigned_to,
+                        assignee: allAssignees.find(a => String(a.id) === String(t.assigned_to)) || null
+                    }))
 
-        customers.forEach(customer => {
-            const allTasks = customer.tasks || []
+                const progress = tasks.length
+                    ? Math.round((tasks.filter(t => t.status === 'done').length / tasks.length) * 100)
+                    : null
 
-            // Gán task cho từng gói thầu
-            customer.biddings.forEach(bid => {
-                bid.tasks = allTasks.filter(t => t.linked_type === 'bidding' && String(t.linked_id) === String(bid.id))
+                return {
+                    title: i.title,
+                    tasks,
+                    progress
+                }
             })
-
-            // Gán task cho từng hợp đồng
-            customer.contracts.forEach(contract => {
-                contract.tasks = allTasks.filter(t => t.linked_type === 'contract' && String(t.linked_id) === String(contract.id))
-            })
-        })
-
-        data.value = customers
-    } catch (e) {
-        message.error('Không thể tải dữ liệu tổng quan')
-    } finally {
-        loading.value = false
+        }
     }
+
+    const result = []
+    const allTasks = customer.tasks || []
+    const assignees = customer.assignees || []
+
+    if (customer.biddings?.length) result.push(group(customer.biddings, 'bidding', allTasks, assignees))
+    if (customer.contracts?.length) result.push(group(customer.contracts, 'contract', allTasks, assignees))
+
+    return result
 }
 
+const getTotalRows = (customer) => {
+    let total = 0
+    const allTasks = customer.tasks || []
+    const countTasks = (items, type) => {
+        return items.reduce((sum, i) => {
+            const t = allTasks.filter(t => t.linked_type === type && String(t.linked_id) === String(i.id))
+            return sum + (t.length || 1)
+        }, 0)
+    }
 
+    if (customer.biddings) total += countTasks(customer.biddings, 'bidding')
+    if (customer.contracts) total += countTasks(customer.contracts, 'contract')
 
+    return total || 1
+}
+
+const fetchOverview = async () => {
+    try {
+        const res = await getProjectOverviewAPI()
+        data.value = res.data.data
+    } catch (e) {
+        message.error('Không thể tải dữ liệu tổng quan')
+    }
+}
 
 onMounted(fetchOverview)
 </script>
 
-<style>
-.project_overview a {
-    color: #000000e0;
+<style scoped>
+.custom-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-size: 14px;
+    background-color: #fff;
 }
+
+.custom-table th {
+    background-color: #f2f4f8;
+    text-align: center;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #ccc;
+}
+
+.custom-table td {
+    border: 1px solid #e0e0e0;
+    padding: 10px;
+    vertical-align: middle;
+    color: #333;
+}
+
+/* ✅ Hover highlight */
+.row-hover:hover {
+    background-color: #f0faff;
+    transition: background-color 0.2s ease;
+}
+
+.customer-cell {
+    background-color: #fafafa;
+    font-weight: bold;
+    font-size: 15px;
+    color: #1d39c4;
+}
+
+.type-cell.bidding {
+    background-color: #f9f0ff;
+    color: #722ed1;
+    font-weight: bold;
+    text-align: center;
+}
+
+.type-cell.contract {
+    background-color: #fff2e8;
+    color: #fa541c;
+    font-weight: bold;
+    text-align: center;
+}
+
+.title-cell.bidding {
+    background-color: #fcf5ff;
+    color: #531dab;
+}
+
+.title-cell.contract {
+    background-color: #fff7e6;
+    color: #d4380d;
+}
+
+.task-cell.bidding {
+    background-color: #faf0fe;
+    color: #531dab;
+}
+
+.task-cell.contract {
+    background-color: #fff1e6;
+    color: #d46b08;
+}
+
+.assignee-cell.bidding {
+    background-color: #fdf4ff;
+    color: #531dab;
+}
+
+.assignee-cell.contract {
+    background-color: #fff7eb;
+    color: #d46b08;
+}
+
+.progress-cell {
+    font-weight: bold;
+    color: #52c41a;
+    text-align: center;
+}
+
+/* ✅ Biểu tượng trạng thái task */
+.task-status {
+    font-size: 12px;
+    margin-left: 6px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.task-status.todo {
+    background-color: #e6f7ff;
+    color: #1890ff;
+}
+
+.task-status.doing {
+    background-color: #fffbe6;
+    color: #faad14;
+}
+
+.task-status.done {
+    background-color: #f6ffed;
+    color: #52c41a;
+}
+
+/* ✅ Badge người phụ trách */
+.assignee-badge {
+    display: inline-block;
+    background-color: #e6f4ff;
+    color: #0958d9;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.progress-badge {
+    display: inline-block;
+    background-color: #f6ffed;
+    color: #237804;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.muted {
+    color: #999;
+    font-style: italic;
+}
+
 </style>

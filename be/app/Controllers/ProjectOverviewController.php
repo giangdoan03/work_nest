@@ -61,17 +61,22 @@ class ProjectOverviewController extends ResourceController
         // 3. Lấy tất cả task đang chạy theo customer
         $taskQuery = $db->query("
     SELECT
-        c.id AS customer_id,
-        t.id AS task_id,
-        t.title AS task_title,
-        t.status AS task_status,
-        t.linked_type,
-        t.linked_id
-    FROM tasks t
-    LEFT JOIN customers c 
-        ON (t.linked_type = 'bidding' AND EXISTS (SELECT 1 FROM biddings b WHERE b.id = t.linked_id AND b.customer_id = c.id))
-        OR (t.linked_type = 'contract' AND EXISTS (SELECT 1 FROM contracts ct WHERE ct.id = t.linked_id AND ct.id_customer = c.id))
-    WHERE t.status IS NOT NULL
+    c.id AS customer_id,
+    t.id AS task_id,
+    t.title AS task_title,
+    t.status AS task_status,
+    t.linked_type,
+    t.linked_id,
+    u.id AS user_id,
+    u.name AS user_name,
+    t.assigned_to
+FROM tasks t
+LEFT JOIN customers c 
+    ON (t.linked_type = 'bidding' AND EXISTS (SELECT 1 FROM biddings b WHERE b.id = t.linked_id AND b.customer_id = c.id))
+    OR (t.linked_type = 'contract' AND EXISTS (SELECT 1 FROM contracts ct WHERE ct.id = t.linked_id AND ct.id_customer = c.id))
+LEFT JOIN users u ON u.id = t.assigned_to
+WHERE t.status IS NOT NULL
+
 ");
 
 
@@ -84,14 +89,20 @@ class ProjectOverviewController extends ResourceController
             if (!isset($tasksByCustomer[$cid])) {
                 $tasksByCustomer[$cid] = [];
             }
+
             $tasksByCustomer[$cid][] = [
                 'id' => $task['task_id'],
                 'title' => $task['task_title'],
                 'linked_type' => $task['linked_type'],
-                'linked_id' => $task['linked_id'], // ← Quan trọng
-                'status' => $task['task_status']
+                'linked_id' => $task['linked_id'],
+                'status' => $task['task_status'],
+                'assignees' => $task['user_id'] ? [
+                    [ 'id' => $task['user_id'], 'name' => $task['user_name'] ]
+                ] : [],
+                'assigned_to' => $task['assigned_to'],
             ];
         }
+
 
         // 5. Parse kết quả và gán task
         foreach ($results as &$item) {
