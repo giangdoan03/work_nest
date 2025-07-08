@@ -63,6 +63,14 @@
                                       :placeholder="formData.linked_type == 'bidding' ? 'Chọn bước gói thầu' : 'Chọn bước hợp đồng'"/>
                         </a-form-item>
                     </a-col>
+                    <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
+                        <a-form-item label="Cấp duyệt" name="approval_steps">
+                            <a-radio-group v-model:value="formData.approval_steps">
+                                <a-radio :value="1">1 cấp duyệt</a-radio>
+                                <a-radio :value="2">2 cấp duyệt</a-radio>
+                            </a-radio-group>
+                        </a-form-item>
+                    </a-col>
 
                     <a-col :span="24">
                         <a-form-item label="Mô tả" name="description">
@@ -135,6 +143,7 @@ const formData = ref({
     status: null,
     priority: null,
     parent_id: null,
+    approval_steps: 1,
 })
 
 // //SETUP
@@ -210,6 +219,7 @@ const rules = computed(() => {
         assigned_to: [{required: true, validator: validateAsigned, trigger: 'change'}],
         linked_type: [{required: true, validator: validateLinkedType, trigger: 'change'}],
         description: [{required: true, validator: validateDescription, trigger: 'change'}],
+        approval_steps: [{ required: true, message: 'Vui lòng chọn cấp duyệt' }]
     }
 })
 
@@ -222,6 +232,7 @@ const statusOption = computed(() => {
     return [
         {value: 'todo', label: "Việc cần làm"},
         {value: 'doing', label: "Đang thực hiện"},
+        {value: 'pending_approval', label: "Đã gửi duyệt", color: "gold" },
         {value: 'done', label: "Hoàn thành"},
         {value: 'overdue', label: "Quá hạn"},
     ]

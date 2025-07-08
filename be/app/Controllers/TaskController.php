@@ -3,23 +3,24 @@
 namespace App\Controllers;
 
 use App\Models\BiddingStepModel;
+use App\Models\BiddingStepTemplateModel;
 use App\Models\ContractStepModel;
+use App\Models\ContractStepTemplateModel;
+use App\Models\TaskApprovalModel;
 use App\Models\TaskModel;
+use App\Enums\TaskStatus;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
-use Config\Database;
 
 class TaskController extends ResourceController
 {
     protected $modelName = TaskModel::class;
     protected $format    = 'json';
 
-    // ✅ Danh sách task (lọc nâng cao)
     public function index()
     {
         $builder = $this->model->builder();
 
-        // --- Lọc nâng cao ---
         if ($assigned = $this->request->getGet('assigned_to')) {
             $builder->where('assigned_to', $assigned);
         }
@@ -49,11 +50,9 @@ class TaskController extends ResourceController
             $builder->where('users.department_id', $department);
         }
 
-        // --- Đếm tổng ---
         $totalBuilder = clone $builder;
         $total = $totalBuilder->countAllResults(false);
 
-        // --- Phân trang ---
         $page     = (int) ($this->request->getGet('page') ?? 1);
         $perPage  = (int) ($this->request->getGet('per_page') ?? 10);
         $offset   = ($page - 1) * $perPage;
@@ -61,19 +60,9 @@ class TaskController extends ResourceController
         $builder->limit($perPage, $offset);
         $tasks = $builder->get()->getResultArray();
 
-        // --- Load step templates ---
-        $contractStepTemplates = [];
-        $biddingStepTemplates = [];
+        $contractStepTemplates = (new ContractStepTemplateModel())->findAll();
+        $biddingStepTemplates  = (new BiddingStepTemplateModel())->findAll();
 
-        if (!empty($tasks)) {
-            $contractTemplateModel = new \App\Models\ContractStepTemplateModel();
-            $contractStepTemplates = $contractTemplateModel->findAll();
-
-            $biddingTemplateModel = new \App\Models\BiddingStepTemplateModel();
-            $biddingStepTemplates = $biddingTemplateModel->findAll();
-        }
-
-        // --- Build map ---
         $contractMap = [];
         foreach ($contractStepTemplates as $row) {
             $contractMap[$row['step_number']] = $row['title'];
@@ -84,10 +73,8 @@ class TaskController extends ResourceController
             $biddingMap[$row['step_number']] = $row['title'];
         }
 
-        // --- Gán step_name ---
         foreach ($tasks as &$task) {
             $stepCode = (int) ($task['step_code'] ?? 0);
-
             if ($task['linked_type'] === 'contract') {
                 $task['step_name'] = $contractMap[$stepCode] ?? null;
             } elseif ($task['linked_type'] === 'bidding') {
@@ -97,7 +84,6 @@ class TaskController extends ResourceController
             }
         }
 
-        // --- Trả kết quả ---
         return $this->response->setJSON([
             'status' => 'success',
             'data' => $tasks,
@@ -110,34 +96,95 @@ class TaskController extends ResourceController
         ]);
     }
 
-
-
-    // ✅ Chi tiết 1 task
     public function show($id = null)
     {
         $data = $this->model->find($id);
         return $data ? $this->respond($data) : $this->failNotFound('Task not found');
     }
 
-    // ✅ Tạo task mới
+    /**
+     * @throws \ReflectionException
+     */
     public function create()
     {
         $data = $this->request->getJSON(true);
+
+        if (!empty($data['approval_steps']) && (int)$data['approval_steps'] > 0) {
+            $data['approval_status'] = 'pending';
+            $data['current_level'] = 1;
+
+            if ($data['status'] === TaskStatus::DONE) {
+                $data['status'] = TaskStatus::REQUEST_APPROVAL;
+            }
+        }
 
         if (!$this->model->insert($data)) {
             return $this->failValidationErrors($this->model->errors());
         }
 
+        $taskId = $this->model->insertID();
+
+        if (!empty($data['approval_steps']) && (int)$data['approval_steps'] > 0) {
+            (new TaskApprovalModel())->insert([
+                'task_id' => $taskId,
+                'level' => 1,
+                'status' => 'pending',
+                'approved_by' => null
+            ]);
+        }
+
         return $this->respondCreated([
             'message' => 'Task created',
-            'id' => $this->model->insertID()
+            'id' => $taskId
         ]);
     }
 
-    // ✅ Cập nhật task
+    /**
+     * @throws \ReflectionException
+     */
     public function update($id = null)
     {
         $data = $this->request->getJSON(true);
+        $task = $this->model->find($id);
+
+        if (!$task) {
+            return $this->failNotFound('Task not found');
+        }
+
+        // ❌ Cấm hoàn thành thủ công nếu chưa được duyệt đủ cấp
+        if (($data['status'] ?? null) === TaskStatus::DONE) {
+            if ((int)$task['approval_steps'] > 0 && $task['approval_status'] !== 'approved') {
+                return $this->fail('Không thể chuyển sang trạng thái Hoàn thành trước khi được duyệt');
+            }
+
+            if ((int)$task['approval_steps'] > 0) {
+                return $this->fail('Nhiệm vụ có cấp duyệt, không thể hoàn thành thủ công');
+            }
+        }
+
+        // ✅ Gửi duyệt hoặc gửi lại duyệt
+        if (($data['status'] ?? null) === TaskStatus::REQUEST_APPROVAL && (int)$task['approval_steps'] > 0) {
+            $approvalModel = new TaskApprovalModel();
+
+            // Xoá các dòng duyệt cũ nếu đã từ chối (rejected)
+            $approvalModel
+                ->where('task_id', $id)
+                ->delete();
+
+            // Tạo dòng duyệt mới từ cấp 1
+            $approvalModel->insert([
+                'task_id'     => $id,
+                'level'       => 1,
+                'status'      => 'pending',
+                'approved_by' => null,
+                'approved_at' => null
+            ]);
+
+            // Reset lại trạng thái task
+            $data['approval_status'] = 'pending';
+            $data['current_level'] = 1;
+            $data['status'] = TaskStatus::REQUEST_APPROVAL;
+        }
 
         if (!$this->model->update($id, $data)) {
             return $this->failValidationErrors($this->model->errors());
@@ -146,7 +193,7 @@ class TaskController extends ResourceController
         return $this->respond(['message' => 'Task updated']);
     }
 
-    // ✅ Xoá task
+
     public function delete($id = null)
     {
         if (!$this->model->find($id)) {
@@ -154,18 +201,15 @@ class TaskController extends ResourceController
         }
 
         $this->model->delete($id);
-
         return $this->respondDeleted(['message' => 'Task deleted']);
     }
 
-    // ✅ Danh sách subtask theo task cha
     public function subtasks($parent_id): ResponseInterface
     {
         $tasks = $this->model->where('parent_id', $parent_id)->findAll();
         return $this->respond($tasks);
     }
 
-    // ✅ Cập nhật subtask
     public function updateSubtask($id = null): ResponseInterface
     {
         $subtask = $this->model->find($id);
@@ -183,7 +227,6 @@ class TaskController extends ResourceController
         return $this->respond(['message' => 'Subtask updated']);
     }
 
-    // ✅ Xoá subtask
     public function deleteSubtask($id = null): ResponseInterface
     {
         $subtask = $this->model->find($id);
@@ -193,19 +236,15 @@ class TaskController extends ResourceController
         }
 
         $this->model->delete($id);
-
         return $this->respondDeleted(['message' => 'Subtask deleted']);
     }
 
-    // ✅ Lấy danh sách task theo bước đấu thầu
     public function byBiddingStep($step_id): ResponseInterface
     {
         $tasks = $this->model->where('step_id', $step_id)->findAll();
         return $this->respond($tasks);
     }
 
-
-    // ✅ Lấy danh sách task theo bước hợp đồng
     public function byContractStep($step_id): ResponseInterface
     {
         $tasks = $this->model->where('step_id', $step_id)->findAll();
@@ -214,16 +253,16 @@ class TaskController extends ResourceController
 
     public function getTaskByBiddingStep($stepId): ResponseInterface
     {
-        $stepModel = new \App\Models\BiddingStepModel();
-        $step = $stepModel->find($stepId);
+        $step = (new BiddingStepModel())->find($stepId);
 
         if (!$step || !$step['task_id']) {
             return $this->failNotFound("Không tìm thấy bước hoặc bước chưa gán task.");
         }
 
-        $taskModel = new \App\Models\TaskModel();
-        $task = $taskModel->find($step['task_id']);
+        $task = (new TaskModel())->find($step['task_id']);
 
         return $task ? $this->respond($task) : $this->failNotFound("Task không tồn tại.");
     }
+
+
 }

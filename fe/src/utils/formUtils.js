@@ -41,6 +41,10 @@ export const formatDate = (value) => {
     })
 }
 
+export const toDayjs = (value) => {
+    return value ? dayjs(value) : null
+}
+
 
 
 export const formatDateForSave = (value) => {

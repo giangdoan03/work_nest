@@ -41,6 +41,16 @@ export const uploadTaskFileAPI = (taskId, formData) =>
         headers: { 'Content-Type': 'multipart/form-data' }
     })
 
+/**
+ * 🔹 Upload link tài liệu cho task
+ * @param {number|string} taskId
+ * @param {Object} data - { title, url, user_id }
+ */
+export const uploadTaskLinkAPI = (taskId, data) =>
+    instance.post(`/tasks/${taskId}/files/link`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    })
+
 // 🔹 Lấy bình luận cho task
 export const getComments = (task_id, data={}) =>  instance.get(`/tasks/${task_id}/comments`, {params: data})
 

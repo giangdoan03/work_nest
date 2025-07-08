@@ -14,7 +14,7 @@ class BiddingStepController extends ResourceController
     protected $modelName = BiddingStepModel::class;
     protected $format    = 'json';
 
-    public function index()
+    public function index(): ResponseInterface
     {
         $biddingId = $this->request->getGet('bidding_id');
 
@@ -24,8 +24,37 @@ class BiddingStepController extends ResourceController
             $builder = $builder->where('bidding_id', $biddingId);
         }
 
-        return $this->respond($builder->findAll());
+        $steps = $builder->findAll();
+        $stepIds = array_column($steps, 'id');
+
+        $taskModel = new TaskModel();
+        $allTasks = [];
+
+        if (!empty($stepIds)) {
+            $allTasks = $taskModel
+                ->where('linked_type', 'bidding')
+                ->whereIn('step_id', $stepIds)
+                ->findAll();
+        }
+
+        // Nhóm task theo step_id
+        $tasksGrouped = [];
+        foreach ($allTasks as $task) {
+            $tasksGrouped[$task['step_id']][] = $task;
+        }
+
+        // Gán tasks, task_count, task_done_count vào từng step
+        foreach ($steps as &$step) {
+            $tasks = $tasksGrouped[$step['id']] ?? [];
+
+            $step['tasks'] = $tasks;
+            $step['task_count'] = count($tasks);
+            $step['task_done_count'] = count(array_filter($tasks, fn($t) => $t['status'] === 'done'));
+        }
+
+        return $this->respond($steps);
     }
+
 
     public function show($id = null)
     {

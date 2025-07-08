@@ -192,6 +192,12 @@ const routes = [
                 name: 'my-tasks',
                 component: MyTasks,
                 meta: { breadcrumb: 'Nhiệm vụ của tôi' }
+            },
+            {
+                path: '/task-approvals',
+                name: 'task-approvals',
+                component: () => import('../page/TaskApprovalList.vue'),
+                meta: { breadcrumb: 'Duyệt nhiệm vụ' }
             }
 
         ]

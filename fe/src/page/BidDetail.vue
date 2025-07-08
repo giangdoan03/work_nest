@@ -1,10 +1,10 @@
 <template>
     <div>
         <a-page-header
-                title="Chi tiết gói thầu"
-                sub-title="Xem thông tin và tiến trình xử lý"
-                @back="goBack"
-                style="padding: 0 0 20px;"
+            title="Chi tiết gói thầu"
+            sub-title="Xem thông tin và tiến trình xử lý"
+            @back="goBack"
+            style="padding: 0 0 20px;"
         />
         <a-descriptions bordered :column="2">
             <!-- Hàng 1 -->
@@ -44,7 +44,6 @@
             </a-descriptions-item>
         </a-descriptions>
 
-
         <a-typography-title :level="5" class="mt-30 mb-30">Tiến trình xử lý</a-typography-title>
 
         <a-spin :spinning="loadingSteps">
@@ -52,10 +51,31 @@
                 <a-step
                     v-for="(step, index) in steps"
                     :key="step.id"
-                    :title="`Bước ${step.step_number ?? '-'}: ${step.title ?? '-'}`"
                     :status="mapStepStatus(step.status)"
-                    @click="openStepDrawer(step)"
                 >
+                    <template #title>
+                        <div
+                            @click.stop="openStepDrawer(step)"
+                            style="
+                                  display: flex;
+                                  justify-content: space-between;
+                                  align-items: center;
+                                  cursor: pointer;
+                                  color: #1890ff;
+                                ">
+                                <span style="text-decoration: underline;">
+                                  Bước {{ step.step_number ?? '-' }}: {{ step.title ?? '-' }}
+                                </span>
+
+                            <span
+                                v-if="step.task_count !== undefined"
+                                style="font-size: 12px; color: #888; font-weight: normal; padding-left: 10px"
+                            >
+                                  {{ step.task_done_count ?? 0 }}/{{ step.task_count }} task đã xong
+                                </span>
+                        </div>
+                    </template>
+
                     <template #description>
                         <div style="background: #fafafa; padding: 12px; border: 1px solid #f0f0f0; border-radius: 6px;">
                             <p>Phòng ban:
@@ -85,16 +105,24 @@
                                 </a>
                                 <span v-else>Không xác định</span>
                             </p>
+                            <p>
+                                Ngày bắt đầu: {{ formatDate(step.start_date) }}
+                            </p>
+                            <p>
+                                Ngày kết thúc: {{ formatDate(step.end_date) }}
+                            </p>
+
                         </div>
                     </template>
                 </a-step>
+
             </a-steps>
         </a-spin>
 
 
         <!-- Drawer hiển thị chi tiết bước -->
         <a-drawer
-            title="Chi tiết bước xử lý"
+            title="Danh sách nhiệm vụ"
             placement="right"
             :visible="drawerVisible"
             @close="drawerVisible = false"
@@ -102,90 +130,147 @@
         >
             <template v-if="selectedStep">
                 <a-descriptions
-                    bordered
                     size="small"
                     :column="1"
-                    title="Thông tin bước"
                 >
-                    <a-descriptions-item label="Bước số">{{ selectedStep.step_number }}</a-descriptions-item>
-                    <a-descriptions-item label="Tiêu đề">{{ selectedStep.title }}</a-descriptions-item>
-                    <a-descriptions-item label="Phòng ban">
-                        <template #default>
-                            <a-tag
-                                v-for="(dep, index) in parseDepartment(selectedStep.department)"
-                                :key="index"
-                                color="blue"
-                                style="margin-right: 4px;"
-                            >
-                                {{ dep }}
-                            </a-tag>
-                        </template>
-                    </a-descriptions-item>
-                    <a-descriptions-item label="Trạng thái">
-                        <a-select
-                            v-model:value="selectedStep.status"
-                            style="width: 100%"
-                            @change="(value) => updateStepStatus(value, selectedStep)"
-                        >
-                            <a-select-option value="0">Chưa bắt đầu</a-select-option>
-                            <a-select-option value="1">Đang xử lý</a-select-option>
-                            <a-select-option value="2">Hoàn thành</a-select-option>
-                            <a-select-option value="3">Bỏ qua</a-select-option>
-                        </a-select>
-                    </a-descriptions-item>
-                    <a-descriptions-item label="Người phụ trách">
-                        <a-select
-                            v-model:value="selectedStep.assigned_to"
-                            style="width: 100%"
-                            placeholder="Chọn người phụ trách"
-                            @change="(value) => updateStepAssignedTo(value, selectedStep)"
-                            :allowClear="true"
-                        >
-                            <a-select-option
-                                v-for="user in users"
-                                :key="user.id"
-                                :value="user.id"
-                            >
-                                {{ user.name }}
-                            </a-select-option>
-                        </a-select>
-                    </a-descriptions-item>
+                    <!--                    <a-descriptions-item label="Bước số">{{ selectedStep.step_number }}</a-descriptions-item>-->
+                    <!--                    <a-descriptions-item label="Tiêu đề">{{ selectedStep.title }}</a-descriptions-item>-->
+                    <!--                    <a-descriptions-item label="Phòng ban">-->
+                    <!--                        <template #default>-->
+                    <!--                            <a-tag-->
+                    <!--                                v-for="(dep, index) in parseDepartment(selectedStep.department)"-->
+                    <!--                                :key="index"-->
+                    <!--                                color="blue"-->
+                    <!--                                style="margin-right: 4px;"-->
+                    <!--                            >-->
+                    <!--                                {{ dep }}-->
+                    <!--                            </a-tag>-->
+                    <!--                        </template>-->
+                    <!--                    </a-descriptions-item>-->
+                    <!--                    <a-descriptions-item label="Trạng thái">-->
+                    <!--                        <a-select-->
+                    <!--                            v-model:value="selectedStep.status"-->
+                    <!--                            style="width: 100%"-->
+                    <!--                            @change="(value) => updateStepStatus(value, selectedStep)"-->
+                    <!--                        >-->
+                    <!--                            <a-select-option value="0">Chưa bắt đầu</a-select-option>-->
+                    <!--                            <a-select-option value="1">Đang xử lý</a-select-option>-->
+                    <!--                            <a-select-option value="2">Hoàn thành</a-select-option>-->
+                    <!--                            <a-select-option value="3">Bỏ qua</a-select-option>-->
+                    <!--                        </a-select>-->
+                    <!--                    </a-descriptions-item>-->
+                    <!--                    <a-descriptions-item label="Người phụ trách">-->
+                    <!--                        <a-select-->
+                    <!--                            v-model:value="selectedStep.assigned_to"-->
+                    <!--                            style="width: 100%"-->
+                    <!--                            placeholder="Chọn người phụ trách"-->
+                    <!--                            @change="(value) => updateStepAssignedTo(value, selectedStep)"-->
+                    <!--                            :allowClear="true"-->
+                    <!--                        >-->
+                    <!--                            <a-select-option-->
+                    <!--                                v-for="user in users"-->
+                    <!--                                :key="user.id"-->
+                    <!--                                :value="user.id"-->
+                    <!--                            >-->
+                    <!--                                {{ user.name }}-->
+                    <!--                            </a-select-option>-->
+                    <!--                        </a-select>-->
+                    <!--                    </a-descriptions-item>-->
 
-                    <a-descriptions-item label="Ngày tạo">{{ formatDate(selectedStep.created_at) }}</a-descriptions-item>
-                    <a-descriptions-item label="Ngày cập nhật">{{ formatDate(selectedStep.updated_at) }}</a-descriptions-item>
+                    <!--                    <a-descriptions-item label="Ngày bắt đầu">-->
+                    <!--                        <a-date-picker-->
+                    <!--                            v-model:value="selectedStep.start_date"-->
+                    <!--                            format="YYYY-MM-DD"-->
+                    <!--                            style="width: 100%"-->
+                    <!--                            @change="(date) => updateStepDate('start_date', date, selectedStep)"-->
+                    <!--                        />-->
+                    <!--                    </a-descriptions-item>-->
+
+                    <!--                    <a-descriptions-item label="Ngày kết thúc">-->
+                    <!--                        <a-date-picker-->
+                    <!--                            v-model:value="selectedStep.end_date"-->
+                    <!--                            format="YYYY-MM-DD"-->
+                    <!--                            style="width: 100%"-->
+                    <!--                            @change="(date) => updateStepDate('end_date', date, selectedStep)"-->
+                    <!--                        />-->
+                    <!--                    </a-descriptions-item>-->
+
                 </a-descriptions>
 
 
-                <a-divider>Danh sách công việc của bước này</a-divider>
+                <!--                <a-divider>Danh sách công việc của bước này</a-divider>-->
 
-                <a-empty v-if="relatedTasks.length === 0" description="Không có công việc" />
+                <!-- Nếu không có task -->
+                <a-empty v-if="relatedTasks.length === 0" description="Không có công việc"/>
 
-                <a-list
-                    v-else
-                    :dataSource="relatedTasks"
-                    :rowKey="task => task.id"
-                >
-                    <template #renderItem="{ item }">
-                        <a-list-item>
-                            <a-list-item-meta>
-                                <template #title>
-                                    <router-link :to="`/internal-tasks/${item.id}/info`">
-                                        {{ item.title }}
-                                    </router-link>
-                                </template>
-                                <template #description>
-                                    {{ item.description }} | Phụ trách: {{ getAssignedUserName(item.assigned_to) }}
-                                </template>
-                            </a-list-item-meta>
+                <!-- Nếu có task -->
+                <template v-else>
+                    <!-- Header -->
+                    <div
+                        style="
+                          display: flex;
+                          justify-content: space-between;
+                          padding: 8px 16px;
+                          font-weight: 500;
+                          color: #555;
+                          border-bottom: 1px solid #f0f0f0;
+                        "
+                    >
+                        <span>Nội dung mô tả</span>
+                        <span>Trạng thái</span>
+                    </div>
 
-                            <template #actions>
-                                <a-tag :color="getTaskStatusColor(item.status)">
-                                    {{ getTaskStatusText(item.status) }}
-                                </a-tag>
-                            </template>
-                        </a-list-item>
-                    </template>
-                </a-list>
+                    <!-- Danh sách nhiệm vụ -->
+                    <a-list
+                        :dataSource="relatedTasks"
+                        :rowKey="task => task.id"
+                        item-layout="horizontal"
+                    >
+                        <template #renderItem="{ item }">
+                            <a-list-item>
+                                <div style="display: flex; justify-content: space-between; width: 100%;">
+                                    <!-- Cột trái: nội dung -->
+                                    <div>
+                                        <div style="font-weight: 600;">
+                                            <router-link :to="`/internal-tasks/${item.id}/info`">
+                                                {{ item.title }}
+                                            </router-link>
+                                        </div>
+                                        <div style="font-size: 13px; color: #666;">
+                                            {{ item.description }}
+                                        </div>
+                                        <div style="font-size: 13px; color: #999;">
+                                            Phụ trách: {{ getAssignedUserName(item.assigned_to) }}
+                                        </div>
+                                    </div>
+
+                                    <!-- Cột phải: trạng thái thực hiện + duyệt -->
+                                    <div style="white-space: nowrap; text-align: right;">
+                                        <!-- Luôn hiển thị trạng thái task -->
+                                        <a-tag :color="getTaskStatusColor(item.status)">
+                                            {{ getTaskStatusText(item.status) }}
+                                        </a-tag>
+
+                                        <!-- Nếu đã hoàn thành và đã duyệt -->
+                                        <div v-if="item.status === 'done' && item.approval_status === 'approved'">
+                                            <a-tag color="green">Hoàn thành & Đã duyệt</a-tag>
+                                        </div>
+
+                                        <!-- Nếu hoàn thành nhưng chưa được duyệt hoặc bị từ chối -->
+                                        <div v-else-if="item.status === 'done'">
+                                            <a-tag :color="getApprovalStatusColor(item.approval_status)">
+                                                {{ getApprovalStatusText(item.approval_status) }}
+                                            </a-tag>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </a-list-item>
+                        </template>
+                    </a-list>
+
+
+                </template>
 
 
             </template>
@@ -194,7 +279,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import {ref, onMounted} from 'vue'
+import dayjs from 'dayjs'
 import {
     getBiddingAPI,
     cloneFromTemplatesAPI,
@@ -202,12 +288,13 @@ import {
     updateBiddingStepAPI,
     completeBiddingStepAPI
 } from '@/api/bidding'
-import { getUsers } from '@/api/user.js'
-import { useRoute } from 'vue-router'
-import { message } from 'ant-design-vue'
-import { formatDate, formatCurrency } from '@/utils/formUtils'
-import { getCustomers } from '../api/customer' // file API của bạn
-import { useRouter } from 'vue-router'
+import {getUsers} from '@/api/user.js'
+import {useRoute} from 'vue-router'
+import {message} from 'ant-design-vue'
+import {formatDate, formatCurrency} from '@/utils/formUtils'
+import {getCustomers} from '../api/customer' // file API của bạn
+import {useRouter} from 'vue-router'
+
 const router = useRouter()
 const route = useRoute()
 const id = route.params.id
@@ -220,18 +307,19 @@ const selectedStep = ref(null)
 const customers = ref([])
 const users = ref([])
 
-import { getTasksByBiddingStep } from '@/api/task' // nếu chưa import
+import {getTasksByBiddingStep} from '@/api/task' // nếu chưa import
 
 const allTasks = ref([])
 const relatedTasks = ref([])
 
 const openStepDrawer = async (step) => {
-    selectedStep.value = { ...step }
+    selectedStep.value = {...step}
+    console.log('selectedStep.value', selectedStep.value)
     drawerVisible.value = true
 
     try {
         const res = await getTasksByBiddingStep(step.id)
-        console.log('res', step.id)
+        console.log('res', res)
         relatedTasks.value = res.data || []
     } catch (e) {
         console.error('Không thể tải công việc của bước', e)
@@ -258,6 +346,33 @@ const statusText = (status) => {
         '2': 'Đã hoàn thành',
         '3': 'Bỏ qua',
     }[status] || 'Không rõ'
+}
+
+const getApprovalStatusText = (status) => {
+    switch (status) {
+        case 'approved':
+            return 'Đã duyệt';
+        case 'pending':
+            return 'Chờ duyệt';
+        case 'rejected':
+            return 'Từ chối';
+        default:
+            return 'Không rõ';
+    }
+}
+
+const getApprovalStatusColor = (status) => {
+    switch (status) {
+        case 'approved':
+            return 'green';
+        case 'pending':
+            return 'blue';
+        case 'rejected':
+            return 'red';
+        default:
+            return 'gray';
+    }
+
 }
 
 const lastCompletedIndex = () => {
@@ -321,7 +436,7 @@ const updateStepStatus = async (newStatus, step) => {
             await completeBiddingStepAPI(step.id)
             message.success('Bước đã hoàn thành và bước kế tiếp đã được mở')
         } else {
-            await updateBiddingStepAPI(step.id, { status: newStatus })
+            await updateBiddingStepAPI(step.id, {status: newStatus})
             message.success('Đã cập nhật trạng thái bước')
         }
 
@@ -344,6 +459,18 @@ const updateStepStatus = async (newStatus, step) => {
     }
 }
 
+const updateStepDate = async (field, date, step) => {
+    try {
+        const payload = {[field]: date ? date.format('YYYY-MM-DD') : null}
+        await updateBiddingStepAPI(step.id, payload)
+        message.success(`Đã cập nhật ${field === 'start_date' ? 'ngày bắt đầu' : 'ngày kết thúc'}`)
+        await fetchSteps()
+    } catch (e) {
+        console.error(`Lỗi cập nhật ${field}:`, e)
+        message.error(`Không thể cập nhật ${field}`)
+    }
+}
+
 const fetchUsers = async () => {
     try {
         const res = await getUsers()
@@ -361,7 +488,7 @@ const getAssignedUserName = (userId) => {
 
 const goToUserDetail = (userId) => {
     if (!userId) return
-    router.push({ name: 'user-detail', params: { id: userId } })
+    router.push({name: 'user-detail', params: {id: userId}})
 }
 
 
@@ -386,7 +513,7 @@ const updateStepAssignedTo = async (userId, step) => {
             return
         }
 
-        await updateBiddingStepAPI(step.id, { assigned_to: userId })
+        await updateBiddingStepAPI(step.id, {assigned_to: userId})
         message.success('Đã cập nhật người phụ trách')
         await fetchSteps()
     } catch (e) {
@@ -400,11 +527,9 @@ const updateStepAssignedTo = async (userId, step) => {
 }
 
 
-
-
 const goToCustomerDetail = (customerId) => {
     if (!customerId) return
-    router.push({ name: 'customer-detail', params: { id: customerId.toString() } })
+    router.push({name: 'customer-detail', params: {id: customerId.toString()}})
 }
 
 const fetchCustomers = async () => {
@@ -478,15 +603,23 @@ onMounted(async () => {
     margin-top: 12px;
     text-align: right;
 }
+
 .ant-steps-item-title {
     color: rgba(0, 0, 0, 0.85) !important;
     font-weight: 500;
     cursor: pointer;
 }
+
 .mt-30 {
     margin-top: 30px;
 }
+
 .mb-30 {
     margin-bottom: 30px;
+}
+
+.ant-list-items li {
+    padding-left: 0;
+    padding-right: 0;
 }
 </style>

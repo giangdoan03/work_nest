@@ -17,6 +17,7 @@ class TaskFileController extends ResourceController
     {
         $file = $this->request->getFile('file');
         $user_id = $this->request->getPost('user_id');
+        $title    = $this->request->getPost('title');
 
         if (!$file || !$file->isValid()) {
             return $this->failValidationErrors('File không hợp lệ.');
@@ -30,6 +31,7 @@ class TaskFileController extends ResourceController
 
         $this->model->insert([
             'task_id'     => $task_id,
+            'title'       => $title,
             'file_name'   => $upload['file_name'],
             'file_path'   => $upload['file_path'],
             'uploaded_by' => $user_id,
@@ -58,4 +60,28 @@ class TaskFileController extends ResourceController
         $this->model->delete($id);
         return $this->respondDeleted(['message' => 'Đã xoá file']);
     }
+
+    public function uploadLink($task_id = null): ResponseInterface
+    {
+        $title = $this->request->getPost('title');
+        $url   = $this->request->getPost('url'); // ✅ sửa lại thành 'url'
+        $user_id = $this->request->getPost('user_id');
+
+        if (!$title || !$url) {
+            return $this->failValidationErrors('Thiếu tiêu đề hoặc link.');
+        }
+
+        $this->model->insert([
+            'task_id'     => $task_id,
+            'file_name'   => $title,
+            'link_url'    => $url, // ✅ lưu vào cột link_url
+            'uploaded_by' => $user_id,
+            'is_link'     => 1
+        ]);
+
+        return $this->respondCreated(['message' => 'Đã lưu link tài liệu']);
+    }
+
+
+
 }

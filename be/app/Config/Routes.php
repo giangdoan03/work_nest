@@ -73,6 +73,9 @@ $routes->group('api', function ($routes) {
     $routes->put('step-templates/(:num)', 'StepTemplateController::update/$1');
     $routes->delete('step-templates/(:num)', 'StepTemplateController::delete/$1');
 
+    $routes->get('tasks/(:num)/approvals', 'TaskApprovalController::history/$1');
+    $routes->post('tasks/(:num)/files/link', 'TaskFileController::uploadLink/$1');
+
     // 🧩 Comment API cho task — phải đặt TRƯỚC
     $routes->get('tasks/(:num)/comments', 'CommentController::byTask/$1');
     $routes->post('tasks/(:num)/comments', 'CommentController::create/$1');
@@ -147,6 +150,13 @@ $routes->group('api', function ($routes) {
     $routes->put('contract-step-templates/(:num)', 'ContractStepTemplateController::update/$1');
     $routes->delete('contract-step-templates/(:num)', 'ContractStepTemplateController::delete/$1');
     $routes->put('contract-steps/(:num)/complete', 'ContractStepController::complete/$1');
+
+    // Task Approvals
+
+    $routes->get('task-approvals', 'TaskApprovalController::index'); // Lấy danh sách nhiệm vụ cần duyệt
+    $routes->post('task-approvals/(:num)/approve', 'TaskApprovalController::approve/$1'); // Phê duyệt task
+    $routes->post('task-approvals/(:num)/reject', 'TaskApprovalController::reject/$1');   // Từ chối task
+
 
 
 

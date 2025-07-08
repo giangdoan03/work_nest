@@ -27,6 +27,10 @@
                 <ScheduleOutlined />
                 <span>Nhiệm vụ của tôi</span>
             </a-menu-item>
+            <a-menu-item key="task-approvals">
+                <CheckCircleOutlined />
+                <span>Duyệt nhiệm vụ</span>
+            </a-menu-item>
             <a-menu-item key="quan-ly-khach-hang">
                 <TeamOutlined/>
                 <span>Quản lý khách hàng</span>
@@ -134,7 +138,8 @@ import {
     FileDoneOutlined,
     ProfileOutlined,
     ScheduleOutlined,
-    BarChartOutlined
+    BarChartOutlined,
+    CheckCircleOutlined
 } from '@ant-design/icons-vue'
 import { h } from 'vue'
 
@@ -157,6 +162,7 @@ const pathToKeyMap = {
     '/dashboard': 'dashboard',
     '/project-overview': 'project-overview',
     '/my-tasks': 'my-tasks',
+    '/task-approvals': 'task-approvals',
     '/customers': 'quan-ly-khach-hang',
     '/permissions': 'permission',
     '/departments': 'list-phong-ban',
@@ -185,6 +191,7 @@ const keyToParentMap = {
     // Các menu chính
     'project-overview': 'project-overview',
     'my-tasks': 'my-tasks',
+    'task-approvals': 'task-approvals',
     'dashboard': 'dashboard',
     'quan-ly-khach-hang': 'dashboard',
     'cau-hinh': 'dashboard',

@@ -1,13 +1,17 @@
 <template>
     <div class="custom-overview">
+        <div class="header-actions">
+            <a href="/gantt-chart" target="_blank" class="gantt-link">📊 Xem biểu đồ Gantt</a>
+        </div>
         <table class="custom-table">
             <thead>
             <tr>
-                <th>Khách hàng</th>
-                <th>Loại</th>
+                <th style="width: 200px">Khách hàng</th>
+                <th style="width: 100px">Loại</th>
                 <th>Tên</th>
-                <th>Task liên quan</th>
-                <th>Người phụ trách</th>
+                <th>Task đang chạy</th>
+                <th style="width: 150px">Trạng thái</th>
+                <th style="width: 200px">Người phụ trách</th>
                 <th>Tiến độ (%)</th>
             </tr>
             </thead>
@@ -21,7 +25,7 @@
                                 <td
                                     v-if="groupIdx === 0 && i === 0 && taskIdx === 0"
                                     :rowspan="getTotalRows(customer)"
-                                    class="customer-cell"
+                                    class="customer-cell vertical-text"
                                 >
                                     {{ customer.customer_name }}
                                 </td>
@@ -46,20 +50,25 @@
 
                                 <!-- Task -->
                                 <td :class="['task-cell', group.type]">
-                    <span v-if="task.title">
-                      {{ task.title }}
-                      <span class="task-status" :class="task.status">
-                        {{ task.status }}
-                      </span>
-                    </span>
+                                    <span v-if="task.title">
+                                      {{ task.title }}
+                                    </span>
                                     <span v-else class="muted">Chưa có nhiệm vụ</span>
+                                </td>
+
+                                <!-- Trạng thái -->
+                                <td :class="['status-cell', group.type]">
+                                  <span v-if="task.status" class="task-status" :class="task.status">
+                                    {{ getTaskStatusText(task.status) }}
+                                  </span>
+                                    <span v-else class="muted">—</span>
                                 </td>
 
                                 <!-- Người phụ trách -->
                                 <td :class="['assignee-cell', group.type]">
-                    <span v-if="task.assignee" class="assignee-badge">
-                      👤 {{ task.assignee.name }}
-                    </span>
+                                    <span v-if="task.assignee" class="assignee-badge">
+                                      👤 {{ task.assignee.name }}
+                                    </span>
                                     <span v-else class="muted">Chưa có</span>
                                 </td>
 
@@ -69,9 +78,9 @@
                                     :rowspan="item.tasks.length || 1"
                                     class="progress-cell"
                                 >
-                    <span v-if="item.progress !== null" class="progress-badge">
-                      📊 {{ item.progress }}%
-                    </span>
+                                    <span v-if="item.progress !== null" class="progress-badge">
+                                      📊 {{ item.progress }}%
+                                    </span>
                                     <span v-else class="muted">—</span>
                                 </td>
                             </tr>
@@ -81,9 +90,20 @@
             </template>
             </tbody>
         </table>
+
+        <!-- ✅ Pagination -->
+        <a-pagination
+            v-model:current="pagination.page"
+            :total="pagination.total"
+            :page-size="pagination.limit"
+            show-size-changer
+            :page-size-options="['5', '10', '20', '50']"
+            @change="fetchOverview"
+            @showSizeChange="onPageSizeChange"
+            style="margin-top: 16px; text-align: right"
+        />
     </div>
 </template>
-
 
 <script setup>
 import { ref, onMounted } from 'vue'
@@ -91,6 +111,11 @@ import { getProjectOverviewAPI } from '@/api/project'
 import { message } from 'ant-design-vue'
 
 const data = ref([])
+const pagination = ref({
+    page: 1,
+    limit: 10,
+    total: 0
+})
 
 const getGroupedRows = (customer) => {
     const group = (items, type, allTasks, allAssignees) => {
@@ -102,32 +127,51 @@ const getGroupedRows = (customer) => {
                     .map(t => ({
                         title: t.title,
                         status: t.status,
+                        priority: t.priority,
+                        created_at: t.created_at,
                         assigned_to: t.assigned_to,
                         assignee: allAssignees.find(a => String(a.id) === String(t.assigned_to)) || null
                     }))
+                    .sort((a, b) => {
+                        // Ưu tiên: quá hạn
+                        if (a.status === 'overdue' && b.status !== 'overdue') return -1;
+                        if (a.status !== 'overdue' && b.status === 'overdue') return 1;
+
+                        // Ưu tiên: priority
+                        const priorityRank = { high: 1, medium: 2, low: 3, null: 4 };
+                        const prioA = priorityRank[a.priority] || 4;
+                        const prioB = priorityRank[b.priority] || 4;
+                        if (prioA !== prioB) return prioA - prioB;
+
+                        // Mới hơn lên trước
+                        return new Date(b.created_at) - new Date(a.created_at);
+                    });
 
                 const progress = tasks.length
                     ? Math.round((tasks.filter(t => t.status === 'done').length / tasks.length) * 100)
-                    : null
+                    : null;
 
                 return {
                     title: i.title,
                     tasks,
                     progress
-                }
+                };
             })
-        }
-    }
+        };
+    };
 
-    const result = []
-    const allTasks = customer.tasks || []
-    const assignees = customer.assignees || []
+    const result = [];
+    const allTasks = customer.tasks || [];
+    const assignees = customer.assignees || [];
 
-    if (customer.biddings?.length) result.push(group(customer.biddings, 'bidding', allTasks, assignees))
-    if (customer.contracts?.length) result.push(group(customer.contracts, 'contract', allTasks, assignees))
+    if (customer.biddings?.length)
+        result.push(group(customer.biddings, 'bidding', allTasks, assignees));
+    if (customer.contracts?.length)
+        result.push(group(customer.contracts, 'contract', allTasks, assignees));
 
-    return result
-}
+    return result;
+};
+
 
 const getTotalRows = (customer) => {
     let total = 0
@@ -147,12 +191,37 @@ const getTotalRows = (customer) => {
 
 const fetchOverview = async () => {
     try {
-        const res = await getProjectOverviewAPI()
+        const res = await getProjectOverviewAPI({
+            page: pagination.value.page,
+            limit: pagination.value.limit
+        })
         data.value = res.data.data
+        pagination.value.total = res.data.total
     } catch (e) {
         message.error('Không thể tải dữ liệu tổng quan')
     }
 }
+
+const onPageSizeChange = (current, size) => {
+    pagination.value.page = 1
+    pagination.value.limit = size
+    fetchOverview()
+}
+
+const getTaskStatusText = (status) => {
+    switch (status) {
+        case 'todo':
+            return 'Chưa làm';
+        case 'doing':
+            return 'Đang làm';
+        case 'done':
+            return 'Đã hoàn thành';
+        case 'overdue':
+            return 'Quá hạn';
+        default:
+            return 'Không xác định';
+    }
+};
 
 onMounted(fetchOverview)
 </script>
@@ -161,7 +230,6 @@ onMounted(fetchOverview)
 .custom-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 16px;
     font-size: 14px;
     background-color: #fff;
 }
@@ -171,7 +239,8 @@ onMounted(fetchOverview)
     text-align: center;
     font-weight: 600;
     color: #333;
-    border-bottom: 2px solid #ccc;
+    padding: 15px 10px;
+    border: 1px solid #e0e0e0;
 }
 
 .custom-table td {
@@ -181,7 +250,6 @@ onMounted(fetchOverview)
     color: #333;
 }
 
-/* ✅ Hover highlight */
 .row-hover:hover {
     background-color: #f0faff;
     transition: background-color 0.2s ease;
@@ -244,7 +312,6 @@ onMounted(fetchOverview)
     text-align: center;
 }
 
-/* ✅ Biểu tượng trạng thái task */
 .task-status {
     font-size: 12px;
     margin-left: 6px;
@@ -269,7 +336,6 @@ onMounted(fetchOverview)
     color: #52c41a;
 }
 
-/* ✅ Badge người phụ trách */
 .assignee-badge {
     display: inline-block;
     background-color: #e6f4ff;
@@ -294,5 +360,76 @@ onMounted(fetchOverview)
     color: #999;
     font-style: italic;
 }
+
+.header-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+.gantt-link {
+    font-weight: 500;
+    color: #096dd9;
+    text-decoration: none;
+}
+
+.gantt-link:hover {
+    text-decoration: underline;
+}
+
+/* 🎯 Nút cố định dưới góc phải */
+.floating-gantt-link {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #1890ff;
+    color: white;
+    padding: 10px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    font-weight: bold;
+    z-index: 1000;
+    transition: background 0.3s;
+}
+
+.floating-gantt-link:hover {
+    background: #40a9ff;
+}
+
+.task-status {
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.task-status.todo {
+    background-color: #e6f7ff;
+    color: #1890ff;
+}
+
+.task-status.doing {
+    background-color: #fffbe6;
+    color: #faad14;
+}
+
+.task-status.done {
+    background-color: #f6ffed;
+    color: #52c41a;
+}
+
+.task-status.overdue {
+    background-color: #fff1f0;
+    color: #f5222d;
+}
+/*
+.vertical-text {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+} */
 
 </style>
