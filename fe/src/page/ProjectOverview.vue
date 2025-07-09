@@ -261,7 +261,7 @@ onMounted(fetchOverview)
     font-size: 15px;
     color: #1d39c4;
 }
-
+/*
 .type-cell.bidding {
     background-color: #f9f0ff;
     color: #722ed1;
@@ -305,6 +305,8 @@ onMounted(fetchOverview)
     background-color: #fff7eb;
     color: #d46b08;
 }
+
+ */
 
 .progress-cell {
     font-weight: bold;
