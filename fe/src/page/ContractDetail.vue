@@ -147,8 +147,18 @@
                             </a-select-option>
                         </a-select>
                     </a-descriptions-item>
-                    <a-descriptions-item label="Ngày tạo">{{ formatDate(selectedStep.created_at) }}</a-descriptions-item>
-                    <a-descriptions-item label="Ngày cập nhật">{{ formatDate(selectedStep.updated_at) }}</a-descriptions-item>
+                    <a-descriptions-item label="Ngày bắt đầu /kết thúc">
+                        <a-typography-text type="secondary" v-if="!showEditDate" @click="editDate">
+                            {{ formatDate(selectedStep.created_at) }} - {{ formatDate(selectedStep.updated_at) }}
+                        </a-typography-text>
+                        <a-range-picker
+                            v-model:value="dateRange"
+                            v-if="showEditDate"
+                            style="width: 100%"
+                            :allowClear="false"
+                            @change="updateStepStartEndDate"
+                        />
+                    </a-descriptions-item>
                 </a-descriptions>
 
                 <a-divider>Danh sách công việc thuộc bước này</a-divider>
@@ -194,7 +204,7 @@ import {onMounted, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {message} from 'ant-design-vue'
 import {formatCurrency, formatDate} from '@/utils/formUtils'
-
+import dayjs from 'dayjs'
 import {getContractAPI} from '@/api/contract'
 import { getBiddingsAPI } from '@/api/bidding'
 
@@ -227,7 +237,22 @@ const customerName = ref('Đang tải...')
 const allTasks = ref([])
 const relatedTasks = ref([])
 
+const showEditDate = ref(false)
+const dateRange = ref([])
 
+const editDate = () => {
+    showEditDate.value = true
+    dateRange.value = [dayjs(selectedStep.value.start_date), dayjs(selectedStep.value.end_date)]
+}
+const updateStepStartEndDate = (value, option) => {
+    if(value.length === 2) {
+        selectedStep.value.start_date = value[0].format('YYYY-MM-DD')
+        selectedStep.value.end_date = value[1].format('YYYY-MM-DD')
+    }else{
+        // dateRange.value = []
+    }
+    showEditDate.value = false
+}
 const fetchBiddings = async () => {
     try {
         const res = await getBiddingsAPI()
