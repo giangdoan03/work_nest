@@ -75,16 +75,21 @@
                         </a-form-item>
                     </a-col>
                 </a-row>
-                <a-row :gutter="16">
-                    <a-col :span="24">
-                        <a-form-item label="Gói thầu đã trúng" name="bidding_id">
+                <a-row :gutter="[16, 0]">
+                    <a-col :span="24" >
+                        <a-checkbox v-model:checked="formData.is_awarded" style="margin-bottom: 12px;" @change="handleIsAwardedChange">
+                            Đã trúng thầu
+                        </a-checkbox>
+                    </a-col>
+                    <a-col :span="24" v-if="formData.is_awarded">
+                        <a-form-item label="Gói thầu đã trúng" name="bidding_id" >
                             <a-select
-                                    v-model:value="formData.bidding_id"
-                                    :options="awardedBiddings"
-                                    placeholder="Chọn gói thầu đã trúng"
-                                    allow-clear
-                                    show-search
-                                    :filter-option="(input, option) =>option.label.toLowerCase().includes(input.toLowerCase())"
+                                v-model:value="formData.bidding_id"
+                                :options="awardedBiddings"
+                                placeholder="Chọn gói thầu đã trúng"
+                                allow-clear
+                                show-search
+                                :filter-option="(input, option) =>option.label.toLowerCase().includes(input.toLowerCase())"
                             />
                         </a-form-item>
                     </a-col>
@@ -176,6 +181,7 @@ const formData = ref({
     name: "",
     code: "",
     status: 0, // ✅ sửa từ "pending" → 0 (tương ứng "Nháp")
+    is_awarded: true,
     start_date: null,
     end_date: null,
     description: "",
@@ -311,6 +317,10 @@ const rules = computed(() => {
         customer_id: [{ required: true, message: 'Không tìm thấy khách hàng', trigger: 'change' }],
     }
 })
+
+const handleIsAwardedChange = (checked) => {
+    formData.value.bidding_id = null
+}
 
 const getContracts = async () => {
     loading.value = true

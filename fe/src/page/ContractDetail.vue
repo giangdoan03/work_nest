@@ -89,6 +89,20 @@
                                 </a>
                                 <span v-else>Không xác định</span>
                             </p>
+                            <p>
+                                Ngày bắt đầu:
+                                <span v-if="step.start_date">
+                                    {{ formatDate(step.start_date) }}
+                                </span>
+                                <span v-else> --</span>
+                            </p>
+                            <p>
+                                Ngày kết thúc:
+                                <span v-if="step.end_date">
+                                    {{ formatDate(step.end_date) }}
+                                </span>
+                                <span v-else> --</span>
+                            </p>
                         </div>
                     </template>
                 </a-step>
@@ -147,8 +161,29 @@
                             </a-select-option>
                         </a-select>
                     </a-descriptions-item>
-                    <a-descriptions-item label="Ngày tạo">{{ formatDate(selectedStep.created_at) }}</a-descriptions-item>
-                    <a-descriptions-item label="Ngày cập nhật">{{ formatDate(selectedStep.updated_at) }}</a-descriptions-item>
+                    <a-descriptions-item label="Ngày bắt đầu">
+                        <a-typography-text type="secondary" v-if="!showEditDateStart" @click="editDateStart">
+                            {{ formatDate(selectedStep.start_date) }}
+                        </a-typography-text>
+                        <a-date-picker
+                            v-if="showEditDateStart"
+                            style="width: 100%"
+                            v-model:value="dateStart"
+                            @change="updateStepStartDate"
+                        />
+                    </a-descriptions-item>
+                    <a-descriptions-item label="Ngày kết thúc">
+                        <a-typography-text type="secondary" v-if="!showEditDateEnd" @click="editDateEnd">
+                            {{ formatDate(selectedStep.end_date) }}
+                        </a-typography-text>
+                        <a-date-picker
+                            :disabledDate="disabledDate"
+                            v-if="showEditDateEnd"
+                            style="width: 100%"
+                            v-model:value="dateEnd"
+                            @change="updateStepEndDate"
+                        />
+                    </a-descriptions-item>
                 </a-descriptions>
 
                 <a-divider>Danh sách công việc thuộc bước này</a-divider>
@@ -194,7 +229,7 @@ import {onMounted, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {message} from 'ant-design-vue'
 import {formatCurrency, formatDate} from '@/utils/formUtils'
-
+import dayjs from 'dayjs'
 import {getContractAPI} from '@/api/contract'
 import { getBiddingsAPI } from '@/api/bidding'
 
@@ -227,7 +262,50 @@ const customerName = ref('Đang tải...')
 const allTasks = ref([])
 const relatedTasks = ref([])
 
-
+const showEditDate = ref(false)
+const dateStart = ref()
+const dateEnd = ref()
+const showEditDateStart = ref(false)
+const showEditDateEnd = ref(false)
+const editDateStart = () => {
+    dateStart.value = dayjs(selectedStep.value.start_date)
+    showEditDateStart.value = true
+    showEditDateEnd.value = false
+}
+const editDateEnd = () => {
+    dateEnd.value = dayjs(selectedStep.value.end_date)
+    showEditDateStart.value = false
+    showEditDateEnd.value = true
+}
+const updateStepStartDate = async (value, option) => {
+    selectedStep.value.start_date = value.format('YYYY-MM-DD');
+    try {
+        await updateContractStepAPI(selectedStep.value.id, { start_date: selectedStep.value.start_date })
+        message.success('Cập nhật ngày bắt đầu thành công')
+        showEditDateStart.value = false
+        await fetchSteps()
+    } catch (e) {
+        const msg = 'Không thể cập nhật ngày bắt đầu'
+        message.error(msg)
+        console.warn('Lỗi cập nhật ngày bắt đầu:', msg)
+    }
+}
+const updateStepEndDate = async (value, option) => {
+    selectedStep.value.end_date = value.format('YYYY-MM-DD')
+    try {
+        await updateContractStepAPI(selectedStep.value.id, { end_date: selectedStep.value.end_date })
+        message.success('Cập nhật ngày kết thúc thành công')
+        showEditDateEnd.value = false
+        await fetchSteps()
+    } catch (e) {
+        const msg = 'Không thể cập nhật ngày kết thúc'
+        message.error(msg)
+        console.warn('Lỗi cập nhật ngày kết thúc:', msg)
+    }
+}
+const disabledDate = current => {
+  return current && current < dayjs(selectedStep.value.start_date).endOf('day');
+};
 const fetchBiddings = async () => {
     try {
         const res = await getBiddingsAPI()
