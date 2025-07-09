@@ -106,10 +106,18 @@
                                 <span v-else>Không xác định</span>
                             </p>
                             <p>
-                                Ngày bắt đầu: {{ formatDate(step.start_date) }}
+                                Ngày bắt đầu:
+                                <span v-if="step.start_date">
+                                    {{ formatDate(step.start_date) }}
+                                </span>
+                                <span v-else> --</span>
                             </p>
                             <p>
-                                Ngày kết thúc: {{ formatDate(step.end_date) }}
+                                Ngày kết thúc:
+                                <span v-if="step.end_date">
+                                    {{ formatDate(step.end_date) }}
+                                </span>
+                                <span v-else> --</span>
                             </p>
 
                         </div>
@@ -122,7 +130,7 @@
 
         <!-- Drawer hiển thị chi tiết bước -->
         <a-drawer
-            title="Danh sách nhiệm vụ"
+            title="Chi tiết bước xử lý"
             placement="right"
             :visible="drawerVisible"
             @close="drawerVisible = false"
@@ -132,73 +140,80 @@
                 <a-descriptions
                     size="small"
                     :column="1"
+                    bordered
                 >
-                    <!--                    <a-descriptions-item label="Bước số">{{ selectedStep.step_number }}</a-descriptions-item>-->
-                    <!--                    <a-descriptions-item label="Tiêu đề">{{ selectedStep.title }}</a-descriptions-item>-->
-                    <!--                    <a-descriptions-item label="Phòng ban">-->
-                    <!--                        <template #default>-->
-                    <!--                            <a-tag-->
-                    <!--                                v-for="(dep, index) in parseDepartment(selectedStep.department)"-->
-                    <!--                                :key="index"-->
-                    <!--                                color="blue"-->
-                    <!--                                style="margin-right: 4px;"-->
-                    <!--                            >-->
-                    <!--                                {{ dep }}-->
-                    <!--                            </a-tag>-->
-                    <!--                        </template>-->
-                    <!--                    </a-descriptions-item>-->
-                    <!--                    <a-descriptions-item label="Trạng thái">-->
-                    <!--                        <a-select-->
-                    <!--                            v-model:value="selectedStep.status"-->
-                    <!--                            style="width: 100%"-->
-                    <!--                            @change="(value) => updateStepStatus(value, selectedStep)"-->
-                    <!--                        >-->
-                    <!--                            <a-select-option value="0">Chưa bắt đầu</a-select-option>-->
-                    <!--                            <a-select-option value="1">Đang xử lý</a-select-option>-->
-                    <!--                            <a-select-option value="2">Hoàn thành</a-select-option>-->
-                    <!--                            <a-select-option value="3">Bỏ qua</a-select-option>-->
-                    <!--                        </a-select>-->
-                    <!--                    </a-descriptions-item>-->
-                    <!--                    <a-descriptions-item label="Người phụ trách">-->
-                    <!--                        <a-select-->
-                    <!--                            v-model:value="selectedStep.assigned_to"-->
-                    <!--                            style="width: 100%"-->
-                    <!--                            placeholder="Chọn người phụ trách"-->
-                    <!--                            @change="(value) => updateStepAssignedTo(value, selectedStep)"-->
-                    <!--                            :allowClear="true"-->
-                    <!--                        >-->
-                    <!--                            <a-select-option-->
-                    <!--                                v-for="user in users"-->
-                    <!--                                :key="user.id"-->
-                    <!--                                :value="user.id"-->
-                    <!--                            >-->
-                    <!--                                {{ user.name }}-->
-                    <!--                            </a-select-option>-->
-                    <!--                        </a-select>-->
-                    <!--                    </a-descriptions-item>-->
+                    <a-descriptions-item label="Bước số">{{ selectedStep.step_number }}</a-descriptions-item>
+                    <a-descriptions-item label="Tiêu đề">{{ selectedStep.title }}</a-descriptions-item>
+                    <a-descriptions-item label="Phòng ban">
+                        <template #default>
+                            <a-tag
+                                v-for="(dep, index) in parseDepartment(selectedStep.department)"
+                                :key="index"
+                                color="blue"
+                                style="margin-right: 4px;"
+                            >
+                                {{ dep }}
+                            </a-tag>
+                        </template>
+                    </a-descriptions-item>
+                    <a-descriptions-item label="Trạng thái">
+                        <a-select
+                            v-model:value="selectedStep.status"
+                            style="width: 100%"
+                        @change="(value) => updateStepStatus(value, selectedStep)"
+                    >
+                        <a-select-option value="0">Chưa bắt đầu</a-select-option>
+                        <a-select-option value="1">Đang xử lý</a-select-option>
+                            <a-select-option value="2">Hoàn thành</a-select-option>
+                            <a-select-option value="3">Bỏ qua</a-select-option>
+                        </a-select>
+                    </a-descriptions-item>
+                    <a-descriptions-item label="Người phụ trách">
+                        <a-select
+                            v-model:value="selectedStep.assigned_to"
+                            style="width: 100%"
+                            placeholder="Chọn người phụ trách"
+                            @change="(value) => updateStepAssignedTo(value, selectedStep)"
+                            :allowClear="true"
+                        >
+                            <a-select-option
+                                v-for="user in users"
+                                :key="user.id"
+                                :value="user.id"
+                            >
+                                {{ user.name }}
+                            </a-select-option>
+                        </a-select>
+                    </a-descriptions-item>
 
-                    <!--                    <a-descriptions-item label="Ngày bắt đầu">-->
-                    <!--                        <a-date-picker-->
-                    <!--                            v-model:value="selectedStep.start_date"-->
-                    <!--                            format="YYYY-MM-DD"-->
-                    <!--                            style="width: 100%"-->
-                    <!--                            @change="(date) => updateStepDate('start_date', date, selectedStep)"-->
-                    <!--                        />-->
-                    <!--                    </a-descriptions-item>-->
-
-                    <!--                    <a-descriptions-item label="Ngày kết thúc">-->
-                    <!--                        <a-date-picker-->
-                    <!--                            v-model:value="selectedStep.end_date"-->
-                    <!--                            format="YYYY-MM-DD"-->
-                    <!--                            style="width: 100%"-->
-                    <!--                            @change="(date) => updateStepDate('end_date', date, selectedStep)"-->
-                    <!--                        />-->
-                    <!--                    </a-descriptions-item>-->
+                    <a-descriptions-item label="Ngày bắt đầu">
+                        <a-typography-text type="secondary" v-if="!showEditDateStart" @click="editDateStart">
+                            {{ formatDate(selectedStep.start_date) }}
+                        </a-typography-text>
+                        <a-date-picker
+                            v-if="showEditDateStart"
+                            style="width: 100%"
+                            v-model:value="dateStart"
+                            @change="updateStepStartDate"
+                        />
+                    </a-descriptions-item>
+                    <a-descriptions-item label="Ngày kết thúc">
+                        <a-typography-text type="secondary" v-if="!showEditDateEnd" @click="editDateEnd">
+                            {{ formatDate(selectedStep.end_date) }}
+                        </a-typography-text>
+                        <a-date-picker
+                            :disabledDate="disabledDate"
+                            v-if="showEditDateEnd"
+                            style="width: 100%"
+                            v-model:value="dateEnd"
+                            @change="updateStepEndDate"
+                        />
+                    </a-descriptions-item>
 
                 </a-descriptions>
 
 
-                <!--                <a-divider>Danh sách công việc của bước này</a-divider>-->
+                <a-divider>Danh sách công việc của bước này</a-divider>
 
                 <!-- Nếu không có task -->
                 <a-empty v-if="relatedTasks.length === 0" description="Không có công việc"/>
@@ -312,6 +327,50 @@ import {getTasksByBiddingStep} from '@/api/task' // nếu chưa import
 const allTasks = ref([])
 const relatedTasks = ref([])
 
+const dateStart = ref()
+const dateEnd = ref()
+const showEditDateStart = ref(false)
+const showEditDateEnd = ref(false)
+const editDateStart = () => {
+    dateStart.value = dayjs(selectedStep.value.start_date)
+    showEditDateStart.value = true
+    showEditDateEnd.value = false
+}
+const editDateEnd = () => {
+    dateEnd.value = dayjs(selectedStep.value.end_date)
+    showEditDateStart.value = false
+    showEditDateEnd.value = true
+}
+const updateStepStartDate = async (value, option) => {
+    selectedStep.value.start_date = value.format('YYYY-MM-DD');
+    try {
+        await updateBiddingStepAPI(selectedStep.value.id, { start_date: selectedStep.value.start_date })
+        message.success('Cập nhật ngày bắt đầu thành công')
+        showEditDateStart.value = false
+        await fetchSteps()
+    } catch (e) {
+        const msg = 'Không thể cập nhật ngày bắt đầu'
+        message.error(msg)
+        console.warn('Lỗi cập nhật ngày bắt đầu:', msg)
+    }
+}
+const updateStepEndDate = async (value, option) => {
+    selectedStep.value.end_date = value.format('YYYY-MM-DD')
+    try {
+        await updateBiddingStepAPI(selectedStep.value.id, { end_date: selectedStep.value.end_date })
+        message.success('Cập nhật ngày kết thúc thành công')
+        showEditDateEnd.value = false
+        await fetchSteps()
+    } catch (e) {
+        console.log('e', e)
+        const msg = 'Không thể cập nhật ngày kết thúc'
+        message.error(msg)
+        console.warn('Lỗi cập nhật ngày kết thúc:', msg)
+    }
+}
+const disabledDate = current => {
+  return current && current < dayjs(selectedStep.value.start_date).endOf('day');
+};
 const openStepDrawer = async (step) => {
     selectedStep.value = {...step}
     console.log('selectedStep.value', selectedStep.value)
