@@ -12,7 +12,7 @@ class ContractStepModel extends Model
 
     protected $allowedFields = [
         'contract_id', 'customer_id', 'step_number', 'title', 'status',
-        'assigned_to', 'start_date', 'due_date', 'completed_at', 'department'
+        'assigned_to', 'start_date', 'due_date', 'completed_at', 'department', 'end_date'
     ];
     protected $useTimestamps = true;
 }

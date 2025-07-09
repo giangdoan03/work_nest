@@ -65,9 +65,15 @@ class ContractStepController extends ResourceController
             $data['completed_at'] = date('Y-m-d H:i:s');
         }
 
+        // ✅ Tránh update khi không có dữ liệu gì
+        if (empty($data)) {
+            return $this->failValidationErrors('Không có dữ liệu nào để cập nhật.');
+        }
+
         $this->model->update($id, $data);
         return $this->respond(['status' => 'success', 'message' => 'Step updated']);
     }
+
 
 
     public function delete($id = null)
