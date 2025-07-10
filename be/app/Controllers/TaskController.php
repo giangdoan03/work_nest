@@ -7,6 +7,7 @@ use App\Models\BiddingStepTemplateModel;
 use App\Models\ContractStepModel;
 use App\Models\ContractStepTemplateModel;
 use App\Models\TaskApprovalModel;
+use App\Models\TaskExtensionModel;
 use App\Models\TaskModel;
 use App\Enums\TaskStatus;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -186,12 +187,100 @@ class TaskController extends ResourceController
             $data['status'] = TaskStatus::REQUEST_APPROVAL;
         }
 
+        // ✅ Ghi lại lượt gia hạn nếu thay đổi end_date
+        $oldEndDate = $task['end_date'] ?? null;
+        $newEndDate = $data['end_date'] ?? null;
+
+        if ($oldEndDate && $newEndDate && $oldEndDate !== $newEndDate) {
+            $session = session();
+            $userId = $session->get('user_id');
+
+            $extensionModel = new TaskExtensionModel();
+            $extensionModel->insert([
+                'task_id' => $id,
+                'extended_by' => $userId,
+                'old_end_date' => $oldEndDate,
+                'new_end_date' => $newEndDate,
+                'reason' => $data['extend_reason'] ?? null,
+            ]);
+        }
+
         if (!$this->model->update($id, $data)) {
             return $this->failValidationErrors($this->model->errors());
         }
 
         return $this->respond(['message' => 'Task updated']);
     }
+
+
+
+
+    public function extendDeadline($id = null): ResponseInterface
+    {
+        $task = $this->model->find($id);
+
+        if (!$task) {
+            return $this->failNotFound('Task not found');
+        }
+
+        $data = $this->request->getJSON(true);
+        $newEndDate = $data['new_end_date'] ?? null;
+        $reason = $data['reason'] ?? null;
+        $userId = user_id(); // Assuming auth helper returns current user ID
+
+        if (!$newEndDate) {
+            return $this->failValidationErrors(['new_end_date' => 'New end date is required']);
+        }
+
+        $extensionModel = new TaskExtensionModel();
+        $extensionModel->insert([
+            'task_id' => $id,
+            'extended_by' => $userId,
+            'old_end_date' => $task['end_date'],
+            'new_end_date' => $newEndDate,
+            'reason' => $reason
+        ]);
+
+        $this->model->update($id, [
+            'end_date' => $newEndDate
+        ]);
+
+        return $this->respond(['message' => 'Deadline extended successfully']);
+    }
+
+
+    public function countExtensions($id = null): ResponseInterface
+    {
+        $session = session();
+        $userId = $session->get('user_id');
+        $extensionModel = new TaskExtensionModel();
+
+        $count = $extensionModel
+            ->where('task_id', $id)
+            ->where('extended_by', $userId)
+            ->countAllResults();
+
+        return $this->respond([
+            'task_id' => $id,
+            'user_id' => $userId,
+            'extension_count' => $count
+        ]);
+    }
+
+    public function getExtensions($id = null): ResponseInterface
+    {
+        $extensionModel = new TaskExtensionModel();
+        $extensions = $extensionModel
+            ->where('task_id', $id)
+            ->orderBy('created_at', 'DESC')
+            ->findAll();
+
+        return $this->respond([
+            'task_id' => $id,
+            'extensions' => $extensions
+        ]);
+    }
+
 
 
     public function delete($id = null)

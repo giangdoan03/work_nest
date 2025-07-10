@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\TaskModel;
+use App\Models\TaskExtensionModel;
 use CodeIgniter\RESTful\ResourceController;
 
 class MyTaskController extends ResourceController
@@ -23,11 +24,9 @@ class MyTaskController extends ResourceController
         $filters = $this->request->getGet();
         $timeframe = $filters['timeframe'] ?? 'all';
 
-        // 🔁 Dùng cột assigned_to trong bảng tasks
         $builder = $this->model->builder()
             ->where('assigned_to', $userId);
 
-        // 👉 Lọc theo thời gian
         switch ($timeframe) {
             case 'day':
                 $builder->where('DATE(start_date)', date('Y-m-d'));
@@ -45,6 +44,16 @@ class MyTaskController extends ResourceController
         }
 
         $tasks = $builder->get()->getResult();
+
+        // ✅ Đếm số lần gia hạn
+        $extensionModel = new TaskExtensionModel();
+
+        foreach ($tasks as &$task) {
+            $count = $extensionModel
+                ->where('task_id', $task->id)
+                ->countAllResults();
+            $task->extension_count = $count;
+        }
 
         return $this->respond([
             'data' => $tasks,

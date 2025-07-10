@@ -81,6 +81,16 @@ $routes->group('api', function ($routes) {
     $routes->post('tasks/(:num)/comments', 'CommentController::create/$1');
     $routes->get('tasks/(:num)/subtasks', 'TaskController::subtasks/$1');
 
+    // 📌 Lưu lịch sử gia hạn (nếu cần gọi riêng)
+    $routes->post('tasks/(:num)/extend', 'TaskController::extendDeadline/$1');
+
+// 📌 Đếm số lần gia hạn của user hiện tại với task
+    $routes->get('tasks/(:num)/extensions/count', 'TaskController::countExtensions/$1');
+
+// 📌 Lấy danh sách các lần đã gia hạn deadline
+    $routes->get('tasks/(:num)/extensions', 'TaskController::getExtensions/$1');
+
+
     $routes->put('subtasks/(:num)', 'TaskController::updateSubtask/$1');
     $routes->delete('subtasks/(:num)', 'TaskController::deleteSubtask/$1');
 

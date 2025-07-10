@@ -49,41 +49,57 @@
                             <a-row :gutter="16">
                                 <a-col :span="12">
                                     <a-form-item label="Thời gian" name="time">
-                                        <a-typography-text v-if="!isEditMode">{{ (formData.start_date ? (formData.start_date) : "Trống") + " → " + (formData.end_date ? (formData.end_date) : "Trống") }}</a-typography-text>
-                                        <a-config-provider :locale="locale" v-else>
-                                            <a-range-picker v-model:value="dateRange" format="YYYY-MM-DD" @change="changeDateTime" style="width: 100%;"></a-range-picker>
-                                        </a-config-provider>
+                                        <template v-if="!isEditMode">
+                                            <a-typography-text>
+                                                {{ (formData.start_date || "Trống") + " → " + (formData.end_date || "Trống") }}
+                                            </a-typography-text>
+                                        </template>
+                                        <template v-else>
+                                            <a-config-provider :locale="locale">
+                                                <a-range-picker
+                                                        v-model:value="dateRange"
+                                                        format="YYYY-MM-DD"
+                                                        @change="changeDateTime"
+                                                        style="width: 100%;"
+                                                />
+                                            </a-config-provider>
+                                        </template>
+
+                                        <!-- ✅ Luôn hiển thị lịch sử gia hạn -->
+                                        <a-timeline v-if="extensions.length" style="margin-top: 8px;">
+                                            <a-timeline-item v-for="item in sortedExtensions" :key="item.id">
+                                                <template #dot>📅</template>
+                                                <span :style="{ color: extensionErrors[item.id] ? 'red' : 'inherit' }">
+                                                    {{ formatDate(item.old_end_date) }} → <b>{{ formatDate(item.new_end_date) }}</b>
+                                                    <span v-if="item.reason">({{ item.reason }})</span>
+                                                    <span v-if="extensionErrors[item.id]" style="margin-left: 8px; font-weight: bold;">
+                                                        {{ extensionErrors[item.id] }}
+                                                    </span>
+                                                </span>
+                                            </a-timeline-item>
+                                        </a-timeline>
                                     </a-form-item>
                                 </a-col>
+
+
                                 <a-col :span="12">
                                     <a-form-item label="Độ ưu tiên" name="priority">
-                                        <a-tag v-if="!isEditMode" :color="checkPriority(formData.priority).color">{{ checkPriority(formData.priority).label }}</a-tag>
+                                        <a-tag v-if="!isEditMode" :color="checkPriority(formData.priority).color">
+                                            {{ checkPriority(formData.priority).label }}
+                                        </a-tag>
                                         <a-select v-else v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên" />
                                     </a-form-item>
                                 </a-col>
+
                                 <a-col :span="12">
                                     <a-form-item label="Trạng thái" name="status">
                                         <template v-if="!isEditMode">
-                                            <a-tag
-                                                v-if="formData.approval_status === 'approved'"
-                                                color="success"
-                                            >
-                                                Hoàn thành
-                                            </a-tag>
-                                            <a-tag
-                                                v-else
-                                                :color="checkStatus(formData.status).color"
-                                            >
+                                            <a-tag v-if="formData.approval_status === 'approved'" color="success">Hoàn thành</a-tag>
+                                            <a-tag v-else :color="checkStatus(formData.status).color">
                                                 {{ checkStatus(formData.status).label }}
                                             </a-tag>
                                         </template>
-
-                                        <a-select
-                                            v-else
-                                            v-model:value="formData.status"
-                                            :options="statusOption"
-                                            placeholder="Chọn trạng thái"
-                                        />
+                                        <a-select v-else v-model:value="formData.status" :options="statusOption" placeholder="Chọn trạng thái" />
                                     </a-form-item>
                                 </a-col>
 
@@ -107,7 +123,6 @@
                                     </a-form-item>
                                 </a-col>
 
-
                                 <a-col :span="12">
                                     <a-form-item label="Gắn tới người dùng" name="assigned_to">
                                         <a-typography-text v-if="!isEditMode">{{ getUserById(formData.assigned_to) }}</a-typography-text>
@@ -116,6 +131,7 @@
                                 </a-col>
                             </a-row>
                         </div>
+
                         <div class="task-in-end">
                             <a-row :gutter="16">
                                 <a-col :span="24">
@@ -267,6 +283,11 @@
     import { useUserStore } from '@/stores/user';
     import {updateStepTemplateAPI} from "@/api/step-template.js";
     import { getApprovalHistoryByTask } from '@/api/taskApproval'
+    import {getTaskExtensions} from "../../api/task";
+    import { formatDate } from '@/utils/formUtils';
+
+    const extensions = ref([]);
+    const extensionHistory = ref([]);
 
 
     const route = useRoute();
@@ -353,6 +374,31 @@
         }
         return "Trống"
     }
+
+    const sortedExtensions = computed(() => {
+        return [...extensionHistory.value].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+    });
+
+    const extensionErrors = computed(() => {
+        const result = {};
+        let prevNewDate = null;
+
+        sortedExtensions.value.forEach((item) => {
+            const oldDate = new Date(item.old_end_date);
+            const newDate = new Date(item.new_end_date);
+
+            // Điều kiện lỗi: new < old hoặc old ≠ new của lần trước
+            if (newDate < oldDate || (prevNewDate && oldDate.getTime() !== prevNewDate.getTime())) {
+                result[item.id] = '❗Không hợp lệ';
+            }
+
+            prevNewDate = newDate;
+        });
+
+        return result;
+    });
+
+
     const linkedIdOption = computed(()=>{
         if(formData.value.linked_type === 'bidding'){
             return listBidding.value.map(ele => {
@@ -532,13 +578,17 @@
             formData.value.current_level = 1;
         }
 
-        const hasInvalidTitle = pendingFiles.value.some(f => !f.title?.trim());
+        // ✅ Nếu đổi ngày kết thúc → thêm lý do gia hạn
+        const isEndDateChanged = formData.value.end_date !== formDataSave.value.end_date;
+        if (isEndDateChanged) {
+            formData.value.extend_reason = 'Gia hạn thời gian'; // Bạn có thể dùng modal để hỏi lý do cụ thể nếu muốn
+        }
 
+        const hasInvalidTitle = pendingFiles.value.some(f => !f.title?.trim());
         if (hasInvalidTitle) {
             message.error('Vui lòng nhập tiêu đề cho tất cả tài liệu đính kèm.');
             return;
         }
-
 
         try {
             const res = await updateTask(route.params.id, formData.value);
@@ -546,13 +596,11 @@
             // Upload file nếu có
             for (const file of pendingFiles.value) {
                 const formDataFile = new FormData();
-                formDataFile.append('file', file.raw); // lấy file gốc
-                formDataFile.append('title', file.title); // thêm tiêu đề
+                formDataFile.append('file', file.raw);
+                formDataFile.append('title', file.title);
                 formDataFile.append('user_id', store.currentUser.id);
                 await uploadTaskFileAPI(route.params.id, formDataFile);
             }
-
-
 
             // Gán task vào step nếu có step_id
             if (formData.value.step_id) {
@@ -564,6 +612,8 @@
             pendingFiles.value = [];
             await fetchTaskFiles();
             await getDetailTaskById();
+            await fetchExtensionHistory();
+            extensionErrors.value = calculateExtensionErrors(extensionHistory.value);
 
             message.success("Cập nhật thành công");
         } catch (error) {
@@ -575,6 +625,28 @@
             isEditMode.value = false;
         }
     };
+
+    const calculateExtensionErrors = (extensions) => {
+        const errors = {};
+
+        extensions.forEach(item => {
+            const oldDate = new Date(item.old_end_date);
+            const newDate = new Date(item.new_end_date);
+
+            if (newDate < oldDate) {
+                errors[item.id] = 'Gia hạn không hợp lệ (ngày kết thúc mới < cũ)';
+            }
+
+            // ✅ Thêm điều kiện khác nếu cần, ví dụ:
+            // if (!item.reason || item.reason.trim() === '') {
+            //     errors[item.id] = 'Lý do gia hạn không được để trống';
+            // }
+        });
+
+        return errors;
+    };
+
+
 
     const cancelEditTask = () => {
         isEditMode.value = false;
@@ -667,6 +739,29 @@
             default: return 'default'
         }
     }
+
+
+    const fetchExtensions = async () => {
+        try {
+            const res = await getTaskExtensions(route.params.id);
+            console.log('📦 API extensions:', res.data); // ✅ debug ở đây
+            extensions.value = res.data.extensions || [];
+        } catch (error) {
+            console.error('❌ Lỗi fetch extensions:', error);
+            extensions.value = [];
+        }
+    };
+
+    const fetchExtensionHistory = async () => {
+        try {
+            const res = await getTaskExtensions(route.params.id);
+            extensionHistory.value = res.data.extensions || [];
+        } catch (e) {
+            console.error('❌ Lỗi khi lấy lịch sử gia hạn:', e);
+            extensionHistory.value = [];
+        }
+    };
+
 
     const logColumns = [
         { title: 'Cấp', dataIndex: 'level' },
@@ -772,6 +867,8 @@
             await getListContract()
             await fetchTaskFiles()
             await fetchLogHistory()
+            await fetchExtensions();
+            await fetchExtensionHistory(); // ✅ Thêm vào đây
             handleChangeLinkedId()
 
         } catch (e) {

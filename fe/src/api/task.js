@@ -72,3 +72,17 @@ export const getTaskFilesAPI = (taskId) => instance.get(`/tasks/${taskId}/files`
 
 // 🔹 Xoá file đính kèm của task
 export const deleteTaskFilesAPI = (taskId) => instance.delete(`/task-files/${taskId}`)
+
+
+// 🔹 Gia hạn deadline cho task
+export const extendTaskDeadlineAPI = (taskId, data) =>
+    instance.post(`/tasks/${taskId}/extend`, data)
+
+// 🔹 Đếm số lần user hiện tại đã gia hạn task
+export const countTaskExtensionsAPI = (taskId) =>
+    instance.get(`/tasks/${taskId}/extensions/count`)
+
+// 🔹 Lấy lịch sử gia hạn deadline của task
+export const getTaskExtensions = (taskId) =>
+    instance.get(`/tasks/${taskId}/extensions`);
+

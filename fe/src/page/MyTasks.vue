@@ -38,6 +38,11 @@
                     <a-tag :color="getStatusColor(record.status)">{{ getStatusText(record.status) }}</a-tag>
                 </template>
             </a-table-column>
+            <a-table-column title="Số lần gia hạn" key="extension_count">
+                <template #default="{ record }">
+                    {{ record.extension_count || 0 }}
+                </template>
+            </a-table-column>
             <a-table-column title="Mức độ ưu tiên" key="priority">
                 <template #default="{ record }">
                     <a-tag :color="getPriorityColor(record.priority)">{{ getPriorityText(record.priority) }}</a-tag>
