@@ -97,7 +97,15 @@
                 <a-row :gutter="16">
                     <a-col :span="24">
                         <a-form-item label="Khách hàng liên quan">
-                            <a-input :value="selectedCustomerName" disabled />
+                            <a-select
+                                v-model:value="formData.customer_id"
+                                :options="customerOptions"
+                                placeholder="Chọn khách hàng liên quan"
+                                allow-clear
+                                show-search
+                                :disabled="!formData.bidding_id"
+                                :filter-option="(input, option) => option.label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(input.toLowerCase()) || option.label.toLowerCase().includes(input.toLowerCase())"
+                            />
                         </a-form-item>
                     </a-col>
                 </a-row>
@@ -166,8 +174,7 @@ import {canMarkContractAsCompleteAPI} from '@/api/contract'
 import {formatDate} from '@/utils/formUtils'
 import {useRouter} from 'vue-router'
 import {getUsers} from "@/api/user.js";
-
-const selectedCustomerName = ref('')
+import { debounce } from 'lodash'
 
 const router = useRouter()
 
@@ -181,12 +188,13 @@ const formData = ref({
     name: "",
     code: "",
     status: 0, // ✅ sửa từ "pending" → 0 (tương ứng "Nháp")
-    is_awarded: true,
+    is_awarded: false,
     start_date: null,
     end_date: null,
     description: "",
     bidding_id: null,
     assigned_to: null,
+    customer_id: null,
 })
 
 const steps = ref([]) // hoặc dữ liệu thực tế từ API
@@ -198,6 +206,20 @@ const goToContractDetail = (id) => {
 }
 
 const awardedBiddings = ref([])
+const customers = ref([])
+const filtersCustomers = ref({
+    search: '',
+    page: 1,
+})
+const customerOptions = computed(() => {
+    if (customers.value.length === 0) {
+        return []
+    }
+    return customers.value.map(customer => ({
+        label: customer.name,
+        value: customer.id
+    }))
+})
 
 const columns = [
     { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
@@ -346,6 +368,28 @@ const getContracts = async () => {
         loading.value = false
     }
 }
+
+const fetchCustomers = async () => {
+    try {
+        const params = {
+            search: filtersCustomers.value.search,
+            page: filtersCustomers.value.page
+        }
+        const res = await getCustomers(params)
+        if (filtersCustomers.value.page === 1) {
+            customers.value = res.data.data
+        } else {
+            customers.value = [...customers.value, ...res.data.data]
+        }
+        
+        if (res.data.pager.current_page * res.data.pager.per_page < res.data.pager.total ) {
+            fetchCustomers()
+        }
+    } catch (err) {
+        
+    } finally {
+    }
+}
 const submitForm = async () => {
     try {
         await formRef.value?.validate()
@@ -481,14 +525,6 @@ const showPopupDetail = async (record) => {
     // console.log("assigned_to (formData):", formData.value.assigned_to)
     // console.log("userOptions:", userOptions.value.map(x => typeof x.value + ':' + x.value))
 
-    if (record.customer_id) {
-        getCustomers({ id: record.customer_id }).then(res => {
-            const matched = res.data?.data?.find(c => c.id === record.customer_id)
-            selectedCustomerName.value = matched?.name || 'Không xác định'
-        }).catch(() => {
-            selectedCustomerName.value = 'Không thể tải khách hàng'
-        })
-    }
 }
 
 
@@ -522,29 +558,24 @@ const resetFormValidate = () => {
 
 watch(() => formData.value.bidding_id, async (newVal) => {
     if (!newVal) {
-        selectedCustomerName.value = ''
         formData.value.customer_id = null
         return
     }
 
     try {
         const biddingRes = await getBiddingAPI(newVal)
-        const customerId = biddingRes.data.customer_id
 
+        const customerId = biddingRes.data.customer_id
+        
+        if (awardedBiddings.value.map(x => x.value).includes(formData.value.bidding_id)) {
+            formData.value.is_awarded = true
+        }else{
+            formData.value.is_awarded = false
+        }
         formData.value.customer_id = customerId // ✅ Gán customer_id để lưu vào backend
 
-        if (!customerId) {
-            selectedCustomerName.value = 'Không có khách hàng'
-            return
-        }
-
-        const customerRes = await getCustomers({ id: customerId })
-        const matched = customerRes.data?.data?.find(cus => cus.id === customerId)
-
-        selectedCustomerName.value = matched?.name || 'Không xác định'
     } catch (e) {
         console.error(e)
-        selectedCustomerName.value = 'Lỗi tải khách hàng'
         formData.value.customer_id = null
     }
 })
@@ -552,6 +583,7 @@ watch(() => formData.value.bidding_id, async (newVal) => {
 onMounted(() => {
     getContracts();
     fetchUsers()
+    fetchCustomers()
 })
 
 </script>
