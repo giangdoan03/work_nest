@@ -1,10 +1,8 @@
 <template>
     <div class="custom-overview">
-        <template>
-            <div class="header-actions">
-                <a :href="`${origin}/gantt-chart`" target="_blank" class="gantt-link">📊 Xem biểu đồ Gantt</a>
-            </div>
-        </template>
+        <div class="header-actions">
+            <a :href="`${origin}/gantt-chart`" target="_blank" class="gantt-link">📊 Xem biểu đồ Gantt</a>
+        </div>
         <table class="custom-table">
             <thead>
             <tr>
