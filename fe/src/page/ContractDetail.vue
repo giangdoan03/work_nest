@@ -113,7 +113,7 @@
             title="Chi tiết bước xử lý"
             placement="right"
             :visible="drawerVisible"
-            @close="drawerVisible = false"
+            @close="closeDrawer"
             width="580"
         >
             <template v-if="selectedStep">
@@ -164,6 +164,7 @@
                     <a-descriptions-item label="Ngày bắt đầu">
                         <a-typography-text type="secondary" v-if="!showEditDateStart" @click="editDateStart">
                             {{ formatDate(selectedStep.start_date) }}
+                            <EditOutlined />
                         </a-typography-text>
                         <a-date-picker
                             v-if="showEditDateStart"
@@ -175,6 +176,7 @@
                     <a-descriptions-item label="Ngày kết thúc">
                         <a-typography-text type="secondary" v-if="!showEditDateEnd" @click="editDateEnd">
                             {{ formatDate(selectedStep.end_date) }}
+                            <EditOutlined />
                         </a-typography-text>
                         <a-date-picker
                             :disabledDate="disabledDate"
@@ -232,7 +234,7 @@ import {formatCurrency, formatDate} from '@/utils/formUtils'
 import dayjs from 'dayjs'
 import {getContractAPI} from '@/api/contract'
 import { getBiddingsAPI } from '@/api/bidding'
-
+import {EditOutlined} from '@ant-design/icons-vue'
 import {
     cloneContractStepsFromTemplateAPI,
     completeContractStepAPI,
@@ -268,12 +270,12 @@ const dateEnd = ref()
 const showEditDateStart = ref(false)
 const showEditDateEnd = ref(false)
 const editDateStart = () => {
-    dateStart.value = dayjs(selectedStep.value.start_date)
+    dateStart.value = selectedStep.value.start_date ? dayjs(selectedStep.value.start_date) : null
     showEditDateStart.value = true
     showEditDateEnd.value = false
 }
 const editDateEnd = () => {
-    dateEnd.value = dayjs(selectedStep.value.end_date)
+    dateEnd.value = selectedStep.value.end_date ? dayjs(selectedStep.value.end_date) : null
     showEditDateStart.value = false
     showEditDateEnd.value = true
 }
@@ -442,7 +444,13 @@ const updateStepAssignedTo = async (newUserId, step) => {
     }
 }
 
-
+const closeDrawer = () => {
+    drawerVisible.value = false
+    showEditDateStart.value = false
+    showEditDateEnd.value = false
+    dateStart.value = null
+    dateEnd.value = null
+}
 const fetchCustomers = async () => {
     try {
         const res = await getCustomers()
