@@ -12,7 +12,7 @@ class TaskModel extends Model
         'title', 'description', 'assigned_to', 'start_date', 'end_date', 'status',
         'linked_type', 'linked_id', 'step_code', 'created_by',
         'priority', 'comments_count', 'parent_id', 'step_id','approval_status',
-        'approval_steps', 'current_level', 'title'
+        'approval_steps', 'current_level', 'title', 'updated_at'
     ];
 
     protected $useTimestamps = true;
