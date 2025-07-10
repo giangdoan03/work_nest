@@ -103,7 +103,7 @@
                                 placeholder="Chọn khách hàng liên quan"
                                 allow-clear
                                 show-search
-                                :disabled="!formData.bidding_id"
+                                :disabled="formData.is_awarded"
                                 :filter-option="(input, option) => option.label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(input.toLowerCase()) || option.label.toLowerCase().includes(input.toLowerCase())"
                             />
                         </a-form-item>
