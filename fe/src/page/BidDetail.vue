@@ -133,7 +133,7 @@
             title="Chi tiết bước xử lý"
             placement="right"
             :visible="drawerVisible"
-            @close="drawerVisible = false"
+            @close="closeDrawer"
             width="680"
         >
             <template v-if="selectedStep">
@@ -189,6 +189,7 @@
                     <a-descriptions-item label="Ngày bắt đầu">
                         <a-typography-text type="secondary" v-if="!showEditDateStart" @click="editDateStart">
                             {{ formatDate(selectedStep.start_date) }}
+                            <EditOutlined />
                         </a-typography-text>
                         <a-date-picker
                             v-if="showEditDateStart"
@@ -200,6 +201,7 @@
                     <a-descriptions-item label="Ngày kết thúc">
                         <a-typography-text type="secondary" v-if="!showEditDateEnd" @click="editDateEnd">
                             {{ formatDate(selectedStep.end_date) }}
+                            <EditOutlined />
                         </a-typography-text>
                         <a-date-picker
                             :disabledDate="disabledDate"
@@ -309,7 +311,7 @@ import {message} from 'ant-design-vue'
 import {formatDate, formatCurrency} from '@/utils/formUtils'
 import {getCustomers} from '../api/customer' // file API của bạn
 import {useRouter} from 'vue-router'
-
+import {EditOutlined} from '@ant-design/icons-vue'
 const router = useRouter()
 const route = useRoute()
 const id = route.params.id
@@ -332,12 +334,12 @@ const dateEnd = ref()
 const showEditDateStart = ref(false)
 const showEditDateEnd = ref(false)
 const editDateStart = () => {
-    dateStart.value = dayjs(selectedStep.value.start_date)
+    dateStart.value = selectedStep.value.start_date ? dayjs(selectedStep.value.start_date) : null
     showEditDateStart.value = true
     showEditDateEnd.value = false
 }
 const editDateEnd = () => {
-    dateEnd.value = dayjs(selectedStep.value.end_date)
+    dateEnd.value = selectedStep.value.end_date ? dayjs(selectedStep.value.end_date) : null
     showEditDateStart.value = false
     showEditDateEnd.value = true
 }
@@ -385,6 +387,13 @@ const openStepDrawer = async (step) => {
         message.error('Không thể tải danh sách công việc')
         relatedTasks.value = []
     }
+}
+const closeDrawer = () => {
+    drawerVisible.value = false
+    showEditDateStart.value = false
+    showEditDateEnd.value = false
+    dateStart.value = null
+    dateEnd.value = null
 }
 const getStatusColor = (status) => {
     const map = {
