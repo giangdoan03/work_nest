@@ -66,9 +66,11 @@
                                         </template>
 
                                         <!-- ✅ Luôn hiển thị lịch sử gia hạn -->
-                                        <a-timeline v-if="extensions.length" style="margin-top: 8px;">
+                                        <a-timeline v-if="extensions.length" style="margin-top: 20px;">
                                             <a-timeline-item v-for="item in sortedExtensions" :key="item.id">
-                                                <template #dot>📅</template>
+                                                <template #dot>
+                                                    <CalendarOutlined />
+                                                </template>
                                                 <span :style="{ color: extensionErrors[item.id] ? 'red' : 'inherit' }">
                                                     {{ formatDate(item.old_end_date) }} → <b>{{ formatDate(item.new_end_date) }}</b>
                                                     <span v-if="item.reason">({{ item.reason }})</span>
@@ -257,7 +259,7 @@
     </div>
 </template>
 <script setup>
-    import { EllipsisOutlined, PaperClipOutlined, PlusOutlined, CaretDownOutlined } from '@ant-design/icons-vue';
+    import { EllipsisOutlined, PaperClipOutlined, PlusOutlined, CaretDownOutlined, CalendarOutlined } from '@ant-design/icons-vue';
     import { ref, computed, onMounted, watch, reactive } from 'vue';
     import { message } from 'ant-design-vue'
     import 'dayjs/locale/vi';

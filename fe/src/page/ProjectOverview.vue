@@ -1,8 +1,10 @@
 <template>
     <div class="custom-overview">
-        <div class="header-actions">
-            <a href="/gantt-chart" target="_blank" class="gantt-link">📊 Xem biểu đồ Gantt</a>
-        </div>
+        <template>
+            <div class="header-actions">
+                <a :href="`${origin}/gantt-chart`" target="_blank" class="gantt-link">📊 Xem biểu đồ Gantt</a>
+            </div>
+        </template>
         <table class="custom-table">
             <thead>
             <tr>
@@ -109,6 +111,7 @@
 import { ref, onMounted } from 'vue'
 import { getProjectOverviewAPI } from '@/api/project'
 import { message } from 'ant-design-vue'
+const origin = window.location.origin
 
 const data = ref([])
 const pagination = ref({

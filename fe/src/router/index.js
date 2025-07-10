@@ -30,6 +30,7 @@ import ContractDetail from '../page/ContractDetail.vue' // 👈 đảm bảo fil
 import UserDetail from '../page/UserDetail.vue' // 👈 đảm bảo file này tồn tại
 import MyTasks from '../page/MyTasks.vue' // 👈 đảm bảo file này tồn tại
 import ProjectOverview from '../page/ProjectOverview.vue' // 👈 đảm bảo file này tồn tại
+import GanttChart from '../page/GanttChart.vue' // 👈 đảm bảo file này tồn tại
 
 const routes = [
     {
@@ -198,7 +199,13 @@ const routes = [
                 name: 'task-approvals',
                 component: () => import('../page/TaskApprovalList.vue'),
                 meta: { breadcrumb: 'Duyệt nhiệm vụ' }
-            }
+            },
+            {
+                path: '/gantt-chart',
+                name: 'GanttChart',
+                component: GanttChart,
+                meta: { breadcrumb: 'Biểu đồ thống kê' }
+            },
 
         ]
     }
