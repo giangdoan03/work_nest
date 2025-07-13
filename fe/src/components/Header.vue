@@ -42,9 +42,10 @@
                             Thông tin cá nhân
                         </a-menu-item>
                         <a-menu-divider />
-                        <a-menu-item key="logout" @click="emit('logout')">
+                        <a-menu-item key="logout" @click="handleLogout">
                             Đăng xuất
                         </a-menu-item>
+
                     </a-menu>
                 </template>
             </a-dropdown>
@@ -92,6 +93,11 @@ const breadcrumbs = computed(() => {
 
     return matched
 })
+
+const handleLogout = () => {
+    userStore.clearUser()     // 👉 Xoá user + quyền
+    router.push('/')          // 👉 Về trang login/home
+}
 const redirectToProfile = () => {
     router.push({
         name: 'persons-info',

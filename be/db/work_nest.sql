@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jul 10, 2025 at 06:54 AM
--- Server version: 8.4.3
--- PHP Version: 8.3.16
+-- Generation Time: Jul 13, 2025 at 04:49 PM
+-- Server version: 8.0.30
+-- PHP Version: 8.1.10
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -196,7 +196,7 @@ INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `start_
 (107, 5, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 03:44:51', '2025-06-29 17:12:28', 0, 4, NULL, 7),
 (108, 5, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:44:51', '2025-06-29 17:12:28', 0, 4, NULL, 11),
 (109, 2, 1, 'Nhận nhu cầu khách hàng', '2025-07-07 00:00:00', '2025-07-31 00:00:00', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:48:05', '2025-07-08 14:24:18', 2, 1, 8, 32),
-(110, 2, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:48:05', '2025-06-30 15:41:50', 2, 1, 22, 34),
+(110, 2, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:48:05', '2025-07-13 13:51:48', 2, 1, 22, 34),
 (111, 2, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:48:05', '2025-07-10 05:58:48', 2, 1, 24, 31),
 (112, 2, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:48:05', '2025-07-06 12:31:36', 2, 1, NULL, 1),
 (113, 2, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:48:05', '2025-07-01 11:11:05', 1, 1, NULL, 1),
@@ -307,7 +307,7 @@ INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `start_
 (259, 9, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 15:07:34', '2025-07-10 05:53:03', 0, 8, NULL, 46),
 (260, 9, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 15:07:34', '2025-06-30 16:45:06', 0, 8, NULL, 38),
 (261, 9, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 15:07:34', '2025-06-30 16:51:09', 0, 8, NULL, 39),
-(264, 34, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 15:21:11', '2025-07-10 05:52:44', 2, 1, 6, 42),
+(264, 34, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 15:21:11', '2025-07-13 13:59:41', 2, 1, 6, 48),
 (265, 34, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 15:21:11', '2025-07-06 17:05:22', 2, 1, 8, 3),
 (266, 34, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 15:21:11', '2025-06-29 17:12:28', 2, 1, 7, 16),
 (267, 34, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 15:21:11', '2025-06-29 17:12:28', 2, 1, 20, 5),
@@ -738,7 +738,11 @@ CREATE TABLE `documents` (
 
 INSERT INTO `documents` (`id`, `title`, `file_path`, `department_id`, `uploaded_by`, `visibility`, `file_type`, `file_size`, `created_at`, `updated_at`, `tags`) VALUES
 (1, 'Báo cáo Q2 đã cập nhật', 'documents/1749798305_37045c936642c36152e8.png', 3, 1, 'public', 'image/png', 528057, '2025-06-13 07:05:05', '2025-06-13 07:27:04', 'báo cáo, quý 2'),
-(2, 'Báo cáo tài chính', 'documents/1749799608_3bbef2158709ab8061f4.png', 3, 1, 'public', 'image/png', 528057, '2025-06-13 07:26:48', '2025-06-13 07:26:48', 'tài chính, 2025');
+(2, 'Báo cáo tài chính', 'documents/1749799608_3bbef2158709ab8061f4.png', 3, 1, 'public', 'image/png', 528057, '2025-06-13 07:26:48', '2025-06-13 07:26:48', 'tài chính, 2025'),
+(3, 'test', 'https://vnexpress.net/', 1, 1, 'private', 'link', 0, '2025-07-13 14:48:56', '2025-07-13 14:48:56', NULL),
+(4, 'test 2', 'https://dantri.com.vn/noi-vu/nhom-can-bo-cong-chuc-duoc-uu-tien-nghi-huu-truoc-tuoi-20250322153127598.htm', 2, 1, 'private', 'link', 0, '2025-07-13 15:01:40', '2025-07-13 15:01:40', NULL),
+(5, 'test 3', 'https://dantri.com.vn/noi-vu/nhom-can-bo-cong-chuc-duoc-uu-tien-nghi-huu-truoc-tuoi-20250322153127598.htm', 3, 1, 'private', 'link', 0, '2025-07-13 15:01:55', '2025-07-13 15:01:55', NULL),
+(6, 'tài liệu kỹ thuật 4', 'https://vnexpress.net/', 3, 1, '', 'link', 0, '2025-07-13 15:23:25', '2025-07-13 16:45:12', NULL);
 
 -- --------------------------------------------------------
 
@@ -770,7 +774,14 @@ INSERT INTO `document_permissions` (`id`, `document_id`, `shared_with_type`, `sh
 (10, 1, 'department', 1, 'download', '2025-06-13 07:23:20', '2025-06-13 07:23:20'),
 (11, 1, 'user', 1, 'view', '2025-06-13 07:26:53', '2025-06-13 07:26:53'),
 (12, 1, 'department', 1, 'download', '2025-06-13 07:26:53', '2025-06-13 07:26:53'),
-(13, 1, 'user', 12, 'view', '2025-06-13 09:04:00', '2025-06-13 09:04:00');
+(13, 1, 'user', 12, 'view', '2025-06-13 09:04:00', '2025-06-13 09:04:00'),
+(163, 6, 'user', 5, 'view', '2025-07-13 16:45:12', '2025-07-13 16:45:12'),
+(164, 6, 'user', 8, 'view', '2025-07-13 16:45:12', '2025-07-13 16:45:12'),
+(165, 6, 'user', 12, 'view', '2025-07-13 16:45:12', '2025-07-13 16:45:12'),
+(166, 6, 'department', 1, 'view', '2025-07-13 16:45:12', '2025-07-13 16:45:12'),
+(167, 6, 'department', 2, 'view', '2025-07-13 16:45:12', '2025-07-13 16:45:12'),
+(168, 6, 'department', 3, 'view', '2025-07-13 16:45:12', '2025-07-13 16:45:12'),
+(169, 6, 'department', 4, 'view', '2025-07-13 16:45:12', '2025-07-13 16:45:12');
 
 -- --------------------------------------------------------
 
@@ -818,44 +829,72 @@ CREATE TABLE `permissions` (
 --
 
 INSERT INTO `permissions` (`id`, `key_name`, `description`, `created_at`, `updated_at`) VALUES
-(1, 'product.view', 'Xem sản phẩm', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(2, 'product.create', 'Tạo sản phẩm', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(3, 'product.update', 'Cập nhật sản phẩm', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(4, 'product.delete', 'Xoá sản phẩm', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(5, 'category.view', 'Xem danh mục', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(6, 'category.create', 'Tạo danh mục', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(7, 'category.update', 'Cập nhật danh mục', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(8, 'category.delete', 'Xoá danh mục', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(9, 'business.view', 'Xem doanh nghiệp', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(10, 'business.create', 'Tạo doanh nghiệp', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(11, 'business.update', 'Cập nhật doanh nghiệp', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(12, 'business.delete', 'Xoá doanh nghiệp', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(13, 'person.view', 'Xem cá nhân', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(14, 'person.create', 'Tạo cá nhân', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(15, 'person.update', 'Cập nhật cá nhân', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(16, 'person.delete', 'Xoá cá nhân', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(17, 'store.view', 'Xem cửa hàng', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(18, 'store.create', 'Tạo cửa hàng', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(19, 'store.update', 'Cập nhật cửa hàng', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(20, 'store.delete', 'Xoá cửa hàng', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(21, 'event.view', 'Xem sự kiện', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(22, 'event.create', 'Tạo sự kiện', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(23, 'event.update', 'Cập nhật sự kiện', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(24, 'event.delete', 'Xoá sự kiện', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(25, 'qr.view', 'Xem QR Code', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(26, 'qr.create', 'Tạo QR Code', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(27, 'qr.update', 'Cập nhật QR Code', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(28, 'qr.delete', 'Xoá QR Code', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(29, 'loyalty.view', 'Xem chương trình loyalty', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(30, 'loyalty.create', 'Tạo chương trình loyalty', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(31, 'loyalty.update', 'Cập nhật chương trình loyalty', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(32, 'loyalty.delete', 'Xoá chương trình loyalty', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
 (33, 'user.view', 'Xem người dùng', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
 (34, 'user.create', 'Tạo người dùng', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
 (35, 'user.update', 'Cập nhật người dùng', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
 (36, 'user.delete', 'Xoá người dùng', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
 (37, 'setting.view', 'Xem cấu hình', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
-(38, 'setting.update', 'Cập nhật cấu hình', '2025-04-21 00:15:39', '2025-04-21 00:15:39');
+(38, 'setting.update', 'Cập nhật cấu hình', '2025-04-21 00:15:39', '2025-04-21 00:15:39'),
+(39, 'task.view', 'Xem nhiệm vụ', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(40, 'task.create', 'Tạo nhiệm vụ', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(41, 'task.update', 'Cập nhật nhiệm vụ', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(42, 'task.delete', 'Xoá nhiệm vụ', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(43, 'department.view', 'Xem phòng ban', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(44, 'department.create', 'Tạo phòng ban', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(45, 'department.update', 'Cập nhật phòng ban', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(46, 'department.delete', 'Xoá phòng ban', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(47, 'contract.view', 'Xem hợp đồng', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(48, 'contract.create', 'Tạo hợp đồng', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(49, 'contract.update', 'Cập nhật hợp đồng', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(50, 'contract.delete', 'Xoá hợp đồng', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(51, 'bidding.view', 'Xem đấu thầu', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(52, 'bidding.create', 'Tạo đấu thầu', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(53, 'bidding.update', 'Cập nhật đấu thầu', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(54, 'bidding.delete', 'Xoá đấu thầu', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(55, 'user.view', 'Xem người dùng', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(56, 'user.create', 'Tạo người dùng', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(57, 'user.update', 'Cập nhật người dùng', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(58, 'user.delete', 'Xoá người dùng', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(59, 'setting.view', 'Xem cấu hình', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(60, 'setting.create', 'Tạo cấu hình', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(61, 'setting.update', 'Cập nhật cấu hình', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(62, 'setting.delete', 'Xoá cấu hình', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(63, 'customer.view', 'Xem khách hàng', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(64, 'customer.create', 'Tạo khách hàng', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(65, 'customer.update', 'Cập nhật khách hàng', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(66, 'customer.delete', 'Xoá khách hàng', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(67, 'document.view', 'Xem tài liệu', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(68, 'document.create', 'Tạo tài liệu', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(69, 'document.update', 'Cập nhật tài liệu', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(70, 'document.delete', 'Xoá tài liệu', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(71, 'permission.view', 'Xem phân quyền', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(72, 'permission.create', 'Tạo phân quyền', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(73, 'permission.update', 'Cập nhật phân quyền', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(74, 'permission.delete', 'Xoá phân quyền', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(75, 'project.view', 'Xem tổng quan dự án', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(76, 'project.create', 'Tạo tổng quan dự án', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(77, 'project.update', 'Cập nhật tổng quan dự án', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(78, 'project.delete', 'Xoá tổng quan dự án', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(79, 'comment.view', 'Xem bình luận', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(80, 'comment.create', 'Tạo bình luận', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(81, 'comment.update', 'Cập nhật bình luận', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(82, 'comment.delete', 'Xoá bình luận', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(83, 'approval.view', 'Xem duyệt nhiệm vụ', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(84, 'approval.create', 'Tạo duyệt nhiệm vụ', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(85, 'approval.update', 'Cập nhật duyệt nhiệm vụ', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(86, 'approval.delete', 'Xoá duyệt nhiệm vụ', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(87, 'gantt.view', 'Xem biểu đồ Gantt', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(88, 'gantt.create', 'Tạo biểu đồ Gantt', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(89, 'gantt.update', 'Cập nhật biểu đồ Gantt', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(90, 'gantt.delete', 'Xoá biểu đồ Gantt', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(91, 'step-template.view', 'Xem mẫu bước', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(92, 'step-template.create', 'Tạo mẫu bước', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(93, 'step-template.update', 'Cập nhật mẫu bước', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(94, 'step-template.delete', 'Xoá mẫu bước', '2025-07-13 10:34:40', '2025-07-13 10:34:40'),
+(95, 'my-task.view', 'View My Task', '2025-07-13 16:50:56', '2025-07-13 16:50:56'),
+(96, 'my-task.create', 'Create My Task', '2025-07-13 16:50:56', '2025-07-13 16:50:56'),
+(97, 'my-task.update', 'Update My Task', '2025-07-13 16:50:56', '2025-07-13 16:50:56'),
+(98, 'my-task.delete', 'Delete My Task', '2025-07-13 16:50:56', '2025-07-13 16:50:56');
 
 -- --------------------------------------------------------
 
@@ -925,22 +964,67 @@ INSERT INTO `roles` (`id`, `name`, `description`, `created_at`, `updated_at`) VA
 CREATE TABLE `role_permissions` (
   `id` int NOT NULL,
   `role_id` int NOT NULL,
-  `permission_id` int NOT NULL,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
+  `permission_id` int DEFAULT NULL,
+  `module` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `action` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `role_permissions`
 --
 
-INSERT INTO `role_permissions` (`id`, `role_id`, `permission_id`, `created_at`) VALUES
-(4, 3, 1, '2025-04-21 00:35:31'),
-(5, 3, 2, '2025-04-21 00:35:31'),
-(6, 3, 3, '2025-04-21 00:35:31'),
-(7, 1, 1, '2025-04-21 21:48:03'),
-(8, 1, 2, '2025-04-21 21:48:03'),
-(9, 1, 7, '2025-04-21 21:48:03'),
-(10, 1, 18, '2025-04-21 21:48:03');
+INSERT INTO `role_permissions` (`id`, `role_id`, `permission_id`, `module`, `action`, `created_at`, `updated_at`) VALUES
+(160, 1, 75, 'project', 'view', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(161, 1, 76, 'project', 'create', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(162, 1, 77, 'project', 'update', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(163, 1, 78, 'project', 'delete', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(164, 1, 63, 'customer', 'view', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(165, 1, 64, 'customer', 'create', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(166, 1, 65, 'customer', 'update', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(167, 1, 66, 'customer', 'delete', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(172, 1, 43, 'department', 'view', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(173, 1, 44, 'department', 'create', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(174, 1, 45, 'department', 'update', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(175, 1, 46, 'department', 'delete', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(180, 1, 67, 'document', 'view', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(181, 1, 68, 'document', 'create', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(182, 1, 69, 'document', 'update', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(183, 1, 70, 'document', 'delete', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(184, 1, 71, 'permission', 'view', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(185, 1, 72, 'permission', 'create', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(186, 1, 73, 'permission', 'update', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(187, 1, 74, 'permission', 'delete', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(188, 1, 37, 'setting', 'view', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(189, 1, 60, 'setting', 'create', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(190, 1, 38, 'setting', 'update', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(191, 1, 62, 'setting', 'delete', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(196, 1, 87, 'gantt', 'view', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(197, 1, 88, 'gantt', 'create', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(198, 1, 89, 'gantt', 'update', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(199, 1, 90, 'gantt', 'delete', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(200, 1, 91, 'step-template', 'view', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(201, 1, 92, 'step-template', 'create', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(202, 1, 93, 'step-template', 'update', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(203, 1, 94, 'step-template', 'delete', '2025-07-13 16:30:39', '2025-07-13 16:38:24'),
+(216, 1, NULL, 'my-task', 'view', '2025-07-13 20:50:18', '2025-07-13 20:50:18'),
+(217, 1, NULL, 'my-task', 'create', '2025-07-13 20:50:18', '2025-07-13 20:50:18'),
+(218, 1, NULL, 'my-task', 'update', '2025-07-13 20:50:18', '2025-07-13 20:50:18'),
+(219, 1, NULL, 'my-task', 'delete', '2025-07-13 20:50:18', '2025-07-13 20:50:18'),
+(220, 1, NULL, 'approval', 'view', '2025-07-13 20:50:30', '2025-07-13 20:50:30'),
+(221, 1, NULL, 'approval', 'create', '2025-07-13 20:50:30', '2025-07-13 20:50:30'),
+(222, 1, NULL, 'approval', 'update', '2025-07-13 20:50:30', '2025-07-13 20:50:30'),
+(223, 1, NULL, 'approval', 'delete', '2025-07-13 20:50:30', '2025-07-13 20:50:30'),
+(224, 1, NULL, 'task', 'view', '2025-07-13 20:51:12', '2025-07-13 20:51:12'),
+(228, 1, NULL, 'contract', 'view', '2025-07-13 20:52:33', '2025-07-13 20:52:33'),
+(229, 1, NULL, 'contract', 'create', '2025-07-13 20:52:33', '2025-07-13 20:52:33'),
+(230, 1, NULL, 'contract', 'update', '2025-07-13 20:52:33', '2025-07-13 20:52:33'),
+(231, 1, NULL, 'contract', 'delete', '2025-07-13 20:52:33', '2025-07-13 20:52:33'),
+(232, 1, NULL, 'bidding', 'view', '2025-07-13 20:52:46', '2025-07-13 20:52:46'),
+(233, 1, NULL, 'bidding', 'create', '2025-07-13 20:52:46', '2025-07-13 20:52:46'),
+(234, 1, NULL, 'bidding', 'update', '2025-07-13 20:52:46', '2025-07-13 20:52:46'),
+(235, 1, NULL, 'bidding', 'delete', '2025-07-13 20:52:46', '2025-07-13 20:52:46');
 
 -- --------------------------------------------------------
 
@@ -1168,7 +1252,7 @@ CREATE TABLE `task_extensions` (
   `extended_by` int NOT NULL,
   `old_end_date` datetime NOT NULL,
   `new_end_date` datetime NOT NULL,
-  `reason` text COLLATE utf8mb4_unicode_ci,
+  `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1270,7 +1354,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `name`, `phone`, `avatar`, `role`, `department_id`, `role_id`) VALUES
-(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-06-23 22:34:43', 'Nguyễn Văn A', '0988888888', 'avatars/1749049795_4087ec00b95ac222533a.png', 'user', 1, 2),
+(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-07-13 10:57:18', 'Nguyễn Văn A', '0988888888', 'avatars/1749049795_4087ec00b95ac222533a.png', 'super admin', 1, 1),
 (3, 'superadmin@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-20 14:02:38', '2025-05-25 09:51:46', 'Super Admin', '0988888888', NULL, 'super admin', 2, 1),
 (4, 'nguyenvana@example.com', '$2y$10$n65TNehIFvx11oCJ2IbjXeiyDXWe9haW0VMv6UvFhMzctFOu1Ptd.', '2025-05-26 04:33:21', '2025-06-21 15:32:53', 'Nguyễn Văn A', '0909123456', NULL, 'customer', 2, NULL),
 (5, 'a@worknest.vn', '$2y$10$y9WQWckMJCEVQbqG0PNSCum.x7fNlxAJK7RqwxZvlaxBVZRtre96W', '2025-06-04 09:10:50', '2025-06-04 09:10:50', 'Nguyễn Văn A', '0911111111', NULL, 'customer', 1, NULL),
@@ -1415,7 +1499,8 @@ ALTER TABLE `roles`
 -- Indexes for table `role_permissions`
 --
 ALTER TABLE `role_permissions`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_permission` (`role_id`,`module`,`action`);
 
 --
 -- Indexes for table `settings`
@@ -1552,13 +1637,13 @@ ALTER TABLE `departments`
 -- AUTO_INCREMENT for table `documents`
 --
 ALTER TABLE `documents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `document_permissions`
 --
 ALTER TABLE `document_permissions`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=170;
 
 --
 -- AUTO_INCREMENT for table `document_settings`
@@ -1570,7 +1655,7 @@ ALTER TABLE `document_settings`
 -- AUTO_INCREMENT for table `permissions`
 --
 ALTER TABLE `permissions`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=99;
 
 --
 -- AUTO_INCREMENT for table `persons`
@@ -1588,7 +1673,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `role_permissions`
 --
 ALTER TABLE `role_permissions`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=236;
 
 --
 -- AUTO_INCREMENT for table `settings`

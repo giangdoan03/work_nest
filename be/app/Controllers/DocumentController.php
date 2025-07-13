@@ -8,6 +8,7 @@ use CodeIgniter\RESTful\ResourceController;
 use App\Models\DocumentModel;
 use App\Models\DocumentPermissionModel;
 use App\Helpers\UploadHelper;
+use stdClass;
 
 class DocumentController extends ResourceController
 {
@@ -19,6 +20,14 @@ class DocumentController extends ResourceController
         $filters = $this->request->getGet();
         $query = $this->model;
 
+        $userId = session()->get('user_id');
+        $deptId = session()->get('department_id');
+
+        if (!$userId) {
+            return $this->failUnauthorized('Chưa đăng nhập.');
+        }
+
+        // Áp dụng bộ lọc
         if (!empty($filters['department_id'])) {
             $query->where('department_id', $filters['department_id']);
         }
@@ -32,12 +41,33 @@ class DocumentController extends ResourceController
                 ->where('created_at <=', $filters['created_to']);
         }
 
-        $userId = session()->get('user_id');
-        if (!$userId) {
-            return $this->failUnauthorized('Chưa đăng nhập.');
-        }
+        // Tài liệu user có thể truy cập
+        $permissionModel = new DocumentPermissionModel();
+        $sharedDocIds = $permissionModel
+            ->groupStart()
+            ->where('shared_with_type', 'user')
+            ->where('shared_with_id', $userId)
+            ->groupEnd()
+            ->orGroupStart()
+            ->where('shared_with_type', 'department')
+            ->where('shared_with_id', $deptId)
+            ->groupEnd()
+            ->select('document_id')
+            ->findAll();
+        $sharedIds = array_column($sharedDocIds, 'document_id');
 
-        $query->where('uploaded_by', $userId);
+        // Xây dựng truy vấn truy cập
+        $query->groupStart()
+            ->where('uploaded_by', $userId)
+            ->orGroupStart()
+            ->where('visibility', 'department')
+            ->where('department_id', $deptId)
+            ->groupEnd()
+            ->orGroupStart()
+            ->where('visibility', 'custom')
+            ->whereIn('id', $sharedIds)
+            ->groupEnd()
+            ->groupEnd();
 
         return $this->respond($query->findAll());
     }
@@ -72,40 +102,63 @@ class DocumentController extends ResourceController
             return $this->respond([]);
         }
 
-        $docs = $this->model->whereIn('id', $ids)->findAll();
+        $docs = $this->model
+            ->whereIn('id', $ids)
+            ->where('visibility', 'custom')
+            ->findAll();
 
         return $this->respond($docs);
     }
 
+
+    /**
+     * @throws \ReflectionException
+     */
     public function upload(): ResponseInterface
     {
-        $uploadResult = UploadHelper::uploadDocumentFile($this->request);
-
-        if (isset($uploadResult['error'])) {
-            return $this->failValidationErrors(['file' => $uploadResult['error']]);
-        }
-
         $userId = session()->get('user_id');
         if (!$userId) {
             return $this->failUnauthorized('Chưa đăng nhập');
         }
 
-        $data = [
-            'title'         => $this->request->getPost('title'),
-            'file_path'     => $uploadResult['file_path'],
-            'file_type'     => $uploadResult['file_type'],
-            'file_size'     => $uploadResult['file_size'],
-            'department_id' => $this->request->getPost('department_id'),
-            'visibility'    => $this->request->getPost('visibility'),
-            'tags'          => $this->request->getPost('tags'),
+        // ✅ Dùng getJSON thay vì getPost
+        $data = $this->request->getJSON(true);
+
+        if (!$data || !is_array($data)) {
+            return $this->failValidationErrors('Dữ liệu JSON không hợp lệ');
+        }
+
+        $title = $data['title'] ?? '';
+        $fileUrl = $data['file_url'] ?? '';
+        $departmentId = $data['department_id'] ?? '';
+        $visibility = $data['visibility'] ?? 'private';
+
+        if (!$title || !$fileUrl || !$departmentId) {
+            return $this->failValidationErrors('Vui lòng nhập đầy đủ thông tin.');
+        }
+
+        $insertData = [
+            'title'         => $title,
+            'file_path'     => $fileUrl,
+            'file_type'     => 'link',
+            'file_size'     => 0,
+            'department_id' => $departmentId,
+            'visibility'    => $visibility,
             'uploaded_by'   => $userId
         ];
 
-        $id = $this->model->insert($data);
+        $docId = $this->model->insert($insertData);
+
+        // ✅ xử lý permission nếu visibility là custom
+        if ($visibility === 'custom') {
+            $permissionModel = new DocumentPermissionModel();
+
+            $this->extracted($data, $docId, $permissionModel);
+        }
 
         return $this->respondCreated([
-            'id'  => $id,
-            'url' => $uploadResult['url']
+            'id'  => $docId,
+            'url' => $fileUrl
         ]);
     }
 
@@ -141,6 +194,9 @@ class DocumentController extends ResourceController
         return $this->respond(['status' => 'shared']);
     }
 
+    /**
+     * @throws \ReflectionException
+     */
     public function update($id = null)
     {
         if (!$this->model->find($id)) {
@@ -148,10 +204,31 @@ class DocumentController extends ResourceController
         }
 
         $data = $this->request->getJSON(true);
-        $this->model->update($id, $data);
+        if (empty($data)) {
+            $data = $this->request->getPost(); // fallback nếu dùng FormData
+        }
+
+        $documentData = [
+            'title'         => $data['title'] ?? '',
+            'file_path'     => $data['file_url'] ?? '',
+            'department_id' => $data['department_id'] ?? '',
+            'visibility'    => $data['visibility'] ?? 'private',
+        ];
+
+        $this->model->update($id, $documentData);
+
+        // Xử lý lại quyền: xoá cũ, thêm mới nếu là custom
+        $permissionModel = new DocumentPermissionModel();
+        $permissionModel->where('document_id', $id)->delete();
+
+        if ($documentData['visibility'] === 'custom') {
+            $this->extracted($data, $id, $permissionModel);
+        }
 
         return $this->respond(['status' => 'success']);
     }
+
+
 
     public function delete($id = null)
     {
@@ -179,8 +256,46 @@ class DocumentController extends ResourceController
 
         $documents = $builder->findAll();
 
+        // Nếu có tài liệu visibility = custom thì lấy thêm quyền chia sẻ
+        $docIds = array_column($documents, 'id');
+        $permissionModel = new DocumentPermissionModel();
+        $permissions = $permissionModel
+            ->whereIn('document_id', $docIds)
+            ->findAll();
+
+        // Gom nhóm quyền chia sẻ theo tài liệu
+        $sharedMap = [];
+        foreach ($permissions as $p) {
+            $docId = $p['document_id'];
+            if (!isset($sharedMap[$docId])) {
+                $sharedMap[$docId] = [
+                    'shared_users' => [],
+                    'shared_departments' => []
+                ];
+            }
+
+            if ($p['shared_with_type'] === 'user') {
+                $sharedMap[$docId]['shared_users'][] = (int) $p['shared_with_id'];
+            } elseif ($p['shared_with_type'] === 'department') {
+                $sharedMap[$docId]['shared_departments'][] = (int) $p['shared_with_id'];
+            }
+        }
+
+        // Gắn vào mỗi document
+        foreach ($documents as &$doc) {
+            $docId = $doc['id'];
+            if ($doc['visibility'] === 'custom' && isset($sharedMap[$docId])) {
+                $doc['shared_users'] = $sharedMap[$docId]['shared_users'];
+                $doc['shared_departments'] = $sharedMap[$docId]['shared_departments'];
+            } else {
+                $doc['shared_users'] = [];
+                $doc['shared_departments'] = [];
+            }
+        }
+
         return $this->respond(['data' => $documents]);
     }
+
 
     public function getPermissions(): ResponseInterface
     {
@@ -358,7 +473,42 @@ class DocumentController extends ResourceController
         return $this->respondDeleted(['status' => 'deleted', 'id' => $id]);
     }
 
+    /**
+     * @param array|stdClass $data
+     * @param $docId
+     * @param DocumentPermissionModel $permissionModel
+     * @return void
+     * @throws \ReflectionException
+     */
+    public function extracted(array|stdClass $data, $docId, DocumentPermissionModel $permissionModel): void
+    {
+        $sharedUsers = $data['shared_users'] ?? [];
+        $sharedDepartments = $data['shared_departments'] ?? [];
 
+        $permissions = [];
+
+        foreach ($sharedUsers as $uid) {
+            $permissions[] = [
+                'document_id' => $docId,
+                'shared_with_type' => 'user',
+                'shared_with_id' => $uid,
+                'permission_type' => 'view'
+            ];
+        }
+
+        foreach ($sharedDepartments as $deptId) {
+            $permissions[] = [
+                'document_id' => $docId,
+                'shared_with_type' => 'department',
+                'shared_with_id' => $deptId,
+                'permission_type' => 'view'
+            ];
+        }
+
+        if (!empty($permissions)) {
+            $permissionModel->insertBatch($permissions);
+        }
+    }
 
 
 }

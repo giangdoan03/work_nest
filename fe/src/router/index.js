@@ -30,7 +30,9 @@ import ContractDetail from '../page/ContractDetail.vue' // 👈 đảm bảo fil
 import UserDetail from '../page/UserDetail.vue' // 👈 đảm bảo file này tồn tại
 import MyTasks from '../page/MyTasks.vue' // 👈 đảm bảo file này tồn tại
 import ProjectOverview from '../page/ProjectOverview.vue' // 👈 đảm bảo file này tồn tại
-import GanttChart from '../page/GanttChart.vue' // 👈 đảm bảo file này tồn tại
+import GanttChart from '../page/GanttChart.vue'
+import {getPermissionMatrix} from "@/api/permission.js";
+import Forbidden403 from "@/page/Forbidden403.vue"; // 👈 đảm bảo file này tồn tại
 
 const routes = [
     {
@@ -41,6 +43,12 @@ const routes = [
         path: '/',
         component: Layout,
         children: [
+            {
+                path: '/403',
+                name: 'forbidden',
+                component: Forbidden403,
+                meta: { breadcrumb: 'Không có quyền truy cập' }
+            },
             {
                 path: '/project-overview',
                 name: 'project-overview',
@@ -216,36 +224,61 @@ const router = createRouter({
     routes
 })
 
+
+const routePermissionMap = {
+    'internal-tasks': 'task',
+    'internal-tasks-info': 'task',
+    'contracts-tasks': 'contract',
+    'contract-task-info': 'task',
+    'bidding-task-info': 'task',
+    'contract-detail': 'contract',
+    'documents': 'document',
+    'documents-my': 'document',
+    'documents-shared': 'document',
+    'documents-department': 'document',
+    'documents-permission': 'document',
+    'documents-settings': 'document',
+    'user-management': 'user',
+    'permissions': 'permission',
+    'departments': 'department',
+    'settings': 'setting',
+    'cau-hinh-dau-thau': 'step-template',
+    'cau-hinh-hop-dong': 'step-template',
+    'bid-list': 'bidding',
+    'bid-detail': 'bidding',
+    'customers': 'customer',
+    'customer-detail': 'customer',
+    'my-tasks': 'my-task',
+    'task-approvals': 'approval',
+    'GanttChart': 'gantt',
+    'project-overview': 'project',
+}
+
+
 router.beforeEach(async (to, from, next) => {
-    try {
-        const response = await checkSession()
-        const data = response.data
-        const isLoggedIn = data.status === 'success'
+    const userStore = useUserStore()
 
-        if (isLoggedIn) {
-            const userStore = useUserStore()
-            userStore.setUser(data.user)
+    const isLoggedIn = !!userStore.user
+
+    if (isLoggedIn) {
+        // ✅ Nếu chưa có permissions, mới gọi fetch
+        if (!userStore.permissions || Object.keys(userStore.permissions).length === 0) {
+            await userStore.fetchPermissions()
         }
 
-        if (!isLoggedIn && to.path !== '/') {
-            next('/')
-        } else if (isLoggedIn && to.path === '/') {
-            next('/project-overview')
-        } else {
-            next()
-        }
-    } catch (error) {
-        console.error('Error in router guard:', error)
-
-        // ✅ Nếu đang vào trang login ("/") thì vẫn cho hiển thị giao diện
-        if (to.path === '/') {
-            next()
-        } else {
-            // ✅ Nếu truy cập trang khác mà không kết nối được -> chuyển về login
-            next('/')
+        // ✅ Check quyền xem route
+        const module = routePermissionMap[to.name]
+        if (module && !userStore.hasPermission(module, 'view')) {
+            return next('/403')
         }
     }
+
+    if (!isLoggedIn && to.path !== '/') return next('/')
+    if (isLoggedIn && to.path === '/') return next('/project-overview')
+
+    next()
 })
+
 
 
 export default router

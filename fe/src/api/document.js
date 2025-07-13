@@ -21,4 +21,8 @@ export const uploadDocument = (formData) =>
 export const shareDocument = (permissions) =>
     instance.post('/documents/share', {permissions})
 export const updateDocument = (id, data) =>
-    instance.put(`/documents/${id}`, data)
+    instance.put(`/documents/${id}`, data, {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
