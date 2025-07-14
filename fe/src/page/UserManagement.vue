@@ -88,6 +88,13 @@
                 </a-row>
                 <a-row :gutter="16">
                     <a-col :span="12">
+                        <a-form-item name="password">
+                            <a-checkbox v-model:checked="changePassword">Đổi mật khẩu</a-checkbox>
+                        </a-form-item>
+                    </a-col>
+                </a-row>
+                <a-row :gutter="16" v-if="!selectedUser || changePassword">
+                    <a-col :span="12">
                         <a-form-item label="Mật khẩu" name="password">
                             <a-input-password v-model:value="formData.password" placeholder="Nhập Mật khẩu" />
                         </a-form-item>
@@ -98,6 +105,7 @@
                         </a-form-item>
                     </a-col>
                 </a-row>
+
             </a-form>
             <template #extra>
                 <a-space>
@@ -110,7 +118,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { getUsers, createUser, updateUser, deleteUser } from '../api/user'
 import { getDepartments } from '@/api/department'
 import { message } from 'ant-design-vue'
@@ -125,6 +133,7 @@ const loading = ref(false)
 const loadingCreate = ref(false)
 const openDrawer = ref(false)
 const departments = ref([])
+const changePassword = ref(false);
 const formData = ref({
     name: "",
     email: "",
@@ -210,15 +219,21 @@ const validateDepartment = async (_rule, value) => {
     }
 };
 const rules = computed(() => {
-    return {
+    const base = {
         name: [{ required: true, validator: validateName, trigger: 'change' }],
         email: [{ required: true, validator: validateEmail, trigger: 'change' }],
         phone: [{ required: true, validator: validatePhone, trigger: 'change' }],
-        department: [{ required: true, validator: validateDepartment, trigger: 'change' }],
-        password: [{ required: true, validator: validatePass, trigger: 'change' }],
-        confirm_password: [{ required: true, validator: validateConfirmPassword,  trigger: 'change' }],
+        department: [{ required: true, validator: validateDepartment, trigger: 'change' }]
+    };
+
+    if (!selectedUser.value || changePassword.value) {
+        base.password = [{ required: true, validator: validatePass, trigger: 'change' }];
+        base.confirm_password = [{ required: true, validator: validateConfirmPassword, trigger: 'change' }];
     }
-})
+
+    return base;
+});
+
 
 const optionsDepartment = computed(() =>{
     if (!departments.value) {
@@ -273,10 +288,10 @@ const createDrawerUser = async () => {
     }
     try {
         await createUser(formData.value);
-        getUser();
+        await getUser();
         onCloseDrawer();
     } catch (e) {
-        if(e.response.data.error == 400){
+        if(e.response.data.error === 400){
             message.error('Email đã tồn tại, vui lòng nhập email khác!')
             return
         }
@@ -294,7 +309,7 @@ const updateDrawerUser = async () => {
     loadingCreate.value = true;
     try {
         await updateUser(selectedUser.value.id, formData.value);
-        getUser();
+        await getUser();
         onCloseDrawer()
     } catch (e) {
         message.error('Cập nhật người dùng không thành công')
@@ -306,21 +321,25 @@ const updateDrawerUser = async () => {
 const deleteConfirm = async (userId) => {
     try {
         await deleteUser(userId);
-        getUser();
+        await getUser();
     } catch (e) {
         message.error('Xóa người dùng không thành công')
     } finally {
     }
 }
 
-const showPopupDetail = async (record) => {    
+const showPopupDetail = async (record) => {
     selectedUser.value = record;
     formData.value.name = record.name;
     formData.value.email = record.email;
     formData.value.phone = record.phone;
     formData.value.department_id = record.department_id;
-    formData.value.password = record.password;
-    formData.value.confirm_password = record.confirm_password;
+
+    // ❌ KHÔNG nên gán password và confirm_password khi sửa
+    formData.value.password = '';
+    formData.value.confirm_password = '';
+
+    changePassword.value = false; // Reset checkbox đổi mật khẩu
     openDrawer.value = true;
 }
 
@@ -329,10 +348,11 @@ const showPopupCreate = () => {
 }
 
 const onCloseDrawer = () => {
+    changePassword.value = false;
     openDrawer.value = false;
     setDefaultData();
     selectedUser.value = null;
-    resetFormValidate()
+    resetFormValidate();
 }
 
 const setDefaultData = () =>{
@@ -362,6 +382,12 @@ const getNameDepartments = (value) => {
     const department = departments.value.find(item => item.id === value)
     return department ? department.name : ""
 }
+
+watch(selectedUser, (val) => {
+    if (val) {
+        changePassword.value = false; // Khi chỉnh sửa user, mặc định KHÔNG đổi mật khẩu
+    }
+});
 
 onMounted(() => {
     getUser();

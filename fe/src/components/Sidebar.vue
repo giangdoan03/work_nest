@@ -73,10 +73,10 @@
                     <span>Tài liệu của tôi</span>
                 </a-menu-item>
 
-                <a-menu-item key="documents-shared">
-                    <template #icon><InboxOutlined /></template>
-                    <span>Được chia sẻ với tôi</span>
-                </a-menu-item>
+<!--                <a-menu-item key="documents-shared">-->
+<!--                    <template #icon><InboxOutlined /></template>-->
+<!--                    <span>Được chia sẻ với tôi</span>-->
+<!--                </a-menu-item>-->
 
                 <!-- Tuỳ chọn - Tất cả người dùng -->
                 <a-menu-item key="documents-department">

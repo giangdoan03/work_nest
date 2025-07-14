@@ -34,12 +34,12 @@
             <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'action'">
                     <a-space>
-                        <a-button type="link" @click="viewDocument(record.id)">
+                        <a-button type="link" @click="viewDoc(record)">
                             <EyeOutlined />
                         </a-button>
-                        <a-button type="link" @click="downloadDocument(record)">
-                            <DownloadOutlined />
-                        </a-button>
+<!--                        <a-button type="link" @click="downloadDocument(record)">-->
+<!--                            <DownloadOutlined />-->
+<!--                        </a-button>-->
                         <a-button type="link" @click="editDocument(record.id)">
                             <EditOutlined />
                         </a-button>
@@ -54,6 +54,44 @@
 
 
         </a-table>
+
+        <a-modal
+            v-model:open="editModalVisible"
+            title="Chỉnh sửa tài liệu"
+            @ok="submitEdit"
+            @cancel="resetEditForm"
+            :confirm-loading="editLoading"
+            ok-text="Cập nhật"
+            cancel-text="Hủy"
+        >
+            <a-form layout="vertical">
+                <a-form-item label="Tiêu đề">
+                    <a-input v-model:value="editForm.title" placeholder="Nhập tiêu đề" />
+                </a-form-item>
+
+                <a-form-item label="Phòng ban">
+                    <a-select
+                        v-model:value="editForm.department_id"
+                        :options="departments"
+                        placeholder="Chọn phòng ban"
+                    />
+                </a-form-item>
+
+                <a-form-item label="Đường dẫn file">
+                    <a-input v-model:value="editForm.file_path" placeholder="Link tài liệu" />
+                </a-form-item>
+
+                <a-form-item label="Quyền truy cập">
+                    <a-select v-model:value="editForm.visibility">
+                        <a-select-option value="private">Riêng tư</a-select-option>
+                        <a-select-option value="public">Công khai</a-select-option>
+                        <a-select-option value="department">Theo phòng ban</a-select-option>
+                        <a-select-option value="custom">Tùy chỉnh</a-select-option>
+                    </a-select>
+                </a-form-item>
+            </a-form>
+        </a-modal>
+
     </div>
 </template>
 
@@ -122,9 +160,6 @@
         fetchDocuments()
     }
 
-    const editDocument = (id) => {
-        // router.push(`/documents/${id}/edit`)
-    }
 
     const deleteDoc = async (id) => {
         try {
@@ -141,6 +176,70 @@
     }
     const downloadDocument = (record) => {
         window.open(import.meta.env.VITE_API_URL + '/' + record.file_path, '_blank')
+    }
+
+    const baseURL = import.meta.env.VITE_API_URL
+
+    const viewDoc = (doc) => {
+        const url = doc.file_path.startsWith('http')
+            ? doc.file_path
+            : `${baseURL}/${doc.file_path}`
+        window.open(url, '_blank')
+    }
+
+
+    import { updateDocument } from '../api/document' // giả sử bạn có API này
+
+    const editModalVisible = ref(false)
+    const editLoading = ref(false)
+
+    const editForm = ref({
+        id: null,
+        title: '',
+        department_id: null,
+        file_path: '',
+        visibility: 'private'
+    })
+
+    const editDocument = (id) => {
+        const doc = documents.value.find(d => d.id === id)
+        if (!doc) return
+
+        editForm.value = {
+            id: doc.id,
+            title: doc.title,
+            department_id: doc.department_id,
+            file_path: doc.file_path,
+            visibility: doc.visibility
+        }
+
+        editModalVisible.value = true
+    }
+
+    const submitEdit = async () => {
+        editLoading.value = true
+        try {
+            const { id, ...data } = editForm.value
+            await updateDocument(id, data)
+            message.success('Cập nhật thành công')
+            await fetchDocuments()
+            editModalVisible.value = false
+        } catch (e) {
+            message.error('Cập nhật thất bại')
+        } finally {
+            editLoading.value = false
+        }
+    }
+
+    const resetEditForm = () => {
+        editForm.value = {
+            id: null,
+            title: '',
+            department_id: null,
+            file_path: '',
+            visibility: 'private'
+        }
+        editModalVisible.value = false
     }
 
     onMounted(fetchDocuments)

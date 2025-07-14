@@ -27,9 +27,9 @@ class DocumentController extends ResourceController
             return $this->failUnauthorized('Chưa đăng nhập.');
         }
 
-        // Áp dụng bộ lọc
+        // Áp dụng filter
         if (!empty($filters['department_id'])) {
-            $query->where('department_id', $filters['department_id']);
+            $query->where('documents.department_id', $filters['department_id']);
         }
 
         if (!empty($filters['tags'])) {
@@ -56,21 +56,37 @@ class DocumentController extends ResourceController
             ->findAll();
         $sharedIds = array_column($sharedDocIds, 'document_id');
 
-        // Xây dựng truy vấn truy cập
         $query->groupStart()
-            ->where('uploaded_by', $userId)
+            ->where('documents.uploaded_by', $userId)
             ->orGroupStart()
-            ->where('visibility', 'department')
-            ->where('department_id', $deptId)
-            ->groupEnd()
-            ->orGroupStart()
-            ->where('visibility', 'custom')
-            ->whereIn('id', $sharedIds)
-            ->groupEnd()
+            ->where('documents.visibility', 'department')
+            ->where('documents.department_id', $deptId)
             ->groupEnd();
 
-        return $this->respond($query->findAll());
+        if (!empty($sharedIds)) {
+            $query->orGroupStart()
+                ->where('documents.visibility', 'custom')
+                ->whereIn('documents.id', $sharedIds)
+                ->groupEnd();
+        }
+
+        $query->groupEnd();
+
+
+
+        // Join thêm tên phòng ban và người tạo
+        $query->select('documents.*, departments.name as department_name, users.name as uploader_name')
+            ->join('departments', 'departments.id = documents.department_id', 'left')
+            ->join('users', 'users.id = documents.uploaded_by', 'left');
+
+        $documents = $query->findAll();
+        $docIds = array_column($documents, 'id');
+
+        // Lấy quyền chia sẻ
+        return $this->getSharingPermissions($permissionModel, $docIds, $documents);
     }
+
+
 
     public function sharedWithMe(): ResponseInterface
     {
@@ -121,22 +137,29 @@ class DocumentController extends ResourceController
             return $this->failUnauthorized('Chưa đăng nhập');
         }
 
-        // ✅ Dùng getJSON thay vì getPost
         $data = $this->request->getJSON(true);
-
         if (!$data || !is_array($data)) {
             return $this->failValidationErrors('Dữ liệu JSON không hợp lệ');
         }
 
-        $title = $data['title'] ?? '';
-        $fileUrl = $data['file_url'] ?? '';
-        $departmentId = $data['department_id'] ?? '';
-        $visibility = $data['visibility'] ?? 'private';
+        // Lấy dữ liệu đầu vào
+        $title         = $data['title'] ?? '';
+        $fileUrl       = $data['file_url'] ?? '';
+        $departmentId  = $data['department_id'] ?? '';
+        $visibility    = $data['visibility'] ?? 'private';
 
+        // Chuẩn hoá visibility
+        $validVisibilities = ['private', 'public', 'department', 'custom'];
+        if (!in_array($visibility, $validVisibilities)) {
+            $visibility = 'private';
+        }
+
+        // Kiểm tra dữ liệu bắt buộc
         if (!$title || !$fileUrl || !$departmentId) {
             return $this->failValidationErrors('Vui lòng nhập đầy đủ thông tin.');
         }
 
+        // Chuẩn bị dữ liệu insert
         $insertData = [
             'title'         => $title,
             'file_path'     => $fileUrl,
@@ -147,12 +170,12 @@ class DocumentController extends ResourceController
             'uploaded_by'   => $userId
         ];
 
+        // Tạo mới tài liệu
         $docId = $this->model->insert($insertData);
 
-        // ✅ xử lý permission nếu visibility là custom
+        // Nếu là custom thì lưu quyền chia sẻ
         if ($visibility === 'custom') {
             $permissionModel = new DocumentPermissionModel();
-
             $this->extracted($data, $docId, $permissionModel);
         }
 
@@ -161,6 +184,7 @@ class DocumentController extends ResourceController
             'url' => $fileUrl
         ]);
     }
+
 
     public function share(): ResponseInterface
     {
@@ -208,11 +232,18 @@ class DocumentController extends ResourceController
             $data = $this->request->getPost(); // fallback nếu dùng FormData
         }
 
+        // Lấy visibility và đảm bảo hợp lệ
+        $visibility = $data['visibility'] ?? 'private';
+        $validVisibilities = ['private', 'public', 'department', 'custom'];
+        if (!in_array($visibility, $validVisibilities)) {
+            $visibility = 'private';
+        }
+
         $documentData = [
             'title'         => $data['title'] ?? '',
             'file_path'     => $data['file_url'] ?? '',
             'department_id' => $data['department_id'] ?? '',
-            'visibility'    => $data['visibility'] ?? 'private',
+            'visibility'    => $visibility,
         ];
 
         $this->model->update($id, $documentData);
@@ -221,12 +252,13 @@ class DocumentController extends ResourceController
         $permissionModel = new DocumentPermissionModel();
         $permissionModel->where('document_id', $id)->delete();
 
-        if ($documentData['visibility'] === 'custom') {
+        if ($visibility === 'custom') {
             $this->extracted($data, $id, $permissionModel);
         }
 
         return $this->respond(['status' => 'success']);
     }
+
 
 
 
@@ -259,41 +291,7 @@ class DocumentController extends ResourceController
         // Nếu có tài liệu visibility = custom thì lấy thêm quyền chia sẻ
         $docIds = array_column($documents, 'id');
         $permissionModel = new DocumentPermissionModel();
-        $permissions = $permissionModel
-            ->whereIn('document_id', $docIds)
-            ->findAll();
-
-        // Gom nhóm quyền chia sẻ theo tài liệu
-        $sharedMap = [];
-        foreach ($permissions as $p) {
-            $docId = $p['document_id'];
-            if (!isset($sharedMap[$docId])) {
-                $sharedMap[$docId] = [
-                    'shared_users' => [],
-                    'shared_departments' => []
-                ];
-            }
-
-            if ($p['shared_with_type'] === 'user') {
-                $sharedMap[$docId]['shared_users'][] = (int) $p['shared_with_id'];
-            } elseif ($p['shared_with_type'] === 'department') {
-                $sharedMap[$docId]['shared_departments'][] = (int) $p['shared_with_id'];
-            }
-        }
-
-        // Gắn vào mỗi document
-        foreach ($documents as &$doc) {
-            $docId = $doc['id'];
-            if ($doc['visibility'] === 'custom' && isset($sharedMap[$docId])) {
-                $doc['shared_users'] = $sharedMap[$docId]['shared_users'];
-                $doc['shared_departments'] = $sharedMap[$docId]['shared_departments'];
-            } else {
-                $doc['shared_users'] = [];
-                $doc['shared_departments'] = [];
-            }
-        }
-
-        return $this->respond(['data' => $documents]);
+        return $this->getSharingPermissions($permissionModel, $docIds, $documents);
     }
 
 
@@ -314,6 +312,9 @@ class DocumentController extends ResourceController
     }
 
 
+    /**
+     * @throws \ReflectionException
+     */
     public function createPermission(): ResponseInterface
     {
         $data = $this->request->getJSON(true);
@@ -478,12 +479,19 @@ class DocumentController extends ResourceController
      * @param $docId
      * @param DocumentPermissionModel $permissionModel
      * @return void
-     * @throws \ReflectionException
      */
     public function extracted(array|stdClass $data, $docId, DocumentPermissionModel $permissionModel): void
     {
         $sharedUsers = $data['shared_users'] ?? [];
         $sharedDepartments = $data['shared_departments'] ?? [];
+
+        // Nếu là string JSON thì decode
+        if (is_string($sharedUsers)) {
+            $sharedUsers = json_decode($sharedUsers, true);
+        }
+        if (is_string($sharedDepartments)) {
+            $sharedDepartments = json_decode($sharedDepartments, true);
+        }
 
         $permissions = [];
 
@@ -506,8 +514,60 @@ class DocumentController extends ResourceController
         }
 
         if (!empty($permissions)) {
-            $permissionModel->insertBatch($permissions);
+            try {
+                $success = $permissionModel->insertBatch($permissions);
+                if (!$success) {
+                    log_message('error', '⚠️ insertBatch failed: ' . json_encode($permissionModel->errors()));
+                }
+            } catch (\Exception $e) {
+                log_message('error', '❌ Exception in extracted(): ' . $e->getMessage());
+            }
         }
+    }
+
+    /**
+     * @param DocumentPermissionModel $permissionModel
+     * @param array $docIds
+     * @param $documents
+     * @return ResponseInterface
+     */
+    public function getSharingPermissions(DocumentPermissionModel $permissionModel, array $docIds, $documents): ResponseInterface
+    {
+        $permissions = $permissionModel
+            ->whereIn('document_id', $docIds)
+            ->findAll();
+
+        // Gom nhóm theo document
+        $sharedMap = [];
+        foreach ($permissions as $p) {
+            $docId = $p['document_id'];
+            if (!isset($sharedMap[$docId])) {
+                $sharedMap[$docId] = [
+                    'shared_users' => [],
+                    'shared_departments' => []
+                ];
+            }
+
+            if ($p['shared_with_type'] === 'user') {
+                $sharedMap[$docId]['shared_users'][] = (int)$p['shared_with_id'];
+            } elseif ($p['shared_with_type'] === 'department') {
+                $sharedMap[$docId]['shared_departments'][] = (int)$p['shared_with_id'];
+            }
+        }
+
+        // Gắn permissions vào document
+        foreach ($documents as &$doc) {
+            $docId = $doc['id'];
+            if ($doc['visibility'] === 'custom' && isset($sharedMap[$docId])) {
+                $doc['shared_users'] = $sharedMap[$docId]['shared_users'];
+                $doc['shared_departments'] = $sharedMap[$docId]['shared_departments'];
+            } else {
+                $doc['shared_users'] = [];
+                $doc['shared_departments'] = [];
+            }
+        }
+
+        return $this->respond(['data' => $documents]);
     }
 
 

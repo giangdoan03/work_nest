@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jul 13, 2025 at 04:49 PM
+-- Generation Time: Jul 14, 2025 at 04:45 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -724,7 +724,7 @@ CREATE TABLE `documents` (
   `file_path` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `department_id` int DEFAULT NULL,
   `uploaded_by` int NOT NULL,
-  `visibility` enum('private','department','public') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'private',
+  `visibility` enum('private','public','department','custom') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'private',
   `file_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `file_size` int DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
@@ -737,12 +737,12 @@ CREATE TABLE `documents` (
 --
 
 INSERT INTO `documents` (`id`, `title`, `file_path`, `department_id`, `uploaded_by`, `visibility`, `file_type`, `file_size`, `created_at`, `updated_at`, `tags`) VALUES
-(1, 'Báo cáo Q2 đã cập nhật', 'documents/1749798305_37045c936642c36152e8.png', 3, 1, 'public', 'image/png', 528057, '2025-06-13 07:05:05', '2025-06-13 07:27:04', 'báo cáo, quý 2'),
-(2, 'Báo cáo tài chính', 'documents/1749799608_3bbef2158709ab8061f4.png', 3, 1, 'public', 'image/png', 528057, '2025-06-13 07:26:48', '2025-06-13 07:26:48', 'tài chính, 2025'),
-(3, 'test', 'https://vnexpress.net/', 1, 1, 'private', 'link', 0, '2025-07-13 14:48:56', '2025-07-13 14:48:56', NULL),
+(1, 'Báo cáo Q2 đã cập nhật', 'documents/1749798305_37045c936642c36152e8.png', 3, 1, 'custom', 'image/png', 528057, '2025-06-13 07:05:05', '2025-07-14 16:42:40', 'báo cáo, quý 2'),
+(2, 'Báo cáo tài chính', 'documents/1749799608_3bbef2158709ab8061f4.png', 3, 1, 'custom', 'image/png', 528057, '2025-06-13 07:26:48', '2025-07-14 16:42:16', 'tài chính, 2025'),
+(3, 'test', 'https://vnexpress.net/', 1, 1, 'custom', 'link', 0, '2025-07-13 14:48:56', '2025-07-14 16:42:08', NULL),
 (4, 'test 2', 'https://dantri.com.vn/noi-vu/nhom-can-bo-cong-chuc-duoc-uu-tien-nghi-huu-truoc-tuoi-20250322153127598.htm', 2, 1, 'private', 'link', 0, '2025-07-13 15:01:40', '2025-07-13 15:01:40', NULL),
-(5, 'test 3', 'https://dantri.com.vn/noi-vu/nhom-can-bo-cong-chuc-duoc-uu-tien-nghi-huu-truoc-tuoi-20250322153127598.htm', 3, 1, 'private', 'link', 0, '2025-07-13 15:01:55', '2025-07-13 15:01:55', NULL),
-(6, 'tài liệu kỹ thuật 4', 'https://vnexpress.net/', 3, 1, '', 'link', 0, '2025-07-13 15:23:25', '2025-07-13 16:45:12', NULL);
+(5, 'test 3', 'https://dantri.com.vn/noi-vu/nhom-can-bo-cong-chuc-duoc-uu-tien-nghi-huu-truoc-tuoi-20250322153127598.htm', 3, 1, 'custom', 'link', 0, '2025-07-13 15:01:55', '2025-07-14 14:57:26', NULL),
+(6, 'tài liệu kỹ thuật 4', 'https://vnexpress.net/', 3, 1, 'custom', 'link', 0, '2025-07-13 15:23:25', '2025-07-14 21:53:55', NULL);
 
 -- --------------------------------------------------------
 
@@ -765,23 +765,29 @@ CREATE TABLE `document_permissions` (
 --
 
 INSERT INTO `document_permissions` (`id`, `document_id`, `shared_with_type`, `shared_with_id`, `permission_type`, `created_at`, `updated_at`) VALUES
-(3, 1, 'user', 5, 'edit', '2025-06-13 07:14:22', '2025-07-01 12:00:42'),
-(4, 1, 'department', 2, 'download', '2025-06-13 07:14:22', '2025-06-13 07:14:22'),
-(5, 1, 'user', 5, 'view', '2025-06-13 07:20:13', '2025-06-13 07:20:13'),
-(6, 1, 'department', 1, 'download', '2025-06-13 07:20:13', '2025-06-13 07:20:13'),
-(7, 1, 'user', 1, 'view', '2025-06-13 07:20:31', '2025-06-13 07:20:31'),
-(9, 1, 'user', 133, 'view', '2025-06-13 07:23:20', '2025-06-13 07:23:20'),
-(10, 1, 'department', 1, 'download', '2025-06-13 07:23:20', '2025-06-13 07:23:20'),
-(11, 1, 'user', 1, 'view', '2025-06-13 07:26:53', '2025-06-13 07:26:53'),
-(12, 1, 'department', 1, 'download', '2025-06-13 07:26:53', '2025-06-13 07:26:53'),
-(13, 1, 'user', 12, 'view', '2025-06-13 09:04:00', '2025-06-13 09:04:00'),
-(163, 6, 'user', 5, 'view', '2025-07-13 16:45:12', '2025-07-13 16:45:12'),
-(164, 6, 'user', 8, 'view', '2025-07-13 16:45:12', '2025-07-13 16:45:12'),
-(165, 6, 'user', 12, 'view', '2025-07-13 16:45:12', '2025-07-13 16:45:12'),
-(166, 6, 'department', 1, 'view', '2025-07-13 16:45:12', '2025-07-13 16:45:12'),
-(167, 6, 'department', 2, 'view', '2025-07-13 16:45:12', '2025-07-13 16:45:12'),
-(168, 6, 'department', 3, 'view', '2025-07-13 16:45:12', '2025-07-13 16:45:12'),
-(169, 6, 'department', 4, 'view', '2025-07-13 16:45:12', '2025-07-13 16:45:12');
+(206, 6, 'user', 5, 'view', '2025-07-14 14:49:19', '2025-07-14 14:49:19'),
+(207, 6, 'user', 8, 'view', '2025-07-14 14:49:19', '2025-07-14 14:49:19'),
+(208, 6, 'user', 12, 'view', '2025-07-14 14:49:19', '2025-07-14 14:49:19'),
+(209, 6, 'department', 2, 'view', '2025-07-14 14:49:19', '2025-07-14 14:49:19'),
+(210, 6, 'department', 3, 'view', '2025-07-14 14:49:19', '2025-07-14 14:49:19'),
+(211, 6, 'department', 4, 'view', '2025-07-14 14:49:19', '2025-07-14 14:49:19'),
+(212, 5, 'user', 8, 'view', '2025-07-14 14:57:26', '2025-07-14 14:57:26'),
+(213, 5, 'department', 2, 'view', '2025-07-14 14:57:26', '2025-07-14 14:57:26'),
+(214, 5, 'department', 3, 'view', '2025-07-14 14:57:26', '2025-07-14 14:57:26'),
+(215, 3, 'user', 5, 'view', '2025-07-14 16:42:08', '2025-07-14 16:42:08'),
+(216, 3, 'user', 8, 'view', '2025-07-14 16:42:08', '2025-07-14 16:42:08'),
+(217, 3, 'user', 12, 'view', '2025-07-14 16:42:08', '2025-07-14 16:42:08'),
+(218, 3, 'department', 2, 'view', '2025-07-14 16:42:08', '2025-07-14 16:42:08'),
+(219, 3, 'department', 3, 'view', '2025-07-14 16:42:08', '2025-07-14 16:42:08'),
+(220, 3, 'department', 4, 'view', '2025-07-14 16:42:08', '2025-07-14 16:42:08'),
+(221, 2, 'user', 8, 'view', '2025-07-14 16:42:16', '2025-07-14 16:42:16'),
+(222, 2, 'department', 2, 'view', '2025-07-14 16:42:16', '2025-07-14 16:42:16'),
+(223, 2, 'department', 3, 'view', '2025-07-14 16:42:16', '2025-07-14 16:42:16'),
+(224, 1, 'user', 8, 'view', '2025-07-14 16:42:40', '2025-07-14 16:42:40'),
+(225, 1, 'user', 12, 'view', '2025-07-14 16:42:40', '2025-07-14 16:42:40'),
+(226, 1, 'department', 1, 'view', '2025-07-14 16:42:40', '2025-07-14 16:42:40'),
+(227, 1, 'department', 2, 'view', '2025-07-14 16:42:40', '2025-07-14 16:42:40'),
+(228, 1, 'department', 3, 'view', '2025-07-14 16:42:40', '2025-07-14 16:42:40');
 
 -- --------------------------------------------------------
 
@@ -1024,7 +1030,118 @@ INSERT INTO `role_permissions` (`id`, `role_id`, `permission_id`, `module`, `act
 (232, 1, NULL, 'bidding', 'view', '2025-07-13 20:52:46', '2025-07-13 20:52:46'),
 (233, 1, NULL, 'bidding', 'create', '2025-07-13 20:52:46', '2025-07-13 20:52:46'),
 (234, 1, NULL, 'bidding', 'update', '2025-07-13 20:52:46', '2025-07-13 20:52:46'),
-(235, 1, NULL, 'bidding', 'delete', '2025-07-13 20:52:46', '2025-07-13 20:52:46');
+(235, 1, NULL, 'bidding', 'delete', '2025-07-13 20:52:46', '2025-07-13 20:52:46'),
+(236, 1, NULL, 'user', 'view', '2025-07-14 22:01:59', '2025-07-14 22:01:59'),
+(237, 1, NULL, 'user', 'create', '2025-07-14 22:01:59', '2025-07-14 22:01:59'),
+(238, 1, NULL, 'user', 'update', '2025-07-14 22:01:59', '2025-07-14 22:01:59'),
+(239, 1, NULL, 'user', 'delete', '2025-07-14 22:01:59', '2025-07-14 22:01:59'),
+(240, 3, NULL, 'task', 'view', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(244, 3, NULL, 'document', 'view', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(245, 3, NULL, 'document', 'create', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(246, 3, NULL, 'document', 'update', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(247, 3, NULL, 'document', 'delete', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(248, 3, NULL, 'project', 'view', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(249, 3, NULL, 'project', 'create', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(250, 3, NULL, 'project', 'update', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(251, 3, NULL, 'project', 'delete', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(252, 3, NULL, 'step-template', 'view', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(253, 3, NULL, 'step-template', 'create', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(254, 3, NULL, 'step-template', 'update', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(255, 3, NULL, 'step-template', 'delete', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(256, 3, NULL, 'my-task', 'view', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(257, 3, NULL, 'my-task', 'create', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(258, 3, NULL, 'my-task', 'update', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(259, 3, NULL, 'my-task', 'delete', '2025-07-14 22:12:00', '2025-07-14 22:12:00'),
+(260, 3, NULL, 'contract', 'view', '2025-07-14 22:20:20', '2025-07-14 22:20:20'),
+(261, 3, NULL, 'contract', 'create', '2025-07-14 22:20:20', '2025-07-14 22:20:20'),
+(262, 3, NULL, 'contract', 'update', '2025-07-14 22:20:20', '2025-07-14 22:20:20'),
+(263, 3, NULL, 'contract', 'delete', '2025-07-14 22:20:20', '2025-07-14 22:20:20'),
+(272, 3, NULL, 'department', 'view', '2025-07-14 22:21:04', '2025-07-14 22:21:04'),
+(273, 3, NULL, 'department', 'create', '2025-07-14 22:21:04', '2025-07-14 22:21:04'),
+(274, 3, NULL, 'department', 'update', '2025-07-14 22:21:04', '2025-07-14 22:21:04'),
+(275, 3, NULL, 'department', 'delete', '2025-07-14 22:21:04', '2025-07-14 22:21:04'),
+(276, 3, NULL, 'bidding', 'view', '2025-07-14 22:21:04', '2025-07-14 22:21:04'),
+(277, 3, NULL, 'bidding', 'create', '2025-07-14 22:21:04', '2025-07-14 22:21:04'),
+(278, 3, NULL, 'bidding', 'update', '2025-07-14 22:21:04', '2025-07-14 22:21:04'),
+(279, 3, NULL, 'bidding', 'delete', '2025-07-14 22:21:04', '2025-07-14 22:21:04'),
+(280, 3, NULL, 'customer', 'view', '2025-07-14 22:21:04', '2025-07-14 22:21:04'),
+(281, 3, NULL, 'customer', 'create', '2025-07-14 22:21:04', '2025-07-14 22:21:04'),
+(282, 3, NULL, 'customer', 'update', '2025-07-14 22:21:04', '2025-07-14 22:21:04'),
+(283, 3, NULL, 'customer', 'delete', '2025-07-14 22:21:04', '2025-07-14 22:21:04'),
+(292, 3, NULL, 'gantt', 'view', '2025-07-14 22:21:04', '2025-07-14 22:21:04'),
+(293, 3, NULL, 'gantt', 'create', '2025-07-14 22:21:04', '2025-07-14 22:21:04'),
+(294, 3, NULL, 'gantt', 'update', '2025-07-14 22:21:04', '2025-07-14 22:21:04'),
+(295, 3, NULL, 'gantt', 'delete', '2025-07-14 22:21:04', '2025-07-14 22:21:04'),
+(296, 3, NULL, 'task', 'create', '2025-07-14 22:21:57', '2025-07-14 22:21:57'),
+(297, 3, NULL, 'task', 'update', '2025-07-14 22:21:57', '2025-07-14 22:21:57'),
+(298, 3, NULL, 'task', 'delete', '2025-07-14 22:21:57', '2025-07-14 22:21:57'),
+(299, 1, NULL, 'task', 'create', '2025-07-14 22:39:53', '2025-07-14 22:39:53'),
+(300, 1, NULL, 'task', 'update', '2025-07-14 22:39:53', '2025-07-14 22:39:53'),
+(301, 1, NULL, 'task', 'delete', '2025-07-14 22:39:53', '2025-07-14 22:39:53'),
+(302, 1, NULL, 'comment', 'view', '2025-07-14 22:39:53', '2025-07-14 22:39:53'),
+(303, 1, NULL, 'comment', 'create', '2025-07-14 22:39:53', '2025-07-14 22:39:53'),
+(304, 1, NULL, 'comment', 'update', '2025-07-14 22:39:53', '2025-07-14 22:39:53'),
+(305, 1, NULL, 'comment', 'delete', '2025-07-14 22:39:53', '2025-07-14 22:39:53'),
+(306, 2, NULL, 'user', 'view', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(307, 2, NULL, 'user', 'create', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(308, 2, NULL, 'user', 'update', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(309, 2, NULL, 'user', 'delete', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(310, 2, NULL, 'setting', 'view', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(311, 2, NULL, 'setting', 'create', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(312, 2, NULL, 'setting', 'update', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(313, 2, NULL, 'setting', 'delete', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(314, 2, NULL, 'task', 'view', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(315, 2, NULL, 'task', 'create', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(316, 2, NULL, 'task', 'update', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(317, 2, NULL, 'task', 'delete', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(318, 2, NULL, 'department', 'view', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(319, 2, NULL, 'department', 'create', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(320, 2, NULL, 'department', 'update', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(321, 2, NULL, 'department', 'delete', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(322, 2, NULL, 'contract', 'view', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(323, 2, NULL, 'contract', 'create', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(324, 2, NULL, 'contract', 'update', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(325, 2, NULL, 'contract', 'delete', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(326, 2, NULL, 'bidding', 'view', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(327, 2, NULL, 'bidding', 'create', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(328, 2, NULL, 'bidding', 'update', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(329, 2, NULL, 'bidding', 'delete', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(330, 2, NULL, 'customer', 'view', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(331, 2, NULL, 'customer', 'create', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(332, 2, NULL, 'customer', 'update', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(333, 2, NULL, 'customer', 'delete', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(334, 2, NULL, 'document', 'view', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(335, 2, NULL, 'document', 'create', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(336, 2, NULL, 'document', 'update', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(337, 2, NULL, 'document', 'delete', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(338, 2, NULL, 'permission', 'view', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(339, 2, NULL, 'permission', 'create', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(340, 2, NULL, 'permission', 'update', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(341, 2, NULL, 'permission', 'delete', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(342, 2, NULL, 'project', 'view', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(343, 2, NULL, 'project', 'create', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(344, 2, NULL, 'project', 'update', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(345, 2, NULL, 'project', 'delete', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(346, 2, NULL, 'comment', 'view', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(347, 2, NULL, 'comment', 'create', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(348, 2, NULL, 'comment', 'update', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(349, 2, NULL, 'comment', 'delete', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(350, 2, NULL, 'approval', 'view', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(351, 2, NULL, 'approval', 'create', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(352, 2, NULL, 'approval', 'update', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(353, 2, NULL, 'approval', 'delete', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(354, 2, NULL, 'gantt', 'view', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(355, 2, NULL, 'gantt', 'create', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(356, 2, NULL, 'gantt', 'update', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(357, 2, NULL, 'gantt', 'delete', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(358, 2, NULL, 'step-template', 'view', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(359, 2, NULL, 'step-template', 'create', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(360, 2, NULL, 'step-template', 'update', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(361, 2, NULL, 'step-template', 'delete', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(362, 2, NULL, 'my-task', 'view', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(363, 2, NULL, 'my-task', 'create', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(364, 2, NULL, 'my-task', 'update', '2025-07-14 22:56:36', '2025-07-14 22:56:36'),
+(365, 2, NULL, 'my-task', 'delete', '2025-07-14 22:56:36', '2025-07-14 22:56:36');
 
 -- --------------------------------------------------------
 
@@ -1354,11 +1471,11 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `name`, `phone`, `avatar`, `role`, `department_id`, `role_id`) VALUES
-(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-07-13 10:57:18', 'Nguyễn Văn A', '0988888888', 'avatars/1749049795_4087ec00b95ac222533a.png', 'super admin', 1, 1),
-(3, 'superadmin@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-20 14:02:38', '2025-05-25 09:51:46', 'Super Admin', '0988888888', NULL, 'super admin', 2, 1),
-(4, 'nguyenvana@example.com', '$2y$10$n65TNehIFvx11oCJ2IbjXeiyDXWe9haW0VMv6UvFhMzctFOu1Ptd.', '2025-05-26 04:33:21', '2025-06-21 15:32:53', 'Nguyễn Văn A', '0909123456', NULL, 'customer', 2, NULL),
-(5, 'a@worknest.vn', '$2y$10$y9WQWckMJCEVQbqG0PNSCum.x7fNlxAJK7RqwxZvlaxBVZRtre96W', '2025-06-04 09:10:50', '2025-06-04 09:10:50', 'Nguyễn Văn A', '0911111111', NULL, 'customer', 1, NULL),
-(6, 'b@worknest.vn', '$2y$10$1LWsovHhrQhpuY3tvcl5Bu6nu8cWhi4U51LIHhlp7pTD3yBeY/Gz.', '2025-06-04 09:11:21', '2025-06-04 09:11:21', 'Trần Thị B', '0911111112', NULL, 'customer', 1, NULL),
+(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-07-14 22:54:59', 'Nguyễn Văn A', '0988888888', 'avatars/1749049795_4087ec00b95ac222533a.png', 'super admin', 1, 2),
+(3, 'superadmin@example.com', '$2y$10$kJ6V.Isy8GCV6kRwFekdEuS/PvVzBe4PTeQUqpWvnW3efeyhbg4Hq', '2025-04-20 14:02:38', '2025-07-14 22:52:57', 'Super Admin', '0988888888', NULL, 'super admin', 2, 1),
+(4, 'nguyenvana@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-05-26 04:33:21', '2025-07-14 22:13:40', 'Nguyễn Văn A', '0909123456', NULL, 'customer', 2, 3),
+(5, 'a@worknest.vn', '$2y$10$fPUyT/hhSHhPknmvWgPtxelsaQfNLRiOVZ3Wayj2tbcNo4lApUFEW', '2025-06-04 09:10:50', '2025-07-14 16:27:49', 'Nguyễn Vân Anh', '0911111111', NULL, 'customer', 1, NULL),
+(6, 'b@worknest.vn', '$2y$10$ZKKb/DZ/dk0eFQW/xfG3Ne8Ozrdt1TcQcR1alq4KP5biJpmUm2Uuy', '2025-06-04 09:11:21', '2025-07-14 15:34:45', 'Trần Thị B', '0911111112', NULL, 'customer', 1, NULL),
 (7, 'c@worknest.vn', '$2y$10$0M2AJM7k/CXzGKJCeeEh1.g2tFjFCZfeOLDGKqGgm3dUHqqpNtciW', '2025-06-04 09:11:44', '2025-06-04 09:11:44', 'Lê Văn C', '0911111113', NULL, 'customer', 2, NULL),
 (8, 'd@worknest.vn', '$2y$10$UfmfTcnJd1Hc1wcH0Utaz.w9IFmXwNCzoFUQdahizBIri0BTfsDp2', '2025-06-04 09:12:07', '2025-06-22 02:33:05', 'Phạm Thị D', '0911111114', NULL, 'customer', 2, NULL),
 (9, 't@worknest.vn', '$2y$10$hGqQg.IGey/1/3a6Dt/3rOQKKdPgz2U787lWDghxeDqCmCk30v7SW', '2025-06-04 09:12:52', '2025-06-04 09:12:52', 'Bùi Minh T', '0911111115', NULL, 'customer', 3, NULL),
@@ -1643,7 +1760,7 @@ ALTER TABLE `documents`
 -- AUTO_INCREMENT for table `document_permissions`
 --
 ALTER TABLE `document_permissions`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=170;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=229;
 
 --
 -- AUTO_INCREMENT for table `document_settings`
@@ -1673,7 +1790,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `role_permissions`
 --
 ALTER TABLE `role_permissions`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=236;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=366;
 
 --
 -- AUTO_INCREMENT for table `settings`

@@ -30,14 +30,16 @@
         <!-- User Dropdown -->
         <div style="margin-right: 24px; display: flex; align-items: center;">
             <a-dropdown v-if="user" trigger="click">
-                <!-- <a @click.prevent style="cursor: pointer;">
-                    {{ user.name }} <DownOutlined />
-                </a> -->
-                <a-avatar  @click.prevent style="cursor: pointer;">
-                    <template #icon><UserOutlined /></template>
-                </a-avatar>
+                <div @click.prevent style="display: flex; align-items: center; cursor: pointer;">
+                    <a-avatar size="small" style="margin-right: 8px;">
+                        <template #icon><UserOutlined /></template>
+                    </a-avatar>
+                    <span>{{ user.name }}</span>
+<!--                    <DownOutlined style="margin-left: 6px;" />-->
+                </div>
+
                 <template #overlay>
-                    <a-menu >
+                    <a-menu>
                         <a-menu-item key="profile" @click="redirectToProfile">
                             Thông tin cá nhân
                         </a-menu-item>
@@ -45,11 +47,11 @@
                         <a-menu-item key="logout" @click="handleLogout">
                             Đăng xuất
                         </a-menu-item>
-
                     </a-menu>
                 </template>
             </a-dropdown>
         </div>
+
     </a-layout-header>
 </template>
 
