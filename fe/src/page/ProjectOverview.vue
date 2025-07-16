@@ -18,69 +18,55 @@
             <tbody>
             <template v-for="customer in data" :key="customer.customer_id">
                 <template v-for="(group, groupIdx) in getGroupedRows(customer)" :key="groupIdx">
-                    <template v-for="(item, i) in group.items" :key="i">
+                    <template v-for="(item, itemIdx) in group.items" :key="itemIdx">
                         <template v-for="(task, taskIdx) in item.tasks.length ? item.tasks : [{}]" :key="taskIdx">
                             <tr class="row-hover">
-                                <!-- Khách hàng -->
-                                <td
-                                    v-if="groupIdx === 0 && i === 0 && taskIdx === 0"
+                                <td v-if="groupIdx === 0 && itemIdx === 0 && taskIdx === 0"
                                     :rowspan="getTotalRows(customer)"
-                                    class="customer-cell vertical-text"
-                                >
+                                    class="customer-cell vertical-text">
                                     {{ customer.customer_name }}
                                 </td>
 
-                                <!-- Loại -->
-                                <td
-                                    v-if="i === 0 && taskIdx === 0"
+                                <td v-if="itemIdx === 0 && taskIdx === 0"
                                     :rowspan="group.items.reduce((sum, it) => sum + (it.tasks.length || 1), 0)"
-                                    :class="['type-cell', group.type]"
-                                >
+                                    class="type-cell">
                                     {{ group.type === 'bidding' ? 'Gói thầu' : 'Hợp đồng' }}
                                 </td>
 
-                                <!-- Tên -->
-                                <td
-                                    v-if="taskIdx === 0"
+                                <td v-if="taskIdx === 0"
                                     :rowspan="item.tasks.length || 1"
-                                    :class="['title-cell', group.type]"
-                                >
+                                    class="title-cell">
                                     {{ item.title }}
                                 </td>
 
-                                <!-- Task -->
-                                <td :class="['task-cell', group.type]">
-                                    <span v-if="task.title">
-                                      {{ task.title }}
-                                    </span>
+                                <td class="task-cell">
+                                  <span v-if="task && task.title">
+                                      <template v-if="task.step_title"><strong> - {{ task.step_title }}</strong></template>
+                                    {{ task.title }}
+                                  </span>
                                     <span v-else class="muted">Chưa có nhiệm vụ</span>
                                 </td>
 
-                                <!-- Trạng thái -->
-                                <td :class="['status-cell', group.type]">
-                                  <span v-if="task.status" class="task-status" :class="task.status">
-                                    {{ getTaskStatusText(task.status) }}
-                                  </span>
+                                <td class="status-cell">
+                    <span v-if="task && task.status" class="task-status" :class="task.status">
+                      {{ getTaskStatusText(task.status) }}
+                    </span>
                                     <span v-else class="muted">—</span>
                                 </td>
 
-                                <!-- Người phụ trách -->
-                                <td :class="['assignee-cell', group.type]">
-                                    <span v-if="task.assignee" class="assignee-badge">
-                                      👤 {{ task.assignee.name }}
-                                    </span>
+                                <td class="assignee-cell">
+                    <span v-if="task && task.assignee" class="assignee-badge">
+                      👤 {{ task.assignee.name }}
+                    </span>
                                     <span v-else class="muted">Chưa có</span>
                                 </td>
 
-                                <!-- Tiến độ -->
-                                <td
-                                    v-if="taskIdx === 0"
+                                <td v-if="taskIdx === 0"
                                     :rowspan="item.tasks.length || 1"
-                                    class="progress-cell"
-                                >
-                                    <span v-if="item.progress !== null" class="progress-badge">
-                                      📊 {{ item.progress }}%
-                                    </span>
+                                    class="progress-cell">
+                    <span v-if="item.progress !== null" class="progress-badge">
+                      📊 {{ item.progress }}%
+                    </span>
                                     <span v-else class="muted">—</span>
                                 </td>
                             </tr>
@@ -91,141 +77,115 @@
             </tbody>
         </table>
 
-        <!-- ✅ Pagination -->
         <a-pagination
-            v-model:current="pagination.page"
-            :total="pagination.total"
-            :page-size="pagination.limit"
-            show-size-changer
-            :page-size-options="['5', '10', '20', '50']"
-            @change="fetchOverview"
-            @showSizeChange="onPageSizeChange"
-            style="margin-top: 16px; text-align: right"
+                v-model:current="pagination.page"
+                :total="pagination.total"
+                :page-size="pagination.limit"
+                show-size-changer
+                :page-size-options="['5', '10', '20', '50']"
+                @change="fetchOverview"
+                @showSizeChange="onPageSizeChange"
+                style="margin-top: 16px; text-align: right"
         />
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { getProjectOverviewAPI } from '@/api/project'
-import { message } from 'ant-design-vue'
-const origin = window.location.origin
+    import { ref, onMounted } from 'vue';
+    import { getProjectOverviewAPI } from '@/api/project';
+    import { message } from 'ant-design-vue';
 
-const data = ref([])
-const pagination = ref({
-    page: 1,
-    limit: 10,
-    total: 0
-})
+    const origin = window.location.origin;
+    const data = ref([]);
+    const pagination = ref({ page: 1, limit: 10, total: 0 });
 
-const getGroupedRows = (customer) => {
-    const group = (items, type, allTasks, allAssignees) => {
-        return {
-            type,
-            items: items.map(i => {
-                const tasks = allTasks
-                    .filter(t => t.linked_type === type && String(t.linked_id) === String(i.id))
-                    .map(t => ({
-                        title: t.title,
-                        status: t.status,
-                        priority: t.priority,
-                        created_at: t.created_at,
-                        assigned_to: t.assigned_to,
-                        assignee: allAssignees.find(a => String(a.id) === String(t.assigned_to)) || null
-                    }))
-                    .sort((a, b) => {
-                        // Ưu tiên: quá hạn
-                        if (a.status === 'overdue' && b.status !== 'overdue') return -1;
-                        if (a.status !== 'overdue' && b.status === 'overdue') return 1;
+    const getGroupedRows = (customer) => {
+        const allTasks = customer.tasks || [];
+        const assignees = customer.assignees || [];
 
-                        // Ưu tiên: priority
-                        const priorityRank = { high: 1, medium: 2, low: 3, null: 4 };
-                        const prioA = priorityRank[a.priority] || 4;
-                        const prioB = priorityRank[b.priority] || 4;
-                        if (prioA !== prioB) return prioA - prioB;
+        const group = (items, type) => {
+            return {
+                type,
+                items: items.map(i => {
+                    const tasks = allTasks.filter(t => t.linked_type === type && String(t.linked_id) === String(i.id))
+                        .map(t => ({
+                            title: t.title,
+                            status: t.status,
+                            step_title: t.step_title || null, // Thêm dòng này
+                            assignee: assignees.find(a => String(a.id) === String(t.assigned_to)) || null
+                        }))
 
-                        // Mới hơn lên trước
-                        return new Date(b.created_at) - new Date(a.created_at);
-                    });
+                            .sort((a, b) => {
+                            const statusOrder = { 'overdue': 1, 'doing': 2, 'todo': 3, 'done': 4 };
+                            return (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5);
+                        });
 
-                const progress = tasks.length
-                    ? Math.round((tasks.filter(t => t.status === 'done').length / tasks.length) * 100)
-                    : null;
+                    const progress = tasks.length ? Math.round((tasks.filter(t => t.status === 'done').length / tasks.length) * 100) : null;
 
-                return {
-                    title: i.title,
-                    tasks,
-                    progress
-                };
-            })
+                    return {
+                        title: i.title,
+                        tasks,
+                        progress
+                    };
+                })
+            };
         };
+
+        const result = [];
+        if (customer.biddings?.length) result.push(group(customer.biddings, 'bidding'));
+        if (customer.contracts?.length) result.push(group(customer.contracts, 'contract'));
+        return result;
     };
 
-    const result = [];
-    const allTasks = customer.tasks || [];
-    const assignees = customer.assignees || [];
+    const getTotalRows = (customer) => {
+        let total = 0;
+        const allTasks = customer.tasks || [];
 
-    if (customer.biddings?.length)
-        result.push(group(customer.biddings, 'bidding', allTasks, assignees));
-    if (customer.contracts?.length)
-        result.push(group(customer.contracts, 'contract', allTasks, assignees));
+        const count = (items, type) => {
+            return items.reduce((sum, i) => {
+                const itemTasks = allTasks.filter(t => t.linked_type === type && String(t.linked_id) === String(i.id));
+                return sum + (itemTasks.length || 1);
+            }, 0);
+        };
 
-    return result;
-};
+        if (customer.biddings) total += count(customer.biddings, 'bidding');
+        if (customer.contracts) total += count(customer.contracts, 'contract');
+        return total;
+    };
 
+    const fetchOverview = async () => {
+        try {
+            const res = await getProjectOverviewAPI({
+                page: pagination.value.page,
+                limit: pagination.value.limit
+            });
+            data.value = res.data.data;
+            pagination.value.total = res.data.total;
+        } catch (e) {
+            message.error('Không thể tải dữ liệu tổng quan');
+        }
+    };
 
-const getTotalRows = (customer) => {
-    let total = 0
-    const allTasks = customer.tasks || []
-    const countTasks = (items, type) => {
-        return items.reduce((sum, i) => {
-            const t = allTasks.filter(t => t.linked_type === type && String(t.linked_id) === String(i.id))
-            return sum + (t.length || 1)
-        }, 0)
-    }
+    const onPageSizeChange = (current, size) => {
+        pagination.value.page = 1;
+        pagination.value.limit = size;
+        fetchOverview();
+    };
 
-    if (customer.biddings) total += countTasks(customer.biddings, 'bidding')
-    if (customer.contracts) total += countTasks(customer.contracts, 'contract')
+    const getTaskStatusText = (status) => {
+        switch (status) {
+            case 'todo': return 'Chưa làm';
+            case 'doing': return 'Đang làm';
+            case 'done': return 'Đã hoàn thành';
+            case 'overdue': return 'Quá hạn';
+            default: return 'Không xác định';
+        }
+    };
 
-    return total || 1
-}
-
-const fetchOverview = async () => {
-    try {
-        const res = await getProjectOverviewAPI({
-            page: pagination.value.page,
-            limit: pagination.value.limit
-        })
-        data.value = res.data.data
-        pagination.value.total = res.data.total
-    } catch (e) {
-        message.error('Không thể tải dữ liệu tổng quan')
-    }
-}
-
-const onPageSizeChange = (current, size) => {
-    pagination.value.page = 1
-    pagination.value.limit = size
-    fetchOverview()
-}
-
-const getTaskStatusText = (status) => {
-    switch (status) {
-        case 'todo':
-            return 'Chưa làm';
-        case 'doing':
-            return 'Đang làm';
-        case 'done':
-            return 'Đã hoàn thành';
-        case 'overdue':
-            return 'Quá hạn';
-        default:
-            return 'Không xác định';
-    }
-};
-
-onMounted(fetchOverview)
+    onMounted(fetchOverview);
 </script>
+
+
 
 <style scoped>
 .custom-table {
