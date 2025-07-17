@@ -47,6 +47,12 @@
                                       @change="handleChangeLinkedType" placeholder="Chọn loại nhiệm vụ"/>
                         </a-form-item>
                     </a-col>
+                    <a-col :span="12">
+                        <a-form-item label="Phòng ban" name="department_id">
+                            <a-select v-model:value="formData.department_id" :options="departmentOptions"
+                                      @change="handleChangeDepartment" placeholder="Chọn phòng ban"/>
+                        </a-form-item>
+                    </a-col>
                     <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
                         <a-form-item
                             :label="formData.linked_type == 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'"
@@ -144,6 +150,7 @@ const formData = ref({
     priority: null,
     parent_id: null,
     approval_steps: 1,
+    department_id: null
 })
 
 // //SETUP
@@ -162,6 +169,7 @@ const setDefaultData = () => {
         status: "",
         priority: null,
         parent_id: props.taskParent ? props.taskParent : null,
+        department_id: ""
     }
     dateRange.value = null
 }
@@ -204,6 +212,16 @@ const validateLinkedType = async (_rule, value) => {
         return Promise.resolve();
     }
 };
+
+const validateDepartment = async (_rule, value) => {
+    if (!formData.value.department_id) {
+        return Promise.reject('Vui lòng chọn phòng ban');
+    } else {
+        return Promise.resolve();
+    }
+};
+
+
 const validateDescription = async (_rule, value) => {
     if (value === '') {
         return Promise.reject('Vui lòng nhập mô tả nhiệm vụ');
@@ -211,6 +229,7 @@ const validateDescription = async (_rule, value) => {
         return Promise.resolve();
     }
 };
+
 const rules = computed(() => {
     return {
         title: [{required: true, validator: validateTitle, trigger: 'change'}],
@@ -219,6 +238,7 @@ const rules = computed(() => {
         assigned_to: [{required: true, validator: validateAsigned, trigger: 'change'}],
         linked_type: [{required: true, validator: validateLinkedType, trigger: 'change'}],
         description: [{required: true, validator: validateDescription, trigger: 'change'}],
+        department_id: [{required: true, validator: validateDepartment, trigger: 'change'}],
         approval_steps: [{ required: true, message: 'Vui lòng chọn cấp duyệt' }]
     }
 })
@@ -242,6 +262,16 @@ const linkedTypeOption = ref([
     {value: "contract", label: "Hợp đồng"},
     {value: "internal", label: "Nhiệm vụ nội bộ"},
 ])
+
+const departmentOptions = ref([
+    { value: 'HCNS', label: 'Phòng Hành chính - Nhân sự' },
+    { value: 'TCKT', label: 'Phòng Tài chính - Kế toán' },
+    { value: 'KD', label: 'Phòng Kinh doanh' },
+    { value: 'TM', label: 'Phòng Thương mại' },
+    { value: 'DVKT', label: 'Phòng Dịch vụ - Kỹ thuật' },
+])
+
+
 const stepOption = ref([])
 const linkedIdOption = computed(() => {
     if (formData.value.linked_type === 'bidding') {
@@ -272,6 +302,13 @@ const handleChangeLinkedType = () => {
     formData.value.linked_id = null;
     formData.value.step_code = null;
 };
+
+const handleChangeDepartment = () => {
+    // formData.value.id_department = null;
+    // formData.value.step_code = null;
+};
+
+
 const handleChangeLinkedId = () => {
     if (formData.value.linked_type === 'bidding') {
         getBiddingStep()

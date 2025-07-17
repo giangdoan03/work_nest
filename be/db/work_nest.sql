@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jul 14, 2025 at 04:45 PM
+-- Generation Time: Jul 17, 2025 at 01:24 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -1216,44 +1216,45 @@ CREATE TABLE `tasks` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `approval_steps` int DEFAULT '1',
-  `current_level` int DEFAULT '1'
+  `current_level` int DEFAULT '1',
+  `id_department` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `tasks`
 --
 
-INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `start_date`, `end_date`, `status`, `approval_status`, `linked_type`, `linked_id`, `step_code`, `step_id`, `created_by`, `priority`, `comments_count`, `created_at`, `updated_at`, `approval_steps`, `current_level`) VALUES
-(1, NULL, 'Thiết kế hồ sơ thầu', 'Chuẩn bị file bản vẽ và hồ sơ năng lực', 5, '2025-07-01', '2025-08-25', 'done', 'approved', 'bidding', 2, 4, 112, 1, 'normal', 0, '2025-06-04 01:23:15', '2025-07-06 06:22:45', 1, 1),
-(2, NULL, 'Thiết kế hồ sơ thầu', 'Mô tả công việc thiết kế hồ sơ thầu', 3, '2025-06-25', '2025-07-31', 'done', 'approved', 'bidding', 6, 5, 237, 2, 'high', 1, '2025-06-04 01:37:15', '2025-07-06 06:57:23', 1, 1),
-(3, NULL, 'Nghiên cứu yêu cầu khách hàng', 'Mô tả công việc nghiên cứu yêu cầu khách hàng', 9, '2025-06-29', '2025-07-31', 'todo', 'rejected', 'contract', 30, 16, 265, 1, 'high', 3, '2025-06-04 01:37:24', '2025-07-06 10:05:22', 1, 1),
-(10, NULL, 'Mua sắm vật tư', 'Mô tả công việc mua sắm vật tư', 10, '2025-06-25', '2025-07-31', 'todo', 'rejected', 'bidding', 2, 3, 111, 2, 'high', 5, '2025-06-04 01:38:26', '2025-07-06 06:50:29', 1, 1),
-(22, 3, 'Sửa tên subtask', 'Thiết kế giao diện cho phần chi tiết', 9, NULL, '2025-06-15', '', 'pending', 'internal', NULL, 8, 122, 1, '', 0, '2025-06-04 19:29:35', '2025-06-29 18:15:33', 1, 1),
-(26, 3, 'Thiết kế giao diện phụ - task con 3', 'Thiết kế giao diện cho phần chi tiết', 9, NULL, '2025-06-15', 'todo', 'pending', 'bidding', 2, 3, 111, 1, '', 0, '2025-06-05 05:38:39', '2025-06-30 08:39:32', 1, 1),
-(27, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, '2025-06-10', '2025-06-14', 'done', 'approved', 'bidding', 2, 1, 109, 3, 'high', 0, '2025-06-05 06:16:42', '2025-07-06 07:10:04', 1, 1),
-(28, 3, 'Thiết kế giao diện phụ - task con 3 có ngay bat dau - ngay ket thuc', 'Thiết kế giao diện cho phần chi tiết', 17, '2025-06-25', '2025-07-31', 'done', 'approved', 'bidding', 2, 3, 111, 1, 'normal', 0, '2025-06-05 06:19:14', '2025-07-06 06:52:52', 1, 1),
-(29, 18, 'sub task 1', 'tesst subtask', 13, '2025-06-24', '2025-07-31', '', 'pending', 'bidding', 5, 5, 104, 1, 'normal', 0, '2025-06-23 18:15:50', '2025-07-06 08:53:08', 1, 1),
-(30, NULL, 'test', 'tesst tesst', 22, '2025-06-24', '2025-07-30', 'done', 'approved', 'bidding', 5, 5, 104, 1, 'normal', 0, '2025-06-23 18:52:15', '2025-07-06 07:10:40', 1, 1),
-(31, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, '2025-08-29', '2025-08-31', 'overdue', 'pending', 'bidding', 2, 3, 111, 3, 'high', 0, '2025-06-24 18:47:18', '2025-06-30 08:34:19', 1, 1),
-(32, 1, 'tesst subtask', 'xxxxxxx', 22, '2025-06-28', '2025-07-31', 'done', 'approved', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-06-28 08:01:02', '2025-07-08 07:25:09', 1, 1),
-(33, NULL, 'test task mới', 'test', 3, '2025-06-29', '2025-07-31', 'doing', 'pending', 'bidding', 5, 9, 130, 1, 'normal', 0, '2025-06-29 01:28:22', '2025-06-29 18:15:33', 1, 1),
-(34, NULL, 'test nhiêm vụ mới', 'test test', 7, '2025-06-29', '2025-07-31', 'doing', 'pending', 'bidding', 2, 2, 110, 1, 'normal', 0, '2025-06-29 01:36:07', '2025-06-30 08:10:30', 1, 1),
-(35, NULL, 'test mới 3', 'test nhé', 7, '2025-06-29', '2025-08-07', 'doing', 'pending', 'bidding', 8, 7, 79, 1, 'normal', 0, '2025-06-29 01:51:48', '2025-06-30 08:08:35', 1, 1),
-(36, NULL, 'mới', 'đasadd', 9, '2025-06-30', '2025-07-31', 'doing', 'pending', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-06-29 11:25:28', '2025-06-30 08:07:11', 1, 1),
-(37, NULL, 'test nhiệm vụ hợp đồng 1', 'test nhiệm vụ hợp đồng 1', 23, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 10, 259, 1, 'normal', 0, '2025-06-30 09:33:07', '2025-06-30 09:33:59', 1, 1),
-(38, NULL, 'test nhiệm vụ hợp đồng 2', 'test nhiệm vụ hợp đồng 2', 19, '2025-06-30', '2025-07-29', 'doing', 'pending', 'contract', 30, 11, 260, 1, '', 0, '2025-06-30 09:37:45', '2025-06-30 09:45:06', 1, 1),
-(39, NULL, 'duyệt hợp đồng mua', 'duyệt hợp đồng mua', 21, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 12, 261, 1, '', 0, '2025-06-30 09:48:27', '2025-06-30 09:51:08', 1, 1),
-(40, NULL, 'nhiệm vụ cho gói thầu 1', 'test chấm thầu', 4, '2025-07-10', '2025-08-05', 'doing', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-06-30 09:54:52', '2025-07-09 20:39:12', 1, 1),
-(41, NULL, 'nhiệm vụ hợp đồng 2', 'nghiệm thu', 23, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 16, 265, 1, 'normal', 0, '2025-06-30 09:58:15', '2025-06-30 09:58:44', 1, 1),
-(42, NULL, 'test nhiệm vụ hợp đồng 4', 'kiểm tra hàng hóa', 1, '2025-08-13', '2025-08-21', 'doing', 'pending', 'contract', 30, 15, 264, 1, '', 0, '2025-06-30 10:05:48', '2025-07-09 20:45:19', 1, 1),
-(43, NULL, 'test nhiệm vụ hợp đồng 5', 'kiểm tra hàng hóa', 1, '2025-07-01', '2025-08-31', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'normal', 0, '2025-06-30 10:10:57', '2025-07-09 20:42:34', 1, 1),
-(44, NULL, 'test nhiệm vụ hợp đồng 6', 'nghiệm thu', 24, '2025-07-01', '2025-08-31', 'doing', 'pending', 'contract', 33, 16, 316, 1, 'normal', 0, '2025-06-30 10:12:22', '2025-06-30 10:12:22', 1, 1),
-(45, NULL, 'test nhiệm vụ gói thầu 7', 'chấm thầu', 24, '2025-07-31', '2025-08-29', 'doing', 'pending', 'bidding', 3, 6, 123, 1, '', 0, '2025-06-30 10:13:58', '2025-07-09 21:33:09', 1, 1),
-(46, NULL, 'test hợp đồng 8', 'test hợp đồng 8', 1, '2025-07-24', '2025-08-28', 'doing', 'pending', 'contract', 30, 10, 259, 1, '', 0, '2025-06-30 10:23:23', '2025-07-09 20:45:01', 1, 1),
-(47, NULL, 'nhiệm vụ mới', 'mô tả mẫu', 15, '2025-07-01', '2025-08-28', 'doing', 'pending', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-07-01 04:00:46', '2025-07-01 04:03:23', 1, 1),
-(48, NULL, 'nhiệm vụ cho hợp đồng mới', 'mô tả mẫu', 20, '2025-07-01', '2025-08-30', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'normal', 0, '2025-07-01 04:07:24', '2025-07-01 04:07:24', 1, 1),
-(49, NULL, 'nhiệm vụ  phát sinh', 'nhiêm vụ phát sinh', 1, '2025-08-30', '2025-08-31', 'doing', 'pending', 'bidding', 3, 1, 118, 1, 'high', 0, '2025-07-01 04:31:44', '2025-07-09 20:40:13', 1, 1),
-(50, NULL, 'nhiệm vụ mới 06/07', 'test task mới', 1, '2025-07-06', '2025-08-27', 'doing', 'pending', 'bidding', 2, 3, 111, 1, 'normal', 0, '2025-07-06 03:52:58', '2025-07-09 20:42:58', 2, 1);
+INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `start_date`, `end_date`, `status`, `approval_status`, `linked_type`, `linked_id`, `step_code`, `step_id`, `created_by`, `priority`, `comments_count`, `created_at`, `updated_at`, `approval_steps`, `current_level`, `id_department`) VALUES
+(1, NULL, 'Thiết kế hồ sơ thầu', 'Chuẩn bị file bản vẽ và hồ sơ năng lực', 5, '2025-07-01', '2025-08-25', 'done', 'approved', 'bidding', 2, 4, 112, 1, 'normal', 0, '2025-06-04 01:23:15', '2025-07-06 06:22:45', 1, 1, NULL),
+(2, NULL, 'Thiết kế hồ sơ thầu', 'Mô tả công việc thiết kế hồ sơ thầu', 3, '2025-06-25', '2025-07-31', 'done', 'approved', 'bidding', 6, 5, 237, 2, 'high', 1, '2025-06-04 01:37:15', '2025-07-06 06:57:23', 1, 1, NULL),
+(3, NULL, 'Nghiên cứu yêu cầu khách hàng', 'Mô tả công việc nghiên cứu yêu cầu khách hàng', 9, '2025-06-29', '2025-07-31', 'todo', 'rejected', 'contract', 30, 16, 265, 1, 'high', 3, '2025-06-04 01:37:24', '2025-07-06 10:05:22', 1, 1, NULL),
+(10, NULL, 'Mua sắm vật tư', 'Mô tả công việc mua sắm vật tư', 10, '2025-06-25', '2025-07-31', 'todo', 'rejected', 'bidding', 2, 3, 111, 2, 'high', 5, '2025-06-04 01:38:26', '2025-07-06 06:50:29', 1, 1, NULL),
+(22, 3, 'Sửa tên subtask', 'Thiết kế giao diện cho phần chi tiết', 9, NULL, '2025-06-15', '', 'pending', 'internal', NULL, 8, 122, 1, '', 0, '2025-06-04 19:29:35', '2025-06-29 18:15:33', 1, 1, NULL),
+(26, 3, 'Thiết kế giao diện phụ - task con 3', 'Thiết kế giao diện cho phần chi tiết', 9, NULL, '2025-06-15', 'todo', 'pending', 'bidding', 2, 3, 111, 1, '', 0, '2025-06-05 05:38:39', '2025-06-30 08:39:32', 1, 1, NULL),
+(27, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, '2025-06-10', '2025-06-14', 'done', 'approved', 'bidding', 2, 1, 109, 3, 'high', 0, '2025-06-05 06:16:42', '2025-07-06 07:10:04', 1, 1, NULL),
+(28, 3, 'Thiết kế giao diện phụ - task con 3 có ngay bat dau - ngay ket thuc', 'Thiết kế giao diện cho phần chi tiết', 17, '2025-06-25', '2025-07-31', 'done', 'approved', 'bidding', 2, 3, 111, 1, 'normal', 0, '2025-06-05 06:19:14', '2025-07-06 06:52:52', 1, 1, NULL),
+(29, 18, 'sub task 1', 'tesst subtask', 13, '2025-06-24', '2025-07-31', '', 'pending', 'bidding', 5, 5, 104, 1, 'normal', 0, '2025-06-23 18:15:50', '2025-07-06 08:53:08', 1, 1, NULL),
+(30, NULL, 'test', 'tesst tesst', 22, '2025-06-24', '2025-07-30', 'done', 'approved', 'bidding', 5, 5, 104, 1, 'normal', 0, '2025-06-23 18:52:15', '2025-07-06 07:10:40', 1, 1, NULL),
+(31, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, '2025-08-29', '2025-08-31', 'overdue', 'pending', 'bidding', 2, 3, 111, 3, 'high', 0, '2025-06-24 18:47:18', '2025-06-30 08:34:19', 1, 1, NULL),
+(32, 1, 'tesst subtask', 'xxxxxxx', 22, '2025-06-28', '2025-07-31', 'done', 'approved', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-06-28 08:01:02', '2025-07-08 07:25:09', 1, 1, NULL),
+(33, NULL, 'test task mới', 'test', 3, '2025-06-29', '2025-07-31', 'doing', 'pending', 'bidding', 5, 9, 130, 1, 'normal', 0, '2025-06-29 01:28:22', '2025-06-29 18:15:33', 1, 1, NULL),
+(34, NULL, 'test nhiêm vụ mới', 'test test', 7, '2025-06-29', '2025-07-31', 'doing', 'pending', 'bidding', 2, 2, 110, 1, 'normal', 0, '2025-06-29 01:36:07', '2025-06-30 08:10:30', 1, 1, NULL),
+(35, NULL, 'test mới 3', 'test nhé', 7, '2025-06-29', '2025-08-07', 'doing', 'pending', 'bidding', 8, 7, 79, 1, 'normal', 0, '2025-06-29 01:51:48', '2025-06-30 08:08:35', 1, 1, NULL),
+(36, NULL, 'mới', 'đasadd', 9, '2025-06-30', '2025-07-31', 'doing', 'pending', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-06-29 11:25:28', '2025-06-30 08:07:11', 1, 1, NULL),
+(37, NULL, 'test nhiệm vụ hợp đồng 1', 'test nhiệm vụ hợp đồng 1', 23, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 10, 259, 1, 'normal', 0, '2025-06-30 09:33:07', '2025-06-30 09:33:59', 1, 1, NULL),
+(38, NULL, 'test nhiệm vụ hợp đồng 2', 'test nhiệm vụ hợp đồng 2', 19, '2025-06-30', '2025-07-29', 'doing', 'pending', 'contract', 30, 11, 260, 1, '', 0, '2025-06-30 09:37:45', '2025-06-30 09:45:06', 1, 1, NULL),
+(39, NULL, 'duyệt hợp đồng mua', 'duyệt hợp đồng mua', 21, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 12, 261, 1, '', 0, '2025-06-30 09:48:27', '2025-06-30 09:51:08', 1, 1, NULL),
+(40, NULL, 'nhiệm vụ cho gói thầu 1', 'test chấm thầu', 4, '2025-07-10', '2025-08-05', 'doing', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-06-30 09:54:52', '2025-07-09 20:39:12', 1, 1, NULL),
+(41, NULL, 'nhiệm vụ hợp đồng 2', 'nghiệm thu', 23, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 16, 265, 1, 'normal', 0, '2025-06-30 09:58:15', '2025-06-30 09:58:44', 1, 1, NULL),
+(42, NULL, 'test nhiệm vụ hợp đồng 4', 'kiểm tra hàng hóa', 1, '2025-08-13', '2025-08-21', 'doing', 'pending', 'contract', 30, 15, 264, 1, '', 0, '2025-06-30 10:05:48', '2025-07-09 20:45:19', 1, 1, NULL),
+(43, NULL, 'test nhiệm vụ hợp đồng 5', 'kiểm tra hàng hóa', 1, '2025-07-01', '2025-08-31', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'normal', 0, '2025-06-30 10:10:57', '2025-07-09 20:42:34', 1, 1, NULL),
+(44, NULL, 'test nhiệm vụ hợp đồng 6', 'nghiệm thu', 24, '2025-07-01', '2025-08-31', 'doing', 'pending', 'contract', 33, 16, 316, 1, 'normal', 0, '2025-06-30 10:12:22', '2025-06-30 10:12:22', 1, 1, NULL),
+(45, NULL, 'test nhiệm vụ gói thầu 7', 'chấm thầu', 24, '2025-07-31', '2025-08-29', 'doing', 'pending', 'bidding', 3, 6, 123, 1, '', 0, '2025-06-30 10:13:58', '2025-07-09 21:33:09', 1, 1, NULL),
+(46, NULL, 'test hợp đồng 8', 'test hợp đồng 8', 1, '2025-07-24', '2025-08-28', 'doing', 'pending', 'contract', 30, 10, 259, 1, '', 0, '2025-06-30 10:23:23', '2025-07-09 20:45:01', 1, 1, NULL),
+(47, NULL, 'nhiệm vụ mới', 'mô tả mẫu', 15, '2025-07-01', '2025-08-28', 'doing', 'pending', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-07-01 04:00:46', '2025-07-01 04:03:23', 1, 1, NULL),
+(48, NULL, 'nhiệm vụ cho hợp đồng mới', 'mô tả mẫu', 20, '2025-07-01', '2025-08-30', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'normal', 0, '2025-07-01 04:07:24', '2025-07-01 04:07:24', 1, 1, NULL),
+(49, NULL, 'nhiệm vụ  phát sinh', 'nhiêm vụ phát sinh', 1, '2025-08-30', '2025-08-31', 'doing', 'pending', 'bidding', 3, 1, 118, 1, 'high', 0, '2025-07-01 04:31:44', '2025-07-09 20:40:13', 1, 1, NULL),
+(50, NULL, 'nhiệm vụ mới 06/07', 'test task mới', 1, '2025-07-06', '2025-08-27', 'doing', 'pending', 'bidding', 2, 3, 111, 1, 'normal', 0, '2025-07-06 03:52:58', '2025-07-09 20:42:58', 2, 1, NULL);
 
 -- --------------------------------------------------------
 
