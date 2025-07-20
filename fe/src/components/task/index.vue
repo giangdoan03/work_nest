@@ -131,6 +131,13 @@
                                         <a-select v-else v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng" />
                                     </a-form-item>
                                 </a-col>
+
+                                <a-col :span="12">
+                                    <a-form-item label="Phòng ban" name="id_department">
+                                        <a-typography-text v-if="!isEditMode">{{ getDepartmentById(formData.id_department) }}</a-typography-text>
+                                        <a-select v-else v-model:value="formData.id_department" :options="departmentOptions" placeholder="Chọn người dùng" />
+                                    </a-form-item>
+                                </a-col>
                             </a-row>
                         </div>
 
@@ -280,6 +287,7 @@
     import { getContractsAPI } from "@/api/contract";
     import {getContractStepsAPI, updateContractStepAPI} from '@/api/contract-steps';
     import { getBiddingStepsAPI } from '@/api/bidding';
+    import { getDepartments } from '@/api/department'
     import Comment from './Comment.vue';
     import SubTasks from './SubTasks.vue'
     import { useUserStore } from '@/stores/user';
@@ -304,7 +312,7 @@
     const listContract = ref([]);
     const listBidding = ref([]);
     const dateRange = ref([]);
-    const listSubTask = ref([])
+    const listDepartment = ref([])
 
     const formDataSave = ref()
     const logData = ref([])
@@ -322,6 +330,7 @@
         status: "",
         priority: null,
         parent_id: null,
+        id_department: null,
     });
     const priorityOption = ref([
         {value: "low", label: "Thấp", color: "success"},
@@ -337,6 +346,11 @@
             { value: 'overdue', label: 'Quá hạn', color: 'error' },
         ];
     });
+    const departmentOptions = computed(()=>{
+        return listDepartment.value.map(ele => {
+            return { value: ele.id, label: ele.name }
+        })
+    })
 
     const linkedTypeOption = ref([
         {value: "bidding", label: "Gói thầu"},
@@ -541,6 +555,13 @@
     }
     const getUserById = (userId) =>  {
         let data = listUser.value.find(ele => ele.id == userId);
+        if(!data){
+            return "" ;
+        }
+        return data.name;
+    }
+    const getDepartmentById = (userId) =>  {
+        let data = listDepartment.value.find(ele => ele.id == userId);
         if(!data){
             return "" ;
         }
@@ -847,7 +868,15 @@
         manualLink.url = '';
     };
 
-
+    const getDepartment = async () => {
+        try {
+            const response = await getDepartments();
+            listDepartment.value = response.data;
+        } catch (e) {
+            message.error('Không thể tải người dùng')
+        } finally {
+        }
+    }
 
 
     const goBack = () => {
@@ -858,11 +887,11 @@
     watch(() => formData.value.step_code, (newCode) => {
         const found = stepOption.value.find(item => item.value === newCode)
         formData.value.step_id = found ? found.step_id : null;
-        console.log('formData.value', formData.value)
     })
 
     onMounted(async () => {
         try {
+            getDepartment()
             await getDetailTaskById()
             await getUser()
             await getListBidding()

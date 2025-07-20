@@ -17,7 +17,7 @@
                     <a-typography-text strong style="cursor: pointer;" @click="showPopupDetail(record)">{{ text }}</a-typography-text>
                 </template>
                 <template v-else-if="column.dataIndex == 'action'">
-                    <a-dropdown placement="left">
+                    <a-dropdown placement="left" trigger="click"  :getPopupContainer="triggerNode => triggerNode.parentNode">
                         <a-button>
                             <template #icon>
                                 <MoreOutlined />

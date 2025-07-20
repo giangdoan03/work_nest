@@ -21,7 +21,7 @@
                 <a-select
                     :allowClear="true"
                     style="width: 100%" 
-                    v-model:value="dataFilter.department_id" 
+                    v-model:value="dataFilter.id_department" 
                     :options="optionsDepartment" 
                     placeholder="Chọn phòng ban" 
                     @change="getInternalTask()"
@@ -96,7 +96,7 @@
                     {{ text || '—' }}
                 </template>
                 <template v-else-if="column.dataIndex === 'action'">
-                    <a-dropdown placement="left">
+                    <a-dropdown placement="left" :trigger="['click']" :getPopupContainer="triggerNode => triggerNode.parentNode">
                         <a-button>
                             <template #icon>
                                 <MoreOutlined />
@@ -116,7 +116,7 @@
                                     @confirm="deleteConfirm(record.id)"
                                     placement="topRight"
                                 >
-                                    <div>
+                                    <div style="width: 100%; text-align: start;">
                                         <DeleteOutlined class="icon-action" style="color: red;"/>
                                         Xóa
                                     </div>
@@ -160,7 +160,7 @@ const listUser = ref([])
 const listDepartment = ref([])
 const dataFilter = ref({
     linked_type: null,
-    department_id: null,
+    id_department: null,
     status: null,
     priority: null,
     assigned_to: null,

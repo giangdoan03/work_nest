@@ -30,7 +30,7 @@
                             <a-typography-text>{{ record.end_date }}</a-typography-text>
                         </template>
                         <template v-if="column.key === 'action'">
-                            <a-dropdown placement="left">
+                            <a-dropdown placement="left" trigger="click"  :getPopupContainer="triggerNode => triggerNode.parentNode">
                                 <a-button>
                                 <template #icon>
                                     <MoreOutlined />

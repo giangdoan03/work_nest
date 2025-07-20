@@ -49,7 +49,8 @@
                     </a-col>
                     <a-col :span="12">
                         <a-form-item label="Phòng ban" name="department_id">
-                            <a-select v-model:value="formData.department_id" :options="departmentOptions" @change="handleChangeDepartment" placeholder="Chọn phòng ban"/>
+                            <a-select v-model:value="formData.id_department" :options="departmentOptions"
+                                      @change="handleChangeDepartment" placeholder="Chọn phòng ban"/>
                         </a-form-item>
                     </a-col>
                     <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
@@ -102,6 +103,8 @@ import {message} from 'ant-design-vue'
 import {useRoute} from 'vue-router';
 import {getContractStepsAPI} from '@/api/contract-steps';
 import {getBiddingStepsAPI} from '@/api/bidding';
+import { getDepartments } from '@/api/department'
+
 
 
 import dayjs from 'dayjs';
@@ -131,7 +134,7 @@ const loading = ref(false)
 const listBidding = ref([])
 const listContract = ref([])
 const dateRange = ref()
-
+const listDepartment = ref([])
 const formData = ref({
     title: "",
     created_by: "",
@@ -147,13 +150,15 @@ const formData = ref({
     priority: null,
     parent_id: null,
     approval_steps: 0,
-    department_id: null
+    id_department: null
 })
+
+// //SETUP
 
 const setDefaultData = () => {
     formData.value = {
         title: "",
-        created_by: "",
+        created_by: null,
         step_code: null,
         linked_type: null,
         description: "",
@@ -161,10 +166,10 @@ const setDefaultData = () => {
         assigned_to: null,
         start_date: "",
         end_date: "",
-        status: "",
+        status: null,
         priority: null,
         parent_id: props.taskParent ? props.taskParent : null,
-        department_id: ""
+        id_department: null
     }
     dateRange.value = null
 }
@@ -202,7 +207,7 @@ const validateAsigned = async (_rule, value) => {
 };
 
 const validateProposed = async (_rule, value) => {
-    if (!formData.value.assigned_to) {
+    if (!formData.value.proposed_by) {
         return Promise.reject('Vui lòng chọn người đề nghị');
     } else {
         return Promise.resolve();
@@ -217,7 +222,7 @@ const validateLinkedType = async (_rule, value) => {
 };
 
 const validateDepartment = async (_rule, value) => {
-    if (!formData.value.department_id) {
+    if (!formData.value.id_department) {
         return Promise.reject('Vui lòng chọn phòng ban');
     } else {
         return Promise.resolve();
@@ -250,7 +255,7 @@ const rules = computed(() => {
 const priorityOption = ref([
     {value: "low", label: "Thấp"},
     {value: "normal", label: "Thường"},
-    {value: "hight", label: "Cao"},
+    {value: "high", label: "Cao"},
 ])
 const statusOption = computed(() => {
     return [
@@ -267,13 +272,11 @@ const linkedTypeOption = ref([
     {value: "internal", label: "Nhiệm vụ nội bộ"},
 ])
 
-const departmentOptions = ref([
-    { value: 'HCNS', label: 'Phòng Hành chính - Nhân sự' },
-    { value: 'TCKT', label: 'Phòng Tài chính - Kế toán' },
-    { value: 'KD', label: 'Phòng Kinh doanh' },
-    { value: 'TM', label: 'Phòng Thương mại' },
-    { value: 'DVKT', label: 'Phòng Dịch vụ - Kỹ thuật' },
-])
+const departmentOptions = computed(()=>{
+    return listDepartment.value.map(ele => {
+        return { value: ele.id, label: ele.name }
+    })
+})
 
 
 const stepOption = ref([])
@@ -302,6 +305,15 @@ const userOption = computed(() => {
 })
 
 //METHOD
+const getDepartment = async () => {
+    try {
+        const response = await getDepartments();
+        listDepartment.value = response.data;
+    } catch (e) {
+        message.error('Không thể tải người dùng')
+    } finally {
+    }
+}
 const handleChangeLinkedType = () => {
     formData.value.linked_id = null;
     formData.value.step_code = null;
@@ -345,6 +357,7 @@ const createDrawerInternal = async () => {
     formData.value.created_by = store.currentUser.id;
     loadingCreate.value = true;
     try {
+
         await createTask(formData.value);
         message.success('Thêm mới nhiệm vụ thành công')
         emit('submitForm');
@@ -422,6 +435,7 @@ onMounted(() => {
     getBiddingTask()
     getContractTask()
     handleChangeLinkedId()
+    getDepartment()
 })
 
 </script>
