@@ -21,7 +21,7 @@
         >
             <a-menu-item key="project-overview">
                 <BarChartOutlined />
-                <span>Tổng quan dự án</span>
+                <span>Tổng quan</span>
             </a-menu-item>
             <a-menu-item key="my-tasks">
                 <ScheduleOutlined />

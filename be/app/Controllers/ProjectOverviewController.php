@@ -85,33 +85,34 @@ class ProjectOverviewController extends ResourceController
 
         // 3. Lấy task có thông tin step
         $taskQuery = $db->query("
-            SELECT
-    c.id AS customer_id,
-    t.id AS task_id,
-    t.title AS task_title,
-    t.status AS task_status,
-    t.linked_type,
-    t.linked_id,
-    t.step_code,
-    t.step_id,
-    CASE 
-        WHEN t.linked_type = 'bidding' THEN bs.title
-        WHEN t.linked_type = 'contract' THEN cs.title
-        ELSE NULL
-    END AS step_title,
-    u.id AS user_id,
-    u.name AS user_name,
-    t.assigned_to
-FROM tasks t
-LEFT JOIN customers c 
-    ON (t.linked_type = 'bidding' AND EXISTS (SELECT 1 FROM biddings b WHERE b.id = t.linked_id AND b.customer_id = c.id))
-    OR (t.linked_type = 'contract' AND EXISTS (SELECT 1 FROM contracts ct WHERE ct.id = t.linked_id AND ct.id_customer = c.id))
-LEFT JOIN users u ON u.id = t.assigned_to
-LEFT JOIN bidding_steps bs ON t.linked_type = 'bidding' AND t.step_id = bs.id
-LEFT JOIN contract_steps cs ON t.linked_type = 'contract' AND t.step_id = cs.id
-WHERE t.status IS NOT NULL
+    SELECT
+        c.id AS customer_id,
+        t.id AS task_id,
+        t.title AS task_title,
+        t.status AS task_status,
+        t.linked_type,
+        t.linked_id,
+        t.step_code,
+        t.step_id,
+        CASE 
+            WHEN t.linked_type = 'bidding' THEN bs.title
+            WHEN t.linked_type = 'contract' THEN cs.title
+            ELSE NULL
+        END AS step_title,
+        u.id AS user_id,
+        u.name AS user_name,
+        t.assigned_to
+    FROM tasks t
+    LEFT JOIN customers c 
+        ON (t.linked_type = 'bidding' AND EXISTS (SELECT 1 FROM biddings b WHERE b.id = t.linked_id AND b.customer_id = c.id))
+        OR (t.linked_type = 'contract' AND EXISTS (SELECT 1 FROM contracts ct WHERE ct.id = t.linked_id AND ct.id_customer = c.id))
+    LEFT JOIN users u ON u.id = t.assigned_to
+    LEFT JOIN bidding_steps bs ON t.linked_type = 'bidding' AND t.step_id = bs.id
+    LEFT JOIN contract_steps cs ON t.linked_type = 'contract' AND t.step_id = cs.id
+    WHERE t.status IS NOT NULL
+    ORDER BY t.linked_type, t.linked_id, t.step_code
+");
 
-        ");
 
         $rawTasks = $taskQuery->getResultArray();
 

@@ -1,94 +1,105 @@
 <template>
     <div class="custom-overview">
-        <div class="header-actions">
-            <a :href="`${origin}/gantt-chart`" target="_blank" class="gantt-link">📊 Xem biểu đồ Gantt</a>
-        </div>
-        <table class="custom-table">
-            <thead>
-            <tr>
-                <th style="width: 200px">Khách hàng</th>
-                <th style="width: 100px">Loại</th>
-                <th>Tên</th>
-                <th>Task đang chạy</th>
-                <th style="width: 150px">Trạng thái</th>
-                <th style="width: 200px">Người phụ trách</th>
-                <th>Tiến độ (%)</th>
-            </tr>
-            </thead>
-            <tbody>
-            <template v-for="customer in data" :key="customer.customer_id">
-                <template v-for="(group, groupIdx) in getGroupedRows(customer)" :key="groupIdx">
-                    <template v-for="(item, itemIdx) in group.items" :key="itemIdx">
-                        <template v-for="(task, taskIdx) in item.tasks.length ? item.tasks : [{}]" :key="taskIdx">
-                            <tr class="row-hover">
-                                <td v-if="groupIdx === 0 && itemIdx === 0 && taskIdx === 0"
-                                    :rowspan="getTotalRows(customer)"
-                                    class="customer-cell vertical-text">
-                                    {{ customer.customer_name }}
-                                </td>
+        <a-tabs v-model:activeKey="activeKey">
+            <a-tab-pane key="1" tab="Tổng quan gói thầu - hợp đồng">
+                <div class="header-actions">
+                    <a :href="`${origin}/gantt-chart`" target="_blank" class="gantt-link">📊 Xem biểu đồ Gantt</a>
+                </div>
 
-                                <td v-if="itemIdx === 0 && taskIdx === 0"
-                                    :rowspan="group.items.reduce((sum, it) => sum + (it.tasks.length || 1), 0)"
-                                    class="type-cell">
-                                    {{ group.type === 'bidding' ? 'Gói thầu' : 'Hợp đồng' }}
-                                </td>
+                <table class="custom-table">
+                    <thead>
+                    <tr>
+                        <th style="width: 200px">Khách hàng</th>
+                        <th style="width: 100px">Loại</th>
+                        <th>Tên</th>
+                        <th>Bước quy trình</th>
+                        <th>Task đang chạy</th>
+                        <th style="width: 150px">Trạng thái</th>
+                        <th style="width: 200px">Người phụ trách</th>
+                        <th>Tiến độ (%)</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template v-for="customer in data" :key="customer.customer_id">
+                        <template v-for="(group, groupIdx) in getGroupedRows(customer)" :key="groupIdx">
+                            <template v-for="(item, itemIdx) in group.items" :key="itemIdx">
+                                <template v-for="(task, taskIdx) in item.tasks.length ? item.tasks : [{}]" :key="taskIdx">
+                                    <tr class="row-hover">
+                                        <td v-if="groupIdx === 0 && itemIdx === 0 && taskIdx === 0"
+                                            :rowspan="getTotalRows(customer)"
+                                            class="customer-cell vertical-text">
+                                            {{ customer.customer_name }}
+                                        </td>
 
-                                <td v-if="taskIdx === 0"
-                                    :rowspan="item.tasks.length || 1"
-                                    class="title-cell">
-                                    {{ item.title }}
-                                </td>
+                                        <td v-if="itemIdx === 0 && taskIdx === 0"
+                                            :rowspan="group.items.reduce((sum, it) => sum + (it.tasks.length || 1), 0)"
+                                            class="type-cell">
+                                            {{ group.type === 'bidding' ? 'Gói thầu' : 'Hợp đồng' }}
+                                        </td>
 
-                                <td class="task-cell">
-                                  <span v-if="task && task.title">
-                                      <template v-if="task.step_title"><strong> - {{ task.step_title }}</strong></template>
-                                    {{ task.title }}
-                                  </span>
-                                    <span v-else class="muted">Chưa có nhiệm vụ</span>
-                                </td>
+                                        <td v-if="taskIdx === 0" :rowspan="item.tasks.length || 1" class="title-cell">
+                                            {{ item.title }}
+                                        </td>
+                                        <td>
+                                            {{ task.step_title }}
+                                        </td>
 
-                                <td class="status-cell">
-                    <span v-if="task && task.status" class="task-status" :class="task.status">
-                      {{ getTaskStatusText(task.status) }}
-                    </span>
-                                    <span v-else class="muted">—</span>
-                                </td>
+                                        <td class="task-cell">
+                        <span v-if="task && task.title">
+                          {{ task.title }}
+                        </span>
+                                            <span v-else class="muted">Chưa có nhiệm vụ</span>
+                                        </td>
 
-                                <td class="assignee-cell">
-                    <span v-if="task && task.assignee" class="assignee-badge">
-                      👤 {{ task.assignee.name }}
-                    </span>
-                                    <span v-else class="muted">Chưa có</span>
-                                </td>
+                                        <td class="status-cell">
+                        <span v-if="task && task.status" class="task-status" :class="task.status">
+                          {{ getTaskStatusText(task.status) }}
+                        </span>
+                                            <span v-else class="muted">—</span>
+                                        </td>
 
-                                <td v-if="taskIdx === 0"
-                                    :rowspan="item.tasks.length || 1"
-                                    class="progress-cell">
-                    <span v-if="item.progress !== null" class="progress-badge">
-                      📊 {{ item.progress }}%
-                    </span>
-                                    <span v-else class="muted">—</span>
-                                </td>
-                            </tr>
+                                        <td class="assignee-cell">
+                        <span v-if="task && task.assignee" class="assignee-badge">
+                          👤 {{ task.assignee.name }}
+                        </span>
+                                            <span v-else class="muted">Chưa có</span>
+                                        </td>
+
+                                        <td v-if="taskIdx === 0" :rowspan="item.tasks.length || 1" class="progress-cell">
+                        <span v-if="item.progress !== null" class="progress-badge">
+                          📊 {{ item.progress }}%
+                        </span>
+                                            <span v-else class="muted">—</span>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </template>
                         </template>
                     </template>
-                </template>
-            </template>
-            </tbody>
-        </table>
+                    </tbody>
+                </table>
 
-        <a-pagination
-                v-model:current="pagination.page"
-                :total="pagination.total"
-                :page-size="pagination.limit"
-                show-size-changer
-                :page-size-options="['5', '10', '20', '50']"
-                @change="fetchOverview"
-                @showSizeChange="onPageSizeChange"
-                style="margin-top: 16px; text-align: right"
-        />
+                <a-pagination
+                    v-model:current="pagination.page"
+                    :total="pagination.total"
+                    :page-size="pagination.limit"
+                    show-size-changer
+                    :page-size-options="['5', '10', '20', '50']"
+                    @change="fetchOverview"
+                    @showSizeChange="onPageSizeChange"
+                    style="margin-top: 16px; text-align: right"
+                />
+            </a-tab-pane>
+
+            <a-tab-pane key="2" tab="P.Kinh Doanh">Nội dung khác ở tab 2</a-tab-pane>
+            <a-tab-pane key="3" tab="P.Tài Chính Kế toán">Phòng tài chính kế toán</a-tab-pane>
+            <a-tab-pane key="4" tab="P.Thương Mại">Phòng thương mại</a-tab-pane>
+            <a-tab-pane key="5" tab="P.Dịch Vụ Kỹ Thuật">Phòng dịch vụ kỹ thuật</a-tab-pane>
+            <a-tab-pane key="6" tab="P.Hành Chính Nhân Sự">Phòng Hành Chính Nhân Sự</a-tab-pane>
+        </a-tabs>
     </div>
 </template>
+
 
 <script setup>
     import { ref, onMounted } from 'vue';
@@ -98,6 +109,7 @@
     const origin = window.location.origin;
     const data = ref([]);
     const pagination = ref({ page: 1, limit: 10, total: 0 });
+    const activeKey = ref('1'); // 👈 Tab hiện tại
 
     const getGroupedRows = (customer) => {
         const allTasks = customer.tasks || [];
@@ -222,52 +234,6 @@
     font-size: 15px;
     color: #1d39c4;
 }
-/*
-.type-cell.bidding {
-    background-color: #f9f0ff;
-    color: #722ed1;
-    font-weight: bold;
-    text-align: center;
-}
-
-.type-cell.contract {
-    background-color: #fff2e8;
-    color: #fa541c;
-    font-weight: bold;
-    text-align: center;
-}
-
-.title-cell.bidding {
-    background-color: #fcf5ff;
-    color: #531dab;
-}
-
-.title-cell.contract {
-    background-color: #fff7e6;
-    color: #d4380d;
-}
-
-.task-cell.bidding {
-    background-color: #faf0fe;
-    color: #531dab;
-}
-
-.task-cell.contract {
-    background-color: #fff1e6;
-    color: #d46b08;
-}
-
-.assignee-cell.bidding {
-    background-color: #fdf4ff;
-    color: #531dab;
-}
-
-.assignee-cell.contract {
-    background-color: #fff7eb;
-    color: #d46b08;
-}
-
- */
 
 .progress-cell {
     font-weight: bold;

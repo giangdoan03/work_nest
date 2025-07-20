@@ -14,64 +14,56 @@
                     <a-col :span="12">
                         <a-form-item label="Thời gian" name="time">
                             <a-config-provider :locale="locale">
-                                <a-range-picker v-model:value="dateRange" format="DD-MM-YYYY" @change="changeDateTime"
-                                                style="width: 100%;"></a-range-picker>
+                                <a-range-picker v-model:value="dateRange" format="DD-MM-YYYY" @change="changeDateTime" style="width: 100%;"></a-range-picker>
                             </a-config-provider>
                         </a-form-item>
                     </a-col>
                     <a-col :span="12">
                         <a-form-item label="Độ Ưu tiên" name="priority">
-                            <a-select v-model:value="formData.priority" :options="priorityOption"
-                                      placeholder="Chọn độ ưu tiên"/>
+                            <a-select v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên"/>
                         </a-form-item>
                     </a-col>
                 </a-row>
                 <a-row :gutter="16">
                     <a-col :span="12">
                         <a-form-item label="Trạng thái" name="status">
-                            <a-select v-model:value="formData.status" :options="statusOption"
-                                      placeholder="Chọn trạng thái"/>
+                            <a-select v-model:value="formData.status" :options="statusOption" placeholder="Chọn trạng thái"/>
                         </a-form-item>
                     </a-col>
                     <a-col :span="12">
                         <a-form-item label="Gắn tới người dùng" name="assigned_to">
-                            <a-select v-model:value="formData.assigned_to" :options="userOption"
-                                      placeholder="Chọn người dùng"/>
+                            <a-select v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng"/>
                         </a-form-item>
                     </a-col>
                 </a-row>
                 <a-row :gutter="16">
                     <a-col :span="12">
                         <a-form-item label="Loại nhiệm vụ" name="linked_type">
-                            <a-select v-model:value="formData.linked_type" :options="linkedTypeOption"
-                                      @change="handleChangeLinkedType" placeholder="Chọn loại nhiệm vụ"/>
+                            <a-select v-model:value="formData.linked_type" :options="linkedTypeOption" @change="handleChangeLinkedType" placeholder="Chọn loại nhiệm vụ"/>
                         </a-form-item>
                     </a-col>
                     <a-col :span="12">
                         <a-form-item label="Phòng ban" name="department_id">
-                            <a-select v-model:value="formData.department_id" :options="departmentOptions"
-                                      @change="handleChangeDepartment" placeholder="Chọn phòng ban"/>
+                            <a-select v-model:value="formData.department_id" :options="departmentOptions" @change="handleChangeDepartment" placeholder="Chọn phòng ban"/>
                         </a-form-item>
                     </a-col>
                     <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
-                        <a-form-item
-                            :label="formData.linked_type == 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'"
-                            name="linked_id">
-                            <a-select v-model:value="formData.linked_id" :options="linkedIdOption"
-                                      @change="handleChangeLinkedId"
-                                      :placeholder="formData.linked_type == 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'"/>
+                        <a-form-item :label="formData.linked_type === 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'" name="linked_id">
+                            <a-select v-model:value="formData.linked_id" :options="linkedIdOption" @change="handleChangeLinkedId"
+                                      :placeholder="formData.linked_type === 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'"/>
                         </a-form-item>
                     </a-col>
                     <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
                         <a-form-item label="Bước tiến trình" name="step_code">
                             <a-select v-model:value="formData.step_code" :options="stepOption"
                                       :disabled="!formData.linked_id"
-                                      :placeholder="formData.linked_type == 'bidding' ? 'Chọn bước gói thầu' : 'Chọn bước hợp đồng'"/>
+                                      :placeholder="formData.linked_type === 'bidding' ? 'Chọn bước gói thầu' : 'Chọn bước hợp đồng'"/>
                         </a-form-item>
                     </a-col>
-                    <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
+                    <a-col :span="24">
                         <a-form-item label="Cấp duyệt" name="approval_steps">
                             <a-radio-group v-model:value="formData.approval_steps">
+                                <a-radio :value="0">Không cấp duyệt</a-radio>
                                 <a-radio :value="1">1 cấp duyệt</a-radio>
                                 <a-radio :value="2">2 cấp duyệt</a-radio>
                             </a-radio-group>
@@ -80,8 +72,7 @@
 
                     <a-col :span="24">
                         <a-form-item label="Mô tả" name="description">
-                            <a-textarea v-model:value="formData.description" :rows="4"
-                                        placeholder="Nhập mô tả "/>
+                            <a-textarea v-model:value="formData.description" :rows="4" placeholder="Nhập mô tả "/>
                         </a-form-item>
                     </a-col>
                 </a-row>
@@ -149,11 +140,9 @@ const formData = ref({
     status: null,
     priority: null,
     parent_id: null,
-    approval_steps: 1,
+    approval_steps: 0,
     department_id: null
 })
-
-// //SETUP
 
 const setDefaultData = () => {
     formData.value = {
