@@ -4,9 +4,14 @@
                   :footer-style="{ textAlign: 'right' }" @close="onCloseDrawer">
             <a-form ref="formRef" :model="formData" :rules="rules" layout="vertical">
                 <a-row :gutter="16">
-                    <a-col :span="24">
+                    <a-col :span="12">
                         <a-form-item label="Tên nhiệm vụ" name="title">
                             <a-input v-model:value="formData.title" placeholder="Nhập tên nhiệm vụ"/>
+                        </a-form-item>
+                    </a-col>
+                    <a-col :span="12">
+                        <a-form-item label="Người đề nghị" name="proposed_by">
+                            <a-select v-model:value="formData.proposed_by" :options="userOption" placeholder="Chọn người dùng"/>
                         </a-form-item>
                     </a-col>
                 </a-row>
@@ -31,7 +36,7 @@
                         </a-form-item>
                     </a-col>
                     <a-col :span="12">
-                        <a-form-item label="Gắn tới người dùng" name="assigned_to">
+                        <a-form-item label="Người thực hiện" name="assigned_to">
                             <a-select v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng"/>
                         </a-form-item>
                     </a-col>
@@ -135,6 +140,7 @@ const formData = ref({
     description: "",
     linked_id: null,
     assigned_to: null,
+    proposed_by: null,
     start_date: "",
     end_date: "",
     status: null,
@@ -194,6 +200,14 @@ const validateAsigned = async (_rule, value) => {
         return Promise.resolve();
     }
 };
+
+const validateProposed = async (_rule, value) => {
+    if (!formData.value.assigned_to) {
+        return Promise.reject('Vui lòng chọn người đề nghị');
+    } else {
+        return Promise.resolve();
+    }
+};
 const validateLinkedType = async (_rule, value) => {
     if (!formData.value.linked_type) {
         return Promise.reject('Vui lòng chọn loại nhiệm vụ');
@@ -225,6 +239,7 @@ const rules = computed(() => {
         time: [{required: true, validator: validateTime, trigger: 'change'}],
         priority: [{required: true, validator: validatePriority, trigger: 'change'}],
         assigned_to: [{required: true, validator: validateAsigned, trigger: 'change'}],
+        proposed_by: [{required: true, validator: validateProposed, trigger: 'change'}],
         linked_type: [{required: true, validator: validateLinkedType, trigger: 'change'}],
         description: [{required: true, validator: validateDescription, trigger: 'change'}],
         department_id: [{required: true, validator: validateDepartment, trigger: 'change'}],

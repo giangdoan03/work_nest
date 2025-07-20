@@ -60,10 +60,25 @@
                 <a-step
                     v-for="(step, index) in steps"
                     :key="step.id"
-                    :title="`Bước ${step.step_number ?? '-'}: ${step.title ?? '-'}`"
                     :status="mapStepStatus(step.status)"
-                    @click="openStepDrawer(step)"
                 >
+                    <template #title>
+                        <div @click.stop="openStepDrawer(step)" style="
+                                  display: flex;
+                                  justify-content: space-between;
+                                  align-items: center;
+                                  cursor: pointer;
+                                  color: #1890ff;
+                                ">
+                                <span style="text-decoration: underline;">
+                                  Bước {{ step.step_number ?? '-' }}: {{ step.title ?? '-' }}
+                                </span>
+
+                            <span v-if="step.task_count !== undefined" style="font-size: 12px; color: #888; font-weight: normal; padding-left: 10px">
+                                  {{ step.task_done_count ?? 0 }}/{{ step.task_count }} task đã xong
+                            </span>
+                        </div>
+                    </template>
                     <template #description>
                         <div style="background: #fafafa; padding: 12px; border: 1px solid #f0f0f0; border-radius: 6px;">
                             <p>Phòng ban:
@@ -485,7 +500,9 @@ const fetchSteps = async () => {
         }
 
         const stepRes = await getContractStepsAPI(id)
-        steps.value = Array.isArray(stepRes.data) ? stepRes.data : []
+        steps.value = Array.isArray(stepRes.data) ? stepRes.data : [];
+
+        console.log('steps.value ', steps.value )
 
         // Nếu sau khi fetch đã có steps thì không clone lại nữa
         isNewContract.value = false

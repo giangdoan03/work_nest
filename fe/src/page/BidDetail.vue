@@ -54,9 +54,7 @@
                     :status="mapStepStatus(step.status)"
                 >
                     <template #title>
-                        <div
-                            @click.stop="openStepDrawer(step)"
-                            style="
+                        <div @click.stop="openStepDrawer(step)" style="
                                   display: flex;
                                   justify-content: space-between;
                                   align-items: center;
@@ -67,46 +65,35 @@
                                   Bước {{ step.step_number ?? '-' }}: {{ step.title ?? '-' }}
                                 </span>
 
-                            <span
-                                v-if="step.task_count !== undefined"
-                                style="font-size: 12px; color: #888; font-weight: normal; padding-left: 10px"
-                            >
+                            <span v-if="step.task_count !== undefined" style="font-size: 12px; color: #888; font-weight: normal; padding-left: 10px">
                                   {{ step.task_done_count ?? 0 }}/{{ step.task_count }} task đã xong
-                                </span>
+                            </span>
                         </div>
                     </template>
 
                     <template #description>
                         <div style="background: #fafafa; padding: 12px; border: 1px solid #f0f0f0; border-radius: 6px;">
                             <p>Phòng ban:
-                                <a-tag
-                                    v-for="(dep, i) in parseDepartment(step.department)"
-                                    :key="i"
-                                    color="blue"
-                                    style="margin-right: 5px;"
-                                >
+                                <a-tag v-for="(dep, i) in parseDepartment(step.department)" :key="i" color="blue" style="margin-right: 5px;">
                                     {{ dep }}
                                 </a-tag>
                             </p>
-                            <p>
-                                Trạng thái:
+                            <p>Trạng thái:
                                 <a-tag :color="getStepStatusColor(step.status)">
                                     {{ statusText(step.status) }}
                                 </a-tag>
                             </p>
                             <p>
                                 Phụ trách bước:
-                                <a
-                                    v-if="step.assigned_to"
-                                    @click.stop="goToUserDetail(step.assigned_to)"
-                                    style="color: #1890ff; cursor: pointer;"
+                                <a v-if="step.assigned_to"
+                                   @click.stop="goToUserDetail(step.assigned_to)"
+                                   style="color: #1890ff; cursor: pointer;"
                                 >
                                     {{ getAssignedUserName(step.assigned_to) }}
                                 </a>
                                 <span v-else>Không xác định</span>
                             </p>
-                            <p>
-                                Ngày bắt đầu:
+                            <p>Ngày bắt đầu:
                                 <span v-if="step.start_date">
                                     {{ formatDate(step.start_date) }}
                                 </span>

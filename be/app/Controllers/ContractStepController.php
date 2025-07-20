@@ -18,13 +18,42 @@ class ContractStepController extends ResourceController
 
     public function index($contractId = null)
     {
-        return $this->respond(
-            $this->model
-                ->where('contract_id', $contractId)
-                ->orderBy('step_number', 'ASC')
-                ->findAll()
-        );
+        // Lấy tất cả các bước theo contract_id
+        $steps = $this->model
+            ->where('contract_id', $contractId)
+            ->orderBy('step_number', 'ASC')
+            ->findAll();
+
+        $stepIds = array_column($steps, 'id');
+
+        $taskModel = new TaskModel();
+        $allTasks = [];
+
+        if (!empty($stepIds)) {
+            $allTasks = $taskModel
+                ->where('linked_type', 'contract')
+                ->whereIn('step_id', $stepIds)
+                ->findAll();
+        }
+
+        // Nhóm tasks theo step_id
+        $tasksGrouped = [];
+        foreach ($allTasks as $task) {
+            $tasksGrouped[$task['step_id']][] = $task;
+        }
+
+        // Gán tasks, task_count, task_done_count cho mỗi bước
+        foreach ($steps as &$step) {
+            $tasks = $tasksGrouped[$step['id']] ?? [];
+
+            $step['tasks'] = $tasks;
+            $step['task_count'] = count($tasks);
+            $step['task_done_count'] = count(array_filter($tasks, fn($t) => $t['status'] === 'done'));
+        }
+
+        return $this->respond($steps);
     }
+
 
 
     public function create($contractId = null)

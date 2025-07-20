@@ -75,6 +75,7 @@ $routes->group('api', function ($routes) {
 
     $routes->get('tasks/(:num)/approvals', 'TaskApprovalController::history/$1');
     $routes->post('tasks/(:num)/files/link', 'TaskFileController::uploadLink/$1');
+    $routes->get('tasks/by-department/(:num)', 'TaskController::byDepartment/$1');
 
     // 🧩 Comment API cho task — phải đặt TRƯỚC
     $routes->get('tasks/(:num)/comments', 'CommentController::byTask/$1');
@@ -166,11 +167,6 @@ $routes->group('api', function ($routes) {
     $routes->get('task-approvals', 'TaskApprovalController::index'); // Lấy danh sách nhiệm vụ cần duyệt
     $routes->post('task-approvals/(:num)/approve', 'TaskApprovalController::approve/$1'); // Phê duyệt task
     $routes->post('task-approvals/(:num)/reject', 'TaskApprovalController::reject/$1');   // Từ chối task
-
-
-
-
-
 
 
 });

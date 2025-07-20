@@ -99,9 +99,44 @@ class TaskController extends ResourceController
 
     public function show($id = null)
     {
-        $data = $this->model->find($id);
-        return $data ? $this->respond($data) : $this->failNotFound('Task not found');
+        $task = $this->model->find($id);
+
+        if (!$task) {
+            return $this->failNotFound('Task not found');
+        }
+
+        // Lấy step name (nếu có)
+        $stepCode = (int) ($task['step_code'] ?? 0);
+        $task['step_name'] = null;
+
+        if ($task['linked_type'] === 'contract') {
+            $contractSteps = (new ContractStepTemplateModel())->findAll();
+            foreach ($contractSteps as $step) {
+                if ((int)$step['step_number'] === $stepCode) {
+                    $task['step_name'] = $step['title'];
+                    break;
+                }
+            }
+        } elseif ($task['linked_type'] === 'bidding') {
+            $biddingSteps = (new BiddingStepTemplateModel())->findAll();
+            foreach ($biddingSteps as $step) {
+                if ((int)$step['step_number'] === $stepCode) {
+                    $task['step_name'] = $step['title'];
+                    break;
+                }
+            }
+        }
+
+        // Lấy danh sách extensions
+        $extensions = (new TaskExtensionModel())
+            ->where('task_id', $id)
+            ->findAll();
+
+        $task['extensions'] = $extensions;
+
+        return $this->respond($task);
     }
+
 
     /**
      * @throws \ReflectionException
