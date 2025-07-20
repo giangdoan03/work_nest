@@ -46,7 +46,7 @@ class TaskController extends ResourceController
             $builder->where('linked_type', $linked_type);
         }
 
-        if ($department = $this->request->getGet('department_id')) {
+        if ($department = $this->request->getGet('id_department')) {
             $builder->join('users', 'users.id = tasks.assigned_to', 'left');
             $builder->where('users.department_id', $department);
         }

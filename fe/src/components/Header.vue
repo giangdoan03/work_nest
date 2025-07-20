@@ -29,7 +29,7 @@
 
         <!-- User Dropdown -->
         <div style="margin-right: 24px; display: flex; align-items: center;">
-            <a-dropdown v-if="user" trigger="click">
+            <a-dropdown v-if="user" trigger="click" :getPopupContainer="triggerNode => triggerNode.parentNode">
                 <div @click.prevent style="display: flex; align-items: center; cursor: pointer;">
                     <a-avatar size="small" style="margin-right: 8px;">
                         <template #icon><UserOutlined /></template>

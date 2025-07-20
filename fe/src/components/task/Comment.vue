@@ -68,7 +68,7 @@
                         </a-col>
 
                         <a-col>
-                            <a-dropdown>
+                            <a-dropdown trigger="click" :getPopupContainer="triggerNode => triggerNode.parentNode">
                                 <EllipsisOutlined />
                                 <template #overlay>
                                     <a-menu>
