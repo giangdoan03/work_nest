@@ -138,18 +138,27 @@
 </template>
 
 <script setup>
-import {ref, onMounted} from 'vue';
+import {ref, onMounted, watch } from 'vue';
 import {getProjectOverviewAPI} from '@/api/project';
 import {message} from 'ant-design-vue';
 import { formatDate } from '@/utils/formUtils';
 import DepartmentTasks from '@/components/DepartmentTasks.vue'
+import { useRoute, useRouter } from 'vue-router'
+const route = useRoute()
+const router = useRouter()
 
 const origin = window.location.origin;
 const data = ref([]);
 const pagination = ref({page: 1, limit: 10, total: 0});
 
-const activeTabKey = ref('1') // mặc định tab đầu tiên
+// Gán mặc định từ URL nếu có, nếu không thì tab đầu tiên
+const activeTabKey = ref(route.query.tab || '1')
 const currentDeptId = ref(1)
+
+// Theo dõi tab thay đổi để cập nhật URL
+watch(activeTabKey, (newVal) => {
+    router.replace({ query: { ...route.query, tab: newVal } })
+})
 
 const getGroupedRows = (customer) => {
     const allTasks = customer.tasks || [];

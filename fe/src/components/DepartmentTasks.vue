@@ -87,7 +87,7 @@ const loadTasks = async () => {
     if (!props.departmentId) return
     loading.value = true
     try {
-        const res = await getTasks({ department_id: props.departmentId, per_page: 100 })
+        const res = await getTasks({ id_department: props.departmentId, per_page: 100 })
         tasks.value = res.data.data || []
         updateStats(tasks.value)
     } catch (e) {

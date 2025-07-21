@@ -295,6 +295,7 @@
     import { getApprovalHistoryByTask } from '@/api/taskApproval'
     import {getTaskExtensions} from "../../api/task";
     import { formatDate } from '@/utils/formUtils';
+    import {nextTick} from "@vue/runtime-core";
 
     const extensions = ref([]);
     const extensionHistory = ref([]);
@@ -392,7 +393,7 @@
     }
 
     const sortedExtensions = computed(() => {
-        return [...extensionHistory.value].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+        return [...extensionHistory.value].sort((a, b) => new Date(a.updated_at) - new Date(b.updated_at));
     });
 
     const extensionErrors = computed(() => {
@@ -567,15 +568,14 @@
         }
         return data.name;
     }
-    const changeDateTime = (day, date) => {
-        if(day){
-            formData.value.start_date = date[0]
-            formData.value.end_date = date[1]
-        }else {
-            formData.value.start_date = "";
-            formData.value.end_date = "";
+    const changeDateTime = (day) => {
+        if (day && day.length === 2) {
+            formData.value.start_date = day[0]?.format('YYYY-MM-DD')
+            formData.value.end_date = day[1]?.format('YYYY-MM-DD')
+        } else {
+            formData.value.start_date = ""
+            formData.value.end_date = ""
         }
-
     }
 
     const editTask = () => {
@@ -636,6 +636,7 @@
             await fetchTaskFiles();
             await getDetailTaskById();
             await fetchExtensionHistory();
+            await nextTick();
             extensionErrors.value = calculateExtensionErrors(extensionHistory.value);
 
             message.success("Cập nhật thành công");
@@ -889,9 +890,21 @@
         formData.value.step_id = found ? found.step_id : null;
     })
 
+    watch(
+        () => [formData.value.start_date, formData.value.end_date],
+        ([start, end]) => {
+            if (start && end) {
+                dateRange.value = [dayjs(start), dayjs(end)]
+            } else {
+                dateRange.value = []
+            }
+        },
+        { immediate: true }
+    )
+
     onMounted(async () => {
         try {
-            getDepartment()
+            await getDepartment()
             await getDetailTaskById()
             await getUser()
             await getListBidding()
