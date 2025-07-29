@@ -44,6 +44,11 @@
                         :scroll="{ x: 900, y: 300 }"
                         :locale="{ emptyText: 'Không có dữ liệu' }"
                     >
+                        <template #emptyText>
+                            <div style="height: 250px; padding-top: 90px;">
+                                Không có dữ liệu
+                            </div>
+                        </template>
                         <template #bodyCell="{ column, record }">
                             <template v-if="column.dataIndex === 'status'">
                                 <a-tag :color="getStatusColor(record.status)">
@@ -131,9 +136,6 @@
                         </template>
                     </a-table>
 
-                    <div v-if="!tasksDueIn1Day.length" class="no-tasks">
-                        <p>Không có công việc nào còn 1 ngày hết hạn.</p>
-                    </div>
                 </div>
 
                 <div class="table-section">
@@ -145,9 +147,14 @@
                         bordered 
                         size="small" 
                         :pagination="false"
-                        :scroll="{ x: 900, y: 300 }"
-                        :locale="{ emptyText: 'Không có dữ liệu' }"
+                        :scroll="{ x: 900, y: 300 }"0
                     >
+                        <template #emptyText>
+                            <div style="height: 250px; padding-top: 90px;">
+                                Không có dữ liệu
+                            </div>
+                        </template>
+
                         <template #bodyCell="{ column, record }">
                             <template v-if="column.dataIndex === 'status'">
                                 <a-tag :color="getStatusColor(record.status)">
