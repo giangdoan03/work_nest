@@ -47,7 +47,7 @@
 
             <a-menu-item key="internal-tasks">
                 <ToolOutlined />
-                <span>Nhiệm vụ nội bộ</span>
+                <span>Công việc</span>
             </a-menu-item>
 
             <a-menu-item key="list-phong-ban">

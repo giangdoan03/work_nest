@@ -267,7 +267,7 @@
 </template>
 <script setup>
     import { EllipsisOutlined, PaperClipOutlined, PlusOutlined, CaretDownOutlined, CalendarOutlined } from '@ant-design/icons-vue';
-    import { ref, computed, onMounted, watch, reactive } from 'vue';
+    import { ref, computed, onMounted, watch, reactive, nextTick } from 'vue';
     import { message } from 'ant-design-vue'
     import 'dayjs/locale/vi';
     dayjs.locale('vi');
@@ -293,9 +293,9 @@
     import { useUserStore } from '@/stores/user';
     import {updateStepTemplateAPI} from "@/api/step-template.js";
     import { getApprovalHistoryByTask } from '@/api/taskApproval'
-    import {getTaskExtensions} from "../../api/task";
+    import {getTaskExtensions} from "@/api/task.js";
     import { formatDate } from '@/utils/formUtils';
-    import {nextTick} from "@vue/runtime-core";
+    import { useTaskDrawerStore } from '@/stores/taskDrawerStore';
 
     const extensions = ref([]);
     const extensionHistory = ref([]);
@@ -317,7 +317,19 @@
 
     const formDataSave = ref()
     const logData = ref([])
-    const taskId = route.params.id
+    const taskId = route.params.id;
+    const drawerVisible = ref(false);
+
+    const drawerStore = useTaskDrawerStore();
+
+    // onMounted(() => {
+    //     if (drawerStore.shouldReopen) {
+    //         drawerVisible.value = true; // mở lại drawer
+    //         drawerStore.reset(); // chỉ mở 1 lần
+    //     }
+    // });
+
+
     const formData = ref({
         title: "",
         created_by: "",
@@ -881,7 +893,11 @@
 
 
     const goBack = () => {
-        router.push('/internal-tasks')
+        if (window.history.length > 1) {
+            router.back();
+        } else {
+            router.push('/internal-tasks'); // fallback nếu không có trang trước
+        }
     }
 
 

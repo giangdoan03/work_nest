@@ -22,6 +22,11 @@ class TaskController extends ResourceController
     {
         $builder = $this->model->builder();
 
+        // Select tasks + assignee name
+        $builder->select('tasks.*, tasks.id as task_id, users.id as assignee_id, users.name as assignee_name');
+        $builder->join('users', 'users.id = tasks.assigned_to', 'left'); // Luôn join để có name
+
+        // Bộ lọc
         if ($assigned = $this->request->getGet('assigned_to')) {
             $builder->where('assigned_to', $assigned);
         }
@@ -47,10 +52,10 @@ class TaskController extends ResourceController
         }
 
         if ($department = $this->request->getGet('id_department')) {
-            $builder->join('users', 'users.id = tasks.assigned_to', 'left');
             $builder->where('users.department_id', $department);
         }
 
+        // Phân trang
         $totalBuilder = clone $builder;
         $total = $totalBuilder->countAllResults(false);
 
@@ -61,6 +66,7 @@ class TaskController extends ResourceController
         $builder->limit($perPage, $offset);
         $tasks = $builder->get()->getResultArray();
 
+        // Bản đồ bước quy trình
         $contractStepTemplates = (new ContractStepTemplateModel())->findAll();
         $biddingStepTemplates  = (new BiddingStepTemplateModel())->findAll();
 
@@ -74,6 +80,7 @@ class TaskController extends ResourceController
             $biddingMap[$row['step_number']] = $row['title'];
         }
 
+        // Gắn step_name và assignee
         foreach ($tasks as &$task) {
             $stepCode = (int) ($task['step_code'] ?? 0);
             if ($task['linked_type'] === 'contract') {
@@ -83,6 +90,15 @@ class TaskController extends ResourceController
             } else {
                 $task['step_name'] = null;
             }
+
+            // Gắn assignee dạng object
+            $task['assignee'] = [
+                'id' => $task['assignee_id'] ?? null,
+                'name' => $task['assignee_name'] ?? 'Chưa có'
+            ];
+
+            // Dọn biến phụ
+            unset($task['assignee_id'], $task['assignee_name']);
         }
 
         return $this->response->setJSON([
@@ -96,6 +112,7 @@ class TaskController extends ResourceController
             ]
         ]);
     }
+
 
     public function show($id = null)
     {
