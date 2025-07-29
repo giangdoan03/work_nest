@@ -6,16 +6,24 @@
 import { computed } from 'vue'
 import { Bar } from 'vue-chartjs'
 import {
-    Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip, Legend
+    Chart as ChartJS,
+    BarElement,
+    CategoryScale,
+    LinearScale,
+    Tooltip,
+    Legend
 } from 'chart.js'
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend)
 
-const props = defineProps({ data: Array })
+// Props từ API: data là mảng tasks, mỗi task có assignee { id, name }
+const props = defineProps({
+    data: Array
+})
 
 const chartData = computed(() => {
-    const userCount = props.data.reduce((acc, t) => {
-        const name = t.name || 'Chưa có'
+    const userCount = props.data.reduce((acc, task) => {
+        const name = task.assignee?.name || 'Chưa có'
         acc[name] = (acc[name] || 0) + 1
         return acc
     }, {})
@@ -41,3 +49,4 @@ const chartOptions = {
     }
 }
 </script>
+

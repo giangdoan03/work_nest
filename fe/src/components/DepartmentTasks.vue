@@ -247,7 +247,7 @@
         <a-drawer
             :title="drawerTitle"
             placement="right"
-            :width="800"
+            :width="1000"
             :open="drawerVisible"
             @close="drawerVisible = false"
         >
@@ -278,6 +278,12 @@
                                 {{ getTaskStatusText(record.status) }}
                             </a-tag>
                         </template>
+                        <template v-else-if="column.dataIndex === 'title'">
+                            <router-link :to="`/internal-tasks/${record.id}/info`" style="color: #1890ff;">
+                                {{ record.title }}
+                            </router-link>
+                        </template>
+
                         <template v-else-if="column.dataIndex === 'priority'">
                             <a-tag :color="getPriorityColor(record.priority)">
                                 {{ getPriorityText(record.priority) }}
@@ -438,6 +444,7 @@ const newProgressValue = ref(0)
 const paginatedTasks = computed(() => {
     const start = (currentPage.value - 1) * pageSize.value
     const end = start + pageSize.value
+    console.log('filteredTasks', filteredTasks)
     return filteredTasks.value.slice(start, end)
 })
 
@@ -620,32 +627,43 @@ const getAvatarColor = (name) => {
     return colors[index]
 }
 
-const handleCardClick = (item) => {
-    // Implement navigation or filtering logic here
-    // For example, if 'today' is clicked, filter tasks for today
-    if (item.key === 'today') {
+const filterStrategies = {
+    today: () => {
         const today = new Date().toISOString().slice(0, 10);
-        filteredTasks.value = tasks.value.filter(t => t.end_date === today);
-        drawerTitle.value = 'Công việc cần xử lý hôm nay';
-        emptyMessage.value = 'Không có nhiệm vụ nào hôm nay.';
-        drawerVisible.value = true; // Open the drawer
-    } else if (item.key === 'urgent') {
-        filteredTasks.value = tasks.value.filter(t => t.priority === 'high');
-        drawerTitle.value = 'Công việc GẤP cần xử lý';
-        emptyMessage.value = 'Không có nhiệm vụ GẤP nào.';
-        drawerVisible.value = true;
-    } else if (item.key === 'done') {
-        filteredTasks.value = tasks.value.filter(t => t.status === 'done');
-        drawerTitle.value = 'Công việc hoàn thành';
-        emptyMessage.value = 'Không có nhiệm vụ hoàn thành nào.';
-        drawerVisible.value = true;
-    } else if (item.key === 'overdue') {
-        filteredTasks.value = tasks.value.filter(t => t.status === 'overdue');
-        drawerTitle.value = 'Công việc QUÁ HẠN';
-        emptyMessage.value = 'Không có nhiệm vụ QUÁ HẠN nào.';
+        return {
+            title: 'Công việc cần xử lý hôm nay',
+            message: 'Không có nhiệm vụ nào hôm nay.',
+            data: tasks.value.filter(t => t.end_date === today),
+        };
+    },
+    urgent: () => ({
+        title: 'Công việc GẤP cần xử lý',
+        message: 'Không có nhiệm vụ GẤP nào.',
+        data: tasks.value.filter(t => t.priority === 'high'),
+    }),
+    done: () => ({
+        title: 'Công việc hoàn thành',
+        message: 'Không có nhiệm vụ hoàn thành nào.',
+        data: tasks.value.filter(t => t.status === 'done'),
+    }),
+    overdue: () => ({
+        title: 'Công việc QUÁ HẠN',
+        message: 'Không có nhiệm vụ QUÁ HẠN nào.',
+        data: tasks.value.filter(t => t.status === 'overdue'),
+    }),
+};
+
+const handleCardClick = (item) => {
+    const strategy = filterStrategies[item.key];
+    if (strategy) {
+        const { title, message, data } = strategy();
+        filteredTasks.value = data;
+        drawerTitle.value = title;
+        emptyMessage.value = message;
         drawerVisible.value = true;
     }
 };
+
 
 const openProgressModal = (task) => {
     selectedTask.value = task;
