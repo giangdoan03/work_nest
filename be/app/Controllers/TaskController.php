@@ -12,12 +12,18 @@ use App\Models\TaskModel;
 use App\Enums\TaskStatus;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use CodeIgniter\I18n\Time;
+use DateTime;
+helper('task');
 
 class TaskController extends ResourceController
 {
     protected $modelName = TaskModel::class;
     protected $format    = 'json';
 
+    /**
+     * @throws \Exception
+     */
     public function index()
     {
         $builder = $this->model->builder();
@@ -97,6 +103,12 @@ class TaskController extends ResourceController
                 'name' => $task['assignee_name'] ?? 'Chưa có'
             ];
 
+            // ✅ Tính ngày còn lại hoặc quá hạn
+            $diff = calculateDeadlineDiff($task['end_date']);
+            $task['days_remaining'] = $diff['days_remaining'];
+            $task['days_overdue']   = $diff['days_overdue'];
+
+
             // Dọn biến phụ
             unset($task['assignee_id'], $task['assignee_name']);
         }
@@ -114,6 +126,9 @@ class TaskController extends ResourceController
     }
 
 
+    /**
+     * @throws \Exception
+     */
     public function show($id = null)
     {
         $task = $this->model->find($id);
@@ -150,6 +165,12 @@ class TaskController extends ResourceController
             ->findAll();
 
         $task['extensions'] = $extensions;
+
+        // Tính days_remaining & days_overdue nếu có end_date
+        $diff = calculateDeadlineDiff($task['end_date']);
+        $task['days_remaining'] = $diff['days_remaining'];
+        $task['days_overdue']   = $diff['days_overdue'];
+
 
         return $this->respond($task);
     }
@@ -238,6 +259,23 @@ class TaskController extends ResourceController
             $data['current_level'] = 1;
             $data['status'] = TaskStatus::REQUEST_APPROVAL;
         }
+
+        // ✅ Cập nhật progress nếu được gửi từ frontend
+        if (isset($data['progress'])) {
+            $progress = (int) $data['progress'];
+
+            if ($progress < 0 || $progress > 100) {
+                return $this->fail('Tiến độ phải nằm trong khoảng 0 - 100');
+            }
+
+            // Nếu có cấp duyệt và chưa approved thì cấm đặt 100%
+            if ($progress === 100 && (int)$task['approval_steps'] > 0 && $task['approval_status'] !== 'approved') {
+                return $this->fail('Không thể đặt tiến độ 100% trước khi được duyệt');
+            }
+
+            $data['progress'] = $progress;
+        }
+
 
         // ✅ Ghi lại lượt gia hạn nếu thay đổi end_date
         $oldEndDate = $task['end_date'] ?? null;

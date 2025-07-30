@@ -14,12 +14,12 @@
                         <th>Tên</th>
                         <th>Bước quy trình</th>
                         <th>Task đang chạy</th>
-                        <th>Độ ưu tiên</th>
                         <th style="width: 150px">Đề nghị</th>
                         <th style="width: 150px">Người phụ trách</th>
                         <th style="width: 100px">Bắt đầu</th>
                         <th style="width: 100px">Kết thúc</th>
                         <th style="width: 100px">Gia hạn</th>
+                        <th>Độ ưu tiên</th>
                         <th style="width: 150px">Trạng thái</th>
                     </tr>
                     </thead>
@@ -58,9 +58,14 @@
                                                 class="step_code"
                                             >
                                                 <a-tooltip :title="task.step_title">
-                                                    <span class="ellipsis-text">
-                                                      <span v-if="task.step_code">B{{ task.step_code }} - </span>{{ task.step_title }}
-                                                    </span>
+                                                    <router-link
+                                                        :to="getLinkedRoute(task)"
+                                                        class="ellipsis-text"
+                                                        style="color: #096dd9; text-decoration: none"
+                                                    >
+                                                        <span v-if="task.step_code">B{{ task.step_code }} - </span>{{ task.step_title }}
+                                                    </router-link>
+
                                                 </a-tooltip>
                                             </td>
 
@@ -68,26 +73,45 @@
                                             <!-- Các ô còn lại -->
                                             <td class="task-cell">
                                                 <a-tooltip :title="task.title" v-if="task.title">
-                                                    <span class="ellipsis-text">• {{ task.title }}</span>
+                                                    <router-link
+                                                        :to="`/internal-tasks/${task.id}/info`"
+                                                        class="ellipsis-text"
+                                                        style="color: #1890ff"
+                                                    >
+                                                        • {{ task.title }}
+                                                    </router-link>
                                                 </a-tooltip>
                                                 <span v-else class="muted">Chưa có nhiệm vụ</span>
                                             </td>
-                                            <td>
-                                                <a-tag v-if="task.priority" :color="getPriorityColor(task.priority)" bordered>
-                                                    {{ task.priority === 'high' ? 'Cao' : task.priority === 'normal' ? 'Trung bình' : 'Thấp' }}
-                                                </a-tag>
-                                                <span v-else class="muted">—</span>
-                                            </td>
+
                                             <td>{{ task.proposed_name || 'Chưa có' }}</td>
                                             <td>{{ task.assignee?.name || 'Chưa có' }}</td>
                                             <td>{{ task.start_date ? formatDate(task.start_date) : '—' }}</td>
                                             <td>{{ task.end_date ? formatDate(task.end_date) : '—' }}</td>
                                             <td>
-                                                <ul v-if="task.extensions?.length" class="extension-list">
-                                                    <li v-for="(ext, extIdx) in task.extensions" :key="extIdx">
-                                                        {{ formatDate(ext.new_end_date) }}
-                                                    </li>
-                                                </ul>
+                                                <a-tooltip
+                                                    v-if="task.days_overdue > 0"
+                                                    :title="task.overdue_reason || 'Chưa rõ lý do'"
+                                                >
+                                                    <a-tag color="red" style="cursor: pointer;">
+                                                        Quá hạn {{ task.days_overdue }} ngày
+                                                    </a-tag>
+                                                </a-tooltip>
+
+                                                <a-tag v-else-if="task.days_remaining > 0" color="orange">
+                                                    Còn {{ task.days_remaining }} ngày
+                                                </a-tag>
+
+                                                <a-tag v-else color="default">
+                                                    Hạn hôm nay
+                                                </a-tag>
+                                            </td>
+
+
+                                            <td>
+                                                <a-tag v-if="task.priority" :color="getPriorityColor(task.priority)" bordered>
+                                                    {{ task.priority === 'high' ? 'Cao' : task.priority === 'normal' ? 'Trung bình' : 'Thấp' }}
+                                                </a-tag>
                                                 <span v-else class="muted">—</span>
                                             </td>
                                             <td>
@@ -150,6 +174,16 @@ const router = useRouter()
 const origin = window.location.origin;
 const data = ref([]);
 const pagination = ref({page: 1, limit: 10, total: 0});
+const EXPIRING_SOON_DAYS = 3;
+
+const isExpiringOrOverdue = (t) =>
+    (t.days_overdue && t.days_overdue > 0) ||
+    (t.days_remaining && t.days_remaining <= EXPIRING_SOON_DAYS);
+
+const isValidAndExpiringTask = (t) =>
+    isValidTask(t) &&
+    t.status !== 'done' &&
+    isExpiringOrOverdue(t);
 
 // Gán mặc định từ URL nếu có, nếu không thì tab đầu tiên
 const activeTabKey = ref(route.query.tab || '1')
@@ -172,10 +206,9 @@ const getGroupedRows = (customer) => {
                     .filter(t =>
                         t.linked_type === type &&
                         String(t.linked_id) === String(i.id) &&
-                        isValidTask(t)
+                        isValidAndExpiringTask(t)
                     )
                     .sort((a, b) => {
-                        // 🟢 Ưu tiên sắp theo step_code trước, rồi mới theo status
                         const stepDiff = Number(a.step_code) - Number(b.step_code);
                         if (stepDiff !== 0) return stepDiff;
 
@@ -183,7 +216,10 @@ const getGroupedRows = (customer) => {
                         return (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5);
                     })
                     .map(t => ({
+                        id: t.id,
                         title: t.title,
+                        linked_id: t.linked_id,
+                        linked_type: t.linked_type,
                         step_code: t.step_code,
                         status: t.status,
                         step_title: t.step_title || null,
@@ -192,7 +228,10 @@ const getGroupedRows = (customer) => {
                         proposed_name: t.proposed_name || null,
                         start_date: t.start_date || null,
                         end_date: t.end_date || null,
-                        extensions: t.extensions || []
+                        extensions: t.extensions || [],
+                        days_remaining: t.days_remaining,
+                        days_overdue: t.days_overdue,
+                        overdue_reason: t.overdue_reason || null
                     }));
 
                 const progress = tasks.length
@@ -204,17 +243,24 @@ const getGroupedRows = (customer) => {
                     tasks,
                     progress
                 };
-            })
+            }).filter(i => i.tasks.length > 0) // ✅ loại bỏ items không có task
         };
     };
 
-
-
     const result = [];
-    if (customer.biddings?.length) result.push(group(customer.biddings, 'bidding'));
-    if (customer.contracts?.length) result.push(group(customer.contracts, 'contract'));
+    if (customer.biddings?.length) {
+        const biddingGroup = group(customer.biddings, 'bidding');
+        if (biddingGroup.items.length) result.push(biddingGroup);
+    }
+
+    if (customer.contracts?.length) {
+        const contractGroup = group(customer.contracts, 'contract');
+        if (contractGroup.items.length) result.push(contractGroup);
+    }
+
     return result;
 };
+
 
 const groupByStep = (tasks) => {
     return tasks.reduce((acc, task) => {
@@ -255,23 +301,17 @@ const getPriorityColor = (priority) => {
 const isValidTask = (t) => t.priority === 'high' || t.is_priority === true;
 
 const getTotalRows = (customer) => {
-    const allTasks = customer.tasks || [];
+    const grouped = getGroupedRows(customer);
+    return grouped.reduce((total, group) => {
+        return total + group.items.reduce((sum, i) => sum + i.tasks.length, 0);
+    }, 0);
+};
 
-    const count = (items, type) => {
-        return items.reduce((sum, i) => {
-            const itemTasks = allTasks.filter(t =>
-                t.linked_type === type &&
-                String(t.linked_id) === String(i.id) &&
-                isValidTask(t)
-            );
-            return sum + itemTasks.length;
-        }, 0);
-    };
-
-    let total = 0;
-    if (customer.biddings) total += count(customer.biddings, 'bidding');
-    if (customer.contracts) total += count(customer.contracts, 'contract');
-    return total;
+const getLinkedRoute = (task) => {
+    if (!task?.linked_type || !task?.linked_id) return '/project-overview';
+    return task.linked_type === 'bidding'
+        ? { name: 'bid-detail', params: { id: task.linked_id } }
+        : { name: 'contract-detail', params: { id: task.linked_id } };
 };
 
 

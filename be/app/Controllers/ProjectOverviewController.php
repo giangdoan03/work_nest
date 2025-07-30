@@ -4,11 +4,15 @@ namespace App\Controllers;
 
 use CodeIgniter\RESTful\ResourceController;
 use Config\Database;
+helper('task');
 
 class ProjectOverviewController extends ResourceController
 {
     protected $format = 'json';
 
+    /**
+     * @throws \Exception
+     */
     public function index()
     {
         $db = Database::connect();
@@ -156,6 +160,8 @@ class ProjectOverviewController extends ResourceController
                 $tasksByCustomer[$cid] = [];
             }
 
+            $diff = calculateDeadlineDiff($task['end_date']);
+
             $tasksByCustomer[$cid][] = [
                 'id' => $task['task_id'],
                 'title' => $task['task_title'],
@@ -172,7 +178,9 @@ class ProjectOverviewController extends ResourceController
                 'assigned_name' => $task['assigned_name'],
                 'proposed_by' => $task['proposed_by'],
                 'proposed_name' => $task['proposed_name'],
-                'extensions' => $extensionsByTask[$task['task_id']] ?? []
+                'extensions' => $extensionsByTask[$task['task_id']] ?? [],
+                'days_remaining' => $diff['days_remaining'],
+                'days_overdue' => $diff['days_overdue'],
             ];
         }
 
