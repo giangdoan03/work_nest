@@ -130,8 +130,19 @@
                             <template v-else-if="column.dataIndex === 'start_date'">
                                 {{ formatDate(record.start_date) }}
                             </template>
-                            <template v-else-if="column.dataIndex === 'end_date'">
-                                {{ formatDate(record.end_date) }}
+                            <template v-else-if="column.dataIndex === 'deadline'">
+                                <a-tag v-if="record.days_overdue > 0" color="error">
+                                    Quá hạn {{ record.days_overdue }} ngày
+                                </a-tag>
+                                <a-tag v-else-if="record.days_remaining > 0" color="green">
+                                    Còn {{ record.days_remaining }} ngày
+                                </a-tag>
+                                <a-tag v-else-if="record.days_remaining === 0" :color="'#faad14'">
+                                    Hạn chót hôm nay
+                                </a-tag>
+                                <a-tag v-else>
+                                    —
+                                </a-tag>
                             </template>
                         </template>
                     </a-table>
@@ -303,17 +314,17 @@
                             </a-tag>
                         </template>
                         <template v-else-if="column.dataIndex === 'progress'">
-                            <a-tooltip title="Click để thay đổi tiến trình">
-                                <div @click="openProgressModal(record)" style="cursor: pointer;">
-                                    <a-progress 
-                                        :percent="record.progress || 0" 
-                                        size="small" 
-                                        :status="getProgressStatus(record.progress)"
-                                        :format="(percent) => `${percent}%`"
-                                        :stroke-width="20"
-                                    />
-                                </div>
-                            </a-tooltip>
+                            <a-progress
+                                @click="openProgressModal(record)" style="cursor: pointer;"
+                                :percent="Number(record.progress)"
+                                :stroke-color="{
+                                  '0%': '#108ee9',
+                                  '100%': '#87d068',
+                                }"
+                                :status="record.progress >= 100 ? 'success' : 'active'"
+                                size="small"
+                                :show-info="true"
+                            />
                         </template>
                         <template v-else-if="column.dataIndex === 'assignee'">
                             <a-tooltip 
@@ -342,38 +353,49 @@
                                 </div>
                             </a-tooltip>
                         </template>
-                        <template v-else-if="column.dataIndex === 'assigned_to_name'">
-                            <a-tooltip 
-                                placement="top"
-                                :overlayStyle="{ maxWidth: '300px' }"
-                            >
-                                <template #title>
-                                    <div style="text-align: center; padding: 8px;">
+                                <template v-else-if="column.dataIndex === 'create_by'">
+                                <a-tooltip 
+                                    placement="top"
+                                    :overlayStyle="{ maxWidth: '400px', wordWrap: 'break-word', whiteSpace: 'normal' }"
+                                >
+                                    <template #title>
+                                        <div style="text-align: center; padding: 12px; min-width: 200px;">
+                                            <a-avatar 
+                                                :style="{ backgroundColor: getAvatarColor(getUserById(record.create_by)) }"
+                                                size="large"
+                                                style="margin-bottom: 12px;"
+                                            >
+                                                {{ getFirstLetter(getUserById(record.create_by)) }}
+                                            </a-avatar>
+                                            <div style="font-weight: bold; color: white; word-wrap: break-word; white-space: normal; line-height: 1.4;">{{ getUserById(record.create_by) }}</div>
+                                        </div>
+                                    </template>
+                                    <div style="display: flex; justify-content: center; align-items: center;">
                                         <a-avatar 
-                                            :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }"
-                                            size="large"
-                                            style="margin-bottom: 8px;"
+                                            :style="{ backgroundColor: getAvatarColor(getUserById(record.create_by)) }"
+                                            size="small"
                                         >
-                                            {{ getFirstLetter(record.assigned_to_name) }}
+                                            {{ getFirstLetter(getUserById(record.create_by)) }}
                                         </a-avatar>
-                                        <div style="font-weight: bold; color: white;">{{ record.assigned_to_name }}</div>
                                     </div>
-                                </template>
-                                <div style="display: flex; justify-content: center; align-items: center;">
-                                    <a-avatar 
-                                        :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }"
-                                        size="small"
-                                    >
-                                        {{ getFirstLetter(record.assigned_to_name) }}
-                                    </a-avatar>
-                                </div>
-                            </a-tooltip>
-                        </template>
+                                </a-tooltip>
+                            </template>
                         <template v-else-if="column.dataIndex === 'start_date'">
                             {{ formatDate(record.start_date) }}
                         </template>
-                        <template v-else-if="column.dataIndex === 'end_date'">
-                            {{ formatDate(record.end_date) }}
+                        <template v-else-if="column.dataIndex === 'deadline'">
+                            <a-tag v-if="record.days_overdue > 0" color="error">
+                                Quá hạn {{ record.days_overdue }} ngày
+                            </a-tag>
+                            <a-tag v-else-if="record.days_remaining > 0" color="green">
+                                Còn {{ record.days_remaining }} ngày
+                            </a-tag>
+                            <a-tag v-else-if="record.days_remaining === 0" :color="'#faad14'">
+                                Hạn chót hôm nay
+                            </a-tag>
+                            <a-tag v-else>
+                                —
+                            </a-tag>
                         </template>
                     </template>
                 </a-table>
@@ -477,18 +499,17 @@ const columns = [
     { title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee' },
     { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
     { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority' },
-    { title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date' }
+    { title: 'Hạn', dataIndex: 'deadline', key: 'deadline' }
 ]
 
 const drawerColumns = [
     { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
     { title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee', width: 80, align: 'center' },
-    { title: 'Người giao việc', dataIndex: 'assigned_to_name', key: 'assigned_to_name', width: 80, align: 'center' },
+    { title: 'Người giao việc', dataIndex: 'create_by', key: 'create_by', width: 80, align: 'center' },
     { title: 'Tiến trình', dataIndex: 'progress', key: 'progress', width: 120, align: 'center' },
     { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 120, align: 'center' },
     { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', width: 80, align: 'center' },
-    { title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date', width: 120, align: 'center' },
-    { title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date', width: 120, align: 'center' }
+    { title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 120, align: 'center' }
 ]
 
 const loadTasks = async () => {
@@ -504,11 +525,8 @@ const loadTasks = async () => {
         tasks.value = tasksRes.data.data || []
         users.value = usersRes.data || []
         
-        // Map assigned_to IDs to user names
-        tasks.value = tasks.value.map(task => ({
-            ...task,
-            assigned_to_name: getUserName(task.assigned_to)
-        }))
+        // Không cần map assigned_to_name nữa vì đã sử dụng create_by
+        tasks.value = tasks.value
         
         updateStats(tasks.value)
     } catch (e) {
@@ -689,8 +707,19 @@ const updateProgress = async () => {
     progressUpdating.value = true;
     try {
         await updateTask(selectedTask.value.id, { progress: newProgressValue.value });
-        // Reload tasks to update progress
-        await loadTasks();
+        
+        // Cập nhật trực tiếp trong bảng thay vì reload
+        const taskToUpdate = tasks.value.find(t => t.id === selectedTask.value.id);
+        if (taskToUpdate) {
+            taskToUpdate.progress = newProgressValue.value;
+        }
+        
+        // Cập nhật trong filteredTasks nếu có
+        const filteredTaskToUpdate = filteredTasks.value.find(t => t.id === selectedTask.value.id);
+        if (filteredTaskToUpdate) {
+            filteredTaskToUpdate.progress = newProgressValue.value;
+        }
+        
         // Close modal and reset values
         progressModalVisible.value = false;
         selectedTask.value = null;
@@ -702,6 +731,9 @@ const updateProgress = async () => {
         progressUpdating.value = false;
     }
 };
+
+// Sử dụng function có sẵn getUserName
+const getUserById = getUserName;
 
 onMounted(() => {
     loadTasks()
