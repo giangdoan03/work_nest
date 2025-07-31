@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jul 30, 2025 at 05:57 PM
--- Server version: 8.0.30
--- PHP Version: 8.1.10
+-- Generation Time: Jul 31, 2025 at 09:24 AM
+-- Server version: 8.4.3
+-- PHP Version: 8.3.16
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -742,7 +742,7 @@ CREATE TABLE `documents` (
   `file_path` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `department_id` int DEFAULT NULL,
   `uploaded_by` int NOT NULL,
-  `visibility` enum('private','public','department','custom') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'private',
+  `visibility` enum('private','public','department','custom') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'private',
   `file_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `file_size` int DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
@@ -989,8 +989,8 @@ CREATE TABLE `role_permissions` (
   `id` int NOT NULL,
   `role_id` int NOT NULL,
   `permission_id` int DEFAULT NULL,
-  `module` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `action` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `module` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `action` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1238,7 +1238,7 @@ CREATE TABLE `tasks` (
   `current_level` int DEFAULT '1',
   `id_department` int DEFAULT NULL,
   `progress` tinyint UNSIGNED DEFAULT '0',
-  `overdue_reason` text COLLATE utf8mb4_unicode_ci
+  `overdue_reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -1250,8 +1250,7 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (2, NULL, 'Thiết kế hồ sơ thầu', 'Mô tả công việc thiết kế hồ sơ thầu', 3, 2, '2025-06-25', '2025-07-31', 'done', 'approved', 'bidding', 6, 5, 237, 2, 'high', 1, '2025-06-04 01:37:15', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
 (3, NULL, 'Nghiên cứu yêu cầu khách hàng', 'Mô tả công việc nghiên cứu yêu cầu khách hàng', 9, 4, '2025-06-29', '2025-07-31', 'todo', 'rejected', 'contract', 30, 16, 265, 1, 'high', 3, '2025-06-04 01:37:24', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
 (10, NULL, 'Mua sắm vật tư', 'Mô tả công việc mua sắm vật tư', 10, 2, '2025-06-25', '2025-07-31', 'todo', 'rejected', 'bidding', 2, 3, 111, 2, 'high', 5, '2025-06-04 01:38:26', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
-(22, 3, 'Sửa tên subtask', 'Thiết kế giao diện cho phần chi tiết', 9, 4, NULL, '2025-06-15', '', 'pending', 'internal', NULL, 8, NULL, 1, 'high', 0, '2025-06-04 19:29:35', '2025-07-20 15:21:54', 1, 1, 4, 0, NULL),
-(26, 3, 'Thiết kế giao diện phụ - task con 3', 'Thiết kế giao diện cho phần chi tiết', 9, 2, NULL, '2025-06-15', 'todo', 'pending', 'bidding', 2, 3, 111, 1, 'high', 0, '2025-06-05 05:38:39', '2025-07-20 15:21:54', 1, 1, 3, 0, NULL),
+(26, 3, 'Thiết kế giao diện phụ - task con 3', 'Thiết kế giao diện cho phần chi tiết', 9, 2, '2025-06-15', '2025-06-16', 'todo', 'pending', 'bidding', 2, 3, 111, 1, 'high', 0, '2025-06-05 05:38:39', '2025-07-31 02:23:19', 1, 1, 3, 75, 'Tổng Bí thư: Trung ương khóa mới dự kiến có 200 ủy viên ddd'),
 (27, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, 4, '2025-06-10', '2025-06-14', 'done', 'approved', 'bidding', 2, 1, 109, 3, 'high', 0, '2025-06-05 06:16:42', '2025-07-20 15:21:54', 1, 1, 1, 0, NULL),
 (28, 3, 'Thiết kế giao diện phụ - task con 3 có ngay bat dau - ngay ket thuc', 'Thiết kế giao diện cho phần chi tiết', 17, 4, '2025-06-25', '2025-07-31', 'done', 'approved', 'bidding', 2, 3, 111, 1, 'normal', 0, '2025-06-05 06:19:14', '2025-07-20 15:21:54', 1, 1, 3, 0, NULL),
 (29, 18, 'sub task 1', 'tesst subtask', 13, 4, '2025-06-24', '2025-07-31', '', 'pending', 'bidding', 5, 5, 104, 1, 'normal', 0, '2025-06-23 18:15:50', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
@@ -1263,7 +1262,7 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (35, NULL, 'test mới 3', 'test nhé', 7, 2, '2025-06-29', '2025-08-07', 'doing', 'pending', 'bidding', 8, 7, 79, 1, 'high', 0, '2025-06-29 01:51:48', '2025-07-20 15:21:54', 1, 1, 3, 0, NULL),
 (36, NULL, 'mới', 'đasadd', 9, 1, '2025-06-30', '2025-07-31', 'doing', 'pending', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-06-29 11:25:28', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
 (37, NULL, 'test nhiệm vụ hợp đồng 1', 'test nhiệm vụ hợp đồng 1', 23, 1, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 10, 259, 1, 'normal', 0, '2025-06-30 09:33:07', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
-(38, NULL, 'test nhiệm vụ hợp đồng 2', 'test nhiệm vụ hợp đồng 2', 19, 4, '2025-06-30', '2025-07-29', 'doing', 'pending', 'contract', 30, 11, 260, 1, 'high', 0, '2025-06-30 09:37:45', '2025-07-20 15:21:54', 1, 1, 4, 0, NULL),
+(38, NULL, 'test nhiệm vụ hợp đồng 2', 'test nhiệm vụ hợp đồng 2', 19, 4, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 11, 260, 1, 'high', 0, '2025-06-30 09:37:45', '2025-07-31 01:35:47', 1, 1, 4, 25, NULL),
 (39, NULL, 'duyệt hợp đồng mua', 'duyệt hợp đồng mua', 21, 4, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 12, 261, 1, 'high', 0, '2025-06-30 09:48:27', '2025-07-20 15:21:54', 1, 1, 2, 0, NULL),
 (40, NULL, 'nhiệm vụ cho gói thầu 1', 'test chấm thầu', 4, 1, '2025-07-10', '2025-08-05', 'doing', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-06-30 09:54:52', '2025-07-20 15:21:54', 1, 1, 2, 0, NULL),
 (41, NULL, 'nhiệm vụ hợp đồng 2', 'nghiệm thu', 23, 1, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 16, 265, 1, 'normal', 0, '2025-06-30 09:58:15', '2025-07-20 15:21:54', 1, 1, 4, 0, NULL),
@@ -1276,7 +1275,7 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (48, NULL, 'nhiệm vụ cho hợp đồng mới', 'mô tả mẫu', 20, 4, '2025-07-01', '2025-08-30', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'normal', 0, '2025-07-01 04:07:24', '2025-07-20 15:21:54', 1, 1, 4, 0, NULL),
 (49, NULL, 'nhiệm vụ  phát sinh', 'nhiêm vụ phát sinh', 1, 4, '2025-08-30', '2025-08-31', 'doing', 'pending', 'bidding', 3, 1, 118, 1, 'high', 0, '2025-07-01 04:31:44', '2025-07-20 15:21:54', 1, 1, 2, 0, NULL),
 (50, NULL, 'nhiệm vụ mới 06/07', 'test task mới', 1, 1, '2025-07-06', '2025-08-27', 'doing', 'pending', 'bidding', 2, 3, 111, 1, 'high', 0, '2025-07-06 03:52:58', '2025-07-20 15:21:54', 2, 1, 3, 0, NULL),
-(51, NULL, 'test nhiệm vụ mới', 'demo', 6, 9, '2025-07-15', '2025-07-19', 'doing', 'pending', 'contract', 34, 16, 333, 1, 'high', 0, '2025-07-20 04:53:06', '2025-07-20 15:21:54', 0, 1, 5, 0, NULL);
+(51, NULL, 'test nhiệm vụ mới', 'demo', 6, 9, '2025-07-15', '2025-08-28', 'doing', 'pending', 'contract', 34, 16, 333, 1, 'high', 0, '2025-07-20 04:53:06', '2025-07-31 01:36:25', 0, 1, 5, 75, NULL);
 
 -- --------------------------------------------------------
 
@@ -1417,7 +1416,10 @@ INSERT INTO `task_extensions` (`id`, `task_id`, `extended_by`, `old_end_date`, `
 (13, 46, 1, '2025-08-29 00:00:00', '2025-08-28 00:00:00', 'Gia hạn thời gian', '2025-07-09 22:53:03', '2025-07-09 22:53:03'),
 (14, 49, 1, '2025-08-29 00:00:00', '2025-08-31 00:00:00', 'Gia hạn thời gian', '2025-07-09 22:53:50', '2025-07-09 22:53:50'),
 (15, 31, 1, '2025-08-10 00:00:00', '2025-08-31 00:00:00', 'Gia hạn thời gian', '2025-07-09 22:58:48', '2025-07-09 22:58:48'),
-(16, 51, 1, '2025-07-29 00:00:00', '2025-07-19 00:00:00', 'Gia hạn thời gian', '2025-07-20 05:46:44', '2025-07-20 05:46:44');
+(16, 51, 1, '2025-07-29 00:00:00', '2025-07-19 00:00:00', 'Gia hạn thời gian', '2025-07-20 05:46:44', '2025-07-20 05:46:44'),
+(17, 38, 1, '2025-07-29 00:00:00', '2025-07-31 00:00:00', NULL, '2025-07-31 01:35:47', '2025-07-31 01:35:47'),
+(18, 51, 1, '2025-07-19 00:00:00', '2025-08-28 00:00:00', NULL, '2025-07-31 01:36:25', '2025-07-31 01:36:25'),
+(19, 26, 1, '2025-06-15 00:00:00', '2025-06-16 00:00:00', NULL, '2025-07-31 01:38:24', '2025-07-31 01:38:24');
 
 -- --------------------------------------------------------
 
@@ -1856,7 +1858,7 @@ ALTER TABLE `task_comments`
 -- AUTO_INCREMENT for table `task_extensions`
 --
 ALTER TABLE `task_extensions`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `task_files`

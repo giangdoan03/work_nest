@@ -107,6 +107,8 @@ class ProjectOverviewController extends ResourceController
                 t.id AS task_id,
                 t.title AS task_title,
                 t.status AS task_status,
+                t.progress AS task_progress,
+                t.overdue_reason,
                 t.start_date,
                 t.end_date,
                 t.linked_type,
@@ -168,6 +170,7 @@ class ProjectOverviewController extends ResourceController
                 'linked_type' => $task['linked_type'],
                 'linked_id' => $task['linked_id'],
                 'status' => $task['task_status'],
+                'progress' => $task['task_progress'],
                 'start_date' => $task['start_date'],
                 'end_date' => $task['end_date'],
                 'step_code' => $task['step_code'],
@@ -181,6 +184,7 @@ class ProjectOverviewController extends ResourceController
                 'extensions' => $extensionsByTask[$task['task_id']] ?? [],
                 'days_remaining' => $diff['days_remaining'],
                 'days_overdue' => $diff['days_overdue'],
+                'overdue_reason' => $task['overdue_reason'] ?? null,
             ];
         }
 
