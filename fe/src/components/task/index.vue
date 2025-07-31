@@ -86,8 +86,17 @@
 
                                 <a-col :span="12">
                                     <a-form-item label="Ngày còn lại">
-                                        <a-tag :color="getRemainingDaysColor" size="small" style="font-size: 12px; padding: 2px 6px;">
-                                            {{ getRemainingDaysText }}
+                                        <a-tag v-if="formData.days_overdue > 0" color="error">
+                                            Quá hạn {{ formData.days_overdue }} ngày
+                                        </a-tag>
+                                        <a-tag v-else-if="formData.days_remaining > 0" color="green">
+                                            Còn {{ formData.days_remaining }} ngày
+                                        </a-tag>
+                                        <a-tag v-else-if="formData.days_remaining === 0" :color="'#faad14'">
+                                            Hạn chót hôm nay
+                                        </a-tag>
+                                        <a-tag v-else>
+                                            —
                                         </a-tag>
                                     </a-form-item>
                                 </a-col>
@@ -151,11 +160,15 @@
                                 <a-col :span="24">
                                     <a-form-item label="Tiến trình" name="progress">
                                         <template v-if="!isEditMode">
-                                            <a-progress 
-                                                :percent="formData.progress || 0" 
-                                                :status="getProgressStatus(formData.progress)"
-                                                :format="(percent) => `${percent}%`"
-                                                :stroke-width="20"
+                                            <a-progress
+                                                :percent="Number(formData.progress)"
+                                                :stroke-color="{
+                                                  '0%': '#108ee9',
+                                                  '100%': '#87d068',
+                                                }"
+                                                :status="formData.progress >= 100 ? 'success' : 'active'"
+                                                size="small"
+                                                :show-info="true"
                                             />
                                         </template>
                                         <template v-else>
@@ -168,11 +181,15 @@
                                                 style="width: calc(90% + 50px); margin: 0 auto; display: block;"
                                             />
                                             <div style="margin-top: 24px;">
-                                                <a-progress 
-                                                    :percent="formData.progress || 0" 
-                                                    :status="getProgressStatus(formData.progress)"
-                                                    :format="(percent) => `${percent}%`"
-                                                    :stroke-width="16"
+                                                <a-progress
+                                                    :percent="Number(formData.progress)"
+                                                    :stroke-color="{
+                                                      '0%': '#108ee9',
+                                                      '100%': '#87d068',
+                                                    }"
+                                                    :status="formData.progress >= 100 ? 'success' : 'active'"
+                                                    size="small"
+                                                    :show-info="true"
                                                     style="width: calc(90% + 50px); margin: 0 auto; display: block;"
                                                 />
                                             </div>
