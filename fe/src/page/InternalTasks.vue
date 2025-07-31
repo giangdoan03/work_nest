@@ -127,6 +127,7 @@
                             @change="onRangeChange"
                             allowClear
                             :placeholder="['Từ ngày', 'Đến ngày']"
+                            :getPopupContainer="triggerNode => triggerNode.parentNode"
                     />
                 </a-config-provider>
             </a-col>

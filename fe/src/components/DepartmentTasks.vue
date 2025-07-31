@@ -44,6 +44,11 @@
                         :scroll="{ x: 900, y: 300 }"
                         :locale="{ emptyText: 'Không có dữ liệu' }"
                     >
+                        <template #emptyText>
+                            <div style="height: 250px; padding-top: 90px;">
+                                Không có dữ liệu
+                            </div>
+                        </template>
                         <template #bodyCell="{ column, record }">
                             <template v-if="column.dataIndex === 'status'">
                                 <a-tag :color="getStatusColor(record.status)">
@@ -68,7 +73,7 @@
                                     </div>
                                 </a-tooltip>
                             </template>
-                            <template v-else-if="column.dataIndex === 'name'">
+                            <template v-else-if="column.dataIndex === 'assignee'">
                                 <a-tooltip 
                                     placement="top"
                                     :overlayStyle="{ maxWidth: '300px' }"
@@ -76,21 +81,21 @@
                                     <template #title>
                                         <div style="text-align: center; padding: 8px;">
                                             <a-avatar 
-                                                :style="{ backgroundColor: getAvatarColor(record.name) }"
+                                                :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
                                                 size="large"
                                                 style="margin-bottom: 8px;"
                                             >
-                                                {{ getFirstLetter(record.name) }}
+                                                {{ getFirstLetter(record.assignee?.name) }}
                                             </a-avatar>
-                                            <div style="font-weight: bold; color: white;">{{ record.name }}</div>
+                                            <div style="font-weight: bold; color: white;">{{ record.assignee?.name }}</div>
                                         </div>
                                     </template>
                                     <div style="display: flex; justify-content: center; align-items: center;">
                                         <a-avatar 
-                                            :style="{ backgroundColor: getAvatarColor(record.name) }"
+                                            :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
                                             size="small"
                                         >
-                                            {{ getFirstLetter(record.name) }}
+                                            {{ getFirstLetter(record.assignee?.name) }}
                                         </a-avatar>
                                     </div>
                                 </a-tooltip>
@@ -131,9 +136,6 @@
                         </template>
                     </a-table>
 
-                    <div v-if="!tasksDueIn1Day.length" class="no-tasks">
-                        <p>Không có công việc nào còn 1 ngày hết hạn.</p>
-                    </div>
                 </div>
 
                 <div class="table-section">
@@ -148,6 +150,12 @@
                         :scroll="{ x: 900, y: 300 }"
                         :locale="{ emptyText: 'Không có dữ liệu' }"
                     >
+                        <template #emptyText>
+                            <div style="height: 250px; padding-top: 90px;">
+                                Không có dữ liệu
+                            </div>
+                        </template>
+
                         <template #bodyCell="{ column, record }">
                             <template v-if="column.dataIndex === 'status'">
                                 <a-tag :color="getStatusColor(record.status)">
@@ -172,7 +180,7 @@
                                     </div>
                                 </a-tooltip>
                             </template>
-                            <template v-else-if="column.dataIndex === 'name'">
+                            <template v-else-if="column.dataIndex === 'assignee'">
                                 <a-tooltip 
                                     placement="top"
                                     :overlayStyle="{ maxWidth: '300px' }"
@@ -180,21 +188,21 @@
                                     <template #title>
                                         <div style="text-align: center; padding: 8px;">
                                             <a-avatar 
-                                                :style="{ backgroundColor: getAvatarColor(record.name) }"
+                                                :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
                                                 size="large"
                                                 style="margin-bottom: 8px;"
                                             >
-                                                {{ getFirstLetter(record.name) }}
+                                                {{ getFirstLetter(record.assignee?.name) }}
                                             </a-avatar>
-                                            <div style="font-weight: bold; color: white;">{{ record.name }}</div>
+                                            <div style="font-weight: bold; color: white;">{{ record.assignee?.name }}</div>
                                         </div>
                                     </template>
                                     <div style="display: flex; justify-content: center; align-items: center;">
                                         <a-avatar 
-                                            :style="{ backgroundColor: getAvatarColor(record.name) }"
+                                            :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
                                             size="small"
                                         >
-                                            {{ getFirstLetter(record.name) }}
+                                            {{ getFirstLetter(record.assignee?.name) }}
                                         </a-avatar>
                                     </div>
                                 </a-tooltip>
@@ -272,6 +280,11 @@
                     :pagination="false"
                     :locale="{ emptyText: 'Không có dữ liệu' }"
                 >
+                    <template #emptyText>
+                        <div style="height: 250px; padding-top: 90px;">
+                            Không có dữ liệu
+                        </div>
+                    </template>
                     <template #bodyCell="{ column, record }">
                         <template v-if="column.dataIndex === 'status'">
                             <a-tag :color="getStatusColor(record.status)">
@@ -302,7 +315,7 @@
                                 </div>
                             </a-tooltip>
                         </template>
-                        <template v-else-if="column.dataIndex === 'name'">
+                        <template v-else-if="column.dataIndex === 'assignee'">
                             <a-tooltip 
                                 placement="top"
                                 :overlayStyle="{ maxWidth: '300px' }"
@@ -310,21 +323,21 @@
                                 <template #title>
                                     <div style="text-align: center; padding: 8px;">
                                         <a-avatar 
-                                            :style="{ backgroundColor: getAvatarColor(record.name) }"
+                                            :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
                                             size="large"
                                             style="margin-bottom: 8px;"
                                         >
-                                            {{ getFirstLetter(record.name) }}
+                                            {{ getFirstLetter(record.assignee?.name) }}
                                         </a-avatar>
-                                        <div style="font-weight: bold; color: white;">{{ record.name }}</div>
+                                        <div style="font-weight: bold; color: white;">{{ record.assignee?.name }}</div>
                                     </div>
                                 </template>
                                 <div style="display: flex; justify-content: center; align-items: center;">
                                     <a-avatar 
-                                        :style="{ backgroundColor: getAvatarColor(record.name) }"
+                                        :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
                                         size="small"
                                     >
-                                        {{ getFirstLetter(record.name) }}
+                                        {{ getFirstLetter(record.assignee?.name) }}
                                     </a-avatar>
                                 </div>
                             </a-tooltip>
@@ -417,7 +430,7 @@ import {
 import { formatDate } from '@/utils/formUtils';
 import PieChart from './PieChart.vue'
 import BarChart from './BarChart.vue'
-import { getTasks } from '@/api/task'
+import { getTasks, updateTask } from '@/api/task'
 import { getUsers } from '@/api/user'
 
 
@@ -461,7 +474,7 @@ const urgentTasks = computed(() => {
 
 const columns = [
     { title: 'Tên công việc', dataIndex: 'title', key: 'title' },
-    { title: 'Người thực hiện', dataIndex: 'name', key: 'name' },
+    { title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee' },
     { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
     { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority' },
     { title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date' }
@@ -469,7 +482,7 @@ const columns = [
 
 const drawerColumns = [
     { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
-    { title: 'Người thực hiện', dataIndex: 'name', key: 'name', width: 80, align: 'center' },
+    { title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee', width: 80, align: 'center' },
     { title: 'Người giao việc', dataIndex: 'assigned_to_name', key: 'assigned_to_name', width: 80, align: 'center' },
     { title: 'Tiến trình', dataIndex: 'progress', key: 'progress', width: 120, align: 'center' },
     { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 120, align: 'center' },
@@ -675,7 +688,7 @@ const updateProgress = async () => {
     if (!selectedTask.value) return;
     progressUpdating.value = true;
     try {
-        await getTasks({ id: selectedTask.value.id, progress: newProgressValue.value });
+        await updateTask(selectedTask.value.id, { progress: newProgressValue.value });
         // Reload tasks to update progress
         await loadTasks();
         // Close modal and reset values

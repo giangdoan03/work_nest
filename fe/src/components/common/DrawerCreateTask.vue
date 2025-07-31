@@ -19,7 +19,7 @@
                     <a-col :span="12">
                         <a-form-item label="Thời gian" name="time">
                             <a-config-provider :locale="locale">
-                                <a-range-picker v-model:value="dateRange" format="DD-MM-YYYY" @change="changeDateTime" style="width: 100%;"></a-range-picker>
+                                <a-range-picker v-model:value="dateRange" format="DD-MM-YYYY" @change="changeDateTime" style="width: 100%;" :getPopupContainer="triggerNode => triggerNode.parentNode"></a-range-picker>
                             </a-config-provider>
                         </a-form-item>
                     </a-col>
