@@ -20,10 +20,17 @@ class Auth extends Controller
         $this->model = new UserModel();
     }
 
+    private function filterUser(array $user): array
+    {
+        unset($user['password']);
+        return $user;
+    }
+
     public function index(): ResponseInterface
     {
         $users = $this->model->findAll();
-        return $this->respond($users);
+        $cleanedUsers = array_map([$this, 'filterUser'], $users);
+        return $this->respond($cleanedUsers);
     }
 
     public function show($id = null): ResponseInterface

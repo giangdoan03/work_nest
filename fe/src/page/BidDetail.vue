@@ -121,7 +121,7 @@
             placement="right"
             :visible="drawerVisible"
             @close="closeDrawer"
-            width="680"
+            width="900"
         >
             <template v-if="selectedStep">
                 <a-descriptions
@@ -198,11 +198,21 @@
                             @change="updateStepEndDate"
                         />
                     </a-descriptions-item>
-
                 </a-descriptions>
 
 
-                <a-divider>Danh sách công việc của bước này</a-divider>
+                <a-divider>
+                    Danh sách công việc của bước này
+                    <a-button
+                        type="primary"
+                        size="small"
+                        style="float: right; margin-top: -5px"
+                        @click="showPopupCreate"
+                    >
+                        Thêm nhiệm vụ mới
+                    </a-button>
+                </a-divider>
+
 
                 <!-- Nếu không có task -->
                 <a-empty v-if="relatedTasks.length === 0" description="Không có công việc"/>
@@ -210,8 +220,7 @@
                 <!-- Nếu có task -->
                 <template v-else>
                     <!-- Header -->
-                    <div
-                        style="
+                    <div style="
                           display: flex;
                           justify-content: space-between;
                           padding: 8px 16px;
@@ -267,18 +276,25 @@
                                             </a-tag>
                                         </div>
                                     </div>
-
                                 </div>
                             </a-list-item>
                         </template>
                     </a-list>
-
-
                 </template>
-
-
             </template>
         </a-drawer>
+
+        <DrawerCreateTask
+            v-model:open-drawer="openDrawer"
+            :list-user="users"
+            type="bidding"
+            :task-meta="{
+  bidding_id: selectedStep?.bidding_id,
+  step_id: selectedStep?.id,
+  step_number: selectedStep?.step_number
+}"
+            @submitForm="submitForm"
+        />
     </div>
 </template>
 
@@ -310,8 +326,12 @@ let drawerVisible = ref(false)
 const selectedStep = ref(null)
 const customers = ref([])
 const users = ref([])
+const openDrawer = ref(false)
+const listUser = ref([])
 
-import {getTasksByBiddingStep} from '@/api/task' // nếu chưa import
+
+import {getTasks, getTasksByBiddingStep} from '@/api/task'
+import DrawerCreateTask from "@/components/common/DrawerCreateTask.vue"; // nếu chưa import
 
 const allTasks = ref([])
 const relatedTasks = ref([])
@@ -343,6 +363,38 @@ const updateStepStartDate = async (value, option) => {
         console.warn('Lỗi cập nhật ngày bắt đầu:', msg)
     }
 }
+
+const submitForm = () => {
+    getInternalTask();
+}
+
+const showPopupCreate = () => {
+    openDrawer.value = true;
+}
+
+
+const getInternalTask = async () => {
+    loading.value = true
+    try {
+        const response = await getTasks(dataFilter.value)
+
+        tableData.value = response.data.data ?? []
+
+        const pg = response.data.pagination
+        pagination.value = {
+            ...pagination.value,
+            current: pg.page,
+            total: pg.total,
+            pageSize: pg.per_page
+        }
+    } catch (e) {
+        message.error('Không thể tải nhiệm vụ')
+    } finally {
+        loading.value = false
+    }
+}
+
+
 const updateStepEndDate = async (value, option) => {
     selectedStep.value.end_date = value.format('YYYY-MM-DD')
     try {
@@ -529,7 +581,7 @@ const updateStepDate = async (field, date, step) => {
 const fetchUsers = async () => {
     try {
         const res = await getUsers()
-        users.value = res.data
+        users.value = res.data;
     } catch (e) {
         console.error('Không thể tải danh sách người dùng:', e)
     }
@@ -651,8 +703,6 @@ onMounted(async () => {
         fetchCustomers(),
         fetchUsers()
     ])
-    const res = await getUsers()
-    users.value = res.data
 })
 
 </script>

@@ -44,9 +44,20 @@
                 <a-row :gutter="16">
                     <a-col :span="12">
                         <a-form-item label="Loại nhiệm vụ" name="linked_type">
-                            <a-select v-model:value="formData.linked_type" :options="linkedTypeOption" @change="handleChangeLinkedType" placeholder="Chọn loại nhiệm vụ"/>
+                            <template v-if="!props.type">
+                                <a-select
+                                    v-model:value="formData.linked_type"
+                                    :options="linkedTypeOption"
+                                    @change="handleChangeLinkedType"
+                                    placeholder="Chọn loại nhiệm vụ"
+                                />
+                            </template>
+                            <template v-else>
+                                <a-input :value="getLinkedTypeLabel(props.type)" disabled />
+                            </template>
                         </a-form-item>
                     </a-col>
+
                     <a-col :span="12">
                         <a-form-item label="Phòng ban" name="department_id">
                             <a-select v-model:value="formData.id_department" :options="departmentOptions"
@@ -54,16 +65,27 @@
                         </a-form-item>
                     </a-col>
                     <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
-                        <a-form-item :label="formData.linked_type === 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'" name="linked_id">
-                            <a-select v-model:value="formData.linked_id" :options="linkedIdOption" @change="handleChangeLinkedId"
-                                      :placeholder="formData.linked_type === 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'"/>
+                        <a-form-item
+                            :label="formData.linked_type === 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'"
+                            name="linked_id"
+                        >
+                            <a-select
+                                v-model:value="formData.linked_id"
+                                :options="linkedIdOption"
+                                @change="handleChangeLinkedId"
+                                :placeholder="formData.linked_type === 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'"
+                                :disabled="!!formData.linked_id"
+                            />
                         </a-form-item>
                     </a-col>
                     <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
                         <a-form-item label="Bước tiến trình" name="step_code">
-                            <a-select v-model:value="formData.step_code" :options="stepOption"
-                                      :disabled="!formData.linked_id"
-                                      :placeholder="formData.linked_type === 'bidding' ? 'Chọn bước gói thầu' : 'Chọn bước hợp đồng'"/>
+                            <a-select
+                                v-model:value="formData.step_code"
+                                :options="stepOption"
+                                :disabled="!formData.linked_id || !!formData.step_code"
+                            :placeholder="formData.linked_type === 'bidding' ? 'Chọn bước gói thầu' : 'Chọn bước hợp đồng'"
+                            />
                         </a-form-item>
                     </a-col>
                     <a-col :span="24">
@@ -105,8 +127,6 @@ import {getContractStepsAPI} from '@/api/contract-steps';
 import {getBiddingStepsAPI} from '@/api/bidding';
 import { getDepartments } from '@/api/department'
 
-
-
 import dayjs from 'dayjs';
 
 dayjs.locale('vi');
@@ -118,6 +138,14 @@ const props = defineProps({
     listUser: {
         type: Array,
         default: () => [],
+    },
+    type: {
+        type: String,
+        default: 'internal' // fallback nếu không truyền
+    },
+    taskMeta: {
+        type: Object,
+        default: () => ({})
     },
 })
 const emit = defineEmits(['update:openDrawer', 'submitForm'])
@@ -153,7 +181,7 @@ const formData = ref({
     id_department: null
 })
 
-// //SETUP
+// SETUP
 
 const setDefaultData = () => {
     formData.value = {
@@ -277,7 +305,6 @@ const departmentOptions = computed(()=>{
         return { value: ele.id, label: ele.name }
     })
 })
-
 
 const stepOption = ref([])
 const linkedIdOption = computed(() => {
@@ -422,6 +449,15 @@ const resetFormValidate = () => {
     formRef.value.resetFields();
 };
 
+const getLinkedTypeLabel = (val) => {
+    const map = {
+        bidding: 'Gói thầu',
+        contract: 'Hợp đồng',
+        internal: 'Nhiệm vụ nội bộ'
+    }
+    return map[val] || val
+}
+
 watch(() => formData.value.step_code, (newCode) => {
     const found = stepOption.value.find(item => item.value === newCode)
     formData.value.step_id = found ? found.step_id : null;
@@ -429,14 +465,43 @@ watch(() => formData.value.step_code, (newCode) => {
 
 //Watch onMounted
 onMounted(() => {
+    if (props.type) {
+        formData.value.linked_type = props.type
+    }
+
     if (props.taskParent) {
         formData.value.parent_id = props.taskParent;
     }
+
+    if (props.type) {
+        formData.value.linked_type = props.type
+    }
+
+    if (props.taskParent) {
+        formData.value.parent_id = props.taskParent
+    }
+
     getBiddingTask()
     getContractTask()
     handleChangeLinkedId()
     getDepartment()
 })
+
+watch(
+    () => props.taskMeta,
+    (newMeta) => {
+        if (newMeta?.bidding_id) {
+            formData.value.linked_id = newMeta.bidding_id
+        }
+        if (newMeta?.step_number) {
+            formData.value.step_code = newMeta.step_number
+        }
+        if (newMeta?.step_id) {
+            formData.value.step_id = newMeta.step_id
+        }
+    },
+    { immediate: true, deep: true }
+)
 
 </script>
 <style scoped>
