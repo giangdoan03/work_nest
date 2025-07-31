@@ -16,9 +16,8 @@
                         <th>Task đang chạy</th>
                         <th style="width: 150px">Đề nghị</th>
                         <th style="width: 150px">Người phụ trách</th>
-                        <th style="width: 100px">Bắt đầu</th>
-                        <th style="width: 100px">Kết thúc</th>
-                        <th style="width: 100px">Gia hạn</th>
+                        <th style="width: 150px">Thời gian</th>
+                        <th style="width: 150px">Hạn</th>
                         <th>Độ ưu tiên</th>
                         <th style="width: 150px">Trạng thái</th>
                     </tr>
@@ -31,10 +30,16 @@
                                     <template v-for="(task, taskIdx) in stepTasks" :key="taskIdx">
                                         <tr class="row-hover">
                                             <!-- Khách hàng -->
-                                            <td v-if="groupIdx === 0 && itemIdx === 0 && stepIdx === 0 && taskIdx === 0"
-                                                :rowspan="getTotalRows(customer)"
-                                                class="customer-cell vertical-text name_customer">
-                                                {{ customer.customer_name }}
+                                            <td
+                                                    v-if="groupIdx === 0 && itemIdx === 0 && stepIdx === 0 && taskIdx === 0"
+                                                    :rowspan="getTotalRows(customer)"
+                                                    class="customer-cell vertical-text name_customer"
+                                            >
+                                                <a-tooltip :title="customer.customer_name">
+                                                  <span>
+                                                    {{ truncatedName(customer.customer_name) }}
+                                                  </span>
+                                                </a-tooltip>
                                             </td>
 
                                             <!-- Loại -->
@@ -84,28 +89,46 @@
                                                 <span v-else class="muted">Chưa có nhiệm vụ</span>
                                             </td>
 
-                                            <td>{{ task.proposed_name || 'Chưa có' }}</td>
-                                            <td>{{ task.assignee?.name || 'Chưa có' }}</td>
-                                            <td>{{ task.start_date ? formatDate(task.start_date) : '—' }}</td>
-                                            <td>{{ task.end_date ? formatDate(task.end_date) : '—' }}</td>
                                             <td>
-                                                <a-tooltip
-                                                    v-if="task.days_overdue > 0"
-                                                    :title="task.overdue_reason || 'Chưa rõ lý do'"
-                                                >
+                                                <UserOutlined style="margin-right: 4px; color: #fa8c16" />
+                                                {{ task.proposed_name || 'Chưa có' }}
+                                            </td>
+                                            <td>
+                                                <UserOutlined style="margin-right: 4px; color: #1890ff" />
+                                                {{ task.assignee?.name || 'Chưa có' }}
+                                            </td>
+                                            <td>
+                                                <div style="display: flex; flex-direction: column; line-height: 1.4;">
+        <span>
+            <FieldTimeOutlined style="margin-right: 4px; color: #52c41a;" />
+            {{ task.start_date ? formatDate(task.start_date) : '—' }}
+        </span>
+                                                    <span>
+            <FieldTimeOutlined style="margin-right: 4px; color: #f5222d;" />
+            {{ task.end_date ? formatDate(task.end_date) : '—' }}
+        </span>
+                                                </div>
+                                            </td>
+
+                                            <td>
+                                                <a-tooltip v-if="task.days_overdue > 0" :title="task.overdue_reason || 'Chưa rõ lý do'">
                                                     <a-tag color="red" style="cursor: pointer;">
+                                                        <ExclamationCircleOutlined style="margin-right: 4px;" />
                                                         Quá hạn {{ task.days_overdue }} ngày
                                                     </a-tag>
                                                 </a-tooltip>
 
                                                 <a-tag v-else-if="task.days_remaining > 0" color="orange">
+                                                    <ClockCircleOutlined style="margin-right: 4px;" />
                                                     Còn {{ task.days_remaining }} ngày
                                                 </a-tag>
 
-                                                <a-tag v-else color="default">
+                                                <a-tag v-else color="#faad14" style="color: black; font-weight: bold;">
+                                                    <ClockCircleOutlined style="margin-right: 4px;" />
                                                     Hạn hôm nay
                                                 </a-tag>
                                             </td>
+
 
 
                                             <td>
@@ -167,6 +190,14 @@ import {getProjectOverviewAPI} from '@/api/project';
 import {message} from 'ant-design-vue';
 import { formatDate } from '@/utils/formUtils';
 import DepartmentTasks from '@/components/DepartmentTasks.vue'
+import {
+    UserOutlined,
+    CalendarOutlined,
+    ClockCircleOutlined,
+    ExclamationCircleOutlined,
+    CheckCircleOutlined,
+    FieldTimeOutlined,
+} from '@ant-design/icons-vue';
 import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()
 const router = useRouter()
@@ -193,6 +224,10 @@ const currentDeptId = ref(1)
 watch(activeTabKey, (newVal) => {
     router.replace({ query: { ...route.query, tab: newVal } })
 })
+
+const truncatedName = (name) => {
+    return name.length > 12 ? name.slice(0, 10) + '…' : name;
+}
 
 const getGroupedRows = (customer) => {
     const allTasks = customer.tasks || [];

@@ -442,7 +442,7 @@
         // ✅ Thêm cột ngày kết thúc
         {title: 'Kết thúc', dataIndex: 'end_date', key: 'end_date'},
 
-        {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: 150,},
+        {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: 200,},
 
         // ✅ Thêm cột hạn
         {
