@@ -272,6 +272,7 @@
                         v-model:value="dateRange"
                         style="width: 100%; margin-top: 20px;"
                         format="DD/MM/YYYY"
+                        :getPopupContainer="triggerNode => triggerNode.parentNode"
                 />
             </div>
         </a-modal>

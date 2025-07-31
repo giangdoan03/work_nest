@@ -12,6 +12,7 @@
                 <a-range-picker
                         v-model:value="filters.dateRange"
                         :placeholder="['Từ ngày', 'Đến ngày']"
+                        :getPopupContainer="triggerNode => triggerNode.parentNode"
                 />
                 <a-input
                         v-model:value="filters.title"

@@ -15,7 +15,7 @@
                     </a-select>
                 </a-col>
                 <a-col :span="5">
-                    <a-range-picker v-model:value="filters.dateRange" style="width: 100%" />
+                    <a-range-picker v-model:value="filters.dateRange" style="width: 100%" :getPopupContainer="triggerNode => triggerNode.parentNode" />
                 </a-col>
                 <a-col :span="4">
                         <a-select

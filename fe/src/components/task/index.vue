@@ -60,13 +60,14 @@
                                                         v-model:value="dateRange"
                                                         format="YYYY-MM-DD"
                                                         @change="changeDateTime"
+                                                        :getPopupContainer="triggerNode => triggerNode.parentNode"
                                                         style="width: 100%;"
                                                 />
                                             </a-config-provider>
                                         </template>
 
                                         <!-- ✅ Luôn hiển thị lịch sử gia hạn -->
-                                        <a-timeline v-if="extensions.length" style="margin-top: 20px;">
+                                        <!-- <a-timeline v-if="extensions.length" style="margin-top: 20px;">
                                             <a-timeline-item v-for="item in sortedExtensions" :key="item.id">
                                                 <template #dot>
                                                     <CalendarOutlined />
@@ -79,7 +80,15 @@
                                                     </span>
                                                 </span>
                                             </a-timeline-item>
-                                        </a-timeline>
+                                        </a-timeline> -->
+                                    </a-form-item>
+                                </a-col>
+
+                                <a-col :span="12">
+                                    <a-form-item label="Ngày còn lại">
+                                        <a-tag :color="getRemainingDaysColor" size="small" style="font-size: 12px; padding: 2px 6px;">
+                                            {{ getRemainingDaysText }}
+                                        </a-tag>
                                     </a-form-item>
                                 </a-col>
 
@@ -136,6 +145,38 @@
                                     <a-form-item label="Phòng ban" name="id_department">
                                         <a-typography-text v-if="!isEditMode">{{ getDepartmentById(formData.id_department) }}</a-typography-text>
                                         <a-select v-else v-model:value="formData.id_department" :options="departmentOptions" placeholder="Chọn người dùng" />
+                                    </a-form-item>
+                                </a-col>
+
+                                <a-col :span="24">
+                                    <a-form-item label="Tiến trình" name="progress">
+                                        <template v-if="!isEditMode">
+                                            <a-progress 
+                                                :percent="formData.progress || 0" 
+                                                :status="getProgressStatus(formData.progress)"
+                                                :format="(percent) => `${percent}%`"
+                                                :stroke-width="20"
+                                            />
+                                        </template>
+                                        <template v-else>
+                                            <a-slider
+                                                v-model:value="formData.progress"
+                                                :min="0"
+                                                :max="100"
+                                                :step="5"
+                                                :marks="{ 0: '0%', 25: '25%', 50: '50%', 75: '75%', 100: '100%' }"
+                                                style="width: calc(90% + 50px); margin: 0 auto; display: block;"
+                                            />
+                                            <div style="margin-top: 24px;">
+                                                <a-progress 
+                                                    :percent="formData.progress || 0" 
+                                                    :status="getProgressStatus(formData.progress)"
+                                                    :format="(percent) => `${percent}%`"
+                                                    :stroke-width="16"
+                                                    style="width: calc(90% + 50px); margin: 0 auto; display: block;"
+                                                />
+                                            </div>
+                                        </template>
                                     </a-form-item>
                                 </a-col>
                             </a-row>
@@ -344,6 +385,7 @@
         priority: null,
         parent_id: null,
         id_department: null,
+        progress: 0,
     });
     const priorityOption = ref([
         {value: "low", label: "Thấp", color: "success"},
@@ -426,6 +468,56 @@
 
         return result;
     });
+
+    // Lấy data từ trường days_overdue và days_remaining
+    const getRemainingDays = computed(() => {
+        // Nếu có trường days_overdue (quá hạn)
+        if (formData.value.days_overdue !== undefined && formData.value.days_overdue > 0) {
+            return -formData.value.days_overdue; // Trả về số âm để biểu thị quá hạn
+        }
+        
+        // Nếu có trường days_remaining (còn hạn)
+        if (formData.value.days_remaining !== undefined && formData.value.days_remaining >= 0) {
+            return formData.value.days_remaining;
+        }
+        
+        // Fallback: tính toán thủ công nếu không có data từ server
+        if (!formData.value.end_date) return null;
+        
+        const today = new Date();
+        const endDate = new Date(formData.value.end_date);
+        const diffTime = endDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        return diffDays;
+    });
+
+    const getRemainingDaysText = computed(() => {
+        const days = getRemainingDays.value;
+        if (days === null) return 'Chưa có hạn';
+        if (days < 0) return `Quá hạn ${Math.abs(days)} ngày`;
+        if (days === 0) return 'Hết hạn hôm nay';
+        if (days === 1) return 'Còn 1 ngày';
+        return `Còn ${days} ngày`;
+    });
+
+    const getRemainingDaysColor = computed(() => {
+        const days = getRemainingDays.value;
+        if (days === null) return 'default';
+        if (days < 0) return 'error';
+        if (days <= 1) return 'warning';
+        if (days <= 3) return 'orange';
+        return 'success';
+    });
+
+    // Trạng thái tiến trình
+    const getProgressStatus = (progress) => {
+        if (!progress) return 'normal';
+        if (progress >= 100) return 'success';
+        if (progress >= 80) return 'normal';
+        if (progress >= 50) return 'active';
+        return 'exception';
+    };
 
 
     const linkedIdOption = computed(()=>{
@@ -972,5 +1064,16 @@
     }
     :deep(.ant-form-item-label){
         padding-bottom: 0;
+    }
+    
+    /* Dropdown đi cùng khi scroll */
+    :deep(.ant-select-dropdown) {
+        position: fixed !important;
+        z-index: 1050 !important;
+    }
+    
+    /* Đảm bảo dropdown hiển thị đúng vị trí */
+    :deep(.ant-select-dropdown .ant-select-item) {
+        position: relative;
     }
 </style>
