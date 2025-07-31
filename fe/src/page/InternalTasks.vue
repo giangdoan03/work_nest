@@ -6,418 +6,663 @@
             </div>
             <a-button type="primary" @click="showPopupCreate">Thêm nhiệm vụ mới</a-button>
         </a-flex>
+
+        <a-row :gutter="[14,14]" style="margin-top: 10px;">
+            <a-col :span="2">
+                <!-- ✅ Nút xoá -->
+                <a-button danger type="primary" :disabled="selectedRowKeys.length === 0" @click="handleBulkDelete">
+                    Xoá {{ selectedRowKeys.length }} nhiệm vụ
+                </a-button>
+            </a-col>
+            <a-col :span="13">
+                <!-- ✅ Tổng số -->
+                <a-typography-text strong style="color: #1890ff; font-size: 16px;">
+                    <UnorderedListOutlined style="margin-right: 6px;"/>
+                    Tổng số nhiệm vụ: {{ totalTasks }}
+                </a-typography-text>
+            </a-col>
+            <a-col :span="4">
+                <!-- ✅ Bộ lọc nhanh -->
+                <a-space>
+                    <!-- Lọc theo loại -->
+                    <a-button-group>
+                        <a-button
+                                :type="dataFilter.linked_type === null ? 'primary' : 'default'"
+                                @click="filterByType(null)"
+                        >Tất cả
+                        </a-button>
+                        <a-button
+                                :type="dataFilter.linked_type === 'bidding' ? 'primary' : 'default'"
+                                @click="filterByType('bidding')"
+                        >Gói thầu
+                        </a-button>
+                        <a-button
+                                :type="dataFilter.linked_type === 'contract' ? 'primary' : 'default'"
+                                @click="filterByType('contract')"
+                        >Hợp đồng
+                        </a-button>
+                        <a-button
+                                :type="dataFilter.linked_type === 'internal' ? 'primary' : 'default'"
+                                @click="filterByType('internal')"
+                        >Nội bộ
+                        </a-button>
+                    </a-button-group>
+
+                    <!-- Lọc theo độ ưu tiên -->
+                    <a-button-group>
+                        <a-button
+                                :type="dataFilter.priority === null ? 'primary' : 'default'"
+                                @click="filterByPriority(null)"
+                        >Tất cả
+                        </a-button>
+                        <a-button
+                                :type="dataFilter.priority === 'low' ? 'primary' : 'default'"
+                                danger
+                                ghost
+                                @click="filterByPriority('low')"
+                        >Thấp
+                        </a-button>
+                        <a-button
+                                :type="dataFilter.priority === 'normal' ? 'primary' : 'default'"
+                                @click="filterByPriority('normal')"
+                                style="background: #faad14; color: white"
+                        >Thường
+                        </a-button>
+                        <a-button
+                                :type="dataFilter.priority === 'high' ? 'primary' : 'default'"
+                                @click="filterByPriority('high')"
+                                style="background: #f5222d; color: white"
+                        >Cao
+                        </a-button>
+                    </a-button-group>
+                </a-space>
+            </a-col>
+        </a-row>
+
         <a-row :gutter="[14,14]" style="margin-top: 10px;">
             <a-col :span="4">
-                <a-select
-                    :allowClear="true"
-                    style="width: 100%" 
-                    v-model:value="dataFilter.linked_type" 
-                    :options="optionsLinkType" 
-                    placeholder="Loại nhiệm vụ" 
-                    @change="getInternalTask()"
+                <a-input
+                        v-model:value="dataFilter.title"
+                        placeholder="Tìm việc theo tiêu đề"
+                        allow-clear
+                        @input="onTitleSearch"
                 />
             </a-col>
             <a-col :span="4">
                 <a-select
-                    :allowClear="true"
-                    style="width: 100%" 
-                    v-model:value="dataFilter.id_department" 
-                    :options="optionsDepartment" 
-                    placeholder="Chọn phòng ban" 
-                    @change="getInternalTask()"
+                        :allowClear="true"
+                        style="width: 100%"
+                        v-model:value="dataFilter.id_department"
+                        :options="optionsDepartment"
+                        placeholder="Chọn phòng ban"
+                        @change="getInternalTask()"
                 />
             </a-col>
-            <a-col :span="4">
+            <a-col :span="3">
                 <a-select
-                    :allowClear="true"
-                    style="width: 100%" 
-                    v-model:value="dataFilter.priority" 
-                    :options="priorityOption" 
-                    placeholder="Chọn độ ưu tiên" 
-                    @change="getInternalTask()"
+                        :allowClear="true"
+                        style="width: 100%"
+                        v-model:value="dataFilter.status"
+                        :options="statusOption"
+                        placeholder="Chọn trạng thái"
+                        @change="getInternalTask()"
                 />
             </a-col>
-            <a-col :span="4">
+            <a-col :span="3">
                 <a-select
-                    :allowClear="true"
-                    style="width: 100%" 
-                    v-model:value="dataFilter.status" 
-                    :options="statusOption" 
-                    placeholder="Chọn trạng thái" 
-                    @change="getInternalTask()"
-                />
-            </a-col>
-            <a-col :span="4">
-                <a-select
-                    :allowClear="true"
-                    style="width: 100%" 
-                    v-model:value="dataFilter.assigned_to" 
-                    :options="optionsAssigned" 
-                    placeholder="Người phụ trách"
-                    @change="getInternalTask()"
+                        :allowClear="true"
+                        style="width: 100%"
+                        v-model:value="dataFilter.assigned_to"
+                        :options="optionsAssigned"
+                        placeholder="Người phụ trách"
+                        @change="getInternalTask()"
                 />
             </a-col>
             <a-col :span="4">
                 <a-config-provider :locale="locale">
-                    <a-date-picker format="YYYY-MM-DD" @change="changeDateTime" style="width: 100%;"></a-date-picker>
+                    <a-range-picker
+                            v-model:value="dateRange"
+                            format="YYYY-MM-DD"
+                            style="width: 100%;"
+                            @change="onRangeChange"
+                            allowClear
+                            :placeholder="['Từ ngày', 'Đến ngày']"
+                    />
                 </a-config-provider>
             </a-col>
         </a-row>
 
-        <a-table :columns="columns" :data-source="tableData" :loading="loading" @change="handleTableChange" :pagination="pagination"
-            style="margin-top: 8px;" row-key="module" :scroll="{ y: 'calc( 100vh - 360px )' }">
+        <a-table :columns="columns" :data-source="tableData" :loading="loading" @change="handleTableChange"
+                 :pagination="pagination" :row-selection="rowSelection"
+                 style="margin-top: 8px;" row-key="id" :scroll="{ x: 'max-content', y: 'calc(100vh - 360px)' }">
             <template #bodyCell="{ column, record, index, text }">
                 <template v-if="column.dataIndex === 'title'">
-                    <a-typography-text strong style="cursor: pointer;" @click="showPopupDetail(record)">{{ text }}</a-typography-text>
+                    <a-tooltip :title="text">
+                        <a-typography-text
+                                strong
+                                style="cursor: pointer; display: inline-block; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                                @click="showPopupDetail(record)"
+                        >
+                            {{ text }}
+                        </a-typography-text>
+                    </a-tooltip>
                 </template>
+
+
                 <template v-if="column.dataIndex === 'priority'">
                     <a-tag v-if="text" :color="checkPriority(text).color">{{ checkPriority(text).title }}</a-tag>
                 </template>
-                <template v-if="['created_by', 'assigned_to'].includes(column.dataIndex)">
-                    {{ getUserById(text) }}
+
+                <template v-if="column.dataIndex === 'assigned_to'">
+                    <a-tooltip :title="record.assignee?.name || '—'">
+                        <a-avatar
+                                size="large"
+                                :style="{
+        backgroundColor: getAvatarColor(record.assignee?.name),
+        verticalAlign: 'middle',
+        cursor: 'default'
+      }"
+                        >
+                            {{ record.assignee?.name?.charAt(0).toUpperCase() || '?' }}
+                        </a-avatar>
+                    </a-tooltip>
                 </template>
+
+
                 <template v-if="column.dataIndex === 'linked_type'">
-                    <a-tag :color="getLinkedTypeTag(text).color">
+                    <a-tag :color="getLinkedTypeTag(text).color" style="cursor: pointer;">
                         {{ getLinkedTypeTag(text).label }}
                     </a-tag>
                 </template>
+
+
                 <template v-if="column.dataIndex === 'linked_id'">
-                      <span
-                          v-if="record.linked_type === 'bidding' || record.linked_type === 'contract'"
-                          style="color: #1890ff; cursor: pointer;"
-                          @click="goToLinkedDetail(record)"
-                      >
-                        {{ getLinkedName(record.linked_type, text) }}
-                      </span>
-                    <span v-else>—</span>
+                    <a-tooltip :title="getLinkedName(record.linked_type, text)">
+                        <span v-if="record.linked_type === 'bidding' || record.linked_type === 'contract'"
+                              style="color: #1890ff; cursor: pointer; display: inline-block; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                              @click="goToLinkedDetail(record)">
+                          {{ getLinkedName(record.linked_type, text) }}
+                        </span>
+                    </a-tooltip>
                 </template>
 
-                <template v-if="column.dataIndex === 'step_name'">
-                    {{ text || '—' }}
+                <template v-if="column.dataIndex === 'step_info'">
+                    <a-tooltip
+                            :title="getLinkedName(record.linked_type, record.linked_id)
+                          ? 'Thuộc: ' + getLinkedName(record.linked_type, record.linked_id)
+                          : ''"
+                    >
+                        <span
+                                v-if="record.step_code"
+                                style="color: #1890ff; cursor: pointer;"
+                                @click="goToLinkedDetail(record)"
+                        >
+                          B{{ record.step_code }} - {{ record.step_name || '—' }}
+                        </span>
+                        <span v-else>
+                          {{ record.step_name || '—' }}
+                        </span>
+                    </a-tooltip>
+                </template>
+
+                <template v-if="column.dataIndex === 'progress'">
+                    <a-progress
+                            :percent="Number(record.progress)"
+                            :stroke-color="{
+                              '0%': '#108ee9',
+                              '100%': '#87d068',
+                            }"
+                            :status="record.progress >= 100 ? 'success' : 'active'"
+                            size="small"
+                            :show-info="true"
+                    />
+                </template>
+                <template v-if="column.dataIndex === 'start_date' || column.dataIndex === 'end_date'">
+                    {{ formatDate(text) || '—' }}
+                </template>
+
+                <template v-if="column.dataIndex === 'deadline'">
+                    <a-tag v-if="record.days_overdue > 0" color="error">
+                        Quá hạn {{ record.days_overdue }} ngày
+                    </a-tag>
+                    <a-tag v-else-if="record.days_remaining > 0" color="green">
+                        Còn {{ record.days_remaining }} ngày
+                    </a-tag>
+                    <a-tag v-else-if="record.days_remaining === 0" :color="'#faad14'">
+                        Hạn chót hôm nay
+                    </a-tag>
+                    <a-tag v-else>
+                        —
+                    </a-tag>
                 </template>
                 <template v-else-if="column.dataIndex === 'action'">
-                    <a-dropdown placement="left" :trigger="['click']" :getPopupContainer="triggerNode => triggerNode.parentNode">
+                    <a-dropdown placement="left" :trigger="['click']"
+                                :getPopupContainer="triggerNode => triggerNode.parentNode">
                         <a-button>
                             <template #icon>
-                                <MoreOutlined />
+                                <MoreOutlined/>
                             </template>
                         </a-button>
                         <template #overlay>
-                        <a-menu>
-                            <a-menu-item @click="showPopupDetail(record)">
-                                <InfoCircleOutlined class="icon-action" style="color: blue;" />
-                                Chi tiết
-                            </a-menu-item>
-                            <a-menu-item>
-                                <a-popconfirm
-                                    title="Bạn chắc chắn muốn xóa nhiệm vụ này?"
-                                    ok-text="Xóa"
-                                    cancel-text="Hủy"
-                                    @confirm="deleteConfirm(record.id)"
-                                    placement="topRight"
-                                >
-                                    <div style="width: 100%; text-align: start;">
-                                        <DeleteOutlined class="icon-action" style="color: red;"/>
-                                        Xóa
-                                    </div>
-                                </a-popconfirm>
-                            </a-menu-item>
-                        </a-menu>
+                            <a-menu>
+                                <a-menu-item @click="showPopupDetail(record)">
+                                    <InfoCircleOutlined class="icon-action" style="color: blue;"/>
+                                    Chi tiết
+                                </a-menu-item>
+                                <a-menu-item>
+                                    <a-popconfirm
+                                            title="Bạn chắc chắn muốn xóa nhiệm vụ này?"
+                                            ok-text="Xóa"
+                                            cancel-text="Hủy"
+                                            @confirm="deleteConfirm(record.id)"
+                                            placement="topRight"
+                                    >
+                                        <div style="width: 100%; text-align: start;">
+                                            <DeleteOutlined class="icon-action" style="color: red;"/>
+                                            Xóa
+                                        </div>
+                                    </a-popconfirm>
+                                </a-menu-item>
+                            </a-menu>
                         </template>
                     </a-dropdown>
                 </template>
+
             </template>
         </a-table>
         <DrawerCreateTask
-            v-model:open-drawer="openDrawer"
-            :list-user="listUser"
-            @submitForm="submitForm"
+                v-model:open-drawer="openDrawer"
+                :list-user="listUser"
+                @submitForm="submitForm"
         />
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { getTasks, deleteTask } from '../api/task'
-import { getDepartments } from '../api/department'
-import { getUsers } from '@/api/user';
-import { message } from 'ant-design-vue'
-import { useRoute, useRouter } from 'vue-router';
-import { InfoCircleOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons-vue';
-import { CONTRACTS_STEPS, BIDDING_STEPS } from '@/common'
-import DrawerCreateTask from "../components/common/DrawerCreateTask.vue";
-import viVN from 'ant-design-vue/es/locale/vi_VN';
+    import {ref, onMounted, computed} from 'vue'
+    import {getTasks, deleteTask} from '../api/task'
+    import {getDepartments} from '../api/department'
+    import {getUsers} from '@/api/user';
+    import {message} from 'ant-design-vue'
+    import {useRoute, useRouter} from 'vue-router';
+    import {InfoCircleOutlined, DeleteOutlined, MoreOutlined, UnorderedListOutlined} from '@ant-design/icons-vue';
+    import {CONTRACTS_STEPS, BIDDING_STEPS} from '@/common'
+    import DrawerCreateTask from "../components/common/DrawerCreateTask.vue";
+    import viVN from 'ant-design-vue/es/locale/vi_VN';
+    import {debounce} from 'lodash-es'
+    import { formatDate } from '@/utils/formUtils'
 
-import { getBiddingsAPI } from '@/api/bidding.js'
-import { getContractsAPI } from '@/api/contract.js'
+    import {getBiddingsAPI} from '@/api/bidding.js'
+    import {getContractsAPI} from '@/api/contract.js'
 
-const locale = ref(viVN);
-const router = useRouter()
-const tableData = ref([])
-const loading = ref(false)
-const openDrawer = ref(false)
-const listUser = ref([])
-const listDepartment = ref([])
-const dataFilter = ref({
-    linked_type: null,
-    id_department: null,
-    status: null,
-    priority: null,
-    assigned_to: null,
-    due_date: null,
-    page: 1,
-    per_page: 10
-})
-
-const optionsLinkType = computed(() => {
-    return [
-        {value: 'bidding', label: "Gói thầu"},
-        {value: 'contract', label: "Hợp đồng"},
-        {value: 'internal', label: "Nhiệm vụ nội bộ"},
-    ]
-})
-const priorityOption = computed(() => {
-    return [
-        {value: 'low', label: "Thấp"},
-        {value: 'normal', label: "Thường"},
-        {value: 'high', label: "Cao"},
-    ]
-})
-const statusOption = computed(() => {
-    return [
-        {value: 'todo', label: "Việc cần làm"},
-        {value: 'doing', label: "Đang thực hiện"},
-        {value: 'done', label: "Hoàn thành"},
-        {value: 'overdue', label: "Quá hạn"},
-    ]
-})
-const optionsAssigned = computed(() => {
-    return listUser.value.map(ele => {
-        return { value: ele.id, label: ele.name }
+    const locale = ref(viVN);
+    const router = useRouter()
+    const tableData = ref([])
+    const loading = ref(false)
+    const openDrawer = ref(false)
+    const listUser = ref([])
+    const listDepartment = ref([])
+    const dataFilter = ref({
+        linked_type: null,
+        id_department: null,
+        status: null,
+        priority: null,
+        assigned_to: null,
+        due_date: null,
+        start_date: null, // bắt đầu lọc theo khoảng
+        end_date: null,   // kết thúc lọc theo khoảng
+        title: '',
+        page: 1,
+        per_page: 10
     })
-})
-const optionsDepartment = computed(() => {
-    return listDepartment.value.map(ele => {
-        return { value: ele.id, label: ele.name }
-    })
-})
 
-const pagination = ref({
-    current: 1,
-    pageSize: 10,
-    total: 0,
-    showSizeChanger: true,
-    showQuickJumper: true,
-    showTotal: total => `Tổng ${total} nhiệm vụ`
-})
+    const selectedRowKeys = ref([])
 
-const columns = [
-    // { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
-    { title: 'Tên nhiệm vụ', dataIndex: 'title', key: 'title' },
-    { title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority' },
-    { title: 'Người phụ trách', dataIndex: 'assigned_to', key: 'assigned_to' },
-    { title: 'Loại Task', dataIndex: 'linked_type', key: 'linked_type' },
-    { title: 'Gói thầu || Hợp đồng', dataIndex: 'linked_id', key: 'linked_id' },
-    { title: 'Tên bước tiến trình', dataIndex: 'step_name', key: 'step_name' },
-    { title: 'Thuộc bước số', dataIndex: 'step_code', key: 'step_code' },
-    { title: 'Người tạo nhiệm vụ', dataIndex: 'created_by', key: 'created_by' },
-    { title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px', align:'center' },
-]
-const changeDateTime = (day, date) => {
-    if(date){
-        dataFilter.value.due_date = date;
-    }else {
-        dataFilter.value.due_date = "";
-    }
-    dataFilter.value.page = 1
-    getInternalTask()
-}
-const getInternalTask = async () => {
-    loading.value = true
-    try {
-        const response = await getTasks(dataFilter.value)
-
-        tableData.value = response.data.data ?? []
-
-        const pg = response.data.pagination
-        pagination.value = {
-            ...pagination.value,
-            current: pg.page,
-            total: pg.total,
-            pageSize: pg.per_page
+    const rowSelection = computed(() => ({
+        selectedRowKeys: selectedRowKeys.value,
+        onChange: (newSelectedRowKeys) => {
+            selectedRowKeys.value = newSelectedRowKeys
         }
-    } catch (e) {
-        message.error('Không thể tải nhiệm vụ')
-    } finally {
-        loading.value = false
-    }
-}
-const listBidding = ref([])
-const listContract = ref([])
+    }))
 
-const getBiddings = async () => {
-    try {
-        const res = await getBiddingsAPI()
-        listBidding.value = res.data.data
-    } catch (e) {
-        message.error('Không thể tải gói thầu')
-    }
-}
+    const onTitleSearch = debounce(() => {
+        dataFilter.value.page = 1
+        getInternalTask()
+    }, 500)
 
-const getContracts = async () => {
-    try {
-        const res = await getContractsAPI()
-        listContract.value = res.data
-    } catch (e) {
-        message.error('Không thể tải hợp đồng')
-    }
-}
+    const dateRange = ref([])
 
-const getLinkedName = (type, id) => {
-    if (type === 'bidding' && Array.isArray(listBidding.value)) {
-        const found = listBidding.value.find(ele => ele.id === id)
-        return found ? found.title : '—'
-    } else if (type === 'contract' && Array.isArray(listContract.value)) {
-        const found = listContract.value.find(ele => ele.id === id)
-        return found ? found.title : '—'
-    }
-    return '—'
-}
+    const totalTasks = computed(() => pagination.value.total)
 
 
-const getLinkedTypeTag = (type) => {
-    switch (type) {
-        case 'bidding':
-            return { label: 'Gói thầu', color: 'blue' }
-        case 'contract':
-            return { label: 'Hợp đồng', color: 'green' }
-        case 'internal':
-            return { label: 'Nội bộ', color: 'default' }
-        default:
-            return { label: 'Không rõ', color: 'red' }
-    }
-}
+    const filteredCount = computed(() => tableData.value.length)
+
+    const getAvatarColor = (name) => {
+        if (!name) return '#ccc';
+
+        // Hash tên thành 1 số
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+
+        // Tạo màu HSL từ hash
+        const hue = Math.abs(hash) % 360;
+        return `hsl(${hue}, 65%, 55%)`; // màu tươi sáng, đẹp
+    };
 
 
-const goToLinkedDetail = (record) => {
-    if (record.linked_type === 'bidding') {
-        router.push(`/bid-detail/${record.linked_id}`)
-    } else if (record.linked_type === 'contract') {
-        router.push(`/contracts/${record.linked_id}`)
+    const onRangeChange = (dates, dateStrings) => {
+        if (dateStrings[0] && dateStrings[1]) {
+            dataFilter.value.start_date = dateStrings[0]
+            dataFilter.value.end_date = dateStrings[1]
+        } else {
+            dataFilter.value.start_date = null
+            dataFilter.value.end_date = null
+        }
+        getInternalTask()
     }
-}
 
-const deleteConfirm = async (internalId) => {
-    try {
-        await deleteTask(internalId);
-        await getInternalTask();
-    } catch (e) {
-        message.error('Xóa nhiệm vụ không thành công')
-    } finally {
-    }
-}
-const showPopupDetail = async (record) => {    
-    await router.push({
-        name: "internal-tasks-info",
-        params: {id: record.id, task_name: record.name}
-    })
-}
-const showPopupCreate = () => {
-    openDrawer.value = true;
-}
-const submitForm = () => {
-    getInternalTask();
-}
-const checkPriority = (text) => {
-    switch (text) {
-        case 'low':
-            return { title: "Thấp", color: "success"};
-        case 'normal':
-            return { title: "Thường", color: "warning"};
-        case 'high':
-            return { title: "Cao", color: "error"};    
-        default:
-            return { title: "", color: ""};
-    }
-};
-
-const getUserById = (userId) =>  {
-    let data = listUser.value.find(ele => ele.id == userId);
-    if(!data){
-        return "" ;
-    }
-    return data.name;
-}
-const getLinkedType = (text) =>  {
-    switch (text) {
-        case 'bidding':
-            return "Gói thầu";
-        case 'contract':
-            return "Hợp đồng";
-        case 'internal':
-            return "Nhiệm vụ nội bộ";
-        default:
-            return ""
-    }
-}
-
-const getStepByStepNo = (step) =>  {
-    let data = CONTRACTS_STEPS.find(ele => ele.step_code == step);
-    if(!data){
-        data = BIDDING_STEPS.find(ele => ele.step_code == step);
-        if(!data){
-            return "Trống" ;
+    const handleBulkDelete = async () => {
+        try {
+            await Promise.all(
+                selectedRowKeys.value.map(id => deleteTask(id))
+            )
+            message.success(`Đã xoá ${selectedRowKeys.value.length} nhiệm vụ`)
+            selectedRowKeys.value = []
+            await getInternalTask()
+        } catch (e) {
+            message.error('Xoá hàng loạt thất bại')
         }
     }
-    return data.name;
-}
-const getUser = async () => {
-    loading.value = true
-    try {
-        const response = await getUsers();
-        listUser.value = response.data;
-    } catch (e) {
-        message.error('Không thể tải người dùng')
-    } finally {
-        loading.value = false
-    }
-}
-const getDepartment = async () => {
-    loading.value = true
-    try {
-        const response = await getDepartments();
-        listDepartment.value = response.data;
-    } catch (e) {
-        message.error('Không thể tải người dùng')
-    } finally {
-        loading.value = false
-    }
-}
 
-const handleTableChange = (pager) => {
-    dataFilter.value.page = pager.current
-    dataFilter.value.per_page = pager.pageSize
-    getInternalTask()
-}
-onMounted(() => {
-    getInternalTask();
-    getUser();
-    getDepartment();
-    getBiddings()
-    getContracts()
-})
+    const filterByType = (type) => {
+        dataFilter.value.linked_type = type
+        getInternalTask()
+    }
+
+    const filterByPriority = (priority) => {
+        dataFilter.value.priority = priority
+        getInternalTask()
+    }
+
+    const optionsLinkType = computed(() => {
+        return [
+            {value: 'bidding', label: "Gói thầu"},
+            {value: 'contract', label: "Hợp đồng"},
+            {value: 'internal', label: "Nhiệm vụ nội bộ"},
+        ]
+    })
+    const priorityOption = computed(() => {
+        return [
+            {value: 'low', label: "Thấp"},
+            {value: 'normal', label: "Thường"},
+            {value: 'high', label: "Cao"},
+        ]
+    })
+    const statusOption = computed(() => {
+        return [
+            {value: 'todo', label: "Việc cần làm"},
+            {value: 'doing', label: "Đang thực hiện"},
+            {value: 'done', label: "Hoàn thành"},
+            {value: 'overdue', label: "Quá hạn"},
+        ]
+    })
+    const optionsAssigned = computed(() => {
+        return listUser.value.map(ele => {
+            return {value: ele.id, label: ele.name}
+        })
+    })
+    const optionsDepartment = computed(() => {
+        return listDepartment.value.map(ele => {
+            return {value: ele.id, label: ele.name}
+        })
+    })
+
+    const pagination = ref({
+        current: 1,
+        pageSize: 10,
+        total: 0,
+        showSizeChanger: true,
+        showQuickJumper: true,
+        showTotal: total => `Tổng ${total} nhiệm vụ`
+    })
+
+    const columns = [
+        { title: 'Tên nhiệm vụ', dataIndex: 'title', key: 'title', width: 250, ellipsis: true },
+        { title: 'Bước tiến trình', dataIndex: 'step_info', key: 'step_info', width: 200, ellipsis: true },
+        {title: 'Loại Task', dataIndex: 'linked_type', key: 'linked_type'},
+        // { title: 'Gói thầu || Hợp đồng', dataIndex: 'linked_id', key: 'linked_id' },
+        {title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority'},
+        {title: 'Người thực hiện', dataIndex: 'assigned_to', key: 'assigned_to', width: 140,},
+
+        // ✅ Thêm cột ngày bắt đầu
+        {title: 'Bắt đầu', dataIndex: 'start_date', key: 'start_date'},
+
+        // ✅ Thêm cột ngày kết thúc
+        {title: 'Kết thúc', dataIndex: 'end_date', key: 'end_date'},
+
+        {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: 150,},
+
+        // ✅ Thêm cột hạn
+        {
+            title: 'Hạn',
+            dataIndex: 'deadline',
+            key: 'deadline',
+            customRender: ({record}) => {
+                const overdue = record.days_overdue;
+                const remaining = record.days_remaining;
+
+                if (overdue > 0) {
+                    return `Quá hạn ${overdue} ngày`;
+                } else if (remaining >= 0) {
+                    return `Còn ${remaining} ngày`;
+                } else {
+                    return '—';
+                }
+            }
+        },
+
+        {title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px', align: 'center'},
+    ];
+
+    const changeDateTime = (day, date) => {
+        if (date) {
+            dataFilter.value.due_date = date;
+        } else {
+            dataFilter.value.due_date = "";
+        }
+        dataFilter.value.page = 1
+        getInternalTask()
+    }
+    const getInternalTask = async () => {
+        loading.value = true
+        try {
+            const response = await getTasks(dataFilter.value)
+
+            tableData.value = response.data.data ?? []
+
+            const pg = response.data.pagination
+            pagination.value = {
+                ...pagination.value,
+                current: pg.page,
+                total: pg.total,
+                pageSize: pg.per_page
+            }
+        } catch (e) {
+            message.error('Không thể tải nhiệm vụ')
+        } finally {
+            loading.value = false
+        }
+    }
+    const listBidding = ref([])
+    const listContract = ref([])
+
+    const getBiddings = async () => {
+        try {
+            const res = await getBiddingsAPI()
+            listBidding.value = res.data.data
+        } catch (e) {
+            message.error('Không thể tải gói thầu')
+        }
+    }
+
+    const getContracts = async () => {
+        try {
+            const res = await getContractsAPI()
+            listContract.value = res.data
+        } catch (e) {
+            message.error('Không thể tải hợp đồng')
+        }
+    }
+
+    const getLinkedName = (type, id) => {
+        if (type === 'bidding' && Array.isArray(listBidding.value)) {
+            const found = listBidding.value.find(ele => ele.id === id)
+            return found ? found.title : '—'
+        } else if (type === 'contract' && Array.isArray(listContract.value)) {
+            const found = listContract.value.find(ele => ele.id === id)
+            return found ? found.title : '—'
+        }
+        return '—'
+    }
+
+
+    const getLinkedTypeTag = (type) => {
+        switch (type) {
+            case 'bidding':
+                return {label: 'Gói thầu', color: 'blue'}
+            case 'contract':
+                return {label: 'Hợp đồng', color: 'green'}
+            case 'internal':
+                return {label: 'Nội bộ', color: 'default'}
+            default:
+                return {label: 'Không rõ', color: 'red'}
+        }
+    }
+
+
+    const goToLinkedDetail = (record) => {
+        if (record.linked_type === 'bidding') {
+            router.push(`/bid-detail/${record.linked_id}`)
+        } else if (record.linked_type === 'contract') {
+            router.push(`/contracts/${record.linked_id}`)
+        }
+    }
+
+    const deleteConfirm = async (internalId) => {
+        try {
+            await deleteTask(internalId);
+            await getInternalTask();
+        } catch (e) {
+            message.error('Xóa nhiệm vụ không thành công')
+        } finally {
+        }
+    }
+    const showPopupDetail = async (record) => {
+        await router.push({
+            name: "internal-tasks-info",
+            params: {id: record.id, task_name: record.name}
+        })
+    }
+    const showPopupCreate = () => {
+        openDrawer.value = true;
+    }
+    const submitForm = () => {
+        getInternalTask();
+    }
+    const checkPriority = (text) => {
+        switch (text) {
+            case 'low':
+                return {title: "Thấp", color: "success"};
+            case 'normal':
+                return {title: "Thường", color: "warning"};
+            case 'high':
+                return {title: "Cao", color: "error"};
+            default:
+                return {title: "", color: ""};
+        }
+    };
+
+    const getUserById = (userId) => {
+        let data = listUser.value.find(ele => ele.id == userId);
+        if (!data) {
+            return "";
+        }
+        return data.name;
+    }
+    const getLinkedType = (text) => {
+        switch (text) {
+            case 'bidding':
+                return "Gói thầu";
+            case 'contract':
+                return "Hợp đồng";
+            case 'internal':
+                return "Nhiệm vụ nội bộ";
+            default:
+                return ""
+        }
+    }
+
+    const getStepByStepNo = (step) => {
+        let data = CONTRACTS_STEPS.find(ele => ele.step_code == step);
+        if (!data) {
+            data = BIDDING_STEPS.find(ele => ele.step_code == step);
+            if (!data) {
+                return "Trống";
+            }
+        }
+        return data.name;
+    }
+    const getUser = async () => {
+        loading.value = true
+        try {
+            const response = await getUsers();
+            listUser.value = response.data;
+        } catch (e) {
+            message.error('Không thể tải người dùng')
+        } finally {
+            loading.value = false
+        }
+    }
+    const getDepartment = async () => {
+        loading.value = true
+        try {
+            const response = await getDepartments();
+            listDepartment.value = response.data;
+        } catch (e) {
+            message.error('Không thể tải người dùng')
+        } finally {
+            loading.value = false
+        }
+    }
+
+    const handleTableChange = (pager) => {
+        dataFilter.value.page = pager.current
+        dataFilter.value.per_page = pager.pageSize
+        getInternalTask()
+    }
+    onMounted(() => {
+        getInternalTask();
+        getUser();
+        getDepartment();
+        getBiddings()
+        getContracts()
+    })
 </script>
 <style scoped>
-:deep(.ant-pagination){
-    margin-bottom: 0 !important;
-}
-.icon-action {
-    font-size: 18px;
-    margin-right: 8px;
-    cursor: pointer;
-}
+    :deep(.ant-pagination) {
+        margin-bottom: 0 !important;
+    }
 
-&:last-child {
-    margin-right: 0;
-}
+    .icon-action {
+        font-size: 18px;
+        margin-right: 8px;
+        cursor: pointer;
+    }
+
+    &
+    :last-child {
+        margin-right: 0;
+    }
 </style>

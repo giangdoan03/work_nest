@@ -638,7 +638,11 @@ const getStatusText = (status) => {
     return map[status] ?? `Không rõ`
 }
 const goBack = () => {
-    router.push('/bid-list')
+    if (window.history.length > 1) {
+        router.back();
+    } else {
+        router.push('/bid-list'); // fallback nếu không có trang trước
+    }
 }
 
 onMounted(async () => {

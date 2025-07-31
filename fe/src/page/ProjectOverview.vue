@@ -2,9 +2,9 @@
     <div class="custom-overview">
         <a-tabs v-model:activeKey="activeTabKey" @change="handleTabChange">
             <a-tab-pane key="1" tab="Tổng quan gói thầu - hợp đồng">
-                <div class="header-actions">
-                    <a :href="`${origin}/gantt-chart`" target="_blank" class="gantt-link">📊 Xem biểu đồ Gantt</a>
-                </div>
+<!--                <div class="header-actions">-->
+<!--                    <a :href="`${origin}/gantt-chart`" target="_blank" class="gantt-link">📊 Xem biểu đồ Gantt</a>-->
+<!--                </div>-->
 
                 <table class="custom-table">
                     <thead>

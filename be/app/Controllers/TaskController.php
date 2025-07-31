@@ -61,6 +61,18 @@ class TaskController extends ResourceController
             $builder->where('users.department_id', $department);
         }
 
+        if ($title = $this->request->getGet('title')) {
+            $builder->like('tasks.title', $title);
+        }
+
+        if ($start_date = $this->request->getGet('start_date')) {
+            $builder->where('start_date >=', $start_date);
+        }
+
+        if ($end_date = $this->request->getGet('end_date')) {
+            $builder->where('end_date <=', $end_date);
+        }
+
         // Phân trang
         $totalBuilder = clone $builder;
         $total = $totalBuilder->countAllResults(false);

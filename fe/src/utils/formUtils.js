@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-
+// formUtils.js
 export const normalizeProductData = (data) => {
     const fieldsToParse = ['avatar', 'image', 'video', 'certificate_file']
 
