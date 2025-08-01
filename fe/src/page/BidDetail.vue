@@ -65,52 +65,67 @@
                                   Bước {{ step.step_number ?? '-' }}: {{ step.title ?? '-' }}
                                 </span>
 
-                            <span v-if="step.task_count !== undefined" style="font-size: 12px; color: #888; font-weight: normal; padding-left: 10px">
-                                  {{ step.task_done_count ?? 0 }}/{{ step.task_count }} task đã xong
-                            </span>
+                            <a-statistic
+                                    :value="step.task_done_count ?? 0"
+                                    :suffix="'/' + step.task_count + ' task đã xong'"
+                                    :value-style="{ fontSize: '13px', color: '#555' }"
+                                    style="padding-left: 10px;"
+                            />
                         </div>
                     </template>
 
                     <template #description>
-                        <div style="background: #fafafa; padding: 12px; border: 1px solid #f0f0f0; border-radius: 6px;">
-                            <p>Phòng ban:
-                                <a-tag v-for="(dep, i) in parseDepartment(step.department)" :key="i" color="blue" style="margin-right: 5px;">
-                                    {{ dep }}
-                                </a-tag>
-                            </p>
-                            <p>Trạng thái:
+                        <a-descriptions
+                                size="small"
+                                :column="1"
+                                bordered
+                                style="background: #fafafa; padding: 12px; border-radius: 6px;"
+                                :labelStyle="{ width: '200px' }"
+                        >
+                            <a-descriptions-item label="Phòng ban">
+                                <template #default>
+                                    <a-tag
+                                            v-for="(dep, i) in parseDepartment(step.department)"
+                                            :key="i"
+                                            color="blue"
+                                            style="margin-right: 4px;"
+                                    >
+                                        {{ dep }}
+                                    </a-tag>
+                                </template>
+                            </a-descriptions-item>
+
+                            <a-descriptions-item label="Trạng thái">
                                 <a-tag :color="getStepStatusColor(step.status)">
                                     {{ statusText(step.status) }}
                                 </a-tag>
-                            </p>
-                            <p>
-                                Phụ trách bước:
-                                <a v-if="step.assigned_to"
-                                   @click.stop="goToUserDetail(step.assigned_to)"
-                                   style="color: #1890ff; cursor: pointer;"
-                                >
-                                    {{ getAssignedUserName(step.assigned_to) }}
-                                </a>
-                                <span v-else>Không xác định</span>
-                            </p>
-                            <p>Ngày bắt đầu:
-                                <span v-if="step.start_date">
-                                    {{ formatDate(step.start_date) }}
-                                </span>
-                                <span v-else> --</span>
-                            </p>
-                            <p>
-                                Ngày kết thúc:
-                                <span v-if="step.end_date">
-                                    {{ formatDate(step.end_date) }}
-                                </span>
-                                <span v-else> --</span>
-                            </p>
+                            </a-descriptions-item>
 
-                        </div>
+                            <a-descriptions-item label="Phụ trách bước">
+                                <template #default>
+                                    <a
+                                            v-if="step.assigned_to"
+                                            @click.stop="goToUserDetail(step.assigned_to)"
+                                            style="color: #1890ff; cursor: pointer;"
+                                    >
+                                        {{ getAssignedUserName(step.assigned_to) }}
+                                    </a>
+                                    <span v-else>Không xác định</span>
+                                </template>
+                            </a-descriptions-item>
+
+                            <a-descriptions-item label="Ngày bắt đầu">
+                                <span v-if="step.start_date">{{ formatDate(step.start_date) }}</span>
+                                <span v-else>--</span>
+                            </a-descriptions-item>
+
+                            <a-descriptions-item label="Ngày kết thúc">
+                                <span v-if="step.end_date">{{ formatDate(step.end_date) }}</span>
+                                <span v-else>--</span>
+                            </a-descriptions-item>
+                        </a-descriptions>
                     </template>
                 </a-step>
-
             </a-steps>
         </a-spin>
 
@@ -200,19 +215,20 @@
                     </a-descriptions-item>
                 </a-descriptions>
 
+                <a-divider>
+                </a-divider>
+
+                <a-row :gutter="16" justify="end">
+                    <a-col>
+                        <a-button type="primary" @click="showPopupCreate">
+                            Thêm nhiệm vụ mới
+                        </a-button>
+                    </a-col>
+                </a-row>
 
                 <a-divider>
                     Danh sách công việc của bước này
-                    <a-button
-                        type="primary"
-                        size="small"
-                        style="float: right; margin-top: -5px"
-                        @click="showPopupCreate"
-                    >
-                        Thêm nhiệm vụ mới
-                    </a-button>
                 </a-divider>
-
 
                 <!-- Nếu không có task -->
                 <a-empty v-if="relatedTasks.length === 0" description="Không có công việc"/>
@@ -285,21 +301,16 @@
         </a-drawer>
 
         <DrawerCreateTask
-            v-model:open-drawer="openDrawer"
-            :list-user="users"
-            type="bidding"
-            :task-meta="{
-  bidding_id: selectedStep?.bidding_id,
-  step_id: selectedStep?.id,
-  step_number: selectedStep?.step_number
-}"
-            @submitForm="submitForm"
+                v-model:open-drawer="openDrawer"
+                :list-user="users"
+                type="bidding"
+                @submitForm="handleDrawerSubmit"
         />
     </div>
 </template>
 
 <script setup>
-import {ref, onMounted} from 'vue'
+import {ref, onMounted, computed } from 'vue'
 import dayjs from 'dayjs'
 import {
     getBiddingAPI,
@@ -315,6 +326,8 @@ import {formatDate, formatCurrency} from '@/utils/formUtils'
 import {getCustomers} from '../api/customer' // file API của bạn
 import {useRouter} from 'vue-router'
 import {EditOutlined} from '@ant-design/icons-vue'
+import { useStepStore } from '@/stores/step'
+const stepStore = useStepStore()
 const router = useRouter()
 const route = useRoute()
 const id = route.params.id
@@ -334,7 +347,8 @@ import {getTasks, getTasksByBiddingStep} from '@/api/task'
 import DrawerCreateTask from "@/components/common/DrawerCreateTask.vue"; // nếu chưa import
 
 const allTasks = ref([])
-const relatedTasks = ref([])
+const relatedTasks = computed(() => stepStore.relatedTasks)
+const loading = ref(false);
 
 const dateStart = ref()
 const dateEnd = ref()
@@ -367,10 +381,50 @@ const updateStepStartDate = async (value, option) => {
 const submitForm = () => {
     getInternalTask();
 }
-
 const showPopupCreate = () => {
-    openDrawer.value = true;
+    openDrawer.value = true
 }
+
+
+const handleDrawerSubmit = async () => {
+    console.log('📥 Đang gọi handleDrawerSubmit')
+
+    if (stepStore.selectedStep?.id) {
+        try {
+            // 1. Lấy danh sách task mới
+            const res = await getTasksByBiddingStep(stepStore.selectedStep.id)
+            const tasks = Array.isArray(res.data) ? res.data : []
+
+            console.log('📦 Tải về tasks:', tasks)
+
+            // 2. Cập nhật vào store
+            stepStore.setRelatedTasks(tasks)
+
+            // 3. Gọi lại danh sách các bước để cập nhật task_count
+            await fetchSteps()
+
+            // 4. Cập nhật lại step đang mở để lấy task_count mới
+            const updatedStep = steps.value.find(s => s.id === stepStore.selectedStep.id)
+            if (updatedStep) {
+                selectedStep.value = { ...updatedStep }
+                stepStore.setSelectedStep({ ...updatedStep })
+                console.log('🔄 Đã cập nhật lại selectedStep:', updatedStep)
+            } else {
+                console.warn('⚠️ Không tìm thấy step để cập nhật')
+            }
+
+            // 5. Kiểm tra lại tasks trong store
+            setTimeout(() => {
+                console.log('✅ Tasks trong store:', stepStore.relatedTasks)
+            }, 50)
+
+        } catch (err) {
+            console.error('❌ Không thể load task sau khi tạo:', err)
+        }
+    }
+}
+
+
 
 
 const getInternalTask = async () => {
@@ -412,21 +466,27 @@ const updateStepEndDate = async (value, option) => {
 const disabledDate = current => {
   return current && current < dayjs(selectedStep.value.start_date).endOf('day');
 };
+
 const openStepDrawer = async (step) => {
-    selectedStep.value = {...step}
-    console.log('selectedStep.value', selectedStep.value)
+    selectedStep.value = { ...step }
+    stepStore.setSelectedStep({ ...step }) // ← Lưu vào store
     drawerVisible.value = true
 
     try {
         const res = await getTasksByBiddingStep(step.id)
-        console.log('res', res)
-        relatedTasks.value = res.data || []
+        stepStore.setRelatedTasks(Array.isArray(res.data) ? res.data : [])
+
+        // Debug
+        setTimeout(() => {
+            console.log('🔍 Tasks trong store sau openStepDrawer:', stepStore.relatedTasks)
+        }, 50)
     } catch (e) {
-        console.error('Không thể tải công việc của bước', e)
-        message.error('Không thể tải danh sách công việc')
-        relatedTasks.value = []
+        console.error('❌ Không thể tải công việc của bước', e)
+        stepStore.setRelatedTasks([])
     }
 }
+
+
 const closeDrawer = () => {
     drawerVisible.value = false
     showEditDateStart.value = false

@@ -37,6 +37,20 @@
             </a-row>
         </a-form>
 
+        <a-row :gutter="16" style="margin-bottom: 16px">
+            <a-col :span="4">
+                <a-button
+                        type="primary"
+                        danger
+                        :disabled="selectedRowKeys.length === 0"
+                        @click="handleBulkDelete"
+                        style="margin-bottom: 16px"
+                >
+                    Xóa {{ selectedRowKeys.length }} khách hàng
+                </a-button>
+            </a-col>
+        </a-row>
+
         <a-table
             :columns="columns"
             :data-source="customers"
@@ -45,6 +59,7 @@
             :pagination="pagination"
             @change="handleTableChange"
             :scroll="{ y: 'calc( 100vh - 430px )' }"
+            :row-selection="rowSelection"
         >
             <template #bodyCell="{ column, record, index, text }">
                 <template v-if="column.key === 'stt'">
@@ -237,6 +252,30 @@ const interactionLogs = ref([])
 const contracts = ref([])
 
 const detailDrawerVisible = ref(false)
+
+const selectedRowKeys = ref([]) // chứa id các hàng được chọn
+const selectedRows = ref([])    // chứa bản ghi được chọn (tùy chọn)
+
+const rowSelection = computed(() => ({
+    selectedRowKeys: selectedRowKeys.value,
+    onChange: (keys, rows) => {
+        selectedRowKeys.value = keys
+        selectedRows.value = rows
+    }
+}))
+
+const handleBulkDelete = async () => {
+    try {
+        await Promise.all(selectedRowKeys.value.map(id => deleteCustomer(id)))
+        message.success(`Đã xoá ${selectedRowKeys.value.length} khách hàng`)
+        selectedRowKeys.value = []
+        await fetchCustomers()
+    } catch (err) {
+        message.error('Không thể xoá hàng loạt khách hàng')
+    }
+}
+
+
 
 const interactionForm = ref({
     type: '',

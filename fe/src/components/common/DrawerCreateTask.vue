@@ -108,7 +108,7 @@
             <template #extra>
                 <a-space>
                     <a-button @click="onCloseDrawer">Hủy</a-button>
-                    <a-button type="primary" @click="submitForm" html-type="submit" :loading="loadingCreate">Thêm mới
+                    <a-button type="primary" @click="submitForm" html-type="submit" :loading="loadingCreate">Lưu lại
                     </a-button>
                 </a-space>
             </template>
@@ -127,10 +127,18 @@ import {getContractStepsAPI} from '@/api/contract-steps';
 import {getBiddingStepsAPI} from '@/api/bidding';
 import { getDepartments } from '@/api/department'
 
+import { useStepStore } from '@/stores/step'
+const stepStore = useStepStore()
+
+const emit = defineEmits(['update:openDrawer', 'submitForm'])
+const store = useUserStore()
+const selectedStep = computed(() => stepStore.selectedStep)
+
 import dayjs from 'dayjs';
 
 dayjs.locale('vi');
 import viVN from 'ant-design-vue/es/locale/vi_VN';
+import {defineEmits, defineProps} from "@vue/runtime-core";
 
 const props = defineProps({
     openDrawer: Boolean,
@@ -148,9 +156,7 @@ const props = defineProps({
         default: () => ({})
     },
 })
-const emit = defineEmits(['update:openDrawer', 'submitForm'])
 
-const store = useUserStore()
 
 const locale = ref(viVN);
 const route = useRoute()
@@ -362,8 +368,15 @@ const handleChangeLinkedId = () => {
 const getContractStep = async () => {
     await getContractStepsAPI(formData.value.linked_id).then(res => {
         stepOption.value = res.data ? res.data.map(ele => {
-            return {value: ele.step_number, label: ele.title, step_id: ele.id}
+            return { value: ele.step_number, label: ele.title, step_id: ele.id }
         }) : []
+
+        if (formData.value.step_code) {
+            const match = stepOption.value.find(opt => opt.value === formData.value.step_code)
+            if (!match) {
+                formData.value.step_code = null // hoặc bạn có thể tự tạo option đặc biệt
+            }
+        }
     }).catch(err => {
 
     })
@@ -373,28 +386,42 @@ const getBiddingStep = async () => {
         stepOption.value = res.data ? res.data.map(ele => {
             return {value: ele.step_number, label: ele.title, step_id: ele.id}
         }) : []
+
+        if (formData.value.step_code) {
+            const match = stepOption.value.find(opt => opt.value === formData.value.step_code)
+            if (!match) {
+                formData.value.step_code = null // hoặc bạn có thể tự tạo option đặc biệt
+            }
+        }
+
     }).catch(err => {
 
     })
 }
 const createDrawerInternal = async () => {
-    if (loadingCreate.value) {
-        return;
-    }
+    if (loadingCreate.value) return;
+
     formData.value.created_by = store.currentUser.id;
     loadingCreate.value = true;
-    try {
 
-        await createTask(formData.value);
-        message.success('Thêm mới nhiệm vụ thành công')
-        emit('submitForm');
+    try {
+        const res = await createTask(formData.value); // giả sử API trả về task vừa tạo
+
+        message.success('Thêm mới nhiệm vụ thành công');
+
+        // 👇 Emit để component cha xử lý reload task
+        emit('submitForm', res.data); // emit task mới nếu cần
+
         onCloseDrawer();
     } catch (e) {
-        message.error('Thêm mới nhiệm vụ không thành công')
+        console.error('[createDrawerInternal] error:', e);
+        message.error('Thêm mới nhiệm vụ không thành công');
     } finally {
-        loadingCreate.value = false
+        loadingCreate.value = false;
     }
-}
+};
+
+
 const onCloseDrawer = () => {
     emit('update:openDrawer', false)
     setDefaultData();
@@ -445,6 +472,7 @@ const submitForm = async () => {
 
     }
 }
+
 const resetFormValidate = () => {
     formRef.value.resetFields();
 };
@@ -458,50 +486,78 @@ const getLinkedTypeLabel = (val) => {
     return map[val] || val
 }
 
-watch(() => formData.value.step_code, (newCode) => {
-    const found = stepOption.value.find(item => item.value === newCode)
-    formData.value.step_id = found ? found.step_id : null;
-})
-
-//Watch onMounted
 onMounted(() => {
-    if (props.type) {
-        formData.value.linked_type = props.type
-    }
+    // Gán từ props
+    if (props.type) formData.value.linked_type = props.type
+    if (props.taskParent) formData.value.parent_id = props.taskParent
 
-    if (props.taskParent) {
-        formData.value.parent_id = props.taskParent;
-    }
-
-    if (props.type) {
-        formData.value.linked_type = props.type
-    }
-
-    if (props.taskParent) {
-        formData.value.parent_id = props.taskParent
+    // Gán từ Pinia store nếu có
+    if (selectedStep.value) {
+        setFormStepFromStore(selectedStep.value)
     }
 
     getBiddingTask()
     getContractTask()
-    handleChangeLinkedId()
     getDepartment()
+
+    if (formData.value.linked_id) {
+        fetchStepOptions()
+    }
 })
 
-watch(
-    () => props.taskMeta,
-    (newMeta) => {
-        if (newMeta?.bidding_id) {
-            formData.value.linked_id = newMeta.bidding_id
-        }
-        if (newMeta?.step_number) {
-            formData.value.step_code = newMeta.step_number
-        }
-        if (newMeta?.step_id) {
-            formData.value.step_id = newMeta.step_id
-        }
-    },
-    { immediate: true, deep: true }
-)
+// Hàm gán giá trị từ store
+const setFormStepFromStore = (step) => {
+    const type = props.type || 'bidding';
+
+    formData.value.linked_type = type;
+
+    if (type === 'bidding') {
+        formData.value.linked_id = step?.bidding_id || null;
+    } else if (type === 'contract') {
+        formData.value.linked_id = step?.contract_id || null;
+    } else {
+        formData.value.linked_id = null;
+    }
+
+    formData.value.step_code = step?.step_number || null;
+    formData.value.step_id = step?.id || null;
+}
+
+// Hàm gọi API theo loại nhiệm vụ
+const fetchStepOptions = async () => {
+    if (formData.value.linked_type === 'bidding') {
+        await getBiddingStep()
+    } else if (formData.value.linked_type === 'contract') {
+        await getContractStep()
+    }
+
+    // Xử lý kiểm tra step_code có tồn tại trong stepOption không
+    const stepValid = stepOption.value.find(opt => opt.value === formData.value.step_code)
+    if (!stepValid) {
+        formData.value.step_code = null
+        formData.value.step_id = null
+    }
+}
+
+// Watch selectedStep: khi Drawer được mở lại
+watch(() => selectedStep.value, (step) => {
+    if (!step) return
+    setFormStepFromStore(step)
+    if (formData.value.linked_id) fetchStepOptions()
+}, { immediate: true })
+
+// Watch linked_id: khi thay đổi gói thầu/hợp đồng
+watch(() => formData.value.linked_id, async (newVal, oldVal) => {
+    if (!newVal || newVal === oldVal) return
+    await fetchStepOptions()
+})
+
+// Watch step_code: cập nhật step_id tương ứng
+watch(() => formData.value.step_code, (newCode) => {
+    const found = stepOption.value.find(item => item.value === newCode)
+    formData.value.step_id = found ? found.step_id : null
+})
+
 
 </script>
 <style scoped>

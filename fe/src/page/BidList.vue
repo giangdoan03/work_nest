@@ -2,9 +2,16 @@
     <div>
         <a-flex justify="space-between">
             <div>
-                <a-typography-title :level="4">Danh sách gói thầu</a-typography-title>
+                <a-typography-title :level="4">Danh sách hợp đồng</a-typography-title>
             </div>
-            <a-button type="primary" @click="showPopupCreate">Tạo gói thầu mới</a-button>
+            <div>
+                <a-space>
+                    <a-button danger v-if="selectedRowKeys.length" @click="handleBulkDelete">
+                        Xóa {{ selectedRowKeys.length }} hợp đồng
+                    </a-button>
+                    <a-button type="primary" @click="showPopupCreate">Thêm hợp đồng mới</a-button>
+                </a-space>
+            </div>
         </a-flex>
 
         <a-table
@@ -14,16 +21,26 @@
                 style="margin-top: 12px"
                 row-key="id"
                 :scroll="{ y: 'calc(100vh - 400px)' }"
+                :row-selection="rowSelection"
         >
             <template #bodyCell="{ column, record, index }">
                 <template v-if="column.dataIndex === 'stt'">
                     {{ index + 1 }}
                 </template>
                 <template v-else-if="column.key === 'title'">
-                    <a-typography-text strong style="cursor: pointer" @click="goToDetail(record.id)">{{ record.title }}</a-typography-text>
+                    <a-tooltip :title="record.title">
+                        <a-typography-text strong style="cursor: pointer" @click="goToDetail(record.id)">
+                            {{ truncateText(record.title, 25) }}
+                        </a-typography-text>
+                    </a-tooltip>
                 </template>
                 <template v-else-if="column.dataIndex === 'status'">
                     <a-tag :color="getStatusColor(record.status)">
+                        <template #icon>
+                            <CheckCircleOutlined v-if="record.status === 3" />
+                            <CloseCircleOutlined v-if="record.status === 4" />
+                            <ClockCircleOutlined v-if="record.status === 0" />
+                        </template>
                         {{ getStatusText(record.status) }}
                     </a-tag>
                 </template>
@@ -34,8 +51,12 @@
                     {{ formatDate(record[column.dataIndex]) }}
                 </template>
                 <template v-else-if="column.dataIndex === 'action'">
-                    <EyeOutlined class="icon-action" style="color: green;" @click="goToDetail(record.id)" />
-                    <EditOutlined class="icon-action" style="color: blue;" @click="showPopupDetail(record)" />
+                    <a-tooltip title="Xem chi tiết">
+                        <EyeOutlined class="icon-action" style="color: #52c41a;" @click="goToDetail(record.id)" />
+                    </a-tooltip>
+                    <a-tooltip title="Chỉnh sửa">
+                        <EditOutlined class="icon-action" style="color: #1890ff;" @click="showPopupDetail(record)" />
+                    </a-tooltip>
                     <a-popconfirm
                             title="Bạn chắc chắn muốn xoá gói thầu này?"
                             ok-text="Xoá"
@@ -43,9 +64,12 @@
                             @confirm="deleteConfirm(record.id)"
                             placement="topRight"
                     >
-                        <DeleteOutlined class="icon-action" style="color: red;" />
+                        <a-tooltip title="Xoá">
+                            <DeleteOutlined class="icon-action" style="color: red;" />
+                        </a-tooltip>
                     </a-popconfirm>
                 </template>
+
             </template>
         </a-table>
 
@@ -105,9 +129,16 @@
 </template>
 
 <script setup>
-    import { ref, onMounted } from 'vue'
+    import { ref, onMounted, computed } from 'vue'
     import { message } from 'ant-design-vue'
-    import { EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons-vue'
+    import {
+        CheckCircleOutlined,
+        CloseCircleOutlined,
+        ClockCircleOutlined,
+        EditOutlined,
+        DeleteOutlined,
+        EyeOutlined
+    } from '@ant-design/icons-vue';
     import dayjs from 'dayjs'
     import {
         getBiddingsAPI,
@@ -127,6 +158,36 @@
     const loading = ref(false)
     const loadingCreate = ref(false)
     const openDrawer = ref(false)
+
+
+    const selectedRowKeys = ref([])
+    const selectedRows = ref([])
+
+    const rowSelection = computed(() => ({
+        selectedRowKeys: selectedRowKeys.value,
+        onChange: (keys, rows) => {
+            selectedRowKeys.value = keys
+            selectedRows.value = rows
+        }
+    }))
+
+    const handleBulkDelete = async () => {
+        try {
+            await Promise.all(selectedRowKeys.value.map(id => deleteBiddingAPI(id)))
+            message.success(`Đã xoá ${selectedRowKeys.value.length} gói thầu`)
+            selectedRowKeys.value = []
+            await getBiddings()
+        } catch (err) {
+            message.error('Không thể xoá gói thầu')
+        }
+    }
+
+    const truncateText = (text, length = 30) => {
+        if (!text) return '';
+        return text.length > length ? text.slice(0, length) + '...' : text;
+    }
+
+
     const formData = ref({
         title: '',
         description: '',
@@ -294,6 +355,13 @@
     })
 
 </script>
+
+<style>
+    :deep(.ant-table-tbody > tr:hover) {
+        background-color: #f5faff !important;
+        transition: background-color 0.3s;
+    }
+</style>
 
 <style scoped>
     .icon-action {

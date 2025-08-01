@@ -214,7 +214,6 @@ const getListComment = async (page = 1) => {
     try {
         const params = { page };
         const res = await getComments(route.params.id, params);
-        console.log('res', res);
 
         if (page === 1) {
             listComment.value = res.data.comments;

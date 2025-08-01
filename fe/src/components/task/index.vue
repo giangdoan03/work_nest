@@ -161,41 +161,36 @@
                                     <a-form-item label="Tiến trình" name="progress">
                                         <template v-if="!isEditMode">
                                             <a-progress
-                                                :percent="Number(formData.progress)"
-                                                :stroke-color="{
-                                                  '0%': '#108ee9',
-                                                  '100%': '#87d068',
-                                                }"
-                                                :status="formData.progress >= 100 ? 'success' : 'active'"
-                                                size="small"
-                                                :show-info="true"
+                                                    :percent="numericProgress"
+                                                    :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
+                                                    :status="numericProgress >= 100 ? 'success' : 'active'"
+                                                    size="small"
+                                                    :show-info="true"
                                             />
                                         </template>
                                         <template v-else>
                                             <a-slider
-                                                v-model:value="formData.progress"
-                                                :min="0"
-                                                :max="100"
-                                                :step="5"
-                                                :marks="{ 0: '0%', 25: '25%', 50: '50%', 75: '75%', 100: '100%' }"
-                                                style="width: calc(90% + 50px); margin: 0 auto; display: block;"
+                                                    v-model:value="numericProgress"
+                                                    :min="0"
+                                                    :max="100"
+                                                    :step="5"
+                                                    :marks="{ 0: '0%', 25: '25%', 50: '50%', 75: '75%', 100: '100%' }"
+                                                    style="width: calc(90% + 50px); margin: 0 auto; display: block;"
                                             />
                                             <div style="margin-top: 24px;">
                                                 <a-progress
-                                                    :percent="Number(formData.progress)"
-                                                    :stroke-color="{
-                                                      '0%': '#108ee9',
-                                                      '100%': '#87d068',
-                                                    }"
-                                                    :status="formData.progress >= 100 ? 'success' : 'active'"
-                                                    size="small"
-                                                    :show-info="true"
-                                                    style="width: calc(90% + 50px); margin: 0 auto; display: block;"
+                                                        :percent="numericProgress"
+                                                        :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
+                                                        :status="numericProgress >= 100 ? 'success' : 'active'"
+                                                        size="small"
+                                                        :show-info="true"
+                                                        style="width: calc(90% + 50px); margin: 0 auto; display: block;"
                                                 />
                                             </div>
                                         </template>
                                     </a-form-item>
                                 </a-col>
+
                             </a-row>
                         </div>
 
@@ -485,6 +480,11 @@
 
         return result;
     });
+
+    const numericProgress = computed({
+        get: () => Number(formData.value.progress || 0),
+        set: (val) => formData.value.progress = val
+    })
 
     // Lấy data từ trường days_overdue và days_remaining
     const getRemainingDays = computed(() => {
@@ -889,7 +889,6 @@
     const fetchExtensions = async () => {
         try {
             const res = await getTaskExtensions(route.params.id);
-            console.log('📦 API extensions:', res.data); // ✅ debug ở đây
             extensions.value = res.data.extensions || [];
         } catch (error) {
             console.error('❌ Lỗi fetch extensions:', error);
@@ -940,7 +939,6 @@
     const fetchLogHistory = async () => {
         try {
             const res = await getApprovalHistoryByTask(route.params.id)
-            console.log('🧾 Log history:', res.data)
             logData.value = Array.isArray(res.data) ? res.data : []
         } catch (e) {
             console.error('Lỗi khi lấy log:', e)
