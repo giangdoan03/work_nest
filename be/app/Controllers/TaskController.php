@@ -184,6 +184,12 @@ class TaskController extends ResourceController
     {
         $data = $this->request->getJSON(true);
 
+        // ✅ Đảm bảo có step_id với tất cả loại nhiệm vụ
+        if (empty($data['step_id'])) {
+            return $this->failValidationErrors(['step_id' => 'Thiếu step_id']);
+        }
+
+        // ✅ Xử lý cấp duyệt nếu có
         if (!empty($data['approval_steps']) && (int)$data['approval_steps'] > 0) {
             $data['approval_status'] = 'pending';
             $data['current_level'] = 1;
@@ -193,17 +199,19 @@ class TaskController extends ResourceController
             }
         }
 
+        // ✅ Lưu nhiệm vụ
         if (!$this->model->insert($data)) {
             return $this->failValidationErrors($this->model->errors());
         }
 
         $taskId = $this->model->insertID();
 
+        // ✅ Tạo dòng cấp duyệt nếu có
         if (!empty($data['approval_steps']) && (int)$data['approval_steps'] > 0) {
             (new TaskApprovalModel())->insert([
-                'task_id' => $taskId,
-                'level' => 1,
-                'status' => 'pending',
+                'task_id'     => $taskId,
+                'level'       => 1,
+                'status'      => 'pending',
                 'approved_by' => null
             ]);
         }
@@ -213,6 +221,7 @@ class TaskController extends ResourceController
             'id' => $taskId
         ]);
     }
+
 
     /**
      * @throws \ReflectionException

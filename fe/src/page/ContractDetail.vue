@@ -445,7 +445,7 @@ const handleDrawerSubmit = async () => {
             // 5. Kiểm tra lại tasks trong store
             setTimeout(() => {
                 console.log('✅ Tasks trong store:', stepStore.relatedTasks)
-            }, 50)
+            }, 500)
 
         } catch (err) {
             console.error('❌ Không thể load task sau khi tạo:', err)

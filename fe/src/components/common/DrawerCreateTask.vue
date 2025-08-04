@@ -65,10 +65,7 @@
                         </a-form-item>
                     </a-col>
                     <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
-                        <a-form-item
-                            :label="formData.linked_type === 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'"
-                            name="linked_id"
-                        >
+                        <a-form-item :label="formData.linked_type === 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'" name="linked_id">
                             <a-select
                                 v-model:value="formData.linked_id"
                                 :options="linkedIdOption"
@@ -118,8 +115,8 @@
 <script setup>
 import {ref, onMounted, computed, watch} from 'vue'
 import {useUserStore} from '@/stores/user.js'
-import {createTask, updateTask} from '@/api/task.js'
-import {getBiddingsAPI} from '@/api/bidding.js'
+import {createTask, getTasksByBiddingStep, getTasksByContractStep, updateTask} from '@/api/task.js'
+import {getBiddingAPI, getBiddingsAPI} from '@/api/bidding.js'
 import {getContractsAPI} from '@/api/contract.js'
 import {message} from 'ant-design-vue'
 import {useRoute} from 'vue-router';
@@ -315,15 +312,18 @@ const departmentOptions = computed(()=>{
 const stepOption = ref([])
 const linkedIdOption = computed(() => {
     if (formData.value.linked_type === 'bidding') {
-        return listBidding.value.map(ele => {
-            return {value: ele.id, label: ele.title}
-        })
+        return listBidding.value.map(ele => ({
+            value: String(ele.id),
+            label: ele.title,
+        }))
     } else if (formData.value.linked_type === 'contract') {
-        return listContract.value.map(ele => {
-            return {value: ele.id, label: ele.title}
-        })
-    } else return [];
+        return listContract.value.map(ele => ({
+            value: String(ele.id),
+            label: ele.title,
+        }))
+    } else return []
 })
+
 const userOption = computed(() => {
     if (!props.listUser || !props.listUser.length) {
         return []
@@ -402,15 +402,41 @@ const createDrawerInternal = async () => {
     if (loadingCreate.value) return;
 
     formData.value.created_by = store.currentUser.id;
+    formData.value.step_id = selectedStep.value?.id || null;
     loadingCreate.value = true;
 
     try {
-        const res = await createTask(formData.value); // giả sử API trả về task vừa tạo
+        const res = await createTask(formData.value);
 
         message.success('Thêm mới nhiệm vụ thành công');
 
-        // 👇 Emit để component cha xử lý reload task
-        emit('submitForm', res.data); // emit task mới nếu cần
+        // Tự động cập nhật lại danh sách nhiệm vụ trong stepStore (không cần chờ cha gọi emit)
+        await new Promise(resolve => setTimeout(resolve, 300)); // đảm bảo backend đã lưu xong
+
+        const dataFilter = {};
+        if (store.currentUser?.role_id === 3) {
+            dataFilter.assigned_to = store.currentUser.id;
+        } else if (store.currentUser?.role_id === 2) {
+            dataFilter.id_department = store.currentUser.department_id;
+        }
+
+        const stepId = selectedStep.value?.id;
+        const linkedType = selectedStep.value?.linked_type || formData.value.linked_type || 'bidding';
+
+        if (stepId) {
+            let resTasks = null;
+            if (linkedType === 'contract') {
+                resTasks = await getTasksByContractStep(stepId, dataFilter);
+            } else {
+                resTasks = await getTasksByBiddingStep(stepId, dataFilter);
+            }
+
+            const tasks = Array.isArray(resTasks.data?.data) ? resTasks.data.data : resTasks.data || [];
+            stepStore.setRelatedTasks(tasks);
+        }
+
+        // 👇 Emit nếu cha cần xử lý thêm
+        emit('submitForm', res.data);
 
         onCloseDrawer();
     } catch (e) {
@@ -422,6 +448,30 @@ const createDrawerInternal = async () => {
 };
 
 
+const ensureLinkedIdInOptions = async () => {
+    if (
+        formData.value.linked_type !== 'bidding' ||
+        !formData.value.linked_id
+    ) return;
+
+    const exists = listBidding.value.some(
+        item => String(item.id) === String(formData.value.linked_id)
+    );
+
+    if (!exists) {
+        try {
+            const res = await getBiddingAPI(formData.value.linked_id);
+            if (res?.data) {
+                listBidding.value.push(res.data); // 👉 push thêm để a-select hiển thị đúng label
+                console.log('listBidding.value', listBidding.value)
+            }
+        } catch (err) {
+            console.error('Không thể lấy thông tin gói thầu:', err);
+        }
+    }
+}
+
+
 const onCloseDrawer = () => {
     emit('update:openDrawer', false)
     setDefaultData();
@@ -431,6 +481,7 @@ const getBiddingTask = async () => {
     loading.value = true
     try {
         const response = await getBiddingsAPI();
+        console.log('response', response)
         listBidding.value = response.data.data ? response.data.data : [];
     } catch (e) {
         message.error('Không thể tải nhiệm vụ')
@@ -486,24 +537,35 @@ const getLinkedTypeLabel = (val) => {
     return map[val] || val
 }
 
-onMounted(() => {
-    // Gán từ props
+onMounted(async () => {
     if (props.type) formData.value.linked_type = props.type
     if (props.taskParent) formData.value.parent_id = props.taskParent
 
-    // Gán từ Pinia store nếu có
+    // Gán từ Pinia store
     if (selectedStep.value) {
         setFormStepFromStore(selectedStep.value)
     }
 
-    getBiddingTask()
-    getContractTask()
-    getDepartment()
+    await getBiddingTask()
+    await getContractTask()
+    await getDepartment()
+
+    // 👇 Đảm bảo chạy sau khi linked_id đã có
+    await ensureLinkedIdInOptions()
 
     if (formData.value.linked_id) {
-        fetchStepOptions()
+        await fetchStepOptions()
     }
 })
+
+
+watch(() => formData.value.linked_id, async (newVal, oldVal) => {
+    if (!newVal || newVal === oldVal) return
+
+    await ensureLinkedIdInOptions()
+    await fetchStepOptions()
+})
+
 
 // Hàm gán giá trị từ store
 const setFormStepFromStore = (step) => {

@@ -404,39 +404,34 @@ const handleDrawerSubmit = async () => {
     const dataFilter = {}
 
     if (String(user?.role_id) === '3') {
-        // Nhân viên → chỉ xem nhiệm vụ của mình
         dataFilter.assigned_to = user.id
     } else if (String(user?.role_id) === '2') {
-        // Trưởng phòng → xem nhiệm vụ của phòng
         dataFilter.id_department = user.department_id
     }
-    // Admin (1) → không lọc gì cả
 
     if (stepStore.selectedStep?.id) {
         try {
-            // 1. Lấy danh sách task mới (sau khi tạo task xong)
-            const res = await getTasksByContractStep(stepStore.selectedStep.id, dataFilter)
-            const tasks = Array.isArray(res.data) ? res.data : []
+            // ⏳ Đợi một chút để backend hoàn tất insert (nếu cần)
+            await new Promise(resolve => setTimeout(resolve, 500))
 
-            // 2. Cập nhật vào store
+            // 🧪 In log rõ ràng
+            console.log('🔍 Fetching tasks after submit with:', {
+                stepId: stepStore.selectedStep.id,
+                dataFilter
+            })
+
+            const res = await getTasksByBiddingStep(stepStore.selectedStep.id, dataFilter)
+            const tasks = Array.isArray(res.data?.data) ? res.data.data : []
+
+            console.log('📦 Tasks fetched:', tasks)
+
             stepStore.setRelatedTasks(tasks)
 
-            // 3. Gọi lại danh sách các bước để cập nhật task_count
             await fetchSteps()
 
-            // 4. Cập nhật lại step đang mở để lấy task_count mới
-            const updatedStep = steps.value.find(s => s.id === stepStore.selectedStep.id)
-            if (updatedStep) {
-                selectedStep.value = { ...updatedStep }
-                stepStore.setSelectedStep({ ...updatedStep })
-            } else {
-                console.warn('⚠️ Không tìm thấy step để cập nhật')
-            }
-
-            // 5. Kiểm tra lại tasks trong store
             setTimeout(() => {
                 console.log('✅ Tasks trong store:', stepStore.relatedTasks)
-            }, 50)
+            }, 300)
 
         } catch (err) {
             console.error('❌ Không thể load task sau khi tạo:', err)
@@ -444,6 +439,9 @@ const handleDrawerSubmit = async () => {
         }
     }
 }
+
+
+
 
 const getInternalTask = async () => {
     loading.value = true
