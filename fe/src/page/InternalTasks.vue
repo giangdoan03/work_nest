@@ -26,33 +26,25 @@
                 <a-space>
                     <!-- Lọc theo loại -->
                     <a-button-group>
-                        <a-button :type="dataFilter.linked_type === null ? 'primary' : 'default'"
-                                  @click="filterByType(null)">Tất cả
+                        <a-button :type="dataFilter.linked_type === null ? 'primary' : 'default'" @click="filterByType(null)">Tất cả
                         </a-button>
-                        <a-button :type="dataFilter.linked_type === 'bidding' ? 'primary' : 'default'"
-                                  @click="filterByType('bidding')">Gói thầu
+                        <a-button :type="dataFilter.linked_type === 'bidding' ? 'primary' : 'default'" @click="filterByType('bidding')">Gói thầu
                         </a-button>
-                        <a-button :type="dataFilter.linked_type === 'contract' ? 'primary' : 'default'"
-                                  @click="filterByType('contract')">Hợp đồng
+                        <a-button :type="dataFilter.linked_type === 'contract' ? 'primary' : 'default'" @click="filterByType('contract')">Hợp đồng
                         </a-button>
-                        <a-button :type="dataFilter.linked_type === 'internal' ? 'primary' : 'default'"
-                                  @click="filterByType('internal')">Nội bộ
+                        <a-button :type="dataFilter.linked_type === 'internal' ? 'primary' : 'default'" @click="filterByType('internal')">Nội bộ
                         </a-button>
                     </a-button-group>
 
                     <!-- Lọc theo độ ưu tiên -->
                     <a-button-group>
-                        <a-button :type="dataFilter.priority === null ? 'primary' : 'default'"
-                                  @click="filterByPriority(null)">Tất cả
+                        <a-button :type="dataFilter.priority === null ? 'primary' : 'default'" @click="filterByPriority(null)">Tất cả
                         </a-button>
-                        <a-button :type="dataFilter.priority === 'low' ? 'primary' : 'default'" danger ghost
-                                  @click="filterByPriority('low')">Thấp
+                        <a-button :type="dataFilter.priority === 'low' ? 'primary' : 'default'" danger ghost @click="filterByPriority('low')">Thấp
                         </a-button>
-                        <a-button :type="dataFilter.priority === 'normal' ? 'primary' : 'default'"
-                                  @click="filterByPriority('normal')" style="background: #faad14; color: white">Thường
+                        <a-button :type="dataFilter.priority === 'normal' ? 'primary' : 'default'" @click="filterByPriority('normal')" style="background: #faad14; color: white">Thường
                         </a-button>
-                        <a-button :type="dataFilter.priority === 'high' ? 'primary' : 'default'"
-                                  @click="filterByPriority('high')" style="background: #f5222d; color: white">Cao
+                        <a-button :type="dataFilter.priority === 'high' ? 'primary' : 'default'" @click="filterByPriority('high')" style="background: #f5222d; color: white">Cao
                         </a-button>
                     </a-button-group>
                 </a-space>
@@ -61,8 +53,7 @@
 
         <a-row :gutter="[14,14]" style="margin-top: 10px;">
             <a-col :span="4">
-                <a-input v-model:value="dataFilter.title" placeholder="Tìm việc theo tiêu đề" allow-clear
-                         @input="onTitleSearch"/>
+                <a-input v-model:value="dataFilter.title" placeholder="Tìm việc theo tiêu đề" allow-clear @input="onTitleSearch"/>
             </a-col>
             <a-col :span="4">
                 <a-select
@@ -124,9 +115,7 @@
             <template #bodyCell="{ column, record, index, text }">
                 <template v-if="column.dataIndex === 'title'">
                     <a-tooltip :title="text">
-                        <a-typography-text strong
-                                           style="cursor: pointer; display: inline-block; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
-                                           @click="showPopupDetail(record)">
+                        <a-typography-text strong style="cursor: pointer; display: inline-block; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" @click="showPopupDetail(record)">
                             {{ text }}
                         </a-typography-text>
                     </a-tooltip>
@@ -138,8 +127,7 @@
 
                 <template v-if="column.dataIndex === 'assigned_to'">
                     <a-tooltip :title="record.assignee?.name || '—'">
-                        <a-avatar size="large"
-                                  :style="{ backgroundColor: getAvatarColor(record.assignee?.name),verticalAlign: 'middle',cursor: 'default'}">
+                        <a-avatar size="large" :style="{ backgroundColor: getAvatarColor(record.assignee?.name),verticalAlign: 'middle',cursor: 'default'}">
                             {{ record.assignee?.name?.charAt(0).toUpperCase() || '?' }}
                         </a-avatar>
                     </a-tooltip>

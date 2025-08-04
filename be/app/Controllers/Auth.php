@@ -53,8 +53,13 @@ class Auth extends Controller
         if (!$user) {
             return $this->failNotFound('User not found');
         }
+
+        // Xoá trường password
+        unset($user['password']);
+
         return $this->respond($user);
     }
+
 
     /**
      * @throws \ReflectionException

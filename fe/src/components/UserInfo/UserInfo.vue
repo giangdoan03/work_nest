@@ -60,6 +60,12 @@
                 <a-input :value="getNameDepartments" placeholder="VD: Phòng hành chính nhân sự" disabled/>
             </a-form-item>
 
+            <!-- Loại tài khoản -->
+            <a-form-item label="Loại tài khoản" name="role">
+                <a-input :value="form.role" placeholder="VD: Nhân viên, Trưởng phòng" disabled />
+            </a-form-item>
+
+
             <!-- Nút hành động -->
             <a-form-item class="margin-bot-0" v-if="isEditMode">
                 <a-space>
@@ -84,12 +90,12 @@
 <script setup>
 import {ref, onMounted, computed, watch } from 'vue'
 import {useRoute, useRouter} from 'vue-router'
-import { uploadFile, updateUser } from '../../api/user'
+import { uploadFile, updateUser } from '@/api/user.js'
 import {message} from 'ant-design-vue'
 import {UploadOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons-vue'
 import cloneDeep from 'lodash/cloneDeep'
 
-import {useUserStore} from '../../stores/user'
+import {useUserStore} from '@/stores/user.js'
 import { getDepartments } from '@/api/department'
 
 const userStore = useUserStore()
@@ -287,7 +293,6 @@ props.dataUser, function (value) {
     }
     
     .action-icon{
-        display: none;
         position: absolute;
         top: 0;
         width: 110px;

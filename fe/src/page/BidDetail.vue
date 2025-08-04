@@ -145,25 +145,33 @@
                     bordered
                 >
                     <a-descriptions-item label="Bước số">{{ selectedStep.step_number }}</a-descriptions-item>
-                    <a-descriptions-item label="Tiêu đề">{{ selectedStep.title }}</a-descriptions-item>
+                    <a-descriptions-item label="Tiêu đề">
+                        <a-typography-text
+                            type="secondary"
+                            v-if="!showEditTitle"
+                            @click="editTitle"
+                        >
+                            {{ selectedStep.title || '---' }}
+                            <EditOutlined />
+                        </a-typography-text>
+                        <a-input
+                            v-if="showEditTitle"
+                            v-model:value="editedTitle"
+                            @pressEnter="updateStepTitle"
+                            @blur="updateStepTitle"
+                            placeholder="Nhập tiêu đề"
+                        />
+                    </a-descriptions-item>
+
                     <a-descriptions-item label="Phòng ban">
                         <template #default>
-                            <a-tag
-                                v-for="(dep, index) in parseDepartment(selectedStep.department)"
-                                :key="index"
-                                color="blue"
-                                style="margin-right: 4px;"
-                            >
+                            <a-tag v-for="(dep, index) in parseDepartment(selectedStep.department)" :key="index" color="blue" style="margin-right: 4px;">
                                 {{ dep }}
                             </a-tag>
                         </template>
                     </a-descriptions-item>
                     <a-descriptions-item label="Trạng thái">
-                        <a-select
-                            v-model:value="selectedStep.status"
-                            style="width: 100%"
-                        @change="(value) => updateStepStatus(value, selectedStep)"
-                    >
+                        <a-select v-model:value="selectedStep.status" style="width: 100%" @change="(value) => updateStepStatus(value, selectedStep)">
                         <a-select-option value="0">Chưa bắt đầu</a-select-option>
                         <a-select-option value="1">Đang xử lý</a-select-option>
                             <a-select-option value="2">Hoàn thành</a-select-option>
@@ -239,7 +247,7 @@
                     <div style="
                           display: flex;
                           justify-content: space-between;
-                          padding: 8px 16px;
+                          padding: 8px 0;
                           font-weight: 500;
                           color: #555;
                           border-bottom: 1px solid #f0f0f0;
@@ -347,8 +355,9 @@ const userStore = useUserStore()
 const user = userStore.currentUser
 
 
-import {getTasks, getTasksByBiddingStep} from '@/api/task'
-import DrawerCreateTask from "@/components/common/DrawerCreateTask.vue"; // nếu chưa import
+import {getTasks, getTasksByBiddingStep, getTasksByContractStep} from '@/api/task'
+import DrawerCreateTask from "@/components/common/DrawerCreateTask.vue";
+import {updateContractStepAPI} from "@/api/contract-steps.js"; // nếu chưa import
 
 const allTasks = ref([])
 const relatedTasks = computed(() => stepStore.relatedTasks)
@@ -393,10 +402,22 @@ const showPopupCreate = () => {
 const handleDrawerSubmit = async () => {
     console.log('📥 Đang gọi handleDrawerSubmit')
 
+    const user = userStore.currentUser
+    const dataFilter = {}
+
+    if (String(user?.role_id) === '3') {
+        // Nhân viên → chỉ xem nhiệm vụ của mình
+        dataFilter.assigned_to = user.id
+    } else if (String(user?.role_id) === '2') {
+        // Trưởng phòng → xem nhiệm vụ của phòng
+        dataFilter.id_department = user.department_id
+    }
+    // Admin (1) → không lọc gì cả
+
     if (stepStore.selectedStep?.id) {
         try {
-            // 1. Lấy danh sách task mới
-            const res = await getTasksByBiddingStep(stepStore.selectedStep.id)
+            // 1. Lấy danh sách task mới (sau khi tạo task xong)
+            const res = await getTasksByContractStep(stepStore.selectedStep.id, dataFilter)
             const tasks = Array.isArray(res.data) ? res.data : []
 
             console.log('📦 Tải về tasks:', tasks)
@@ -424,12 +445,10 @@ const handleDrawerSubmit = async () => {
 
         } catch (err) {
             console.error('❌ Không thể load task sau khi tạo:', err)
+            message.error('Không thể tải danh sách công việc sau khi tạo')
         }
     }
 }
-
-
-
 
 const getInternalTask = async () => {
     loading.value = true
@@ -449,6 +468,35 @@ const getInternalTask = async () => {
         message.error('Không thể tải nhiệm vụ')
     } finally {
         loading.value = false
+    }
+}
+
+const showEditTitle = ref(false)
+const editedTitle = ref('')
+
+const editTitle = () => {
+    editedTitle.value = selectedStep.value.title || ''
+    showEditTitle.value = true
+}
+
+// Hàm cập nhật tiêu đề bước
+const updateStepTitle = async () => {
+    if (editedTitle.value.trim() === '') {
+        message.warning('Tiêu đề không được để trống')
+        return
+    }
+
+    try {
+        await updateBiddingStepAPI(selectedStep.value.id, {
+            title: editedTitle.value.trim()
+        })
+        selectedStep.value.title = editedTitle.value.trim()
+        message.success('Cập nhật tiêu đề thành công')
+        showEditTitle.value = false
+        await fetchSteps()
+    } catch (e) {
+        console.error('Không thể cập nhật tiêu đề bước', e)
+        message.error('Lỗi khi cập nhật tiêu đề')
     }
 }
 

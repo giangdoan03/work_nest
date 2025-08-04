@@ -31,7 +31,7 @@
 import { ref, computed, onMounted, shallowRef} from 'vue';
 import UserInfo from './UserInfo.vue';
 import ChangePassword from './ChangePassword.vue';
-import { getUserDetail } from '../../api/user';
+import { getUserDetail } from '@/api/user.js';
 import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute()
