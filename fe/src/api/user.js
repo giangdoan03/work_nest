@@ -12,9 +12,9 @@ export const uploadFile = (data) => {
     return instance.post('/users/upload-avatar', formData)
 }
 
-export const getUsers = () => 
-    instance.get('/users')
-
+export const getUsers = (params = {}) => {
+    return instance.get('/users', { params }); // ✅ quan trọng: phải có { params }
+};
 export const getUserDetail = (userId) =>
     instance.get(`/users/${userId}`, { params: { user_id: userId } })
 

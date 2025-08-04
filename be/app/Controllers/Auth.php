@@ -28,11 +28,25 @@ class Auth extends Controller
 
     public function index(): ResponseInterface
     {
-        $users = $this->model->findAll();
-        $cleanedUsers = array_map([$this, 'filterUser'], $users);
-        return $this->respond($cleanedUsers);
-    }
+        $departmentId = $this->request->getGet('department_id');
 
+        $builder = $this->model;
+
+        // ✅ Lọc theo department_id nếu có
+        if ($departmentId) {
+            $builder = $builder->where('department_id', $departmentId);
+        }
+
+        $users = $builder->findAll();
+
+        // ✅ Xóa mật khẩu trước khi trả về
+        $users = array_map(function ($user) {
+            unset($user['password']);
+            return $user;
+        }, $users);
+
+        return $this->respond($users);
+    }
     public function show($id = null): ResponseInterface
     {
         $user = $this->model->find($id);

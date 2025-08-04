@@ -4,16 +4,33 @@ namespace App\Controllers;
 
 use App\Models\DepartmentModel;
 use CodeIgniter\RESTful\ResourceController;
+use CodeIgniter\HTTP\ResponseInterface;
 
 class DepartmentController extends ResourceController
 {
     protected $modelName = DepartmentModel::class;
     protected $format    = 'json';
 
-    public function index()
+    public function index(): ResponseInterface
     {
-        return $this->respond($this->model->findAll());
+        $departmentId = $this->request->getGet('department_id');
+        $query = $this->model;
+
+        if ($departmentId) {
+            $query = $query->where('department_id', $departmentId);
+        }
+
+        $users = $query->findAll();
+
+        // Optional: xóa mật khẩu
+        $users = array_map(function ($user) {
+            unset($user['password']);
+            return $user;
+        }, $users);
+
+        return $this->respond($users);
     }
+
 
     public function show($id = null)
     {
