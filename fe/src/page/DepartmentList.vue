@@ -220,8 +220,6 @@
         return role ? role.label : 'Không xác định'; // Sử dụng `label` thay vì `description`
     };
 
-
-
     const submitDepartment = async () => {
         try {
             await formRef.value?.validate();

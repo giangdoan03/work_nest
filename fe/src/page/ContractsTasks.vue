@@ -23,9 +23,10 @@
                 :scroll="{y: 'calc( 100vh - 330px )'}">
             <template #bodyCell="{ column, record, index }">
                 <template v-if="column.dataIndex === 'stt'">
-                    {{ index+1 }}
+                    {{ index + 1 }}
                 </template>
-                <template v-if="column.dataIndex === 'name'">
+
+                <template v-else-if="column.dataIndex === 'name'">
                     <a-tooltip :title="record.name">
                         <a-typography-text strong style="cursor: pointer" @click="goToContractDetail(record.id)">
                             {{ truncateText(record.name, 25) }}
@@ -38,17 +39,18 @@
                         {{ getStatusLabel(record.status) }}
                     </a-tag>
                 </template>
+
+                <template v-else-if="column.dataIndex === 'start_date'">
+                    {{ formatDate(record.start_date) }}
+                </template>
+
+                <template v-else-if="column.dataIndex === 'end_date'">
+                    {{ formatDate(record.end_date) }}
+                </template>
+
                 <template v-else-if="column.dataIndex === 'action'">
-                    <EyeOutlined
-                            class="icon-action"
-                            style="color: #1890ff;"
-                            @click="goToContractDetail(record.id)"
-                    />
-                    <EditOutlined
-                            class="icon-action"
-                            style="color: blue;"
-                            @click="showPopupDetail(record)"
-                    />
+                    <EyeOutlined class="icon-action" style="color: #1890ff" @click="goToContractDetail(record.id)"/>
+                    <EditOutlined class="icon-action" style="color: blue" @click="showPopupDetail(record)"/>
                     <a-popconfirm
                             title="Bạn chắc chắn muốn xóa hợp đồng này?"
                             ok-text="Xóa"
@@ -56,11 +58,11 @@
                             @confirm="deleteConfirm(record.id)"
                             placement="topRight"
                     >
-                        <DeleteOutlined class="icon-action" style="margin: 0; color: red;"/>
+                        <DeleteOutlined class="icon-action" style="margin: 0; color: red" />
                     </a-popconfirm>
                 </template>
-
             </template>
+
         </a-table>
 
         <a-drawer :title="selectedContract ? 'Sửa hợp đồng' : 'Tạo hợp đồng mới'" :width="700" :open="openDrawer"
@@ -95,8 +97,7 @@
                 </a-row>
                 <a-row :gutter="[16, 0]">
                     <a-col :span="24">
-                        <a-checkbox v-model:checked="formData.is_awarded" style="margin-bottom: 12px;"
-                                    @change="handleIsAwardedChange">
+                        <a-checkbox v-model:checked="formData.is_awarded" style="margin-bottom: 12px;" @change="handleIsAwardedChange">
                             Đã trúng thầu
                         </a-checkbox>
                     </a-col>
@@ -197,7 +198,6 @@
     import {debounce} from 'lodash'
 
     const router = useRouter()
-
     const formRef = ref(null);
     const selectedContract = ref(null)
     const tableData = ref([])
@@ -276,7 +276,7 @@
         {title: 'Trạng thái', dataIndex: 'status', key: 'status'},
         {title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date'},
         {title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date'},
-        {title: 'Thời gian tạo', dataIndex: 'created_at', key: 'created_at'},
+        // {title: 'Thời gian tạo', dataIndex: 'created_at', key: 'created_at'},
         {title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px'},
     ]
 
