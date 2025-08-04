@@ -400,8 +400,6 @@ const showPopupCreate = () => {
 
 
 const handleDrawerSubmit = async () => {
-    console.log('📥 Đang gọi handleDrawerSubmit')
-
     const user = userStore.currentUser
     const dataFilter = {}
 
@@ -420,8 +418,6 @@ const handleDrawerSubmit = async () => {
             const res = await getTasksByContractStep(stepStore.selectedStep.id, dataFilter)
             const tasks = Array.isArray(res.data) ? res.data : []
 
-            console.log('📦 Tải về tasks:', tasks)
-
             // 2. Cập nhật vào store
             stepStore.setRelatedTasks(tasks)
 
@@ -433,7 +429,6 @@ const handleDrawerSubmit = async () => {
             if (updatedStep) {
                 selectedStep.value = { ...updatedStep }
                 stepStore.setSelectedStep({ ...updatedStep })
-                console.log('🔄 Đã cập nhật lại selectedStep:', updatedStep)
             } else {
                 console.warn('⚠️ Không tìm thấy step để cập nhật')
             }
