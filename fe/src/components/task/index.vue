@@ -101,7 +101,6 @@
                                     </a-form-item>
                                 </a-col>
 
-
                                 <a-col :span="12">
                                     <a-form-item label="Độ ưu tiên" name="priority">
                                         <a-tag v-if="!isEditMode" :color="checkPriority(formData.priority).color">
@@ -190,7 +189,6 @@
                                         </template>
                                     </a-form-item>
                                 </a-col>
-
                             </a-row>
                         </div>
 
@@ -199,12 +197,7 @@
                                 <a-col :span="24">
                                     <a-form-item label="Mô tả" name="description">
                                         <a-typography-text v-if="!isEditMode">{{ formData.description ? formData.description : "Trống" }}</a-typography-text>
-                                        <a-textarea
-                                                v-else
-                                                v-model:value="formData.description"
-                                                :rows="4"
-                                                placeholder="Nhập mô tả "
-                                        />
+                                        <a-textarea v-else v-model:value="formData.description" :rows="4" placeholder="Nhập mô tả "/>
                                     </a-form-item>
                                 </a-col>
                                 <a-col :span="24">
@@ -249,7 +242,6 @@
                                         </div>
                                     </a-form-item>
 
-
                                     <!-- ✅ Hiển thị danh sách link đã thêm -->
                                     <a-form-item v-if="manualLinks.length" label="Link đã thêm">
                                         <a-list bordered size="small" :data-source="manualLinks">
@@ -265,7 +257,6 @@
                                         </a-list>
 
                                     </a-form-item>
-
 
                                     <!-- ✅ Tách form item khác để nhập tiêu đề -->
                                     <a-form-item v-if="pendingFiles.length" label="Tiêu đề tài liệu">
@@ -950,7 +941,7 @@
         const uploaded = fileList.value.map(f => ({
             ...f,
             name: f.title ? `${f.title} (${f.name})` : f.name,
-            url: f.is_link ? f.link_url : f.link_url // ✅ thêm url nếu là link
+            url: f.is_link ? f.link_url : f.link_url
         }));
 
         const pending = pendingFiles.value.map((f, idx) => ({
@@ -969,21 +960,13 @@
 
     const addManualLink = async () => {
         if (!manualLink.title || !manualLink.url) return;
-
         manualLinks.value.push({ ...manualLink });
-
-        // Gọi API ngay khi thêm
         const formData = new FormData();
         formData.append('title', manualLink.title);
         formData.append('url', manualLink.url);
         formData.append('user_id', store.currentUser.id);
-
         await uploadTaskLinkAPI(route.params.id, formData);
-
-        // Load lại danh sách tài liệu
         await fetchTaskFiles();
-
-        // Reset input
         manualLink.title = '';
         manualLink.url = '';
     };
@@ -1003,7 +986,7 @@
         if (window.history.length > 1) {
             router.back();
         } else {
-            router.push('/internal-tasks'); // fallback nếu không có trang trước
+            router.push('/internal-tasks');
         }
     }
 
@@ -1035,7 +1018,7 @@
             await fetchTaskFiles()
             await fetchLogHistory()
             await fetchExtensions();
-            await fetchExtensionHistory(); // ✅ Thêm vào đây
+            await fetchExtensionHistory();
             handleChangeLinkedId()
 
         } catch (e) {

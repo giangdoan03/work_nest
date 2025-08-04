@@ -26,53 +26,33 @@
                 <a-space>
                     <!-- Lọc theo loại -->
                     <a-button-group>
-                        <a-button
-                                :type="dataFilter.linked_type === null ? 'primary' : 'default'"
-                                @click="filterByType(null)"
-                        >Tất cả
+                        <a-button :type="dataFilter.linked_type === null ? 'primary' : 'default'"
+                                  @click="filterByType(null)">Tất cả
                         </a-button>
-                        <a-button
-                                :type="dataFilter.linked_type === 'bidding' ? 'primary' : 'default'"
-                                @click="filterByType('bidding')"
-                        >Gói thầu
+                        <a-button :type="dataFilter.linked_type === 'bidding' ? 'primary' : 'default'"
+                                  @click="filterByType('bidding')">Gói thầu
                         </a-button>
-                        <a-button
-                                :type="dataFilter.linked_type === 'contract' ? 'primary' : 'default'"
-                                @click="filterByType('contract')"
-                        >Hợp đồng
+                        <a-button :type="dataFilter.linked_type === 'contract' ? 'primary' : 'default'"
+                                  @click="filterByType('contract')">Hợp đồng
                         </a-button>
-                        <a-button
-                                :type="dataFilter.linked_type === 'internal' ? 'primary' : 'default'"
-                                @click="filterByType('internal')"
-                        >Nội bộ
+                        <a-button :type="dataFilter.linked_type === 'internal' ? 'primary' : 'default'"
+                                  @click="filterByType('internal')">Nội bộ
                         </a-button>
                     </a-button-group>
 
                     <!-- Lọc theo độ ưu tiên -->
                     <a-button-group>
-                        <a-button
-                                :type="dataFilter.priority === null ? 'primary' : 'default'"
-                                @click="filterByPriority(null)"
-                        >Tất cả
+                        <a-button :type="dataFilter.priority === null ? 'primary' : 'default'"
+                                  @click="filterByPriority(null)">Tất cả
                         </a-button>
-                        <a-button
-                                :type="dataFilter.priority === 'low' ? 'primary' : 'default'"
-                                danger
-                                ghost
-                                @click="filterByPriority('low')"
-                        >Thấp
+                        <a-button :type="dataFilter.priority === 'low' ? 'primary' : 'default'" danger ghost
+                                  @click="filterByPriority('low')">Thấp
                         </a-button>
-                        <a-button
-                                :type="dataFilter.priority === 'normal' ? 'primary' : 'default'"
-                                @click="filterByPriority('normal')"
-                                style="background: #faad14; color: white"
-                        >Thường
+                        <a-button :type="dataFilter.priority === 'normal' ? 'primary' : 'default'"
+                                  @click="filterByPriority('normal')" style="background: #faad14; color: white">Thường
                         </a-button>
-                        <a-button
-                                :type="dataFilter.priority === 'high' ? 'primary' : 'default'"
-                                @click="filterByPriority('high')"
-                                style="background: #f5222d; color: white"
-                        >Cao
+                        <a-button :type="dataFilter.priority === 'high' ? 'primary' : 'default'"
+                                  @click="filterByPriority('high')" style="background: #f5222d; color: white">Cao
                         </a-button>
                     </a-button-group>
                 </a-space>
@@ -81,12 +61,8 @@
 
         <a-row :gutter="[14,14]" style="margin-top: 10px;">
             <a-col :span="4">
-                <a-input
-                        v-model:value="dataFilter.title"
-                        placeholder="Tìm việc theo tiêu đề"
-                        allow-clear
-                        @input="onTitleSearch"
-                />
+                <a-input v-model:value="dataFilter.title" placeholder="Tìm việc theo tiêu đề" allow-clear
+                         @input="onTitleSearch"/>
             </a-col>
             <a-col :span="4">
                 <a-select
@@ -133,22 +109,28 @@
             </a-col>
         </a-row>
 
-        <a-table :columns="columns" :data-source="tableData" :loading="loading" @change="handleTableChange"
-                 :pagination="pagination" :row-selection="rowSelection"
-                 style="margin-top: 8px;" row-key="id" :scroll="{ x: 'max-content', y: 'calc(100vh - 360px)' }">
+        <a-table
+                :columns="columns"
+                :data-source="tableData"
+                :loading="loading"
+                @change="handleTableChange"
+                :pagination="pagination"
+                :row-selection="rowSelection"
+                style="margin-top: 8px;table-layout: fixed;"
+                row-key="id"
+                :scroll="{ x: 'max-content', y: 'calc(100vh - 360px)' }"
+                class="custom_table_list_task"
+        >
             <template #bodyCell="{ column, record, index, text }">
                 <template v-if="column.dataIndex === 'title'">
                     <a-tooltip :title="text">
-                        <a-typography-text
-                                strong
-                                style="cursor: pointer; display: inline-block; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
-                                @click="showPopupDetail(record)"
-                        >
+                        <a-typography-text strong
+                                           style="cursor: pointer; display: inline-block; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                                           @click="showPopupDetail(record)">
                             {{ text }}
                         </a-typography-text>
                     </a-tooltip>
                 </template>
-
 
                 <template v-if="column.dataIndex === 'priority'">
                     <a-tag v-if="text" :color="checkPriority(text).color">{{ checkPriority(text).title }}</a-tag>
@@ -156,26 +138,18 @@
 
                 <template v-if="column.dataIndex === 'assigned_to'">
                     <a-tooltip :title="record.assignee?.name || '—'">
-                        <a-avatar
-                                size="large"
-                                :style="{
-        backgroundColor: getAvatarColor(record.assignee?.name),
-        verticalAlign: 'middle',
-        cursor: 'default'
-      }"
-                        >
+                        <a-avatar size="large"
+                                  :style="{ backgroundColor: getAvatarColor(record.assignee?.name),verticalAlign: 'middle',cursor: 'default'}">
                             {{ record.assignee?.name?.charAt(0).toUpperCase() || '?' }}
                         </a-avatar>
                     </a-tooltip>
                 </template>
-
 
                 <template v-if="column.dataIndex === 'linked_type'">
                     <a-tag :color="getLinkedTypeTag(text).color" style="cursor: pointer;">
                         {{ getLinkedTypeTag(text).label }}
                     </a-tag>
                 </template>
-
 
                 <template v-if="column.dataIndex === 'linked_id'">
                     <a-tooltip :title="getLinkedName(record.linked_type, text)">
@@ -188,22 +162,18 @@
                 </template>
 
                 <template v-if="column.dataIndex === 'step_info'">
-                    <a-tooltip
-                            :title="getLinkedName(record.linked_type, record.linked_id)
-                          ? 'Thuộc: ' + getLinkedName(record.linked_type, record.linked_id)
-                          : ''"
-                    >
-                        <span
-                                v-if="record.step_code"
-                                style="color: #1890ff; cursor: pointer;"
-                                @click="goToLinkedDetail(record)"
-                        >
+                    <div class="step_info_title">
+                        <a-tooltip :title="getLinkedName(record.linked_type, record.linked_id)
+                          ? 'Thuộc: ' + getLinkedName(record.linked_type, record.linked_id): ''">
+                        <span v-if="record.step_code" style="color: #1890ff; cursor: pointer;"
+                              @click="goToLinkedDetail(record)">
                           B{{ record.step_code }} - {{ record.step_name || '—' }}
                         </span>
-                        <span v-else>
+                            <span v-else>
                           {{ record.step_name || '—' }}
                         </span>
-                    </a-tooltip>
+                        </a-tooltip>
+                    </div>
                 </template>
 
                 <template v-if="column.dataIndex === 'progress'">
@@ -236,6 +206,12 @@
                         —
                     </a-tag>
                 </template>
+                <template v-if="column.dataIndex === 'status'">
+                    <a-tag :color="getStatusColor(text)">
+                        {{ getStatusLabel(text) }}
+                    </a-tag>
+                </template>
+
                 <template v-else-if="column.dataIndex === 'action'">
                     <a-dropdown placement="left" :trigger="['click']"
                                 :getPopupContainer="triggerNode => triggerNode.parentNode">
@@ -291,7 +267,7 @@
     import DrawerCreateTask from "../components/common/DrawerCreateTask.vue";
     import viVN from 'ant-design-vue/es/locale/vi_VN';
     import {debounce} from 'lodash-es'
-    import { formatDate } from '@/utils/formUtils'
+    import {formatDate} from '@/utils/formUtils'
 
     import {getBiddingsAPI} from '@/api/bidding.js'
     import {getContractsAPI} from '@/api/contract.js'
@@ -310,8 +286,8 @@
         priority: null,
         assigned_to: null,
         due_date: null,
-        start_date: null, // bắt đầu lọc theo khoảng
-        end_date: null,   // kết thúc lọc theo khoảng
+        start_date: null,
+        end_date: null,
         title: '',
         page: 1,
         per_page: 10
@@ -332,10 +308,7 @@
     }, 500)
 
     const dateRange = ref([])
-
     const totalTasks = computed(() => pagination.value.total)
-
-
     const filteredCount = computed(() => tableData.value.length)
 
     const getAvatarColor = (name) => {
@@ -366,9 +339,7 @@
 
     const handleBulkDelete = async () => {
         try {
-            await Promise.all(
-                selectedRowKeys.value.map(id => deleteTask(id))
-            )
+            await Promise.all(selectedRowKeys.value.map(id => deleteTask(id)))
             message.success(`Đã xoá ${selectedRowKeys.value.length} nhiệm vụ`)
             selectedRowKeys.value = []
             await getInternalTask()
@@ -430,22 +401,15 @@
     })
 
     const columns = [
-        { title: 'Tên nhiệm vụ', dataIndex: 'title', key: 'title', width: 250, ellipsis: true },
-        { title: 'Bước tiến trình', dataIndex: 'step_info', key: 'step_info', width: 200, ellipsis: true },
+        {title: 'Tên nhiệm vụ', dataIndex: 'title', key: 'title', width: 250, ellipsis: true},
+        {title: 'Bước tiến trình', dataIndex: 'step_info', key: 'step_info', width: 200, ellipsis: true},
         {title: 'Loại Task', dataIndex: 'linked_type', key: 'linked_type'},
         // { title: 'Gói thầu || Hợp đồng', dataIndex: 'linked_id', key: 'linked_id' },
         {title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority'},
         {title: 'Người thực hiện', dataIndex: 'assigned_to', key: 'assigned_to', width: 140,},
-
-        // ✅ Thêm cột ngày bắt đầu
         {title: 'Bắt đầu', dataIndex: 'start_date', key: 'start_date'},
-
-        // ✅ Thêm cột ngày kết thúc
         {title: 'Kết thúc', dataIndex: 'end_date', key: 'end_date'},
-
         {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: 200,},
-
-        // ✅ Thêm cột hạn
         {
             title: 'Hạn',
             dataIndex: 'deadline',
@@ -462,6 +426,12 @@
                     return '—';
                 }
             }
+        },
+        {
+            title: 'Trạng thái',
+            dataIndex: 'status',
+            key: 'status',
+            width: 120,
         },
 
         {title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px', align: 'center'},
@@ -643,6 +613,41 @@
         dataFilter.value.per_page = pager.pageSize
         getInternalTask()
     }
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'todo':
+                return 'default';
+            case 'doing':
+                return 'blue';
+            case 'done':
+                return 'green';
+            case 'overdue':
+                return 'red';
+            case 'request_approval':
+                return 'orange';
+            default:
+                return 'default';
+        }
+    };
+
+    const getStatusLabel = (status) => {
+        switch (status) {
+            case 'todo':
+                return 'Chưa bắt đầu';
+            case 'doing':
+                return 'Đang thực hiện';
+            case 'done':
+                return 'Hoàn thành';
+            case 'overdue':
+                return 'Quá hạn';
+            case 'request_approval':
+                return 'Chờ phê duyệt';
+            default:
+                return 'Không rõ';
+        }
+    };
+
     onMounted(() => {
         getInternalTask();
         getUser();
@@ -651,6 +656,20 @@
         getContracts()
     })
 </script>
+
+<style>
+    .custom_table_list_task td {
+        white-space: normal !important;
+    }
+    .step_info_title span {
+        display: inline-block;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+</style>
+
 <style scoped>
     :deep(.ant-pagination) {
         margin-bottom: 0 !important;
