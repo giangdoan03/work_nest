@@ -272,6 +272,9 @@
     import {getBiddingsAPI} from '@/api/bidding.js'
     import {getContractsAPI} from '@/api/contract.js'
 
+    import { useUserStore } from '@/stores/user'
+    const userStore = useUserStore()
+
     const locale = ref(viVN);
     const router = useRouter()
     const tableData = ref([])
@@ -449,6 +452,23 @@
     const getInternalTask = async () => {
         loading.value = true
         try {
+            const user = userStore.currentUser;
+
+            console.log('user', user)
+
+            // Xóa filter cũ (tránh chồng chéo)
+            dataFilter.value.assigned_to = null
+            dataFilter.value.id_department = null
+
+            // 👇 Phân quyền lọc theo vai trò
+            const roleId = Number(user?.role_id)
+            if (roleId === 3) {
+                dataFilter.value.assigned_to = user.id
+            } else if (roleId === 2) {
+                dataFilter.value.id_department = user.department_id
+            }
+            // Admin không cần giới hạn
+
             const response = await getTasks(dataFilter.value)
 
             tableData.value = response.data.data ?? []
@@ -466,6 +486,8 @@
             loading.value = false
         }
     }
+
+
     const listBidding = ref([])
     const listContract = ref([])
 

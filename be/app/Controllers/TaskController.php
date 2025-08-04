@@ -28,79 +28,71 @@ class TaskController extends ResourceController
     {
         $builder = $this->model->builder();
 
-        // Select tasks + assignee name
+        // Lấy input một lần duy nhất
+        $params = $this->request->getGet();
+
+        // Select + join
         $builder->select('tasks.*, tasks.id as task_id, users.id as assignee_id, users.name as assignee_name');
-        $builder->join('users', 'users.id = tasks.assigned_to', 'left'); // Luôn join để có name
+        $builder->join('users', 'users.id = tasks.assigned_to', 'left');
 
         // Bộ lọc
-        if ($assigned = $this->request->getGet('assigned_to')) {
-            $builder->where('assigned_to', $assigned);
+        if (!empty($params['assigned_to'])) {
+            $builder->where('tasks.assigned_to', $params['assigned_to']);
         }
 
-        if ($created_by = $this->request->getGet('created_by')) {
-            $builder->where('created_by', $created_by);
+        if (!empty($params['created_by'])) {
+            $builder->where('created_by', $params['created_by']);
         }
 
-        if ($priority = $this->request->getGet('priority')) {
-            $builder->where('priority', $priority);
+        if (!empty($params['priority'])) {
+            $builder->where('priority', $params['priority']);
         }
 
-        if ($status = $this->request->getGet('status')) {
-            $builder->where('status', $status);
+        if (!empty($params['status'])) {
+            $builder->where('status', $params['status']);
         }
 
-        if ($end_date = $this->request->getGet('end_date')) {
-            $builder->where('end_date <=', $end_date);
+        if (!empty($params['linked_type'])) {
+            $builder->where('linked_type', $params['linked_type']);
         }
 
-        if ($linked_type = $this->request->getGet('linked_type')) {
-            $builder->where('linked_type', $linked_type);
+        if (!empty($params['id_department'])) {
+            $builder->where('users.department_id', $params['id_department']);
         }
 
-        if ($department = $this->request->getGet('id_department')) {
-            $builder->where('users.department_id', $department);
+        if (!empty($params['title'])) {
+            $builder->like('tasks.title', $params['title']);
         }
 
-        if ($title = $this->request->getGet('title')) {
-            $builder->like('tasks.title', $title);
+        if (!empty($params['start_date'])) {
+            $builder->where('start_date >=', $params['start_date']);
         }
 
-        if ($start_date = $this->request->getGet('start_date')) {
-            $builder->where('start_date >=', $start_date);
-        }
-
-        if ($end_date = $this->request->getGet('end_date')) {
-            $builder->where('end_date <=', $end_date);
+        if (!empty($params['end_date'])) {
+            $builder->where('end_date <=', $params['end_date']);
         }
 
         // Phân trang
+        $page    = (int)($params['page'] ?? 1);
+        $perPage = (int)($params['per_page'] ?? 10);
+        $offset  = ($page - 1) * $perPage;
+
         $totalBuilder = clone $builder;
         $total = $totalBuilder->countAllResults(false);
-
-        $page     = (int) ($this->request->getGet('page') ?? 1);
-        $perPage  = (int) ($this->request->getGet('per_page') ?? 10);
-        $offset   = ($page - 1) * $perPage;
 
         $builder->limit($perPage, $offset);
         $tasks = $builder->get()->getResultArray();
 
-        // Bản đồ bước quy trình
-        $contractStepTemplates = (new ContractStepTemplateModel())->findAll();
-        $biddingStepTemplates  = (new BiddingStepTemplateModel())->findAll();
+        // Lấy bước tiến trình cho contract & bidding
+        $contractSteps = (new ContractStepTemplateModel())->findAll();
+        $biddingSteps  = (new BiddingStepTemplateModel())->findAll();
 
-        $contractMap = [];
-        foreach ($contractStepTemplates as $row) {
-            $contractMap[$row['step_number']] = $row['title'];
-        }
+        $contractMap = array_column($contractSteps, 'title', 'step_number');
+        $biddingMap  = array_column($biddingSteps, 'title', 'step_number');
 
-        $biddingMap = [];
-        foreach ($biddingStepTemplates as $row) {
-            $biddingMap[$row['step_number']] = $row['title'];
-        }
-
-        // Gắn step_name và assignee
+        // Xử lý dữ liệu đầu ra
         foreach ($tasks as &$task) {
-            $stepCode = (int) ($task['step_code'] ?? 0);
+            $stepCode = (int)($task['step_code'] ?? 0);
             if ($task['linked_type'] === 'contract') {
                 $task['step_name'] = $contractMap[$stepCode] ?? null;
             } elseif ($task['linked_type'] === 'bidding') {
@@ -109,19 +101,15 @@ class TaskController extends ResourceController
                 $task['step_name'] = null;
             }
 
-            // Gắn assignee dạng object
             $task['assignee'] = [
                 'id' => $task['assignee_id'] ?? null,
                 'name' => $task['assignee_name'] ?? 'Chưa có'
             ];
 
-            // ✅ Tính ngày còn lại hoặc quá hạn
             $diff = calculateDeadlineDiff($task['end_date']);
             $task['days_remaining'] = $diff['days_remaining'];
             $task['days_overdue']   = $diff['days_overdue'];
 
-
-            // Dọn biến phụ
             unset($task['assignee_id'], $task['assignee_name']);
         }
 
@@ -136,6 +124,7 @@ class TaskController extends ResourceController
             ]
         ]);
     }
+
 
 
     /**
@@ -432,13 +421,57 @@ class TaskController extends ResourceController
 
     public function byBiddingStep($step_id): ResponseInterface
     {
-        $tasks = $this->model->where('step_id', $step_id)->findAll();
+        $params = $this->request->getGet(); // lấy các query param
+        $builder = $this->model->builder();
+
+        $builder->select('tasks.*, users.name as assignee_name');
+        $builder->join('users', 'users.id = tasks.assigned_to', 'left');
+
+        $builder->where('step_id', $step_id);
+
+        // Áp dụng các bộ lọc nếu có
+        if (!empty($params['assigned_to'])) {
+            $builder->where('tasks.assigned_to', $params['assigned_to']);
+        }
+
+        if (!empty($params['id_department'])) {
+            $builder->where('users.department_id', $params['id_department']);
+        }
+
+        $tasks = $builder->get()->getResultArray();
+
         return $this->respond($tasks);
     }
 
+
     public function byContractStep($step_id): ResponseInterface
     {
-        $tasks = $this->model->where('step_id', $step_id)->findAll();
+        $params = $this->request->getGet(); // lấy query string
+        $builder = $this->model->builder();
+
+        $builder->select('tasks.*, users.name as assignee_name, users.id as assignee_id');
+        $builder->join('users', 'users.id = tasks.assigned_to', 'left');
+        $builder->where('tasks.step_id', $step_id);
+
+        if (!empty($params['assigned_to'])) {
+            $builder->where('tasks.assigned_to', $params['assigned_to']);
+        }
+
+        if (!empty($params['id_department'])) {
+            $builder->where('users.department_id', $params['id_department']);
+        }
+
+        $tasks = $builder->get()->getResultArray();
+
+        // Định dạng giống API chính
+        foreach ($tasks as &$task) {
+            $task['assignee'] = [
+                'id' => $task['assignee_id'] ?? null,
+                'name' => $task['assignee_name'] ?? 'Chưa có'
+            ];
+            unset($task['assignee_id'], $task['assignee_name']);
+        }
+
         return $this->respond($tasks);
     }
 

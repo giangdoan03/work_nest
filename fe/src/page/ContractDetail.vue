@@ -275,6 +275,10 @@
     } from '@/api/contract-steps'
     import {getTaskDetail, getTasks, getTasksByBiddingStep, getTasksByContractStep} from '@/api/task' // giả sử bạn có API như vậy
 
+    import { useUserStore } from '@/stores/user'
+    const userStore = useUserStore()
+    const user = userStore.currentUser
+
     import {getCustomers} from '@/api/customer'
     import {getUsers} from '@/api/user.js'
     const openDrawer = ref(false)
@@ -363,24 +367,36 @@
     }
 
     const openStepDrawer = async (step) => {
-        selectedStep.value = {...step}
-        stepStore.setSelectedStep({ ...step }) // ← Lưu vào store
+        selectedStep.value = { ...step }
+        stepStore.setSelectedStep({ ...step })
         drawerVisible.value = true
 
+        const user = userStore.currentUser
+        const dataFilter = {}
+
+        console.log('🔑 userxxx', user)
+
+        if (String(user?.role_id) === '3') {
+            // Nhân viên → chỉ xem nhiệm vụ của mình
+            dataFilter.assigned_to = user.id
+        } else if (String(user?.role_id) === '2') {
+            // Trưởng phòng → xem được nhiệm vụ của cả phòng
+            dataFilter.id_department = user.department_id
+        }
+
+        console.log('📤 dataFilter', dataFilter)
+
         try {
-            const res = await getTasksByContractStep(step.id)
+            const res = await getTasksByContractStep(step.id, dataFilter)
             stepStore.setRelatedTasks(Array.isArray(res.data) ? res.data : [])
-
-            setTimeout(() => {
-                console.log('🔍 Tasks trong store sau openStepDrawer:', stepStore.relatedTasks)
-            }, 50)
-
         } catch (e) {
-            console.error('Không thể tải công việc của bước', e)
+            console.error('❌ Không thể tải công việc của bước', e)
             message.error('Không thể tải danh sách công việc')
             stepStore.setRelatedTasks([])
         }
     }
+
+
 
     const showPopupCreate = () => {
         openDrawer.value = true
@@ -650,11 +666,26 @@
 
 
     const fetchTasks = async () => {
+        const user = userStore.currentUser
+        const dataFilter = {
+            linked_type: 'contract'
+        }
+
+        if (String(user?.role_id) === '3') {
+            // Nhân viên → chỉ xem nhiệm vụ của mình
+            dataFilter.assigned_to = user.id
+        } else if (String(user?.role_id) === '2') {
+            // Trưởng phòng → xem nhiệm vụ trong phòng
+            dataFilter.id_department = user.department_id
+        }
+        // Admin (role_id === '1') → không cần lọc thêm
+
         try {
-            const res = await getTasks({linked_type: 'contract'}) // ✅ đúng format
+            const res = await getTasks(dataFilter)
             allTasks.value = res.data?.data || []
         } catch (e) {
             console.error('Không thể tải danh sách task', e)
+            message.error('Không thể tải danh sách nhiệm vụ')
         }
     }
 

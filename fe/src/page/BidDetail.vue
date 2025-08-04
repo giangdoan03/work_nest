@@ -342,6 +342,10 @@ const users = ref([])
 const openDrawer = ref(false)
 const listUser = ref([])
 
+import { useUserStore } from '@/stores/user'
+const userStore = useUserStore()
+const user = userStore.currentUser
+
 
 import {getTasks, getTasksByBiddingStep} from '@/api/task'
 import DrawerCreateTask from "@/components/common/DrawerCreateTask.vue"; // nếu chưa import
@@ -469,17 +473,25 @@ const disabledDate = current => {
 
 const openStepDrawer = async (step) => {
     selectedStep.value = { ...step }
-    stepStore.setSelectedStep({ ...step }) // ← Lưu vào store
+    stepStore.setSelectedStep({ ...step })
     drawerVisible.value = true
 
-    try {
-        const res = await getTasksByBiddingStep(step.id)
-        stepStore.setRelatedTasks(Array.isArray(res.data) ? res.data : [])
+    const dataFilter = {}
 
-        // Debug
-        setTimeout(() => {
-            console.log('🔍 Tasks trong store sau openStepDrawer:', stepStore.relatedTasks)
-        }, 50)
+    console.log('user', user)
+
+    if (String(user.role_id) === '3') {
+        // Nhân viên → chỉ xem nhiệm vụ của mình
+        dataFilter.assigned_to = user.id
+    } else if (String(user.role_id) === '2') {
+        // Trưởng phòng → xem được nhiệm vụ của cả phòng
+        dataFilter.id_department = user.department_id
+    }
+
+    console.log('dataFilter',dataFilter)
+    try {
+        const res = await getTasksByBiddingStep(step.id, dataFilter)
+        stepStore.setRelatedTasks(Array.isArray(res.data) ? res.data : [])
     } catch (e) {
         console.error('❌ Không thể tải công việc của bước', e)
         stepStore.setRelatedTasks([])

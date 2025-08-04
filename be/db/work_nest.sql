@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Aug 04, 2025 at 06:53 AM
+-- Generation Time: Aug 04, 2025 at 09:31 AM
 -- Server version: 8.4.3
 -- PHP Version: 8.3.16
 
@@ -307,7 +307,7 @@ INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `start_
 (259, 9, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 15:07:34', '2025-07-20 09:38:40', 0, 8, NULL, 46),
 (260, 9, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 15:07:34', '2025-07-20 09:37:49', 0, 8, NULL, 38),
 (261, 9, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 15:07:34', '2025-07-20 09:38:04', 0, 8, NULL, 39),
-(264, 34, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 15:21:11', '2025-07-20 09:38:27', 2, 1, 6, 42),
+(264, 34, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 15:21:11', '2025-08-04 09:13:26', 2, 1, 6, 42),
 (265, 34, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 15:21:11', '2025-07-06 17:05:22', 2, 1, 8, 3),
 (266, 34, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 15:21:11', '2025-06-29 17:12:28', 2, 1, 7, 16),
 (267, 34, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 15:21:11', '2025-06-29 17:12:28', 2, 1, 20, 5),
@@ -1266,7 +1266,7 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (39, NULL, 'duyệt hợp đồng mua', 'duyệt hợp đồng mua', 21, 4, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 12, 261, 1, 'high', 0, '2025-06-30 09:48:27', '2025-07-20 15:21:54', 1, 1, 2, 0, NULL),
 (40, NULL, 'nhiệm vụ cho gói thầu 1', 'test chấm thầu', 4, 1, '2025-07-10', '2025-08-05', 'doing', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-06-30 09:54:52', '2025-07-20 15:21:54', 1, 1, 2, 0, NULL),
 (41, NULL, 'nhiệm vụ hợp đồng 2', 'nghiệm thu', 23, 1, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 16, 265, 1, 'normal', 0, '2025-06-30 09:58:15', '2025-07-20 15:21:54', 1, 1, 4, 0, NULL),
-(42, NULL, 'test nhiệm vụ hợp đồng 4', 'kiểm tra hàng hóa', 1, 4, '2025-08-13', '2025-08-21', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'high', 0, '2025-06-30 10:05:48', '2025-07-20 15:21:54', 1, 1, 4, 0, NULL),
+(42, NULL, 'test nhiệm vụ hợp đồng 4', 'kiểm tra hàng hóa', 5, 4, '2025-08-13', '2025-08-21', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'high', 0, '2025-06-30 10:05:48', '2025-07-20 15:21:54', 1, 1, 4, 0, NULL),
 (43, NULL, 'test nhiệm vụ hợp đồng 5', 'kiểm tra hàng hóa', 1, 2, '2025-07-01', '2025-08-31', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'normal', 0, '2025-06-30 10:10:57', '2025-07-20 15:21:54', 1, 1, 1, 0, NULL),
 (44, NULL, 'test nhiệm vụ hợp đồng 6', 'nghiệm thu', 24, 2, '2025-07-01', '2025-08-31', 'doing', 'pending', 'contract', 33, 16, 316, 1, 'normal', 0, '2025-06-30 10:12:22', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
 (45, NULL, 'test nhiệm vụ gói thầu 7', 'chấm thầu', 24, 2, '2025-07-31', '2025-08-29', 'doing', 'pending', 'bidding', 3, 6, 123, 1, 'high', 0, '2025-06-30 10:13:58', '2025-07-20 15:21:54', 1, 1, 3, 0, NULL),
@@ -1315,7 +1315,11 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (88, NULL, 'nhập kho hàng 2', '4324424', 23, 20, '2025-08-01', '2025-09-30', '', 'pending', 'contract', 30, 18, 267, 1, 'high', 0, '2025-08-01 02:00:26', '2025-08-01 02:00:26', 0, 1, 4, 0, NULL),
 (89, NULL, 'đánh giá 1', 'ưqeqeqeqe', 12, 5, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 2, 110, 1, 'normal', 0, '2025-08-01 02:03:52', '2025-08-01 02:03:52', 0, 1, 5, 0, NULL),
 (90, NULL, 'nội bộ 01/08/2025', '342342424', 23, 21, '2025-08-01', '2025-09-30', 'todo', 'pending', 'internal', NULL, 1, 109, 1, 'normal', 0, '2025-08-01 02:04:48', '2025-08-01 02:04:48', 0, 1, 1, 0, NULL),
-(91, NULL, 'tiếp nhận thông tin khách hàng 1', '342343242424', 19, 23, '2025-08-02', '2025-09-30', 'todo', 'pending', 'bidding', 11, 1, 91, 1, 'normal', 0, '2025-08-01 21:29:09', '2025-08-01 21:29:09', 0, 1, 3, 0, NULL);
+(91, NULL, 'tiếp nhận thông tin khách hàng 1', '342343242424', 19, 23, '2025-08-02', '2025-09-30', 'todo', 'pending', 'bidding', 11, 1, 91, 1, 'normal', 0, '2025-08-01 21:29:09', '2025-08-01 21:29:09', 0, 1, 3, 0, NULL),
+(92, NULL, 'test nhiệm vụ', '234342424', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'contract', 30, 18, 267, 1, 'normal', 0, '2025-08-04 02:14:19', '2025-08-04 02:14:19', 0, 1, 3, 0, NULL),
+(93, NULL, 'test nhiệm vụ', '343242424', 5, 5, '2025-08-04', '2025-09-30', 'todo', 'pending', 'contract', 34, 10, 259, 1, 'normal', 0, '2025-08-04 02:18:42', '2025-08-04 02:18:42', 0, 1, 2, 0, NULL),
+(94, NULL, 'test nhiệm cho 04/08', '42344242', 4, 4, '2025-08-04', '2025-09-30', 'todo', 'pending', 'contract', 31, 10, 276, 1, 'normal', 0, '2025-08-04 02:23:38', '2025-08-04 02:23:38', 0, 1, 4, 0, NULL),
+(95, NULL, 'test nhiệm vụ của Ái', '342432243432', 1, 1, '2025-08-04', '2025-09-30', 'todo', 'pending', 'contract', 31, 10, 276, 1, 'normal', 0, '2025-08-04 02:31:25', '2025-08-04 02:31:25', 0, 1, 2, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -1537,9 +1541,9 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `name`, `phone`, `avatar`, `role`, `department_id`, `role_id`) VALUES
-(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-08-04 10:53:56', 'Nguyễn Văn A', '0988888888', 'avatars/1749049795_4087ec00b95ac222533a.png', 'Trưởng phòng', 1, 2),
+(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-08-04 16:27:20', 'Nguyễn Văn Ái', '0988888888', 'avatars/1749049795_4087ec00b95ac222533a.png', 'Trưởng phòng', 1, 2),
 (3, 'superadmin@example.com', '$2y$10$kJ6V.Isy8GCV6kRwFekdEuS/PvVzBe4PTeQUqpWvnW3efeyhbg4Hq', '2025-04-20 14:02:38', '2025-07-14 22:52:57', 'Super Admin', '0988888888', NULL, 'super admin', 2, 1),
-(4, 'nguyenvana@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-05-26 04:33:21', '2025-08-04 10:54:09', 'Nguyễn Văn A', '0909123456', NULL, 'Nhân viên', 2, 3),
+(4, 'nguyenvana@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-05-26 04:33:21', '2025-08-04 16:27:31', 'Nguyễn Văn Tuấn', '0909123456', NULL, 'Nhân viên', 2, 3),
 (5, 'a@worknest.vn', '$2y$10$fPUyT/hhSHhPknmvWgPtxelsaQfNLRiOVZ3Wayj2tbcNo4lApUFEW', '2025-06-04 09:10:50', '2025-08-04 06:31:02', 'Nguyễn Vân Anh', '0911111111', NULL, 'user', 1, 3),
 (6, 'b@worknest.vn', '$2y$10$ZKKb/DZ/dk0eFQW/xfG3Ne8Ozrdt1TcQcR1alq4KP5biJpmUm2Uuy', '2025-06-04 09:11:21', '2025-08-04 06:31:07', 'Trần Thị B', '0911111112', NULL, 'user', 1, 2),
 (7, 'c@worknest.vn', '$2y$10$0M2AJM7k/CXzGKJCeeEh1.g2tFjFCZfeOLDGKqGgm3dUHqqpNtciW', '2025-06-04 09:11:44', '2025-08-04 06:31:16', 'Lê Văn C', '0911111113', NULL, 'user', 2, 3),
@@ -1874,7 +1878,7 @@ ALTER TABLE `step_templates`
 -- AUTO_INCREMENT for table `tasks`
 --
 ALTER TABLE `tasks`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=96;
 
 --
 -- AUTO_INCREMENT for table `task_approvals`
