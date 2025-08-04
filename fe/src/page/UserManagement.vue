@@ -19,6 +19,9 @@
                 <template v-if="column.dataIndex === 'department'">
                     {{ getNameDepartments(record.department_id) }}
                 </template>
+                <template v-if="column.dataIndex === 'role'">
+                    {{ getRoleName(record.role_id) }}
+                </template>
                 <template v-else-if="column.dataIndex === 'action'">
                     <a-space>
                         <!-- Xem chi tiết -->
@@ -87,8 +90,20 @@
                     </a-col>
                 </a-row>
                 <a-row :gutter="16">
+                    <a-col :span="24">
+                        <a-form-item label="Loại tài khoản" name="role_id">
+                            <a-select
+                                    v-model:value="formData.role_id"
+                                    :options="roles"
+                                    placeholder="Chọn loại tài khoản"
+                            />
+                        </a-form-item>
+                    </a-col>
+                </a-row>
+
+                <a-row :gutter="16">
                     <a-col :span="12">
-                        <a-form-item name="password">
+                        <a-form-item>
                             <a-checkbox v-model:checked="changePassword">Đổi mật khẩu</a-checkbox>
                         </a-form-item>
                     </a-col>
@@ -118,12 +133,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { getUsers, createUser, updateUser, deleteUser } from '../api/user'
 import { getDepartments } from '@/api/department'
 import { message } from 'ant-design-vue'
 import { EditOutlined, DeleteOutlined, MoreOutlined, EyeOutlined } from '@ant-design/icons-vue';
 import { useRouter } from 'vue-router'
+import {getRoles} from "../api/permission";
 const router = useRouter()
 
 const formRef = ref(null);
@@ -140,8 +156,15 @@ const formData = ref({
     phone: "",
     password: "",
     department_id: null,
+    role_id: null,
     confirm_password: "",
 })
+
+const roles = ref([
+    { label: 'Super Admin', value: 1 },
+    { label: 'Trưởng phòng', value: 2 },
+    { label: 'Nhân viên', value: 3 },
+])
 
 const columns = [
     { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
@@ -149,6 +172,7 @@ const columns = [
     { title: 'Email', dataIndex: 'email', key: 'email' },
     { title: 'Số điện thoại', dataIndex: 'phone', key: 'phone' },
     { title: 'Phòng ban', dataIndex: 'department', key: 'department' },
+    { title: 'Quyền', dataIndex: 'role', key: 'role' },
     { title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px', align:'center' },
 ]
 
@@ -223,7 +247,8 @@ const rules = computed(() => {
         name: [{ required: true, validator: validateName, trigger: 'change' }],
         email: [{ required: true, validator: validateEmail, trigger: 'change' }],
         phone: [{ required: true, validator: validatePhone, trigger: 'change' }],
-        department: [{ required: true, validator: validateDepartment, trigger: 'change' }]
+        department: [{ required: true, validator: validateDepartment, trigger: 'change' }],
+        role_id: [{ required: true, validator: validateRole, trigger: 'change' }],
     };
 
     if (!selectedUser.value || changePassword.value) {
@@ -234,6 +259,33 @@ const rules = computed(() => {
     return base;
 });
 
+const validateRole = async (_rule, value) => {
+    if (!value) {
+        return Promise.reject('Vui lòng chọn loại tài khoản');
+    } else {
+        return Promise.resolve();
+    }
+};
+
+const getListRoles = async () => {
+    const res = await getRoles(); // Tạo API tương ứng trong backend
+    if (res.data) {
+        roles.value = res.data.map(r => ({
+            label: r.description,
+            value: Number(r.id),
+        }));
+    }
+}
+
+const roleMap = computed(() => {
+    const map = new Map();
+    roles.value.forEach(role => map.set(role.value, role.label));
+    return map;
+});
+
+const getRoleName = (id) => {
+    return roleMap.value.get(Number(id)) || '';
+};
 
 const optionsDepartment = computed(() =>{
     if (!departments.value) {
@@ -252,13 +304,17 @@ const getUser = async () => {
     loading.value = true
     try {
         const response = await getUsers();
-        tableData.value = response.data;
+        tableData.value = response.data.map(user => ({
+            ...user,
+            role_name: getRoleName(user.role_id),
+        }));
     } catch (e) {
-        message.error('Không thể tải người dùng')
+        message.error('Không thể tải người dùng');
     } finally {
         loading.value = false
     }
 }
+
 
 const goToUserDetail = (id) => {
     router.push(`/users/${id}`)
@@ -329,22 +385,32 @@ const deleteConfirm = async (userId) => {
 }
 
 const showPopupDetail = async (record) => {
+    // ✅ Đảm bảo roles có sẵn
+    if (roles.value.length === 0) {
+        await getListRoles(); // chờ load roles xong
+    }
+
     selectedUser.value = record;
+
+    // ép kiểu nếu cần
     formData.value.name = record.name;
     formData.value.email = record.email;
     formData.value.phone = record.phone;
     formData.value.department_id = record.department_id;
+    formData.value.role_id = Number(record.role_id); // ✅ ép kiểu cho chắc
 
-    // ❌ KHÔNG nên gán password và confirm_password khi sửa
     formData.value.password = '';
     formData.value.confirm_password = '';
 
-    changePassword.value = false; // Reset checkbox đổi mật khẩu
+    changePassword.value = false;
     openDrawer.value = true;
 }
 
 const showPopupCreate = () => {
     openDrawer.value = true;
+    nextTick(() => {
+        setDefaultData();
+    });
 }
 
 const onCloseDrawer = () => {
@@ -361,6 +427,7 @@ const setDefaultData = () =>{
         email: "",
         phone: "",
         department_id: null,
+        role_id: 3,
         password: "",
         confirm_password: "",
     }
@@ -392,6 +459,7 @@ watch(selectedUser, (val) => {
 onMounted(() => {
     getUser();
     getListDepartments();
+    getListRoles();
 })
 </script>
 <style scoped>
