@@ -20,10 +20,24 @@
                     {{ index + 1 }}
                 </template>
                 <template v-else-if="column.dataIndex === 'name'">
-                    <a-typography-text strong style="cursor: pointer;" @click="showUsersOnly(record)">
+                    <a-typography-text
+                        strong
+                        :style="{cursor: 'pointer',color: activeDepartmentId === record.id ? '#1890ff' : undefined,textDecoration: activeDepartmentId === record.id ? 'underline' : undefined}"
+                        @click="showUsersOnly(record)"
+                    >
                         {{ text }}
                     </a-typography-text>
                 </template>
+                <!-- Thời gian tạo -->
+                <template v-else-if="column.dataIndex === 'created_at'">
+                    {{ formatDate(text) }}
+                </template>
+
+                <!-- Cập nhật gần nhất -->
+                <template v-else-if="column.dataIndex === 'updated_at'">
+                    {{ formatDate(text) }}
+                </template>
+
                 <template v-else-if="column.dataIndex === 'action'">
                     <a-dropdown placement="left" trigger="click" :getPopupContainer="triggerNode => triggerNode.parentNode">
                         <a-button>
@@ -150,6 +164,8 @@
     import { message } from 'ant-design-vue';
     import { EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons-vue';
     import {getRoles} from "../api/permission";
+    import { formatDate } from '@/utils/formUtils' // hoặc đúng path file bạn dùng
+
 
     const selectedDepartment = ref(null);
     const tableData = ref([]);
@@ -158,8 +174,8 @@
     const openDrawer = ref(false);
     const formRef = ref(null);
     const roles = ref([]); // Khai báo mảng role
-
     const drawerMode = ref("form"); // hoặc "view_users"
+    const activeDepartmentId = ref(null);
 
     const formData = ref({
         name: '',
@@ -267,6 +283,7 @@
         formRef.value?.resetFields();
         selectedDepartment.value = null;
         departmentUsers.value = [];
+        activeDepartmentId.value = null; // ✅ bỏ active
     };
 
     const getUsersByDepartment = async (departmentId) => {
@@ -285,6 +302,7 @@
     const showUsersOnly = async (record) => {
         drawerMode.value = 'view_users';
         selectedDepartment.value = record;
+        activeDepartmentId.value = record.id; // ✅ đánh dấu active
         formData.value = { name: record.name, description: record.description };
         openDrawer.value = true;
         await getUsersByDepartment(record.id);
