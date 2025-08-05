@@ -21,12 +21,15 @@ class TaskApprovalController extends ResourceController
         }
 
         $userId = $session->get('user_id');
-        $model = new TaskApprovalModel();
-        $db = db_connect();
+        $model  = new TaskApprovalModel();
+        $db     = db_connect();
 
         $status = $this->request->getGet('status') ?? 'pending';
+        $search = $this->request->getGet('search');
+        $page   = $this->request->getGet('page') ?? 1;
+        $limit  = $this->request->getGet('limit') ?? 10;
 
-        // ✅ Nếu tab là "pending"
+        // ✅ Query builder chung
         if ($status === 'pending') {
             $subBuilder = $db->table('task_approvals')
                 ->select('MAX(id) AS id')
@@ -35,22 +38,29 @@ class TaskApprovalController extends ResourceController
 
             $subQuery = $subBuilder->getCompiledSelect();
 
-            $data = $model
-                ->select('task_approvals.*, tasks.title')
+            $builder = $model
+                ->select('task_approvals.*, tasks.title, users.name AS assigned_to_name')
                 ->join('tasks', 'tasks.id = task_approvals.task_id')
+                ->join('users', 'users.id = tasks.assigned_to', 'left')
                 ->where("task_approvals.id IN ($subQuery)", null, false)
-                ->where('tasks.current_level = task_approvals.level')
-                ->paginate(10);
+                ->where('tasks.current_level = task_approvals.level');
         } else {
-            // ✅ Lấy lịch sử các nhiệm vụ đã xử lý (approved / rejected) của user
-            $data = $model
-                ->select('task_approvals.*, tasks.title')
+            $builder = $model
+                ->select('task_approvals.*, tasks.title, users.name AS assigned_to_name')
                 ->join('tasks', 'tasks.id = task_approvals.task_id')
+                ->join('users', 'users.id = tasks.assigned_to', 'left')
                 ->where('task_approvals.status !=', 'pending')
                 ->where('task_approvals.approved_by', $userId)
-                ->orderBy('task_approvals.approved_at', 'DESC')
-                ->paginate(10);
+                ->orderBy('task_approvals.approved_at', 'DESC');
         }
+
+        // ✅ Áp dụng tìm kiếm theo tiêu đề nhiệm vụ
+        if ($search) {
+            $builder->like('tasks.title', $search);
+        }
+
+        // ✅ Phân trang
+        $data = $builder->paginate($limit, 'default', $page);
 
         return $this->respond([
             'status' => 'success',
@@ -58,9 +68,6 @@ class TaskApprovalController extends ResourceController
             'total'  => $model->pager->getTotal()
         ]);
     }
-
-
-
 
     /**
      * @throws \ReflectionException

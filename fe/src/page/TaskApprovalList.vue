@@ -2,6 +2,14 @@
     <div>
         <a-typography-title :level="4">Nhiệm vụ cần duyệt</a-typography-title>
 
+        <!-- 🔍 Tìm kiếm tên nhiệm vụ -->
+        <a-input-search
+                v-model:value="searchTitle"
+                placeholder="Tìm theo tên nhiệm vụ"
+                allow-clear
+                style="max-width: 300px; margin-bottom: 16px"
+        />
+
         <a-tabs v-model:activeKey="activeTab" @change="handleTabChange">
             <a-tab-pane key="pending" tab="Cần duyệt" />
             <a-tab-pane key="resolved" tab="Đã duyệt / Từ chối" />
@@ -11,15 +19,21 @@
                 :columns="columns"
                 :data-source="taskApprovals"
                 :loading="loading"
-                row-key="id"
                 :pagination="pagination"
+                row-key="id"
+                :locale="{ emptyText: 'Không có nhiệm vụ nào' }"
                 @change="handleTableChange"
         >
-            <template #bodyCell="{ column, record }">
+
+        <template #bodyCell="{ column, record }">
                 <template v-if="column.dataIndex === 'title'">
                     <router-link :to="`/internal-tasks/${record.task_id}/info`">
                         {{ record.title }}
                     </router-link>
+                </template>
+
+                <template v-if="column.dataIndex === 'assigned_to_name'">
+                    {{ record.assigned_to_name || '—' }}
                 </template>
 
                 <template v-if="column.dataIndex === 'level'">
@@ -80,7 +94,7 @@
                     </template>
 
                     <template v-else-if="step.status === 'rejected'">
-                        ❌ Cấp {{ step.level }}: {{ step.approved_by_name }} đã từ chối lúc {{ formatTime(step.approved_at) }}
+                        ❌ Cấp {{ step.level }}: {{ step.approved_by_name }} từ chối lúc {{ formatTime(step.approved_at) }}
                         <div v-if="step.comment">📝 {{ step.comment }}</div>
                     </template>
 
@@ -98,7 +112,7 @@
 </template>
 
 <script setup>
-    import { ref, onMounted } from 'vue'
+    import { ref, onMounted, watch } from 'vue'
     import { message } from 'ant-design-vue'
     import {
         getTaskApprovals,
@@ -111,6 +125,8 @@
     const taskApprovals = ref([])
     const loading = ref(false)
     const activeTab = ref('pending')
+    const searchTitle = ref('') // 🔍 input tìm kiếm
+    import { debounce } from 'lodash'
 
     const pagination = ref({
         current: 1,
@@ -129,11 +145,13 @@
     // Columns
     const columns = [
         { title: 'Tên nhiệm vụ', dataIndex: 'title', key: 'title' },
+        { title: 'Người thực hiện', dataIndex: 'assigned_to_name', key: 'assigned_to_name' },
         { title: 'Cấp hiện tại', dataIndex: 'level', key: 'level' },
         { title: 'Tổng cấp duyệt', dataIndex: 'approval_steps', key: 'approval_steps' },
         { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
         { title: 'Hành động', dataIndex: 'action', key: 'action' }
     ]
+
 
     // Fetch data
     const fetchData = async () => {
@@ -142,7 +160,8 @@
             const res = await getTaskApprovals({
                 page: pagination.value.current,
                 limit: pagination.value.pageSize,
-                status: activeTab.value === 'pending' ? 'pending' : 'resolved'
+                status: activeTab.value === 'pending' ? 'pending' : 'resolved',
+                search: searchTitle.value.trim()
             })
             taskApprovals.value = res.data.data
             pagination.value.total = res.data.total
@@ -161,6 +180,11 @@
     const handleTableChange = (paginationChange) => {
         pagination.value.current = paginationChange.current
         pagination.value.pageSize = paginationChange.pageSize
+        fetchData()
+    }
+
+    const handleSearch = () => {
+        pagination.value.current = 1
         fetchData()
     }
 
@@ -224,7 +248,7 @@
         }
     }
 
-    // Xử lý màu timeline
+    // Màu timeline
     const getTimelineColor = (status) => {
         switch (status) {
             case 'approved': return 'green'
@@ -233,6 +257,11 @@
             default: return 'gray'
         }
     }
+
+    watch(searchTitle, debounce(() => {
+        pagination.value.current = 1
+        fetchData()
+    }, 400))
 
     const formatTime = (ts) => {
         return ts ? new Date(ts).toLocaleString('vi-VN') : ''
