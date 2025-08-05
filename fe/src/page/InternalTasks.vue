@@ -2,7 +2,7 @@
     <div>
         <a-flex justify="space-between">
             <div>
-                <a-typography-title :level="4">Danh sách nhiệm vụ</a-typography-title>
+                <a-typography-title :level="4">Danh sách nhiệm vụ ( Tổng: {{ totalTasks }})</a-typography-title>
             </div>
             <a-button type="primary" @click="showPopupCreate">Thêm nhiệm vụ mới</a-button>
         </a-flex>
@@ -14,14 +14,7 @@
                     Xoá {{ selectedRowKeys.length }} nhiệm vụ
                 </a-button>
             </a-col>
-            <a-col :span="13">
-                <!-- ✅ Tổng số -->
-                <a-typography-text strong style="color: #1890ff; font-size: 16px;">
-                    <UnorderedListOutlined style="margin-right: 6px;"/>
-                    Tổng số nhiệm vụ: {{ totalTasks }}
-                </a-typography-text>
-            </a-col>
-            <a-col :span="4">
+            <a-col :span="8">
                 <!-- ✅ Bộ lọc nhanh -->
                 <a-space>
                     <!-- Lọc theo loại -->
@@ -441,8 +434,6 @@
         loading.value = true
         try {
             const user = userStore.currentUser;
-
-            console.log('user', user)
 
             // Xóa filter cũ (tránh chồng chéo)
             dataFilter.value.assigned_to = null

@@ -122,6 +122,25 @@
                                     </a-form-item>
                                 </a-col>
 
+                                <a-col :span="12">
+                                    <a-form-item label="Phê duyệt" name="approval_status">
+                                        <template v-if="!isEditMode">
+                                            <a-tag :color="checkApprovalStatus(formData.approval_status).color">
+                                                {{ checkApprovalStatus(formData.approval_status).label }}
+                                                <template v-if="formData.approval_status === 'pending' && formData.approval_steps">
+                                                    ({{ formData.approval_steps }} bước)
+                                                </template>
+                                            </a-tag>
+                                        </template>
+                                        <a-select
+                                                v-else
+                                                v-model:value="formData.approval_status"
+                                                :options="approvalStatusOption"
+                                                placeholder="Chọn trạng thái phê duyệt"
+                                        />
+                                    </a-form-item>
+                                </a-col>
+
                                 <a-col :span="12" v-if="formData.status === 'request_approval'">
                                     <a-form-item label="Trạng thái duyệt" name="approval_status">
                                         <a-tag :color="getApprovalColor(formData.approval_status)">
@@ -981,6 +1000,25 @@
         }
     }
 
+    const approvalStatusOption = [
+        { value: 'pending', label: 'Chờ duyệt' },
+        { value: 'approved', label: 'Đã duyệt' },
+        { value: 'rejected', label: 'Từ chối' }
+    ];
+
+    function checkApprovalStatus(status) {
+        switch (status) {
+            case 'approved':
+                return { label: 'Đã duyệt', color: 'green' };
+            case 'pending':
+                return { label: 'Chờ duyệt', color: 'orange' };
+            case 'rejected':
+                return { label: 'Từ chối', color: 'red' };
+            default:
+                return { label: 'Không rõ', color: 'gray' };
+        }
+    }
+
 
     const goBack = () => {
         if (window.history.length > 1) {
@@ -1017,8 +1055,8 @@
             await getListContract()
             await fetchTaskFiles()
             await fetchLogHistory()
-            await fetchExtensions();
-            await fetchExtensionHistory();
+            // await fetchExtensions();
+            // await fetchExtensionHistory();
             handleChangeLinkedId()
 
         } catch (e) {

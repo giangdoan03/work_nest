@@ -482,7 +482,6 @@ const getBiddingTask = async () => {
     loading.value = true
     try {
         const response = await getBiddingsAPI();
-        console.log('response', response)
         listBidding.value = response.data.data ? response.data.data : [];
     } catch (e) {
         message.error('Không thể tải nhiệm vụ')
