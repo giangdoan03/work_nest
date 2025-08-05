@@ -77,16 +77,8 @@
                     <a-typography-text strong style="cursor: pointer" @click="showPopupDetail(record)">{{ text }}</a-typography-text>
                 </template>
                 <template v-else-if="column.key === 'action'">
-                    <EyeOutlined
-                            class="icon-action"
-                            style="color: green;"
-                            @click="goToCustomerDetail(record)"
-                    />
-                    <EditOutlined
-                            class="icon-action"
-                            style="color: blue;"
-                            @click="showPopupDetail(record)"
-                    />
+                    <EyeOutlined class="icon-action" style="color: green;" @click="goToCustomerDetail(record)"/>
+                    <EditOutlined class="icon-action" style="color: blue;" @click="showPopupDetail(record)"/>
                     <a-popconfirm
                             title="Bạn chắc chắn muốn xóa khách hàng này?"
                             ok-text="Xóa"
@@ -94,10 +86,7 @@
                             @confirm="deleteConfirm(record.id)"
                             placement="topRight"
                     >
-                        <DeleteOutlined
-                                class="icon-action"
-                                style="color: red;"
-                        />
+                        <DeleteOutlined class="icon-action" style="color: red;" />
                     </a-popconfirm>
                 </template>
             </template>
@@ -200,17 +189,10 @@
 
             <!-- Contracts List -->
             <a-divider>Danh sách hợp đồng</a-divider>
-            <a-list
-                :data-source="contracts"
-                bordered
-                :locale="{ emptyText: 'Chưa có hợp đồng nào' }"
-            >
+            <a-list :data-source="contracts" bordered :locale="{ emptyText: 'Chưa có hợp đồng nào' }">
                 <template #renderItem="{ item }">
                     <a-list-item>
-                        <a-list-item-meta
-                            :title="item.title"
-                            :description="`Trạng thái: ${item.status} | Từ ${formatDate(item.start_date)} đến ${formatDate(item.end_date)}`"
-                        />
+                        <a-list-item-meta :title="item.title" :description="`Trạng thái: ${item.status} | Từ ${formatDate(item.start_date)} đến ${formatDate(item.end_date)}`"/>
                         <div>{{ item.content }}</div>
                     </a-list-item>
                 </template>
@@ -274,7 +256,6 @@ const handleBulkDelete = async () => {
         message.error('Không thể xoá hàng loạt khách hàng')
     }
 }
-
 
 
 const interactionForm = ref({
@@ -413,7 +394,7 @@ const submitForm = async () => {
             await createCustomer(formData.value)
             message.success('Tạo mới thành công')
         }
-        fetchCustomers()
+        await fetchCustomers()
         onCloseDrawer()
     } catch (err) {
         message.error('Xử lý không thành công')

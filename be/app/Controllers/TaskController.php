@@ -312,9 +312,9 @@ class TaskController extends ResourceController
         return $this->respond(['message' => 'Task updated']);
     }
 
-
-
-
+    /**
+     * @throws \ReflectionException
+     */
     public function extendDeadline($id = null): ResponseInterface
     {
         $task = $this->model->find($id);

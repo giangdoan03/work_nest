@@ -316,7 +316,6 @@
     }
 
 
-
     const deleteConfirm = async (id) => {
         try {
             // Gọi API xoá (bạn cần có API deleteBiddingAPI tương ứng)
