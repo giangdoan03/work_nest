@@ -1,58 +1,56 @@
 <template>
-    <div class="login-wrapper">
-        <template v-if="hasServerError">
-            <a-result status="500" title="500" sub-title="Sorry, the server is not responding.">
-                <template #extra>
-                    <a-button type="primary" @click="reloadPage">Reload Page</a-button>
-                </template>
-            </a-result>
-        </template>
+    <div class="login-mobile">
+        <div class="login-content">
+            <!-- Logo & Slogan -->
+            <div class="logo-section">
+<!--                <img src="/logo.png" class="logo-img" alt="Logo" />-->
+                <h2 class="slogan">
+                    <span>GIẢI PHÁP QUẢN LÝ</span><br />
+                    <small>Làm việc mọi lúc mọi nơi</small>
+                </h2>
+            </div>
 
-        <template v-else>
+            <!-- Form đăng nhập -->
             <a-card class="login-card" :bordered="false">
-                <h2 class="login-title">Welcome Back 👋</h2>
+                <h3 class="login-title">Đăng nhập</h3>
 
                 <a-form
                     :model="formState"
-                    name="login-form"
-                    autocomplete="off"
                     layout="vertical"
                     @finish="onFinish"
                     @finishFailed="onFinishFailed"
                 >
-                    <a-form-item
-                        label="Email"
-                        name="email"
-                        :rules="[
-              { required: true, message: 'Please input your email!' },
-              { type: 'email', message: 'Invalid email format!' }
-            ]"
-                    >
-                        <a-input v-model:value="formState.email" placeholder="Enter your email" />
+                    <a-form-item name="email" :rules="[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }]">
+                        <a-input v-model:value="formState.email" placeholder="Tên đăng nhập*" />
                     </a-form-item>
 
-                    <a-form-item
-                        label="Password"
-                        name="password"
-                        :rules="[{ required: true, message: 'Please input your password!' }]"
-                    >
-                        <a-input-password v-model:value="formState.password" placeholder="Enter your password" />
+                    <a-form-item name="password" :rules="[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]">
+                        <a-input-password v-model:value="formState.password" placeholder="Mật khẩu*" />
                     </a-form-item>
 
-                    <a-form-item name="remember">
-                        <a-checkbox v-model:checked="formState.remember">Remember me</a-checkbox>
-                    </a-form-item>
+                    <div class="form-footer">
+                        <a-checkbox v-model:checked="formState.remember">Giữ tôi luôn đăng nhập</a-checkbox>
+                        <a href="#" class="forgot-password">Quên mật khẩu?</a>
+                    </div>
 
-                    <a-form-item>
-                        <a-button type="primary" html-type="submit" block :loading="loading">
-                            Login
-                        </a-button>
-                    </a-form-item>
+                    <a-button type="primary" block html-type="submit" :loading="loading">
+                        ĐĂNG NHẬP
+                    </a-button>
                 </a-form>
+
+                <div class="app-download">
+<!--                    <p>Cài đặt ứng dụng trên điện thoại</p>-->
+                    <div class="store-links">
+<!--                        <img src="/google-play.png" alt="Google Play" />-->
+<!--                        <img src="/app-store.png" alt="App Store" />-->
+                    </div>
+                </div>
             </a-card>
-        </template>
+        </div>
     </div>
 </template>
+
+
 
 <script setup>
 import { reactive, ref } from 'vue'
@@ -113,28 +111,90 @@ const reloadPage = () => {
 </script>
 
 <style scoped>
-.login-wrapper {
-    min-height: 100vh;
+.login-mobile {
     display: flex;
-    align-items: center;
     justify-content: center;
-    background: #f5f7fa;
-    padding: 24px;
+    align-items: center;
+    background-color: #d6ccfa;
+    min-height: 100vh;
+    padding: 16px;
+}
+
+.login-content {
+    width: 100%;
+    max-width: 400px;
+}
+
+.logo-section {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.logo-img {
+    height: 48px;
+    margin-bottom: 12px;
+}
+
+.slogan {
+    font-size: 16px;
+    font-weight: 500;
+    color: #555;
+}
+.slogan span {
+    color: #5a4ae3;
+    font-weight: bold;
+}
+.slogan small {
+    color: #f59e0b;
 }
 
 .login-card {
-    width: 100%;
-    max-width: 400px;
+    background: #fff;
     border-radius: 12px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
     padding: 24px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+}
+
+.language-select {
+    position: absolute;
+    top: 16px;
+    right: 16px;
 }
 
 .login-title {
-    text-align: center;
-    margin-bottom: 24px;
-    font-size: 24px;
+    text-align: left;
     font-weight: 600;
-    color: #333;
+    margin-bottom: 16px;
+}
+
+.form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    font-size: 13px;
+}
+
+.forgot-password {
+    color: #1890ff;
+}
+
+.app-download {
+    text-align: center;
+    margin-top: 24px;
+}
+
+.store-links {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.store-links img {
+    height: 36px;
+    cursor: pointer;
 }
 </style>
+
+

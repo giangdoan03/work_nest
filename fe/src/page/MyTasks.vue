@@ -39,9 +39,11 @@
             <a-table :dataSource="tasks" :loading="loading" :rowKey="record => record.id" bordered size="small">
                 <a-table-column title="Tiêu đề" key="title">
                     <template #default="{ record }">
-                        <router-link :to="`/internal-tasks/${record.id}/info`" style="color: #1890ff;">
-                            {{ record.title }}
-                        </router-link>
+                        <div style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;" :title="record.title">
+                            <router-link :to="`/internal-tasks/${record.id}/info`" style="color: #1890ff;">
+                                {{ record.title }}
+                            </router-link>
+                        </div>
                     </template>
                 </a-table-column>
 
@@ -126,9 +128,13 @@
                             </a-tag>
                         </template>
                         <template v-else-if="column.dataIndex === 'title'">
-                            <router-link :to="`/internal-tasks/${record.id}/info`" style="color: #1890ff;">
-                                {{ record.title }}
-                            </router-link>
+                            <a-tooltip :title="record.title">
+                                <div style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
+                                    <router-link :to="`/internal-tasks/${record.id}/info`" style="color: #1890ff;">
+                                        {{ record.title }}
+                                    </router-link>
+                                </div>
+                            </a-tooltip>
                         </template>
 
                         <template v-else-if="column.dataIndex === 'priority'">
@@ -137,9 +143,7 @@
                             </a-tag>
                         </template>
                         <template v-else-if="column.dataIndex === 'progress'">
-                            <a-progress
-                                    @click="openProgressModal(record)" style="cursor: pointer;"
-                                    :percent="Number(record.progress)"
+                            <a-progress @click="openProgressModal(record)" style="cursor: pointer;" :percent="Number(record.progress)"
                                     :stroke-color="{
                                   '0%': '#108ee9',
                                   '100%': '#87d068',
@@ -150,10 +154,7 @@
                             />
                         </template>
                         <template v-else-if="column.dataIndex === 'assignee'">
-                            <a-tooltip
-                                    placement="top"
-                                    :overlayStyle="{ maxWidth: '300px' }"
-                            >
+                            <a-tooltip placement="top" :overlayStyle="{ maxWidth: '300px' }">
                                 <template #title>
                                     <div style="text-align: center; padding: 8px;">
                                         <a-avatar
@@ -167,20 +168,14 @@
                                     </div>
                                 </template>
                                 <div style="display: flex; justify-content: center; align-items: center;">
-                                    <a-avatar
-                                            :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
-                                            size="small"
-                                    >
+                                    <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }" size="small">
                                         {{ getFirstLetter(record.assignee?.name) }}
                                     </a-avatar>
                                 </div>
                             </a-tooltip>
                         </template>
                         <template v-else-if="column.dataIndex === 'create_by'">
-                            <a-tooltip
-                                    placement="top"
-                                    :overlayStyle="{ maxWidth: '400px', wordWrap: 'break-word', whiteSpace: 'normal' }"
-                            >
+                            <a-tooltip placement="top" :overlayStyle="{ maxWidth: '400px', wordWrap: 'break-word', whiteSpace: 'normal' }">
                                 <template #title>
                                     <div style="text-align: center; padding: 12px; min-width: 200px;">
                                         <a-avatar
@@ -194,10 +189,7 @@
                                     </div>
                                 </template>
                                 <div style="display: flex; justify-content: center; align-items: center;">
-                                    <a-avatar
-                                            :style="{ backgroundColor: getAvatarColor(getUserById(record.create_by)) }"
-                                            size="small"
-                                    >
+                                    <a-avatar :style="{ backgroundColor: getAvatarColor(getUserById(record.create_by)) }" size="small">
                                         {{ getFirstLetter(getUserById(record.create_by)) }}
                                     </a-avatar>
                                 </div>
@@ -395,18 +387,18 @@ const drawerColumns = [
         dataIndex: 'assignee',
         key: 'assignee',
     },
-    {
-        title: 'Người tạo',
-        dataIndex: 'create_by',
-        key: 'create_by',
-    },
+    // {
+    //     title: 'Người tạo',
+    //     dataIndex: 'create_by',
+    //     key: 'create_by',
+    // },
     {
         title: 'Ngày bắt đầu',
         dataIndex: 'start_date',
         key: 'start_date',
     },
     {
-        title: 'Deadline',
+        title: 'Hạn',
         dataIndex: 'deadline',
         key: 'deadline',
     },
@@ -626,6 +618,12 @@ const getUserById = getUserName;
 //     high: 'red'
 // }[priority] || 'default')
 </script>
+
+<style>
+.summary-cards .ant-card-body{
+    cursor: pointer;
+}
+</style>
 
 <style scoped>
 .dashboard {

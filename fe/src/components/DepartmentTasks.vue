@@ -107,11 +107,7 @@
                                 >
                                     <template #title>
                                         <div style="text-align: center; padding: 8px;">
-                                            <a-avatar 
-                                                :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }"
-                                                size="large"
-                                                style="margin-bottom: 8px;"
-                                            >
+                                            <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }" size="large" style="margin-bottom: 8px;">
                                                 {{ getFirstLetter(record.assigned_to_name) }}
                                             </a-avatar>
                                             <div style="font-weight: bold; color: white;">{{ record.assigned_to_name }}</div>
@@ -505,7 +501,7 @@ const columns = [
 const drawerColumns = [
     { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
     { title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee', width: 80, align: 'center' },
-    { title: 'Người giao việc', dataIndex: 'create_by', key: 'create_by', width: 80, align: 'center' },
+    // { title: 'Người giao việc', dataIndex: 'create_by', key: 'create_by', width: 80, align: 'center' },
     { title: 'Tiến trình', dataIndex: 'progress', key: 'progress', width: 120, align: 'center' },
     { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 120, align: 'center' },
     { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', width: 80, align: 'center' },
@@ -698,9 +694,10 @@ const handleCardClick = (item) => {
 
 const openProgressModal = (task) => {
     selectedTask.value = task;
-    newProgressValue.value = task.progress || 0;
+    newProgressValue.value = Number(task.progress) || 0; // ✅ ép kiểu về số
     progressModalVisible.value = true;
 };
+
 
 const updateProgress = async () => {
     if (!selectedTask.value) return;
