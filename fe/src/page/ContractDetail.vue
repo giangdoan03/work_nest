@@ -63,7 +63,10 @@
                     :status="mapStepStatus(step.status)"
                 >
                     <template #title>
-                        <div @click.stop="openStepDrawer(step)" style="
+                        <div
+                                @click.stop="openStepDrawer(step)"
+                                :class="{'active-step-title': activeStepId === step.id}"
+                                style="
                                   display: flex;
                                   justify-content: space-between;
                                   align-items: center;
@@ -281,6 +284,7 @@ import {
     updateContractStepAPI
 } from '@/api/contract-steps'
 import {getTaskDetail, getTasks, getTasksByBiddingStep, getTasksByContractStep} from '@/api/task' // giả sử bạn có API như vậy
+const activeStepId = ref(null)
 
 import {useUserStore} from '@/stores/user'
 
@@ -379,6 +383,7 @@ const getBiddingTitle = (id) => {
 const openStepDrawer = async (step) => {
     selectedStep.value = {...step}
     stepStore.setSelectedStep({...step})
+    activeStepId.value = step.id // 👈 đánh dấu bước đang mở
     drawerVisible.value = true
 
     const user = userStore.currentUser
@@ -593,6 +598,7 @@ const updateStepTitle = async () => {
 
 const closeDrawer = () => {
     drawerVisible.value = false
+    activeStepId.value = null
     showEditDateStart.value = false
     showEditDateEnd.value = false
     dateStart.value = null
@@ -753,7 +759,24 @@ onMounted(() => {
 })
 </script>
 
+<style>
+    .active-step-title .ant-statistic-content span {
+        color: #FFFFFF;
+    }
+</style>
+
 <style scoped>
+
+
+    .active-step-title {
+        background-color: #91d5ff;
+        border-radius: 4px;
+        padding: 0 8px;
+    }
+
+    .active-step-title span {
+        color: #ffffff !important;
+    }
 
 .ant-list-item {
     padding-left: 0;
