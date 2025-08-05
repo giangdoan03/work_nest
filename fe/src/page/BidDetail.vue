@@ -421,11 +421,18 @@ const handleDrawerSubmit = async () => {
             })
 
             const res = await getTasksByBiddingStep(stepStore.selectedStep.id, dataFilter)
-            const tasks = Array.isArray(res.data?.data) ? res.data.data : []
+            console.log('res', res)
+
+            const tasks = Array.isArray(res.data)
+                ? res.data
+                : Array.isArray(res.data?.data)
+                    ? res.data.data
+                    : []
 
             console.log('📦 Tasks fetched:', tasks)
 
             stepStore.setRelatedTasks(tasks)
+
 
             await fetchSteps()
 
