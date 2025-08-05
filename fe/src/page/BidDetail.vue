@@ -144,6 +144,7 @@
                         size="small"
                         :column="1"
                         bordered
+                        :title="bidding?.title"
                 >
                     <a-descriptions-item label="Bước số">{{ selectedStep.step_number }}</a-descriptions-item>
                     <a-descriptions-item label="Tiêu đề">

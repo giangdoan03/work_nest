@@ -129,7 +129,7 @@
             width="900"
         >
             <template v-if="selectedStep">
-                <a-descriptions bordered size="small" :column="1" title="Thông tin bước">
+                <a-descriptions bordered size="small" :column="1" :title="contract?.title">
                     <a-descriptions-item label="Bước số">{{ selectedStep.step_number }}</a-descriptions-item>
                     <a-descriptions-item label="Tiêu đề">
                         <a-typography-text
@@ -138,7 +138,7 @@
                             @click="editTitle"
                             style="cursor: pointer;"
                         >
-                            {{ selectedStep.title }}
+                            <strong style="color: #2ca02c">{{ selectedStep.title }}</strong>
                             <EditOutlined/>
                         </a-typography-text>
 
