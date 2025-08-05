@@ -1,10 +1,43 @@
 <template>
     <div class="custom-overview">
         <a-tabs v-model:activeKey="activeTabKey" @change="handleTabChange">
-            <a-tab-pane key="1" tab="Tổng quan gói thầu - hợp đồng">
-<!--                <div class="header-actions">-->
-<!--                    <a :href="`${origin}/gantt-chart`" target="_blank" class="gantt-link">📊 Xem biểu đồ Gantt</a>-->
-<!--                </div>-->
+            <a-tab-pane key="1">
+                <template #tab>
+                    <ShopOutlined /> P.Kinh Doanh
+                </template>
+                <DepartmentTasks v-if="activeTabKey === '1'" :departmentId="1" />
+            </a-tab-pane>
+            <a-tab-pane key="2">
+                <template #tab>
+                    <DollarOutlined /> P.Tài Chính Kế toán
+                </template>
+                <DepartmentTasks v-if="activeTabKey === '2'" :departmentId="2" />
+            </a-tab-pane>
+            <a-tab-pane key="3">
+                <template #tab>
+                    <ShoppingOutlined /> P.Thương Mại
+                </template>
+                <DepartmentTasks v-if="activeTabKey === '3'" :departmentId="3" />
+            </a-tab-pane>
+            <a-tab-pane key="4">
+                <template #tab>
+                    <ToolOutlined /> P.Dịch Vụ Kỹ Thuật
+                </template>
+                <DepartmentTasks v-if="activeTabKey === '4'" :departmentId="4" />
+            </a-tab-pane>
+            <a-tab-pane key="5">
+                <template #tab>
+                    <TeamOutlined /> P.Hành Chính Nhân Sự
+                </template>
+                <DepartmentTasks v-if="activeTabKey === '5'" :departmentId="5" />
+            </a-tab-pane>
+            <a-tab-pane key="6" :departmentId="6">
+                <template #tab>
+                    <AppstoreOutlined /> Tổng quan gói thầu - hợp đồng
+                </template>
+                <!--                <div class="header-actions">-->
+                <!--                    <a :href="`${origin}/gantt-chart`" target="_blank" class="gantt-link">📊 Xem biểu đồ Gantt</a>-->
+                <!--                </div>-->
 
                 <table class="custom-table">
                     <thead>
@@ -32,7 +65,7 @@
                                         <tr class="row-hover">
                                             <!-- Khách hàng -->
                                             <td v-if="groupIdx === 0 && itemIdx === 0 && stepIdx === 0 && taskIdx === 0" :rowspan="getTotalRows(customer)"
-                                                    class="customer-cell vertical-text name_customer"
+                                                class="customer-cell vertical-text name_customer"
                                             >
                                                 <a-tooltip :title="customer.customer_name">
                                                   <span>
@@ -60,15 +93,15 @@
 
                                             <!-- Bước quy trình -->
                                             <td
-                                                v-if="taskIdx === 0"
-                                                :rowspan="stepTasks.length"
-                                                class="step_code"
+                                                    v-if="taskIdx === 0"
+                                                    :rowspan="stepTasks.length"
+                                                    class="step_code"
                                             >
                                                 <a-tooltip :title="task.step_title">
                                                     <router-link
-                                                        :to="getLinkedRoute(task)"
-                                                        class="ellipsis-text"
-                                                        style="color: #096dd9; text-decoration: none"
+                                                            :to="getLinkedRoute(task)"
+                                                            class="ellipsis-text"
+                                                            style="color: #096dd9; text-decoration: none"
                                                     >
                                                         <span v-if="task.step_code">B{{ task.step_code }} - </span>{{ task.step_title }}
                                                     </router-link>
@@ -81,9 +114,9 @@
                                             <td class="task-cell">
                                                 <a-tooltip :title="task.title" v-if="task.title">
                                                     <router-link
-                                                        :to="`/internal-tasks/${task.id}/info`"
-                                                        class="ellipsis-text"
-                                                        style="color: #1890ff"
+                                                            :to="`/internal-tasks/${task.id}/info`"
+                                                            class="ellipsis-text"
+                                                            style="color: #1890ff"
                                                     >
                                                         • {{ task.title }}
                                                     </router-link>
@@ -141,7 +174,7 @@
                                                         :title="task.overdue_reason || 'Chưa rõ lý do'"
                                                 >
 
-                                                <a-tag color="red" style="cursor: pointer;" @click="openOverdueReasonModal(task)">
+                                                    <a-tag color="red" style="cursor: pointer;" @click="openOverdueReasonModal(task)">
                                                         <ExclamationCircleOutlined style="margin-right: 4px;" />
                                                         Quá hạn {{ task.days_overdue }} ngày
                                                     </a-tag>
@@ -196,31 +229,15 @@
                 </table>
 
                 <a-pagination
-                    v-model:current="pagination.page"
-                    :total="pagination.total"
-                    :page-size="pagination.limit"
-                    show-size-changer
-                    :page-size-options="['5', '10', '20', '50']"
-                    @change="fetchOverview"
-                    @showSizeChange="onPageSizeChange"
-                    style="margin-top: 16px; text-align: right"
+                        v-model:current="pagination.page"
+                        :total="pagination.total"
+                        :page-size="pagination.limit"
+                        show-size-changer
+                        :page-size-options="['5', '10', '20', '50']"
+                        @change="fetchOverview"
+                        @showSizeChange="onPageSizeChange"
+                        style="margin-top: 16px; text-align: right"
                 />
-            </a-tab-pane>
-
-            <a-tab-pane key="2" tab="P.Kinh Doanh">
-                <DepartmentTasks v-if="activeTabKey === '2'" :departmentId="1" />
-            </a-tab-pane>
-            <a-tab-pane key="3" tab="P.Tài Chính Kế toán">
-                <DepartmentTasks v-if="activeTabKey === '3'" :departmentId="2" />
-            </a-tab-pane>
-            <a-tab-pane key="4" tab="P.Thương Mại">
-                <DepartmentTasks v-if="activeTabKey === '4'" :departmentId="3" />
-            </a-tab-pane>
-            <a-tab-pane key="5" tab="P.Dịch Vụ Kỹ Thuật">
-                <DepartmentTasks v-if="activeTabKey === '5'" :departmentId="4" />
-            </a-tab-pane>
-            <a-tab-pane key="6" tab="P.Hành Chính Nhân Sự">
-                <DepartmentTasks v-if="activeTabKey === '6'" :departmentId="5" />
             </a-tab-pane>
         </a-tabs>
 
@@ -314,6 +331,12 @@ import {
     ExclamationCircleOutlined,
     CheckCircleOutlined,
     FieldTimeOutlined,
+    ShopOutlined,
+    DollarOutlined,
+    ShoppingOutlined,
+    ToolOutlined,
+    TeamOutlined,
+    AppstoreOutlined
 } from '@ant-design/icons-vue';
 import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()

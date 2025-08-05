@@ -1046,6 +1046,13 @@
         { immediate: true }
     )
 
+    watch(numericProgress, (val) => {
+        if (val === 100 && formData.value.approval_steps > 0 && formData.value.approval_status !== 'approved') {
+            message.warning('Không thể đặt tiến độ 100% trước khi được duyệt!');
+            numericProgress.value = 95; // hoặc giá trị trước đó nếu bạn lưu
+        }
+    });
+
     onMounted(async () => {
         try {
             await getDepartment()
