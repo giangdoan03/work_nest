@@ -477,6 +477,7 @@ const onCloseDrawer = () => {
     setDefaultData();
     resetFormValidate()
 }
+
 const getBiddingTask = async () => {
     loading.value = true
     try {
@@ -489,6 +490,7 @@ const getBiddingTask = async () => {
         loading.value = false
     }
 }
+
 const getContractTask = async () => {
     loading.value = true
     try {
@@ -500,6 +502,7 @@ const getContractTask = async () => {
         loading.value = false
     }
 }
+
 const changeDateTime = (day, date) => {
     if (day) {
         formData.value.start_date = convertDateFormat(date[0]);
@@ -510,6 +513,7 @@ const changeDateTime = (day, date) => {
     }
 
 }
+
 const convertDateFormat = (dateStr) => {
     const [day, month, year] = dateStr.split('-');
     return `${year}-${month}-${day}`;

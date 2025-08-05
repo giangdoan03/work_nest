@@ -394,9 +394,34 @@ const updateStepStartDate = async (value, option) => {
 const submitForm = () => {
     getInternalTask();
 }
+
 const showPopupCreate = () => {
+    const step = stepStore.selectedStep // hoặc từ selectedStep.value nếu bạn đang dùng ref
+
+    if (step) {
+        // Gán lại selectedStep nếu cần (đảm bảo có dữ liệu mới nhất)
+        stepStore.setSelectedStep({ ...step })
+
+        // Optional: load lại task nếu bạn muốn đảm bảo sau khi thêm sẽ update danh sách
+        const dataFilter = {}
+        if (String(user.role_id) === '3') {
+            dataFilter.assigned_to = user.id
+        } else if (String(user.role_id) === '2') {
+            dataFilter.id_department = user.department_id
+        }
+
+        getTasksByBiddingStep(step.id, dataFilter)
+            .then(res => {
+                stepStore.setRelatedTasks(Array.isArray(res.data) ? res.data : [])
+            })
+            .catch(() => {
+                stepStore.setRelatedTasks([])
+            })
+    }
+
     openDrawer.value = true
 }
+
 
 
 const handleDrawerSubmit = async () => {
@@ -446,9 +471,6 @@ const handleDrawerSubmit = async () => {
         }
     }
 }
-
-
-
 
 const getInternalTask = async () => {
     loading.value = true
