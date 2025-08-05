@@ -29,8 +29,15 @@ export const rejectTaskAPI = (approvalId, data = {}) =>
     instance.post(`/task-approvals/${approvalId}/reject`, data)
 
 /**
- * 🔹 Lấy lịch sử duyệt của một task (tuỳ chọn sử dụng)
+ * 🔹 Lấy lịch sử duyệt của một task (đã duyệt qua log)
  * @param {number|string} taskId
  */
 export const getApprovalHistoryByTask = (taskId) =>
     instance.get(`/tasks/${taskId}/approvals`)
+
+/**
+ * 🔹 Lấy trạng thái duyệt đầy đủ theo từng cấp
+ * @param {number|string} taskId
+ */
+export const getFullApprovalStatus = (taskId) =>
+    instance.get(`/task-approvals/full-status/${taskId}`)

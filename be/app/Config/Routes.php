@@ -167,6 +167,8 @@ $routes->group('api', function ($routes) {
     $routes->get('task-approvals', 'TaskApprovalController::index'); // Lấy danh sách nhiệm vụ cần duyệt
     $routes->post('task-approvals/(:num)/approve', 'TaskApprovalController::approve/$1'); // Phê duyệt task
     $routes->post('task-approvals/(:num)/reject', 'TaskApprovalController::reject/$1');   // Từ chối task
+    $routes->get('task-approvals/full-status/(:num)', 'TaskApprovalController::fullApprovalStatus/$1'); // Hiển thị trạng thái duyệt từng cấp
+
 
 
 });
