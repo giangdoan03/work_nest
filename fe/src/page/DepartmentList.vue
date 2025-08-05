@@ -53,8 +53,11 @@
         </a-table>
 
         <a-drawer
-                :title="drawerMode === 'view_users' ? 'Người dùng thuộc phòng ban' : (selectedDepartment ? 'Cập nhật phòng ban' : 'Tạo phòng ban mới')"
-                :width="800"
+            :title="drawerMode === 'view_users'
+    ? `${selectedDepartment?.name ?? ''}`
+    : (selectedDepartment ? 'Cập nhật phòng ban' : 'Tạo phòng ban mới')"
+
+            :width="800"
                 :open="openDrawer"
                 :body-style="{ paddingBottom: '80px' }"
                 :footer-style="{ textAlign: 'right' }"
@@ -186,8 +189,6 @@
         { title: 'Số điện thoại', key: 'phone' },
         { title: 'Vai trò', key: 'role' }
     ];
-
-
 
     const getDepartment = async () => {
         loading.value = true;

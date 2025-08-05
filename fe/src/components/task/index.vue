@@ -835,8 +835,16 @@
     const pendingFiles = ref([]);
 
     const fetchTaskFiles = async () => {
+        const taskId = route.params.id;
+
+        if (!taskId) {
+            console.warn('Thiếu taskId trong route.params');
+            fileList.value = [];
+            return;
+        }
+
         try {
-            const res = await getTaskFilesAPI(route.params.id);
+            const res = await getTaskFilesAPI(taskId);
             fileList.value = (res.data || []).map(f => ({
                 uid: f.id || f.file_name,
                 name: f.file_name,
@@ -845,9 +853,11 @@
                 ...f
             }));
         } catch (e) {
+            console.error('Lỗi khi fetch task files:', e);
             fileList.value = [];
         }
     };
+
 
     const handleBeforeUpload = (file) => {
         pendingFiles.value.push({
@@ -947,14 +957,23 @@
     }
 
     const fetchLogHistory = async () => {
+        const taskId = route.params.id
+
+        if (!taskId) {
+            console.warn('Thiếu task ID từ route.params');
+            logData.value = []
+            return
+        }
+
         try {
-            const res = await getApprovalHistoryByTask(route.params.id)
+            const res = await getApprovalHistoryByTask(taskId)
             logData.value = Array.isArray(res.data) ? res.data : []
         } catch (e) {
             console.error('Lỗi khi lấy log:', e)
             logData.value = []
         }
     }
+
 
     const computedUploadList = computed(() => {
         const uploaded = fileList.value.map(f => ({
