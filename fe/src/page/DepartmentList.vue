@@ -39,30 +39,50 @@
                 </template>
 
                 <template v-else-if="column.dataIndex === 'action'">
-                    <a-dropdown placement="left" trigger="click" :getPopupContainer="triggerNode => triggerNode.parentNode">
-                        <a-button>
-                            <template #icon><MoreOutlined /></template>
+                    <a-space>
+                        <!-- Nút Xem chi tiết -->
+                        <a-button
+                            type="link"
+                            size="small"
+                            style="padding: 0"
+                            @click="showUsersOnly(record)"
+                        >
+                            <EyeOutlined class="icon-action" style="color: #1890ff;" />
+                            Chi tiết
                         </a-button>
-                        <template #overlay>
-                            <a-menu>
-                                <a-menu-item @click="showPopupDetail(record)">
-                                    <div><EditOutlined class="icon-action" style="color: blue;" /> Chỉnh sửa</div>
-                                </a-menu-item>
-                                <a-menu-item>
-                                    <a-popconfirm
-                                            title="Bạn chắc chắn muốn xóa phòng ban này?"
-                                            ok-text="Xóa"
-                                            cancel-text="Hủy"
-                                            @confirm="deleteConfirm(record.id)"
-                                            placement="topRight"
-                                    >
-                                        <div><DeleteOutlined class="icon-action" style="color: red;" /> Xóa</div>
-                                    </a-popconfirm>
-                                </a-menu-item>
-                            </a-menu>
-                        </template>
-                    </a-dropdown>
+
+                        <!-- Nút Chỉnh sửa -->
+                        <a-button
+                            type="link"
+                            size="small"
+                            style="padding: 0"
+                            @click="showPopupDetail(record)"
+                        >
+                            <EditOutlined class="icon-action" style="color: blue;" />
+                            Chỉnh sửa
+                        </a-button>
+
+                        <!-- Nút Xóa -->
+                        <a-popconfirm
+                            title="Bạn chắc chắn muốn xóa phòng ban này?"
+                            ok-text="Xóa"
+                            cancel-text="Hủy"
+                            @confirm="deleteConfirm(record.id)"
+                            placement="topRight"
+                        >
+                            <a-button
+                                type="link"
+                                size="small"
+                                style="padding: 0"
+                            >
+                                <DeleteOutlined class="icon-action" style="color: red;" />
+                                Xóa
+                            </a-button>
+                        </a-popconfirm>
+                    </a-space>
                 </template>
+
+
             </template>
         </a-table>
 
@@ -125,7 +145,6 @@
                             {{ getRoleName(record.role_id) }}
                         </template>
                     </template>
-
                 </a-table>
             </template>
 
@@ -162,7 +181,7 @@
     } from '../api/department';
     import { getUsers } from '../api/user';
     import { message } from 'ant-design-vue';
-    import { EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons-vue';
+    import { EditOutlined, DeleteOutlined, MoreOutlined, EyeOutlined } from '@ant-design/icons-vue';
     import {getRoles} from "../api/permission";
     import { formatDate } from '@/utils/formUtils' // hoặc đúng path file bạn dùng
 
@@ -196,7 +215,7 @@
         { title: 'Mô tả', dataIndex: 'description', key: 'description' },
         { title: 'Thời gian tạo', dataIndex: 'created_at', key: 'created_at' },
         { title: 'Cập nhật gần nhất', dataIndex: 'updated_at', key: 'updated_at' },
-        { title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px', align: 'center' },
+        { title: 'Hành động', dataIndex: 'action', key: 'action', align: 'center' },
     ];
     const userColumns = [
         { title: 'STT', key: 'stt' },
@@ -264,11 +283,18 @@
     };
 
     const showPopupDetail = async (record) => {
+        drawerMode.value = 'form'; // ✅ Chuyển về chế độ form
         selectedDepartment.value = record;
-        formData.value = { name: record.name, description: record.description };
+        formData.value = {
+            name: record.name,
+            description: record.description
+        };
         openDrawer.value = true;
-        await getUsersByDepartment(record.id);
+
+        // Không cần gọi getUsersByDepartment ở đây nếu chỉ sửa
+        departmentUsers.value = []; // optional: reset nếu cần
     };
+
 
     const showPopupCreate = () => {
         drawerMode.value = "form";
