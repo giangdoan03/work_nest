@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Aug 04, 2025 at 06:26 PM
--- Server version: 8.0.30
--- PHP Version: 8.1.10
+-- Generation Time: Aug 05, 2025 at 09:32 AM
+-- Server version: 8.4.3
+-- PHP Version: 8.3.16
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -195,7 +195,7 @@ INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `start_
 (108, 5, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:44:51', '2025-06-29 17:12:28', 0, 4, NULL, 11),
 (109, 2, 1, 'Nhận nhu cầu khách hàng', '2025-07-07 00:00:00', '2025-07-31 00:00:00', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:48:05', '2025-07-08 14:24:18', 2, 1, 8, 32),
 (110, 2, 2, 'Đánh giá tính khả thi', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:48:05', '2025-08-04 15:04:55', 2, 1, 22, 34),
-(111, 2, 3, 'Lập kế hoạch triển khai', '2025-07-19 00:00:00', '2025-07-31 00:00:00', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:48:05', '2025-07-20 09:37:37', 2, 1, 24, 26),
+(111, 2, 3, 'Lập kế hoạch triển khai', '2025-07-19 00:00:00', '2025-07-31 00:00:00', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:48:05', '2025-08-05 08:22:19', 2, 1, 24, 50),
 (112, 2, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:48:05', '2025-07-20 12:47:51', 2, 1, NULL, 1),
 (113, 2, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:48:05', '2025-07-01 11:11:05', 1, 1, NULL, 1),
 (114, 2, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:48:05', '2025-07-10 03:39:12', 0, 1, NULL, 40),
@@ -260,7 +260,7 @@ INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `start_
 (208, 30, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 05:20:16', '2025-06-29 17:12:28', 0, 1, NULL, 1),
 (209, 30, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 05:20:16', '2025-06-29 17:12:28', 0, 1, NULL, 14),
 (210, 30, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 05:20:16', '2025-06-29 17:12:28', 0, 1, NULL, 5),
-(213, 31, 1, 'Nhận nhu cầu khách hàng', '2025-08-04 00:00:00', '2025-08-31 00:00:00', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:22:47', '2025-08-04 15:44:45', 1, 1, 5, 2),
+(213, 31, 1, 'Nhận nhu cầu khách hàng', '2025-08-04 00:00:00', '2025-08-31 00:00:00', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:22:47', '2025-08-05 08:55:45', 1, 1, 5, 119),
 (214, 31, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 05:22:47', '2025-06-29 17:12:28', 0, 1, NULL, 14),
 (215, 31, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 05:22:47', '2025-06-29 17:12:28', 0, 1, NULL, 5),
 (216, 31, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 05:22:47', '2025-06-29 17:12:28', 0, 1, NULL, 4),
@@ -1262,7 +1262,7 @@ CREATE TABLE `tasks` (
 --
 
 INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `proposed_by`, `start_date`, `end_date`, `status`, `approval_status`, `linked_type`, `linked_id`, `step_code`, `step_id`, `created_by`, `priority`, `comments_count`, `created_at`, `updated_at`, `approval_steps`, `current_level`, `id_department`, `progress`, `overdue_reason`) VALUES
-(1, NULL, 'Thiết kế hồ sơ thầu', 'Chuẩn bị file bản vẽ và hồ sơ năng lực', 5, 4, '2025-07-01', '2025-08-25', 'doing', 'pending', 'bidding', 2, 4, 112, 1, 'normal', 0, '2025-06-04 01:23:15', '2025-07-30 09:43:58', 1, 1, 4, 10, NULL),
+(1, NULL, 'Thiết kế hồ sơ thầu', 'Chuẩn bị file bản vẽ và hồ sơ năng lực', 5, 4, '2025-07-01', '2025-08-25', 'done', 'approved', 'bidding', 2, 4, 112, 1, 'normal', 0, '2025-06-04 01:23:15', '2025-08-05 00:19:40', 1, 1, 4, 10, NULL),
 (2, NULL, 'Thiết kế hồ sơ thầu', 'Mô tả công việc thiết kế hồ sơ thầu', 3, 2, '2025-06-25', '2025-07-31', 'done', 'approved', 'bidding', 6, 5, 237, 2, 'high', 1, '2025-06-04 01:37:15', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
 (3, NULL, 'Nghiên cứu yêu cầu khách hàng', 'Mô tả công việc nghiên cứu yêu cầu khách hàng', 9, 4, '2025-06-29', '2025-07-31', 'todo', 'rejected', 'contract', 30, 16, 265, 1, 'high', 3, '2025-06-04 01:37:24', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
 (10, NULL, 'Mua sắm vật tư', 'Mô tả công việc mua sắm vật tư', 10, 2, '2025-06-25', '2025-07-31', 'todo', 'rejected', 'bidding', 2, 3, 111, 2, 'high', 5, '2025-06-04 01:38:26', '2025-08-04 06:53:04', 1, 1, 5, 0, 'tesst'),
@@ -1290,7 +1290,7 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (47, NULL, 'nhiệm vụ mới', 'mô tả mẫu', 15, 4, '2025-07-01', '2025-08-28', 'doing', 'pending', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-07-01 04:00:46', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
 (48, NULL, 'nhiệm vụ cho hợp đồng mới', 'mô tả mẫu', 20, 4, '2025-07-01', '2025-08-30', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'normal', 0, '2025-07-01 04:07:24', '2025-07-20 15:21:54', 1, 1, 4, 0, NULL),
 (49, NULL, 'nhiệm vụ  phát sinh', 'nhiêm vụ phát sinh', 1, 4, '2025-08-30', '2025-08-31', 'doing', 'pending', 'bidding', 3, 1, 118, 1, 'high', 0, '2025-07-01 04:31:44', '2025-07-20 15:21:54', 1, 1, 2, 0, NULL),
-(50, NULL, 'nhiệm vụ mới 06/07', 'test task mới', 1, 1, '2025-07-06', '2025-08-27', 'doing', 'pending', 'bidding', 2, 3, 111, 1, 'high', 0, '2025-07-06 03:52:58', '2025-07-20 15:21:54', 2, 1, 3, 0, NULL),
+(50, NULL, 'nhiệm vụ mới 06/07', 'test task mới', 1, 1, '2025-07-06', '2025-08-27', 'request_approval', 'pending', 'bidding', 2, 3, 111, 1, 'high', 0, '2025-07-06 03:52:58', '2025-07-20 15:21:54', 2, 1, 3, 0, NULL),
 (51, NULL, 'test nhiệm vụ mới', 'demo', 6, 9, '2025-07-15', '2025-08-28', 'doing', 'pending', 'contract', 34, 16, 333, 1, 'high', 0, '2025-07-20 04:53:06', '2025-07-31 01:36:25', 0, 1, 5, 75, NULL),
 (52, NULL, 'nhiệm vụ cho gói thầu 08/01/2025', 'test nhiệm vụ gói thàu 08/01/2025', 6, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 5, 113, 1, 'high', 0, '2025-07-31 20:58:15', '2025-07-31 20:58:15', 0, 1, 3, 0, NULL),
 (53, NULL, 'nhiệm vụ cho gói thầu 2 08/01/2025', 'test nhiệm vụ cho gói thầu 2 08/01/2025', 7, 9, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 5, 113, 1, 'high', 0, '2025-07-31 21:00:50', '2025-07-31 21:00:50', 0, 1, 3, 0, NULL),
@@ -1344,7 +1344,7 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (101, NULL, 'nhiệm vụ của vân anh 1 cấp duyệt', 'nhiệm vụ 1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'contract', 30, 14, 263, 5, 'low', 0, '2025-08-04 08:18:36', '2025-08-04 08:18:36', 1, 1, 3, 0, NULL),
 (102, NULL, 'task duyệt đơn hàng vân anh', 'task 1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'contract', 30, 11, NULL, 5, 'normal', 0, '2025-08-04 08:23:31', '2025-08-04 08:23:31', 1, 1, 3, 0, NULL),
 (103, NULL, 'task 1 cấp duyệt vân anh', 'tast 1 cấp duyệt của vân anh', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'contract', 30, 11, NULL, 5, 'normal', 0, '2025-08-04 08:24:33', '2025-08-04 08:24:33', 1, 1, 3, 0, NULL),
-(104, NULL, 'test task va', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 6, 1, NULL, 5, 'normal', 0, '2025-08-04 08:25:44', '2025-08-04 08:25:44', 1, 1, 3, 0, NULL),
+(104, NULL, 'test task va', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'todo', 'rejected', 'bidding', 6, 1, NULL, 5, 'normal', 0, '2025-08-04 08:25:44', '2025-08-04 23:26:07', 1, 1, 3, 0, NULL),
 (105, NULL, 'test task 1', 'test 1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 6, 1, NULL, 5, 'normal', 0, '2025-08-04 08:27:11', '2025-08-04 08:27:11', 1, 1, 3, 0, NULL),
 (106, NULL, 'test test', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 6, 1, 233, 5, 'normal', 0, '2025-08-04 08:30:39', '2025-08-04 08:30:39', 1, 1, 3, 0, NULL),
 (107, NULL, 'sub task 1', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 6, 1, NULL, 5, 'normal', 0, '2025-08-04 08:32:16', '2025-08-04 08:32:16', 1, 1, 3, 0, NULL),
@@ -1359,7 +1359,7 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (116, NULL, 'test xxxx', 'không cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 31, 1, 213, 5, 'normal', 0, '2025-08-04 08:45:18', '2025-08-04 08:45:18', 0, 1, 3, 0, NULL),
 (117, NULL, 'test 33', '2 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'todo', 'pending', 'bidding', 31, 1, 213, 5, 'normal', 0, '2025-08-04 08:45:53', '2025-08-04 08:45:53', 2, 1, 4, 0, NULL),
 (118, NULL, 'test mnmnmn', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 31, 1, NULL, 5, 'normal', 0, '2025-08-04 08:46:56', '2025-08-04 08:46:56', 1, 1, 4, 0, NULL),
-(119, NULL, 'test mới 32443242', '2 cấp duyệt nhé', 5, 5, '2025-08-04', '2025-09-30', 'todo', 'pending', 'bidding', 31, 1, 213, 5, 'high', 0, '2025-08-04 08:47:53', '2025-08-04 08:47:53', 2, 1, 3, 0, NULL),
+(119, NULL, 'test mới 32443242', '2 cấp duyệt nhé', 5, 5, '2025-08-04', '2025-09-30', 'todo', 'pending', 'bidding', 31, 1, 213, 5, 'high', 0, '2025-08-04 08:47:53', '2025-08-04 08:47:53', 2, 1, 3, 95, NULL),
 (120, NULL, 'test 1 cấp duyệt', 'test 2 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 31, 1, 213, 5, 'normal', 0, '2025-08-04 08:48:26', '2025-08-04 08:48:26', 1, 1, 5, 0, NULL),
 (121, NULL, 'test 111', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 31, 1, 213, 5, 'high', 0, '2025-08-04 08:49:18', '2025-08-04 08:49:18', 1, 1, 3, 0, NULL),
 (122, NULL, 'test mới 3333', 'ko cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 31, 2, 214, 5, 'normal', 0, '2025-08-04 08:50:09', '2025-08-04 08:50:09', 0, 1, 3, 0, NULL),
@@ -1384,7 +1384,27 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (141, NULL, 'test mới 2', '3242342424', 5, 5, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 1, 284, 5, 'normal', 0, '2025-08-04 11:17:11', '2025-08-04 11:17:11', 0, 1, 3, 0, NULL),
 (142, NULL, 'test mới 3', '34242424', 5, 5, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 1, 284, 5, 'normal', 0, '2025-08-04 11:19:10', '2025-08-04 11:19:10', 1, 1, 3, 0, NULL),
 (143, NULL, 'test 3', '4234234324', 5, 5, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 1, 284, 5, 'normal', 0, '2025-08-04 11:22:00', '2025-08-04 11:22:00', 1, 1, 3, 0, NULL),
-(144, NULL, 'test 5', '4234234234', 5, 5, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 1, 284, 5, 'normal', 0, '2025-08-04 11:25:27', '2025-08-04 11:25:27', 1, 1, 3, 0, NULL);
+(144, NULL, 'test 5', '4234234234', 5, 5, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 1, 284, 5, 'normal', 0, '2025-08-04 11:25:27', '2025-08-04 11:25:27', 1, 1, 3, 0, NULL),
+(145, NULL, 'task mới', 'xxxxx', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 3, 286, 1, 'normal', 0, '2025-08-04 18:41:00', '2025-08-04 18:41:00', 0, 1, 3, 0, NULL),
+(146, NULL, 'test 5', '2 cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 5, 288, 1, 'normal', 0, '2025-08-04 18:59:19', '2025-08-04 18:59:19', 2, 1, 3, 0, NULL),
+(147, NULL, 'đánh giá 2', '1 cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'todo', 'pending', 'bidding', 35, 2, 285, 1, 'normal', 0, '2025-08-04 19:03:30', '2025-08-04 19:03:30', 1, 1, 3, 0, NULL),
+(148, NULL, 'đánh giá 3', '2 cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 2, 285, 1, 'normal', 0, '2025-08-04 19:06:33', '2025-08-04 19:06:33', 2, 1, 3, 0, NULL),
+(149, NULL, 'đánh giá 4', '1 cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'todo', 'pending', 'bidding', 35, 2, 285, 1, 'low', 0, '2025-08-04 19:08:02', '2025-08-04 19:08:02', 1, 1, 3, 0, NULL),
+(150, NULL, 'duyệt 4', '1 cấp', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 4, 287, 1, 'normal', 0, '2025-08-04 19:15:17', '2025-08-04 19:15:17', 1, 1, 3, 0, NULL),
+(151, NULL, 'duyệt 5', '1 cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'todo', 'pending', 'bidding', 35, 4, 287, 1, 'high', 0, '2025-08-04 19:22:30', '2025-08-04 19:22:30', 0, 1, 3, 0, NULL),
+(152, NULL, 'test mới 222', 'ko cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 7, 290, 1, 'normal', 0, '2025-08-04 19:46:14', '2025-08-04 19:46:14', 0, 1, 3, 0, NULL),
+(153, NULL, 'tesst mới 3333', '3423424', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 5, 288, 1, 'normal', 0, '2025-08-04 20:04:52', '2025-08-04 20:04:52', 1, 1, 2, 0, NULL),
+(154, NULL, 'tesst mới ', '432432424', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 1, 284, 1, 'normal', 0, '2025-08-04 20:14:31', '2025-08-05 02:31:56', 0, 1, 3, 100, NULL),
+(155, NULL, 'chấm 1', 'chấm 1', 1, 1, '2025-08-05', '2025-09-30', 'todo', 'pending', 'bidding', 35, 6, 289, 1, 'normal', 0, '2025-08-04 20:18:33', '2025-08-04 20:18:33', 0, 1, 3, 0, NULL),
+(156, NULL, 'chấm 2', '2 cấp', 1, 1, '2025-08-05', '2025-09-30', 'todo', 'pending', 'bidding', 35, 6, 289, 1, 'normal', 0, '2025-08-04 20:19:16', '2025-08-04 20:19:16', 2, 1, 3, 0, NULL),
+(157, NULL, 'khiển khai 2', 'cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 8, 291, 1, 'normal', 0, '2025-08-04 20:20:40', '2025-08-04 20:20:40', 2, 1, 3, 0, NULL),
+(158, NULL, 'duyệt 2', '1 cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 9, 292, 1, 'normal', 0, '2025-08-04 20:32:19', '2025-08-04 20:32:19', 1, 1, 5, 0, NULL),
+(159, NULL, 'duyệt 3', 'không cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 9, 292, 1, 'high', 0, '2025-08-04 20:32:51', '2025-08-04 20:32:51', 0, 1, 3, 0, NULL),
+(160, NULL, 'triển khai 3', '2 cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'todo', 'pending', 'bidding', 35, 8, 291, 1, 'high', 0, '2025-08-04 20:33:41', '2025-08-04 20:33:41', 2, 1, 3, 0, NULL),
+(161, NULL, 'test mới 432432424', '34242424', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'contract', 34, 11, 328, 1, 'normal', 0, '2025-08-04 20:49:30', '2025-08-04 20:49:30', 0, 1, 4, 0, NULL),
+(162, NULL, 'tesst mới 45345435435', '43242424324', 1, 1, '2025-08-05', '2025-09-30', 'done', 'approved', 'contract', 34, 11, 328, 1, 'high', 0, '2025-08-04 20:50:07', '2025-08-04 23:25:12', 1, 1, 2, 0, NULL),
+(163, NULL, 'nhiệm vụ thuộc gói thầu', '4535354353', 1, 1, '2025-08-05', '2025-09-30', 'todo', 'pending', 'bidding', 2, 8, 116, 1, 'normal', 0, '2025-08-04 21:11:21', '2025-08-04 21:11:21', 0, 1, 5, 0, NULL),
+(164, NULL, 'nhiệm vụ mới', '2 cấp', 1, 1, '2025-08-05', '2025-09-30', 'done', 'approved', 'bidding', 2, 8, 116, 1, 'high', 0, '2025-08-04 21:11:51', '2025-08-04 23:29:22', 2, 2, 2, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -1414,7 +1434,7 @@ INSERT INTO `task_approvals` (`id`, `task_id`, `level`, `status`, `approved_by`,
 (10, 28, 1, 'approved', 1, '2025-07-06 13:52:52', 'ok'),
 (11, 30, 1, 'approved', 1, '2025-07-06 14:10:40', 'ok'),
 (12, 32, 1, 'approved', 1, '2025-07-08 14:25:09', 'ok'),
-(13, 1, 1, 'pending', NULL, NULL, NULL),
+(13, 1, 1, 'approved', 1, '2025-08-05 07:19:40', 'ok'),
 (14, 96, 1, 'pending', NULL, NULL, NULL),
 (15, 97, 1, 'pending', NULL, NULL, NULL),
 (16, 98, 1, 'pending', NULL, NULL, NULL),
@@ -1423,7 +1443,7 @@ INSERT INTO `task_approvals` (`id`, `task_id`, `level`, `status`, `approved_by`,
 (19, 101, 1, 'pending', NULL, NULL, NULL),
 (20, 102, 1, 'pending', NULL, NULL, NULL),
 (21, 103, 1, 'pending', NULL, NULL, NULL),
-(22, 104, 1, 'pending', NULL, NULL, NULL),
+(22, 104, 1, 'rejected', 1, '2025-08-05 06:26:07', 'ko'),
 (23, 105, 1, 'pending', NULL, NULL, NULL),
 (24, 106, 1, 'pending', NULL, NULL, NULL),
 (25, 107, 1, 'pending', NULL, NULL, NULL),
@@ -1455,7 +1475,21 @@ INSERT INTO `task_approvals` (`id`, `task_id`, `level`, `status`, `approved_by`,
 (51, 139, 1, 'pending', NULL, NULL, NULL),
 (52, 142, 1, 'pending', NULL, NULL, NULL),
 (53, 143, 1, 'pending', NULL, NULL, NULL),
-(54, 144, 1, 'pending', NULL, NULL, NULL);
+(54, 144, 1, 'pending', NULL, NULL, NULL),
+(55, 146, 1, 'pending', NULL, NULL, NULL),
+(56, 147, 1, 'pending', NULL, NULL, NULL),
+(57, 148, 1, 'pending', NULL, NULL, NULL),
+(58, 149, 1, 'pending', NULL, NULL, NULL),
+(59, 150, 1, 'pending', NULL, NULL, NULL),
+(60, 153, 1, 'pending', NULL, NULL, NULL),
+(61, 156, 1, 'pending', NULL, NULL, NULL),
+(62, 157, 1, 'pending', NULL, NULL, NULL),
+(63, 158, 1, 'pending', NULL, NULL, NULL),
+(64, 160, 1, 'pending', NULL, NULL, NULL),
+(65, 162, 1, 'approved', 1, '2025-08-05 06:25:12', 'ok'),
+(66, 164, 1, 'approved', 1, '2025-08-05 06:28:15', 'ok'),
+(67, 164, 2, 'approved', 1, '2025-08-05 06:29:22', 'ok'),
+(68, 50, 1, 'pending', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1482,7 +1516,12 @@ INSERT INTO `task_approval_logs` (`id`, `task_id`, `level`, `status`, `approved_
 (1, 2, 1, 'approved', 1, '2025-07-06 13:57:23', 'ok dc', '2025-07-06 13:57:23'),
 (2, 27, 1, 'approved', 1, '2025-07-06 14:10:04', 'ok', '2025-07-06 14:10:04'),
 (3, 30, 1, 'approved', 1, '2025-07-06 14:10:40', 'ok', '2025-07-06 14:10:40'),
-(4, 32, 1, 'approved', 1, '2025-07-08 14:25:09', 'ok', '2025-07-08 14:25:09');
+(4, 32, 1, 'approved', 1, '2025-07-08 14:25:09', 'ok', '2025-07-08 14:25:09'),
+(5, 162, 1, 'approved', 1, '2025-08-05 06:25:12', 'ok', '2025-08-05 06:25:12'),
+(6, 104, 1, 'rejected', 1, '2025-08-05 06:26:07', 'ko', '2025-08-05 06:26:07'),
+(7, 164, 1, 'approved', 1, '2025-08-05 06:28:15', 'ok', '2025-08-05 06:28:15'),
+(8, 164, 2, 'approved', 1, '2025-08-05 06:29:22', 'ok', '2025-08-05 06:29:22'),
+(9, 1, 1, 'approved', 1, '2025-08-05 07:19:40', 'ok', '2025-08-05 07:19:40');
 
 -- --------------------------------------------------------
 
@@ -1984,19 +2023,19 @@ ALTER TABLE `step_templates`
 -- AUTO_INCREMENT for table `tasks`
 --
 ALTER TABLE `tasks`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=145;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=165;
 
 --
 -- AUTO_INCREMENT for table `task_approvals`
 --
 ALTER TABLE `task_approvals`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
 
 --
 -- AUTO_INCREMENT for table `task_approval_logs`
 --
 ALTER TABLE `task_approval_logs`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `task_comments`
