@@ -1,16 +1,15 @@
 <template>
     <a-layout-sider
-        :collapsed="collapsed"
         :trigger="null"
         collapsible
-        collapsedWidth="0"
-        width="250"
+        collapsedWidth="60"
+        width="80"
         breakpoint="lg"
         @breakpoint="handleBreakpoint"
         @collapse="handleCollapse"
         style="background-color: #000000;"
     >
-        <div class="logo"/>
+        <div class="logo" style="height: 30px;"/>
         <a-menu
             :selectedKeys="selectedKeys"
             :openKeys="openKeys"
@@ -18,10 +17,11 @@
             mode="inline"
             @openChange="val => openKeys = val"
             @select="handleSelect"
+            :class="{ 'collapsed-menu': collapsed }"
         >
             <a-menu-item key="project-overview">
-                <BarChartOutlined />
-                <span>Tổng quan</span>
+                <BarChartOutlined /><br></br>
+                Tổng quan
             </a-menu-item>
             <a-menu-item key="my-tasks">
                 <ScheduleOutlined />

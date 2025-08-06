@@ -1,20 +1,24 @@
 <template>
     <a-layout style="min-height: 100vh;">
-        <Sidebar
-            :collapsed="collapsed"
-            :selectedKeys="selectedKeys"
-            @update:collapsed="collapsed = $event"
-            @update:selectedKeys="selectedKeys = $event"
-        />
-        <a-layout>
-            <Header
+        <div style="width: 60px;">
+            <Sidebar2
                 :collapsed="collapsed"
-                :user="user"
-                @toggle="toggleCollapsed"
-                @logout="handleLogout"
+                :selectedKeys="selectedKeys"
+                @update:collapsed="collapsed = $event"
+                @update:selectedKeys="selectedKeys = $event"
             />
-            <Content />
-        </a-layout>
+        </div>
+        <div style="width: calc(100% - 60px);">
+            <a-layout>
+                <Header
+                    :collapsed="collapsed"
+                    :user="user"
+                    @toggle="toggleCollapsed"
+                    @logout="handleLogout"
+                />
+                <Content />
+            </a-layout>
+        </div>
     </a-layout>
 </template>
 
@@ -25,6 +29,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 import Sidebar from './Sidebar.vue'
+import Sidebar2 from './Sidebar-v2.vue'
 import Header from './Header.vue'
 import Content from './Content.vue'
 

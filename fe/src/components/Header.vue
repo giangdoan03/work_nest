@@ -2,18 +2,8 @@
     <a-layout-header
         style="background: #fff; padding: 0; display: flex; justify-content: space-between; align-items: center;"
     >
-        <div>
-            <MenuUnfoldOutlined
-                v-if="collapsed"
-                class="trigger"
-                @click="emit('toggle')"
-            />
-            <MenuFoldOutlined
-                v-else
-                class="trigger"
-                @click="emit('toggle')"
-            />
-        </div>
+        <!-- Toggle button hidden since sidebar is fixed -->
+        <div style="width: 25px;"></div>
 
         <!-- Breadcrumb -->
         <div style="flex: 1; margin-left: 16px;">
