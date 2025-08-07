@@ -1,24 +1,28 @@
 <template>
     <a-layout style="min-height: 100vh;">
-        <div style="width: 60px;">
-            <Sidebar2
-                :collapsed="collapsed"
-                :selectedKeys="selectedKeys"
-                @update:collapsed="collapsed = $event"
-                @update:selectedKeys="selectedKeys = $event"
-            />
-        </div>
-        <div style="width: calc(100% - 60px);">
-            <a-layout>
-                <Header
+        <a-row>
+            <a-col flex="60px">
+                <Sidebar2
                     :collapsed="collapsed"
-                    :user="user"
-                    @toggle="toggleCollapsed"
-                    @logout="handleLogout"
+                    :selectedKeys="selectedKeys"
+                    @update:collapsed="collapsed = $event"
+                    @update:selectedKeys="selectedKeys = $event"
                 />
-                <Content />
-            </a-layout>
-        </div>
+            </a-col>
+            <a-col flex="calc(100% - 60px)">
+                <div>
+                    <a-layout>
+                        <Header
+                            :collapsed="collapsed"
+                            :user="user"
+                            @toggle="toggleCollapsed"
+                            @logout="handleLogout"
+                        />
+                        <Content />
+                    </a-layout>
+                </div>
+            </a-col>
+        </a-row>
     </a-layout>
 </template>
 

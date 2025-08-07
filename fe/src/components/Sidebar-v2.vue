@@ -9,197 +9,185 @@
 
         <!-- Menu -->
         <nav class="menu">
-            <div 
-                class="menu-item"
-                :class="{ active: currentRoute === '/project-overview' }"
-                @click="navigateTo('/project-overview')"
-                title="Tổng quan"
-            >
-                <BarChartOutlined />
-                <span class="menu-text">Tổng quan</span>
-            </div>
-            
-            <div 
-                class="menu-item"
-                :class="{ active: currentRoute === '/my-tasks' }"
-                @click="navigateTo('/my-tasks')"
-                title="Nhiệm vụ của tôi"
-            >
-                <ScheduleOutlined />
-                <span class="menu-text">Nhiệm vụ của tôi</span>
-            </div>
-            
-            <div 
-                class="menu-item"
-                :class="{ active: currentRoute === '/task-approvals' }"
-                @click="navigateTo('/task-approvals')"
-                title="Duyệt nhiệm vụ"
-            >
-                <CheckCircleOutlined />
-                <span class="menu-text">Duyệt nhiệm vụ</span>
-            </div>
-            
-            <div 
-                class="menu-item"
-                :class="{ active: currentRoute === '/quan-ly-khach-hang' }"
-                @click="navigateTo('/quan-ly-khach-hang')"
-                title="Quản lý khách hàng"
-            >
-                <TeamOutlined />
-                <span class="menu-text">Quản lý khách hàng</span>
-            </div>
-            
-            <div 
-                class="menu-item"
-                :class="{ active: currentRoute === '/bid-list' }"
-                @click="navigateTo('/bid-list')"
-                title="Gói thầu"
-            >
-                <FileSearchOutlined />
-                <span class="menu-text">Gói thầu</span>
-            </div>
-            
-            <div 
-                class="menu-item"
-                :class="{ active: currentRoute === '/contracts-tasks' }"
-                @click="navigateTo('/contracts-tasks')"
-                title="Hợp đồng"
-            >
-                <FileTextOutlined />
-                <span class="menu-text">Hợp đồng</span>
-            </div>
-            
-            <div 
-                class="menu-item"
-                :class="{ active: currentRoute === '/internal-tasks' }"
-                @click="navigateTo('/internal-tasks')"
-                title="Công việc"
-            >
-                <ToolOutlined />
-                <span class="menu-text">Công việc</span>
-            </div>
-            
-            <div 
-                class="menu-item"
-                :class="{ active: currentRoute === '/list-phong-ban' }"
-                @click="navigateTo('/list-phong-ban')"
-                title="Danh sách phòng ban"
-            >
-                <ApartmentOutlined />
-                <span class="menu-text">Danh sách phòng ban</span>
-            </div>
-            
-            <div 
-                class="menu-item"
-                :class="{ active: currentRoute === '/user-management' }"
-                @click="navigateTo('/user-management')"
-                title="Quản lý người dùng"
-            >
-                <TeamOutlined />
-                <span class="menu-text">Quản lý người dùng</span>
-            </div>
-            
-            <!-- Submenu Documents -->
-            <div class="submenu">
+            <a-tooltip placement="right" title="Tổng quan">
                 <div 
-                    class="submenu-header"
-                    :class="{ active: isDocumentsActive }"
-                    @click="toggleSubmenu('documents')"
-                    title="Tài liệu"
+                    class="menu-item"
+                    :class="{ active: currentRoute === '/project-overview' }"
+                    @click="navigateTo('/project-overview')"
+                >
+                    <BarChartOutlined />
+                    <span class="menu-text">Tổng quan</span>
+                </div>
+            </a-tooltip>
+            
+            <a-tooltip placement="right" title="Nhiệm vụ của tôi">
+                <div 
+                    class="menu-item"
+                    :class="{ active: currentRoute === '/my-tasks' }"
+                    @click="navigateTo('/my-tasks')"
+                >
+                    <ScheduleOutlined />
+                    <span class="menu-text">Nhiệm vụ của tôi</span>
+                </div>
+            </a-tooltip>
+            
+            <a-tooltip placement="right" title="Duyệt nhiệm vụ">
+                <div 
+                    class="menu-item"
+                    :class="{ active: currentRoute === '/task-approvals' }"
+                    @click="navigateTo('/task-approvals')"
+                >
+                    <CheckCircleOutlined />
+                    <span class="menu-text">Duyệt nhiệm vụ</span>
+                </div>
+            </a-tooltip>
+            
+            <a-tooltip placement="right" title="Quản lý khách hàng">
+                <div 
+                    class="menu-item"
+                    :class="{ active: currentRoute === '/customers' }"
+                    @click="navigateTo('/customers')"
+                >
+                    <TeamOutlined />
+                    <span class="menu-text">Quản lý khách hàng</span>
+                </div>
+            </a-tooltip>
+            
+            <a-tooltip placement="right" title="Gói thầu">
+                <div 
+                    class="menu-item"
+                    :class="{ active: currentRoute === '/bid-list' }"
+                    @click="navigateTo('/bid-list')"
+                >
+                    <FileSearchOutlined />
+                    <span class="menu-text">Gói thầu</span>
+                </div>
+            </a-tooltip>
+            
+            <a-tooltip placement="right" title="Hợp đồng">
+                <div 
+                    class="menu-item"
+                    :class="{ active: currentRoute === '/contracts-tasks' }"
+                    @click="navigateTo('/contracts-tasks')"
                 >
                     <FileTextOutlined />
-                    <span class="menu-text">Tài liệu</span>
-                    <span class="submenu-arrow" :class="{ expanded: submenus.documents }">▼</span>
+                    <span class="menu-text">Hợp đồng</span>
                 </div>
-                
-                <div class="submenu-items" v-show="submenus.documents">
-                    <div 
-                        class="submenu-item"
-                        :class="{ active: currentRoute === '/documents-my' }"
-                        @click="navigateTo('/documents-my')"
-                        title="Tài liệu của tôi"
-                    >
-                        <FileOutlined />
-                        <span class="menu-text">Tài liệu của tôi</span>
-                    </div>
-                    
-                    <div 
-                        class="submenu-item"
-                        :class="{ active: currentRoute === '/documents-department' }"
-                        @click="navigateTo('/documents-department')"
-                        title="Theo phòng ban"
-                    >
-                        <ApartmentOutlined />
-                        <span class="menu-text">Theo phòng ban</span>
-                    </div>
-                    
-                    <div 
-                        class="submenu-item"
-                        :class="{ active: currentRoute === '/documents-permission' }"
-                        @click="navigateTo('/documents-permission')"
-                        title="Phân quyền tài liệu"
-                    >
-                        <LockOutlined />
-                        <span class="menu-text">Phân quyền tài liệu</span>
-                    </div>
-                    
-                    <div 
-                        class="submenu-item"
-                        :class="{ active: currentRoute === '/documents-settings' }"
-                        @click="navigateTo('/documents-settings')"
-                        title="Cấu hình tài liệu"
-                    >
-                        <SettingOutlined />
-                        <span class="menu-text">Cấu hình tài liệu</span>
-                    </div>
-                </div>
-            </div>
+            </a-tooltip>
             
-            <!-- Submenu Settings -->
-            <div class="submenu">
+            <a-tooltip placement="right" title="Công việc">
                 <div 
-                    class="submenu-header"
-                    :class="{ active: isSettingsActive }"
-                    @click="toggleSubmenu('settings')"
-                    title="Cấu hình chung"
+                    class="menu-item"
+                    :class="{ active: currentRoute === '/internal-tasks' }"
+                    @click="navigateTo('/internal-tasks')"
                 >
-                    <SettingOutlined />
-                    <span class="menu-text">Cấu hình chung</span>
-                    <span class="submenu-arrow" :class="{ expanded: submenus.settings }">▼</span>
+                    <ToolOutlined />
+                    <span class="menu-text">Công việc</span>
                 </div>
-                
-                <div class="submenu-items" v-show="submenus.settings">
+            </a-tooltip>
+            
+            <a-tooltip placement="right" title="Danh sách phòng ban">
+                <div 
+                    class="menu-item"
+                    :class="{ active: currentRoute === '/departments' }"
+                    @click="navigateTo('/departments')"
+                >
+                    <ApartmentOutlined />
+                    <span class="menu-text">Danh sách phòng ban</span>
+                </div>
+            </a-tooltip>
+            
+            <a-tooltip placement="right" title="Quản lý người dùng">
+                <div 
+                    class="menu-item"
+                    :class="{ active: currentRoute === '/user-management' }"
+                    @click="navigateTo('/user-management')"
+                >
+                    <TeamOutlined />
+                    <span class="menu-text">Quản lý người dùng</span>
+                </div>
+            </a-tooltip>
+            
+                        <!-- Submenu Documents -->
+            <div class="submenu">
+                <a-dropdown 
+                    placement="rightTop" 
+                    :trigger="['hover']"
+                    :getPopupContainer="triggerNode => triggerNode.parentNode"
+                >
                     <div 
-                        class="submenu-item"
-                        :class="{ active: currentRoute === '/cau-hinh-dau-thau' }"
-                        @click="navigateTo('/cau-hinh-dau-thau')"
-                        title="Đấu thầu"
+                        class="submenu-header"
+                        :class="{ active: isDocumentsActive }"
                     >
-                        <FileDoneOutlined />
-                        <span class="menu-text">Đấu thầu</span>
+                          <FileTextOutlined />
+                        <span class="menu-text">Tài liệu</span>
+                        <span class="submenu-arrow">▼</span>
                     </div>
                     
-                    <div 
-                        class="submenu-item"
-                        :class="{ active: currentRoute === '/cau-hinh-hop-dong' }"
-                        @click="navigateTo('/cau-hinh-hop-dong')"
-                        title="Hợp đồng"
-                    >
-                        <ProfileOutlined />
-                        <span class="menu-text">Hợp đồng</span>
-                    </div>
-                </div>
+                    <template #overlay>
+                        <a-menu :selectedKeys="documentsSelectedKeys">
+                            <a-menu-item key="documents-my" @click="navigateTo('/documents/my')">
+                                <FileOutlined style="margin-right: 12px;" />
+                                <span>Tài liệu của tôi</span>
+                            </a-menu-item>
+                            <a-menu-item key="documents-department" @click="navigateTo('/documents/department')">
+                                <ApartmentOutlined style="margin-right: 12px;" />
+                                <span>Theo phòng ban</span>
+                            </a-menu-item>
+                            <a-menu-item key="documents-permission" @click="navigateTo('/documents/permission')">
+                                <LockOutlined style="margin-right: 12px;" />
+                                <span>Phân quyền tài liệu</span>
+                            </a-menu-item>
+                            <a-menu-item key="documents-settings" @click="navigateTo('/documents/settings')">
+                                <SettingOutlined style="margin-right: 12px;" />
+                                <span>Cấu hình tài liệu</span>
+                            </a-menu-item>
+                        </a-menu>
+                    </template>
+                </a-dropdown>
             </div>
             
-            <div 
-                class="menu-item"
-                :class="{ active: currentRoute === '/permission' }"
-                @click="navigateTo('/permission')"
-                title="Phân quyền"
-            >
-                <TeamOutlined />
-                <span class="menu-text">Phân quyền</span>
+                        <!-- Submenu Settings -->
+            <div class="submenu">
+                <a-dropdown 
+                    placement="rightTop" 
+                    :trigger="['hover']"
+                    :getPopupContainer="triggerNode => triggerNode.parentNode"
+                >
+                    <div 
+                        class="submenu-header"
+                        :class="{ active: isSettingsActive }"
+                    >
+                      <SettingOutlined />
+                        <span class="menu-text">Cấu hình chung</span>
+                        <span class="submenu-arrow">▼</span>
+                    </div>
+                    
+                    <template #overlay>
+                        <a-menu :selectedKeys="settingsSelectedKeys">
+                            <a-menu-item key="settings-bidding" @click="navigateTo('/settings/bidding')">
+                                <FileDoneOutlined style="margin-right: 12px;" />
+                                <span>Đấu thầu</span>
+                            </a-menu-item>
+                            <a-menu-item key="settings-contract" @click="navigateTo('/settings/contract')">
+                                <ProfileOutlined style="margin-right: 12px;" />
+                                <span>Hợp đồng</span>
+                            </a-menu-item>
+                        </a-menu>
+                    </template>
+                </a-dropdown>
             </div>
+            
+            <a-tooltip placement="right" title="Phân quyền">
+                <div 
+                    class="menu-item"
+                    :class="{ active: currentRoute === '/permissions' }"
+                    @click="navigateTo('/permissions')"
+                >
+                    <TeamOutlined />
+                    <span class="menu-text">Phân quyền</span>
+                </div>
+            </a-tooltip>
         </nav>
     </div>
 </template>
@@ -242,40 +230,78 @@ const { user: currentUser } = storeToRefs(userStore)
 // Current route
 const currentRoute = computed(() => route.path)
 
-// Submenu state
-const submenus = ref({
-    documents: false,
-    settings: false
-})
-
 // Check if submenu should be active
 const isDocumentsActive = computed(() => {
-    return ['/documents-my', '/documents-department', '/documents-permission', '/documents-settings'].includes(currentRoute.value)
+    return ['/documents/my', '/documents/shared', '/documents/department', '/documents/permission', '/documents/settings'].includes(currentRoute.value)
 })
 
 const isSettingsActive = computed(() => {
-    return ['/cau-hinh-dau-thau', '/cau-hinh-hop-dong'].includes(currentRoute.value)
+    return ['/settings/bidding', '/settings/contract', '/settings'].includes(currentRoute.value)
 })
+
+// Path to key mapping (same as Sidebar.vue)
+const pathToKeyMap = {
+    '/dashboard': 'dashboard',
+    '/project-overview': 'project-overview',
+    '/my-tasks': 'my-tasks',
+    '/task-approvals': 'task-approvals',
+    '/customers': 'quan-ly-khach-hang',
+    '/permissions': 'permission',
+    '/departments': 'list-phong-ban',
+    '/user-management': 'user-management',
+    '/internal-tasks': 'internal-tasks',
+    '/contracts-tasks': 'contracts-tasks',
+    '/contracts': 'contracts-tasks',
+    '/bid-list': 'bid-list',
+    '/bid-detail': 'bid-list',
+
+    // Tài liệu (sub menu)
+    '/documents/my': 'documents-my',
+    '/documents/shared': 'documents-shared',
+    '/documents/department': 'documents-department',
+    '/documents/permission': 'documents-permission',
+    '/documents/settings': 'documents-settings',
+
+    '/settings/bidding': 'cau-hinh-dau-thau',
+    '/settings/contract': 'cau-hinh-hop-dong',
+    '/settings': 'cau-hinh',
+}
+
+// Key to parent mapping (same as Sidebar.vue)
+const keyToParentMap = {
+    // Các menu chính
+    'project-overview': 'project-overview',
+    'my-tasks': 'my-tasks',
+    'task-approvals': 'task-approvals',
+    'dashboard': 'dashboard',
+    'quan-ly-khach-hang': 'dashboard',
+    'cau-hinh': 'dashboard',
+    'lich-su-mua-goi': 'dashboard',
+    'permission': 'permission',
+    'list-phong-ban': 'list-phong-ban',
+    'user-management': 'user-management',
+    'internal-tasks': 'internal-tasks',
+    'contracts-tasks': 'contracts-tasks',
+    'bid-list': 'bid-list',
+    'bid-detail': 'bid-list',
+
+    // Tài liệu
+    'documents-my': 'documents',
+    'documents-shared': 'documents',
+    'documents-department': 'documents',
+    'documents-permission': 'documents',
+    'documents-settings': 'documents',
+
+    'cau-hinh-dau-thau': 'cau-hinh',
+    'cau-hinh-hop-dong': 'cau-hinh'
+}
 
 // Navigation function
 const navigateTo = (path) => {
     router.push(path)
 }
 
-// Toggle submenu
-const toggleSubmenu = (submenuKey) => {
-    submenus.value[submenuKey] = !submenus.value[submenuKey]
-}
 
-// Auto-open submenu when route matches
-watch(currentRoute, (newRoute) => {
-    if (isDocumentsActive.value) {
-        submenus.value.documents = true
-    }
-    if (isSettingsActive.value) {
-        submenus.value.settings = true
-    }
-}, { immediate: true })
 </script>
 
 <style scoped>
@@ -418,50 +444,76 @@ watch(currentRoute, (newRoute) => {
     transform: translateY(-50%);
     font-size: 8px;
     color: #ffffff;
-    transition: transform 0.2s ease;
 }
 
-.submenu-arrow.expanded {
-    transform: translateY(-50%) rotate(180deg);
+/* Dropdown menu styling */
+.ant-dropdown-menu {
+    background: #001529 !important;
+    border: 1px solid #303030 !important;
+    border-radius: 4px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    min-width: 200px !important;
+    width: 200px !important;
+    max-width: 250px !important;
 }
 
-/* Submenu items */
-.submenu-items {
-    background: #001529;
+.ant-dropdown-menu-item {
+    color: #ffffff !important;
+    padding: 12px 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    white-space: nowrap !important;
+    line-height: 1.5 !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    border-bottom: 1px solid #303030 !important;
+    transition: all 0.2s ease !important;
 }
 
-.submenu-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 6px 4px;
-    height: 40px;
-    min-height: 40px;
-    margin: 0;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    padding-left: 16px;
+.ant-dropdown-menu-item:last-child {
+    border-bottom: none !important;
 }
 
-.submenu-item:hover {
-    background-color: #1890ff;
+:deep(.ant-dropdown-menu-item):hover {
+    background-color: #1890ff !important;
+    color: #ffffff !important;
+    transform: translateX(4px) !important;
+    box-shadow: 0 2px 8px rgba(183, 188, 192, 0.3) !important;
 }
 
-.submenu-item.active {
-    background-color: #1890ff;
+.ant-dropdown-menu-item .anticon {
+    color: #ffffff !important;
+    font-size: 16px !important;
+    flex-shrink: 0 !important;
+    transition: all 0.2s ease !important;
 }
 
-.submenu-item .anticon {
-    display: block;
-    font-size: 14px;
-    margin-bottom: 2px;
-    color: #ffffff;
+.ant-dropdown-menu-item span {
+    color: #ffffff !important;
+    font-size: 14px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-weight: 400 !important;
+    transition: all 0.2s ease !important;
 }
 
-.submenu-item .menu-text {
-    font-size: 9px;
+.ant-dropdown-menu-item:hover ,
+.ant-dropdown-menu-item:hover  {
+    background-color: #1890ff !important;
+    color: #ffffff !important;
+}
+
+/* Active state for menu items */
+:deep(.ant-dropdown-menu-item) .ant-dropdown-menu-item-selected {
+    background-color: #1890ff !important;
+    color: #ffffff !important;
+}
+
+.ant-dropdown-menu-item.ant-dropdown-menu-item-selected .anticon,
+.ant-dropdown-menu-item.ant-dropdown-menu-item-selected span {
+    color: #ffffff !important;
 }
 
 /* Hover effects for all interactive elements */
@@ -471,6 +523,7 @@ watch(currentRoute, (newRoute) => {
 .submenu-header:hover .menu-text,
 .submenu-item:hover .anticon,
 .submenu-item:hover .menu-text {
+    background-color: #1890ff !important;
     color: #ffffff;
 }
 
