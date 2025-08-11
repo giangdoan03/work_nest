@@ -213,12 +213,12 @@ import {
     ProfileOutlined
 } from '@ant-design/icons-vue'
 
-const props = defineProps({
-    user: {
-        type: Object,
-        required: true
-    }
-})
+// const props = defineProps({
+//     user: {
+//         type: Object,
+//         required: true
+//     }
+// })
 
 const emit = defineEmits(['logout'])
 
@@ -295,6 +295,43 @@ const keyToParentMap = {
     'cau-hinh-dau-thau': 'cau-hinh',
     'cau-hinh-hop-dong': 'cau-hinh'
 }
+
+// Cho phép match cả path con: /documents/my/123
+const mapPathToKey = (path) => {
+    // ưu tiên match chính xác
+    if (pathToKeyMap[path]) return pathToKeyMap[path]
+    // sau đó match theo prefix
+    const hit = Object.entries(pathToKeyMap).find(([p]) =>
+        path.startsWith(p + '/')
+    )
+    return hit ? hit[1] : undefined
+}
+
+// Nhóm key thuộc submenu Documents / Settings
+const documentKeys = new Set([
+    'documents-my',
+    'documents-shared',
+    'documents-department',
+    'documents-permission',
+    'documents-settings',
+])
+const settingKeys = new Set([
+    'cau-hinh-dau-thau',
+    'cau-hinh-hop-dong',
+    'cau-hinh',
+])
+
+// selectedKeys cho menu overlay
+const documentsSelectedKeys = computed(() => {
+    const k = mapPathToKey(currentRoute.value)
+    return k && documentKeys.has(k) ? [k] : []
+})
+
+const settingsSelectedKeys = computed(() => {
+    const k = mapPathToKey(currentRoute.value)
+    return k && settingKeys.has(k) ? [k] : []
+})
+
 
 // Navigation function
 const navigateTo = (path) => {

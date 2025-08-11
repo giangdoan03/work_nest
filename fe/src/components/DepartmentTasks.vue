@@ -64,12 +64,16 @@
                             <template v-else-if="column.dataIndex === 'progress'">
                                 <a-tooltip title="Click để thay đổi tiến trình">
                                     <div @click="openProgressModal(record)" style="cursor: pointer;">
-                                        <a-progress 
-                                            :percent="record.progress || 0" 
-                                            size="small" 
-                                            :status="getProgressStatus(record.progress)"
-                                            :format="(percent) => `${percent}%`"
-                                            :stroke-width="20"
+                                        <a-progress
+                                            @click="openProgressModal(record)" style="cursor: pointer;"
+                                            :percent="Number(record.progress)"
+                                            :stroke-color="{
+                                  '0%': '#108ee9',
+                                  '100%': '#87d068',
+                                }"
+                                            :status="record.progress >= 100 ? 'success' : 'active'"
+                                            size="small"
+                                            :show-info="true"
                                         />
                                     </div>
                                 </a-tooltip>
@@ -180,34 +184,23 @@
                             </template>
                             <template v-else-if="column.dataIndex === 'progress'">
                                 <a-tooltip title="Click để thay đổi tiến trình">
-                                    <div @click="openProgressModal(record)" style="cursor: pointer;">
-                                        <a-progress
-                                                :percent="Number(record.progress ?? 0)"
-                                                size="small"
-                                                :status="getProgressStatus(record.progress)"
-                                                :format="(percent) => `${percent}%`"
-                                                :stroke-width="20"
-                                        />
-                                    </div>
+                                    <a-progress
+                                        @click="openProgressModal(record)" style="cursor: pointer;"
+                                        :percent="Number(record.progress)"
+                                        :stroke-color="{
+                                  '0%': '#108ee9',
+                                  '100%': '#87d068',
+                                }"
+                                        :status="record.progress >= 100 ? 'success' : 'active'"
+                                        size="small"
+                                        :show-info="true"
+                                    />
                                 </a-tooltip>
                             </template>
                             <template v-else-if="column.dataIndex === 'priority'">
                                 <a-tag :color="getPriorityColor(record.priority)">
                                     {{ getPriorityText(record.priority) }}
                                 </a-tag>
-                            </template>
-                            <template v-else-if="column.dataIndex === 'progress'">
-                                <a-tooltip title="Click để thay đổi tiến trình">
-                                    <div @click="openProgressModal(record)" style="cursor: pointer;">
-                                        <a-progress 
-                                            :percent="record.progress || 0" 
-                                            size="small" 
-                                            :status="getProgressStatus(record.progress)"
-                                            :format="(percent) => `${percent}%`"
-                                            :stroke-width="20"
-                                        />
-                                    </div>
-                                </a-tooltip>
                             </template>
                             <template v-else-if="column.dataIndex === 'assignee'">
                                 <a-tooltip placement="top" :overlayStyle="{ maxWidth: '300px' }">
@@ -267,7 +260,7 @@
                     </a-table>
 
                     <div v-if="!urgentTasks.length" class="no-tasks">
-                        <p>Không có công việc GẤP nào.</p>
+                        <p>Không có công việc gấp nào.</p>
                     </div>
                 </div>
             </div>
@@ -441,7 +434,9 @@ import {
     FlagOutlined,
     FireOutlined,
     CheckCircleOutlined,
-    StopOutlined
+    StopOutlined,
+    FieldTimeOutlined,   // ⟵ tuần
+    CalendarOutlined     // ⟵ tháng
 } from '@ant-design/icons-vue'
 import { formatDate } from '@/utils/formUtils';
 import PieChart from './PieChart.vue'
@@ -578,23 +573,65 @@ const getUserName = (userId) => {
 }
 
 const updateStats = (data) => {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = new Date()
+    const todayStr = today.toISOString().slice(0, 10)
+
+    // helpers
+    const toDate = (s) => {
+        if (!s) return null
+        const [y, m, d] = s.split('-').map(Number)
+        return new Date(y, m - 1, d)
+    }
+    // tuần: Mon..Sun
+    const monday = new Date(today)
+    monday.setDate(today.getDate() - ((today.getDay() + 6) % 7))
+    monday.setHours(0, 0, 0, 0)
+    const sunday = new Date(monday)
+    sunday.setDate(monday.getDate() + 6)
+    sunday.setHours(23, 59, 59, 999)
+
+    // tháng hiện tại
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+    const monthEnd   = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    monthStart.setHours(0,0,0,0)
+    monthEnd.setHours(23,59,59,999)
+
+    const isInRange = (d, start, end) => d && d >= start && d <= end
+
+    const weekCount = data.filter(t => {
+        const d = toDate(t.end_date)
+        return isInRange(d, monday, sunday)
+    }).length
+
+    const monthCount = data.filter(t => {
+        const d = toDate(t.end_date)
+        return isInRange(d, monthStart, monthEnd)
+    }).length
+
     stats.value = [
-        // {
-        //     key: 'total',
-        //     label: 'Công việc lãnh đạo giao xử lý',
-        //     count: data.length,
-        //     icon: ClockCircleOutlined,
-        //     color: '#1890ff',
-        //     bg: '#e6f7ff'
-        // },
         {
             key: 'today',
             label: 'Công việc cần xử lý hôm nay',
-            count: data.filter(t => t.end_date === today).length,
+            count: data.filter(t => t.end_date === todayStr).length,
             icon: FlagOutlined,
             color: '#faad14',
             bg: '#fffbe6'
+        },
+        {
+            key: 'week',
+            label: 'Công việc theo tuần',
+            count: weekCount,
+            icon: FieldTimeOutlined,
+            color: '#1d39c4',
+            bg: '#f0f5ff'
+        },
+        {
+            key: 'month',
+            label: 'Công việc theo tháng',
+            count: monthCount,
+            icon: CalendarOutlined,
+            color: '#13c2c2',
+            bg: '#e6fffb'
         },
         {
             key: 'urgent',
@@ -622,6 +659,35 @@ const updateStats = (data) => {
         }
     ]
 }
+
+// Helpers tính khoảng ngày
+const toDate = (s) => {
+    if (!s) return null
+    const [y, m, d] = s.split('-').map(Number)
+    return new Date(y, m - 1, d)
+}
+const isInRange = (d, start, end) => d && d >= start && d <= end
+
+const getThisWeekRange = () => {
+    const today = new Date()
+    const monday = new Date(today)
+    monday.setDate(today.getDate() - ((today.getDay() + 6) % 7))
+    monday.setHours(0,0,0,0)
+    const sunday = new Date(monday)
+    sunday.setDate(monday.getDate() + 6)
+    sunday.setHours(23,59,59,999)
+    return { start: monday, end: sunday }
+}
+
+const getThisMonthRange = () => {
+    const today = new Date()
+    const start = new Date(today.getFullYear(), today.getMonth(), 1)
+    const end   = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    start.setHours(0,0,0,0)
+    end.setHours(23,59,59,999)
+    return { start, end }
+}
+
 
 const getTaskStatusText = (status) => {
     switch (status) {
@@ -693,12 +759,28 @@ const getAvatarColor = (name) => {
 
 const filterStrategies = {
     today: () => {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = new Date().toISOString().slice(0, 10)
         return {
             title: 'Công việc cần xử lý hôm nay',
             message: 'Không có nhiệm vụ nào hôm nay.',
             data: tasks.value.filter(t => t.end_date === today),
-        };
+        }
+    },
+    week: () => {
+        const { start, end } = getThisWeekRange()
+        return {
+            title: 'Công việc trong tuần này',
+            message: 'Không có nhiệm vụ nào trong tuần này.',
+            data: tasks.value.filter(t => isInRange(toDate(t.end_date), start, end)),
+        }
+    },
+    month: () => {
+        const { start, end } = getThisMonthRange()
+        return {
+            title: 'Công việc trong tháng này',
+            message: 'Không có nhiệm vụ nào trong tháng này.',
+            data: tasks.value.filter(t => isInRange(toDate(t.end_date), start, end)),
+        }
     },
     urgent: () => ({
         title: 'Công việc gấp cần xử lý',
@@ -715,18 +797,20 @@ const filterStrategies = {
         message: 'Không có nhiệm vụ quá hạn nào.',
         data: tasks.value.filter(t => t.status === 'overdue'),
     }),
-};
+}
+
 
 const handleCardClick = (item) => {
-    const strategy = filterStrategies[item.key];
+    const strategy = filterStrategies[item.key]
     if (strategy) {
-        const { title, message, data } = strategy();
-        filteredTasks.value = data;
-        drawerTitle.value = title;
-        emptyMessage.value = message;
-        drawerVisible.value = true;
+        const { title, message, data } = strategy()
+        filteredTasks.value = data
+        drawerTitle.value = title
+        emptyMessage.value = message
+        currentPage.value = 1
+        drawerVisible.value = true
     }
-};
+}
 
 
 const openProgressModal = (task) => {
