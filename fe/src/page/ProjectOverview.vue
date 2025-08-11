@@ -19,19 +19,19 @@
                 </template>
                 <DepartmentTasks v-if="activeTabKey === '3'" :departmentId="3" />
             </a-tab-pane>
+<!--            <a-tab-pane key="4">-->
+<!--                <template #tab>-->
+<!--                    <ToolOutlined /> P.Dịch Vụ Kỹ Thuật-->
+<!--                </template>-->
+<!--                <DepartmentTasks v-if="activeTabKey === '4'" :departmentId="4" />-->
+<!--            </a-tab-pane>-->
             <a-tab-pane key="4">
-                <template #tab>
-                    <ToolOutlined /> P.Dịch Vụ Kỹ Thuật
-                </template>
-                <DepartmentTasks v-if="activeTabKey === '4'" :departmentId="4" />
-            </a-tab-pane>
-            <a-tab-pane key="5">
                 <template #tab>
                     <TeamOutlined /> P.Hành Chính Nhân Sự
                 </template>
-                <DepartmentTasks v-if="activeTabKey === '5'" :departmentId="5" />
+                <DepartmentTasks v-if="activeTabKey === '4'" :departmentId="4" />
             </a-tab-pane>
-            <a-tab-pane key="6" :departmentId="6">
+            <a-tab-pane key="5" :departmentId="5">
                 <template #tab>
                     <AppstoreOutlined /> Tổng quan gói thầu - hợp đồng
                 </template>
@@ -64,9 +64,7 @@
                                     <template v-for="(task, taskIdx) in stepTasks" :key="taskIdx">
                                         <tr class="row-hover">
                                             <!-- Khách hàng -->
-                                            <td v-if="groupIdx === 0 && itemIdx === 0 && stepIdx === 0 && taskIdx === 0" :rowspan="getTotalRows(customer)"
-                                                class="customer-cell vertical-text name_customer"
-                                            >
+                                            <td v-if="groupIdx === 0 && itemIdx === 0 && stepIdx === 0 && taskIdx === 0" :rowspan="getTotalRows(customer)" class="customer-cell vertical-text name_customer">
                                                 <a-tooltip :title="customer.customer_name">
                                                   <span>
                                                     {{ truncatedName(customer.customer_name) }}
@@ -92,32 +90,18 @@
 
 
                                             <!-- Bước quy trình -->
-                                            <td
-                                                    v-if="taskIdx === 0"
-                                                    :rowspan="stepTasks.length"
-                                                    class="step_code"
-                                            >
+                                            <td v-if="taskIdx === 0" :rowspan="stepTasks.length" class="step_code">
                                                 <a-tooltip :title="task.step_title">
-                                                    <router-link
-                                                            :to="getLinkedRoute(task)"
-                                                            class="ellipsis-text"
-                                                            style="color: #096dd9; text-decoration: none"
-                                                    >
+                                                    <router-link :to="getLinkedRoute(task)" class="ellipsis-text" style="color: #096dd9; text-decoration: none">
                                                         <span v-if="task.step_code">B{{ task.step_code }} - </span>{{ task.step_title }}
                                                     </router-link>
-
                                                 </a-tooltip>
                                             </td>
-
 
                                             <!-- Các ô còn lại -->
                                             <td class="task-cell">
                                                 <a-tooltip :title="task.title" v-if="task.title">
-                                                    <router-link
-                                                            :to="`/internal-tasks/${task.id}/info`"
-                                                            class="ellipsis-text"
-                                                            style="color: #1890ff"
-                                                    >
+                                                    <router-link :to="`/internal-tasks/${task.id}/info`" class="ellipsis-text" style="color: #1890ff">
                                                         • {{ task.title }}
                                                     </router-link>
                                                 </a-tooltip>
@@ -126,8 +110,7 @@
 
                                             <td style="text-align: center">
                                                 <a-tooltip :title="task.proposed_name || 'Chưa có'">
-                                                    <a-avatar
-                                                            size="large"
+                                                    <a-avatar size="large"
                                                             :style="{
                                                                 backgroundColor: getAvatarColor(task.proposed_name),
                                                                 verticalAlign: 'middle',
@@ -169,17 +152,12 @@
                                             </td>
 
                                             <td>
-                                                <a-tooltip
-                                                        v-if="task.days_overdue > 0"
-                                                        :title="task.overdue_reason || 'Chưa rõ lý do'"
-                                                >
-
+                                                <a-tooltip v-if="task.days_overdue > 0" :title="task.overdue_reason || 'Chưa rõ lý do'">
                                                     <a-tag color="red" style="cursor: pointer;" @click="openOverdueReasonModal(task)">
                                                         <ExclamationCircleOutlined style="margin-right: 4px;" />
                                                         Quá hạn {{ task.days_overdue }} ngày
                                                     </a-tag>
                                                 </a-tooltip>
-
                                                 <a-tag v-else-if="task.days_remaining > 0" color="orange">
                                                     <ClockCircleOutlined style="margin-right: 4px;" />
                                                     Còn {{ task.days_remaining }} ngày
@@ -190,8 +168,6 @@
                                                     Hạn hôm nay
                                                 </a-tag>
                                             </td>
-
-
                                             <td>
                                                 <a-tag v-if="task.priority" :color="getPriorityColor(task.priority)" bordered>
                                                     {{ task.priority === 'high' ? 'Cao' : task.priority === 'normal' ? 'Trung bình' : 'Thấp' }}
@@ -217,7 +193,6 @@
                                                     </div>
                                                 </a-tooltip>
                                             </td>
-
                                         </tr>
                                     </template>
                                 </template>

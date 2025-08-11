@@ -561,7 +561,7 @@ const filterStrategies = {
         };
     },
     urgent: () => ({
-        title: 'Công việc GẤP cần xử lý',
+        title: 'Công việc gấp cần xử lý',
         message: 'Không có nhiệm vụ GẤP nào.',
         data: tasks.value.filter(t => t.priority === 'high'),
     }),
@@ -571,8 +571,8 @@ const filterStrategies = {
         data: tasks.value.filter(t => t.status === 'done'),
     }),
     overdue: () => ({
-        title: 'Công việc QUÁ HẠN',
-        message: 'Không có nhiệm vụ QUÁ HẠN nào.',
+        title: 'Công việc quá hạn',
+        message: 'Không có nhiệm vụ quá hạn nào.',
         data: tasks.value.filter(t => t.status === 'overdue'),
     }),
 };
