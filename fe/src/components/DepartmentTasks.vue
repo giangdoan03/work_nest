@@ -152,18 +152,26 @@
 
                 <div class="table-section">
                     <h4>Công việc cần thực hiện gấp</h4>
-                    <a-table 
-                        :columns="columns" 
-                        :dataSource="urgentTasks" 
-                        rowKey="id" 
-                        bordered 
-                        size="small" 
-                        :pagination="false"
-                        :scroll="{ x: 1200, y: 300 }"
-                        :locale="{ emptyText: 'Không có dữ liệu' }"
+                    <a-table
+                        :columns="columns"
+                        :dataSource="urgentTasks"
+                        rowKey="id"
+                        bordered
+                        size="small"
                         class="tiny-scroll"
+                        :scroll="{ x: 1200, y: 300 }"
+                        :pagination="{
+                            current: urgentPage.current,
+                            pageSize: urgentPage.pageSize,
+                            total: urgentTasks.length,
+                            showSizeChanger: true,
+                            showQuickJumper: true,
+                            pageSizeOptions: ['5','10','20','50','100']
+                          }"
+                        @change="onUrgentTableChange"
                     >
-                        <template #emptyText>
+
+                    <template #emptyText>
                             <div style="height: 250px; padding-top: 90px;">
                                 Không có dữ liệu
                             </div>
@@ -428,7 +436,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed, reactive } from 'vue'
 import {
     ClockCircleOutlined,
     FlagOutlined,
@@ -479,9 +487,47 @@ const tasksDueIn1Day = computed(() => {
     return tasks.value.filter(task => task.end_date === tomorrowStr)
 })
 
-const urgentTasks = computed(() => {
-    return tasks.value.filter(task => task.priority === 'high')
+// const urgentTasks = computed(() => {
+//     return tasks.value.filter(task => task.priority === 'high')
+// })
+
+const urgentPage = reactive({
+    current: 1,
+    pageSize: 10,
 })
+
+const onUrgentTableChange = (pagination/*, filters, sorter, extra*/) => {
+    urgentPage.current = pagination.current
+    urgentPage.pageSize = pagination.pageSize
+}
+
+
+// weight cho ưu tiên
+const PRIORITY_WEIGHT = { high: 3, normal: 2, low: 1 }
+
+// Tất cả task, sắp xếp theo ưu tiên giảm dần
+const urgentTasks = computed(() => {
+    return [...tasks.value].sort((a, b) => {
+        const wa = PRIORITY_WEIGHT[a.priority] ?? 0
+        const wb = PRIORITY_WEIGHT[b.priority] ?? 0
+        if (wa !== wb) return wb - wa // desc: high > normal > low
+
+        // tie-breaker (tuỳ chọn): hạn sớm hơn đứng trước
+        const da = a.end_date ? new Date(a.end_date) : null
+        const db = b.end_date ? new Date(b.end_date) : null
+        if (da && db) return da - db
+        if (da && !db) return -1
+        if (!da && db) return 1
+        return 0
+    })
+})
+
+// Khi danh sách thay đổi, đảm bảo current không vượt quá tổng trang
+watch(() => urgentTasks.value.length, (len) => {
+    const totalPages = Math.ceil(len / urgentPage.pageSize) || 1
+    if (urgentPage.current > totalPages) urgentPage.current = totalPages
+})
+
 
 const columns = [
     { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
