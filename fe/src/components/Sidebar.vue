@@ -192,138 +192,142 @@
             
                         <!-- Submenu Documents -->
             <div class="submenu">
-                <a-dropdown 
-                    placement="rightTop" 
-                    :trigger="['hover']"
-                    :getPopupContainer="triggerNode => triggerNode.parentNode"
-                    v-if="!collapsed"
-                >
-                    <div 
-                        class="submenu-header"
-                        :class="{ active: isDocumentsActive }"
+                <div v-if="!collapsed">
+                    <a-dropdown 
+                        placement="rightTop" 
+                        :trigger="['hover']"
+                        :getPopupContainer="triggerNode => triggerNode.parentNode"
                     >
-                          <FileTextOutlined />
-                        <span class="menu-text">Tài liệu</span>
-                        <span class="submenu-arrow">▼</span>
-                    </div>
-                    
-                    <template #overlay>
-                        <a-menu :selectedKeys="documentsSelectedKeys">
-                            <a-menu-item key="documents-my" @click="navigateTo('/documents/my')">
-                                <FileOutlined style="margin-right: 12px;" />
-                                <span>Tài liệu của tôi</span>
-                            </a-menu-item>
-                            <a-menu-item key="documents-department" @click="navigateTo('/documents/department')">
-                                <ApartmentOutlined style="margin-right: 12px;" />
-                                <span>Theo phòng ban</span>
-                            </a-menu-item>
-                            <a-menu-item key="documents-permission" @click="navigateTo('/documents/permission')">
-                                <LockOutlined style="margin-right: 12px;" />
-                                <span>Phân quyền tài liệu</span>
-                            </a-menu-item>
-                            <a-menu-item key="documents-settings" @click="navigateTo('/documents/settings')">
-                                <SettingOutlined style="margin-right: 12px;" />
-                                <span>Cấu hình tài liệu</span>
-                            </a-menu-item>
-                        </a-menu>
-                    </template>
-                </a-dropdown>
-                <a-dropdown 
-                    placement="rightTop" 
-                    :trigger="['hover']"
-                    :getPopupContainer="triggerNode => triggerNode.parentNode"
-                    v-else
-                >
-                    <div 
-                        class="submenu-header"
-                        :class="{ active: isDocumentsActive }"
+                        <div 
+                            class="submenu-header"
+                            :class="{ active: isDocumentsActive }"
+                        >
+                              <FileTextOutlined />
+                            <span class="menu-text">Tài liệu</span>
+                            <span class="submenu-arrow">▼</span>
+                        </div>
+                        
+                        <template #overlay>
+                            <a-menu :selectedKeys="documentsSelectedKeys">
+                                <a-menu-item key="documents-my" @click="navigateTo('/documents/my')">
+                                    <FileOutlined style="margin-right: 12px;" />
+                                    <span>Tài liệu của tôi</span>
+                                </a-menu-item>
+                                <a-menu-item key="documents-department" @click="navigateTo('/documents/department')">
+                                    <ApartmentOutlined style="margin-right: 12px;" />
+                                    <span>Theo phòng ban</span>
+                                </a-menu-item>
+                                <a-menu-item key="documents-permission" @click="navigateTo('/documents/permission')">
+                                    <LockOutlined style="margin-right: 12px;" />
+                                    <span>Phân quyền tài liệu</span>
+                                </a-menu-item>
+                                <a-menu-item key="documents-settings" @click="navigateTo('/documents/settings')">
+                                    <SettingOutlined style="margin-right: 12px;" />
+                                    <span>Cấu hình tài liệu</span>
+                                </a-menu-item>
+                            </a-menu>
+                        </template>
+                    </a-dropdown>
+                </div>
+                <div v-else>
+                    <a-dropdown 
+                        placement="rightTop" 
+                        :trigger="['hover']"
+                        :getPopupContainer="triggerNode => triggerNode.parentNode"
                     >
-                        <FileTextOutlined />
-                        <span class="menu-text-collapsed">Tài liệu</span>
-                        <span class="submenu-arrow-collapsed">▼</span>
-                    </div>
-                    
-                    <template #overlay>
-                        <a-menu :selectedKeys="documentsSelectedKeys">
-                            <a-menu-item key="documents-my" @click="navigateTo('/documents/my')">
-                                <FileOutlined style="margin-right: 12px;" />
-                                <span>Tài liệu của tôi</span>
-                            </a-menu-item>
-                            <a-menu-item key="documents-department" @click="navigateTo('/documents/department')">
-                                <ApartmentOutlined style="margin-right: 12px;" />
-                                <span>Theo phòng ban</span>
-                            </a-menu-item>
-                            <a-menu-item key="documents-permission" @click="navigateTo('/documents/permission')">
-                                <LockOutlined style="margin-right: 12px;" />
-                                <span>Phân quyền tài liệu</span>
-                            </a-menu-item>
-                            <a-menu-item key="documents-settings" @click="navigateTo('/documents/settings')">
-                                <SettingOutlined style="margin-right: 12px;" />
-                                <span>Cấu hình tài liệu</span>
-                            </a-menu-item>
-                        </a-menu>
-                    </template>
-                </a-dropdown>
+                        <div 
+                            class="submenu-header"
+                            :class="{ active: isDocumentsActive }"
+                        >
+                            <FileTextOutlined />
+                            <span class="menu-text-collapsed">Tài liệu</span>
+                            <span class="submenu-arrow-collapsed">▼</span>
+                        </div>
+                        
+                        <template #overlay>
+                            <a-menu :selectedKeys="documentsSelectedKeys">
+                                <a-menu-item key="documents-my" @click="navigateTo('/documents/my')">
+                                    <FileOutlined style="margin-right: 12px;" />
+                                    <span>Tài liệu của tôi</span>
+                                </a-menu-item>
+                                <a-menu-item key="documents-department" @click="navigateTo('/documents/department')">
+                                    <ApartmentOutlined style="margin-right: 12px;" />
+                                    <span>Theo phòng ban</span>
+                                </a-menu-item>
+                                <a-menu-item key="documents-permission" @click="navigateTo('/documents/permission')">
+                                    <LockOutlined style="margin-right: 12px;" />
+                                    <span>Phân quyền tài liệu</span>
+                                </a-menu-item>
+                                <a-menu-item key="documents-settings" @click="navigateTo('/documents/settings')">
+                                    <SettingOutlined style="margin-right: 12px;" />
+                                    <span>Cấu hình tài liệu</span>
+                                </a-menu-item>
+                            </a-menu>
+                        </template>
+                    </a-dropdown>
+                </div>
             </div>
             
                         <!-- Submenu Settings -->
             <div class="submenu">
-                <a-dropdown 
-                    placement="rightTop" 
-                    :trigger="['hover']"
-                    :getPopupContainer="triggerNode => triggerNode.parentNode"
-                    v-if="!collapsed"
-                >
-                    <div 
-                        class="submenu-header"
-                        :class="{ active: isSettingsActive }"
+                <div v-if="!collapsed">
+                    <a-dropdown 
+                        placement="rightTop" 
+                        :trigger="['hover']"
+                        :getPopupContainer="triggerNode => triggerNode.parentNode"
                     >
-                      <SettingOutlined />
-                        <span class="menu-text">Cấu hình chung</span>
-                        <span class="submenu-arrow">▼</span>
-                    </div>
-                    
-                    <template #overlay>
-                        <a-menu :selectedKeys="settingsSelectedKeys">
-                            <a-menu-item key="settings-bidding" @click="navigateTo('/settings/bidding')">
-                                <FileDoneOutlined style="margin-right: 12px;" />
-                                <span>Đấu thầu</span>
-                            </a-menu-item>
-                            <a-menu-item key="settings-contract" @click="navigateTo('/settings/contract')">
-                                <ProfileOutlined style="margin-right: 12px;" />
-                                <span>Hợp đồng</span>
-                            </a-menu-item>
-                        </a-menu>
-                    </template>
-                </a-dropdown>
-                <a-dropdown 
-                    placement="rightTop" 
-                    :trigger="['hover']"
-                    :getPopupContainer="triggerNode => triggerNode.parentNode"
-                    v-else
-                >
-                    <div 
-                        class="submenu-header"
-                        :class="{ active: isSettingsActive }"
+                        <div 
+                            class="submenu-header"
+                            :class="{ active: isSettingsActive }"
+                        >
+                          <SettingOutlined />
+                            <span class="menu-text">Cấu hình chung</span>
+                            <span class="submenu-arrow">▼</span>
+                        </div>
+                        
+                        <template #overlay>
+                            <a-menu :selectedKeys="settingsSelectedKeys">
+                                <a-menu-item key="settings-bidding" @click="navigateTo('/settings/bidding')">
+                                    <FileDoneOutlined style="margin-right: 12px;" />
+                                    <span>Đấu thầu</span>
+                                </a-menu-item>
+                                <a-menu-item key="settings-contract" @click="navigateTo('/settings/contract')">
+                                    <ProfileOutlined style="margin-right: 12px;" />
+                                    <span>Hợp đồng</span>
+                                </a-menu-item>
+                            </a-menu>
+                        </template>
+                    </a-dropdown>
+                </div>
+                <div v-else>
+                    <a-dropdown 
+                        placement="rightTop" 
+                        :trigger="['hover']"
+                        :getPopupContainer="triggerNode => triggerNode.parentNode"
                     >
-                        <SettingOutlined />
-                        <span class="menu-text-collapsed">Cấu hình chung</span>
-                        <span class="submenu-arrow-collapsed">▼</span>
-                    </div>
-                    
-                    <template #overlay>
-                        <a-menu :selectedKeys="settingsSelectedKeys">
-                            <a-menu-item key="settings-bidding" @click="navigateTo('/settings/bidding')">
-                                <FileDoneOutlined style="margin-right: 12px;" />
-                                <span>Đấu thầu</span>
-                            </a-menu-item>
-                            <a-menu-item key="settings-contract" @click="navigateTo('/settings/contract')">
-                                <ProfileOutlined style="margin-right: 12px;" />
-                                <span>Hợp đồng</span>
-                            </a-menu-item>
-                        </a-menu>
-                    </template>
-                </a-dropdown>
+                        <div 
+                            class="submenu-header"
+                            :class="{ active: isSettingsActive }"
+                        >
+                            <SettingOutlined />
+                            <span class="menu-text-collapsed">Cấu hình chung</span>
+                            <span class="submenu-arrow-collapsed">▼</span>
+                        </div>
+                        
+                        <template #overlay>
+                            <a-menu :selectedKeys="settingsSelectedKeys">
+                                <a-menu-item key="settings-bidding" @click="navigateTo('/settings/bidding')">
+                                    <FileDoneOutlined style="margin-right: 12px;" />
+                                    <span>Đấu thầu</span>
+                                </a-menu-item>
+                                <a-menu-item key="settings-contract" @click="navigateTo('/settings/contract')">
+                                    <ProfileOutlined style="margin-right: 12px;" />
+                                    <span>Hợp đồng</span>
+                                </a-menu-item>
+                            </a-menu>
+                        </template>
+                    </a-dropdown>
+                </div>
             </div>
             
             <a-tooltip placement="right" title="Phân quyền" v-if="collapsed">
@@ -397,7 +401,7 @@ const isDocumentsActive = computed(() => {
 })
 
 const isSettingsActive = computed(() => {
-    return ['/settings/bidding', '/settings/contract', '/settings'].includes(currentRoute.value)
+    return ['/settings/bidding', '/settings/contract'].includes(currentRoute.value)
 })
 
 // Path to key mapping (same as Sidebar.vue)
@@ -425,7 +429,6 @@ const pathToKeyMap = {
 
     '/settings/bidding': 'cau-hinh-dau-thau',
     '/settings/contract': 'cau-hinh-hop-dong',
-    '/settings': 'cau-hinh',
 }
 
 // Key to parent mapping (same as Sidebar.vue)
@@ -499,6 +502,11 @@ const navigateTo = (path) => {
     router.push(path)
 }
 
+// Toggle collapsed state
+const toggleCollapsed = () => {
+    emit('update:collapsed', !props.collapsed)
+}
+
 
 </script>
 
@@ -529,6 +537,7 @@ const navigateTo = (path) => {
     text-align: center;
     border-bottom: 1px solid #303030;
     flex-shrink: 0;
+    position: relative;
 }
 
 .sidebar.collapsed .logo-container {
@@ -568,6 +577,28 @@ const navigateTo = (path) => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.logo-toggle {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #ffffff;
+    font-size: 12px;
+    padding: 4px;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+}
+
+.logo-toggle:hover {
+    background-color: #1890ff;
+}
+
+.sidebar.collapsed .logo-toggle {
+    right: 4px;
+    font-size: 10px;
 }
 
 /* Menu styling */
@@ -799,7 +830,7 @@ const navigateTo = (path) => {
 }
 
 /* Active state for menu items */
-:deep(.ant-dropdown-menu-item) .ant-dropdown-menu-item-selected {
+:deep(.ant-dropdown-menu-item-selected)  {
     background-color: #1890ff !important;
     color: #ffffff !important;
 }
