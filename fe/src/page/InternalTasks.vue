@@ -102,7 +102,7 @@
                 :row-selection="rowSelection"
                 style="margin-top: 8px;table-layout: fixed;"
                 row-key="id"
-                :scroll="{ x: 'max-content', y: 'calc(100vh - 360px)' }"
+                :scroll="{ x: 'max-content'}"
                 class="custom_table_list_task"
         >
             <template #bodyCell="{ column, record, index, text }">

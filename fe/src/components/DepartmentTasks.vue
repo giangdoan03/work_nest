@@ -31,167 +31,38 @@
                 </div>
             </div>
 
-            <div class="tables-container">
-                <div class="table-section">
-                    <h4>Công việc còn 1 ngày hết hạn</h4>
-                    <a-table 
-                        :columns="columns" 
-                        :dataSource="tasksDueIn1Day" 
-                        rowKey="id" 
-                        bordered 
-                        size="small" 
-                        :pagination="false"
-                        :scroll="{ x: 1200, y: 300 }"
-                        :locale="{ emptyText: 'Không có dữ liệu' }"
-                        class="tiny-scroll"
-                    >
-                        <template #emptyText>
-                            <div style="height: 250px; padding-top: 90px;">
-                                Không có dữ liệu
-                            </div>
-                        </template>
-                        <template #bodyCell="{ column, record }">
-                            <template v-if="column.dataIndex === 'status'">
-                                <a-tag :color="getStatusColor(record.status)">
-                                    {{ getTaskStatusText(record.status) }}
-                                </a-tag>
-                            </template>
-                            <template v-else-if="column.dataIndex === 'priority'">
-                                <a-tag :color="getPriorityColor(record.priority)">
-                                    {{ getPriorityText(record.priority) }}
-                                </a-tag>
-                            </template>
-                            <template v-else-if="column.dataIndex === 'progress'">
-                                <a-tooltip title="Click để thay đổi tiến trình">
-                                    <div @click="openProgressModal(record)" style="cursor: pointer;">
-                                        <a-progress
-                                            @click="openProgressModal(record)" style="cursor: pointer;"
-                                            :percent="Number(record.progress)"
-                                            :stroke-color="{
-                                  '0%': '#108ee9',
-                                  '100%': '#87d068',
-                                }"
-                                            :status="record.progress >= 100 ? 'success' : 'active'"
-                                            size="small"
-                                            :show-info="true"
-                                        />
-                                    </div>
-                                </a-tooltip>
-                            </template>
-                            <template v-else-if="column.dataIndex === 'assignee'">
-                                <a-tooltip 
-                                    placement="top"
-                                    :overlayStyle="{ maxWidth: '300px' }"
-                                >
-                                    <template #title>
-                                        <div style="text-align: center; padding: 8px;">
-                                            <a-avatar 
-                                                :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
-                                                size="large"
-                                                style="margin-bottom: 8px;"
-                                            >
-                                                {{ getFirstLetter(record.assignee?.name) }}
-                                            </a-avatar>
-                                            <div style="font-weight: bold; color: white;">{{ record.assignee?.name }}</div>
-                                        </div>
-                                    </template>
-                                    <div style="display: flex; justify-content: center; align-items: center;">
-                                        <a-avatar 
-                                            :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
-                                            size="small"
-                                        >
-                                            {{ getFirstLetter(record.assignee?.name) }}
-                                        </a-avatar>
-                                    </div>
-                                </a-tooltip>
-                            </template>
-                            <template v-else-if="column.dataIndex === 'assigned_to_name'">
-                                <a-tooltip 
-                                    placement="top"
-                                    :overlayStyle="{ maxWidth: '300px' }"
-                                >
-                                    <template #title>
-                                        <div style="text-align: center; padding: 8px;">
-                                            <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }" size="large" style="margin-bottom: 8px;">
-                                                {{ getFirstLetter(record.assigned_to_name) }}
-                                            </a-avatar>
-                                            <div style="font-weight: bold; color: white;">{{ record.assigned_to_name }}</div>
-                                        </div>
-                                    </template>
-                                    <div style="display: flex; justify-content: center; align-items: center;">
-                                        <a-avatar 
-                                            :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }"
-                                            size="small"
-                                        >
-                                            {{ getFirstLetter(record.name) }}
-                                        </a-avatar>
-                                    </div>
-                                </a-tooltip>
-                            </template>
-                            <template v-else-if="column.dataIndex === 'start_date'">
-                                {{ formatDate(record.start_date) }}
-                            </template>
-                            <template v-else-if="column.dataIndex === 'deadline'">
-                                <a-tag v-if="record.days_overdue > 0" color="error">
-                                    Quá hạn {{ record.days_overdue }} ngày
-                                </a-tag>
-                                <a-tag v-else-if="record.days_remaining > 0" color="green">
-                                    Còn {{ record.days_remaining }} ngày
-                                </a-tag>
-                                <a-tag v-else-if="record.days_remaining === 0" :color="'#faad14'">
-                                    Hạn chót hôm nay
-                                </a-tag>
-                                <a-tag v-else>
-                                    —
-                                </a-tag>
-                            </template>
-                        </template>
-                    </a-table>
-
-                </div>
-
-                <div class="table-section">
-                    <h4>Công việc cần thực hiện gấp</h4>
-                    <a-table
-                        :columns="columns"
-                        :dataSource="urgentTasks"
-                        rowKey="id"
-                        bordered
-                        size="small"
-                        class="tiny-scroll"
-                        :scroll="{ x: 1200, y: 300 }"
-                        :pagination="{
-                            current: urgentPage.current,
-                            pageSize: urgentPage.pageSize,
-                            total: urgentTasks.length,
-                            showSizeChanger: true,
-                            showQuickJumper: true,
-                            pageSizeOptions: ['5','10','20','50','100']
-                          }"
-                        @change="onUrgentTableChange"
-                    >
-
+            <div class="table-section" style="margin-top: 20px; margin-bottom: 20px">
+                <a-divider>Công việc còn 1 ngày hết hạn</a-divider>
+                <a-table
+                    :columns="columns"
+                    :dataSource="tasksDueIn1Day"
+                    rowKey="id"
+                    bordered
+                    size="small"
+                    :pagination="false"
+                    :scroll="{ x: 1200}"
+                    :locale="{ emptyText: 'Không có dữ liệu' }"
+                    class="tiny-scroll"
+                >
                     <template #emptyText>
-                            <div style="height: 250px; padding-top: 90px;">
-                                Không có dữ liệu
-                            </div>
+                        <div style="height: 250px; padding-top: 90px;">
+                            Không có dữ liệu
+                        </div>
+                    </template>
+                    <template #bodyCell="{ column, record }">
+                        <template v-if="column.dataIndex === 'status'">
+                            <a-tag :color="getStatusColor(record.status)">
+                                {{ getTaskStatusText(record.status) }}
+                            </a-tag>
                         </template>
-
-                        <template #bodyCell="{ column, record }">
-                            <template v-if="column.dataIndex === 'title'">
-                                <a-tooltip :title="record.title" placement="top" :overlayStyle="{ maxWidth: '360px' }" :overlayInnerStyle="{ whiteSpace: 'pre-line' }">
-                                    <router-link :to="`/internal-tasks/${record.id}/info`" style="color:#1890ff; display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                                        {{ record.title }}
-                                    </router-link>
-                                </a-tooltip>
-                            </template>
-                            <template v-if="column.dataIndex === 'status'">
-                                <a-tag :color="getStatusColor(record.status)">
-                                    {{ getTaskStatusText(record.status) }}
-                                </a-tag>
-                            </template>
-                            <template v-else-if="column.dataIndex === 'progress'">
-                                <a-tooltip title="Click để thay đổi tiến trình">
+                        <template v-else-if="column.dataIndex === 'priority'">
+                            <a-tag :color="getPriorityColor(record.priority)">
+                                {{ getPriorityText(record.priority) }}
+                            </a-tag>
+                        </template>
+                        <template v-else-if="column.dataIndex === 'progress'">
+                            <a-tooltip title="Click để thay đổi tiến trình">
+                                <div @click="openProgressModal(record)" style="cursor: pointer;">
                                     <a-progress
                                         @click="openProgressModal(record)" style="cursor: pointer;"
                                         :percent="Number(record.progress)"
@@ -203,73 +74,200 @@
                                         size="small"
                                         :show-info="true"
                                     />
-                                </a-tooltip>
-                            </template>
-                            <template v-else-if="column.dataIndex === 'priority'">
-                                <a-tag :color="getPriorityColor(record.priority)">
-                                    {{ getPriorityText(record.priority) }}
-                                </a-tag>
-                            </template>
-                            <template v-else-if="column.dataIndex === 'assignee'">
-                                <a-tooltip placement="top" :overlayStyle="{ maxWidth: '300px' }">
-                                    <template #title>
-                                        <div style="text-align: center; padding: 8px;">
-                                            <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }" size="large" style="margin-bottom: 8px;">
-                                                {{ getFirstLetter(record.assignee?.name) }}
-                                            </a-avatar>
-                                            <div style="font-weight: bold; color: white;">{{ record.assignee?.name }}</div>
-                                        </div>
-                                    </template>
-                                    <div style="display: flex; justify-content: center; align-items: center;">
-                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }" size="small">
+                                </div>
+                            </a-tooltip>
+                        </template>
+                        <template v-else-if="column.dataIndex === 'assignee'">
+                            <a-tooltip
+                                placement="top"
+                                :overlayStyle="{ maxWidth: '300px' }"
+                            >
+                                <template #title>
+                                    <div style="text-align: center; padding: 8px;">
+                                        <a-avatar
+                                            :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
+                                            size="large"
+                                            style="margin-bottom: 8px;"
+                                        >
                                             {{ getFirstLetter(record.assignee?.name) }}
                                         </a-avatar>
+                                        <div style="font-weight: bold; color: white;">{{ record.assignee?.name }}</div>
                                     </div>
-                                </a-tooltip>
-                            </template>
-                            <template v-else-if="column.dataIndex === 'assigned_to_name'">
-                                <a-tooltip placement="top" :overlayStyle="{ maxWidth: '300px' }">
-                                    <template #title>
-                                        <div style="text-align: center; padding: 8px;">
-                                            <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }" size="large" style="margin-bottom: 8px;">
-                                                {{ getFirstLetter(record.assigned_to_name) }}
-                                            </a-avatar>
-                                            <div style="font-weight: bold; color: white;">{{ record.assigned_to_name }}</div>
-                                        </div>
-                                    </template>
-                                    <div style="display: flex; justify-content: center; align-items: center;">
-                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }" size="small">
-                                            {{ getFirstLetter(record.name) }}
-                                        </a-avatar>
-                                    </div>
-                                </a-tooltip>
-                            </template>
-                            <template v-else-if="column.dataIndex === 'start_date'">
-                                {{ formatDate(record.start_date) }}
-                            </template>
-                            <template v-else-if="column.dataIndex === 'end_date'">
-                                {{ formatDate(record.end_date) }}
-                            </template>
-                            <template v-else-if="column.dataIndex === 'deadline'">
-                                <a-tag v-if="record.days_overdue > 0" color="error">
-                                    Quá hạn {{ record.days_overdue }} ngày
-                                </a-tag>
-                                <a-tag v-else-if="record.days_remaining > 0" color="green">
-                                    Còn {{ record.days_remaining }} ngày
-                                </a-tag>
-                                <a-tag v-else-if="record.days_remaining === 0" :color="'#faad14'">
-                                    Hạn chót hôm nay
-                                </a-tag>
-                                <a-tag v-else>
-                                    —
-                                </a-tag>
-                            </template>
+                                </template>
+                                <div style="display: flex; justify-content: center; align-items: center;">
+                                    <a-avatar
+                                        :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
+                                        size="small"
+                                    >
+                                        {{ getFirstLetter(record.assignee?.name) }}
+                                    </a-avatar>
+                                </div>
+                            </a-tooltip>
                         </template>
-                    </a-table>
+                        <template v-else-if="column.dataIndex === 'assigned_to_name'">
+                            <a-tooltip
+                                placement="top"
+                                :overlayStyle="{ maxWidth: '300px' }"
+                            >
+                                <template #title>
+                                    <div style="text-align: center; padding: 8px;">
+                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }" size="large" style="margin-bottom: 8px;">
+                                            {{ getFirstLetter(record.assigned_to_name) }}
+                                        </a-avatar>
+                                        <div style="font-weight: bold; color: white;">{{ record.assigned_to_name }}</div>
+                                    </div>
+                                </template>
+                                <div style="display: flex; justify-content: center; align-items: center;">
+                                    <a-avatar
+                                        :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }"
+                                        size="small"
+                                    >
+                                        {{ getFirstLetter(record.name) }}
+                                    </a-avatar>
+                                </div>
+                            </a-tooltip>
+                        </template>
+                        <template v-else-if="column.dataIndex === 'start_date'">
+                            {{ formatDate(record.start_date) }}
+                        </template>
+                        <template v-else-if="column.dataIndex === 'deadline'">
+                            <a-tag v-if="record.days_overdue > 0" color="error">
+                                Quá hạn {{ record.days_overdue }} ngày
+                            </a-tag>
+                            <a-tag v-else-if="record.days_remaining > 0" color="green">
+                                Còn {{ record.days_remaining }} ngày
+                            </a-tag>
+                            <a-tag v-else-if="record.days_remaining === 0" :color="'#faad14'">
+                                Hạn chót hôm nay
+                            </a-tag>
+                            <a-tag v-else>
+                                —
+                            </a-tag>
+                        </template>
+                    </template>
+                </a-table>
 
-                    <div v-if="!urgentTasks.length" class="no-tasks">
-                        <p>Không có công việc gấp nào.</p>
-                    </div>
+            </div>
+            <div class="table-section">
+
+                <a-divider>Danh sách nhiệm vụ phòng</a-divider>
+                <a-table
+                    :columns="columns"
+                    :dataSource="urgentTasks"
+                    rowKey="id"
+                    bordered
+                    size="small"
+                    class="tiny-scroll"
+                    :scroll="{ x: 1200 }"
+                    :pagination="{
+                            current: urgentPage.current,
+                            pageSize: urgentPage.pageSize,
+                            total: urgentTasks.length,
+                            showSizeChanger: true,
+                            showQuickJumper: true,
+                            pageSizeOptions: ['5','10','20','50','100']
+                          }"
+                    @change="onUrgentTableChange"
+                >
+
+                    <template #emptyText>
+                        <div style="height: 250px; padding-top: 90px;">
+                            Không có dữ liệu
+                        </div>
+                    </template>
+
+                    <template #bodyCell="{ column, record }">
+                        <template v-if="column.dataIndex === 'title'">
+                            <a-tooltip :title="record.title" placement="top" :overlayStyle="{ maxWidth: '360px' }" :overlayInnerStyle="{ whiteSpace: 'pre-line' }">
+                                <router-link :to="`/internal-tasks/${record.id}/info`" style="color:#1890ff; display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                    {{ record.title }}
+                                </router-link>
+                            </a-tooltip>
+                        </template>
+                        <template v-if="column.dataIndex === 'status'">
+                            <a-tag :color="getStatusColor(record.status)">
+                                {{ getTaskStatusText(record.status) }}
+                            </a-tag>
+                        </template>
+                        <template v-else-if="column.dataIndex === 'progress'">
+                            <a-tooltip title="Click để thay đổi tiến trình">
+                                <a-progress
+                                    @click="openProgressModal(record)" style="cursor: pointer;"
+                                    :percent="Number(record.progress)"
+                                    :stroke-color="{
+                                  '0%': '#108ee9',
+                                  '100%': '#87d068',
+                                }"
+                                    :status="record.progress >= 100 ? 'success' : 'active'"
+                                    size="small"
+                                    :show-info="true"
+                                />
+                            </a-tooltip>
+                        </template>
+                        <template v-else-if="column.dataIndex === 'priority'">
+                            <a-tag :color="getPriorityColor(record.priority)">
+                                {{ getPriorityText(record.priority) }}
+                            </a-tag>
+                        </template>
+                        <template v-else-if="column.dataIndex === 'assignee'">
+                            <a-tooltip placement="top" :overlayStyle="{ maxWidth: '300px' }">
+                                <template #title>
+                                    <div style="text-align: center; padding: 8px;">
+                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }" size="large" style="margin-bottom: 8px;">
+                                            {{ getFirstLetter(record.assignee?.name) }}
+                                        </a-avatar>
+                                        <div style="font-weight: bold; color: white;">{{ record.assignee?.name }}</div>
+                                    </div>
+                                </template>
+                                <div style="display: flex; justify-content: center; align-items: center;">
+                                    <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }" size="small">
+                                        {{ getFirstLetter(record.assignee?.name) }}
+                                    </a-avatar>
+                                </div>
+                            </a-tooltip>
+                        </template>
+                        <template v-else-if="column.dataIndex === 'assigned_to_name'">
+                            <a-tooltip placement="top" :overlayStyle="{ maxWidth: '300px' }">
+                                <template #title>
+                                    <div style="text-align: center; padding: 8px;">
+                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }" size="large" style="margin-bottom: 8px;">
+                                            {{ getFirstLetter(record.assigned_to_name) }}
+                                        </a-avatar>
+                                        <div style="font-weight: bold; color: white;">{{ record.assigned_to_name }}</div>
+                                    </div>
+                                </template>
+                                <div style="display: flex; justify-content: center; align-items: center;">
+                                    <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }" size="small">
+                                        {{ getFirstLetter(record.name) }}
+                                    </a-avatar>
+                                </div>
+                            </a-tooltip>
+                        </template>
+                        <template v-else-if="column.dataIndex === 'start_date'">
+                            {{ formatDate(record.start_date) }}
+                        </template>
+                        <template v-else-if="column.dataIndex === 'end_date'">
+                            {{ formatDate(record.end_date) }}
+                        </template>
+                        <template v-else-if="column.dataIndex === 'deadline'">
+                            <a-tag v-if="record.days_overdue > 0" color="error">
+                                Quá hạn {{ record.days_overdue }} ngày
+                            </a-tag>
+                            <a-tag v-else-if="record.days_remaining > 0" color="green">
+                                Còn {{ record.days_remaining }} ngày
+                            </a-tag>
+                            <a-tag v-else-if="record.days_remaining === 0" :color="'#faad14'">
+                                Hạn chót hôm nay
+                            </a-tag>
+                            <a-tag v-else>
+                                —
+                            </a-tag>
+                        </template>
+                    </template>
+                </a-table>
+
+                <div v-if="!urgentTasks.length" class="no-tasks">
+                    <p>Không có công việc gấp nào.</p>
                 </div>
             </div>
 
@@ -530,6 +528,14 @@ watch(() => urgentTasks.value.length, (len) => {
 
 
 const columns = [
+    {
+        title: 'STT',
+        key: 'index',
+        width: 60,
+        align: 'center',
+        customRender: ({ index }) =>
+            (urgentPage.current - 1) * urgentPage.pageSize + index + 1,
+    },
     { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
     { title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee' },
     { title: 'Tiến trình', dataIndex: 'progress', key: 'progress', width: 120, align: 'center' },
@@ -755,7 +761,7 @@ const getStatusColor = (status) => {
 }
 const getPriorityText = (priority) => {
     switch (priority) {
-        case 'high': return 'Gấp'
+        case 'high': return 'Cao'
         case 'normal': return 'Bình thường'
         case 'low': return 'Thấp'
         default: return 'Không xác định'
@@ -925,17 +931,18 @@ watch(() => filteredTasks.value, () => {
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
+/*
 .tables-container {
     display: flex;
     flex-wrap: wrap;
     gap: 24px;
     margin-top: 32px;
 }
+*/
 
 .table-section {
     flex: 1;
     min-width: 600px;
-    height: 400px;
     background: #fff;
     padding: 16px;
     border-radius: 8px;
@@ -965,32 +972,7 @@ watch(() => filteredTasks.value, () => {
 .table-section .ant-table-tbody > tr {
     height: 40px;
 }
-/* Firefox */
-.tiny-scroll .ant-table-body,
-.tiny-scroll .ant-table-content,
-.tiny-scroll .ant-table-header {
-    scrollbar-width: thin;                         /* mảnh hơn */
-    scrollbar-color: rgba(0,0,0,.35) transparent;  /* màu tay kéo */
-}
 
-/* Chrome/Edge/Safari */
-.tiny-scroll .ant-table-body::-webkit-scrollbar,
-.tiny-scroll .ant-table-content::-webkit-scrollbar,
-.tiny-scroll .ant-table-header::-webkit-scrollbar {
-    width: 6px;   /* dọc */
-    height: 6px;  /* ngang – chỉnh xuống 4px nếu muốn nhỏ nữa */
-}
-.tiny-scroll .ant-table-body::-webkit-scrollbar-thumb,
-.tiny-scroll .ant-table-content::-webkit-scrollbar-thumb,
-.tiny-scroll .ant-table-header::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,.35);
-    border-radius: 6px;
-}
-.tiny-scroll .ant-table-body::-webkit-scrollbar-track,
-.tiny-scroll .ant-table-content::-webkit-scrollbar-track,
-.tiny-scroll .ant-table-header::-webkit-scrollbar-track {
-    background: transparent;
-}
 
 
 @media (max-width: 1200px) {

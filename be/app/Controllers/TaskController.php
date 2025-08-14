@@ -184,19 +184,38 @@ class TaskController extends ResourceController
      */
     public function create()
     {
-        $data = $this->request->getJSON(true);
+        $data = $this->request->getJSON(true) ?? [];
 
-        // ✅ Đảm bảo có step_id với tất cả loại nhiệm vụ
-        if (empty($data['step_id'])) {
+        // ✅ Chuẩn hoá nhẹ
+        $data['linked_type'] = $data['linked_type'] ?? null;
+        $data['step_id']     = $data['step_id'] ?? null;
+        $data['step_code']   = $data['step_code'] ?? null;
+
+        // ✅ Kiểm tra linked_type hợp lệ
+        $validTypes = ['bidding', 'contract', 'internal'];
+        if (empty($data['linked_type']) || !in_array($data['linked_type'], $validTypes, true)) {
+            return $this->failValidationErrors(['linked_type' => 'Giá trị không hợp lệ (bidding/contract/internal)']);
+        }
+
+        // ✅ Chỉ bắt buộc step_id với bidding/contract
+        if ($data['linked_type'] !== 'internal' && empty($data['step_id'])) {
             return $this->failValidationErrors(['step_id' => 'Thiếu step_id']);
         }
 
-        // ✅ Xử lý cấp duyệt nếu có
-        if (!empty($data['approval_steps']) && (int)$data['approval_steps'] > 0) {
-            $data['approval_status'] = 'pending';
-            $data['current_level'] = 1;
+        // (Tuỳ chọn) Với internal, luôn để trống step_id/step_code để tránh dữ liệu rác
+        if ($data['linked_type'] === 'internal') {
+            $data['step_id']   = null;
+            $data['step_code'] = null;
+        }
 
-            if ($data['status'] === TaskStatus::DONE) {
+        // ✅ Xử lý cấp duyệt (approval)
+        $approvalSteps = isset($data['approval_steps']) ? (int)$data['approval_steps'] : 0;
+        if ($approvalSteps > 0) {
+            $data['approval_status'] = 'pending';
+            $data['current_level']   = 1;
+
+            // Nếu đang DONE thì chuyển qua REQUEST_APPROVAL
+            if (isset($data['status']) && $data['status'] === TaskStatus::DONE) {
                 $data['status'] = TaskStatus::REQUEST_APPROVAL;
             }
         }
@@ -205,24 +224,24 @@ class TaskController extends ResourceController
         if (!$this->model->insert($data)) {
             return $this->failValidationErrors($this->model->errors());
         }
+        $taskId = $this->model->getInsertID(); // hoặc $this->model->insertID();
 
-        $taskId = $this->model->insertID();
-
-        // ✅ Tạo dòng cấp duyệt nếu có
-        if (!empty($data['approval_steps']) && (int)$data['approval_steps'] > 0) {
+        // ✅ Tạo dòng cấp duyệt đầu tiên nếu có
+        if ($approvalSteps > 0) {
             (new TaskApprovalModel())->insert([
                 'task_id'     => $taskId,
                 'level'       => 1,
                 'status'      => 'pending',
-                'approved_by' => null
+                'approved_by' => null,
             ]);
         }
 
         return $this->respondCreated([
             'message' => 'Task created',
-            'id' => $taskId
+            'id'      => $taskId,
         ]);
     }
+
 
 
     /**

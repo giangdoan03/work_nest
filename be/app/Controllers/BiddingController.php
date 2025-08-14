@@ -68,10 +68,38 @@ class BiddingController extends ResourceController
     public function show($id = null)
     {
         $bidding = $this->model->find($id);
-        return $bidding
-            ? $this->respond($bidding)
-            : $this->failNotFound("Không tìm thấy gói thầu.");
+
+        if (!$bidding) {
+            return $this->failNotFound("Không tìm thấy gói thầu.");
+        }
+
+        // Tính days_remaining & days_overdue từ end_date
+        $today = new \DateTime('today');
+        $daysRemaining = null;
+        $daysOverdue   = null;
+
+        if (!empty($bidding['end_date'])) {
+            try {
+                $end = new \DateTime(date('Y-m-d', strtotime($bidding['end_date'])));
+                if ($today <= $end) {
+                    $daysRemaining = (int)$today->diff($end)->days; // 0 nếu đến hạn hôm nay
+                    $daysOverdue   = 0;
+                } else {
+                    $daysOverdue   = (int)$end->diff($today)->days;
+                    $daysRemaining = 0;
+                }
+            } catch (\Throwable $e) {
+                $daysRemaining = null;
+                $daysOverdue   = null;
+            }
+        }
+
+        $bidding['days_remaining'] = $daysRemaining;
+        $bidding['days_overdue']   = $daysOverdue;
+
+        return $this->respond($bidding);
     }
+
 
     /**
      * Tạo mới gói thầu và sinh bước mặc định từ setting
