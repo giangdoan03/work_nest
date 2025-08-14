@@ -185,14 +185,14 @@ const routes = [
                 path: '/settings/bidding',
                 name: 'cau-hinh-dau-thau',
                 component: BiddingStepTemplateList,
-                meta: { breadcrumb: 'Cấu hình Đấu thầu', parent: 'cau-hinh' },
+                meta: { breadcrumb: 'Cấu hình đấu thầu', parent: 'cau-hinh' },
             },
             {
                 path: '/settings/contract',
                 name: 'cau-hinh-hop-dong',
                 component: ContractsStepTemplateList,
                 meta: {
-                    breadcrumb: 'Hợp đồng',
+                    breadcrumb: 'Cấu hình hợp đồng',
                     parent: 'cau-hinh'
                 }
             },

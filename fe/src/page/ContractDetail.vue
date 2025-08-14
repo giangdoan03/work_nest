@@ -122,14 +122,14 @@
         </a-spin>
 
         <a-drawer
-            title="Chi tiết bước xử lý"
+            title="Danh sách nhiệm vụ"
             placement="right"
             :visible="drawerVisible"
             @close="closeDrawer"
-            width="900"
+            width="1100"
         >
             <template v-if="selectedStep">
-                <a-descriptions bordered size="small" :column="1" :title="contract?.title">
+                <!-- <a-descriptions bordered size="small" :column="1" :title="contract?.title">
                     <a-descriptions-item label="Bước số">{{ selectedStep.step_number }}</a-descriptions-item>
                     <a-descriptions-item label="Tiêu đề">
                         <a-typography-text
@@ -217,7 +217,7 @@
                 </a-descriptions>
 
                 <a-divider>
-                </a-divider>
+                </a-divider> -->
 
                 <a-row :gutter="16" justify="end">
                     <a-col>
@@ -227,34 +227,115 @@
                     </a-col>
                 </a-row>
 
-                <a-divider>
-                    Danh sách công việc của bước này
-                </a-divider>
 
+                <!-- Nếu không có task -->
                 <a-empty v-if="relatedTasks.length === 0" description="Không có công việc"/>
 
-                <a-list v-else :dataSource="relatedTasks" :rowKey="task => task.id">
-                    <template #renderItem="{ item }">
-                        <a-list-item>
-                            <a-list-item-meta>
-                                <template #title>
-                                    <router-link :to="`/internal-tasks/${item.id}/info`">
-                                        {{ item.title }}
-                                    </router-link>
-                                </template>
-                                <template #description>
-                                    {{ item.description }} | Phụ trách: {{ getAssignedUserName(item.assigned_to) }}
-                                </template>
-                            </a-list-item-meta>
+                <!-- Nếu có task -->
+                <template v-else>
+                    <!-- Header -->
+                    <div style="
+                          display: flex;
+                          justify-content: space-between;
+                          padding: 8px 0;
+                          font-weight: 500;
+                          color: #555;
+                          border-bottom: 1px solid #f0f0f0;
+                        "
+                    >
+                    </div>
 
-                            <template #actions>
-                                <a-tag :color="getTaskStatusColor(item.status)">
-                                    {{ getTaskStatusText(item.status) }}
+                    <!-- Danh sách nhiệm vụ -->
+                    <a-table
+                        class="tiny-scroll"
+                        :columns="relatedColumns"
+                        :dataSource="relatedTasks"
+                        rowKey="id"
+                        bordered
+                        size="small"
+                        :pagination="false"
+                        :scroll="{ x: 1200 }"
+                        :locale="{ emptyText: 'Không có dữ liệu' }"
+                    >
+                        <template #bodyCell="{ column, record, index }">
+                            <!-- STT -->
+                            <template v-if="column.key === 'index'">
+                                {{ index + 1 }}
+                            </template>
+
+                            <!-- Tên công việc -->
+                            <template v-else-if="column.dataIndex === 'title'">
+                                <router-link :to="`/internal-tasks/${record.id}/info`">
+                                    {{ record.title }}
+                                </router-link>
+                            </template>
+
+                            <!-- Người thực hiện -->
+                            <template v-else-if="column.dataIndex === 'assigned_to'">
+                                {{ getAssignedUserName(record.assigned_to) }}
+                            </template>
+
+                            <!-- Tiến trình -->
+                            <template v-else-if="column.dataIndex === 'progress'">
+                                <a-progress
+                                    :percent="Number(record.progress)"
+                                    :status="Number(record.progress) >= 100 ? 'success' : 'active'"
+                                    size="small"
+                                    :show-info="true"
+                                />
+                            </template>
+
+                            <!-- Ưu tiên -->
+                            <template v-else-if="column.dataIndex === 'priority'">
+                                <a-tag :color="getPriorityColor(record.priority)">
+                                    {{ getPriorityText(record.priority) }}
                                 </a-tag>
                             </template>
-                        </a-list-item>
-                    </template>
-                </a-list>
+
+                            <!-- Bắt đầu / Kết thúc -->
+                            <template v-else-if="column.dataIndex === 'start_date'">
+                                {{ formatDate(record.start_date) }}
+                            </template>
+                            <template v-else-if="column.dataIndex === 'end_date'">
+                                {{ formatDate(record.end_date) }}
+                            </template>
+
+                            <!-- Trạng thái -->
+                            <template v-else-if="column.dataIndex === 'status'">
+                                <a-tag :color="getTaskStatusColor(record.status)">
+                                    {{ getTaskStatusText(record.status) }}
+                                </a-tag>
+                            </template>
+
+                            <!-- Hạn (tính từ end_date) -->
+                            <template v-else-if="column.dataIndex === 'deadline'">
+                                <template v-if="deadlineInfo(record.end_date).type === 'overdue'">
+                                    <a-tag color="error">Quá hạn {{ deadlineInfo(record.end_date).days }} ngày</a-tag>
+                                </template>
+                                <template v-else-if="deadlineInfo(record.end_date).type === 'today'">
+                                    <a-tag :color="'#faad14'">Hạn chót hôm nay</a-tag>
+                                </template>
+                                <template v-else-if="deadlineInfo(record.end_date).type === 'remaining'">
+                                    <a-tag color="green">Còn {{ deadlineInfo(record.end_date).days }} ngày</a-tag>
+                                </template>
+                                <template v-else>—</template>
+                            </template>
+
+                            <!-- Duyệt -->
+                            <template v-else-if="column.dataIndex === 'approval_status'">
+                                <template v-if="record.status === 'done' && record.approval_status === 'approved'">
+                                    <a-tag color="green">Hoàn thành & Đã duyệt</a-tag>
+                                </template>
+                                <template v-else-if="record.status === 'done'">
+                                    <a-tag :color="getApprovalStatusColor(record.approval_status)">
+                                        {{ getApprovalStatusText(record.approval_status) }}
+                                    </a-tag>
+                                </template>
+                                <template v-else>—</template>
+                            </template>
+                        </template>
+                    </a-table>
+                </template>
             </template>
         </a-drawer>
 
@@ -304,6 +385,79 @@ const biddings = ref([])
 
 const relatedTasks = computed(() => stepStore.relatedTasks)
 const loading = ref(false);
+
+// Định nghĩa cột cho bảng nhiệm vụ
+const relatedColumns = ref([
+    {
+        title: 'STT',
+        key: 'index',
+        width: 60,
+        align: 'center'
+    },
+    {
+        title: 'Tên công việc',
+        dataIndex: 'title',
+        key: 'title',
+        width: 250,
+        ellipsis: true
+    },
+    {
+        title: 'Người thực hiện',
+        dataIndex: 'assigned_to',
+        key: 'assigned_to',
+        width: 150,
+        align: 'center'
+    },
+    {
+        title: 'Tiến trình',
+        dataIndex: 'progress',
+        key: 'progress',
+        width: 120,
+        align: 'center'
+    },
+    {
+        title: 'Ưu tiên',
+        dataIndex: 'priority',
+        key: 'priority',
+        width: 100,
+        align: 'center'
+    },
+    {
+        title: 'Bắt đầu',
+        dataIndex: 'start_date',
+        key: 'start_date',
+        width: 100,
+        align: 'center'
+    },
+    {
+        title: 'Kết thúc',
+        dataIndex: 'end_date',
+        key: 'end_date',
+        width: 100,
+        align: 'center'
+    },
+    {
+        title: 'Trạng thái',
+        dataIndex: 'status',
+        key: 'status',
+        width: 120,
+        align: 'center'
+    },
+    {
+        title: 'Hạn',
+        dataIndex: 'deadline',
+        key: 'deadline',
+        width: 120,
+        align: 'center'
+    },
+    {
+        title: 'Duyệt',
+        dataIndex: 'approval_status',
+        key: 'approval_status',
+        width: 150,
+        align: 'center'
+    }
+])
 
 const router = useRouter()
 const route = useRoute()
@@ -473,6 +627,65 @@ const getTaskStatusColor = (status) => ({
     done: 'green',
     overdue: 'red',
 }[status] || 'default')
+
+// Hàm lấy màu cho mức độ ưu tiên
+const getPriorityColor = (priority) => {
+    const map = {
+        'low': 'green',
+        'medium': 'orange',
+        'high': 'red',
+        'urgent': 'red'
+    }
+    return map[priority] || 'default'
+}
+
+// Hàm lấy text cho mức độ ưu tiên
+const getPriorityText = (priority) => {
+    const map = {
+        'low': 'Thấp',
+        'medium': 'Trung bình',
+        'high': 'Cao',
+        'urgent': 'Khẩn cấp'
+    }
+    return map[priority] || 'Không xác định'
+}
+
+// Hàm tính toán thông tin deadline
+const deadlineInfo = (endDate) => {
+    if (!endDate) return { type: 'none', days: 0 }
+    
+    const today = dayjs()
+    const deadline = dayjs(endDate)
+    const diffDays = deadline.diff(today, 'day')
+    
+    if (diffDays < 0) {
+        return { type: 'overdue', days: Math.abs(diffDays) }
+    } else if (diffDays === 0) {
+        return { type: 'today', days: 0 }
+    } else {
+        return { type: 'remaining', days: diffDays }
+    }
+}
+
+// Hàm lấy màu cho trạng thái duyệt
+const getApprovalStatusColor = (status) => {
+    const map = {
+        'pending': 'orange',
+        'approved': 'green',
+        'rejected': 'red'
+    }
+    return map[status] || 'default'
+}
+
+// Hàm lấy text cho trạng thái duyệt
+const getApprovalStatusText = (status) => {
+    const map = {
+        'pending': 'Chờ duyệt',
+        'approved': 'Đã duyệt',
+        'rejected': 'Từ chối'
+    }
+    return map[status] || 'Không xác định'
+}
 
 const getStatusColor = (status) => {
     const map = {
@@ -800,5 +1013,45 @@ onMounted(() => {
 
 .mb-30 {
     margin-bottom: 30px;
+}
+
+/* CSS cho bảng nhiệm vụ */
+.tiny-scroll {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.tiny-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.tiny-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.tiny-scroll::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.tiny-scroll::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* CSS cho bảng */
+.ant-table-small .ant-table-thead > tr > th {
+    background-color: #fafafa;
+    font-weight: 600;
+    color: #262626;
+}
+
+.ant-table-small .ant-table-tbody > tr > td {
+    padding: 8px 12px;
+}
+
+.ant-table-small .ant-table-tbody > tr:hover > td {
+    background-color: #f5f5f5;
 }
 </style>
