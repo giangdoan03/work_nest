@@ -8,7 +8,8 @@
         />
         <a-descriptions bordered :column="2">
             <!-- Hàng 1 -->
-            <a-descriptions-item label="Tên">{{ bidding?.title }}</a-descriptions-item>
+            <a-descriptions-item label="Tên"><strong>{{ bidding?.title }}</strong></a-descriptions-item>
+
             <a-descriptions-item label="Trạng thái">
                 <a-tag :color="getStatusColor(bidding?.status)">
                     {{ getStatusText(bidding?.status) }}
@@ -17,6 +18,7 @@
 
             <!-- Hàng 2 -->
             <a-descriptions-item label="Chi phí">{{ formatCurrency(bidding?.estimated_cost) }}</a-descriptions-item>
+
             <a-descriptions-item label="Khách hàng">
                 <a @click="goToCustomerDetail(bidding?.customer_id)" style="color: #1890ff; cursor: pointer;">
                     {{ getCustomerName(bidding?.customer_id) }}
@@ -24,23 +26,33 @@
             </a-descriptions-item>
 
             <!-- Hàng 3 -->
-            <a-descriptions-item label="Phụ trách gói thầu">
-                <a
-                        v-if="bidding?.assigned_to"
-                        @click="goToUserDetail(bidding.assigned_to)"
-                        style="color: #1890ff; cursor: pointer;"
-                >
+            <a-descriptions-item label="Người phụ trách chính">
+                <a v-if="bidding?.assigned_to" @click="goToUserDetail(bidding.assigned_to)" style="color: #1890ff; cursor: pointer;">
                     {{ getAssignedUserName(bidding?.assigned_to) }}
                 </a>
                 <span v-else>Không xác định</span>
             </a-descriptions-item>
 
-            <a-descriptions-item label="Ngày bắt đầu">{{ formatDate(bidding?.start_date) }}</a-descriptions-item>
+            <a-descriptions-item label="Thời gian">
+                <div class="time-item start">
+                    <span class="label">Bắt đầu:</span>
+                    <span class="value">{{ formatDate(bidding?.start_date) }}</span>
+                </div>
+                <div class="time-item end">
+                    <span class="label">Kết thúc:</span>
+                    <span class="value">{{ formatDate(bidding?.end_date) }}</span>
+                </div>
+            </a-descriptions-item>
 
             <!-- Hàng 4 -->
-            <a-descriptions-item label="Ngày kết thúc">{{ formatDate(bidding?.end_date) }}</a-descriptions-item>
             <a-descriptions-item label="Mô tả">
                 {{ bidding?.description }}
+            </a-descriptions-item>
+            <!-- Hạn -->
+            <a-descriptions-item label="Hạn">
+                <a-tag :color="deadlineColor(bidding)">
+                    {{ deadlineText(bidding) }}
+                </a-tag>
             </a-descriptions-item>
         </a-descriptions>
 
@@ -48,11 +60,7 @@
 
         <a-spin :spinning="loadingSteps">
             <a-steps direction="vertical" :current="currentStepIndex()">
-                <a-step
-                        v-for="(step, index) in steps"
-                        :key="step.id"
-                        :status="mapStepStatus(step.status)"
-                >
+                <a-step v-for="(step, index) in steps" :key="step.id" :status="mapStepStatus(step.status)">
                     <template #title>
                         <div
                                 @click.stop="openStepDrawer(step)"
@@ -76,56 +84,166 @@
                     </template>
 
                     <template #description>
-                        <a-descriptions
-                                size="small"
-                                :column="1"
-                                bordered
-                                style="background: #fafafa; padding: 12px; border-radius: 6px;"
-                                :labelStyle="{ width: '200px' }"
+                        <a-descriptions size="small" :column="{ xs: 1, sm: 1, md: 2, lg: 2, xl: 2 }"
+                        bordered
+                        style="background: #fafafa; padding: 12px; border-radius: 6px;"
+                        :labelStyle="{ width: '100px' }"
                         >
-                            <a-descriptions-item label="Phòng ban">
-                                <template #default>
-                                    <a-tag
-                                            v-for="(dep, i) in parseDepartment(step.department)"
-                                            :key="i"
-                                            color="blue"
-                                            style="margin-right: 4px;"
-                                    >
-                                        {{ dep }}
-                                    </a-tag>
-                                </template>
-                            </a-descriptions-item>
-
-                            <a-descriptions-item label="Trạng thái">
-                                <a-tag :color="getStepStatusColor(step.status)">
-                                    {{ statusText(step.status) }}
+                        <!-- Phòng ban: nhiều tag -> chiếm cả hàng -->
+                        <a-descriptions-item label="Phòng ban" style="width: 100px">
+                            <template #default>
+                                <a-tag
+                                    v-for="(dep, i) in parseDepartment(step.department)"
+                                    :key="i"
+                                    color="blue"
+                                    style="margin-right: 4px;"
+                                >
+                                    {{ dep }}
                                 </a-tag>
-                            </a-descriptions-item>
+                            </template>
+                        </a-descriptions-item>
 
-                            <a-descriptions-item label="Phụ trách bước">
-                                <template #default>
-                                    <a
-                                            v-if="step.assigned_to"
-                                            @click.stop="goToUserDetail(step.assigned_to)"
-                                            style="color: #1890ff; cursor: pointer;"
-                                    >
-                                        {{ getAssignedUserName(step.assigned_to) }}
-                                    </a>
-                                    <span v-else>Không xác định</span>
+                        <!-- Ngày bắt đầu & Ngày kết thúc: đặt cạnh nhau -->
+                        <a-descriptions-item label="Ngày bắt đầu" style="width: 150px">
+                            <a-typography-text v-if="!isEditing(step, 'start')" type="secondary" @click.stop="editDateStart(step)">
+                                {{ step.start_date ? formatDate(step.start_date) : '---' }}
+                                <EditOutlined />
+                            </a-typography-text>
+                            <a-date-picker
+                                v-else
+                                style="width: 100%"
+                                v-model:value="dateStart"
+                                :format="'YYYY-MM-DD'"
+                                :allowClear="true"
+                                :disabledDate="disabledStartDate"
+                                @change="updateStepStartDate"
+                            />
+                        </a-descriptions-item>
+
+                        <!-- Trạng thái & Phụ trách bước: đặt cạnh nhau -->
+                        <a-descriptions-item label="Trạng thái">
+                            <a-popover
+                                :open="openStatusForId === step.id"
+                                trigger="click"
+                                placement="bottomLeft"
+                                @openChange="(v) => openStatusForId = v ? step.id : null"
+                            >
+                                <template #content>
+                                    <a-select style="width: 180px" :value="String(step.status)" @change="(val) => onChangeStatus(step, val)">
+                                        <a-select-option value="0">Chưa bắt đầu</a-select-option>
+                                        <a-select-option value="1">Đang xử lý</a-select-option>
+                                        <a-select-option value="2">Hoàn thành</a-select-option>
+                                        <a-select-option value="3">Bỏ qua</a-select-option>
+                                    </a-select>
                                 </template>
+
+                                <a-tag :color="getStepStatusColor(step.status)" class="status-tag">
+                                    {{ statusText(step.status) }}
+                                    <EditOutlined style="margin-left: 6px; font-size: 14px;" />
+                                </a-tag>
+                            </a-popover>
+                        </a-descriptions-item>
+
+                            <a-descriptions-item label="Ngày kết thúc" style="width: 150px">
+                                <a-typography-text
+                                    v-if="!isEditing(step, 'end')"
+                                    type="secondary"
+                                    @click.stop="editDateEnd(step)"
+                                >
+                                    {{ step.end_date ? formatDate(step.end_date) : '---' }}
+                                    <EditOutlined />
+                                </a-typography-text>
+                                <a-date-picker
+                                    v-else
+                                    style="width: 100%"
+                                    v-model:value="dateEnd"
+                                    :format="'YYYY-MM-DD'"
+                                    :allowClear="true"
+                                    :disabledDate="disabledEndDate"
+                                    @change="updateStepEndDate"
+                                />
                             </a-descriptions-item>
 
-                            <a-descriptions-item label="Ngày bắt đầu">
-                                <span v-if="step.start_date">{{ formatDate(step.start_date) }}</span>
-                                <span v-else>--</span>
-                            </a-descriptions-item>
+                        <a-descriptions-item label="Phụ trách bước">
+                            <a-popover
+                                :open="openAssignForId === step.id"
+                                trigger="click"
+                                placement="bottomLeft"
+                                @openChange="(v) => openAssignForId = v ? step.id : null"
+                            >
+                                <template #content>
+                                    <a-select
+                                        style="width: 180px"
+                                        :value="step.assigned_to || null"
+                                        placeholder="Chọn người phụ trách"
+                                        allowClear
+                                        @change="(val) => onChangeAssigned(step, val)"
+                                    >
+                                        <a-select-option v-for="user in users" :key="user.id" :value="user.id">
+                                            {{ user.name }}
+                                        </a-select-option>
+                                    </a-select>
+                                </template>
 
-                            <a-descriptions-item label="Ngày kết thúc">
-                                <span v-if="step.end_date">{{ formatDate(step.end_date) }}</span>
-                                <span v-else>--</span>
-                            </a-descriptions-item>
+                                <span class="assigned-display">
+                                  <a v-if="step.assigned_to" @click.stop.prevent style="color: #1890ff;">
+                                    {{ getAssignedUserName(step.assigned_to) }}
+                                  </a>
+                                  <span v-else>Không xác định</span>
+                                  <EditOutlined style="margin-left: 6px; font-size: 14px;" />
+                                </span>
+                            </a-popover>
+                        </a-descriptions-item>
+
+                        <!-- Hạn: chiếm cả hàng để có chỗ cho tag -->
+                        <a-descriptions-item label="Hạn">
+                            <template v-if="!isEditing(step, 'end')">
+                                <a-tag v-if="deadlineInfo(step.end_date).type === 'remaining'" color="green">
+                                    Còn {{ deadlineInfo(step.end_date).days }} ngày
+                                </a-tag>
+                                <a-tag v-else-if="deadlineInfo(step.end_date).type === 'today'" :color="'#faad14'">
+                                    Hạn chót hôm nay
+                                </a-tag>
+                                <a-tag v-else-if="deadlineInfo(step.end_date).type === 'overdue'" color="error">
+                                    Quá hạn {{ deadlineInfo(step.end_date).days }} ngày
+                                </a-tag>
+                                <a-typography-text v-else type="secondary">—</a-typography-text>
+                            </template>
+                            <template v-else>
+                                <a-tag v-if="deadlineInfo(dateEnd).type === 'remaining'" color="green">
+                                    Còn {{ deadlineInfo(dateEnd).days }} ngày
+                                </a-tag>
+                                <a-tag v-else-if="deadlineInfo(dateEnd).type === 'today'" :color="'#faad14'">
+                                    Hạn chót hôm nay
+                                </a-tag>
+                                <a-tag v-else-if="deadlineInfo(dateEnd).type === 'overdue'" color="error">
+                                    Quá hạn {{ deadlineInfo(dateEnd).days }} ngày
+                                </a-tag>
+                                <a-typography-text v-else type="secondary">—</a-typography-text>
+                            </template>
+                        </a-descriptions-item>
+
+                        <!-- Người liên quan: chiếm cả hàng để đủ chỗ avatar -->
+                        <a-descriptions-item label="Người liên quan">
+                            <template v-if="step.assignees_detail?.length">
+                                <a-avatar-group size="small" :maxCount="5">
+                                    <a-tooltip
+                                        v-for="u in step.assignees_detail"
+                                        :key="u.id"
+                                        :title="u.name || 'Không rõ'"
+                                        placement="top"
+                                    >
+                                        <a-avatar :style="{ backgroundColor: getAvatarColor(u.name) }">
+                                            {{ (u.name || '').charAt(0).toUpperCase() }}
+                                        </a-avatar>
+                                    </a-tooltip>
+                                </a-avatar-group>
+                            </template>
+                            <span v-else>—</span>
+                        </a-descriptions-item>
                         </a-descriptions>
                     </template>
+
                 </a-step>
             </a-steps>
         </a-spin>
@@ -133,102 +251,102 @@
 
         <!-- Drawer hiển thị chi tiết bước -->
         <a-drawer
-                title="Chi tiết bước xử lý"
+                title="Danh sách nhiệm vụ"
                 placement="right"
                 :visible="drawerVisible"
                 @close="closeDrawer"
-                width="900"
+                width="1100"
         >
             <template v-if="selectedStep">
-                <a-descriptions
-                        size="small"
-                        :column="1"
-                        bordered
-                        :title="bidding?.title"
-                >
-                    <a-descriptions-item label="Bước số">{{ selectedStep.step_number }}</a-descriptions-item>
-                    <a-descriptions-item label="Tiêu đề">
-                        <a-typography-text
-                                type="secondary"
-                                v-if="!showEditTitle"
-                                @click="editTitle"
-                        >
-                            {{ selectedStep.title || '---' }}
-                            <EditOutlined/>
-                        </a-typography-text>
-                        <a-input
-                                v-if="showEditTitle"
-                                v-model:value="editedTitle"
-                                @pressEnter="updateStepTitle"
-                                @blur="updateStepTitle"
-                                placeholder="Nhập tiêu đề"
-                        />
-                    </a-descriptions-item>
+<!--                <a-descriptions-->
+<!--                        size="small"-->
+<!--                        :column="1"-->
+<!--                        bordered-->
+<!--                        :title="bidding?.title"-->
+<!--                >-->
+<!--                    <a-descriptions-item label="Bước số">{{ selectedStep.step_number }}</a-descriptions-item>-->
+<!--                    <a-descriptions-item label="Tiêu đề">-->
+<!--                        <a-typography-text-->
+<!--                                type="secondary"-->
+<!--                                v-if="!showEditTitle"-->
+<!--                                @click="editTitle"-->
+<!--                        >-->
+<!--                            {{ selectedStep.title || '-&#45;&#45;' }}-->
+<!--                            <EditOutlined/>-->
+<!--                        </a-typography-text>-->
+<!--                        <a-input-->
+<!--                                v-if="showEditTitle"-->
+<!--                                v-model:value="editedTitle"-->
+<!--                                @pressEnter="updateStepTitle"-->
+<!--                                @blur="updateStepTitle"-->
+<!--                                placeholder="Nhập tiêu đề"-->
+<!--                        />-->
+<!--                    </a-descriptions-item>-->
 
-                    <a-descriptions-item label="Phòng ban">
-                        <template #default>
-                            <a-tag v-for="(dep, index) in parseDepartment(selectedStep.department)" :key="index"
-                                   color="blue" style="margin-right: 4px;">
-                                {{ dep }}
-                            </a-tag>
-                        </template>
-                    </a-descriptions-item>
-                    <a-descriptions-item label="Trạng thái">
-                        <a-select v-model:value="selectedStep.status" style="width: 100%"
-                                  @change="(value) => updateStepStatus(value, selectedStep)">
-                            <a-select-option value="0">Chưa bắt đầu</a-select-option>
-                            <a-select-option value="1">Đang xử lý</a-select-option>
-                            <a-select-option value="2">Hoàn thành</a-select-option>
-                            <a-select-option value="3">Bỏ qua</a-select-option>
-                        </a-select>
-                    </a-descriptions-item>
-                    <a-descriptions-item label="Người phụ trách">
-                        <a-select
-                                v-model:value="selectedStep.assigned_to"
-                                style="width: 100%"
-                                placeholder="Chọn người phụ trách"
-                                @change="(value) => updateStepAssignedTo(value, selectedStep)"
-                                :allowClear="true"
-                        >
-                            <a-select-option
-                                    v-for="user in users"
-                                    :key="user.id"
-                                    :value="user.id"
-                            >
-                                {{ user.name }}
-                            </a-select-option>
-                        </a-select>
-                    </a-descriptions-item>
+<!--                    <a-descriptions-item label="Phòng ban">-->
+<!--                        <template #default>-->
+<!--                            <a-tag v-for="(dep, index) in parseDepartment(selectedStep.department)" :key="index"-->
+<!--                                   color="blue" style="margin-right: 4px;">-->
+<!--                                {{ dep }}-->
+<!--                            </a-tag>-->
+<!--                        </template>-->
+<!--                    </a-descriptions-item>-->
+<!--                    <a-descriptions-item label="Trạng thái">-->
+<!--                        <a-select v-model:value="selectedStep.status" style="width: 100%"-->
+<!--                                  @change="(value) => updateStepStatus(value, selectedStep)">-->
+<!--                            <a-select-option value="0">Chưa bắt đầu</a-select-option>-->
+<!--                            <a-select-option value="1">Đang xử lý</a-select-option>-->
+<!--                            <a-select-option value="2">Hoàn thành</a-select-option>-->
+<!--                            <a-select-option value="3">Bỏ qua</a-select-option>-->
+<!--                        </a-select>-->
+<!--                    </a-descriptions-item>-->
+<!--                    <a-descriptions-item label="Người phụ trách">-->
+<!--                        <a-select-->
+<!--                                v-model:value="selectedStep.assigned_to"-->
+<!--                                style="width: 100%"-->
+<!--                                placeholder="Chọn người phụ trách"-->
+<!--                                @change="(value) => updateStepAssignedTo(value, selectedStep)"-->
+<!--                                :allowClear="true"-->
+<!--                        >-->
+<!--                            <a-select-option-->
+<!--                                    v-for="user in users"-->
+<!--                                    :key="user.id"-->
+<!--                                    :value="user.id"-->
+<!--                            >-->
+<!--                                {{ user.name }}-->
+<!--                            </a-select-option>-->
+<!--                        </a-select>-->
+<!--                    </a-descriptions-item>-->
 
-                    <a-descriptions-item label="Ngày bắt đầu">
-                        <a-typography-text type="secondary" v-if="!showEditDateStart" @click="editDateStart">
-                            {{ formatDate(selectedStep.start_date) }}
-                            <EditOutlined/>
-                        </a-typography-text>
-                        <a-date-picker
-                                v-if="showEditDateStart"
-                                style="width: 100%"
-                                v-model:value="dateStart"
-                                @change="updateStepStartDate"
-                        />
-                    </a-descriptions-item>
-                    <a-descriptions-item label="Ngày kết thúc">
-                        <a-typography-text type="secondary" v-if="!showEditDateEnd" @click="editDateEnd">
-                            {{ formatDate(selectedStep.end_date) }}
-                            <EditOutlined/>
-                        </a-typography-text>
-                        <a-date-picker
-                                :disabledDate="disabledDate"
-                                v-if="showEditDateEnd"
-                                style="width: 100%"
-                                v-model:value="dateEnd"
-                                @change="updateStepEndDate"
-                        />
-                    </a-descriptions-item>
-                </a-descriptions>
+<!--                    <a-descriptions-item label="Ngày bắt đầu">-->
+<!--                        <a-typography-text type="secondary" v-if="!showEditDateStart" @click="editDateStart">-->
+<!--                            {{ formatDate(selectedStep.start_date) }}-->
+<!--                            <EditOutlined/>-->
+<!--                        </a-typography-text>-->
+<!--                        <a-date-picker-->
+<!--                                v-if="showEditDateStart"-->
+<!--                                style="width: 100%"-->
+<!--                                v-model:value="dateStart"-->
+<!--                                @change="updateStepStartDate"-->
+<!--                        />-->
+<!--                    </a-descriptions-item>-->
+<!--                    <a-descriptions-item label="Ngày kết thúc">-->
+<!--                        <a-typography-text type="secondary" v-if="!showEditDateEnd" @click="editDateEnd">-->
+<!--                            {{ formatDate(selectedStep.end_date) }}-->
+<!--                            <EditOutlined/>-->
+<!--                        </a-typography-text>-->
+<!--                        <a-date-picker-->
+<!--                                :disabledDate="disabledDate"-->
+<!--                                v-if="showEditDateEnd"-->
+<!--                                style="width: 100%"-->
+<!--                                v-model:value="dateEnd"-->
+<!--                                @change="updateStepEndDate"-->
+<!--                        />-->
+<!--                    </a-descriptions-item>-->
+<!--                </a-descriptions>-->
 
-                <a-divider>
-                </a-divider>
+<!--                <a-divider>-->
+<!--                </a-divider>-->
 
                 <a-row :gutter="16" justify="end">
                     <a-col>
@@ -238,9 +356,9 @@
                     </a-col>
                 </a-row>
 
-                <a-divider>
-                    Danh sách công việc của bước này
-                </a-divider>
+<!--                <a-divider>-->
+<!--                    Danh sách công việc của bước này-->
+<!--                </a-divider>-->
 
                 <!-- Nếu không có task -->
                 <a-empty v-if="relatedTasks.length === 0" description="Không có công việc"/>
@@ -257,57 +375,100 @@
                           border-bottom: 1px solid #f0f0f0;
                         "
                     >
-                        <span>Nội dung mô tả</span>
-                        <span>Trạng thái</span>
                     </div>
 
                     <!-- Danh sách nhiệm vụ -->
-                    <a-list
-                            :dataSource="relatedTasks"
-                            :rowKey="task => task.id"
-                            item-layout="horizontal"
+                    <a-table
+                        class="tiny-scroll"
+                        :columns="relatedColumns"
+                        :dataSource="relatedTasks"
+                        rowKey="id"
+                        bordered
+                        size="small"
+                        :pagination="false"
+                        :scroll="{ x: 1200 }"
+                        :locale="{ emptyText: 'Không có dữ liệu' }"
                     >
-                        <template #renderItem="{ item }">
-                            <a-list-item>
-                                <div style="display: flex; justify-content: space-between; width: 100%;">
-                                    <!-- Cột trái: nội dung -->
-                                    <div>
-                                        <div style="font-weight: 600;">
-                                            <router-link :to="`/internal-tasks/${item.id}/info`">
-                                                {{ item.title }}
-                                            </router-link>
-                                        </div>
-                                        <div style="font-size: 13px; color: #666;">
-                                            {{ item.description }}
-                                        </div>
-                                        <div style="font-size: 13px; color: #999;">
-                                            Phụ trách: {{ getAssignedUserName(item.assigned_to) }}
-                                        </div>
-                                    </div>
+                        <template #bodyCell="{ column, record, index }">
+                            <!-- STT -->
+                            <template v-if="column.key === 'index'">
+                                {{ index + 1 }}
+                            </template>
 
-                                    <!-- Cột phải: trạng thái thực hiện + duyệt -->
-                                    <div style="white-space: nowrap; text-align: right;">
-                                        <!-- Luôn hiển thị trạng thái task -->
-                                        <a-tag :color="getTaskStatusColor(item.status)">
-                                            {{ getTaskStatusText(item.status) }}
-                                        </a-tag>
+                            <!-- Tên công việc -->
+                            <template v-else-if="column.dataIndex === 'title'">
+                                <router-link :to="`/internal-tasks/${record.id}/info`">
+                                    {{ record.title }}
+                                </router-link>
+                            </template>
 
-                                        <!-- Nếu đã hoàn thành và đã duyệt -->
-                                        <div v-if="item.status === 'done' && item.approval_status === 'approved'">
-                                            <a-tag color="green">Hoàn thành & Đã duyệt</a-tag>
-                                        </div>
+                            <!-- Người thực hiện -->
+                            <template v-else-if="column.dataIndex === 'assigned_to'">
+                                {{ getAssignedUserName(record.assigned_to) }}
+                            </template>
 
-                                        <!-- Nếu hoàn thành nhưng chưa được duyệt hoặc bị từ chối -->
-                                        <div v-else-if="item.status === 'done'">
-                                            <a-tag :color="getApprovalStatusColor(item.approval_status)">
-                                                {{ getApprovalStatusText(item.approval_status) }}
-                                            </a-tag>
-                                        </div>
-                                    </div>
-                                </div>
-                            </a-list-item>
+                            <!-- Tiến trình -->
+                            <template v-else-if="column.dataIndex === 'progress'">
+                                <a-progress
+                                    :percent="Number(record.progress)"
+                                    :status="Number(record.progress) >= 100 ? 'success' : 'active'"
+                                    size="small"
+                                    :show-info="true"
+                                />
+                            </template>
+
+                            <!-- Ưu tiên -->
+                            <template v-else-if="column.dataIndex === 'priority'">
+                                <a-tag :color="getPriorityColor(record.priority)">
+                                    {{ getPriorityText(record.priority) }}
+                                </a-tag>
+                            </template>
+
+                            <!-- Bắt đầu / Kết thúc -->
+                            <template v-else-if="column.dataIndex === 'start_date'">
+                                {{ formatDate(record.start_date) }}
+                            </template>
+                            <template v-else-if="column.dataIndex === 'end_date'">
+                                {{ formatDate(record.end_date) }}
+                            </template>
+
+                            <!-- Trạng thái -->
+                            <template v-else-if="column.dataIndex === 'status'">
+                                <a-tag :color="getTaskStatusColor(record.status)">
+                                    {{ getTaskStatusText(record.status) }}
+                                </a-tag>
+                            </template>
+
+                            <!-- Hạn (tính từ end_date) -->
+                            <template v-else-if="column.dataIndex === 'deadline'">
+                                <template v-if="deadlineInfo(record.end_date).type === 'overdue'">
+                                    <a-tag color="error">Quá hạn {{ deadlineInfo(record.end_date).days }} ngày</a-tag>
+                                </template>
+                                <template v-else-if="deadlineInfo(record.end_date).type === 'today'">
+                                    <a-tag :color="'#faad14'">Hạn chót hôm nay</a-tag>
+                                </template>
+                                <template v-else-if="deadlineInfo(record.end_date).type === 'remaining'">
+                                    <a-tag color="green">Còn {{ deadlineInfo(record.end_date).days }} ngày</a-tag>
+                                </template>
+                                <template v-else>—</template>
+                            </template>
+
+                            <!-- Duyệt -->
+                            <template v-else-if="column.dataIndex === 'approval_status'">
+                                <template v-if="record.status === 'done' && record.approval_status === 'approved'">
+                                    <a-tag color="green">Hoàn thành & Đã duyệt</a-tag>
+                                </template>
+                                <template v-else-if="record.status === 'done'">
+                                    <a-tag :color="getApprovalStatusColor(record.approval_status)">
+                                        {{ getApprovalStatusText(record.approval_status) }}
+                                    </a-tag>
+                                </template>
+                                <template v-else>—</template>
+                            </template>
                         </template>
-                    </a-list>
+                    </a-table>
+
+
                 </template>
             </template>
         </a-drawer>
@@ -322,8 +483,13 @@
 </template>
 
 <script setup>
-    import {ref, onMounted, computed} from 'vue'
+    import {ref, onMounted, computed, reactive} from 'vue'
     import dayjs from 'dayjs'
+
+    dayjs.locale('vi');
+    import viVN from 'ant-design-vue/es/locale/vi_VN';
+    import {defineEmits, defineProps} from "@vue/runtime-core";
+
     import {
         getBiddingAPI,
         cloneFromTemplatesAPI,
@@ -334,7 +500,7 @@
     import {getUsers} from '@/api/user.js'
     import {useRoute} from 'vue-router'
     import {message} from 'ant-design-vue'
-    import {formatDate, formatCurrency} from '@/utils/formUtils'
+    import {formatDate, formatCurrency, deadlineInfo} from '@/utils/formUtils'
     import {getCustomers} from '../api/customer' // file API của bạn
     import {useRouter} from 'vue-router'
     import {EditOutlined} from '@ant-design/icons-vue'
@@ -374,28 +540,133 @@
     const dateEnd = ref()
     const showEditDateStart = ref(false)
     const showEditDateEnd = ref(false)
-    const editDateStart = () => {
-        dateStart.value = selectedStep.value.start_date ? dayjs(selectedStep.value.start_date) : null
-        showEditDateStart.value = true
-        showEditDateEnd.value = false
+
+    // columns đầy đủ
+    const relatedColumns = [
+        { title: 'STT', key: 'index', width: 60, align: 'center', fixed: 'left' },
+        { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 280, ellipsis: true, fixed: 'left' },
+        { title: 'Người thực hiện', dataIndex: 'assigned_to', key: 'assigned_to', width: 160 },
+        { title: 'Tiến trình', dataIndex: 'progress', key: 'progress', width: 140, align: 'center' },
+        { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', width: 120, align: 'center' },
+        {
+            title: 'Bắt đầu',
+            dataIndex: 'start_date',
+            key: 'start_date',
+            width: 120,
+            align: 'center',
+            sorter: (a, b) => new Date(a.start_date) - new Date(b.start_date),
+        },
+        {
+            title: 'Kết thúc',
+            dataIndex: 'end_date',
+            key: 'end_date',
+            width: 120,
+            align: 'center',
+            sorter: (a, b) => new Date(a.end_date) - new Date(b.end_date),
+        },
+        { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 140, align: 'center' },
+        { title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 160, align: 'center' },
+        { title: 'Duyệt', dataIndex: 'approval_status', key: 'approval_status', width: 160, align: 'center' },
+    ]
+
+    const editing = reactive({
+        id: null,
+        field: null
+    })
+
+    const isEditing = (step, field) =>
+        editing.id === step.id && editing.field === field
+
+
+    const editDateStart = (step) => {
+        selectedStep.value = step
+        dateStart.value = step.start_date ? dayjs(step.start_date) : null
+        editing.id = step.id
+        editing.field = 'start'
     }
-    const editDateEnd = () => {
-        dateEnd.value = selectedStep.value.end_date ? dayjs(selectedStep.value.end_date) : null
-        showEditDateStart.value = false
-        showEditDateEnd.value = true
+
+    const editDateEnd = (step) => {
+        selectedStep.value = step
+        dateEnd.value = step.end_date ? dayjs(step.end_date) : null
+        editing.id = step.id
+        editing.field = 'end'
     }
-    const updateStepStartDate = async (value, option) => {
-        selectedStep.value.start_date = value.format('YYYY-MM-DD');
+
+    /** Start không được > end (nếu end đã có) */
+    const disabledStartDate = (current) => {
+        const end = dateEnd.value || (selectedStep.value && selectedStep.value.end_date ? dayjs(selectedStep.value.end_date) : null)
+        if (!end) return false
+        return current && current > end.endOf('day')
+    }
+
+    /** End không được < start (nếu start đã có) */
+    const disabledEndDate = (current) => {
+        const start = dateStart.value || (selectedStep.value && selectedStep.value.start_date ? dayjs(selectedStep.value.start_date) : null)
+        if (!start) return false
+        return current && current < start.startOf('day')
+    }
+
+
+    const updateStepStartDate = async (value) => {
+        // value có thể null nếu user bấm clear
+        const newStart = value ? dayjs(value).format('YYYY-MM-DD') : null
+        const id = selectedStep.value && selectedStep.value.id
+        if (!id) return
+
         try {
-            await updateBiddingStepAPI(selectedStep.value.id, {start_date: selectedStep.value.start_date})
+            await updateBiddingStepAPI(id, { start_date: newStart })
             message.success('Cập nhật ngày bắt đầu thành công')
-            showEditDateStart.value = false
+            // cập nhật local để UI phản hồi ngay
+            selectedStep.value.start_date = newStart
+            editing.id = null
+            editing.field = null
             await fetchSteps()
         } catch (e) {
-            const msg = 'Không thể cập nhật ngày bắt đầu'
-            message.error(msg)
-            console.warn('Lỗi cập nhật ngày bắt đầu:', msg)
+            message.error('Không thể cập nhật ngày bắt đầu')
+            console.warn('Lỗi cập nhật ngày bắt đầu:', e)
         }
+    }
+
+    // script setup (Vue 3, JS thuần)
+    const deadlineText = (b) => {
+        if (!b || !b.end_date) return 'Không xác định';
+        const r = Number(b.days_remaining ?? 0);
+        const o = Number(b.days_overdue ?? 0);
+
+        if (o > 0) return `Quá hạn ${o} ngày`;
+        if (r > 0) return `Còn ${r} ngày`;
+        return 'Đến hạn hôm nay';
+    };
+
+    const deadlineColor = (b) => {
+        if (!b || !b.end_date) return 'default';
+        const r = Number(b.days_remaining ?? 0);
+        const o = Number(b.days_overdue ?? 0);
+
+        if (o > 0) return 'red';
+        if (r > 0) return 'green';
+        return 'orange'; // hôm nay đến hạn
+    };
+
+    const openStatusForId = ref(null)
+
+    const onChangeStatus = async (step, val) => {
+        // đồng bộ kiểu dữ liệu nếu BE dùng số
+        const newVal = Number(val)
+        try {
+            await updateStepStatus(newVal, step)   // hàm của bạn
+            step.status = newVal                   // cập nhật UI
+        } finally {
+            openStatusForId.value = null           // đóng popover
+        }
+    }
+
+    const openAssignForId = ref(null)
+
+    const onChangeAssigned = async (step, val) => {
+        await updateStepAssignedTo(val, step)
+        step.assigned_to = val || null
+        openAssignForId.value = null // đóng popover
     }
 
     const submitForm = () => {
@@ -529,20 +800,25 @@
     }
 
 
-    const updateStepEndDate = async (value, option) => {
-        selectedStep.value.end_date = value.format('YYYY-MM-DD')
+
+    const updateStepEndDate = async (value) => {
+        const newEnd = value ? dayjs(value).format('YYYY-MM-DD') : null
+        const id = selectedStep.value && selectedStep.value.id
+        if (!id) return
+
         try {
-            await updateBiddingStepAPI(selectedStep.value.id, {end_date: selectedStep.value.end_date})
+            await updateBiddingStepAPI(id, { end_date: newEnd })
             message.success('Cập nhật ngày kết thúc thành công')
-            showEditDateEnd.value = false
+            selectedStep.value.end_date = newEnd
+            editing.id = null
+            editing.field = null
             await fetchSteps()
         } catch (e) {
-            console.log('e', e)
-            const msg = 'Không thể cập nhật ngày kết thúc'
-            message.error(msg)
-            console.warn('Lỗi cập nhật ngày kết thúc:', msg)
+            message.error('Không thể cập nhật ngày kết thúc')
+            console.warn('Lỗi cập nhật ngày kết thúc:', e)
         }
     }
+
     const disabledDate = current => {
         return current && current < dayjs(selectedStep.value.start_date).endOf('day');
     };
@@ -555,8 +831,6 @@
 
         const dataFilter = {}
 
-        console.log('user', user)
-
         if (String(user.role_id) === '3') {
             // Nhân viên → chỉ xem nhiệm vụ của mình
             dataFilter.assigned_to = user.id
@@ -565,7 +839,6 @@
             dataFilter.id_department = user.department_id
         }
 
-        console.log('dataFilter', dataFilter)
         try {
             const res = await getTasksByBiddingStep(step.id, dataFilter)
             stepStore.setRelatedTasks(Array.isArray(res.data) ? res.data : [])
@@ -583,17 +856,6 @@
         showEditDateEnd.value = false
         dateStart.value = null
         dateEnd.value = null
-    }
-    const getStatusColor = (status) => {
-        const map = {
-            0: 'orange',   // Chưa nộp
-            1: 'blue',     // Đã nộp
-            2: 'purple',   // Vào vòng sau
-            3: 'green',    // Trúng thầu
-            4: 'red',      // Không trúng
-            5: 'gray'      // Hủy
-        }
-        return map[status] || 'default'
     }
 
     const statusText = (status) => {
@@ -656,6 +918,66 @@
             '3': 'error',
         }[status] || 'wait'
     }
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'todo': return 'default'
+            case 'doing': return 'processing'
+            case 'done': return 'success'
+            case 'overdue': return 'error'
+            default: return 'default'
+        }
+    }
+    const getPriorityText = (priority) => {
+        switch (priority) {
+            case 'high': return 'Cao'
+            case 'normal': return 'Bình thường'
+            case 'low': return 'Thấp'
+            default: return 'Không xác định'
+        }
+    }
+    const getPriorityColor = (priority) => {
+        switch (priority) {
+            case 'high': return 'red'
+            case 'normal': return 'orange'
+            case 'low': return 'blue'
+            default: return 'default'
+        }
+    }
+
+    const getProgressStatus = (progress) => {
+        if (!progress) return 'normal'
+        if (progress >= 100) return 'success'
+        if (progress >= 80) return 'normal'
+        if (progress >= 50) return 'active'
+        return 'exception'
+    }
+
+    const getFirstLetter = (name) => {
+        if (!name || name === 'N/A') return '?'
+        return name.charAt(0).toUpperCase()
+    }
+
+    const getAvatarColor = (name) => {
+        if (!name || name === 'N/A') return '#d9d9d9'
+
+        // Generate consistent color based on name
+        const colors = [
+            '#f5222d', '#fa8c16', '#fadb14', '#52c41a',
+            '#13c2c2', '#1890ff', '#722ed1', '#eb2f96',
+            '#fa541c', '#faad14', '#a0d911', '#52c41a',
+            '#13c2c2', '#1890ff', '#722ed1', '#eb2f96'
+        ]
+
+        // Simple hash function to get consistent color for same name
+        let hash = 0
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash)
+        }
+        const index = Math.abs(hash) % colors.length
+        return colors[index]
+    }
+
 
     const currentStepIndex = () => {
         const last = lastCompletedIndex()
@@ -820,6 +1142,7 @@
             }
 
             steps.value = stepRes.data.filter((step) => step.bidding_id === id)
+            console.log('step', steps)
         } catch (e) {
             console.error(e)
             message.error('Không thể tải dữ liệu')
@@ -861,6 +1184,40 @@
     .active-step-title .ant-statistic-content span {
         color: #FFFFFF;
     }
+    .time-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 4px;
+        font-size: 14px;
+    }
+    .time-item .label {
+        font-weight: 500;
+        color: #555;
+        min-width: 70px; /* để thẳng hàng */
+    }
+    .time-item .value {
+        color: #1890ff;
+    }
+    .time-item.start .value {
+        color: #52c41a; /* xanh lá cho ngày bắt đầu */
+    }
+    .time-item.end .value {
+        color: #f5222d; /* đỏ cho ngày kết thúc */
+    }
+
+    .status-tag {
+        cursor: pointer;
+        user-select: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .assigned-display {
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+    }
+
 </style>
 
 <style scoped>

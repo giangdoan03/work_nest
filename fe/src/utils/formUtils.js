@@ -79,3 +79,14 @@ export const formatCurrency = (value) => {
         maximumFractionDigits: 0,
     })
 }
+
+export const deadlineInfo = (end) => {
+    if (!end) return { type: 'none' }
+    const today = dayjs().startOf('day')
+    const due = dayjs(end).startOf('day')
+    if (!due.isValid()) return { type: 'none' }
+    const diff = due.diff(today, 'day')
+    if (diff === 0) return { type: 'today', days: 0 }
+    if (diff > 0)   return { type: 'remaining', days: diff }
+    return { type: 'overdue', days: Math.abs(diff) }
+}

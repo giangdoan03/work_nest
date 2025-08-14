@@ -2,14 +2,14 @@
     <div>
         <a-flex justify="space-between">
             <div>
-                <a-typography-title :level="4">Danh sách hợp đồng</a-typography-title>
+                <a-typography-title :level="4">Danh sách gói thầu</a-typography-title>
             </div>
             <div>
                 <a-space>
                     <a-button danger v-if="selectedRowKeys.length" @click="handleBulkDelete">
-                        Xóa {{ selectedRowKeys.length }} hợp đồng
+                        Xóa {{ selectedRowKeys.length }} gói thầu
                     </a-button>
-                    <a-button type="primary" @click="showPopupCreate">Thêm hợp đồng mới</a-button>
+                    <a-button type="primary" @click="showPopupCreate">Thêm gói thầu mới</a-button>
                 </a-space>
             </div>
         </a-flex>
@@ -20,7 +20,7 @@
                 :loading="loading"
                 style="margin-top: 12px"
                 row-key="id"
-                :scroll="{ y: 'calc(100vh - 400px)' }"
+                :scroll="{ x: 'max-content'}"
                 :row-selection="rowSelection"
         >
             <template #bodyCell="{ column, record, index }">
