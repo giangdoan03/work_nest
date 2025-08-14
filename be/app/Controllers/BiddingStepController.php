@@ -6,6 +6,7 @@ use App\Models\BiddingModel;
 use App\Models\BiddingStepModel;
 use App\Models\BiddingStepTemplateModel;
 use App\Models\TaskModel;
+use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 
@@ -19,41 +20,140 @@ class BiddingStepController extends ResourceController
         $biddingId = $this->request->getGet('bidding_id');
 
         $builder = $this->model->orderBy('step_number');
-
         if (!empty($biddingId)) {
             $builder = $builder->where('bidding_id', $biddingId);
         }
 
-        $steps = $builder->findAll();
+        $steps   = $builder->findAll();
         $stepIds = array_column($steps, 'id');
 
         $taskModel = new TaskModel();
-        $allTasks = [];
+        $allTasks  = [];
 
         if (!empty($stepIds)) {
+            // Trả về mảng để thêm field dễ
             $allTasks = $taskModel
+                ->asArray()
                 ->where('linked_type', 'bidding')
                 ->whereIn('step_id', $stepIds)
                 ->findAll();
         }
 
-        // Nhóm task theo step_id
-        $tasksGrouped = [];
-        foreach ($allTasks as $task) {
-            $tasksGrouped[$task['step_id']][] = $task;
+        // === TÍNH days_remaining / days_overdue CHO TỪNG TASK ===
+        $tz    = new \DateTimeZone('Asia/Ho_Chi_Minh');
+        $today = new \DateTimeImmutable('today', $tz);
+
+        $allTasks = array_map(function(array $task) use ($today, $tz) {
+            $task['days_remaining'] = null;
+            $task['days_overdue']   = null;
+
+            $endRaw = $task['end_date'] ?? null;
+            if ($endRaw) {
+                $due = \DateTimeImmutable::createFromFormat('Y-m-d', $endRaw, $tz);
+                if ($due === false) {
+                    try { $due = new \DateTimeImmutable($endRaw, $tz); }
+                    catch (\Throwable $e) { $due = null; }
+                }
+                if ($due) {
+                    $diff = (int)$today->diff($due)->format('%r%a'); // dương: còn; âm: quá
+                    $task['days_remaining'] = max(0,  $diff);
+                    $task['days_overdue']   = max(0, -$diff);
+                }
+            }
+            return $task;
+        }, $allTasks);
+
+        // === LẤY TẬP HỢP TẤT CẢ assigned_to ĐỂ MAP USER 1 LẦN ===
+        $allAssigneeIds = array_values(array_unique(array_filter(array_map(
+            fn($t) => $t['assigned_to'] ?? null,
+            $allTasks
+        ))));
+
+        $userById = [];
+        if (!empty($allAssigneeIds)) {
+            $users = (new UserModel())
+                ->asArray()
+                ->select('id,name') // thêm cột khác nếu muốn
+                ->whereIn('id', $allAssigneeIds)
+                ->findAll();
+
+            foreach ($users as $u) {
+                // key theo chuỗi để an toàn khi task trả về id dạng string
+                $userById[(string)$u['id']] = $u;
+            }
         }
 
-        // Gán tasks, task_count, task_done_count vào từng step
+        // === NHÓM TASK THEO step_id ===
+        $tasksGrouped = [];
+        foreach ($allTasks as $t) {
+            $tasksGrouped[$t['step_id']][] = $t;
+        }
+
+        // === GÁN VỀ STEP + TỔNG HỢP DAYS + ASSIGNEES ===
         foreach ($steps as &$step) {
             $tasks = $tasksGrouped[$step['id']] ?? [];
 
-            $step['tasks'] = $tasks;
-            $step['task_count'] = count($tasks);
-            $step['task_done_count'] = count(array_filter($tasks, fn($t) => $t['status'] === 'done'));
+            // Tổng hợp days ở mức step (như trước)
+            $minRemaining = null;
+            $maxOverdue   = 0;
+            $hasToday     = false;
+            $hasAnyDate   = false;
+
+            // Tổng hợp assignees
+            $assigneeIds = [];
+
+            foreach ($tasks as $t) {
+                // days
+                if ($t['days_remaining'] !== null || $t['days_overdue'] !== null) {
+                    $hasAnyDate = true;
+                }
+                if (isset($t['days_remaining']) && $t['days_remaining'] === 0 && !empty($t['end_date'])) {
+                    $hasToday = true;
+                }
+                if (!empty($t['days_remaining']) && $t['days_remaining'] > 0) {
+                    $minRemaining = is_null($minRemaining) ? $t['days_remaining'] : min($minRemaining, $t['days_remaining']);
+                }
+                if (!empty($t['days_overdue']) && $t['days_overdue'] > 0) {
+                    $maxOverdue = max($maxOverdue, $t['days_overdue']);
+                }
+
+                // assignees
+                if (!empty($t['assigned_to'])) {
+                    $assigneeIds[] = (string)$t['assigned_to'];
+                }
+            }
+
+            $assigneeIds = array_values(array_unique($assigneeIds));
+            $assigneesDetail = array_values(array_filter(array_map(
+                fn($id) => $userById[$id] ?? null,
+                $assigneeIds
+            )));
+
+            // Gán về step
+            $step['tasks']           = $tasks;
+            $step['task_count']      = count($tasks);
+            $step['task_done_count'] = count(array_filter($tasks, fn($t) => ($t['status'] ?? null) === 'done'));
+
+            if ($hasAnyDate) {
+                $step['days_remaining'] = $hasToday ? 0 : $minRemaining;     // 0 nếu có task hạn hôm nay
+                $step['days_overdue']   = ($maxOverdue > 0) ? $maxOverdue : 0;
+            } else {
+                $step['days_remaining'] = null;
+                $step['days_overdue']   = null;
+            }
+
+            // 👇 Các field mới bạn cần
+            $step['assignees']         = $assigneeIds;      // mảng ID
+            $step['assignees_detail']  = $assigneesDetail;  // [{id,name,...}]
+            $step['assignees_count']   = count($assigneeIds);
+            // (tuỳ chọn) chuỗi tên để hiển thị nhanh
+            $step['assignees_names']   = implode(', ', array_column($assigneesDetail, 'name'));
         }
+        unset($step);
 
         return $this->respond($steps);
     }
+
 
 
     public function show($id = null)

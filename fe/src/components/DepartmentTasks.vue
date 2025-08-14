@@ -298,7 +298,7 @@
                     rowKey="id" 
                     size="small"
                     bordered
-                    :scroll="{ x: 900, y: 400 }"
+                    :scroll="{ x: 'max-content'}"
                     :pagination="false"
                     :locale="{ emptyText: 'Không có dữ liệu' }"
                 >
@@ -564,6 +564,16 @@ const columns = [
 ]
 
 const drawerColumns = [
+    {
+        title: 'STT',
+        key: 'index',
+        width: 60,
+        align: 'center',
+        // ant-design-vue v3: nhận object { index }
+        customRender: ({ index }) => index + 1, // nếu KHÔNG phân trang
+        // Nếu có phân trang, thay bằng:
+        // customRender: ({ index }) => (drawerPage.current - 1) * drawerPage.pageSize + index + 1,
+    },
     { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
     { title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee', width: 80, align: 'center' },
     { title: 'Tiến trình', dataIndex: 'progress', key: 'progress', width: 120, align: 'center' },

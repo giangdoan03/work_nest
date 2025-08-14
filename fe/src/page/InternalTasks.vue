@@ -2,7 +2,7 @@
     <div>
         <a-flex justify="space-between">
             <div>
-                <a-typography-title :level="4">Danh sách nhiệm vụ ( Tổng: {{ totalTasks }})</a-typography-title>
+                <a-typography-title :level="4">Danh sách nhiệm vụ</a-typography-title>
             </div>
             <a-button type="primary" @click="showPopupCreate">Thêm nhiệm vụ mới</a-button>
         </a-flex>
@@ -19,7 +19,7 @@
                 <a-space>
                     <!-- Lọc theo loại -->
                     <a-button-group>
-                        <a-button :type="dataFilter.linked_type === null ? 'primary' : 'default'" @click="filterByType(null)">Tất cả
+                        <a-button :type="dataFilter.linked_type === null ? 'primary' : 'default'" @click="filterByType(null)">Tất cả ({{ totalTasks }})
                         </a-button>
                         <a-button :type="dataFilter.linked_type === 'bidding' ? 'primary' : 'default'" @click="filterByType('bidding')">Gói thầu
                         </a-button>
@@ -103,7 +103,7 @@
                 style="margin-top: 8px;table-layout: fixed;"
                 row-key="id"
                 :scroll="{ x: 'max-content'}"
-                class="custom_table_list_task"
+                class="custom_table_list_task tiny-scroll"
         >
             <template #bodyCell="{ column, record, index, text }">
                 <template v-if="column.dataIndex === 'title'">
@@ -385,6 +385,18 @@
     })
 
     const columns = [
+        {
+            title: 'STT',
+            key: 'index',
+            width: 60,
+            align: 'center',
+            fixed: 'left',
+            customRender: ({ index }) => {
+                const cur = Number(pagination.value?.current ?? 1)
+                const size = Number(pagination.value?.pageSize ?? 10)
+                return (cur - 1) * size + index + 1
+            }
+        },
         {title: 'Tên nhiệm vụ', dataIndex: 'title', key: 'title', width: 250, ellipsis: true},
         {title: 'Bước tiến trình', dataIndex: 'step_info', key: 'step_info', width: 200, ellipsis: true},
         {title: 'Loại Task', dataIndex: 'linked_type', key: 'linked_type'},
