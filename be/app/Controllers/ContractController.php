@@ -8,12 +8,18 @@ use CodeIgniter\RESTful\ResourceController;
 use App\Models\ContractStepModel;
 use App\Models\UserModel;
 use App\Models\BiddingModel;
+use DateTimeImmutable;
+use DateTimeZone;
+use Throwable;
 
 class ContractController extends ResourceController
 {
     protected $modelName = ContractModel::class;
     protected $format    = 'json';
 
+    /**
+     * @throws \Exception
+     */
     public function index()
     {
         $filters = $this->request->getGet();
@@ -34,13 +40,43 @@ class ContractController extends ResourceController
 
         $data = $builder->findAll();
 
+        $tz    = new DateTimeZone('Asia/Ho_Chi_Minh');
+        $today = new DateTimeImmutable('today', $tz);
+
         foreach ($data as &$row) {
-            $row['bidding_id'] = $row['bidding_id'] ?? null;
+            // Đồng bộ các field phụ
+            $row['bidding_id']  = $row['bidding_id']  ?? null;
             $row['customer_id'] = $row['id_customer'] ?? null;
+
+            // --- TÍNH days_remaining & days_overdue ---
+            // Ưu tiên end_date; nếu bạn dùng due_date thì đổi key dưới đây
+            $dueVal = $row['end_date'] ?? ($row['due_date'] ?? null);
+
+            if (empty($dueVal)) {
+                $row['days_remaining'] = null;
+                $row['days_overdue']   = null;
+                continue;
+            }
+
+            try {
+                $end = new DateTimeImmutable($dueVal, $tz);
+                // Chuẩn hoá về ngày để tính theo ngày, không lệch do giờ
+                $end = new DateTimeImmutable($end->format('Y-m-d'), $tz);
+
+                // end - today (âm = quá hạn, dương = còn hạn)
+                $deltaDays = (int) $today->diff($end)->format('%r%a');
+
+                $row['days_overdue']   = $deltaDays < 0 ? abs($deltaDays) : 0;
+                $row['days_remaining'] = max($deltaDays, 0);
+            } catch (Throwable) {
+                $row['days_remaining'] = null;
+                $row['days_overdue']   = null;
+            }
         }
 
         return $this->respond($data);
     }
+
 
     public function show($id = null)
     {

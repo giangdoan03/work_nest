@@ -48,6 +48,35 @@
                     {{ formatDate(record.end_date) }}
                 </template>
 
+                <template v-if="column.dataIndex === 'due'">
+                    <a-tag
+                        v-if="record.days_remaining > 0"
+                        color="green"
+                    >
+                        Còn {{ record.days_remaining }} ngày
+                    </a-tag>
+
+                    <a-tag
+                        v-else-if="record.days_remaining === 0 && record.days_overdue === 0"
+                        color="gold"
+                    >
+                        Hạn chót hôm nay
+                    </a-tag>
+
+                    <a-tag
+                        v-else-if="record.days_overdue > 0"
+                        color="red"
+                    >
+                        Quá hạn {{ record.days_overdue }} ngày
+                    </a-tag>
+
+                    <a-tag v-else color="default">
+                        Không xác định
+                    </a-tag>
+                </template>
+
+
+
                 <template v-else-if="column.dataIndex === 'action'">
                     <EyeOutlined class="icon-action" style="color: #52c41a" @click="goToContractDetail(record.id)"/>
                     <EditOutlined class="icon-action" style="color: #1890ff" @click="showPopupDetail(record)"/>
@@ -276,7 +305,7 @@
         {title: 'Trạng thái', dataIndex: 'status', key: 'status'},
         {title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date'},
         {title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date'},
-        // {title: 'Thời gian tạo', dataIndex: 'created_at', key: 'created_at'},
+        {title: 'Hạn', dataIndex: 'due', key: 'due' },
         {title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px'},
     ]
 
@@ -407,7 +436,9 @@
                 description: item.description,
                 bidding_id: item.bidding_id || null,
                 customer_id: item.customer_id || null,
-                assigned_to: item.assigned_to || null // ✅ THÊM DÒNG NÀY
+                assigned_to: item.assigned_to || null ,// ✅ THÊM DÒNG NÀY
+                days_overdue: item.days_overdue || null, // ✅ THÊM DÒNG NÀY
+                days_remaining: item.days_remaining || null // ✅ THÊM DÒNG NÀY
             }))
         } catch (e) {
             console.error(e)
@@ -431,7 +462,7 @@
             }
 
             if (res.data.pager.current_page * res.data.pager.per_page < res.data.pager.total) {
-                fetchCustomers()
+                await fetchCustomers()
             }
         } catch (err) {
 

@@ -32,7 +32,7 @@
             </div>
 
             <div class="table-section" style="margin-top: 20px; margin-bottom: 20px">
-                <a-divider>Công việc còn 1 ngày hết hạn</a-divider>
+                <a-divider>{{ dueIn1DayText }}</a-divider>
                 <a-table
                     :columns="columns"
                     :dataSource="tasksDueIn1Day"
@@ -150,7 +150,12 @@
             </div>
             <div class="table-section">
 
-                <a-divider>Danh sách nhiệm vụ phòng</a-divider>
+                <a-divider>
+                    Danh sách nhiệm vụ phòng
+                    <template v-if="totalTasks">
+                        ( {{ totalTasks }})
+                    </template>
+                </a-divider>
                 <a-table
                     :columns="columns"
                     :dataSource="urgentTasks"
@@ -471,6 +476,17 @@ const progressUpdating = ref(false)
 const selectedTask = ref(null)
 const newProgressValue = ref(0)
 
+const totalTasks = ref(0)              // tổng theo API
+const totalAfterFilter = computed(() => filteredTasks.value.length) // số đang hiển thị
+const totalTasksDueIn1Day = computed(() => tasksDueIn1Day.value.length)
+
+const dueIn1DayText = computed(() => {
+    if (totalTasksDueIn1Day.value === 0) return 'Không có công việc nào hết hạn trong 1 ngày tới'
+    if (totalTasksDueIn1Day.value === 1) return 'Có 1 công việc sẽ hết hạn vào ngày mai'
+    return `Có ${totalTasksDueIn1Day.value} công việc sẽ hết hạn trong 1 ngày tới`
+})
+
+
 const paginatedTasks = computed(() => {
     const start = (currentPage.value - 1) * pageSize.value
     const end = start + pageSize.value
@@ -614,6 +630,12 @@ const loadTasks = async () => {
 
         tasks.value = tasksRes.data.data || []
         users.value = usersRes.data || []
+
+        // tổng từ API (rơi về length nếu API không có pagination)
+        totalTasks.value = Number(tasksRes.data?.pagination?.total ?? tasks.value.length)
+
+        // đồng bộ filteredTasks để bảng hiển thị ngay
+        filteredTasks.value = [...tasks.value]
 
         // Không cần map assigned_to_name nữa vì đã sử dụng create_by
         tasks.value = tasks.value
