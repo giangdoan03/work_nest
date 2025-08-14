@@ -49,8 +49,8 @@
                 </template>
 
                 <template v-else-if="column.dataIndex === 'action'">
-                    <EyeOutlined class="icon-action" style="color: #1890ff" @click="goToContractDetail(record.id)"/>
-                    <EditOutlined class="icon-action" style="color: blue" @click="showPopupDetail(record)"/>
+                    <EyeOutlined class="icon-action" style="color: #52c41a" @click="goToContractDetail(record.id)"/>
+                    <EditOutlined class="icon-action" style="color: #1890ff" @click="showPopupDetail(record)"/>
                     <a-popconfirm
                             title="Bạn chắc chắn muốn xóa hợp đồng này?"
                             ok-text="Xóa"

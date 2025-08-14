@@ -73,7 +73,7 @@
             <a-tooltip placement="right" title="Quản lý khách hàng" v-if="collapsed">
                 <div 
                     class="menu-item"
-                    :class="{ active: currentRoute === '/customers' }"
+                    :class="{ active: isCustomerActive }"
                     @click="navigateTo('/customers')"
                 >
                     <TeamOutlined />
@@ -83,7 +83,7 @@
             <div 
                 v-else
                 class="menu-item"
-                :class="{ active: currentRoute === '/customers' }"
+                :class="{ active: isCustomerActive }"
                 @click="navigateTo('/customers')"
             >
                 <TeamOutlined />
@@ -93,7 +93,7 @@
             <a-tooltip placement="right" title="Gói thầu" v-if="collapsed">
                 <div 
                     class="menu-item"
-                    :class="{ active: currentRoute === '/bid-list' }"
+                    :class="{ active: isBiddingActive }"
                     @click="navigateTo('/bid-list')"
                 >
                     <FileSearchOutlined />
@@ -103,7 +103,7 @@
             <div 
                 v-else
                 class="menu-item"
-                :class="{ active: currentRoute === '/bid-list' }"
+                :class="{ active: isBiddingActive }"
                 @click="navigateTo('/bid-list')"
             >
                 <FileSearchOutlined />
@@ -113,7 +113,7 @@
             <a-tooltip placement="right" title="Hợp đồng" v-if="collapsed">
                 <div 
                     class="menu-item"
-                    :class="{ active: currentRoute === '/contracts-tasks' }"
+                    :class="{ active: isContractActive }"
                     @click="navigateTo('/contracts-tasks')"
                 >
                     <FileTextOutlined />
@@ -123,7 +123,7 @@
             <div 
                 v-else
                 class="menu-item"
-                :class="{ active: currentRoute === '/contracts-tasks' }"
+                :class="{ active: isContractActive }"
                 @click="navigateTo('/contracts-tasks')"
             >
                 <FileTextOutlined />
@@ -133,7 +133,7 @@
             <a-tooltip placement="right" title="Công việc" v-if="collapsed">
                 <div 
                     class="menu-item"
-                    :class="{ active: currentRoute === '/internal-tasks' }"
+                    :class="{ active: isInternalTaskActive }"
                     @click="navigateTo('/internal-tasks')"
                 >
                     <ToolOutlined />
@@ -143,7 +143,7 @@
             <div 
                 v-else
                 class="menu-item"
-                :class="{ active: currentRoute === '/internal-tasks' }"
+                :class="{ active: isInternalTaskActive }"
                 @click="navigateTo('/internal-tasks')"
             >
                 <ToolOutlined />
@@ -394,8 +394,24 @@ const { user: currentUser } = storeToRefs(userStore)
 
 // Current route
 const currentRoute = computed(() => route.path)
+const currentRouteId = computed(() => route.params.id)
 
-// Check if submenu should be active
+const isBiddingActive = computed(() => {
+    return ['/bid-list', `/bid-detail/${currentRouteId.value}`].includes(currentRoute.value)
+})
+
+const isContractActive = computed(() => {    
+    return ['/contracts-tasks', `/contracts/${currentRouteId.value}`].includes(currentRoute.value)
+})
+
+const isInternalTaskActive = computed(() => {
+    return ['/internal-tasks', `/internal-tasks/${currentRouteId.value}/info`].includes(currentRoute.value)
+})
+
+const isCustomerActive = computed(() => {
+    return ['/customers', `/customers/${currentRouteId.value}`].includes(currentRoute.value)
+})
+
 const isDocumentsActive = computed(() => {
     return ['/documents/my', '/documents/shared', '/documents/department', '/documents/permission', '/documents/settings'].includes(currentRoute.value)
 })
@@ -404,7 +420,6 @@ const isSettingsActive = computed(() => {
     return ['/settings/bidding', '/settings/contract'].includes(currentRoute.value)
 })
 
-// Path to key mapping (same as Sidebar.vue)
 const pathToKeyMap = {
     '/dashboard': 'dashboard',
     '/project-overview': 'project-overview',
@@ -427,8 +442,8 @@ const pathToKeyMap = {
     '/documents/permission': 'documents-permission',
     '/documents/settings': 'documents-settings',
 
-    '/settings/bidding': 'cau-hinh-dau-thau',
-    '/settings/contract': 'cau-hinh-hop-dong',
+    '/settings/bidding': 'settings-bidding',
+    '/settings/contract': 'settings-contract',
 }
 
 // Key to parent mapping (same as Sidebar.vue)
@@ -456,8 +471,8 @@ const keyToParentMap = {
     'documents-permission': 'documents',
     'documents-settings': 'documents',
 
-    'cau-hinh-dau-thau': 'cau-hinh',
-    'cau-hinh-hop-dong': 'cau-hinh'
+    'settings-bidding': 'cau-hinh',
+    'settings-contract': 'cau-hinh'
 }
 
 // Cho phép match cả path con: /documents/my/123
@@ -480,9 +495,9 @@ const documentKeys = new Set([
     'documents-settings',
 ])
 const settingKeys = new Set([
-    'cau-hinh-dau-thau',
-    'cau-hinh-hop-dong',
-    'cau-hinh',
+    'settings-bidding',
+    'settings-contract',
+    'settings',
 ])
 
 // selectedKeys cho menu overlay
