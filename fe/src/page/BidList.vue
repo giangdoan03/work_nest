@@ -50,6 +50,33 @@
                 <template v-else-if="column.dataIndex === 'start_date' || column.dataIndex === 'end_date'">
                     {{ formatDate(record[column.dataIndex]) }}
                 </template>
+                <template v-if="column.dataIndex === 'due'">
+                    <a-tag
+                        v-if="record.days_remaining > 0"
+                        color="green"
+                    >
+                        Còn {{ record.days_remaining }} ngày
+                    </a-tag>
+
+                    <a-tag
+                        v-else-if="record.days_remaining === 0 && record.days_overdue === 0"
+                        color="gold"
+                    >
+                        Hạn chót hôm nay
+                    </a-tag>
+
+                    <a-tag
+                        v-else-if="record.days_overdue > 0"
+                        color="red"
+                    >
+                        Quá hạn {{ record.days_overdue }} ngày
+                    </a-tag>
+
+                    <a-tag v-else color="default">
+                        Không xác định
+                    </a-tag>
+                </template>
+
                 <template v-else-if="column.dataIndex === 'action'">
                     <a-tooltip title="Xem chi tiết">
                         <EyeOutlined class="icon-action" style="color: #52c41a;" @click="goToDetail(record.id)" />
@@ -210,6 +237,7 @@
         { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
         { title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date' },
         { title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date' },
+        { title: 'Hạn', dataIndex: 'due', key: 'due' },
         { title: 'Hành động', dataIndex: 'action', key: 'action' }
     ]
 

@@ -7,6 +7,9 @@ use App\Models\BiddingStepModel;
 use App\Models\SettingModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use DateTimeImmutable;
+use DateTimeZone;
+use Throwable;
 
 class BiddingController extends ResourceController
 {
@@ -17,6 +20,7 @@ class BiddingController extends ResourceController
 
     /**
      * Lấy danh sách gói thầu có lọc + phân trang
+     * @throws \Exception
      */
     public function index()
     {
@@ -26,19 +30,15 @@ class BiddingController extends ResourceController
         if (isset($filters['status']) && $filters['status'] !== '') {
             $builder = $builder->where('status', (int) $filters['status']);
         }
-
         if (!empty($filters['customer_id'])) {
             $builder = $builder->where('customer_id', $filters['customer_id']);
         }
-
         if (!empty($filters['from'])) {
             $builder = $builder->where('start_date >=', $filters['from']);
         }
-
         if (!empty($filters['to'])) {
             $builder = $builder->where('end_date <=', $filters['to']);
         }
-
         if (!empty($filters['search'])) {
             $builder = $builder->groupStart()
                 ->like('title', $filters['search'])
@@ -47,18 +47,73 @@ class BiddingController extends ResourceController
         }
 
         $perPage = (int) ($filters['per_page'] ?? 10);
-        $page = (int) ($filters['page'] ?? 1);
+        $page    = (int) ($filters['page'] ?? 1);
 
-        $data = $builder->paginate($perPage, 'default', $page);
+        $data  = $builder->paginate($perPage, 'default', $page);
         $pager = $this->model->pager;
 
+        // === Tính days_overdue & days_remaining ===
+        $tz    = new DateTimeZone('Asia/Ho_Chi_Minh');
+        $today = new DateTimeImmutable('today', $tz);
+
+        $mapRow = function ($row) use ($today, $tz) {
+            // Lấy end_date từ mảng hoặc object
+            $endDateVal = is_array($row) ? ($row['end_date'] ?? null) : ($row->end_date ?? null);
+
+            if (empty($endDateVal)) {
+                // Không có end_date
+                if (is_array($row)) {
+                    $row['days_overdue']   = null;
+                    $row['days_remaining'] = null;
+                } else {
+                    $row->days_overdue   = null;
+                    $row->days_remaining = null;
+                }
+                return $row;
+            }
+
+            try {
+                // Chuẩn hoá về chỉ ngày (bỏ phần giờ phút để tính chênh lệch theo ngày)
+                $end = new DateTimeImmutable($endDateVal, $tz);
+                $end = new DateTimeImmutable($end->format('Y-m-d'), $tz);
+
+                // %r%a: số ngày (âm nếu end < today)
+                $deltaDays = (int) $today->diff($end)->format('%r%a');
+
+                $daysOverdue   = $deltaDays < 0 ? abs($deltaDays) : 0;
+                $daysRemaining = max($deltaDays, 0);
+
+                if (is_array($row)) {
+                    $row['days_overdue']   = $daysOverdue;
+                    $row['days_remaining'] = $daysRemaining;
+                } else {
+                    $row->days_overdue   = $daysOverdue;
+                    $row->days_remaining = $daysRemaining;
+                }
+            } catch (Throwable) {
+                // Nếu end_date không parse được → trả null cho an toàn
+                if (is_array($row)) {
+                    $row['days_overdue']   = null;
+                    $row['days_remaining'] = null;
+                } else {
+                    $row->days_overdue   = null;
+                    $row->days_remaining = null;
+                }
+            }
+
+            return $row;
+        };
+
+        // $data có thể là mảng các mảng hoặc mảng các object
+        $data = array_map($mapRow, $data);
+
         return $this->respond([
-            'data' => $data,
+            'data'  => $data,
             'pager' => [
-                'total' => $pager->getTotal(),
-                'per_page' => $perPage,
-                'current_page' => $page,
-            ]
+                'total'         => $pager->getTotal(),
+                'per_page'      => $perPage,
+                'current_page'  => $page,
+            ],
         ]);
     }
 
@@ -88,7 +143,7 @@ class BiddingController extends ResourceController
                     $daysOverdue   = (int)$end->diff($today)->days;
                     $daysRemaining = 0;
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $daysRemaining = null;
                 $daysOverdue   = null;
             }
