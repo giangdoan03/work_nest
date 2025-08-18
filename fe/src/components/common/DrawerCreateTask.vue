@@ -81,7 +81,7 @@
                                 v-model:value="formData.step_code"
                                 :options="stepOption"
                                 :disabled="!formData.linked_id || !!formData.step_code"
-                            :placeholder="formData.linked_type === 'bidding' ? 'Chọn bước gói thầu' : 'Chọn bước hợp đồng'"
+                                :placeholder="formData.linked_type === 'bidding' ? 'Chọn bước gói thầu' : 'Chọn bước hợp đồng'"
                             />
                         </a-form-item>
                     </a-col>
@@ -539,9 +539,17 @@ const getLinkedTypeLabel = (val) => {
     }
     return map[val] || val
 }
+import { useCommonStore } from '@/stores/common'
+const commonStore = useCommonStore()
 
 onMounted(async () => {
-    if (props.type) formData.value.linked_type = props.type
+    if (props.type) {
+        formData.value.linked_type = props.type
+    } else {
+        formData.value.linked_type = commonStore.linkedType
+    }
+    console.log('linked_type', formData.value.linked_type)
+
     if (props.taskParent) formData.value.parent_id = props.taskParent
 
     // Gán từ Pinia store
@@ -562,12 +570,24 @@ onMounted(async () => {
 })
 
 
+watch(
+    () => props.openDrawer,        // mỗi lần Drawer được mở
+    (isOpen) => {
+        if (isOpen) {
+            formData.value.linked_type = props.type || commonStore.linkedType
+            console.log('linked_type', formData.value.linked_type)
+        }
+    }
+)
+
+
 watch(() => formData.value.linked_id, async (newVal, oldVal) => {
     if (!newVal || newVal === oldVal) return
 
     await ensureLinkedIdInOptions()
     await fetchStepOptions()
 })
+
 
 
 // Hàm gán giá trị từ store

@@ -4,17 +4,17 @@
             <div>
                 <a-typography-title :level="4">Danh sách nhiệm vụ</a-typography-title>
             </div>
-            <a-button type="primary" @click="showPopupCreate">Thêm nhiệm vụ mới</a-button>
+            <a-button type="primary" @click="showPopupCreate('internal')">Thêm nhiệm vụ mới</a-button>
         </a-flex>
 
         <a-row :gutter="[14,14]" style="margin-top: 10px;">
-            <a-col :span="2">
+            <a-col :span="3">
                 <!-- ✅ Nút xoá -->
                 <a-button danger type="primary" :disabled="selectedRowKeys.length === 0" @click="handleBulkDelete">
                     Xoá {{ selectedRowKeys.length }} nhiệm vụ
                 </a-button>
             </a-col>
-            <a-col :span="8">
+            <a-col :span="9">
                 <!-- ✅ Bộ lọc nhanh -->
                 <a-space>
                     <!-- Lọc theo loại -->
@@ -255,6 +255,8 @@
 
     import { useUserStore } from '@/stores/user'
     const userStore = useUserStore()
+    import { useCommonStore } from '@/stores/common';
+    const commonStore = useCommonStore()
 
     const locale = ref(viVN);
     const router = useRouter()
@@ -549,7 +551,8 @@
             params: {id: record.id, task_name: record.name}
         })
     }
-    const showPopupCreate = () => {
+    const showPopupCreate = (v) => {
+        commonStore.setLinkedType(v);
         openDrawer.value = true;
     }
     const submitForm = () => {
@@ -569,7 +572,7 @@
     };
 
     const getUserById = (userId) => {
-        let data = listUser.value.find(ele => ele.id == userId);
+        let data = listUser.value.find(ele => ele.id === userId);
         if (!data) {
             return "";
         }

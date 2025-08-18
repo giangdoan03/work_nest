@@ -82,6 +82,7 @@ class TaskController extends ResourceController
         $totalBuilder = clone $builder;
         $total = $totalBuilder->countAllResults(false);
 
+        $builder->orderBy('tasks.created_at', 'DESC');
         $builder->limit($perPage, $offset);
         $tasks = $builder->get()->getResultArray();
 

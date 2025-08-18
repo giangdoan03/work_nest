@@ -14,10 +14,17 @@ export const useStepStore = defineStore('step', () => {
         relatedTasks.value = [...(tasks || [])] // clone danh sách để reactive
     }
 
+    const linkedId = ref(null)
+
+    const setLinkedId = (id) => {
+        linkedId.value = id
+    }
+
     return {
         selectedStep,
         relatedTasks,
         setSelectedStep,
-        setRelatedTasks
+        setRelatedTasks,
+        setLinkedId
     }
 })

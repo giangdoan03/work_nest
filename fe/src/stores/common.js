@@ -1,35 +1,33 @@
-import { defineStore } from 'pinia'
-import { getBiddingStepsAPI } from '@/api/bidding';
-import { onMounted } from 'vue';
-import { init } from 'echarts';
+import {defineStore} from 'pinia';
+import {getBiddingStepsAPI} from "@/api/bidding.js";
 
 export const useCommonStore = defineStore('common', {
     state: () => ({
         contractStep: [],
         biddingStep: [],
+        linkedType: null
     }),
     getters: {
         getContractStep: state => state.contractStep,
         getBiddingStep: state => state.biddingStep,
+        getLinkedType: state => state.linkedType
     },
     actions: {
-        init() {
-            console.log(415135);
-            
-            setContractStep()
+        async init() {
+            await this.setContractStep()
         },
-        setContractStep() {
+        async setContractStep() {
             try {
-                
-                let respon = getBiddingStepsAPI()
-                console.log(444,respon);
-                this.contractStep= respon;
+                this.contractStep = await getBiddingStepsAPI()
             } catch (error) {
-                console.log(error);
+                console.log(error)
             }
         },
         setBiddingStep(steps) {
-            this.biddingStep= steps;
+            this.biddingStep = steps
+        },
+        setLinkedType(type) {
+            this.linkedType = type
         }
     }
 })

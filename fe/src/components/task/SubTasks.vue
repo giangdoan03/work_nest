@@ -64,6 +64,7 @@
                 v-model:open-drawer="openDrawerCreateTask"
                 :list-user="props.listUser"
                 :task-parent="route.params.id"
+                :type="commonStore.linkedType"
                 @submitForm="submitForm"
             />
     </div>
@@ -74,6 +75,8 @@ import { ref, onMounted } from 'vue';
 import { getSubTasks, deleteComment, deleteTask } from '@/api/task';
 import DrawerCreateTask from "../common/DrawerCreateTask.vue";
 import { useRoute, useRouter } from 'vue-router';
+import { useCommonStore } from '@/stores/common'
+const commonStore = useCommonStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -96,7 +99,7 @@ const columns = ref([
     { title: '', key: 'action', dataIndex: 'action', width:"60px" },
 ])
 const getUserById = (userId) =>  {
-    let data = props.listUser.find(ele => ele.id == userId);
+    let data = props.listUser.find(ele => ele.id === userId);
     if(!data){
         return "" ;
     }
@@ -115,8 +118,8 @@ const showDetailSubtask = (record) => {
 const handleDeleteSubtask = async(subtask_id) => {
     loadingSubTask.value = true;
     try {
-        let res =  await deleteTask(subtask_id);
-        getSubTask();
+        await deleteTask(subtask_id);
+        await getSubTask();
     } catch (error) {
         console.log(error);
     }
@@ -124,7 +127,10 @@ const handleDeleteSubtask = async(subtask_id) => {
 const submitForm = () => {
     getSubTask();
 }
+
+const drawerTaskType = ref(null)
 const showPopupCreate = () => {
+    drawerTaskType.value = commonStore.linkedType
     openDrawerCreateTask.value = true;
 }
 const getSubTask = async() => {
