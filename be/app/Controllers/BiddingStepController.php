@@ -19,140 +19,106 @@ class BiddingStepController extends ResourceController
     {
         $biddingId = $this->request->getGet('bidding_id');
 
-        $builder = $this->model->orderBy('step_number');
-        if (!empty($biddingId)) {
-            $builder = $builder->where('bidding_id', $biddingId);
-        }
+        // 1. Lấy steps
+        $steps = $this->model
+            ->orderBy('step_number')
+            ->when($biddingId, fn($b) => $b->where('bidding_id', $biddingId))
+            ->findAll();
 
-        $steps   = $builder->findAll();
         $stepIds = array_column($steps, 'id');
 
-        $taskModel = new TaskModel();
-        $allTasks  = [];
-
-        if (!empty($stepIds)) {
-            // Trả về mảng để thêm field dễ
-            $allTasks = $taskModel
+        // 2. Lấy tasks theo stepIds
+        $tasks = (!empty($stepIds))
+            ? (new TaskModel())
                 ->asArray()
                 ->where('linked_type', 'bidding')
                 ->whereIn('step_id', $stepIds)
-                ->findAll();
-        }
+                ->findAll()
+            : [];
 
-        // === TÍNH days_remaining / days_overdue CHO TỪNG TASK ===
+        // 3. Đánh dấu ngày cho mỗi task
         $tz    = new \DateTimeZone('Asia/Ho_Chi_Minh');
         $today = new \DateTimeImmutable('today', $tz);
 
-        $allTasks = array_map(function(array $task) use ($today, $tz) {
-            $task['days_remaining'] = null;
-            $task['days_overdue']   = null;
+        foreach ($tasks as &$t) {
+            [$t['days_remaining'], $t['days_overdue']] = $this->calcRemOv($t['end_date'] ?? null, $today, $tz);
+        }
+        unset($t);
 
-            $endRaw = $task['end_date'] ?? null;
-            if ($endRaw) {
-                $due = \DateTimeImmutable::createFromFormat('Y-m-d', $endRaw, $tz);
-                if ($due === false) {
-                    try { $due = new \DateTimeImmutable($endRaw, $tz); }
-                    catch (\Throwable $e) { $due = null; }
-                }
-                if ($due) {
-                    $diff = (int)$today->diff($due)->format('%r%a'); // dương: còn; âm: quá
-                    $task['days_remaining'] = max(0,  $diff);
-                    $task['days_overdue']   = max(0, -$diff);
-                }
-            }
-            return $task;
-        }, $allTasks);
-
-        // === LẤY TẬP HỢP TẤT CẢ assigned_to ĐỂ MAP USER 1 LẦN ===
-        $allAssigneeIds = array_values(array_unique(array_filter(array_map(
-            fn($t) => $t['assigned_to'] ?? null,
-            $allTasks
-        ))));
-
+        // 4. Map thông tin user 1 lần
+        $assigneeIds = array_unique(array_column($tasks, 'assigned_to'));
         $userById = [];
-        if (!empty($allAssigneeIds)) {
+        if ($assigneeIds) {
             $users = (new UserModel())
                 ->asArray()
-                ->select('id,name') // thêm cột khác nếu muốn
-                ->whereIn('id', $allAssigneeIds)
+                ->select('id, name')
+                ->whereIn('id', $assigneeIds)
                 ->findAll();
-
             foreach ($users as $u) {
-                // key theo chuỗi để an toàn khi task trả về id dạng string
                 $userById[(string)$u['id']] = $u;
             }
         }
 
-        // === NHÓM TASK THEO step_id ===
-        $tasksGrouped = [];
-        foreach ($allTasks as $t) {
-            $tasksGrouped[$t['step_id']][] = $t;
+        // 5. Nhóm task theo step
+        $grouped = [];
+        foreach ($tasks as $t) {
+            $grouped[$t['step_id']][] = $t;
         }
 
-        // === GÁN VỀ STEP + TỔNG HỢP DAYS + ASSIGNEES ===
-        foreach ($steps as &$step) {
-            $tasks = $tasksGrouped[$step['id']] ?? [];
+        // 6. Tổng hợp vào step
+        foreach ($steps as &$s) {
+            $tArr = $grouped[$s['id']] ?? [];
 
-            // Tổng hợp days ở mức step (như trước)
-            $minRemaining = null;
-            $maxOverdue   = 0;
-            $hasToday     = false;
-            $hasAnyDate   = false;
-
-            // Tổng hợp assignees
-            $assigneeIds = [];
-
-            foreach ($tasks as $t) {
-                // days
-                if ($t['days_remaining'] !== null || $t['days_overdue'] !== null) {
-                    $hasAnyDate = true;
-                }
-                if (isset($t['days_remaining']) && $t['days_remaining'] === 0 && !empty($t['end_date'])) {
-                    $hasToday = true;
-                }
-                if (!empty($t['days_remaining']) && $t['days_remaining'] > 0) {
-                    $minRemaining = is_null($minRemaining) ? $t['days_remaining'] : min($minRemaining, $t['days_remaining']);
-                }
-                if (!empty($t['days_overdue']) && $t['days_overdue'] > 0) {
-                    $maxOverdue = max($maxOverdue, $t['days_overdue']);
-                }
-
-                // assignees
-                if (!empty($t['assigned_to'])) {
-                    $assigneeIds[] = (string)$t['assigned_to'];
-                }
+            // Tổng ngày
+            $minRem = null; $maxOv = 0; $hasToday = false; $hasAny = false;
+            $uids   = [];
+            foreach ($tArr as $t) {
+                if ($t['days_remaining'] !== null || $t['days_overdue'] !== null) $hasAny = true;
+                if ($t['days_remaining'] === 0 && !empty($t['end_date']))       $hasToday = true;
+                if ($t['days_remaining'] > 0)                                   $minRem = is_null($minRem) ? $t['days_remaining'] : min($minRem, $t['days_remaining']);
+                if ($t['days_overdue'] > 0)                                     $maxOv  = max($maxOv, $t['days_overdue']);
+                if (!empty($t['assigned_to']))                                  $uids[] = (string) $t['assigned_to'];
             }
 
-            $assigneeIds = array_values(array_unique($assigneeIds));
-            $assigneesDetail = array_values(array_filter(array_map(
-                fn($id) => $userById[$id] ?? null,
-                $assigneeIds
-            )));
+            $uids = array_values(array_unique($uids));
+            $details = array_values(array_filter(array_map(fn($id) => $userById[$id] ?? null, $uids)));
 
-            // Gán về step
-            $step['tasks']           = $tasks;
-            $step['task_count']      = count($tasks);
-            $step['task_done_count'] = count(array_filter($tasks, fn($t) => ($t['status'] ?? null) === 'done'));
-
-            if ($hasAnyDate) {
-                $step['days_remaining'] = $hasToday ? 0 : $minRemaining;     // 0 nếu có task hạn hôm nay
-                $step['days_overdue']   = ($maxOverdue > 0) ? $maxOverdue : 0;
-            } else {
-                $step['days_remaining'] = null;
-                $step['days_overdue']   = null;
-            }
-
-            // 👇 Các field mới bạn cần
-            $step['assignees']         = $assigneeIds;      // mảng ID
-            $step['assignees_detail']  = $assigneesDetail;  // [{id,name,...}]
-            $step['assignees_count']   = count($assigneeIds);
-            // (tuỳ chọn) chuỗi tên để hiển thị nhanh
-            $step['assignees_names']   = implode(', ', array_column($assigneesDetail, 'name'));
+            $s['tasks']            = $tArr;
+            $s['task_count']       = count($tArr);
+            $s['task_done_count']  = count(array_filter($tArr, fn($t) => ($t['status'] ?? null) === 'done'));
+            $s['days_remaining']   = $hasAny ? ($hasToday ? 0 : $minRem) : null;
+            $s['days_overdue']     = $hasAny ? $maxOv : null;
+            $s['assignees']        = $uids;
+            $s['assignees_detail'] = $details;
+            $s['assignees_count']  = count($uids);
+            $s['assignees_names']  = implode(', ', array_column($details, 'name'));
         }
-        unset($step);
+        unset($s);
 
         return $this->respond($steps);
     }
+
+
+    /**
+     * Tính days_remaining và days_overdue từ end_date
+     */
+    private function calcRemOv(?string $endDate, \DateTimeImmutable $today, \DateTimeZone $tz): array
+    {
+        if (!$endDate) return [null, null];
+
+        $due = \DateTimeImmutable::createFromFormat('Y-m-d', $endDate, $tz);
+        if ($due === false) {
+            try { $due = new \DateTimeImmutable($endDate, $tz); }
+            catch (\Throwable $e) { return [null, null]; }
+        }
+
+        $diff = (int)$today->diff($due)->format('%r%a');
+        return [
+            max(0, $diff),   // days_remaining
+            max(0, -$diff),  // days_overdue
+        ];
+    }
+
 
 
 

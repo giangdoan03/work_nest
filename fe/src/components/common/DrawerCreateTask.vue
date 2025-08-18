@@ -64,27 +64,52 @@
                                       @change="handleChangeDepartment" placeholder="Chọn phòng ban"/>
                         </a-form-item>
                     </a-col>
-                    <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
-                        <a-form-item :label="formData.linked_type === 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'" name="linked_id">
+                    <!-- ==================== BIDDING ==================== -->
+                    <a-col :span="12" v-if="formData.linked_type === 'bidding'">
+                        <a-form-item label="Liên kết gói thầu" name="linked_id">
                             <a-select
-                                v-model:value="formData.linked_id"
-                                :options="linkedIdOption"
-                                @change="handleChangeLinkedId"
-                                :placeholder="formData.linked_type === 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'"
-                                :disabled="!!formData.linked_id"
+                                    v-model:value="formData.linked_id"
+                                    :options="linkedIdOption"
+                                    @change="handleChangeLinkedId"
+                                    placeholder="Chọn gói thầu"
+                                    :disabled="!!formData.linked_id"
                             />
                         </a-form-item>
                     </a-col>
-                    <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
-                        <a-form-item label="Bước tiến trình" name="step_code">
+                    <a-col :span="12" v-if="formData.linked_type === 'bidding'">
+                        <a-form-item label="Bước gói thầu" name="step_code">
                             <a-select
-                                v-model:value="formData.step_code"
-                                :options="stepOption"
-                                :disabled="!formData.linked_id || !!formData.step_code"
-                                :placeholder="formData.linked_type === 'bidding' ? 'Chọn bước gói thầu' : 'Chọn bước hợp đồng'"
+                                    v-model:value="formData.step_code"
+                                    :options="stepOption"
+                                    :disabled="!formData.linked_id || !!formData.step_code"
+                                    placeholder="Chọn bước gói thầu"
                             />
                         </a-form-item>
                     </a-col>
+
+                    <!-- ==================== CONTRACT ==================== -->
+                    <a-col :span="12" v-if="formData.linked_type === 'contract'">
+                        <a-form-item label="Liên kết hợp đồng" name="linked_id">
+                            <a-select
+                                    v-model:value="formData.linked_id"
+                                    :options="linkedIdOption"
+                                    @change="handleChangeLinkedId"
+                                    placeholder="Chọn hợp đồng"
+                                    :disabled="!!formData.linked_id"
+                            />
+                        </a-form-item>
+                    </a-col>
+                    <a-col :span="12" v-if="formData.linked_type === 'contract'">
+                        <a-form-item label="Bước hợp đồng" name="step_code">
+                            <a-select
+                                    v-model:value="formData.step_code"
+                                    :options="stepOption"
+                                    :disabled="!formData.linked_id || !!formData.step_code"
+                                    placeholder="Chọn bước hợp đồng"
+                            />
+                        </a-form-item>
+                    </a-col>
+
                     <a-col :span="24">
                         <a-form-item label="Cấp duyệt" name="approval_steps">
                             <a-radio-group v-model:value="formData.approval_steps">

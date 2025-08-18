@@ -2,8 +2,10 @@
 
 namespace App\Controllers;
 
+use App\Models\BiddingModel;
 use App\Models\BiddingStepModel;
 use App\Models\BiddingStepTemplateModel;
+use App\Models\ContractModel;
 use App\Models\ContractStepModel;
 use App\Models\ContractStepTemplateModel;
 use App\Models\TaskApprovalModel;
@@ -129,8 +131,9 @@ class TaskController extends ResourceController
     }
 
 
-
     /**
+     * @param null $id
+     * @return ResponseInterface
      * @throws \Exception
      */
     public function show($id = null)
@@ -174,6 +177,21 @@ class TaskController extends ResourceController
         $diff = calculateDeadlineDiff($task['end_date']);
         $task['days_remaining'] = $diff['days_remaining'];
         $task['days_overdue']   = $diff['days_overdue'];
+
+        // Lấy title theo kiểu liên kết (bidding/contract)
+        if ($task['linked_type'] === 'bidding' && !empty($task['linked_id'])) {
+            $bidding = (new BiddingModel())->find($task['linked_id']);
+            $task['bidding_title'] = $bidding['title'] ?? null;
+        } else {
+            $task['bidding_title'] = null;
+        }
+
+        if ($task['linked_type'] === 'contract' && !empty($task['linked_id'])) {
+            $contract = (new ContractModel())->find($task['linked_id']);
+            $task['contract_title'] = $contract['title'] ?? null;
+        } else {
+            $task['contract_title'] = null;
+        }
 
 
         return $this->respond($task);

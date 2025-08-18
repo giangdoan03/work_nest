@@ -36,32 +36,63 @@
                                                   placeholder="Chọn loại nhiệm vụ"/>
                                     </a-form-item>
                                 </a-col>
-                                <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
-                                    <a-form-item
-                                        :label=" !formData.linked_type ? 'Trống' : formData.linked_type === 'bidding' ? 'Liên kết gói thầu' : 'Liên kết hợp đồng'"
-                                        name="linked_type">
-                                        <a-typography-text v-if="!isEditMode">{{
-                                                getNameLinked(formData.linked_id)
-                                            }}
-                                        </a-typography-text>
-                                        <a-select v-else v-model:value="formData.linked_id" :options="linkedIdOption"
-                                                  @change="handleChangeLinkedId"
-                                                  :placeholder="formData.linked_type === 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'"/>
+                                <!-- ================== BIDDING ================== -->
+                                <a-col :span="12" v-if="formData.linked_type === 'bidding'">
+                                    <a-form-item label="Liên kết gói thầu" name="linked_id">
+                                        <a-typography-text v-if="!isEditMode">{{ linkedName }}</a-typography-text>
+                                        <a-select
+                                                v-else
+                                                v-model:value="formData.linked_id"
+                                                show-search
+                                                :filterOption="false"
+                                                placeholder="Chọn gói thầu"
+                                                :options="linkedIdOption"
+                                                @search="searchBidding"
+                                                @change="handleChangeLinkedId(formData.linked_id)"
+                                        />
                                     </a-form-item>
                                 </a-col>
-                                <a-col :span="12" v-if="['bidding', 'contract'].includes(formData.linked_type)">
-                                    <a-form-item
-                                        :label=" !formData.linked_type ? 'Trống' : formData.linked_type === 'bidding' ? 'Tiến trình gói thầu' : 'Tiến trình hợp đồng'"
-                                        name="step_code">
-                                        <a-typography-text v-if="!isEditMode">{{
-                                                getStepByStepNo(formData.step_code)
-                                            }}
-                                        </a-typography-text>
-                                        <a-select v-else v-model:value="formData.step_code" @change="handleChangeStep()"
-                                                  :options="stepOption" :disabled="!formData.linked_id"
-                                                  :placeholder="formData.linked_type === 'bidding' ? 'Chọn gói thầu' : 'Chọn hợp đồng'"/>
+                                <a-col :span="12" v-if="formData.linked_type === 'bidding'">
+                                    <a-form-item label="Tiến trình gói thầu" name="step_code">
+                                        <a-typography-text v-if="!isEditMode">{{ getStepByStepNo(formData.step_code) }}</a-typography-text>
+                                        <a-select
+                                                v-else
+                                                v-model:value="formData.step_code"
+                                                :options="stepOption"
+                                                @change="handleChangeStep"
+                                                :disabled="!formData.linked_id"
+                                                placeholder="Chọn tiến trình"
+                                        />
                                     </a-form-item>
                                 </a-col>
+
+                                <!-- ================== CONTRACT ================== -->
+                                <a-col :span="12" v-if="formData.linked_type === 'contract'">
+                                    <a-form-item label="Liên kết hợp đồng" name="linked_id">
+                                        <a-typography-text v-if="!isEditMode">{{ getNameLinked(formData.linked_id) }}</a-typography-text>
+                                        <a-select
+                                                v-else
+                                                v-model:value="formData.linked_id"
+                                                :options="linkedIdOption"
+                                                @change="handleChangeLinkedId"
+                                                placeholder="Chọn hợp đồng"
+                                        />
+                                    </a-form-item>
+                                </a-col>
+                                <a-col :span="12" v-if="formData.linked_type === 'contract'">
+                                    <a-form-item label="Tiến trình hợp đồng" name="step_code">
+                                        <a-typography-text v-if="!isEditMode">{{ getStepByStepNo(formData.step_code) }}</a-typography-text>
+                                        <a-select
+                                                v-else
+                                                v-model:value="formData.step_code"
+                                                :options="stepOption"
+                                                @change="handleChangeStep"
+                                                :disabled="!formData.linked_id"
+                                                placeholder="Chọn tiến trình"
+                                        />
+                                    </a-form-item>
+                                </a-col>
+
                             </a-row>
                         </div>
                         <div class="task-in">
@@ -70,9 +101,7 @@
                                     <a-form-item label="Thời gian" name="time">
                                         <template v-if="!isEditMode">
                                             <a-typography-text>
-                                                {{
-                                                    (formData.start_date || "Trống") + " → " + (formData.end_date || "Trống")
-                                                }}
+                                                {{(formData.start_date || "Trống") + " → " + (formData.end_date || "Trống") }}
                                             </a-typography-text>
                                         </template>
                                         <template v-else>
@@ -189,12 +218,9 @@
 
                                 <a-col :span="12">
                                     <a-form-item label="Gắn tới người dùng" name="assigned_to">
-                                        <a-typography-text v-if="!isEditMode">{{
-                                                getUserById(formData.assigned_to)
-                                            }}
+                                        <a-typography-text v-if="!isEditMode">{{getUserById(formData.assigned_to) }}
                                         </a-typography-text>
-                                        <a-select v-else v-model:value="formData.assigned_to" :options="userOption"
-                                                  placeholder="Chọn người dùng"/>
+                                        <a-select v-else v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng"/>
                                     </a-form-item>
                                 </a-col>
 
@@ -251,8 +277,7 @@
                                         <a-typography-text v-if="!isEditMode">
                                             {{ formData.description ? formData.description : "Trống" }}
                                         </a-typography-text>
-                                        <a-textarea v-else v-model:value="formData.description" :rows="4"
-                                                    placeholder="Nhập mô tả "/>
+                                        <a-textarea v-else v-model:value="formData.description" :rows="4" placeholder="Nhập mô tả "/>
                                     </a-form-item>
                                 </a-col>
                                 <a-col :span="24">
@@ -396,6 +421,7 @@ import {getApprovalHistoryByTask} from '@/api/taskApproval'
 import {getTaskExtensions} from "@/api/task.js";
 import {useTaskDrawerStore} from '@/stores/taskDrawerStore';
 import {useCommonStore} from '@/stores/common';
+import debounce from "lodash-es/debounce";
 
 const commonStore = useCommonStore()
 
@@ -496,18 +522,48 @@ const userOption = computed(() => {
         })
     }
 })
-const getNameLinked = (id) => {
-    if (formData.value.linked_type === 'bidding' && listBidding.value && listBidding.value.length) {
-        let check = listBidding.value.find(ele => ele.id === id)
-        if (check) return check.title
-        else return 'Gói thầu không tồn tại'
-    } else if (formData.value.linked_type === 'contract' && listContract.value && listContract.value.length) {
-        let check = listContract.value.find(ele => ele.id === id)
-        if (check) return check.title
-        else return 'Hợp đồng không tồn tại'
+
+// 1. biến reactive hiển thị tên:
+const linkedName = ref('');
+
+// 2. hàm lấy tên (ưu tiên list, nếu không có thì call API)
+const getNameLinked = async (id) => {
+    if (!id) return 'Trống';
+
+    if (formData.value.linked_type === 'bidding') {
+        const found = listBidding.value.find(x => x.id === id);
+        if (found) return found.title;
+
+        const res = await getBiddingAPI(id);
+        return res.data?.title ?? 'Gói thầu không tồn tại';
     }
-    return "Trống"
-}
+
+    if (formData.value.linked_type === 'contract') {
+        const found = listContract.value.find(x => x.id === id);
+        if (found) return found.title;
+
+        const res = await getContractAPI(id);
+        return res.data?.title ?? 'Hợp đồng không tồn tại';
+    }
+
+    return 'Trống';
+};
+
+// 3. watch để cập nhật tên khi linked_id hoặc linked_type thay đổi
+watch(
+    () => [formData.value.linked_id, formData.value.linked_type],
+    async ([id]) => {
+        linkedName.value = await getNameLinked(id);
+    },
+    { immediate: true }
+);
+
+
+const searchBidding = debounce(async (value) => {
+    const res = await getBiddingsAPI({ search: value, per_page: 20 })
+    listBidding.value = res.data.data
+}, 400)    // chờ 400ms sau khi dừng gõ mới gọi API
+
 
 const sortedExtensions = computed(() => {
     return [...extensionHistory.value].sort((a, b) => new Date(a.updated_at) - new Date(b.updated_at));
@@ -660,11 +716,12 @@ const handleChangeLinkedType = () => {
     formData.value.linked_id = null;
     formData.value.step_code = null;
 };
-const handleChangeLinkedId = () => {
+const handleChangeLinkedId = (id) => {
+    console.log('xxxx', id)
     commonStore.setLinkedType(formData.value.linked_type)    // <== lưu vào Pinia
 
     if (formData.value.linked_type === 'bidding') {
-        getBiddingStep()
+        getBiddingStep(id)
     } else if (formData.value.linked_type === 'contract') {
         getContractStep()
     }
@@ -678,19 +735,23 @@ const getContractStep = async () => {
         stepOption.value = res.data ? res.data.map(ele => {
             return {value: ele.step_number, label: ele.title, step_id: ele.id}
         }) : []
+        console.log('stepOption.value',stepOption.value)
     }).catch(err => {
 
     })
 }
-const getBiddingStep = async () => {
+
+const getBiddingStep = async (id) => {
     await getBiddingStepsAPI(formData.value.linked_id).then(res => {
         stepOption.value = res.data ? res.data.map(ele => {
             return {value: ele.step_number, label: ele.title, step_id: ele.id}
         }) : []
+        console.log('stepOption.value, bid',stepOption.value)
     }).catch(err => {
 
     })
 }
+
 const getStepByStepNo = (step) => {
     let data = stepOption.value.find(ele => ele.value === step);
     if (!data) {
@@ -877,6 +938,7 @@ const getListBidding = async () => {
 
     })
 }
+
 const getListContract = async () => {
     await getContractsAPI().then(res => {
 

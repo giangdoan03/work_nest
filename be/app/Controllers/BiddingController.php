@@ -46,7 +46,7 @@ class BiddingController extends ResourceController
                 ->groupEnd();
         }
 
-        $perPage = (int) ($filters['per_page'] ?? 10);
+        $perPage = (int) ($filters['per_page'] ?? 40);
         $page    = (int) ($filters['page'] ?? 1);
 
         $data  = $builder->paginate($perPage, 'default', $page);
