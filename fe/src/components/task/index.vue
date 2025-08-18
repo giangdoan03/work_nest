@@ -717,9 +717,7 @@ const handleChangeLinkedType = () => {
     formData.value.step_code = null;
 };
 const handleChangeLinkedId = (id) => {
-    console.log('xxxx', id)
-    commonStore.setLinkedType(formData.value.linked_type)    // <== lưu vào Pinia
-
+    commonStore.setLinkedType(formData.value.linked_type)
     if (formData.value.linked_type === 'bidding') {
         getBiddingStep(id)
     } else if (formData.value.linked_type === 'contract') {
@@ -746,7 +744,6 @@ const getBiddingStep = async (id) => {
         stepOption.value = res.data ? res.data.map(ele => {
             return {value: ele.step_number, label: ele.title, step_id: ele.id}
         }) : []
-        console.log('stepOption.value, bid',stepOption.value)
     }).catch(err => {
 
     })
@@ -907,24 +904,20 @@ const calculateExtensionErrors = (extensions) => {
 const cancelEditTask = () => {
     isEditMode.value = false;
 }
+
+
 const getDetailTaskById = async () => {
     try {
         const res = await getTaskDetail(route.params.id)
         formData.value = res.data
-
-        console.log('formData.value',formData.value)
-
         const type = formData.value.linked_type
         const linkedId = formData.value.linked_id
 
-        // Sau khi có dữ liệu nhiệm vụ, gọi tiếp theo type
-        if (type === 'bidding' && linkedId) {
-            const biddingDetail = await getBiddingAPI(linkedId)
-            console.log('Chi tiết gói thầu:', biddingDetail.data)
-        } else if (type === 'contract' && linkedId) {
-            const contractDetail = await getContractAPI(linkedId)
-            console.log('Chi tiết hợp đồng:', contractDetail.data)
-        }
+        console.log('linkedIdxxx', linkedId)
+
+        commonStore.setLinkedType(type)
+        commonStore.setLinkedIdParent('36')
+        console.log('store linkedIdParent =', commonStore.linkedIdParent)
 
     } catch (err) {
         console.error(err)

@@ -244,7 +244,6 @@
     import {message} from 'ant-design-vue'
     import {useRoute, useRouter} from 'vue-router';
     import {InfoCircleOutlined, DeleteOutlined, MoreOutlined, UnorderedListOutlined} from '@ant-design/icons-vue';
-    import {CONTRACTS_STEPS, BIDDING_STEPS} from '@/common'
     import DrawerCreateTask from "../components/common/DrawerCreateTask.vue";
     import viVN from 'ant-design-vue/es/locale/vi_VN';
     import {debounce} from 'lodash-es'
@@ -591,16 +590,6 @@
         }
     }
 
-    const getStepByStepNo = (step) => {
-        let data = CONTRACTS_STEPS.find(ele => ele.step_code == step);
-        if (!data) {
-            data = BIDDING_STEPS.find(ele => ele.step_code == step);
-            if (!data) {
-                return "Trống";
-            }
-        }
-        return data.name;
-    }
     const getUser = async () => {
         loading.value = true
         try {

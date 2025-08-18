@@ -142,7 +142,7 @@ import {ref, onMounted, computed, watch} from 'vue'
 import {useUserStore} from '@/stores/user.js'
 import {createTask, getTasksByBiddingStep, getTasksByContractStep, updateTask} from '@/api/task.js'
 import {getBiddingAPI, getBiddingsAPI} from '@/api/bidding.js'
-import {getContractsAPI} from '@/api/contract.js'
+import {getContractAPI, getContractsAPI} from '@/api/contract.js'
 import {message} from 'ant-design-vue'
 import {useRoute} from 'vue-router';
 import {getContractStepsAPI} from '@/api/contract-steps';
@@ -155,6 +155,8 @@ const stepStore = useStepStore()
 const emit = defineEmits(['update:openDrawer', 'submitForm'])
 const store = useUserStore()
 const selectedStep = computed(() => stepStore.selectedStep)
+import { useCommonStore } from '@/stores/common'
+const commonStore = useCommonStore()
 
 import dayjs from 'dayjs';
 
@@ -471,13 +473,42 @@ const createDrawerInternal = async () => {
         loadingCreate.value = false;
     }
 };
+const linkedName = ref('');
+
+const getNameLinked = async (id) => {
+    if (!id) return 'Trống';
+
+    if (formData.value.linked_type === 'bidding') {
+        const found = listBidding.value.find(x => x.id === id);
+        if (found) return found.title;
+
+        const res = await getBiddingAPI(id);
+        return res.data?.title ?? 'Gói thầu không tồn tại';
+    }
+
+    if (formData.value.linked_type === 'contract') {
+        const found = listContract.value.find(x => x.id === id);
+        if (found) return found.title;
+
+        const res = await getContractAPI(id);
+        return res.data?.title ?? 'Hợp đồng không tồn tại';
+    }
+
+    return 'Trống';
+};
+
+// 3. watch để cập nhật tên khi linked_id hoặc linked_type thay đổi
+watch(
+    () => [formData.value.linked_id, formData.value.linked_type],
+    async ([id]) => {
+        linkedName.value = await getNameLinked(id);
+    },
+    { immediate: true }
+);
 
 
 const ensureLinkedIdInOptions = async () => {
-    if (
-        formData.value.linked_type !== 'bidding' ||
-        !formData.value.linked_id
-    ) return;
+    if (formData.value.linked_type !== 'bidding' || !formData.value.linked_id) return;
 
     const exists = listBidding.value.some(
         item => String(item.id) === String(formData.value.linked_id)
@@ -508,6 +539,7 @@ const getBiddingTask = async () => {
     try {
         const response = await getBiddingsAPI();
         listBidding.value = response.data.data ? response.data.data : [];
+        console.log('listBidding.value xx', listBidding.value)
     } catch (e) {
         message.error('Không thể tải nhiệm vụ')
     } finally {
@@ -564,20 +596,17 @@ const getLinkedTypeLabel = (val) => {
     }
     return map[val] || val
 }
-import { useCommonStore } from '@/stores/common'
-const commonStore = useCommonStore()
+
 
 onMounted(async () => {
     if (props.type) {
-        formData.value.linked_type = props.type
+        formData.value.linked_type = 'bidding'
     } else {
-        formData.value.linked_type = commonStore.linkedType
+        formData.value.linked_type = 'bidding'
     }
-    console.log('linked_type', formData.value.linked_type)
 
     if (props.taskParent) formData.value.parent_id = props.taskParent
 
-    // Gán từ Pinia store
     if (selectedStep.value) {
         setFormStepFromStore(selectedStep.value)
     }
@@ -586,13 +615,26 @@ onMounted(async () => {
     await getContractTask()
     await getDepartment()
 
-    // 👇 Đảm bảo chạy sau khi linked_id đã có
+    if (formData.value.linked_id) {
+        formData.value.linked_id = String(formData.value.linked_id)
+    }
+
+    console.log('linked_type:', formData.value.linked_type)
+    console.log('linked_id:', formData.value.linked_id)
+    console.log('linkedIdOption:', linkedIdOption.value)
+
     await ensureLinkedIdInOptions()
 
     if (formData.value.linked_id) {
         await fetchStepOptions()
     }
+
+    // 👉 gọi lưu vào store tại đây:
+    commonStore.setLinkedType(formData.value.linked_type)
+    commonStore.setLinkedIdParent(formData.value.linked_id)
 })
+
+
 
 
 watch(
@@ -601,6 +643,7 @@ watch(
         if (isOpen) {
             formData.value.linked_type = props.type || commonStore.linkedType
             console.log('linked_type', formData.value.linked_type)
+            formData.value.linked_id = commonStore.linkedIdParent ? String(commonStore.linkedIdParent) : null
         }
     }
 )

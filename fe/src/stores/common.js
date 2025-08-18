@@ -5,7 +5,8 @@ export const useCommonStore = defineStore('common', {
     state: () => ({
         contractStep: [],
         biddingStep: [],
-        linkedType: null
+        linkedType: null,
+        linkedIdParent: null
     }),
     getters: {
         getContractStep: state => state.contractStep,
@@ -28,6 +29,9 @@ export const useCommonStore = defineStore('common', {
         },
         setLinkedType(type) {
             this.linkedType = type
+        },
+        setLinkedIdParent(id) {
+            this.linkedIdParent = id
         }
     }
 })

@@ -129,7 +129,9 @@ const submitForm = () => {
 }
 
 const drawerTaskType = ref(null)
+const currentEditingTask = ref(null)
 const showPopupCreate = () => {
+    currentEditingTask.value = null
     drawerTaskType.value = commonStore.linkedType
     openDrawerCreateTask.value = true;
 }
