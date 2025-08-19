@@ -1127,6 +1127,9 @@
         return customer ? customer.name : `Khách hàng #${id}`
     }
 
+    import { useCommonStore } from '@/stores/common'
+    const commonStore = useCommonStore()
+
 
     const fetchData = async () => {
         try {
@@ -1141,7 +1144,8 @@
                 stepRes = await getBiddingStepsAPI(id)
             }
 
-            steps.value = stepRes.data.filter((step) => step.bidding_id === id)
+            steps.value = stepRes.data.filter((step) => step.bidding_id === id)// res.data.id = bidding_id
+            commonStore.setBiddingIdParent(res.data.id)   // <— ✅ lưu luôn bidding_id cha
             console.log('step', steps)
         } catch (e) {
             console.error(e)
@@ -1171,6 +1175,7 @@
     }
 
     onMounted(async () => {
+
         await Promise.all([
             fetchData(),
             fetchCustomers(),

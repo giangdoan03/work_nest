@@ -539,6 +539,7 @@ const getBiddingTask = async () => {
     try {
         const response = await getBiddingsAPI();
         listBidding.value = response.data.data ? response.data.data : [];
+
         console.log('listBidding.value xx', listBidding.value)
     } catch (e) {
         message.error('Không thể tải nhiệm vụ')
@@ -599,17 +600,11 @@ const getLinkedTypeLabel = (val) => {
 
 
 onMounted(async () => {
-    if (props.type) {
-        formData.value.linked_type = 'bidding'
-    } else {
-        formData.value.linked_type = 'bidding'
-    }
-
-    if (props.taskParent) formData.value.parent_id = props.taskParent
-
-    if (selectedStep.value) {
-        setFormStepFromStore(selectedStep.value)
-    }
+  if (props.type) {
+    formData.value.linked_type = props.type
+  } else {
+    formData.value.linked_type = commonStore.linkedType
+  }
 
     await getBiddingTask()
     await getContractTask()
@@ -619,7 +614,15 @@ onMounted(async () => {
         formData.value.linked_id = String(formData.value.linked_id)
     }
 
-    console.log('linked_type:', formData.value.linked_type)
+  // 3) Nếu tạo mới thì lấy linked_id mặc định từ store cha
+  if (!formData.value.linked_id) {
+    formData.value.linked_id = commonStore.biddingIdParent ? String(commonStore.biddingIdParent) : null
+  } else {
+    formData.value.linked_id = String(formData.value.linked_id)
+  }
+
+
+  console.log('linked_type:', formData.value.linked_type)
     console.log('linked_id:', formData.value.linked_id)
     console.log('linkedIdOption:', linkedIdOption.value)
 

@@ -718,6 +718,17 @@ const handleChangeLinkedType = () => {
 };
 const handleChangeLinkedId = (id) => {
     commonStore.setLinkedType(formData.value.linked_type)
+
+  const type = formData.value.linked_type
+  const linkedId = formData.value.linked_id
+
+  console.log('linkedIdxxx', linkedId)
+
+  commonStore.setLinkedType(type)
+  commonStore.setLinkedIdParent(linkedId)
+  console.log('store linkedIdParent =', commonStore.linkedIdParent)
+
+
     if (formData.value.linked_type === 'bidding') {
         getBiddingStep(id)
     } else if (formData.value.linked_type === 'contract') {
@@ -910,14 +921,6 @@ const getDetailTaskById = async () => {
     try {
         const res = await getTaskDetail(route.params.id)
         formData.value = res.data
-        const type = formData.value.linked_type
-        const linkedId = formData.value.linked_id
-
-        console.log('linkedIdxxx', linkedId)
-
-        commonStore.setLinkedType(type)
-        commonStore.setLinkedIdParent('36')
-        console.log('store linkedIdParent =', commonStore.linkedIdParent)
 
     } catch (err) {
         console.error(err)
