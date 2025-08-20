@@ -1,6 +1,6 @@
 <template>
-    <div style="width: 400px; height: 400px;">
-        <Pie :data="chartData" :options="chartOptions" />
+    <div style="width: 400px; height: 200px; margin: 0 auto; margin-top: 20px">
+        <Pie :data="chartData" :options="chartOptions" style="width:400px; height:200px;" />
     </div>
 </template>
 
@@ -60,6 +60,7 @@ const chartData = computed(() => {
 
 const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false, // quan trọng để height ăn theo div cha
     plugins: {
         legend: {
             position: 'right',

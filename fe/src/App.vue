@@ -1,5 +1,7 @@
 <template>
-    <router-view />
+    <div class="tiny-scroll">
+        <router-view />
+    </div>
 </template>
 
 <script setup>
@@ -51,4 +53,24 @@ onMounted(async () => {
 .tiny-scroll .ant-table-header::-webkit-scrollbar-track {
     background: transparent;
 }
+
+/* Firefox */
+.task, .content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,0,0,.35) transparent;
+}
+
+/* Chrome */
+.task::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+}
+.task::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,.35);
+    border-radius: 3px;
+}
+.task::-webkit-scrollbar-track {
+    background: transparent;
+}
+
 </style>

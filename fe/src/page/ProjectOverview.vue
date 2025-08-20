@@ -43,18 +43,19 @@
                     <table class="custom-table">
                         <thead>
                         <tr>
-                            <th style="width: 50px">Khách hàng</th>
-                            <th style="width: 100px">Loại</th>
-                            <th style="width: 150px">Tên</th>
-                            <th style="width: 100px">Bước quy trình</th>
-                            <th style="width: 100px">Task đang chạy</th>
-                            <th style="width: 100px">Đề nghị</th>
-                            <th style="width: 100px">Người phụ trách</th>
-                            <th style="width: 150px">Thời gian</th>
-                            <th style="width: 150px">Hạn</th>
-                            <th style="width: 100px">Độ ưu tiên</th>
-                            <th style="width: 100px">Trạng thái</th>
-                            <th style="width: 200px">Tiến độ</th>
+                            <th style="min-width: 80px;">Khách hàng</th>
+                            <th style="min-width: 50px">Loại</th>
+                            <th style="min-width: 50px">Tên</th>
+                            <th style="min-width: 90px">Bước quy trình</th>
+                            <th style="min-width: 95px">Task đang chạy</th>
+                            <th style="min-width: 60px;">Đề nghị</th>
+                            <th style="min-width: 50px;">Người thực hiện</th>
+                            <th style="min-width: 80px">Bắt đầu</th>
+                            <th style="min-width: 80px">Kết thúc</th>
+                            <th style="min-width: 80px">Tiến độ</th>
+                            <th style="min-width: 70px;">Độ ưu tiên</th>
+                            <th style="min-width: 100px">Trạng thái</th>
+                            <th style="min-width: 100px">Hạn</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -76,14 +77,14 @@
                                                 <!-- Loại -->
                                                 <td v-if="itemIdx === 0 && stepIdx === 0 && taskIdx === 0"
                                                     :rowspan="group.items.reduce((sum, it) => sum + it.tasks.length, 0)"
-                                                    class="type-cell">
+                                                    class="type-cell" style="border-right: 1px solid #e0e0e0">
                                                     {{ group.type === 'bidding' ? 'Gói thầu' : 'Hợp đồng' }}
                                                 </td>
 
                                                 <!-- Tên -->
                                                 <td v-if="stepIdx === 0 && taskIdx === 0"
                                                     :rowspan="item.tasks.length"
-                                                    class="title-cell">
+                                                    class="title-cell" style="max-width: 150px;border-right: 1px solid #e0e0e0">
                                                     <a-tooltip :title="item.title">
                                                         <span class="ellipsis-text">{{ item.title }}</span>
                                                     </a-tooltip>
@@ -91,7 +92,7 @@
 
 
                                                 <!-- Bước quy trình -->
-                                                <td v-if="taskIdx === 0" :rowspan="stepTasks.length" class="step_code">
+                                                <td v-if="taskIdx === 0" :rowspan="stepTasks.length" class="step_code" style="max-width: 150px">
                                                     <a-tooltip :title="task.step_title">
                                                         <router-link :to="getLinkedRoute(task)" class="ellipsis-text" style="color: #096dd9; text-decoration: none">
                                                             <span v-if="task.step_code">B{{ task.step_code }} - </span>{{ task.step_title }}
@@ -100,18 +101,18 @@
                                                 </td>
 
                                                 <!-- Các ô còn lại -->
-                                                <td class="task-cell">
+                                                <td class="task-cell" style="border-left: 1px solid #e0e0e0">
                                                     <a-tooltip :title="task.title" v-if="task.title">
                                                         <router-link :to="`/internal-tasks/${task.id}/info`" class="ellipsis-text" style="color: #1890ff">
-                                                            • {{ task.title }}
+                                                            {{ task.title }}
                                                         </router-link>
                                                     </a-tooltip>
                                                     <span v-else class="muted">Chưa có nhiệm vụ</span>
                                                 </td>
 
-                                                <td style="text-align: center">
+                                                <td style="text-align: center; width: 100px">
                                                     <a-tooltip :title="task.proposed_name || 'Chưa có'">
-                                                        <a-avatar size="large"
+                                                        <a-avatar size="small"
                                                                   :style="{
                                                                 backgroundColor: getAvatarColor(task.proposed_name),
                                                                 verticalAlign: 'middle',
@@ -124,10 +125,10 @@
                                                     </a-tooltip>
                                                 </td>
 
-                                                <td style="text-align: center">
+                                                <td style="text-align: center; width: 100px">
                                                     <a-tooltip :title="task.assignee?.name || 'Chưa có'">
                                                         <a-avatar
-                                                            size="large"
+                                                            size="small"
                                                             :style="{
                                                             backgroundColor: getAvatarColor(task.assignee?.name),
                                                             verticalAlign: 'middle',
@@ -145,45 +146,20 @@
                                                     <span>
                                                       {{ task.start_date ? formatDate(task.start_date) : '—' }}
                                                     </span>
-                                                        <span style="font-size: 14px; color: #aaa;">↓</span>
+                                                    </div>
+                                                </td>
+
+                                                <td @click="openDateModal(task)" style="cursor: pointer;">
+                                                    <div style="display: flex; flex-direction: column; align-items: center; line-height: 1.4;">
                                                         <span style="color: #f5222d;">
                                                       {{ task.end_date ? formatDate(task.end_date) : '—' }}
                                                     </span>
                                                     </div>
                                                 </td>
 
-                                                <td>
-                                                    <a-tooltip v-if="task.days_overdue > 0" :title="task.overdue_reason || 'Chưa rõ lý do'">
-                                                        <a-tag color="red" style="cursor: pointer;" @click="openOverdueReasonModal(task)">
-                                                            <ExclamationCircleOutlined style="margin-right: 4px;" />
-                                                            Quá hạn {{ task.days_overdue }} ngày
-                                                        </a-tag>
-                                                    </a-tooltip>
-                                                    <a-tag v-else-if="task.days_remaining > 0" color="orange">
-                                                        <ClockCircleOutlined style="margin-right: 4px;" />
-                                                        Còn {{ task.days_remaining }} ngày
-                                                    </a-tag>
-
-                                                    <a-tag v-else color="#faad14" style="color: black; font-weight: bold;">
-                                                        <ClockCircleOutlined style="margin-right: 4px;" />
-                                                        Hạn hôm nay
-                                                    </a-tag>
-                                                </td>
-                                                <td>
-                                                    <a-tag v-if="task.priority" :color="getPriorityColor(task.priority)" bordered>
-                                                        {{ task.priority === 'high' ? 'Cao' : task.priority === 'normal' ? 'Trung bình' : 'Thấp' }}
-                                                    </a-tag>
-                                                    <span v-else class="muted">—</span>
-                                                </td>
-                                                <td>
-                                                    <a-tag v-if="task.status" :color="getStatusColor(task.status)">
-                                                        {{ getTaskStatusText(task.status) }}
-                                                    </a-tag>
-                                                    <span v-else class="muted">—</span>
-                                                </td>
                                                 <td style="cursor: pointer">
                                                     <a-tooltip title="Click để cập nhật tiến độ">
-                                                        <div @click="openProgressModal(task)" style="cursor: pointer; width: 150px">
+                                                        <div @click="openProgressModal(task)" style="cursor: pointer; width: 100px; margin: 0 auto">
                                                             <a-progress
                                                                 :percent="Number(task.progress) || 0"
                                                                 size="small"
@@ -198,6 +174,34 @@
                                                         </div>
                                                     </a-tooltip>
                                                 </td>
+                                                <td style="text-align: center">
+                                                    <a-tag v-if="task.priority" :color="getPriorityColor(task.priority)" bordered>
+                                                        {{ task.priority === 'high' ? 'Cao' : task.priority === 'normal' ? 'Trung bình' : 'Thấp' }}
+                                                    </a-tag>
+                                                    <span v-else class="muted">—</span>
+                                                </td>
+                                                <td style="text-align: center">
+                                                    <a-tag v-if="task.status" :color="getStatusColor(task.status)">
+                                                        {{ getTaskStatusText(task.status) }}
+                                                    </a-tag>
+                                                    <span v-else class="muted">—</span>
+                                                </td>
+
+                                                <td style="text-align: center">
+                                                    <a-tooltip v-if="task.days_overdue > 0" :title="task.overdue_reason || 'Chưa rõ lý do'">
+                                                        <a-tag color="red" style="cursor: pointer;" @click="openOverdueReasonModal(task)">
+                                                            Quá hạn {{ task.days_overdue }} ngày
+                                                        </a-tag>
+                                                    </a-tooltip>
+                                                    <a-tag v-else-if="task.days_remaining > 0" color="orange">
+                                                        Còn {{ task.days_remaining }} ngày
+                                                    </a-tag>
+
+                                                    <a-tag v-else color="#faad14" style="color: black; font-weight: bold;">
+                                                        Hạn hôm nay
+                                                    </a-tag>
+                                                </td>
+
                                             </tr>
                                         </template>
                                     </template>
@@ -693,13 +697,13 @@ onMounted(fetchOverview);
     text-align: center;
     font-weight: 600;
     color: #333;
-    padding: 15px 10px;
-    border: 1px solid #e0e0e0;
+    padding: 8px 10px;
+    font-size: 10px;
 }
 
 .custom-table td {
-    border: 1px solid #e0e0e0;
-    padding: 0 10px;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 0 5px;
     vertical-align: middle;
     color: #333;
 }
@@ -712,7 +716,6 @@ onMounted(fetchOverview);
 .customer-cell {
     background-color: #fafafa;
     font-weight: bold;
-    font-size: 15px;
     color: #1d39c4;
 }
 
@@ -858,12 +861,11 @@ onMounted(fetchOverview);
     padding: 2px 6px;
     border-radius: 4px;
 }
-.ellipsis-text {
-    display: inline-block;
-    max-width: 180px; /* hoặc tùy theo layout */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: middle;
+
+td a, td, td span{
+    font-size: 10px;
+}
+td span{
+    font-size: 10px;
 }
 </style>

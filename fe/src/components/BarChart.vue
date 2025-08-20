@@ -1,5 +1,7 @@
 <template>
-    <div><Bar :data="chartData" :options="chartOptions" /></div>
+    <div style="width: 600px; height: 200px; margin: 0 auto; margin-top: 20px">
+        <Bar :data="chartData" :options="chartOptions" style="width:500px; height:200px;" />
+    </div>
 </template>
 
 <script setup>

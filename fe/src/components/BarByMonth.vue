@@ -1,5 +1,7 @@
 <template>
-    <div><Bar :data="chartData" :options="chartOptions" /></div>
+    <div style="width: 800px; height: 200px; margin: 0 auto; margin-top: 20px">
+        <Bar :data="chartData" :options="chartOptions" style="width:800px; height:200px;" />
+    </div>
 </template>
 
 <script setup>
@@ -52,7 +54,15 @@ const chartOptions = {
     },
     scales: {
         x: { title: { display: true, text: 'Tháng' } },
-        y: { beginAtZero: true, title: { display: true, text: 'Số lượng' } }
+        y: {
+            beginAtZero: true,
+            title: { display: true, text: 'Số lượng' },
+            ticks: {
+                stepSize: 1,    // 🟢 luôn tăng theo số nguyên
+                precision: 0    // 🟢 bỏ số thập phân như 1.5
+            }
+        }
     }
 }
+
 </script>

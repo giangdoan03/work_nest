@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\TaskModel;
 use App\Models\TaskExtensionModel;
 use CodeIgniter\RESTful\ResourceController;
+use DateTimeImmutable;
 
 class MyTaskController extends ResourceController
 {
@@ -28,7 +29,9 @@ class MyTaskController extends ResourceController
         $timeframe = $filters['timeframe'] ?? 'all';
 
         $builder = $this->model->builder()
-            ->where('assigned_to', $userId);
+            ->select('tasks.*, users.name AS assigned_to_name')
+            ->join('users', 'users.id = tasks.assigned_to', 'left')
+            ->where('tasks.assigned_to', $userId);
 
         switch ($timeframe) {
             case 'day':
@@ -81,8 +84,8 @@ class MyTaskController extends ResourceController
             ];
         }
 
-        $now = new \DateTimeImmutable();
-        $end = new \DateTimeImmutable($endDate);
+        $now = new DateTimeImmutable();
+        $end = new DateTimeImmutable($endDate);
         $diff = $now->diff($end);
         $days = (int)$diff->format('%r%a'); // ngày có dấu +/-
 

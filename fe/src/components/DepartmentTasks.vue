@@ -13,7 +13,7 @@
                     <a-space direction="vertical" align="center">
                         <component :is="item.icon" :style="{ fontSize: '32px', color: item.color }" />
                         <div>{{ item.label }}</div>
-                        <h2>{{ item.count }}</h2>
+                        <h2 class="number" :style="{ color: item.color }">{{ item.count }}</h2>
                     </a-space>
                 </a-card>
             </div>
@@ -22,11 +22,11 @@
 
             <div class="charts">
                 <div class="chart-box">
-                    <h4>Tỷ lệ hoàn thành theo tháng</h4>
+                    <h4 style="text-align: center; color: #aaaaaa">Tỷ lệ hoàn thành theo tháng</h4>
                     <PieChart :data="tasks" />
                 </div>
                 <div class="chart-box">
-                    <h4>Công việc theo người thực hiện</h4>
+                    <h4 style="text-align: center; color: #aaaaaa">Công việc theo người thực hiện</h4>
                     <BarChart :data="tasks" />
                 </div>
             </div>
@@ -153,7 +153,7 @@
                 <a-divider>
                     Danh sách nhiệm vụ phòng
                     <template v-if="totalTasks">
-                        ( {{ totalTasks }})
+                        ({{ totalTasks }})
                     </template>
                 </a-divider>
                 <a-table
@@ -554,7 +554,7 @@ const columns = [
     },
     { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
     { title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee' },
-    { title: 'Tiến trình', dataIndex: 'progress', key: 'progress', width: 120, align: 'center' },
+    { title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: 120, align: 'center' },
     { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
     { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority' },
     {
@@ -695,7 +695,7 @@ const updateStats = (data) => {
     stats.value = [
         {
             key: 'today',
-            label: 'Công việc cần xử lý hôm nay',
+            label: 'Công việc xử lý hôm nay',
             count: data.filter(t => t.end_date === todayStr).length,
             icon: FlagOutlined,
             color: '#faad14',
@@ -706,24 +706,24 @@ const updateStats = (data) => {
             label: 'Công việc theo tuần',
             count: weekCount,
             icon: FieldTimeOutlined,
-            color: '#1d39c4',
-            bg: '#f0f5ff'
+            color: '#722ed1',
+            bg: '#f9f0ff'
         },
         {
             key: 'month',
             label: 'Công việc theo tháng',
             count: monthCount,
             icon: CalendarOutlined,
-            color: '#13c2c2',
-            bg: '#e6fffb'
+            color: '#40a9ff',
+            bg: '#e6f7ff'
         },
         {
             key: 'urgent',
             label: 'Công việc gấp cần xử lý',
             count: data.filter(t => t.priority === 'high').length,
             icon: FireOutlined,
-            color: '#722ed1',
-            bg: '#f9f0ff'
+            color: '#ff4d4f',
+            bg: '#fff1f0'
         },
         {
             key: 'done',
@@ -845,7 +845,7 @@ const filterStrategies = {
     today: () => {
         const today = new Date().toISOString().slice(0, 10)
         return {
-            title: 'Công việc cần xử lý hôm nay',
+            title: 'Công việc xử lý hôm nay',
             message: 'Không có nhiệm vụ nào hôm nay.',
             data: tasks.value.filter(t => t.end_date === today),
         }
@@ -1005,7 +1005,21 @@ watch(() => filteredTasks.value, () => {
     height: 40px;
 }
 
+span.ant-divider-inner-text {
+    color: #ff0000;
+}
 
+.number {
+    flex-basis: 70%;
+    overflow: hidden;
+    display: flex;
+    justify-content: flex-start;
+    font-family: inherit;
+    font-size: 51px;
+    color: rgb(32, 175, 255);
+    font-weight: bold;
+    cursor: pointer;
+}
 
 @media (max-width: 1200px) {
     .table-section {

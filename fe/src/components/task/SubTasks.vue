@@ -2,7 +2,7 @@
     <div class="sub-task">
         <a-row justify="space-between">
             <a-col>
-                <a-typography-title :level="5" style="color: #7c7c7c;"> Sub-Tasks</a-typography-title>
+                <a-typography-title :level="5" style="color: #7c7c7c;">Nhiệm vụ con</a-typography-title>
             </a-col>
             <a-col>
                 <PlusOutlined style="font-size: 16px;cursor: pointer;" @click="showPopupCreate"/>
@@ -70,9 +70,9 @@
     </div>
 </template>
 <script setup>
-import { PlusOutlined, CaretDownOutlined, MoreOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, MoreOutlined } from '@ant-design/icons-vue'
 import { ref, onMounted } from 'vue';
-import { getSubTasks, deleteComment, deleteTask } from '@/api/task';
+import { getSubTasks, deleteTask } from '@/api/task';
 import DrawerCreateTask from "../common/DrawerCreateTask.vue";
 import { useRoute, useRouter } from 'vue-router';
 import { useCommonStore } from '@/stores/common'

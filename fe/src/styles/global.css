@@ -1,0 +1,21 @@
+/* Firefox */
+.tiny-scroll .ant-table-body,
+.tiny-scroll .ant-table-content,
+.tiny-scroll .ant-table-header {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,0,0,.35) transparent;
+}
+
+/* Chrome */
+.tiny-scroll .ant-table-body::-webkit-scrollbar,
+.tiny-scroll .ant-table-content::-webkit-scrollbar,
+.tiny-scroll .ant-table-header::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.tiny-scroll .ant-table-body::-webkit-scrollbar-thumb,
+.tiny-scroll .ant-table-content::-webkit-scrollbar-thumb,
+.tiny-scroll .ant-table-header::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,.35);
+    border-radius: 6px;
+}
