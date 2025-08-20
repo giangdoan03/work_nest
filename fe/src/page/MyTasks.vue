@@ -664,9 +664,6 @@ const getUserById = getUserName;
 </style>
 
 <style scoped>
-.dashboard {
-    padding: 16px;
-}
 .summary-cards {
     display: flex;
     flex-wrap: wrap;

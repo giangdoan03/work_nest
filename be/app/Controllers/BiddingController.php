@@ -7,6 +7,7 @@ use App\Models\BiddingStepModel;
 use App\Models\SettingModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use DateTime;
 use DateTimeImmutable;
 use DateTimeZone;
 use Throwable;
@@ -25,7 +26,10 @@ class BiddingController extends ResourceController
     public function index()
     {
         $filters = $this->request->getGet();
-        $builder = $this->model;
+        $builder = $this->model
+            ->select('biddings.*, u1.name AS assigned_to_name, u2.name AS manager_name')
+            ->join('users AS u1', 'u1.id = biddings.assigned_to', 'left')
+            ->join('users AS u2', 'u2.id = biddings.manager_id', 'left');
 
         if (isset($filters['status']) && $filters['status'] !== '') {
             $builder = $builder->where('status', (int) $filters['status']);
@@ -129,13 +133,13 @@ class BiddingController extends ResourceController
         }
 
         // Tính days_remaining & days_overdue từ end_date
-        $today = new \DateTime('today');
+        $today = new DateTime('today');
         $daysRemaining = null;
         $daysOverdue   = null;
 
         if (!empty($bidding['end_date'])) {
             try {
-                $end = new \DateTime(date('Y-m-d', strtotime($bidding['end_date'])));
+                $end = new DateTime(date('Y-m-d', strtotime($bidding['end_date'])));
                 if ($today <= $end) {
                     $daysRemaining = (int)$today->diff($end)->days; // 0 nếu đến hạn hôm nay
                     $daysOverdue   = 0;

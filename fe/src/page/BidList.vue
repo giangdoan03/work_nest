@@ -1,15 +1,31 @@
 <template>
     <div>
-        <a-flex justify="space-between">
-            <div>
+        <div>
+            <a-flex justify="space-between">
                 <a-typography-title :level="4">Danh sách gói thầu</a-typography-title>
-            </div>
+                <a-button type="primary" @click="showPopupCreate">Thêm gói thầu mới</a-button>
+            </a-flex>
+        </div>
+        <div class="summary-cards">
+            <a-card
+                v-for="item in statsBiddings"
+                :key="item.key"
+                :style="{ backgroundColor: item.bg, cursor:'pointer'}"
+                @click="openBidDrawer(item.key,item.label)"
+            >
+                <a-space direction="vertical" align="center">
+                    <component :is="item.icon" :style="{fontSize:'32px',color:item.color}" />
+                    <div>{{ item.label }}</div>
+                    <h2 class="number" :style="{ color: item.color }">{{ item.count }}</h2>
+                </a-space>
+            </a-card>
+        </div>
+        <a-flex justify="space-between">
             <div>
                 <a-space>
                     <a-button danger v-if="selectedRowKeys.length" @click="handleBulkDelete">
                         Xóa {{ selectedRowKeys.length }} gói thầu
                     </a-button>
-                    <a-button type="primary" @click="showPopupCreate">Thêm gói thầu mới</a-button>
                 </a-space>
             </div>
         </a-flex>
@@ -34,6 +50,34 @@
                         </a-typography-text>
                     </a-tooltip>
                 </template>
+                <!-- Tiến độ -->
+                <template v-else-if="column.dataIndex === 'progress'" style="width: 100px">
+                    <a-progress
+                        @click="openProgressModal(record)" style="cursor: pointer;"
+                        :percent="Math.round((record.step_done_count / (record.step_count || 1)) * 100)"
+                        :stroke-color="{
+                                  '0%': '#108ee9',
+                                  '100%': '#87d068',
+                                }"
+                        :status="record.status === 3 ? 'success' : 'active'"
+                        size="small"
+                        :show-info="true"
+                    />
+                </template>
+
+                <!-- Người phụ trách -->
+                <template v-else-if="column.dataIndex === 'assigned_to_name'">
+                    <a-tooltip :title="record.assigned_to_name">
+                        <a-avatar :style="{backgroundColor:getAvatarColor(record.assigned_to_name)}" size="small">
+                            {{ getFirstLetter(record.assigned_to_name) }}
+                        </a-avatar>
+                    </a-tooltip>
+                </template>
+
+                <!-- Trạng thái -->
+                <template v-else-if="column.dataIndex === 'status'">
+                    <a-tag :color="getStatusColor(record.status)">{{ getStatusText(record.status) }}</a-tag>
+                </template>
                 <template v-else-if="column.dataIndex === 'status'">
                     <a-tag :color="getStatusColor(record.status)">
                         <template #icon>
@@ -51,27 +95,15 @@
                     {{ formatDate(record[column.dataIndex]) }}
                 </template>
                 <template v-if="column.dataIndex === 'due'">
-                    <a-tag
-                        v-if="record.days_remaining > 0"
-                        color="green"
-                    >
+                    <a-tag v-if="record.days_remaining > 0" color="green">
                         Còn {{ record.days_remaining }} ngày
                     </a-tag>
-
-                    <a-tag
-                        v-else-if="record.days_remaining === 0 && record.days_overdue === 0"
-                        color="gold"
-                    >
+                    <a-tag v-else-if="record.days_remaining === 0 && record.days_overdue === 0" color="gold">
                         Hạn chót hôm nay
                     </a-tag>
-
-                    <a-tag
-                        v-else-if="record.days_overdue > 0"
-                        color="red"
-                    >
+                    <a-tag v-else-if="record.days_overdue > 0" color="red">
                         Quá hạn {{ record.days_overdue }} ngày
                     </a-tag>
-
                     <a-tag v-else color="default">
                         Không xác định
                     </a-tag>
@@ -152,6 +184,74 @@
                 </a-space>
             </template>
         </a-drawer>
+
+        <a-drawer
+            :title="drawerBidTitle"
+            placement="right"
+            :width="1200"
+            :open="drawerBidVisible"
+            @close="drawerBidVisible = false">
+            <a-table
+                :columns="drawerBidColumns"
+                :data-source="filteredBiddings"
+                row-key="id"
+                size="small"
+                bordered
+                :scroll="{ x: 800, y: 400 }"
+            >
+                <template #bodyCell="{ column, record, index }">
+                    <template v-if="column.dataIndex === 'index'">
+                        {{ index + 1 }}
+                    </template>
+                    <!-- Tiến độ -->
+                    <template v-else-if="column.dataIndex === 'progress'">
+                        <a-progress
+                            :percent="Math.round((record.step_done_count / (record.step_count || 1)) * 100)"
+                            size="small"
+                            :status="record.status === 3 ? 'success' : 'active'"
+                        />
+                    </template>
+
+                    <!-- Người phụ trách -->
+                    <template v-else-if="column.dataIndex === 'assigned_to_name'">
+                        <a-tooltip :title="record.assigned_to_name">
+                            <a-avatar
+                                :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }"
+                                size="small"
+                            >
+                                {{ getFirstLetter(record.assigned_to_name) }}
+                            </a-avatar>
+                        </a-tooltip>
+                    </template>
+                    <template v-else-if="column.key === 'title'">
+                        <a-tooltip :title="record.title">
+                            <a-typography-text strong style="cursor: pointer" @click="goToDetail(record.id)">
+                                {{ truncateText(record.title, 25) }}
+                            </a-typography-text>
+                        </a-tooltip>
+                    </template>
+                    <template v-else-if="column.dataIndex === 'estimated_cost'">
+                        {{ formatCurrency(record.estimated_cost) }}
+                    </template>
+                    <template v-else-if="column.dataIndex === 'priority'">
+                        <a-tag :color="record.priority === 'high' ? 'red' : 'blue'">
+                            {{ record.priority === 'high' ? 'Gấp' : 'Bình thường' }}
+                        </a-tag>
+                    </template>
+                    <template v-else-if="column.dataIndex === 'status'">
+                        <a-tag :color="getStatusColor(record.status)">{{ getStatusText(record.status) }}</a-tag>
+                    </template>
+                    <template v-else-if="column.dataIndex === 'start_date'">{{ formatDate(record.start_date) }}</template>
+                    <template v-else-if="column.dataIndex === 'end_date'">{{ formatDate(record.end_date) }}</template>
+                    <template v-else-if="column.dataIndex === 'due'">
+                        <a-tag v-if="record.days_remaining>0" color="green">Còn {{record.days_remaining}} ngày</a-tag>
+                        <a-tag v-else-if="record.days_remaining===0&&record.days_overdue===0" color="gold">Hạn chót hôm nay</a-tag>
+                        <a-tag v-else-if="record.days_overdue>0" color="red">Quá hạn {{record.days_overdue}} ngày</a-tag>
+                    </template>
+                </template>
+            </a-table>
+        </a-drawer>
+
     </div>
 </template>
 
@@ -164,7 +264,8 @@
         ClockCircleOutlined,
         EditOutlined,
         DeleteOutlined,
-        EyeOutlined
+        EyeOutlined,
+        FireOutlined, StopOutlined
     } from '@ant-design/icons-vue';
     import dayjs from 'dayjs'
     import {
@@ -177,6 +278,7 @@
     import {getUsers} from '@/api/user.js'
 
     import { useRouter } from 'vue-router'
+    import {updateTask} from "@/api/task.js";
     const router = useRouter()
 
     const formRef = ref(null)
@@ -186,9 +288,144 @@
     const loadingCreate = ref(false)
     const openDrawer = ref(false)
 
+    const progressModalVisible = ref(false)
+    const selectedTask = ref(null)
+    const newProgressValue = ref(0)
+    const progressUpdating = ref(false)
+
+    const userOptions = ref([])
+    const currentPage = ref(1)
 
     const selectedRowKeys = ref([])
     const selectedRows = ref([])
+
+
+    const drawerBidVisible = ref(false)
+    const drawerBidTitle = ref('')
+    const drawerBidFilterKey = ref('')
+
+    const drawerBidColumns = [
+        { title: 'STT', dataIndex: 'index', key: 'index', width: '50px', align: 'center' },
+        { title: 'Tên gói thầu', dataIndex: 'title', key: 'title' },
+        { title: 'Tiến độ', dataIndex: 'progress', key: 'progress', align: 'center' },
+
+        { title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'center' },
+
+        { title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority' },
+        { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
+        { title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date' },
+        { title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date' },
+        { title: 'Hạn', dataIndex: 'due', key: 'due' }
+    ]
+
+    const columns = [
+        { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
+        { title: 'Tên gói thầu', dataIndex: 'title', key: 'title' },
+
+        { title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: '150px' },
+        { title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'center' },
+
+        { title: 'Chi phí dự toán', dataIndex: 'estimated_cost', key: 'estimated_cost' },
+        { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
+        { title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date' },
+        { title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date' },
+        { title: 'Hạn', dataIndex: 'due', key: 'due', align: 'center' },
+
+        { title: 'Hành động', dataIndex: 'action', key: 'action' }
+    ];
+
+
+    const openBidDrawer = (key, title) => {
+        drawerBidFilterKey.value = key
+        drawerBidTitle.value = title
+        drawerBidVisible.value = true
+    }
+
+    const filteredBiddings = computed(() => {
+        if    (drawerBidFilterKey.value === 'won')      return tableData.value.filter(b => b.status === 3)
+        else if (drawerBidFilterKey.value === 'important') return tableData.value.filter(b => b.priority === 'high')
+        else if (drawerBidFilterKey.value === 'normal')  return tableData.value.filter(b => b.priority === 'normal')
+        else if (drawerBidFilterKey.value === 'overdue') return tableData.value.filter(b => b.days_overdue > 0)
+        else if (drawerBidFilterKey.value === 'lost')    return tableData.value.filter(b => b.status === 4)
+        return []
+    })
+
+    const statsBiddings = computed(() => [
+        {
+            key: 'won',
+            label: 'Trúng thầu',
+            count: tableData.value.filter(b => b.status === 3).length,
+            color: '#52c41a',
+            bg: '#f6ffed',
+            icon: CheckCircleOutlined
+        },
+        {
+            key: 'important',
+            label: 'Quan trọng',
+            count: tableData.value.filter(b => b.priority === 'high').length,
+            color: '#faad14',
+            bg: '#fffbe6',
+            icon: FireOutlined
+        },
+        {
+            key: 'normal',
+            label: 'Bình thường',
+            count: tableData.value.filter(b => b.priority === 'normal').length,
+            color: '#1890ff',
+            bg: '#e6f7ff',
+            icon: ClockCircleOutlined
+        },
+        {
+            key: 'overdue',
+            label: 'Quá hạn',
+            count: tableData.value.filter(b => b.days_overdue > 0).length,
+            color: '#ff4d4f',
+            bg: '#fff1f0',
+            icon: CloseCircleOutlined
+        },
+        {
+            key: 'lost',
+            label: 'Không trúng',
+            count: tableData.value.filter(b => b.status === 4).length,
+            color: '#d9363e',
+            bg: '#fff1f0',
+            icon: StopOutlined
+        }
+    ])
+
+
+    const getFirstLetter = (name) => {
+        if (!name || name === 'N/A') return '?'
+        return name.charAt(0).toUpperCase()
+    }
+
+    const getAvatarColor = (name) => {
+        if (!name || name === 'N/A') return '#d9d9d9'
+
+        // Generate consistent color based on name
+        const colors = [
+            '#f5222d', '#fa8c16', '#fadb14', '#52c41a',
+            '#13c2c2', '#1890ff', '#722ed1', '#eb2f96',
+            '#fa541c', '#faad14', '#a0d911', '#52c41a',
+            '#13c2c2', '#1890ff', '#722ed1', '#eb2f96'
+        ]
+
+        // Simple hash function to get consistent color for same name
+        let hash = 0
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash)
+        }
+        const index = Math.abs(hash) % colors.length
+        return colors[index]
+    }
+
+
+    const openProgressModal = (task) => {
+        selectedTask.value = task;
+        newProgressValue.value = Number(task.progress) || 0;   // ✅ fix warning
+        progressModalVisible.value = true;
+    };
+
 
     const rowSelection = computed(() => ({
         selectedRowKeys: selectedRowKeys.value,
@@ -225,21 +462,6 @@
         end_date: null,
         assigned_to: null
     })
-
-    const userOptions = ref([])
-
-    const currentPage = ref(1)
-
-    const columns = [
-        { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
-        { title: 'Tên gói thầu', dataIndex: 'title', key: 'title' },
-        { title: 'Chi phí dự toán', dataIndex: 'estimated_cost', key: 'estimated_cost' },
-        { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
-        { title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date' },
-        { title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date' },
-        { title: 'Hạn', dataIndex: 'due', key: 'due' },
-        { title: 'Hành động', dataIndex: 'action', key: 'action' }
-    ]
 
     const getStatusColor = (status) => {
         const map = {
@@ -343,7 +565,6 @@
         }
     }
 
-
     const deleteConfirm = async (id) => {
         try {
             // Gọi API xoá (bạn cần có API deleteBiddingAPI tương ứng)
@@ -383,17 +604,42 @@
 
 </script>
 
+
 <style>
-    :deep(.ant-table-tbody > tr:hover) {
-        background-color: #f5faff !important;
-        transition: background-color 0.3s;
-    }
+.summary-cards .ant-card-body{
+    cursor: pointer;
+}
+.title_chart {
+    text-align: center;
+    color: rgb(170, 170, 170);
+}
+
+:deep(.ant-table-tbody > tr:hover) {
+    background-color: #f5faff !important;
+    transition: background-color 0.3s;
+}
 </style>
 
 <style scoped>
-    .icon-action {
-        font-size: 18px;
-        margin-right: 24px;
-        cursor: pointer;
-    }
+.icon-action {
+    font-size: 18px;
+    margin-right: 24px;
+    cursor: pointer;
+}
+
+.summary-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.summary-cards .ant-card {
+    flex: 1;
+    min-width: 200px;
+    text-align: center;
+}
+.no-tasks {
+    text-align: center;
+    padding: 32px;
+    font-style: italic;
+}
 </style>

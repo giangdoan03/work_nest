@@ -30,14 +30,14 @@
                 <span class="menu-text">Tổng quan</span>
             </div>
             
-            <a-tooltip placement="right" title="Nhiệm vụ của tôi" v-if="collapsed">
+            <a-tooltip placement="right" title="Công việc cá nhân" v-if="collapsed">
                 <div 
                     class="menu-item"
                     :class="{ active: currentRoute === '/my-tasks' }"
                     @click="navigateTo('/my-tasks')"
                 >
                     <ScheduleOutlined />
-                    <div class="menu-text-collapsed">Nhiệm vụ của tôi</div>
+                    <div class="menu-text-collapsed">Công việc cá nhân</div>
                 </div>
             </a-tooltip>
             <div 
@@ -47,7 +47,7 @@
                 @click="navigateTo('/my-tasks')"
             >
                 <ScheduleOutlined />
-                <span class="menu-text">Nhiệm vụ của tôi</span>
+                <span class="menu-text">Công việc cá nhân</span>
             </div>
             
             <a-tooltip placement="right" title="Duyệt nhiệm vụ" v-if="collapsed">
