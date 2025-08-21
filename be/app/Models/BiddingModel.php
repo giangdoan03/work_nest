@@ -14,7 +14,8 @@ class BiddingModel extends Model
         'start_date', 'end_date', 'created_at', 'updated_at',
         'assigned_to',     // người phụ trách
         'manager_id',      // người quản lý
-        'collaborators'    // người phối hợp (có thể là JSON)
+        'collaborators',  // người phối hợp (có thể là JSON)
+        'priority',
     ];
 
     protected $useTimestamps = true;

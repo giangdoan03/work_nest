@@ -43,7 +43,7 @@
         >
             <template #bodyCell="{ column, record, index }">
                 <template v-if="column.dataIndex === 'stt'">
-                    {{ index + 1 }}
+                    {{ (pagination.current - 1) * pagination.pageSize + index + 1 }}
                 </template>
                 <template v-else-if="column.key === 'title'">
                     <a-tooltip :title="record.title">
@@ -55,13 +55,11 @@
                 <!-- Tiến độ -->
                 <template v-else-if="column.dataIndex === 'progress'" style="width: 100px">
                     <a-progress
-                        @click="openProgressModal(record)" style="cursor: pointer;"
-                        :percent="Math.round((record.step_done_count / (record.step_count || 1)) * 100)"
-                        :stroke-color="{
-                                  '0%': '#108ee9',
-                                  '100%': '#87d068',
-                                }"
-                        :status="record.status === 3 ? 'success' : 'active'"
+                        @click="openProgressModal(record)"
+                        style="cursor: pointer;"
+                        :percent="Math.round((Number(record.step_done_count) / (Number(record.step_count) || 1)) * 100)"
+                        :stroke-color="progressColor(record)"
+                        :status="Number(record.status) === STATUS.WON ? 'success' : 'active'"
                         size="small"
                         :show-info="true"
                     />
@@ -75,21 +73,46 @@
                         </a-avatar>
                     </a-tooltip>
                 </template>
+                <!-- Độ ưu tiên -->
+                <template v-else-if="column.dataIndex === 'priority'">
+                    <a-tag :color="Number(record.priority) === 1 ? 'red' : 'blue'">
+                        {{ Number(record.priority) === 1 ? 'Quan trọng' : 'Bình thường' }}
+                    </a-tag>
+                </template>
 
                 <!-- Trạng thái -->
                 <template v-else-if="column.dataIndex === 'status'">
-                    <a-tag :color="getStatusColor(record.status)">{{ getStatusText(record.status) }}</a-tag>
+                    <a-tag v-if="Number(record.status) === STATUS.PREPARING" color="blue">Đang chuẩn bị</a-tag>
+                    <a-tag v-else-if="Number(record.status) === STATUS.WON" color="green">Trúng thầu</a-tag>
+                    <a-tag v-else-if="Number(record.status) === STATUS.CANCELLED" color="gray">Hủy thầu</a-tag>
+                    <span v-else style="color:#999">—</span>
                 </template>
-                <template v-else-if="column.dataIndex === 'status'">
-                    <a-tag :color="getStatusColor(record.status)">
-                        <template #icon>
-                            <CheckCircleOutlined v-if="record.status === 3" />
-                            <CloseCircleOutlined v-if="record.status === 4" />
-                            <ClockCircleOutlined v-if="record.status === 0" />
-                        </template>
-                        {{ getStatusText(record.status) }}
+                <!-- ✅ Độ ưu tiên: chỉ Bình thường / Quan trọng -->
+                <template v-else-if="column.dataIndex === 'priority'">
+                    <a-tag v-if="Number(record.priority) === 1" color="red">Quan trọng</a-tag>
+                    <a-tag v-else color="blue">Bình thường</a-tag>
+                </template>
+
+                <!-- Độ ưu tiên -->
+                <template v-else-if="column.dataIndex === 'priority'">
+                    <a-tag :color="Number(record.priority) === 1 ? 'red' : 'blue'">
+                        {{ Number(record.priority) === 1 ? 'Quan trọng' : 'Bình thường' }}
                     </a-tag>
                 </template>
+
+                <!-- Trạng thái: chỉ hiển thị Trúng thầu / Hủy thầu; còn lại gạch ngang -->
+                <template v-else-if="column.dataIndex === 'status'">
+                    <template v-if="Number(record.status) === 2">
+                        <a-tag color="green">Trúng thầu</a-tag>
+                    </template>
+                    <template v-else-if="Number(record.status) === 3">
+                        <a-tag color="gray">Hủy thầu</a-tag>
+                    </template>
+                    <template v-else>
+                        <span style="color:#999">—</span>
+                    </template>
+                </template>
+
                 <template v-else-if="column.dataIndex === 'estimated_cost'">
                     {{ formatCurrency(record.estimated_cost) }}
                 </template>
@@ -97,18 +120,18 @@
                     {{ formatDate(record[column.dataIndex]) }}
                 </template>
                 <template v-if="column.dataIndex === 'due'">
-                    <a-tag v-if="record.days_remaining > 0" color="green">
-                        Còn {{ record.days_remaining }} ngày
-                    </a-tag>
-                    <a-tag v-else-if="record.days_remaining === 0 && record.days_overdue === 0" color="gold">
-                        Hạn chót hôm nay
-                    </a-tag>
-                    <a-tag v-else-if="record.days_overdue > 0" color="red">
-                        Quá hạn {{ record.days_overdue }} ngày
-                    </a-tag>
-                    <a-tag v-else color="default">
-                        Không xác định
-                    </a-tag>
+                    <div :class="{ 'overdue-cell': Number(record.days_overdue) > 0 }">
+                        <a-tag v-if="record.days_remaining > 0" color="green">
+                            Còn {{ record.days_remaining }} ngày
+                        </a-tag>
+                        <a-tag v-else-if="record.days_remaining === 0 && record.days_overdue === 0" color="gold">
+                            Hạn chót hôm nay
+                        </a-tag>
+                        <a-tag v-else-if="record.days_overdue > 0" color="red">
+                            Quá hạn {{ record.days_overdue }} ngày
+                        </a-tag>
+                        <a-tag v-else color="default">Không xác định</a-tag>
+                    </div>
                 </template>
 
                 <template v-else-if="column.dataIndex === 'action'">
@@ -178,9 +201,16 @@
                 <a-form-item label="Người phụ trách" name="assigned_to">
                     <a-select v-model:value="formData.assigned_to" :options="userOptions" placeholder="Chọn người phụ trách" />
                 </a-form-item>
-                <!-- Trạng thái -->
-                <!-- Tạo/Sửa: Trạng thái -->
-                <!-- chỉ hiện TAG nếu ĐANG SỬA và status là auto (0 hoặc 3) -->
+                <a-form-item label="Độ ưu tiên" name="priority">
+                    <a-select
+                        v-model:value="formData.priority"
+                        :options="[
+                          { value: 1, label: 'Quan trọng' },
+                          { value: 0, label: 'Bình thường' }
+                        ]"
+                    />
+                </a-form-item>
+                <!-- Nếu đang sửa & là status tự động (Trúng thầu) thì chỉ hiện tag -->
                 <template v-if="selectedBidding && isAutoStatus">
                     <a-form-item label="Trạng thái">
                         <a-tag :color="getStatusColor(formData.status)">
@@ -188,6 +218,7 @@
                         </a-tag>
                     </a-form-item>
                 </template>
+                <!-- Ngược lại cho chọn -->
                 <template v-else>
                     <a-form-item label="Trạng thái" name="status">
                         <a-select
@@ -219,25 +250,30 @@
             @close="drawerBidVisible = false">
             <a-table
                 :columns="drawerBidColumns"
-                :data-source="filteredBiddings"
+                :data-source="drawerBidData"
+                :loading="drawerLoading"
+                :pagination="drawerPagination"
+                @change="handleDrawerTableChange"
                 row-key="id"
                 size="small"
                 bordered
                 :scroll="{ x: 800, y: 400 }"
             >
-                <template #bodyCell="{ column, record, index }">
+
+            <template #bodyCell="{ column, record, index }">
                     <template v-if="column.dataIndex === 'index'">
                         {{ index + 1 }}
                     </template>
-                    <!-- Tiến độ -->
+                    <!-- THAY cho block hiện có của cột progress -->
+                <!-- Drawer: cột progress -->
                     <template v-else-if="column.dataIndex === 'progress'">
                         <a-progress
-                            :percent="Math.round((record.step_done_count / (record.step_count || 1)) * 100)"
+                            :percent="progressPercent(record)"
+                            :stroke-color="progressColor(record)"
+                            :status="Number(record.status) === STATUS.WON ? 'success' : 'active'"
                             size="small"
-                            :status="record.status === 3 ? 'success' : 'active'"
                         />
                     </template>
-
                     <!-- Người phụ trách -->
                     <template v-else-if="column.dataIndex === 'assigned_to_name'">
                         <a-tooltip :title="record.assigned_to_name">
@@ -259,13 +295,23 @@
                     <template v-else-if="column.dataIndex === 'estimated_cost'">
                         {{ formatCurrency(record.estimated_cost) }}
                     </template>
+                    <!-- Độ ưu tiên: chỉ hiển thị Quan trọng | Bình thường -->
                     <template v-else-if="column.dataIndex === 'priority'">
-                        <a-tag :color="record.priority === 'high' ? 'red' : 'blue'">
-                            {{ record.priority === 'high' ? 'Gấp' : 'Bình thường' }}
-                        </a-tag>
+                        <a-tag v-if="record.priority === 1" color="red">Quan trọng</a-tag>
+                        <a-tag v-else color="blue">Bình thường</a-tag>
                     </template>
+                    <!-- Trạng thái: chỉ hiển thị Trúng thầu | Đã hủy thầu -->
+                    <!-- Trạng thái -->
                     <template v-else-if="column.dataIndex === 'status'">
-                        <a-tag :color="getStatusColor(record.status)">{{ getStatusText(record.status) }}</a-tag>
+                        <template v-if="record.status === 2">
+                            <a-tag color="green">Trúng thầu</a-tag>
+                        </template>
+                        <template v-else-if="record.status === 3">
+                            <a-tag color="gray">Hủy thầu</a-tag>
+                        </template>
+                        <template v-else>
+                            <span style="color:#999">—</span>
+                        </template>
                     </template>
                     <template v-else-if="column.dataIndex === 'start_date'">{{ formatDate(record.start_date) }}</template>
                     <template v-else-if="column.dataIndex === 'end_date'">{{ formatDate(record.end_date) }}</template>
@@ -336,13 +382,22 @@
     const customerTotal = ref(0)
     const customerLoading = ref(false)
 
+    // --- thêm state ---
+    const drawerBidData = ref([])
+    const drawerLoading = ref(false)
+    const drawerPagination = ref({
+        current: 1,
+        pageSize: 10,
+        total: 0,
+        showSizeChanger: true,
+        pageSizeOptions: ['10','20','50','100']
+    })
+
     const drawerBidColumns = [
         { title: 'STT', dataIndex: 'index', key: 'index', width: '50px', align: 'center' },
         { title: 'Tên gói thầu', dataIndex: 'title', key: 'title' },
         { title: 'Tiến độ', dataIndex: 'progress', key: 'progress', align: 'center' },
-
         { title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'center' },
-
         { title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority' },
         { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
         { title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date' },
@@ -353,78 +408,193 @@
     const columns = [
         { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
         { title: 'Tên gói thầu', dataIndex: 'title', key: 'title' },
-
         { title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: '150px' },
         { title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'center' },
-
         { title: 'Chi phí dự toán', dataIndex: 'estimated_cost', key: 'estimated_cost' },
+
+        // ✅ Độ ưu tiên dùng đúng field
+        { title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority' },
+
+        // ✅ Trạng thái dùng đúng field
         { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
+
         { title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date' },
         { title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date' },
         { title: 'Hạn', dataIndex: 'due', key: 'due', align: 'center' },
-
         { title: 'Hành động', dataIndex: 'action', key: 'action' }
-    ];
+    ]
+
+    const formData = ref({
+        title: '',
+        description: '',
+        customer_id: null,
+        estimated_cost: 0,
+        status: 0,
+        start_date: null,
+        end_date: null,
+        assigned_to: null,
+        customer: null,
+        priority: 0
+    })
 
 
+    // thêm ở phần khai báo state
+    const summary = ref({ won:0, important:0, normal:0, overdue:0, lost:0, total:0 })
+
+    const filteredBiddings = computed(() => {
+        switch (drawerBidFilterKey.value) {
+            case 'won':
+                return tableData.value.filter(b => Number(b.status) === STATUS.WON)
+            case 'important':
+                return tableData.value.filter(b =>
+                    Number(b.status) === STATUS.PREPARING && Number(b.priority) === PRIORITY.IMPORTANT
+                )
+            case 'normal':
+                return tableData.value.filter(b =>
+                    Number(b.status) === STATUS.PREPARING && Number(b.priority) === PRIORITY.NORMAL
+                )
+            case 'overdue':
+                return tableData.value.filter(b =>
+                    Number(b.status) === STATUS.PREPARING && Number(b.days_overdue) > 0
+                )
+            case 'lost':
+                return tableData.value.filter(b => Number(b.status) === STATUS.CANCELLED)
+            default:
+                return []
+        }
+    })
+    const displayStatus = (b) => {
+        // nếu đã thắng hoặc không trúng thì giữ nguyên
+        if (b.status === 0 || b.status === 4) return b.status
+        // nếu đã quá hạn theo ngày → coi như 3
+        if (Number(b.days_overdue) > 0) return 3
+        return b.status
+    }
+
+    // ==== ENUMS & CONSTANTS: đặt TRƯỚC khi dùng ====
+    const STATUS   = Object.freeze({ PREPARING: 1, WON: 2, CANCELLED: 3 });
+    const PRIORITY = Object.freeze({ NORMAL: 0, IMPORTANT: 1 });
+
+    const STATUS_MAP = {
+        [STATUS.PREPARING]: { text: 'Đang chuẩn bị', color: 'blue'  },
+        [STATUS.WON]:       { text: 'Trúng thầu',    color: 'green' },
+        [STATUS.CANCELLED]: { text: 'Hủy thầu',      color: 'gray'  },
+    };
+    const PRIORITY_MAP = {
+        [PRIORITY.NORMAL]:    { text: 'Bình thường', color: 'blue' },
+        [PRIORITY.IMPORTANT]: { text: 'Quan trọng',  color: 'red'  },
+    };
+
+    // Chỉ 2 card có thể gọi API theo status trực tiếp
+    const CARD_STATUS_MAP = { won: STATUS.WON, lost: STATUS.CANCELLED };
+
+    const EDITABLE_STATUS_KEYS = [STATUS.PREPARING, STATUS.CANCELLED]
+
+    const editableStatusOptions = computed(() =>
+        EDITABLE_STATUS_KEYS.map(k => ({ value: k, label: STATUS_MAP[k].text }))
+    )
+    const getStatusText  = s => (STATUS_MAP[s]?.text ?? 'Không rõ')
+    const getStatusColor = s => (STATUS_MAP[s]?.color ?? 'default')
+
+
+    // “tự động” chỉ coi là Trúng thầu
+    const isAutoStatus = computed(() => Number(formData.value.status) === STATUS.WON)
+
+    const statsBiddings = computed(() => [
+        { key:'won',       label:'Trúng thầu',  count: summary.value.won,       color:'#52c41a', bg:'#f6ffed', icon: CheckCircleOutlined },
+        { key:'important', label:'Quan trọng',  count: summary.value.important, color:'#faad14', bg:'#fffbe6', icon: FireOutlined },
+        { key:'normal',    label:'Bình thường', count: summary.value.normal,    color:'#1890ff', bg:'#e6f7ff', icon: ClockCircleOutlined },
+        { key:'overdue',   label:'Quá hạn',     count: summary.value.overdue,   color:'#ff4d4f', bg:'#fff1f0', icon: CloseCircleOutlined },
+        { key:'lost',      label:'Không trúng', count: summary.value.lost,      color:'#d9363e', bg:'#fff1f0', icon: StopOutlined },
+    ])
+    const fetchDrawerList = async () => {
+        drawerLoading.value = true;
+        try {
+            const key = drawerBidFilterKey.value;
+
+            // 2 card lấy trực tiếp theo status từ server
+            if (key === 'won' || key === 'lost') {
+                const res = await getBiddingsAPI({
+                    status: CARD_STATUS_MAP[key],
+                    page: drawerPagination.value.current,
+                    per_page: drawerPagination.value.pageSize,
+                });
+                const { data, pager } = res.data || {};
+                drawerBidData.value = (data ?? []).map(r => ({
+                    ...r,
+                    status: Number(r.status),
+                    priority: Number(r.priority),
+                    days_overdue: Number(r.days_overdue ?? 0),
+                }));
+                drawerPagination.value.total    = Number(pager?.total ?? 0);
+                drawerPagination.value.current  = Number(pager?.current_page ?? 1);
+                drawerPagination.value.pageSize = Number(pager?.per_page ?? drawerPagination.value.pageSize);
+                return;
+            }
+
+            // Quan trọng / Bình thường: lọc theo priority, không phụ thuộc status
+            if (key === 'important' || key === 'normal') {
+                const prio = key === 'important' ? 1 : 0;
+                const res = await getBiddingsAPI({
+                    priority: prio,                         // ✅ server lọc theo priority
+                    page: drawerPagination.value.current,
+                    per_page: drawerPagination.value.pageSize,
+                });
+                const { data, pager } = res.data || {};
+                drawerBidData.value = (data ?? []).map(r => ({
+                    ...r,
+                    status: Number(r.status),
+                    priority: Number(r.priority),
+                    days_overdue: Number(r.days_overdue ?? 0),
+                }));
+                drawerPagination.value.total    = Number(pager?.total ?? 0);
+                drawerPagination.value.current  = Number(pager?.current_page ?? 1);
+                drawerPagination.value.pageSize = Number(pager?.per_page ?? drawerPagination.value.pageSize);
+                return;
+            }
+
+            // Quá hạn: tính động (ưu tiên lấy nhiều rồi lọc client)
+            if (key === 'overdue') {
+                const res = await getBiddingsAPI({ page: 1, per_page: 1000 });
+                const all = (res.data?.data ?? []).map(r => ({
+                    ...r,
+                    status: Number(r.status),
+                    priority: Number(r.priority),
+                    days_overdue: Number(r.days_overdue ?? 0),
+                }));
+                drawerBidData.value = all.filter(b => b.days_overdue > 0);
+                drawerPagination.value.total   = drawerBidData.value.length;
+                drawerPagination.value.current = 1;
+                return;
+            }
+
+            drawerBidData.value = [];
+        } finally {
+            drawerLoading.value = false;
+        }
+    };
+
+
+
+    // mở drawer → reset & fetch
     const openBidDrawer = (key, title) => {
         drawerBidFilterKey.value = key
         drawerBidTitle.value = title
         drawerBidVisible.value = true
+        drawerPagination.value.current = 1
+        drawerPagination.value.pageSize = 10
+        fetchDrawerList()
     }
 
-    const filteredBiddings = computed(() => {
-        if    (drawerBidFilterKey.value === 'won')      return tableData.value.filter(b => b.status === 3)
-        else if (drawerBidFilterKey.value === 'important') return tableData.value.filter(b => b.priority === 'high')
-        else if (drawerBidFilterKey.value === 'normal')  return tableData.value.filter(b => b.priority === 'normal')
-        else if (drawerBidFilterKey.value === 'overdue') return tableData.value.filter(b => b.days_overdue > 0)
-        else if (drawerBidFilterKey.value === 'lost')    return tableData.value.filter(b => b.status === 4)
-        return []
-    })
+    // phân trang trong drawer
+    const handleDrawerTableChange = (pag) => {
+        drawerPagination.value.current = pag.current
+        drawerPagination.value.pageSize = pag.pageSize
+        if (drawerBidFilterKey.value !== 'overdue') fetchDrawerList()
+    }
 
-    const statsBiddings = computed(() => [
-        {
-            key: 'won',
-            label: 'Trúng thầu',
-            count: tableData.value.filter(b => b.status === 3).length,
-            color: '#52c41a',
-            bg: '#f6ffed',
-            icon: CheckCircleOutlined
-        },
-        {
-            key: 'important',
-            label: 'Quan trọng',
-            count: tableData.value.filter(b => b.priority === 'high').length,
-            color: '#faad14',
-            bg: '#fffbe6',
-            icon: FireOutlined
-        },
-        {
-            key: 'normal',
-            label: 'Bình thường',
-            count: tableData.value.filter(b => b.priority === 'normal').length,
-            color: '#1890ff',
-            bg: '#e6f7ff',
-            icon: ClockCircleOutlined
-        },
-        {
-            key: 'overdue',
-            label: 'Quá hạn',
-            count: tableData.value.filter(b => b.days_overdue > 0).length,
-            color: '#ff4d4f',
-            bg: '#fff1f0',
-            icon: CloseCircleOutlined
-        },
-        {
-            key: 'lost',
-            label: 'Không trúng',
-            count: tableData.value.filter(b => b.status === 4).length,
-            color: '#d9363e',
-            bg: '#fff1f0',
-            icon: StopOutlined
-        }
-    ])
-
+    const progressColor = (row) => Number(row.status) === STATUS.WON ? '#52c41a' : '#1890ff';
+    const progressPercent = (r) => Math.round((Number(r.step_done_count) / (Number(r.step_count) || 1)) * 100);
 
     const getFirstLetter = (name) => {
         if (!name || name === 'N/A') return '?'
@@ -483,19 +653,6 @@
         return text.length > length ? text.slice(0, length) + '...' : text;
     }
 
-
-    const formData = ref({
-        title: '',
-        description: '',
-        customer_id: null,
-        estimated_cost: 0,
-        status: 0,
-        start_date: null,
-        end_date: null,
-        assigned_to: null,
-        customer: null
-    })
-
     const customerLabelById = (id) => {
         const opt = customerOptions.value.find(o => o.value === Number(id))
         return opt?.label || null
@@ -552,35 +709,11 @@
         showTotal: (total, range) => `${range[0]}-${range[1]} / ${total} gói thầu`
     })
 
-    const handleTableChange = (pag /*, filters, sorter */) => {
+    const handleTableChange = (pag) => {
         pagination.value.current = pag.current
         pagination.value.pageSize = pag.pageSize
-        getCustomers()
+        getBiddings()
     }
-
-
-    // Định nghĩa mapping trạng thái dùng chung
-    const STATUS_MAP = {
-        0: { text: 'Trúng thầu', color: 'green' },
-        1: { text: 'Quan trọng', color: 'red' },
-        2: { text: 'Bình thường', color: 'blue' },
-        3: { text: 'Quá hạn', color: 'orange' },
-        4: { text: 'Không trúng thầu', color: 'gray' }
-    }
-
-
-    const editableStatusOptions = [
-        { value: 1, label: STATUS_MAP[1].text }, // Quan trọng
-        { value: 2, label: STATUS_MAP[2].text }, // Bình thường
-        { value: 4, label: STATUS_MAP[4].text }  // Không trúng thầu
-    ]
-
-
-    const getStatusText  = s => (s == null ? '' : (STATUS_MAP[s]?.text || 'Không rõ'))
-    const getStatusColor = s => STATUS_MAP[s]?.color || 'default'
-
-    // chỉ coi là auto khi giá trị là 0 hoặc 3
-    const isAutoStatus = computed(() => [0, 3].includes(Number(formData.value.status)))
 
     const rules = {
         title: [{ required: true, message: 'Nhập tên gói thầu' }],
@@ -596,6 +729,7 @@
                 trigger: 'change'
             }
         ],
+        priority: [{ required: true, message: 'Chọn độ ưu tiên' }],
     }
 
     const formatCurrency = (value) => {
@@ -614,10 +748,28 @@
     const getBiddings = async () => {
         loading.value = true
         try {
-            const res = await getBiddingsAPI({ page: currentPage.value, per_page: 20 }) // hoặc 100
-            tableData.value = res.data.data
-        } catch (e) {
-            message.error('Không thể tải gói thầu')
+            const res = await getBiddingsAPI({ page: pagination.value.current, per_page: pagination.value.pageSize })
+            const { data, pager, summary: s } = res.data || {}
+            tableData.value = (data || []).map(r => ({
+                ...r,
+                status:   r.status   != null ? Number(r.status)   : null,
+                priority: r.priority != null ? Number(r.priority) : 0
+            }))
+            if (s) {
+                summary.value = {
+                    won: +s.won || 0,
+                    important: +s.important || 0,
+                    normal: +s.normal || 0,
+                    overdue: +s.overdue || 0,
+                    lost: +s.lost || 0,
+                    total: +s.total || 0,
+                }
+            }
+            if (pager) {
+                pagination.value.total   = +pager.total || 0
+                pagination.value.current = +pager.current_page || 1
+                pagination.value.pageSize= +pager.per_page || pagination.value.pageSize
+            }
         } finally {
             loading.value = false
         }
@@ -689,7 +841,8 @@
             status: Number(record.status),
             start_date: dayjs(record.start_date),
             end_date: dayjs(record.end_date),
-            customer: id ? { value: id, label: record.customer_name || customerLabelById(id) || `#${id}` } : null
+            customer: id ? { value: id, label: record.customer_name || customerLabelById(id) || `#${id}` } : null,
+            priority: record.priority || 'normal',
         }
         openDrawer.value = true
     }
@@ -708,7 +861,8 @@
             description: '',
             customer_id: null,
             estimated_cost: 0,
-            status: null,
+            status: STATUS.PREPARING,
+            priority: PRIORITY.NORMAL,
             start_date: null,
             end_date: null,
             assigned_to: null
@@ -760,5 +914,10 @@
     text-align: center;
     padding: 32px;
     font-style: italic;
+}
+/* viền trái đỏ + padding nhẹ cho ô quá hạn */
+:deep(.overdue-cell) {
+    border-left: 3px solid #ff4d4f;
+    padding-left: 8px;
 }
 </style>
