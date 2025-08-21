@@ -51,6 +51,7 @@ class CustomerController extends ResourceController
 
         // Nếu KHÔNG truyền assigned_to → không lọc gì thêm → lấy toàn bộ
         // => đoạn session() lọc theo user_id đã được loại bỏ
+        $builder = $builder->orderBy('created_at', 'DESC');
 
         $data = $builder->paginate($perPage, 'default', $page);
         $pager = $this->model->pager;

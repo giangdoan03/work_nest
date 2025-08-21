@@ -280,8 +280,10 @@ const pagination = ref({
     pageSize: 10,
     total: 0,
     showSizeChanger: true,
-    pageSizeOptions: ['10', '20', '50', '100']
+    pageSizeOptions: ['10', '20', '50', '100'],
+    showTotal: (total, range) => `${range[0]}-${range[1]} / ${total} khách hàng`
 })
+
 
 
 const formData = ref({
@@ -316,16 +318,26 @@ const fetchCustomers = async () => {
     try {
         const params = {
             search: filters.value.search,
-            customer_group: filters.value.customer_group,
+            // ⚠️ backend nhận tham số 'group', không phải 'customer_group'
+            group: filters.value.customer_group, // đổi tên param tại đây
             assigned_to: filters.value.assigned_to,
             from: filters.value.dateRange?.[0] ? dayjs(filters.value.dateRange[0]).format('YYYY-MM-DD') : undefined,
             to: filters.value.dateRange?.[1] ? dayjs(filters.value.dateRange[1]).format('YYYY-MM-DD') : undefined,
             per_page: pagination.value.pageSize,
             page: pagination.value.current
         }
+
         const res = await getCustomers(params)
-        customers.value = res.data.data
-        pagination.value.total = res.data.total
+        const { data, pager } = res.data || {}
+
+        customers.value = Array.isArray(data) ? data : []
+
+        // 🔑 đọc đúng các khóa trong 'pager'
+        if (pager) {
+            pagination.value.total = Number(pager.total) || 0
+            pagination.value.current = Number(pager.current_page) || 1
+            pagination.value.pageSize = Number(pager.per_page) || pagination.value.pageSize
+        }
     } catch (err) {
         message.error('Không thể tải danh sách khách hàng')
     } finally {

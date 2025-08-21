@@ -31,6 +31,8 @@ class BiddingController extends ResourceController
             ->join('users AS u1', 'u1.id = biddings.assigned_to', 'left')
             ->join('users AS u2', 'u2.id = biddings.manager_id', 'left');
 
+        $builder = $builder->orderBy('biddings.created_at', 'DESC');
+
         if (isset($filters['status']) && $filters['status'] !== '') {
             $builder = $builder->where('status', (int) $filters['status']);
         }

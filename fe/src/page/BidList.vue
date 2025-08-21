@@ -36,8 +36,10 @@
                 :loading="loading"
                 style="margin-top: 12px"
                 row-key="id"
+                :pagination="pagination"
                 :scroll="{ x: 'max-content'}"
                 :row-selection="rowSelection"
+                @change="handleTableChange"
         >
             <template #bodyCell="{ column, record, index }">
                 <template v-if="column.dataIndex === 'stt'">
@@ -161,19 +163,43 @@
                 <a-form-item label="Chi phí dự toán" name="estimated_cost">
                     <a-input-number v-model:value="formData.estimated_cost" style="width: 100%" :min="0" />
                 </a-form-item>
+                <a-form-item label="Khách hàng" name="customer_id">
+                    <a-select
+                        v-model:value="formData.customer"
+                        label-in-value
+                        :options="customerOptions"
+                        placeholder="Chọn khách hàng"
+                        show-search
+                        :filter-option="(input, option) =>
+                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())"
+                        @popupScroll="handleCustomerScroll"
+                    />
+                </a-form-item>
                 <a-form-item label="Người phụ trách" name="assigned_to">
                     <a-select v-model:value="formData.assigned_to" :options="userOptions" placeholder="Chọn người phụ trách" />
                 </a-form-item>
-                <a-form-item label="Trạng thái" name="status">
-                    <a-select v-model:value="formData.status" placeholder="Chọn trạng thái">
-                        <a-select-option :value="0">Chưa nộp</a-select-option>
-                        <a-select-option :value="1">Đã nộp hồ sơ</a-select-option>
-                        <a-select-option :value="2">Vào vòng sau</a-select-option>
-                        <a-select-option :value="3">Đã trúng thầu</a-select-option>
-                        <a-select-option :value="4">Không trúng</a-select-option>
-                        <a-select-option :value="5">Hủy thầu</a-select-option>
-                    </a-select>
-                </a-form-item>
+                <!-- Trạng thái -->
+                <!-- Tạo/Sửa: Trạng thái -->
+                <!-- chỉ hiện TAG nếu ĐANG SỬA và status là auto (0 hoặc 3) -->
+                <template v-if="selectedBidding && isAutoStatus">
+                    <a-form-item label="Trạng thái">
+                        <a-tag :color="getStatusColor(formData.status)">
+                            {{ getStatusText(formData.status) }}
+                        </a-tag>
+                    </a-form-item>
+                </template>
+                <template v-else>
+                    <a-form-item label="Trạng thái" name="status">
+                        <a-select
+                            v-model:value="formData.status"
+                            :options="editableStatusOptions"
+                            placeholder="Chọn trạng thái"
+                            allow-clear
+                        />
+                    </a-form-item>
+                </template>
+
+
             </a-form>
             <template #extra>
                 <a-space>
@@ -256,7 +282,7 @@
 </template>
 
 <script setup>
-    import { ref, onMounted, computed } from 'vue'
+    import { ref, onMounted, computed, watch} from 'vue'
     import { message } from 'ant-design-vue'
     import {
         CheckCircleOutlined,
@@ -279,6 +305,7 @@
 
     import { useRouter } from 'vue-router'
     import {updateTask} from "@/api/task.js";
+    import {getCustomers} from "@/api/customer.js";
     const router = useRouter()
 
     const formRef = ref(null)
@@ -292,6 +319,7 @@
     const selectedTask = ref(null)
     const newProgressValue = ref(0)
     const progressUpdating = ref(false)
+    const customerOptions = ref([])
 
     const userOptions = ref([])
     const currentPage = ref(1)
@@ -303,6 +331,10 @@
     const drawerBidVisible = ref(false)
     const drawerBidTitle = ref('')
     const drawerBidFilterKey = ref('')
+
+    const customerPage = ref(1)
+    const customerTotal = ref(0)
+    const customerLoading = ref(false)
 
     const drawerBidColumns = [
         { title: 'STT', dataIndex: 'index', key: 'index', width: '50px', align: 'center' },
@@ -455,38 +487,100 @@
     const formData = ref({
         title: '',
         description: '',
-        customer_id: 1,
+        customer_id: null,
         estimated_cost: 0,
         status: 0,
         start_date: null,
         end_date: null,
-        assigned_to: null
+        assigned_to: null,
+        customer: null
     })
 
-    const getStatusColor = (status) => {
-        const map = {
-            0: 'orange',   // Chưa nộp
-            1: 'blue',     // Đã nộp
-            2: 'purple',   // Vào vòng sau
-            3: 'green',    // Trúng thầu
-            4: 'red',      // Không trúng
-            5: 'gray'      // Hủy
-        }
-        return map[status] || 'default'
+    const customerLabelById = (id) => {
+        const opt = customerOptions.value.find(o => o.value === Number(id))
+        return opt?.label || null
     }
 
-    const getStatusText = (status) => {
-        const map = {
-            0: 'Chưa nộp',
-            1: 'Đã nộp hồ sơ',
-            2: 'Vào vòng sau',
-            3: 'Đã trúng thầu',
-            4: 'Không trúng',
-            5: 'Hủy thầu',
+    const loadCustomers = async (page = 1) => {
+        customerLoading.value = true
+        try {
+            const res = await getCustomers({ page, per_page: 20 }) // API index
+            const list = res.data.data
+            customerTotal.value = res.data.pager.total
+
+            if (page === 1) {
+                customerOptions.value = []
+            }
+            customerOptions.value = [
+                ...customerOptions.value,
+                ...list.map(c => ({
+                    value: Number(c.id),
+                    label: [c.name, c.phone, c.email].filter(Boolean).join(' • ')
+                }))
+            ]
+        } finally {
+            customerLoading.value = false
         }
-        return map[status] ?? 'Không rõ'
     }
 
+    const handleCustomerScroll = (e) => {
+        const target = e.target
+        if (target.scrollTop + target.offsetHeight >= target.scrollHeight - 10) {
+            if (customerOptions.value.length < customerTotal.value && !customerLoading.value) {
+                customerPage.value++
+                loadCustomers(customerPage.value)
+            }
+        }
+    }
+
+    // lần đầu load
+    onMounted(() => {
+        loadCustomers(1)
+    })
+
+
+    watch(() => openDrawer.value, (open) => {
+        if (open) loadCustomers()
+    })
+
+    const pagination = ref({
+        current: 1,
+        pageSize: 10,
+        total: 0,
+        showSizeChanger: true,
+        pageSizeOptions: ['10', '20', '50', '100'],
+        showTotal: (total, range) => `${range[0]}-${range[1]} / ${total} gói thầu`
+    })
+
+    const handleTableChange = (pag /*, filters, sorter */) => {
+        pagination.value.current = pag.current
+        pagination.value.pageSize = pag.pageSize
+        getCustomers()
+    }
+
+
+    // Định nghĩa mapping trạng thái dùng chung
+    const STATUS_MAP = {
+        0: { text: 'Trúng thầu', color: 'green' },
+        1: { text: 'Quan trọng', color: 'red' },
+        2: { text: 'Bình thường', color: 'blue' },
+        3: { text: 'Quá hạn', color: 'orange' },
+        4: { text: 'Không trúng thầu', color: 'gray' }
+    }
+
+
+    const editableStatusOptions = [
+        { value: 1, label: STATUS_MAP[1].text }, // Quan trọng
+        { value: 2, label: STATUS_MAP[2].text }, // Bình thường
+        { value: 4, label: STATUS_MAP[4].text }  // Không trúng thầu
+    ]
+
+
+    const getStatusText  = s => (s == null ? '' : (STATUS_MAP[s]?.text || 'Không rõ'))
+    const getStatusColor = s => STATUS_MAP[s]?.color || 'default'
+
+    // chỉ coi là auto khi giá trị là 0 hoặc 3
+    const isAutoStatus = computed(() => [0, 3].includes(Number(formData.value.status)))
 
     const rules = {
         title: [{ required: true, message: 'Nhập tên gói thầu' }],
@@ -494,7 +588,14 @@
         start_date: [{ required: true, message: 'Chọn ngày bắt đầu' }],
         end_date: [{ required: true, message: 'Chọn ngày kết thúc' }],
         estimated_cost: [{ required: true, message: 'Nhập chi phí dự toán' }],
-        status: [{ required: true, message: 'Chọn trạng thái' }]
+        status: [{ required: true, message: 'Chọn trạng thái' }],
+        customer: [
+            { required: true, message: 'Chọn khách hàng', trigger: 'change' },
+            {
+                validator: (_rule, v) => (v && v.value ? Promise.resolve() : Promise.reject('Chọn khách hàng')),
+                trigger: 'change'
+            }
+        ],
     }
 
     const formatCurrency = (value) => {
@@ -529,18 +630,22 @@
     const submitForm = async () => {
         try {
             await formRef.value?.validate()
+            loadingCreate.value = true
 
             const formatted = {
                 ...formData.value,
                 start_date: dayjs(formData.value.start_date).format('YYYY-MM-DD'),
-                end_date: dayjs(formData.value.end_date).format('YYYY-MM-DD')
+                end_date: dayjs(formData.value.end_date).format('YYYY-MM-DD'),
+                customer_id: formData.value.customer?.value ?? null
             }
 
-            // 🚫 Nếu chọn trạng thái "Hoàn thành" (status === 4), kiểm tra trước
+            // Kiểm tra trước khi set "Đã trúng thầu"
             if (formatted.status === 3 && selectedBidding.value?.id) {
                 const res = await canMarkBiddingAsCompleteAPI(selectedBidding.value.id)
                 if (!res?.data?.allow) {
-                    message.warning('Bạn cần hoàn thành tất cả các bước trước khi chuyển trạng thái gói thầu sang "Đã trúng thầu".')
+                    message.warning(
+                        'Bạn cần hoàn thành tất cả các bước trước khi chuyển trạng thái gói thầu sang "Đã trúng thầu".'
+                    )
                     return
                 }
             }
@@ -578,11 +683,13 @@
 
     const showPopupDetail = (record) => {
         selectedBidding.value = record
+        const id = record.customer_id != null ? Number(record.customer_id) : null
         formData.value = {
             ...record,
             status: Number(record.status),
             start_date: dayjs(record.start_date),
             end_date: dayjs(record.end_date),
+            customer: id ? { value: id, label: record.customer_name || customerLabelById(id) || `#${id}` } : null
         }
         openDrawer.value = true
     }
@@ -594,6 +701,18 @@
     }
 
     const showPopupCreate = () => {
+        selectedBidding.value = null
+        formRef.value?.resetFields()
+        formData.value = {
+            title: '',
+            description: '',
+            customer_id: null,
+            estimated_cost: 0,
+            status: null,
+            start_date: null,
+            end_date: null,
+            assigned_to: null
+        }
         openDrawer.value = true
     }
 
