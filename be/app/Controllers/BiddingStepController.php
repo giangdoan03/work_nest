@@ -9,12 +9,18 @@ use App\Models\TaskModel;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use DateTimeImmutable;
+use DateTimeZone;
+use Throwable;
 
 class BiddingStepController extends ResourceController
 {
     protected $modelName = BiddingStepModel::class;
     protected $format    = 'json';
 
+    /**
+     * @throws \Exception
+     */
     public function index(): ResponseInterface
     {
         $biddingId = $this->request->getGet('bidding_id');
@@ -37,8 +43,8 @@ class BiddingStepController extends ResourceController
             : [];
 
         // 3. Đánh dấu ngày cho mỗi task
-        $tz    = new \DateTimeZone('Asia/Ho_Chi_Minh');
-        $today = new \DateTimeImmutable('today', $tz);
+        $tz    = new DateTimeZone('Asia/Ho_Chi_Minh');
+        $today = new DateTimeImmutable('today', $tz);
 
         foreach ($tasks as &$t) {
             [$t['days_remaining'], $t['days_overdue']] = $this->calcRemOv($t['end_date'] ?? null, $today, $tz);
@@ -102,14 +108,14 @@ class BiddingStepController extends ResourceController
     /**
      * Tính days_remaining và days_overdue từ end_date
      */
-    private function calcRemOv(?string $endDate, \DateTimeImmutable $today, \DateTimeZone $tz): array
+    private function calcRemOv(?string $endDate, DateTimeImmutable $today, DateTimeZone $tz): array
     {
         if (!$endDate) return [null, null];
 
-        $due = \DateTimeImmutable::createFromFormat('Y-m-d', $endDate, $tz);
+        $due = DateTimeImmutable::createFromFormat('Y-m-d', $endDate, $tz);
         if ($due === false) {
-            try { $due = new \DateTimeImmutable($endDate, $tz); }
-            catch (\Throwable $e) { return [null, null]; }
+            try { $due = new DateTimeImmutable($endDate, $tz); }
+            catch (Throwable) { return [null, null]; }
         }
 
         $diff = (int)$today->diff($due)->format('%r%a');
@@ -118,8 +124,6 @@ class BiddingStepController extends ResourceController
             max(0, -$diff),  // days_overdue
         ];
     }
-
-
 
 
     public function show($id = null)
@@ -210,8 +214,6 @@ class BiddingStepController extends ResourceController
     }
 
 
-
-
     public function cloneFromTemplates($biddingId): ResponseInterface
     {
         $templateModel = new BiddingStepTemplateModel();
@@ -262,8 +264,5 @@ class BiddingStepController extends ResourceController
             'tasks' => $tasks
         ]);
     }
-
-
-
 
 }

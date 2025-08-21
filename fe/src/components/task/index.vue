@@ -21,7 +21,7 @@
                         <div class="task-in">
                             <a-row :gutter="16">
                                 <a-col :span="12">
-                                    <a-form-item label="Tên" name="title">
+                                    <a-form-item label="Tên công việc" name="title">
                                         <a-typography-text v-if="!isEditMode">{{ formData.title }}</a-typography-text>
                                         <a-input v-else v-model:value="formData.title" placeholder="Nhập tên nhiệm vụ"/>
                                     </a-form-item>
@@ -53,7 +53,7 @@
                                     </a-form-item>
                                 </a-col>
                                 <a-col :span="12" v-if="formData.linked_type === 'bidding'">
-                                    <a-form-item label="Tiến trình gói thầu" name="step_code">
+                                    <a-form-item label="Công việc cha" name="step_code">
                                         <a-typography-text v-if="!isEditMode">{{ getStepByStepNo(formData.step_code) }}</a-typography-text>
                                         <a-select
                                                 v-else
@@ -217,7 +217,7 @@
                                 </a-col>
 
                                 <a-col :span="12">
-                                    <a-form-item label="Gắn tới người dùng" name="assigned_to">
+                                    <a-form-item label="Người thực hiện" name="assigned_to">
                                         <a-typography-text v-if="!isEditMode">{{getUserById(formData.assigned_to) }}
                                         </a-typography-text>
                                         <a-select v-else v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng"/>
@@ -234,8 +234,8 @@
                                     </a-form-item>
                                 </a-col>
 
-                                <a-col :span="24">
-                                    <a-form-item label="Tiến trình" name="progress">
+                                <a-col :span="12">
+                                    <a-form-item label="Tiến độ" name="progress">
                                         <template v-if="!isEditMode">
                                             <a-progress
                                                 :percent="numericProgress"
@@ -252,18 +252,8 @@
                                                 :max="100"
                                                 :step="5"
                                                 :marks="{ 0: '0%', 25: '25%', 50: '50%', 75: '75%', 100: '100%' }"
-                                                style="width: calc(90% + 50px); margin: 0 auto; display: block;"
+                                                style="width: calc(83% + 50px); margin: 0 auto; display: block;"
                                             />
-                                            <div style="margin-top: 24px;">
-                                                <a-progress
-                                                    :percent="numericProgress"
-                                                    :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
-                                                    :status="numericProgress >= 100 ? 'success' : 'active'"
-                                                    size="small"
-                                                    :show-info="true"
-                                                    style="width: calc(90% + 50px); margin: 0 auto; display: block;"
-                                                />
-                                            </div>
                                         </template>
                                     </a-form-item>
                                 </a-col>
@@ -483,8 +473,7 @@ const priorityOption = ref([
 ])
 const statusOption = computed(() => {
     return [
-        {value: 'todo', label: 'Việc cần làm', color: 'warning'},
-        {value: 'doing', label: 'Đang thực hiện', color: 'processing'},
+        {value: 'doing', label: 'Đang chuẩn bị', color: 'processing'},
         {value: 'request_approval', label: 'Gửi duyệt', color: 'blue'},
         // { value: 'done', label: 'Hoàn thành', color: 'success' },
         {value: 'overdue', label: 'Quá hạn', color: 'error'},

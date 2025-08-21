@@ -8,12 +8,6 @@
         </a-flex>
 
         <a-row :gutter="[14,14]" style="margin-top: 10px;">
-            <a-col :span="3">
-                <!-- ✅ Nút xoá -->
-                <a-button danger type="primary" :disabled="selectedRowKeys.length === 0" @click="handleBulkDelete">
-                    Xoá {{ selectedRowKeys.length }} nhiệm vụ
-                </a-button>
-            </a-col>
             <a-col :span="9">
                 <!-- ✅ Bộ lọc nhanh -->
                 <a-space>
@@ -25,7 +19,7 @@
                         </a-button>
                         <a-button :type="dataFilter.linked_type === 'contract' ? 'primary' : 'default'" @click="filterByType('contract')">Hợp đồng
                         </a-button>
-                        <a-button :type="dataFilter.linked_type === 'internal' ? 'primary' : 'default'" @click="filterByType('internal')">Nội bộ
+                        <a-button :type="dataFilter.linked_type === 'internal' ? 'primary' : 'default'" @click="filterByType('internal')">Công việc nội bộ
                         </a-button>
                     </a-button-group>
 
@@ -45,6 +39,12 @@
         </a-row>
 
         <a-row :gutter="[14,14]" style="margin-top: 10px;">
+            <a-col :span="2">
+                <!-- ✅ Nút xoá -->
+                <a-button danger type="primary" :disabled="selectedRowKeys.length === 0" @click="handleBulkDelete">
+                    Xoá {{ selectedRowKeys.length }} nhiệm vụ
+                </a-button>
+            </a-col>
             <a-col :span="4">
                 <a-input v-model:value="dataFilter.title" placeholder="Tìm việc theo tiêu đề" allow-clear @input="onTitleSearch"/>
             </a-col>

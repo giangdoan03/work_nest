@@ -224,7 +224,7 @@
                         </a-descriptions-item>
 
                         <!-- Người liên quan: chiếm cả hàng để đủ chỗ avatar -->
-                        <a-descriptions-item label="Người liên quan">
+                        <a-descriptions-item label="Người phối hợp thực hiện">
                             <template v-if="step.assignees_detail?.length">
                                 <a-avatar-group size="small" :maxCount="5">
                                     <a-tooltip
@@ -1146,7 +1146,6 @@
 
             steps.value = stepRes.data.filter((step) => step.bidding_id === id)// res.data.id = bidding_id
             commonStore.setBiddingIdParent(res.data.id)   // <— ✅ lưu luôn bidding_id cha
-            console.log('step', steps)
         } catch (e) {
             console.error(e)
             message.error('Không thể tải dữ liệu')

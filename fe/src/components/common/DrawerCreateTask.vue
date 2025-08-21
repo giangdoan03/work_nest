@@ -117,9 +117,13 @@
                     </a-col>
 
                     <a-col :span="24">
-                        <a-form-item label="Cấp duyệt" name="approval_steps">
+                        <a-form-item
+                            label="Cấp duyệt"
+                            name="approval_steps"
+                            :rules="[{ validator: validateApprovalSteps, trigger: 'change' }]"
+                        >
                             <a-radio-group v-model:value="formData.approval_steps">
-                                <a-radio :value="0">Không cấp duyệt</a-radio>
+                                <!--                                <a-radio :value="0">Không cấp duyệt</a-radio>-->
                                 <a-radio :value="1">1 cấp duyệt</a-radio>
                                 <a-radio :value="2">2 cấp duyệt</a-radio>
                             </a-radio-group>
@@ -212,7 +216,7 @@ const formData = ref({
     status: null,
     priority: null,
     parent_id: null,
-    approval_steps: 0,
+    approval_steps: 1,
     id_department: null
 })
 
@@ -232,7 +236,8 @@ const setDefaultData = () => {
         status: null,
         priority: null,
         parent_id: props.taskParent ? props.taskParent : null,
-        id_department: null
+        id_department: null,
+        approval_steps: null
     }
     dateRange.value = null
 }
@@ -301,6 +306,16 @@ const validateDescription = async (_rule, value) => {
     }
 };
 
+const validateApprovalSteps = async (_rule, value) => {
+    if (value === undefined || value === null || value === '') {
+        return Promise.reject('Vui lòng chọn cấp duyệt');
+    } else if (![1, 2].includes(value)) {
+        return Promise.reject('Giá trị cấp duyệt không hợp lệ');
+    } else {
+        return Promise.resolve();
+    }
+};
+
 const rules = computed(() => {
     return {
         title: [{required: true, validator: validateTitle, trigger: 'change'}],
@@ -322,8 +337,7 @@ const priorityOption = ref([
 ])
 const statusOption = computed(() => {
     return [
-        {value: 'todo', label: "Việc cần làm"},
-        {value: 'doing', label: "Đang thực hiện"},
+        {value: 'doing', label: "Đang chuẩn bị"},
         {value: 'pending_approval', label: "Đã gửi duyệt", color: "gold"},
         {value: 'done', label: "Hoàn thành"},
         {value: 'overdue', label: "Quá hạn"},
@@ -531,8 +545,7 @@ const ensureLinkedIdInOptions = async () => {
         try {
             const res = await getBiddingAPI(formData.value.linked_id);
             if (res?.data) {
-                listBidding.value.push(res.data); // 👉 push thêm để a-select hiển thị đúng label
-                console.log('listBidding.value', listBidding.value)
+                listBidding.value.push(res.data);
             }
         } catch (err) {
             console.error('Không thể lấy thông tin gói thầu:', err);
@@ -552,8 +565,6 @@ const getBiddingTask = async () => {
     try {
         const response = await getBiddingsAPI();
         listBidding.value = response.data.data ? response.data.data : [];
-
-        console.log('listBidding.value xx', listBidding.value)
     } catch (e) {
         message.error('Không thể tải nhiệm vụ')
     } finally {
@@ -635,9 +646,9 @@ onMounted(async () => {
     }
 
 
-    console.log('linked_type:', formData.value.linked_type)
-    console.log('linked_id:', formData.value.linked_id)
-    console.log('linkedIdOption:', linkedIdOption.value)
+    // console.log('linked_type:', formData.value.linked_type)
+    // console.log('linked_id:', formData.value.linked_id)
+    // console.log('linkedIdOption:', linkedIdOption.value)
 
     await ensureLinkedIdInOptions()
 
@@ -656,7 +667,6 @@ watch(
     (isOpen) => {
         if (isOpen) {
             formData.value.linked_type = props.type || commonStore.linkedType
-            console.log('linked_type', formData.value.linked_type)
             formData.value.linked_id = commonStore.linkedIdParent ? String(commonStore.linkedIdParent) : null
         }
     }

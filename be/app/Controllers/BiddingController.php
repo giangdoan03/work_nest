@@ -44,8 +44,8 @@ class BiddingController extends ResourceController
         $pager = $this->model->pager;
 
         // === days_overdue & days_remaining
-        $tz    = new \DateTimeZone('Asia/Ho_Chi_Minh');
-        $today = new \DateTimeImmutable('today', $tz);
+        $tz    = new DateTimeZone('Asia/Ho_Chi_Minh');
+        $today = new DateTimeImmutable('today', $tz);
 
         $data = array_map(function ($row) use ($today, $tz) {
             $endDateVal = is_array($row) ? ($row['end_date'] ?? null) : ($row->end_date ?? null);
@@ -55,8 +55,8 @@ class BiddingController extends ResourceController
                 return $row;
             }
             try {
-                $end = new \DateTimeImmutable($endDateVal, $tz);
-                $end = new \DateTimeImmutable($end->format('Y-m-d'), $tz);
+                $end = new DateTimeImmutable($endDateVal, $tz);
+                $end = new DateTimeImmutable($end->format('Y-m-d'), $tz);
                 $deltaDays     = (int)$today->diff($end)->format('%r%a'); // âm nếu đã quá hạn
                 $daysOverdue   = $deltaDays < 0 ? -$deltaDays : 0;
                 $daysRemaining = max($deltaDays, 0);
@@ -68,7 +68,7 @@ class BiddingController extends ResourceController
                     $row->days_overdue   = $daysOverdue;
                     $row->days_remaining = $daysRemaining;
                 }
-            } catch (\Throwable) {
+            } catch (Throwable) {
                 if (is_array($row)) { $row['days_overdue']=null; $row['days_remaining']=null; }
                 else { $row->days_overdue=null; $row->days_remaining=null; }
             }
@@ -76,8 +76,8 @@ class BiddingController extends ResourceController
         }, $data);
 
         // === SUMMARY (không phân trang)
-        $tz       = new \DateTimeZone('Asia/Ho_Chi_Minh');
-        $todayStr = (new \DateTimeImmutable('today', $tz))->format('Y-m-d');
+        $tz       = new DateTimeZone('Asia/Ho_Chi_Minh');
+        $todayStr = (new DateTimeImmutable('today', $tz))->format('Y-m-d');
 
         // Khi tính summary, đừng khóa theo status người dùng đang lọc (nếu có)
         $filtersNoStatus = $filters;
