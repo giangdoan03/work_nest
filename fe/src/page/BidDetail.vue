@@ -26,7 +26,7 @@
             </a-descriptions-item>
 
             <!-- Hàng 3 -->
-            <a-descriptions-item label="Người phụ trách chính">
+            <a-descriptions-item label="Người phụ trách">
                 <a v-if="bidding?.assigned_to" @click="goToUserDetail(bidding.assigned_to)" style="color: #1890ff; cursor: pointer;">
                     {{ getAssignedUserName(bidding?.assigned_to) }}
                 </a>
@@ -716,14 +716,7 @@
                 // ⏳ Đợi một chút để backend hoàn tất insert (nếu cần)
                 await new Promise(resolve => setTimeout(resolve, 500))
 
-                // 🧪 In log rõ ràng
-                console.log('🔍 Fetching tasks after submit with:', {
-                    stepId: stepStore.selectedStep.id,
-                    dataFilter
-                })
-
                 const res = await getTasksByBiddingStep(stepStore.selectedStep.id, dataFilter)
-                console.log('res', res)
 
                 const tasks = Array.isArray(res.data)
                     ? res.data
@@ -731,11 +724,7 @@
                         ? res.data.data
                         : []
 
-                console.log('📦 Tasks fetched:', tasks)
-
                 stepStore.setRelatedTasks(tasks)
-
-
                 await fetchSteps()
 
                 setTimeout(() => {

@@ -136,12 +136,26 @@ class TaskController extends ResourceController
      * @return ResponseInterface
      * @throws \Exception
      */
-    public function show($id = null)
+    public function show($id = null): ResponseInterface
     {
         $task = $this->model->find($id);
 
         if (!$task) {
             return $this->failNotFound('Task not found');
+        }
+
+        // ✅ Nếu đã duyệt mà progress < 100 → set 100 và lưu vào DB
+        if (($task['approval_status'] ?? null) === 'approved' && (int)($task['progress'] ?? 0) < 100) {
+            // Nếu có enum hằng số trạng thái
+            $done = class_exists(TaskStatus::class) ? TaskStatus::DONE : 'done';
+
+            $this->model->update($id, [
+                'progress' => 100,
+                'status'   => $done, // tùy bạn: muốn auto DONE khi approved hay không
+            ]);
+
+            $task['progress'] = 100;
+            $task['status']   = $done;
         }
 
         // Lấy step name (nếu có)
@@ -193,9 +207,9 @@ class TaskController extends ResourceController
             $task['contract_title'] = null;
         }
 
-
         return $this->respond($task);
     }
+
 
 
     /**

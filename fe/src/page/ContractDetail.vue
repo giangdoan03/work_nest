@@ -57,11 +57,7 @@
 
         <a-spin :spinning="loadingSteps">
             <a-steps direction="vertical" :current="currentStepIndex()">
-                <a-step
-                    v-for="(step, index) in steps"
-                    :key="step.id"
-                    :status="mapStepStatus(step.status)"
-                >
+                <a-step v-for="(step, index) in steps" :key="step.id" :status="mapStepStatus(step.status)">
                     <template #title>
                         <div
                                 @click.stop="openStepDrawer(step)"

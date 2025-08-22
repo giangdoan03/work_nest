@@ -39,12 +39,6 @@
         </a-row>
 
         <a-row :gutter="[14,14]" style="margin-top: 10px;">
-            <a-col :span="2">
-                <!-- ✅ Nút xoá -->
-                <a-button danger type="primary" :disabled="selectedRowKeys.length === 0" @click="handleBulkDelete">
-                    Xoá {{ selectedRowKeys.length }} nhiệm vụ
-                </a-button>
-            </a-col>
             <a-col :span="4">
                 <a-input v-model:value="dataFilter.title" placeholder="Tìm việc theo tiêu đề" allow-clear @input="onTitleSearch"/>
             </a-col>
@@ -90,6 +84,12 @@
                             :getPopupContainer="triggerNode => triggerNode.parentNode"
                     />
                 </a-config-provider>
+            </a-col>
+            <a-col :span="3">
+                <!-- ✅ Nút xoá -->
+                <a-button danger type="primary" :disabled="selectedRowKeys.length === 0" @click="handleBulkDelete">
+                    Xoá {{ selectedRowKeys.length }} nhiệm vụ
+                </a-button>
             </a-col>
         </a-row>
 

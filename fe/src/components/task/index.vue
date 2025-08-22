@@ -101,14 +101,14 @@
                                     <a-form-item label="Thời gian" name="time">
                                         <template v-if="!isEditMode">
                                             <a-typography-text>
-                                                {{(formData.start_date || "Trống") + " → " + (formData.end_date || "Trống") }}
+                                                {{(formatDate(formData.start_date) || "Trống") + " → " + (formatDate(formData.end_date) || "Trống") }}
                                             </a-typography-text>
                                         </template>
                                         <template v-else>
                                             <a-config-provider :locale="locale">
                                                 <a-range-picker
                                                     v-model:value="dateRange"
-                                                    format="YYYY-MM-DD"
+                                                    format="DD/MM/YYYY"
                                                     @change="changeDateTime"
                                                     :getPopupContainer="triggerNode => triggerNode.parentNode"
                                                     style="width: 100%;"
@@ -178,28 +178,8 @@
 
                                 <a-col :span="12">
                                     <a-form-item label="Phê duyệt" name="approval_status">
-                                        <template v-if="!isEditMode">
-                                            <a-tag :color="checkApprovalStatus(formData.approval_status).color">
-                                                {{ checkApprovalStatus(formData.approval_status).label }}
-                                                <template
-                                                    v-if="formData.approval_status === 'pending' && formData.approval_steps">
-                                                    ({{ formData.approval_steps }} bước)
-                                                </template>
-                                            </a-tag>
-                                        </template>
-                                        <a-select
-                                            v-else
-                                            v-model:value="formData.approval_status"
-                                            :options="approvalStatusOption"
-                                            placeholder="Chọn trạng thái phê duyệt"
-                                        />
-                                    </a-form-item>
-                                </a-col>
-
-                                <a-col :span="12" v-if="formData.status === 'request_approval'">
-                                    <a-form-item label="Trạng thái duyệt" name="approval_status">
-                                        <a-tag :color="getApprovalColor(formData.approval_status)">
-                                            {{ getApprovalText(formData.approval_status) }}
+                                        <a-tag :color="formData.approval_status === 'approved' ? 'green' : 'orange'">
+                                            {{ formData.approval_status === 'approved' ? 'Đã duyệt' : 'Chưa duyệt' }}
                                         </a-tag>
                                     </a-form-item>
                                 </a-col>
@@ -392,6 +372,7 @@ import dayjs from 'dayjs';
 import viVN from 'ant-design-vue/es/locale/vi_VN';
 import {getUsers} from '@/api/user';
 import {useRoute, useRouter} from 'vue-router';
+import { formatDate  } from '@/utils/formUtils'
 import {
     deleteTaskFilesAPI,
     getTaskDetail,
@@ -711,13 +692,8 @@ const handleChangeLinkedId = (id) => {
   const type = formData.value.linked_type
   const linkedId = formData.value.linked_id
 
-  console.log('linkedIdxxx', linkedId)
-
   commonStore.setLinkedType(type)
   commonStore.setLinkedIdParent(linkedId)
-  console.log('store linkedIdParent =', commonStore.linkedIdParent)
-
-
     if (formData.value.linked_type === 'bidding') {
         getBiddingStep(id)
     } else if (formData.value.linked_type === 'contract') {
@@ -733,7 +709,6 @@ const getContractStep = async () => {
         stepOption.value = res.data ? res.data.map(ele => {
             return {value: ele.step_number, label: ele.title, step_id: ele.id}
         }) : []
-        console.log('stepOption.value',stepOption.value)
     }).catch(err => {
 
     })

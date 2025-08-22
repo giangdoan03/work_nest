@@ -90,7 +90,11 @@ class TaskApprovalController extends ResourceController
 
         $comment = $this->request->getBody() ?: null;
 
-        // 🔹 Cập nhật trạng thái đã duyệt
+        // Có thể bọc giao dịch để an toàn
+        $db = db_connect();
+        $db->transStart();
+
+        // 1) Cập nhật bản ghi approval hiện tại → approved
         $model->update($id, [
             'status'       => 'approved',
             'approved_by'  => $userId,
@@ -98,8 +102,8 @@ class TaskApprovalController extends ResourceController
             'comment'      => $comment
         ]);
 
-        // 🔹 Ghi log
-        db_connect()->table('task_approval_logs')->insert([
+        // 2) Ghi log
+        $db->table('task_approval_logs')->insert([
             'task_id'     => $approval['task_id'],
             'level'       => $approval['level'],
             'status'      => 'approved',
@@ -108,20 +112,26 @@ class TaskApprovalController extends ResourceController
             'comment'     => $comment
         ]);
 
+        // 3) Lấy task & tính cấp tiếp theo
         $task = $taskModel->find($approval['task_id']);
         if (!$task) {
+            $db->transRollback();
             return $this->failNotFound('Task not found');
         }
 
         $currentLevel  = (int) $approval['level'];
-        $approvalSteps = (int) $task['approval_steps'];
+        $approvalSteps = (int) ($task['approval_steps'] ?? 0);
 
-        if ($currentLevel >= $approvalSteps) {
+        if ($approvalSteps <= 0 || $currentLevel >= $approvalSteps) {
+            // ✅ DUYỆT XONG CẤP CUỐI → set approved + DONE + progress = 100
             $taskModel->update($task['id'], [
                 'approval_status' => 'approved',
-                'status'          => TaskStatus::DONE
+                'status'          => TaskStatus::DONE,
+                'progress'        => 100,              // <-- thêm dòng này
+                'current_level'   => $approvalSteps,   // chuẩn hoá cấp hiện tại
             ]);
         } else {
+            // ⏭️ Chưa xong, tạo cấp kế tiếp
             $model->insert([
                 'task_id'     => $task['id'],
                 'level'       => $currentLevel + 1,
@@ -133,8 +143,14 @@ class TaskApprovalController extends ResourceController
             ]);
         }
 
+        $db->transComplete();
+        if ($db->transStatus() === false) {
+            return $this->fail('Không thể cập nhật duyệt');
+        }
+
         return $this->respond(['message' => 'Approved successfully']);
     }
+
 
 
 
