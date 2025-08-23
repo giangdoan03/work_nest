@@ -1019,6 +1019,8 @@ span.ant-divider-inner-text {
     color: rgb(32, 175, 255);
     font-weight: bold;
     cursor: pointer;
+    margin-bottom: 0;
+    line-height: 0.9;
 }
 
 @media (max-width: 1200px) {
