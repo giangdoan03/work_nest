@@ -1,10 +1,29 @@
 <template>
     <div>
-        <a-page-header title="Quản lý khách hàng" style="padding-left: 0; padding-top: 0"/>
+        <a-flex justify="space-between" align="center" style="margin-bottom: 10px">
+            <a-page-header
+                title="Quản lý khách hàng"
+                style="padding-left: 0; padding-top: 0; padding-bottom: 0"
+            />
+            <a-button type="primary" @click="showPopupCreate">
+                Thêm khách hàng
+            </a-button>
+        </a-flex>
 
         <!-- Bộ lọc -->
         <a-form layout="inline" @submit.prevent>
-            <a-row :gutter="16" style="margin-bottom: 16px">
+            <a-row :gutter="16">
+                <a-col :span="4">
+                    <a-button
+                        type="primary"
+                        danger
+                        :disabled="selectedRowKeys.length === 0"
+                        @click="handleBulkDelete"
+                        style="margin-bottom: 16px"
+                    >
+                        Xóa {{ selectedRowKeys.length }} khách hàng
+                    </a-button>
+                </a-col>
                 <a-col :span="4">
                     <a-input v-model:value="filters.search" placeholder="Tên, sđt hoặc email" allow-clear />
                 </a-col>
@@ -31,26 +50,8 @@
                 <a-col :span="3">
                     <a-button type="primary" @click="fetchCustomers">Tìm kiếm</a-button>
                 </a-col>
-                <a-col :span="4" style="text-align: right">
-                    <a-button type="primary" @click="showPopupCreate">Thêm khách hàng</a-button>
-                </a-col>
             </a-row>
         </a-form>
-
-        <a-row :gutter="16" style="margin-bottom: 16px">
-            <a-col :span="4">
-                <a-button
-                        type="primary"
-                        danger
-                        :disabled="selectedRowKeys.length === 0"
-                        @click="handleBulkDelete"
-                        style="margin-bottom: 16px"
-                >
-                    Xóa {{ selectedRowKeys.length }} khách hàng
-                </a-button>
-            </a-col>
-        </a-row>
-
         <a-table
             :columns="columns"
             :data-source="customers"
@@ -309,7 +310,7 @@ const columns = [
     { title: 'Địa chỉ', key: 'address', dataIndex: 'address' },
     { title: 'Tỉnh/TP', key: 'city', dataIndex: 'city' },
     { title: 'Người phụ trách', key: 'assigned_to', dataIndex: 'assigned_to' },
-    { title: 'Ngày tương tác mới nhất', key: 'last_interaction', dataIndex: 'last_interaction', customRender: ({ text }) => formatDate(text)},
+    { title: 'Ngày tương tác mới nhất', key: 'last_interaction',align: 'center', dataIndex: 'last_interaction', customRender: ({ text }) => formatDate(text)},
     { title: 'Thao tác', key: 'action' }
 ]
 
