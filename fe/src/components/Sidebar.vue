@@ -683,7 +683,7 @@ const toggleCollapsed = () => {
 /* Text styling */
 .menu-text {
     color: #ffffff;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 1.2;
     white-space: nowrap;
     overflow: hidden;
