@@ -11,6 +11,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use DateTimeImmutable;
 use DateTimeZone;
+use Exception;
 use Throwable;
 
 class BiddingStepController extends ResourceController
@@ -19,7 +20,7 @@ class BiddingStepController extends ResourceController
     protected $format    = 'json';
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function index(): ResponseInterface
     {
@@ -72,32 +73,55 @@ class BiddingStepController extends ResourceController
         }
 
         // 6. Tổng hợp vào step
+        // 6. Tổng hợp vào step
         foreach ($steps as &$s) {
             $tArr = $grouped[$s['id']] ?? [];
 
-            // Tổng ngày
             $minRem = null; $maxOv = 0; $hasToday = false; $hasAny = false;
             $uids   = [];
+            $approvedCount = 0; // <-- chỉ đếm task đã DUYỆT
+
             foreach ($tArr as $t) {
+                // ---- deadline aggregate ----
                 if ($t['days_remaining'] !== null || $t['days_overdue'] !== null) $hasAny = true;
-                if ($t['days_remaining'] === 0 && !empty($t['end_date']))       $hasToday = true;
-                if ($t['days_remaining'] > 0)                                   $minRem = is_null($minRem) ? $t['days_remaining'] : min($minRem, $t['days_remaining']);
-                if ($t['days_overdue'] > 0)                                     $maxOv  = max($maxOv, $t['days_overdue']);
-                if (!empty($t['assigned_to']))                                  $uids[] = (string) $t['assigned_to'];
+                if ((int)($t['days_remaining'] ?? -1) === 0 && !empty($t['end_date'])) $hasToday = true;
+                if (($t['days_remaining'] ?? null) !== null && (int)$t['days_remaining'] > 0) {
+                    $minRem = is_null($minRem) ? (int)$t['days_remaining'] : min($minRem, (int)$t['days_remaining']);
+                }
+                if (($t['days_overdue'] ?? null) !== null && (int)$t['days_overdue'] > 0) {
+                    $maxOv  = max($maxOv, (int)$t['days_overdue']);
+                }
+
+                // ---- assignees aggregate ----
+                if (!empty($t['assigned_to'])) $uids[] = (string)$t['assigned_to'];
+
+                // ---- chỉ tính "đã hoàn thành" khi đã DUYỆT ----
+                $status    = (string)($t['status'] ?? '');
+                $progress  = (int)($t['progress'] ?? 0);
+                $approved  = (string)($t['approval_status'] ?? '') === 'approved';
+
+                if (($status === 'done' || $progress >= 100) && $approved) {
+                    $approvedCount++;
+                }
             }
 
-            $uids = array_values(array_unique($uids));
+            $uids    = array_values(array_unique($uids));
             $details = array_values(array_filter(array_map(fn($id) => $userById[$id] ?? null, $uids)));
 
-            $s['tasks']            = $tArr;
-            $s['task_count']       = count($tArr);
-            $s['task_done_count']  = count(array_filter($tArr, fn($t) => ($t['status'] ?? null) === 'done'));
-            $s['days_remaining']   = $hasAny ? ($hasToday ? 0 : $minRem) : null;
-            $s['days_overdue']     = $hasAny ? $maxOv : null;
-            $s['assignees']        = $uids;
-            $s['assignees_detail'] = $details;
-            $s['assignees_count']  = count($uids);
-            $s['assignees_names']  = implode(', ', array_column($details, 'name'));
+            $totalTasks = count($tArr);
+            $stepProgress = $totalTasks > 0 ? (int) round($approvedCount * 100 / $totalTasks) : 0;
+
+            $s['tasks']                    = $tArr;
+            $s['task_count']               = $totalTasks;
+            $s['task_done_count']          = $approvedCount;      // ✅ chỉ task đã DUYỆT
+            $s['step_progress']            = $stepProgress;       // ✅ %
+            $s['is_step_completed']        = ($totalTasks > 0 && $approvedCount === $totalTasks) ? 1 : 0;
+            $s['days_remaining']           = $hasAny ? ($hasToday ? 0 : $minRem) : null;
+            $s['days_overdue']             = $hasAny ? $maxOv : null;
+            $s['assignees']                = $uids;
+            $s['assignees_detail']         = $details;
+            $s['assignees_count']          = count($uids);
+            $s['assignees_names']          = implode(', ', array_column($details, 'name'));
         }
         unset($s);
 

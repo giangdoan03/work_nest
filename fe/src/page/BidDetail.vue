@@ -43,6 +43,22 @@
                     <span class="value">{{ formatDate(bidding?.end_date) }}</span>
                 </div>
             </a-descriptions-item>
+            <a-descriptions-item label="Tiến độ">
+                <a-tooltip :title="detailProgressText(bidding)">
+                    <div class="desc-progress">
+                        <a-progress
+                            :percent="detailProgressPercent(bidding)"
+                            :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
+                            :status="detailProgressPercent(bidding) >= 100 ? 'success' : 'active'"
+                            size="small"
+                            :show-info="false"
+                        />
+<!--                        <span class="progress-meta">-->
+<!--                            {{ detailProgressText(bidding) }}-->
+<!--                          </span>-->
+                    </div>
+                </a-tooltip>
+            </a-descriptions-item>
 
             <!-- Hàng 4 -->
             <a-descriptions-item label="Mô tả">
@@ -53,6 +69,26 @@
                 <a-tag :color="deadlineColor(bidding)">
                     {{ deadlineText(bidding) }}
                 </a-tag>
+            </a-descriptions-item>
+            <!-- 👇 Người phối hợp (gom của TẤT CẢ bước) -->
+            <a-descriptions-item label="Người phối hợp">
+                <template v-if="(bidding?.collaborators_detail?.length || 0) > 0">
+                    <a-space size="small" align="center" wrap>
+                        <a-avatar-group :maxCount="5" size="small">
+                            <a-tooltip
+                                v-for="u in bidding.collaborators_detail"
+                                :key="u.id"
+                                :title="u.name || 'Không rõ'"
+                                placement="top"
+                            >
+                                <a-avatar :style="{ backgroundColor: getAvatarColor(u.name) }">
+                                    {{ getInitials(u.name) }}
+                                </a-avatar>
+                            </a-tooltip>
+                        </a-avatar-group>
+                    </a-space>
+                </template>
+                <span v-else>—</span>
             </a-descriptions-item>
         </a-descriptions>
 
@@ -223,24 +259,24 @@
                             </template>
                         </a-descriptions-item>
 
-                        <!-- Người liên quan: chiếm cả hàng để đủ chỗ avatar -->
-                        <a-descriptions-item label="Người phối hợp thực hiện">
-                            <template v-if="step.assignees_detail?.length">
-                                <a-avatar-group size="small" :maxCount="5">
-                                    <a-tooltip
-                                        v-for="u in step.assignees_detail"
-                                        :key="u.id"
-                                        :title="u.name || 'Không rõ'"
-                                        placement="top"
-                                    >
-                                        <a-avatar :style="{ backgroundColor: getAvatarColor(u.name) }">
-                                            {{ (u.name || '').charAt(0).toUpperCase() }}
-                                        </a-avatar>
-                                    </a-tooltip>
-                                </a-avatar-group>
-                            </template>
-                            <span v-else>—</span>
-                        </a-descriptions-item>
+                            <!-- Người liên quan: chiếm cả hàng để đủ chỗ avatar -->
+                            <a-descriptions-item label="Người phối hợp thực hiện">
+                                <template v-if="step.assignees_detail?.length">
+                                    <a-avatar-group size="small" :maxCount="5">
+                                        <a-tooltip
+                                            v-for="u in step.assignees_detail"
+                                            :key="u.id"
+                                            :title="u.name || 'Không rõ'"
+                                            placement="top"
+                                        >
+                                            <a-avatar :style="{ backgroundColor: getAvatarColor(u.name) }">
+                                                {{ (u.name || '').charAt(0).toUpperCase() }}
+                                            </a-avatar>
+                                        </a-tooltip>
+                                    </a-avatar-group>
+                                </template>
+                                <span v-else>—</span>
+                            </a-descriptions-item>
                         </a-descriptions>
                     </template>
 
@@ -258,96 +294,6 @@
                 width="1100"
         >
             <template v-if="selectedStep">
-<!--                <a-descriptions-->
-<!--                        size="small"-->
-<!--                        :column="1"-->
-<!--                        bordered-->
-<!--                        :title="bidding?.title"-->
-<!--                >-->
-<!--                    <a-descriptions-item label="Bước số">{{ selectedStep.step_number }}</a-descriptions-item>-->
-<!--                    <a-descriptions-item label="Tiêu đề">-->
-<!--                        <a-typography-text-->
-<!--                                type="secondary"-->
-<!--                                v-if="!showEditTitle"-->
-<!--                                @click="editTitle"-->
-<!--                        >-->
-<!--                            {{ selectedStep.title || '-&#45;&#45;' }}-->
-<!--                            <EditOutlined/>-->
-<!--                        </a-typography-text>-->
-<!--                        <a-input-->
-<!--                                v-if="showEditTitle"-->
-<!--                                v-model:value="editedTitle"-->
-<!--                                @pressEnter="updateStepTitle"-->
-<!--                                @blur="updateStepTitle"-->
-<!--                                placeholder="Nhập tiêu đề"-->
-<!--                        />-->
-<!--                    </a-descriptions-item>-->
-
-<!--                    <a-descriptions-item label="Phòng ban">-->
-<!--                        <template #default>-->
-<!--                            <a-tag v-for="(dep, index) in parseDepartment(selectedStep.department)" :key="index"-->
-<!--                                   color="blue" style="margin-right: 4px;">-->
-<!--                                {{ dep }}-->
-<!--                            </a-tag>-->
-<!--                        </template>-->
-<!--                    </a-descriptions-item>-->
-<!--                    <a-descriptions-item label="Trạng thái">-->
-<!--                        <a-select v-model:value="selectedStep.status" style="width: 100%"-->
-<!--                                  @change="(value) => updateStepStatus(value, selectedStep)">-->
-<!--                            <a-select-option value="0">Chưa bắt đầu</a-select-option>-->
-<!--                            <a-select-option value="1">Đang xử lý</a-select-option>-->
-<!--                            <a-select-option value="2">Hoàn thành</a-select-option>-->
-<!--                            <a-select-option value="3">Bỏ qua</a-select-option>-->
-<!--                        </a-select>-->
-<!--                    </a-descriptions-item>-->
-<!--                    <a-descriptions-item label="Người phụ trách">-->
-<!--                        <a-select-->
-<!--                                v-model:value="selectedStep.assigned_to"-->
-<!--                                style="width: 100%"-->
-<!--                                placeholder="Chọn người phụ trách"-->
-<!--                                @change="(value) => updateStepAssignedTo(value, selectedStep)"-->
-<!--                                :allowClear="true"-->
-<!--                        >-->
-<!--                            <a-select-option-->
-<!--                                    v-for="user in users"-->
-<!--                                    :key="user.id"-->
-<!--                                    :value="user.id"-->
-<!--                            >-->
-<!--                                {{ user.name }}-->
-<!--                            </a-select-option>-->
-<!--                        </a-select>-->
-<!--                    </a-descriptions-item>-->
-
-<!--                    <a-descriptions-item label="Ngày bắt đầu">-->
-<!--                        <a-typography-text type="secondary" v-if="!showEditDateStart" @click="editDateStart">-->
-<!--                            {{ formatDate(selectedStep.start_date) }}-->
-<!--                            <EditOutlined/>-->
-<!--                        </a-typography-text>-->
-<!--                        <a-date-picker-->
-<!--                                v-if="showEditDateStart"-->
-<!--                                style="width: 100%"-->
-<!--                                v-model:value="dateStart"-->
-<!--                                @change="updateStepStartDate"-->
-<!--                        />-->
-<!--                    </a-descriptions-item>-->
-<!--                    <a-descriptions-item label="Ngày kết thúc">-->
-<!--                        <a-typography-text type="secondary" v-if="!showEditDateEnd" @click="editDateEnd">-->
-<!--                            {{ formatDate(selectedStep.end_date) }}-->
-<!--                            <EditOutlined/>-->
-<!--                        </a-typography-text>-->
-<!--                        <a-date-picker-->
-<!--                                :disabledDate="disabledDate"-->
-<!--                                v-if="showEditDateEnd"-->
-<!--                                style="width: 100%"-->
-<!--                                v-model:value="dateEnd"-->
-<!--                                @change="updateStepEndDate"-->
-<!--                        />-->
-<!--                    </a-descriptions-item>-->
-<!--                </a-descriptions>-->
-
-<!--                <a-divider>-->
-<!--                </a-divider>-->
-
                 <a-row :gutter="16" justify="end">
                     <a-col>
                         <a-button type="primary" @click="showPopupCreate">
@@ -355,10 +301,6 @@
                         </a-button>
                     </a-col>
                 </a-row>
-
-<!--                <a-divider>-->
-<!--                    Danh sách công việc của bước này-->
-<!--                </a-divider>-->
 
                 <!-- Nếu không có task -->
                 <a-empty v-if="relatedTasks.length === 0" description="Không có công việc"/>
@@ -648,6 +590,29 @@
         return 'orange'; // hôm nay đến hạn
     };
 
+    // màu cố định cho mọi thanh tiến độ
+    const PROGRESS_COLOR = '#1890ff'
+
+    // % tổng của gói thầu trong trang chi tiết
+    const detailProgressPercent = (b) =>
+        Number(b?.progress?.bidding_progress ?? 0)
+
+    // Text hiển thị: "22% (2/9)"
+    const detailProgressText = (b) => {
+        const p  = detailProgressPercent(b)
+        const dn = Number(b?.progress?.steps_completed ?? 0)
+        const tt = Number(b?.progress?.steps_total ?? 0)
+
+        if (!tt) return "Chưa có bước nào"
+
+        if (dn === 0) return `Chưa bắt đầu (${dn}/${tt} bước)`
+
+        if (dn < tt) return `Đã hoàn thành ${dn}/${tt} bước (~${p}%)`
+
+        return `Đã hoàn thành toàn bộ ${tt} bước (100%)`
+    }
+
+
     const openStatusForId = ref(null)
 
     const onChangeStatus = async (step, val) => {
@@ -909,11 +874,10 @@
     }
 
     const getStatusColor = (status) => {
-        switch (status) {
-            case 'todo': return 'default'
-            case 'doing': return 'processing'
-            case 'done': return 'success'
-            case 'overdue': return 'error'
+        switch (Number(status)) {
+            case 1: return 'blue'     // Đang chuẩn bị
+            case 2: return 'green'    // Trúng thầu
+            case 3: return 'red'      // Hủy thầu
             default: return 'default'
         }
     }
@@ -933,6 +897,13 @@
             default: return 'default'
         }
     }
+
+    const getInitials = (name) => {
+        if (!name) return '?'
+        const parts = name.trim().split(/\s+/)
+        return (parts[0][0] + (parts[parts.length-1]?.[0] || '')).toUpperCase()
+    }
+
 
     const getProgressStatus = (progress) => {
         if (!progress) return 'normal'
@@ -1145,15 +1116,13 @@
 
     const getStatusText = (status) => {
         const map = {
-            0: 'Chưa nộp',
-            1: 'Đã nộp hồ sơ',
-            2: 'Vào vòng sau',
-            3: 'Đã trúng thầu',
-            4: 'Không trúng',
-            5: 'Hủy thầu',
+            1: 'Đang chuẩn bị',
+            2: 'Trúng thầu',
+            3: 'Hủy thầu',
         }
         return map[status] ?? `Không rõ`
     }
+
     const goBack = () => {
         if (window.history.length > 1) {
             router.back();
@@ -1210,6 +1179,20 @@
         display: inline-flex;
         align-items: center;
     }
+
+    .desc-progress {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 80px; /* rộng hơn 1 chút cho đẹp */
+        cursor: default;  /* hoặc pointer nếu muốn click mở chi tiết */
+    }
+    .desc-progress :deep(.ant-progress) { flex: 1; }
+    .progress-meta { white-space: nowrap; font-size: 12px; color: rgba(0,0,0,.65); }
+
+    /* Nếu thấy progress vẫn đổi sang xanh lá ở trạng thái success của AntD */
+    :deep(.ant-progress-bg),
+    :deep(.ant-progress-success-bg) { background-color: #1890ff !important; }
 
 </style>
 

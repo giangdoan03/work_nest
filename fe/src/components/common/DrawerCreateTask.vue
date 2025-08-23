@@ -11,8 +11,17 @@
                     </a-col>
                     <a-col :span="12">
                         <a-form-item label="Người đề nghị" name="proposed_by">
-                            <a-select v-model:value="formData.proposed_by" :options="userOption"
-                                      placeholder="Chọn người dùng"/>
+                            <a-select
+                                v-model:value="formData.proposed_by"
+                                :options="userOption"
+                                placeholder="Chọn người dùng"
+                                show-search
+                                option-filter-prop="label"
+                                :filter-option="(input, option) =>
+        normalizeText(option?.label ?? '').includes(normalizeText(input))
+      "
+                                :getPopupContainer="trigger => trigger.parentNode"
+                            />
                         </a-form-item>
                     </a-col>
                 </a-row>
@@ -42,8 +51,17 @@
                     </a-col>
                     <a-col :span="12">
                         <a-form-item label="Người thực hiện" name="assigned_to">
-                            <a-select v-model:value="formData.assigned_to" :options="userOption"
-                                      placeholder="Chọn người dùng"/>
+                            <a-select
+                                v-model:value="formData.assigned_to"
+                                :options="userOption"
+                                placeholder="Chọn người dùng"
+                                show-search
+                                option-filter-prop="label"
+                                :filter-option="(input, option) =>
+        normalizeText(option?.label ?? '').includes(normalizeText(input))
+      "
+                                :getPopupContainer="trigger => trigger.parentNode"
+                            />
                         </a-form-item>
                     </a-col>
                 </a-row>
@@ -241,6 +259,12 @@ const setDefaultData = () => {
     }
     dateRange.value = null
 }
+
+const normalizeText = (s = '') =>
+    s.toString()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
 
 const validateTitle = async (_rule, value) => {
     if (value === '') {

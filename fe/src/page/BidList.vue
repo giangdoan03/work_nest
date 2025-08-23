@@ -68,17 +68,21 @@
                     </a-tooltip>
                 </template>
                 <!-- Tiến độ -->
-                <template v-else-if="column.dataIndex === 'progress'" style="width: 100px">
-                    <a-progress
-                        @click="openProgressModal(record)"
-                        style="cursor: pointer;"
-                        :percent="Math.round((Number(record.step_done_count) / (Number(record.step_count) || 1)) * 100)"
-                        :stroke-color="progressColor(record)"
-                        :status="Number(record.status) === STATUS.WON ? 'success' : 'active'"
-                        size="small"
-                        :show-info="true"
-                    />
+                <template v-else-if="column.dataIndex === 'progress'">
+                    <a-tooltip :title="progressText(record)">
+                        <a-progress
+                            :percent="progressPercent(record)"
+                            :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
+                            :status="progressPercent(record) >= 100 ? 'success' : 'active'"
+                            size="small"
+                            :show-info="progressPercent(record) >= 100"
+                            style="cursor: pointer;"
+                            @click="openProgressModal(record)"
+                        />
+                    </a-tooltip>
                 </template>
+
+
 
                 <!-- Người phụ trách -->
                 <template v-else-if="column.dataIndex === 'assigned_to_name'">
@@ -246,9 +250,9 @@
                             <a-select
                                 v-model:value="formData.priority"
                                 :options="[
-                          { value: 1, label: 'Quan trọng' },
-                          { value: 0, label: 'Bình thường' }
-                        ]"
+                                  { value: 1, label: 'Quan trọng' },
+                                  { value: 0, label: 'Bình thường' }
+                                ]"
                             />
                         </a-form-item>
                     </a-col>
@@ -689,7 +693,44 @@ const handleDrawerTableChange = (pag) => {
 }
 
 const progressColor = (row) => Number(row.status) === STATUS.WON ? '#52c41a' : '#1890ff';
-const progressPercent = (r) => Math.round((Number(r.step_done_count) / (Number(r.step_count) || 1)) * 100);
+const PROGRESS_COLOR = '#1890ff' // hoặc màu bạn muốn, ví dụ '#52c41a'
+
+const getProgressStyle = (percent) => {
+    if (percent >= 100) {
+        return {
+            strokeColor: {
+                '0%': '#108ee9',
+                '100%': '#87d068'
+            },
+            status: 'success'
+        }
+    }
+    return {
+        strokeColor: '#1890ff',
+        status: 'active'
+    }
+}
+const progressPercent = (r) => r.progress_percent ?? 0
+const progressText = (r) => {
+    const done = Number(r.steps_done) || 0
+    const total = Number(r.steps_total) || 0
+
+    if (!total) {
+        return 'Chưa có bước nào'
+    }
+
+    if (done === 0) {
+        return `Chưa bắt đầu (${total} bước)`
+    }
+
+    if (done < total) {
+        return `Đã hoàn thành ${done}/${total} bước`
+    }
+
+    return `Hoàn thành toàn bộ ${total} bước`
+}
+
+
 
 const getFirstLetter = (name) => {
     if (!name || name === 'N/A') return '?'
@@ -851,34 +892,28 @@ const getBiddings = async () => {
         const params = {
             page: pagination.value.current,
             per_page: pagination.value.pageSize,
-        }
-        if (keyword) {
-            // tùy backend; gửi kèm vài key phổ biến – cái nào hỗ trợ sẽ nhận
-            params.q = keyword
-            params.keyword = keyword
-            params.title = keyword
-            params.title_like = keyword
+            with_progress: 1,          // <<— bật trả progress
+            search: keyword || undefined // <<— BE dùng 'search'
         }
 
         const res = await getBiddingsAPI(params)
-        const {data, pager, summary: s} = res.data || {}
+        const { data, pager, summary: s } = res.data || {}
 
-        // chuẩn hóa dữ liệu
+        // chuẩn hóa + bóc sẵn % tiến độ để hiển thị nhanh
         let rows = (data || []).map(r => ({
             ...r,
             status: r.status != null ? Number(r.status) : null,
-            priority: r.priority != null ? Number(r.priority) : 0
+            priority: r.priority != null ? Number(r.priority) : 0,
+            // fallback nếu BE chưa thêm các field phẳng
+            progress_percent: r.progress_percent ?? r.progress?.bidding_progress ?? 0,
+            steps_done:       r.steps_done       ?? r.progress?.steps_completed   ?? 0,
+            steps_total:      r.steps_total      ?? r.progress?.steps_total       ?? 0,
+            subtasks_done:    r.subtasks_done    ?? r.progress?.subtasks_approved ?? 0,
+            subtasks_total:   r.subtasks_total   ?? r.progress?.subtasks_total    ?? 0,
         }))
-
-        // Fallback lọc client nếu server không áp dụng keyword
-        if (keyword) {
-            const kw = keyword.toLowerCase()
-            rows = rows.filter(r => (r.title || '').toLowerCase().includes(kw))
-        }
 
         tableData.value = rows
 
-        // cập nhật summary & pager như cũ
         if (s) {
             summary.value = {
                 won: +s.won || 0,
@@ -900,8 +935,38 @@ const getBiddings = async () => {
 }
 
 
+
 const goToDetail = (id) => {
     router.push({name: 'bid-detail', params: {id}})
+}
+
+// 🔒 Chỉ các field BE cho phép
+const ALLOWED_FIELDS = [
+    'title','description','customer_id','estimated_cost','status',
+    'start_date','end_date','assigned_to','manager_id','collaborators','priority'
+]
+
+// 🧹 Build payload sạch để gửi lên
+const buildBiddingPayload = (src) => {
+    const payload = {
+        title: (src.title || '').trim(),
+        description: (src.description || '').trim(),
+        // lấy id thật từ select label-in-value hoặc giữ nguyên nếu đã là id
+        customer_id: src.customer?.value ?? src.customer_id ?? null,
+        estimated_cost: Number(src.estimated_cost) || 0,
+        status: Number(src.status),
+        start_date: src.start_date ? dayjs(src.start_date).format('YYYY-MM-DD') : null,
+        end_date: src.end_date ? dayjs(src.end_date).format('YYYY-MM-DD') : null,
+        assigned_to: src.assigned_to ?? null,
+        manager_id: src.manager_id ?? null,
+        priority: Number(src.priority) || 0,
+    }
+
+    // Chắc chắn chỉ giữ các key whitelisted & bỏ undefined
+    return Object.fromEntries(
+        Object.entries(payload)
+            .filter(([k, v]) => ALLOWED_FIELDS.includes(k) && v !== undefined)
+    )
 }
 
 const submitForm = async () => {
@@ -909,39 +974,27 @@ const submitForm = async () => {
         await formRef.value?.validate()
         loadingCreate.value = true
 
-        // Chuẩn hoá dữ liệu gửi lên
-        const formatted = {
-            ...formData.value,
-            start_date: dayjs(formData.value.start_date).format('YYYY-MM-DD'),
-            end_date: dayjs(formData.value.end_date).format('YYYY-MM-DD'),
-            customer_id: formData.value.customer?.value ?? null,
-            status: Number(formData.value.status),
-            priority: Number(formData.value.priority)
-        }
+        const formatted = buildBiddingPayload(formData.value)
 
-        // Nếu đang sửa, xử lý chuyển trạng thái
         if (selectedBidding.value) {
+            // ⛔ không gửi created_at/updated_at; CI4 tự set updated_at
+            // Kiểm tra chuyển trạng thái đặc biệt như bạn đang làm
             const prevStatus = Number(selectedBidding.value.status)
             const nextStatus = Number(formatted.status)
 
-            // 1) Chuyển sang TRÚNG THẦU → phải kiểm tra đã hoàn tất các bước
             if (prevStatus !== STATUS.WON && nextStatus === STATUS.WON) {
                 const res = await canMarkBiddingAsCompleteAPI(selectedBidding.value.id)
                 if (!res?.data?.allow) {
-                    message.warning(
-                        'Bạn cần hoàn thành tất cả các bước trước khi chuyển trạng thái gói thầu sang "Trúng thầu".'
-                    )
+                    message.warning('Cần hoàn tất tất cả bước trước khi chuyển sang "Trúng thầu".')
                     return
                 }
             }
 
-            // 2) Chuyển sang HỦY THẦU → hỏi xác nhận, không chạy check hoàn tất bước
             if (prevStatus !== STATUS.CANCELLED && nextStatus === STATUS.CANCELLED) {
                 const ok = await confirmAsync({
                     title: 'Xác nhận hủy gói thầu',
-                    content:
-                        'Bạn có chắc chắn muốn chuyển trạng thái gói thầu này sang "Hủy thầu"? Thao tác này có thể ảnh hưởng tới báo cáo.',
-                    okButtonProps: {danger: true}
+                    content: 'Bạn chắc muốn chuyển trạng thái sang "Hủy thầu"?',
+                    okButtonProps: { danger: true }
                 })
                 if (!ok) return
             }
@@ -949,9 +1002,8 @@ const submitForm = async () => {
             await updateBiddingAPI(selectedBidding.value.id, formatted)
             message.success('Cập nhật thành công')
         } else {
-            // Tạo mới: chỉ clone template khi đang ở trạng thái "Đang chuẩn bị"
             const res = await createBiddingAPI(formatted)
-            if (Number(formatted.status) === STATUS.PREPARING) {
+            if (formatted.status === STATUS.PREPARING) {
                 await cloneFromTemplatesAPI(res.data.id)
             }
             message.success('Tạo gói thầu thành công')
@@ -961,8 +1013,7 @@ const submitForm = async () => {
         await getBiddings()
     } catch (e) {
         console.error('Lỗi submitForm:', e?.response?.data || e)
-        const errMsg = e?.response?.data?.message || 'Có lỗi xảy ra'
-        message.error(errMsg)
+        message.error(e?.response?.data?.message || 'Có lỗi xảy ra')
     } finally {
         loadingCreate.value = false
     }
@@ -995,16 +1046,28 @@ const deleteConfirm = async (id) => {
 const showPopupDetail = (record) => {
     selectedBidding.value = record
     const id = record.customer_id != null ? Number(record.customer_id) : null
+
+    // chuẩn hoá collaborators về mảng id cho form select (nếu bạn có UI chọn)
+    let collaborators = []
+    if (Array.isArray(record.collaborators)) collaborators = record.collaborators
+    else if (typeof record.collaborators === 'string' && record.collaborators.trim()) {
+        try { collaborators = JSON.parse(record.collaborators) } catch {
+            collaborators = record.collaborators.split(',').map(n => Number(n)).filter(Boolean)
+        }
+    }
+
     formData.value = {
         ...record,
         status: Number(record.status),
         start_date: dayjs(record.start_date),
         end_date: dayjs(record.end_date),
-        customer: id ? {value: id, label: record.customer_name || customerLabelById(id) || `#${id}`} : null,
+        customer: id ? { value: id, label: record.customer_name || customerLabelById(id) || `#${id}` } : null,
         priority: record.priority != null ? Number(record.priority) : 0,
+        collaborators, // để UI hiển thị chọn lại
     }
     openDrawer.value = true
 }
+
 
 const onCloseDrawer = () => {
     openDrawer.value = false
@@ -1051,6 +1114,15 @@ onMounted(() => {
     background-color: #f5faff !important;
     transition: background-color 0.3s;
 }
+.progress-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 170px;
+}
+.progress-cell :deep(.ant-progress) { flex: 1; }
+.progress-text { white-space: nowrap; font-size: 12px; color: rgba(0,0,0,.65); }
+
 </style>
 
 <style scoped>

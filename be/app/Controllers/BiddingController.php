@@ -10,6 +10,8 @@ use CodeIgniter\RESTful\ResourceController;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeZone;
+use Exception;
+use ReflectionException;
 use Throwable;
 
 class BiddingController extends ResourceController
@@ -17,11 +19,11 @@ class BiddingController extends ResourceController
     protected $modelName = BiddingModel::class;
     protected $format = 'json';
 
-    protected array $validStatuses = [0, 1, 2, 3, 4, 5];
+    protected array $validStatuses = [1, 2, 3];
 
     /**
      * Lấy danh sách gói thầu có lọc + phân trang
-     * @throws \Exception
+     * @throws Exception
      */
     public function index()
     {
@@ -74,6 +76,47 @@ class BiddingController extends ResourceController
             }
             return $row;
         }, $data);
+
+        // -- GẮN PROGRESS CHO MỖI GÓI THẦU TRONG LIST (tuỳ chọn qua ?with_progress=1)
+        $withProgress = filter_var($filters['with_progress'] ?? '0', FILTER_VALIDATE_BOOLEAN);
+
+        if ($withProgress && !empty($data)) {
+            foreach ($data as &$row) {
+                $bidId = (int)(is_array($row) ? $row['id'] : $row->id);
+                $prog  = $this->computeProgressForBidding($bidId); // đã có sẵn ở dưới
+
+                if (is_array($row)) {
+                    $row['progress']          = $prog;
+                    $row['progress_percent']  = (int)($prog['bidding_progress'] ?? 0);
+                    $row['steps_done']        = (int)($prog['steps_completed'] ?? 0);
+                    $row['steps_total']       = (int)($prog['steps_total'] ?? 0);
+                    $row['subtasks_done']     = (int)($prog['subtasks_approved'] ?? 0);
+                    $row['subtasks_total']    = (int)($prog['subtasks_total'] ?? 0);
+                } else {
+                    $row->progress            = $prog;
+                    $row->progress_percent    = (int)($prog['bidding_progress'] ?? 0);
+                    $row->steps_done          = (int)($prog['steps_completed'] ?? 0);
+                    $row->steps_total         = (int)($prog['steps_total'] ?? 0);
+                    $row->subtasks_done       = (int)($prog['subtasks_approved'] ?? 0);
+                    $row->subtasks_total      = (int)($prog['subtasks_total'] ?? 0);
+                }
+
+                $col = $this->collaboratorsForBidding($bidId);
+                if (is_array($row)) {
+                    $row['collaborators']         = $col['ids'];
+                    $row['collaborators_detail']  = $col['details'];
+                    $row['collaborators_count']   = $col['count'];
+                    $row['collaborators_names']   = $col['names'];
+                } else {
+                    $row->collaborators        = $col['ids'];
+                    $row->collaborators_detail = $col['details'];
+                    $row->collaborators_count  = $col['count'];
+                    $row->collaborators_names  = $col['names'];
+                }
+            }
+            unset($row);
+        }
+
 
         // === SUMMARY (không phân trang)
         $tz       = new DateTimeZone('Asia/Ho_Chi_Minh');
@@ -163,6 +206,128 @@ class BiddingController extends ResourceController
         }
     }
 
+    // BiddingController
+    private function computeProgressForBidding(int $biddingId): array
+    {
+        $db = db_connect();
+
+        // Lấy các step thuộc gói này (KHÔNG select weight)
+        $steps = $db->table('bidding_steps')
+            ->select('id')
+            ->where('bidding_id', $biddingId)
+            ->orderBy('step_number', 'asc')
+            ->get()->getResultArray();
+
+        if (!$steps) {
+            return [
+                'bidding_progress' => 0,
+                'steps_total'      => 0,
+                'steps_completed'  => 0,
+                'subtasks_total'   => 0,
+                'subtasks_approved'=> 0,
+                'per_steps'        => [],
+            ];
+        }
+
+        $stepIds = array_column($steps, 'id');
+
+        // Gộp task theo step: tổng & số đã DUYỆT + hoàn tất (progress>=100 hoặc status='done')
+        $rows = $db->table('tasks')
+            ->select("
+            step_id,
+            COUNT(*) AS total_tasks,
+            SUM(CASE
+                WHEN approval_status='approved'
+                 AND ((progress+0) >= 100 OR status='done')
+                THEN 1 ELSE 0 END
+            ) AS approved_tasks
+        ")
+            ->where('linked_type', 'bidding')
+            ->whereIn('step_id', $stepIds)
+            ->groupBy('step_id')
+            ->get()->getResultArray();
+
+        $byStep = [];
+        foreach ($rows as $r) {
+            $byStep[(string)$r['step_id']] = [
+                'total'    => (int)$r['total_tasks'],
+                'approved' => (int)$r['approved_tasks'],
+            ];
+        }
+
+        $perSteps = [];
+        $stepsCompleted   = 0;
+        $subtasksTotal    = 0;
+        $subtasksApproved = 0;
+        $sumPercent       = 0;
+
+        foreach ($stepIds as $sid) {
+            $sidStr = (string)$sid;
+            $agg = $byStep[$sidStr] ?? ['total'=>0, 'approved'=>0];
+
+            $percent   = $agg['total'] > 0 ? (int) round($agg['approved'] * 100 / $agg['total']) : 0;
+            $completed = ($agg['total'] > 0 && $agg['approved'] === $agg['total']) ? 1 : 0;
+
+            $perSteps[] = [
+                'step_id'       => (int)$sid,
+                'step_progress' => $percent,
+                'sub_total'     => $agg['total'],
+                'sub_done'      => $agg['approved'],
+                'completed'     => $completed,
+            ];
+
+            $stepsCompleted   += $completed;
+            $subtasksTotal    += $agg['total'];
+            $subtasksApproved += $agg['approved'];
+            $sumPercent       += $percent;
+        }
+
+        $biddingProgress = count($stepIds) > 0 ? (int) round($sumPercent / count($stepIds)) : 0;
+
+        return [
+            'bidding_progress' => $biddingProgress,   // %
+            'steps_total'      => count($stepIds),
+            'steps_completed'  => $stepsCompleted,
+            'subtasks_total'   => $subtasksTotal,
+            'subtasks_approved'=> $subtasksApproved,
+            'per_steps'        => $perSteps,
+        ];
+    }
+
+
+    // BiddingController
+    private function collaboratorsForBidding(int $biddingId): array
+    {
+        $db = db_connect();
+
+        $rows = $db->table('tasks t')
+            ->select('t.assigned_to, u.name')
+            ->join('users u', 'u.id = t.assigned_to', 'left')
+            ->where('t.linked_type', 'bidding')
+            ->where('t.linked_id', $biddingId)
+            ->where('t.assigned_to IS NOT NULL', null, false)
+            ->groupBy('t.assigned_to, u.name')
+            ->get()->getResultArray();
+
+        // unique theo user
+        $byId = [];
+        foreach ($rows as $r) {
+            $id = (string)($r['assigned_to'] ?? '');
+            if ($id === '') continue;
+            $byId[$id] = ['id' => $id, 'name' => $r['name'] ?? ('#'.$id)];
+        }
+
+        $details = array_values($byId);
+        return [
+            'ids'    => array_column($details, 'id'),
+            'names'  => implode(', ', array_column($details, 'name')),
+            'details'=> $details,
+            'count'  => count($details),
+        ];
+    }
+
+
+
 
 
     /**
@@ -200,13 +365,22 @@ class BiddingController extends ResourceController
         $bidding['days_remaining'] = $daysRemaining;
         $bidding['days_overdue']   = $daysOverdue;
 
+        $progress = $this->computeProgressForBidding((int)$id);
+        $bidding['progress'] = $progress;
+
+        $col = $this->collaboratorsForBidding((int)$id);
+        $bidding['collaborators']        = $col['ids'];
+        $bidding['collaborators_detail'] = $col['details'];
+        $bidding['collaborators_count']  = $col['count'];
+        $bidding['collaborators_names']  = $col['names'];
+
         return $this->respond($bidding);
     }
 
 
     /**
      * Tạo mới gói thầu và sinh bước mặc định từ setting
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function create()
     {
@@ -261,7 +435,7 @@ class BiddingController extends ResourceController
 
     /**
      * Tạo các bước mẫu từ setting `bidding_steps`
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     protected function generateStepsFromTemplate($biddingId, $customerId): void
     {
