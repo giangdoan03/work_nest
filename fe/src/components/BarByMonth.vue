@@ -1,6 +1,6 @@
 <template>
-    <div style="width: 800px; height: 200px; margin: 20px auto 0;">
-        <Bar :data="chartData" :options="chartOptions" style="width:800px; height:200px;" />
+    <div style="width: 500px; height: 200px; margin: 20px auto 0;">
+        <Bar :data="chartData" :options="chartOptions" style="width:500px; height:200px;" />
     </div>
 </template>
 
