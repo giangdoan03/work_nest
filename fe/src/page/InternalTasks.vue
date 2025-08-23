@@ -212,6 +212,35 @@
             width="600"
         >
             <a-row :gutter="[14,14]" style="margin-top: 10px;">
+                <!-- Độ ưu tiên -->
+                <a-form-item label="Độ ưu tiên">
+                    <a-button-group style="width:100%; display:flex; gap:1px;">
+                        <a-button
+                            :type="dataFilter.priority === null ? 'primary' : 'default'"
+                            style="flex:1"
+                            @click="filterByPriority(null)"
+                        >Tất cả</a-button>
+
+                        <a-button
+                            :type="dataFilter.priority === 'low' ? 'primary' : 'default'"
+                            danger ghost
+                            style="flex:1"
+                            @click="filterByPriority('low')"
+                        >Thấp</a-button>
+
+                        <a-button
+                            :type="dataFilter.priority === 'normal' ? 'primary' : 'default'"
+                            style="flex:1; background:#faad14; color:#fff"
+                            @click="filterByPriority('normal')"
+                        >Thường</a-button>
+
+                        <a-button
+                            :type="dataFilter.priority === 'high' ? 'primary' : 'default'"
+                            style="flex:1; background:#f5222d; color:#fff"
+                            @click="filterByPriority('high')"
+                        >Cao</a-button>
+                    </a-button-group>
+                </a-form-item>
                 <a-col :span="24">
                     <a-input
                         v-model:value="dataFilter.title"
@@ -255,36 +284,6 @@
                         style="width: 100%"
                     />
                 </a-col>
-
-                <!-- Độ ưu tiên -->
-                <a-form-item label="Độ ưu tiên">
-                    <a-button-group style="width:100%; display:flex; gap:8px;">
-                        <a-button
-                            :type="dataFilter.priority === null ? 'primary' : 'default'"
-                            style="flex:1"
-                            @click="filterByPriority(null)"
-                        >Tất cả</a-button>
-
-                        <a-button
-                            :type="dataFilter.priority === 'low' ? 'primary' : 'default'"
-                            danger ghost
-                            style="flex:1"
-                            @click="filterByPriority('low')"
-                        >Thấp</a-button>
-
-                        <a-button
-                            :type="dataFilter.priority === 'normal' ? 'primary' : 'default'"
-                            style="flex:1; background:#faad14; color:#fff"
-                            @click="filterByPriority('normal')"
-                        >Thường</a-button>
-
-                        <a-button
-                            :type="dataFilter.priority === 'high' ? 'primary' : 'default'"
-                            style="flex:1; background:#f5222d; color:#fff"
-                            @click="filterByPriority('high')"
-                        >Cao</a-button>
-                    </a-button-group>
-                </a-form-item>
 
                 <a-col :span="24">
                     <a-config-provider :locale="locale">
@@ -355,18 +354,16 @@ const hasText = (v) => ((v ?? '').toString().trim().length > 0)
 const activeFilterCount = computed(() => {
     const f = dataFilter.value
     let n = 0
-    if (f.linked_type) n++
+    if (hasText(f.title)) n++
     if (f.id_department) n++
     if (f.status) n++
     if (f.priority) n++
     if (f.assigned_to) n++
     if (f.start_date && f.end_date) n++
-    if (hasText(f.title)) n++   // ✅ an toàn
     return n
 })
 
-
-// Chỉ kiểm tra các trường trong Drawer (để enable/disable nút Đặt lại)
+// cái này giữ nguyên để enable/disable nút Reset
 const hasAnyAdvancedFilter = computed(() => {
     const f = dataFilter.value
     return (
@@ -388,6 +385,7 @@ const resetDrawerFilters = () => {
     dataFilter.value.assigned_to = null
     dataFilter.value.start_date = null
     dataFilter.value.end_date = null
+    dataFilter.value.linked_type = null
     dateRange.value = []
     // GIỮ nguyên dataFilter.value.linked_type (bộ lọc nhanh bên ngoài)
     applyDrawerFilters() // gọi luôn để reload

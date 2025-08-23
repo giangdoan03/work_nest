@@ -163,11 +163,14 @@ $routes->group('api', function ($routes) {
     $routes->put('contract-steps/(:num)/complete', 'ContractStepController::complete/$1');
 
     // Task Approvals
+    $routes->get('task-approvals', 'TaskApprovalController::index'); // ?page, ?limit, ?status=pending|resolved, ?search=
+    $routes->post('task-approvals/(:num)/approve', 'TaskApprovalController::approve/$1');
+    $routes->post('task-approvals/(:num)/reject',  'TaskApprovalController::reject/$1');
 
-    $routes->get('task-approvals', 'TaskApprovalController::index'); // Lấy danh sách nhiệm vụ cần duyệt
-    $routes->post('task-approvals/(:num)/approve', 'TaskApprovalController::approve/$1'); // Phê duyệt task
-    $routes->post('task-approvals/(:num)/reject', 'TaskApprovalController::reject/$1');   // Từ chối task
-    $routes->get('task-approvals/full-status/(:num)', 'TaskApprovalController::fullApprovalStatus/$1'); // Hiển thị trạng thái duyệt từng cấp
+    // ▶️ cần thêm:
+    $routes->get('task-approvals/(:num)/can-act',  'TaskApprovalController::canAct/$1');          // check quyền trước khi mở modal
+    $routes->get('task-approvals/full-status/(:num)', 'TaskApprovalController::fullApprovalStatus/$1'); // timeline theo cấp
+    $routes->get('tasks/(:num)/approvals',         'TaskApprovalController::history/$1');
 
 
 

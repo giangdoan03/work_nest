@@ -29,7 +29,7 @@ export const rejectTaskAPI = (approvalId, data = {}) =>
     instance.post(`/task-approvals/${approvalId}/reject`, data)
 
 /**
- * 🔹 Lấy lịch sử duyệt của một task (đã duyệt qua log)
+ * 🔹 Lấy lịch sử duyệt của một task (log các cấp đã duyệt)
  * @param {number|string} taskId
  */
 export const getApprovalHistoryByTask = (taskId) =>
@@ -41,3 +41,18 @@ export const getApprovalHistoryByTask = (taskId) =>
  */
 export const getFullApprovalStatus = (taskId) =>
     instance.get(`/task-approvals/full-status/${taskId}`)
+
+/**
+ * 🔹 Kiểm tra quyền trước khi mở modal duyệt / từ chối
+ * @param {number|string} id - id của task_approval
+ */
+export const canActApprovalAPI = (id) =>
+    instance.get(`/task-approvals/${id}/can-act`)
+
+/**
+ * 🔹 (Optional) Lấy danh sách approvers theo cấp duyệt
+ * @param {number|string} taskId
+ * @param {number} level
+ */
+export const getApproversByLevelAPI = (taskId, level) =>
+    instance.get(`/tasks/${taskId}/approvers`, { params: { level } })
