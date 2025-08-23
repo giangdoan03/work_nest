@@ -60,8 +60,8 @@ class TaskController extends ResourceController
             $builder->where('linked_type', $params['linked_type']);
         }
 
-        if (!empty($params['id_department'])) {
-            $builder->where('users.department_id', $params['id_department']);
+        if (array_key_exists('id_department', $params) && $params['id_department'] !== '') {
+            $builder->where('tasks.id_department', (int)$params['id_department']);
         }
 
         if (!empty($params['title'])) {
@@ -497,8 +497,8 @@ class TaskController extends ResourceController
             $builder->where('tasks.assigned_to', $params['assigned_to']);
         }
 
-        if (!empty($params['id_department'])) {
-            $builder->where('users.department_id', $params['id_department']);
+        if (isset($params['id_department']) && $params['id_department'] !== '') {
+            $builder->where('tasks.id_department', (int)$params['id_department']);
         }
 
         $tasks = $builder->get()->getResultArray();
@@ -520,10 +520,9 @@ class TaskController extends ResourceController
             $builder->where('tasks.assigned_to', $params['assigned_to']);
         }
 
-        if (!empty($params['id_department'])) {
-            $builder->where('users.department_id', $params['id_department']);
+        if (isset($params['id_department']) && $params['id_department'] !== '') {
+            $builder->where('tasks.id_department', (int)$params['id_department']);
         }
-
         $tasks = $builder->get()->getResultArray();
 
         // Định dạng giống API chính

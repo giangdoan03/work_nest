@@ -591,40 +591,58 @@ const changeDateTime = (day, date) => {
     getInternalTask()
 }
 const getInternalTask = async () => {
-    loading.value = true
+    loading.value = true;
     try {
-        const user = userStore.currentUser;
+        const payload = buildTaskQuery();
+        // Debug xem thật sự đã có id_department chưa
+        // console.log('[tasks] payload =', payload);
 
-        // Xóa filter cũ (tránh chồng chéo)
-        dataFilter.value.assigned_to = null
-        dataFilter.value.id_department = null
+        const response = await getTasks(payload);
 
-        // 👇 Phân quyền lọc theo vai trò
-        const roleId = Number(user?.role_id)
-        if (roleId === 3) {
-            dataFilter.value.assigned_to = user.id
-        } else if (roleId === 2) {
-            dataFilter.value.id_department = user.department_id
-        }
-        // Admin không cần giới hạn
+        tableData.value = response?.data?.data ?? [];
 
-        const response = await getTasks(dataFilter.value)
-
-        tableData.value = response.data.data ?? []
-
-        const pg = response.data.pagination
+        const pg = response?.data?.pagination ?? {};
         pagination.value = {
             ...pagination.value,
-            current: pg.page,
-            total: pg.total,
-            pageSize: pg.per_page
-        }
+            current: pg.page ?? 1,
+            total: pg.total ?? 0,
+            pageSize: pg.per_page ?? pagination.value.pageSize,
+        };
     } catch (e) {
-        message.error('Không thể tải nhiệm vụ')
+        message.error('Không thể tải nhiệm vụ');
     } finally {
-        loading.value = false
+        loading.value = false;
     }
-}
+};
+
+// 👇 Tạo payload gửi API, KHÔNG mutate dataFilter gốc
+const buildTaskQuery = () => {
+    const f = { ...dataFilter.value };
+
+    // Ép kiểu số cho các filter số (tránh "3" ≠ 3 trên BE)
+    if (f.id_department !== null && f.id_department !== undefined && f.id_department !== '') {
+        f.id_department = Number(f.id_department);
+    }
+    if (f.assigned_to !== null && f.assigned_to !== undefined && f.assigned_to !== '') {
+        f.assigned_to = Number(f.assigned_to);
+    }
+
+    // Nếu BE dùng department_id thì map thêm (đảm bảo tương thích hai phía)
+    if (f.id_department && !f.department_id) {
+        f.department_id = f.id_department;
+    }
+
+    // Fallback theo role CHỈ khi user không chọn gì cả
+    if (!f.assigned_to && !f.id_department) {
+        const user = userStore.currentUser;
+        const roleId = Number(user?.role_id);
+        if (roleId === 3) f.assigned_to = Number(user.id);
+        else if (roleId === 2) f.id_department = Number(user.department_id);
+    }
+
+    return f;
+};
+
 
 
 const listBidding = ref([])
