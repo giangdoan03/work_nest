@@ -2,10 +2,14 @@
     <div class="sidebar" :class="{ 'collapsed': collapsed }">
         <!-- Logo -->
         <div class="logo-container">
-            <div class="logo">
-                <span class="logo-text" v-if="!collapsed">Work Nest</span>
-                <span class="logo-text-collapsed" v-else>WN</span>
-            </div>
+            <router-link to="/" class="logo">
+                <!-- Ảnh logo: dùng icon khi collapsed, dùng logo ngang khi mở -->
+                <img
+                    :src="collapsed ? logoMark : logoFull"
+                    class="logo-img"
+                    :alt="collapsed ? 'WN' : 'Work Nest'"
+                />
+            </router-link>
         </div>
 
         <!-- Menu -->
@@ -358,6 +362,10 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
+// Dùng đúng đường dẫn tới file logo của bạn
+import logoFull from '@/assets/TTID_logo.png'   // logo ngang có chữ
+import logoMark from '@/assets/logoMark.png'   // logo icon (vuông)
+
 import {
     BarChartOutlined,
     ScheduleOutlined,
@@ -890,5 +898,24 @@ const toggleCollapsed = () => {
 
 .sidebar::-webkit-scrollbar-thumb:hover {
     background: #404040;
+}
+.logo-container {
+    padding: 12px 16px;
+}
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+.logo-img {
+    height: 28px;   /* chỉnh theo kích thước bạn muốn */
+    width: auto;
+    display: block;
+}
+.logo-text {
+    font-weight: 600;
+    font-size: 16px;
+    color: #1f1f1f;
 }
 </style>
