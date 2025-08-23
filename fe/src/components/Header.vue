@@ -1,15 +1,9 @@
 <template>
     <div class="header">
-        <a-layout-header
-            style="background: #fff; padding: 0; display: flex; justify-content: space-between; align-items: center;"
-        >
+        <a-layout-header style="background: #fff; padding: 0; display: flex; justify-content: space-between; align-items: center;">
             <!-- Toggle button -->
             <div style="margin-left: 16px;">
-                <a-button
-                    type="text"
-                    @click="$emit('toggle')"
-                    style="border: none; box-shadow: none;"
-                >
+                <a-button type="text" @click="$emit('toggle')" style="border: none; box-shadow: none;">
                     <MenuFoldOutlined v-if="!collapsed" />
                     <MenuUnfoldOutlined v-else />
                 </a-button>
@@ -22,7 +16,23 @@
                         <router-link v-if="route.name !== currentRoute.name" :to="{ name: route.name }">
                             {{ route.meta.breadcrumb }}
                         </router-link>
-                        <span v-else>{{ route.meta.breadcrumb }}</span>
+
+                        <!-- Nếu là trang internal-tasks thì hiển thị thêm nút + -->
+                        <template v-else>
+                          <span style="display: inline-flex; align-items: center; gap: 4px;">
+                            {{ route.meta.breadcrumb }}
+
+<a-button
+    v-if="currentRoute.path === '/internal-tasks'"
+    size="small"
+    @click="onClickCreateTask"
+    style="margin-left: 8px"
+>
+  <template #icon><PlusOutlined /></template>
+</a-button>
+                          </span>
+                        </template>
+
                     </a-breadcrumb-item>
                 </a-breadcrumb>
             </div>
@@ -35,7 +45,6 @@
                             <template #icon><UserOutlined /></template>
                         </a-avatar>
                         <span>{{ user.name }}</span>
-    <!--                    <DownOutlined style="margin-left: 6px;" />-->
                     </div>
     
                     <template #overlay>
@@ -66,13 +75,25 @@ import {
     MenuFoldOutlined,
     LogoutOutlined,
     DownOutlined,
-    UserOutlined
+    UserOutlined,
+    PlusOutlined
 } from '@ant-design/icons-vue'
 
 const props = defineProps({
     collapsed: Boolean,
     user: Object
 })
+
+
+import { useCommonStore } from '@/stores/common'
+
+const common = useCommonStore()
+
+const onClickCreateTask = () => {
+    if (currentRoute.path === '/internal-tasks') {
+        common.triggerCreateTask('internal')
+    }
+}
 
 const emit = defineEmits(['toggle', 'logout'])
 

@@ -2,8 +2,8 @@
     <div class="content">
         <a-layout-content
             :style="{
-            margin: '24px 16px',
-            padding: '24px',
+            margin: '15px 15px',
+            padding: '15px',
             background: '#fff',
             }"
         >
