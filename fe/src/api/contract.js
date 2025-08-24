@@ -5,7 +5,8 @@ const instance = axios.create({
     withCredentials: true
 })
 
-export const getContractsAPI = () => instance.get('/contracts')
+export const getContractsAPI = (params = {}) =>
+    instance.get('/contracts', { params })
 
 export const getContractAPI = (id) => instance.get(`/contracts/${id}`)
 

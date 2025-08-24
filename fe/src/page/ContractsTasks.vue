@@ -1,102 +1,216 @@
 <template>
     <div>
-        <a-flex justify="space-between">
-            <div>
-                <a-typography-title :level="4">Danh sách hợp đồng</a-typography-title>
+        <!-- Header + Search + Badge -->
+        <a-flex justify="space-between" align="center" style="margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <a-typography-title :level="4" style="margin:0">Danh sách hợp đồng</a-typography-title>
+                <a-badge :count="totalDisplay" show-zero/>
             </div>
+            <a-space>
+                <a-input
+                    v-model:value="searchTerm"
+                    allow-clear
+                    style="width:320px"
+                    placeholder="Tìm hợp đồng theo tên/mã…"
+                >
+                    <template #prefix>
+                        <SearchOutlined/>
+                    </template>
+                </a-input>
+                <a-button type="primary" @click="showPopupCreate">Thêm hợp đồng mới</a-button>
+            </a-space>
+        </a-flex>
+
+        <!-- Summary cards -->
+        <div class="summary-cards">
+            <a-card
+                v-for="item in statsContracts"
+                :key="item.key"
+                :style="{ backgroundColor: item.bg, cursor:'pointer' }"
+                @click="openContractDrawer(item.key,item.label)"
+            >
+                <a-space direction="vertical" align="center">
+                    <component :is="item.icon" :style="{fontSize:'32px',color:item.color}"/>
+                    <div>{{ item.label }}</div>
+                    <h2 class="number" :style="{ color: item.color }">{{ item.count }}</h2>
+                </a-space>
+            </a-card>
+        </div>
+
+        <!-- Bulk actions -->
+        <a-flex justify="space-between" align="center" style="margin-top:12px">
             <div>
                 <a-space>
                     <a-button danger v-if="selectedRowKeys.length" @click="handleBulkDelete">
                         Xóa {{ selectedRowKeys.length }} hợp đồng
                     </a-button>
-                    <a-button type="primary" @click="showPopupCreate">Thêm hợp đồng mới</a-button>
                 </a-space>
             </div>
         </a-flex>
+
+        <!-- Table -->
         <a-table
-                :columns="columns"
-                :data-source="tableData"
-                :loading="loading"
-                :row-selection="rowSelection"
-                 style="margin-top: 12px;"
-                row-key="id"
-                :scroll="{y: 'calc( 100vh - 330px )'}">
+            :columns="columns"
+            :data-source="tableData"
+            :loading="loading"
+            row-key="id"
+            :pagination="pagination"
+            :row-selection="rowSelection"
+            :scroll="{ x: 'max-content'}"
+            style="margin-top:4px"
+            @change="handleTableChange"
+        >
             <template #bodyCell="{ column, record, index }">
                 <template v-if="column.dataIndex === 'stt'">
-                    {{ index + 1 }}
+                    {{ (pagination.current - 1) * pagination.pageSize + index + 1 }}
                 </template>
 
-                <template v-else-if="column.dataIndex === 'name'">
+                <template v-else-if="column.key === 'name'">
                     <a-tooltip :title="record.name">
-                        <a-typography-text strong style="cursor: pointer" @click="goToContractDetail(record.id)">
+                        <a-typography-text strong style="cursor:pointer" @click="goToContractDetail(record.id)">
                             {{ truncateText(record.name, 25) }}
                         </a-typography-text>
                     </a-tooltip>
                 </template>
 
+                <!-- ✅ NEW: progress -->
+                <template v-else-if="column.dataIndex === 'progress'">
+                    <a-tooltip :title="progressText(record)">
+                        <a-progress
+                            :percent="progressPercent(record)"
+                            :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
+                            :status="progressPercent(record) >= 100 ? 'success' : 'active'"
+                            size="small"
+                            :show-info="progressPercent(record) >= 100"
+                        />
+                    </a-tooltip>
+                </template>
+
+                <!-- Người phụ trách -->
+                <template v-else-if="column.dataIndex === 'assigned_to_name'">
+                    <a-tooltip :title="record.assigned_to_name">
+                        <a-avatar :style="{backgroundColor:getAvatarColor(record.assigned_to_name)}" size="small">
+                            {{ getFirstLetter(record.assigned_to_name) }}
+                        </a-avatar>
+                    </a-tooltip>
+                </template>
+
+                <!-- Trạng thái -->
                 <template v-else-if="column.dataIndex === 'status'">
                     <a-tag :color="getStatusColor(record.status)">
                         {{ getStatusLabel(record.status) }}
                     </a-tag>
                 </template>
 
-                <template v-else-if="column.dataIndex === 'start_date'">
-                    {{ formatDate(record.start_date) }}
+                <!-- Ngày tháng -->
+                <template v-else-if="column.dataIndex === 'start_date' || column.dataIndex === 'end_date'">
+                    {{ formatDate(record[column.dataIndex]) }}
                 </template>
 
-                <template v-else-if="column.dataIndex === 'end_date'">
-                    {{ formatDate(record.end_date) }}
+                <!-- Hạn -->
+                <template v-else-if="column.dataIndex === 'due'">
+                    <div :class="{ 'overdue-cell': Number(record.days_overdue) > 0 }">
+                        <a-tag v-if="record.days_remaining > 0" color="green">Còn {{ record.days_remaining }} ngày
+                        </a-tag>
+                        <a-tag v-else-if="record.days_remaining === 0 && record.days_overdue === 0" color="gold">Hạn
+                            chót hôm nay
+                        </a-tag>
+                        <a-tag v-else-if="record.days_overdue > 0" color="red">Quá hạn {{ record.days_overdue }} ngày
+                        </a-tag>
+                        <a-tag v-else color="default">Không xác định</a-tag>
+                    </div>
                 </template>
 
-                <template v-if="column.dataIndex === 'due'">
-                    <a-tag
-                        v-if="record.days_remaining > 0"
-                        color="green"
-                    >
-                        Còn {{ record.days_remaining }} ngày
-                    </a-tag>
-
-                    <a-tag
-                        v-else-if="record.days_remaining === 0 && record.days_overdue === 0"
-                        color="gold"
-                    >
-                        Hạn chót hôm nay
-                    </a-tag>
-
-                    <a-tag
-                        v-else-if="record.days_overdue > 0"
-                        color="red"
-                    >
-                        Quá hạn {{ record.days_overdue }} ngày
-                    </a-tag>
-
-                    <a-tag v-else color="default">
-                        Không xác định
-                    </a-tag>
-                </template>
-
-
-
+                <!-- Hành động -->
                 <template v-else-if="column.dataIndex === 'action'">
-                    <EyeOutlined class="icon-action" style="color: #52c41a" @click="goToContractDetail(record.id)"/>
-                    <EditOutlined class="icon-action" style="color: #1890ff" @click="showPopupDetail(record)"/>
+                    <a-tooltip title="Xem chi tiết">
+                        <EyeOutlined class="icon-action" style="color:#52c41a" @click="goToContractDetail(record.id)"/>
+                    </a-tooltip>
+                    <a-tooltip title="Chỉnh sửa">
+                        <EditOutlined class="icon-action" style="color:#1890ff" @click="showPopupDetail(record)"/>
+                    </a-tooltip>
                     <a-popconfirm
-                            title="Bạn chắc chắn muốn xóa hợp đồng này?"
-                            ok-text="Xóa"
-                            cancel-text="Hủy"
-                            @confirm="deleteConfirm(record.id)"
-                            placement="topRight"
+                        title="Bạn chắc chắn muốn xóa hợp đồng này?"
+                        ok-text="Xóa"
+                        cancel-text="Hủy"
+                        @confirm="deleteConfirm(record.id)"
+                        placement="topRight"
                     >
-                        <DeleteOutlined class="icon-action" style="margin: 0; color: red" />
+                        <a-tooltip title="Xoá">
+                            <DeleteOutlined class="icon-action" style="color:red;margin:0"/>
+                        </a-tooltip>
                     </a-popconfirm>
                 </template>
             </template>
-
         </a-table>
 
+        <!-- Drawer lọc nhanh theo card -->
+        <a-drawer
+            :title="drawerContractTitle"
+            placement="right"
+            :width="1200"
+            :open="drawerVisible"
+            @close="drawerVisible=false"
+        >
+            <a-table
+                :key="drawerKey + '-' + drawerPagination.current + '-' + drawerPagination.pageSize"
+                :columns="drawerColumns"
+                :data-source="drawerData"
+                :loading="drawerLoading"
+                :pagination="drawerPagination"
+                @change="handleDrawerTableChange"
+                row-key="id"
+                size="small"
+                bordered
+                :scroll="{ x: 'max-content'}"
+            >
+                <template #bodyCell="{ column, record, index }">
+                    <template v-if="column.dataIndex === 'index'">{{ index + 1 }}</template>
+                    <template v-else-if="column.key === 'name'">
+                        <a-tooltip :title="record.name">
+                            <a-typography-text strong style="cursor:pointer" @click="goToContractDetail(record.id)">
+                                {{ truncateText(record.name, 25) }}
+                            </a-typography-text>
+                        </a-tooltip>
+                    </template>
+                    <template v-else-if="column.dataIndex === 'progress'">
+                        <a-progress
+                            :percent="progressPercent(record)"
+                            :stroke-color="{ '0%':'#108ee9', '100%':'#87d068' }"
+                            :status="progressPercent(record) >= 100 ? 'success' : 'active'"
+                            size="small"
+                        />
+                    </template>
+                    <template v-else-if="column.dataIndex === 'assigned_to_name'">
+                        <a-tooltip :title="record.assigned_to_name">
+                            <a-avatar :style="{backgroundColor:getAvatarColor(record.assigned_to_name)}" size="small">
+                                {{ getFirstLetter(record.assigned_to_name) }}
+                            </a-avatar>
+                        </a-tooltip>
+                    </template>
+                    <template v-else-if="column.dataIndex === 'status'">
+                        <a-tag :color="getStatusColor(record.status)">{{ getStatusLabel(record.status) }}</a-tag>
+                    </template>
+                    <template v-else-if="column.dataIndex === 'start_date'">{{
+                            formatDate(record.start_date)
+                        }}
+                    </template>
+                    <template v-else-if="column.dataIndex === 'end_date'">{{ formatDate(record.end_date) }}</template>
+                    <template v-else-if="column.dataIndex === 'due'">
+                        <a-tag v-if="record.days_remaining>0" color="green">Còn {{ record.days_remaining }} ngày</a-tag>
+                        <a-tag v-else-if="record.days_remaining===0&&record.days_overdue===0" color="gold">Hạn chót hôm
+                            nay
+                        </a-tag>
+                        <a-tag v-else-if="record.days_overdue>0" color="red">Quá hạn {{ record.days_overdue }} ngày
+                        </a-tag>
+                    </template>
+                </template>
+            </a-table>
+        </a-drawer>
+
+        <!-- Drawer tạo/sửa: giữ form hiện có của bạn -->
         <a-drawer :title="selectedContract ? 'Sửa hợp đồng' : 'Tạo hợp đồng mới'" :width="700" :open="openDrawer"
-                  :body-style="{ paddingBottom: '80px' }"
-                  :footer-style="{ textAlign: 'right' }" @close="onCloseDrawer">
+                  :body-style="{ paddingBottom: '80px' }" :footer-style="{ textAlign: 'right' }" @close="onCloseDrawer">
             <a-form ref="formRef" :model="formData" :rules="rules" layout="vertical">
                 <a-row :gutter="16">
                     <a-col :span="24">
@@ -126,49 +240,34 @@
                 </a-row>
                 <a-row :gutter="[16, 0]">
                     <a-col :span="24">
-                        <a-checkbox v-model:checked="formData.is_awarded" style="margin-bottom: 12px;" @change="handleIsAwardedChange">
-                            Đã trúng thầu
+                        <a-checkbox v-model:checked="formData.is_awarded" style="margin-bottom: 12px;"
+                                    @change="handleIsAwardedChange"> Đã trúng thầu
                         </a-checkbox>
                     </a-col>
                     <a-col :span="24" v-if="formData.is_awarded">
                         <a-form-item label="Gói thầu đã trúng" name="bidding_id">
-                            <a-select
-                                    v-model:value="formData.bidding_id"
-                                    :options="awardedBiddings"
-                                    placeholder="Chọn gói thầu đã trúng"
-                                    allow-clear
-                                    show-search
-                                    :filter-option="(input, option) =>option.label.toLowerCase().includes(input.toLowerCase())"
-                            />
+                            <a-select v-model:value="formData.bidding_id" :options="awardedBiddings"
+                                      placeholder="Chọn gói thầu đã trúng" allow-clear show-search
+                                      :filter-option="(input, option) =>option.label.toLowerCase().includes(input.toLowerCase())"/>
                         </a-form-item>
                     </a-col>
                 </a-row>
                 <a-row :gutter="16">
                     <a-col :span="24">
                         <a-form-item label="Khách hàng liên quan">
-                            <a-select
-                                    v-model:value="formData.customer_id"
-                                    :options="customerOptions"
-                                    placeholder="Chọn khách hàng liên quan"
-                                    allow-clear
-                                    show-search
-                                    :disabled="formData.is_awarded"
-                                    :filter-option="(input, option) => option.label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(input.toLowerCase()) || option.label.toLowerCase().includes(input.toLowerCase())"
-                            />
+                            <a-select v-model:value="formData.customer_id" :options="customerOptions"
+                                      placeholder="Chọn khách hàng liên quan" allow-clear show-search
+                                      :disabled="formData.is_awarded"
+                                      :filter-option="(input, option) => option.label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(input.toLowerCase()) || option.label.toLowerCase().includes(input.toLowerCase())"/>
                         </a-form-item>
                     </a-col>
                 </a-row>
                 <a-row :gutter="16">
                     <a-col :span="24">
                         <a-form-item label="Người phụ trách" name="assigned_to">
-                            <a-select
-                                    v-model:value="formData.assigned_to"
-                                    :options="userOptions"
-                                    placeholder="Chọn người phụ trách"
-                                    allow-clear
-                                    show-search
-                                    :filter-option="(input, option) => option.label.toLowerCase().includes(input.toLowerCase())"
-                            />
+                            <a-select v-model:value="formData.assigned_to" :options="userOptions"
+                                      placeholder="Chọn người phụ trách" allow-clear show-search
+                                      :filter-option="(input, option) => option.label.toLowerCase().includes(input.toLowerCase())"/>
                         </a-form-item>
                     </a-col>
                 </a-row>
@@ -206,485 +305,579 @@
 </template>
 
 <script setup>
-    import {computed, onMounted, ref, watch} from 'vue'
-    import {message} from 'ant-design-vue'
-    import {DeleteOutlined, EditOutlined, EyeOutlined} from '@ant-design/icons-vue';
-    import dayjs from 'dayjs';
-    import {getBiddingAPI, getBiddingsAPI} from '../api/bidding'
-    import {getCustomers} from '../api/customer' // đảm bảo bạn có API này
-    import {
-        cloneStepsFromTemplateAPI,
-        createContractAPI,
-        deleteContractAPI,
-        getContractsAPI,
-        updateContractAPI
-    } from "../api/contract"; // ✅ đảm bảo đúng path
-    import {canMarkContractAsCompleteAPI} from '@/api/contract'
+import {ref, computed, onMounted, watch, nextTick} from 'vue'
+import dayjs from 'dayjs'
 
-    import {formatDate} from '@/utils/formUtils'
-    import {useRouter} from 'vue-router'
-    import {getUsers} from "@/api/user.js";
-    import {debounce} from 'lodash'
-
-    const router = useRouter()
-    const formRef = ref(null);
-    const selectedContract = ref(null)
-    const tableData = ref([])
-    const loading = ref(false)
-    const loadingCreate = ref(false)
-    const openDrawer = ref(false)
-    const formData = ref({
-        name: "",
-        code: "",
-        status: 0, // ✅ sửa từ "pending" → 0 (tương ứng "Nháp")
-        is_awarded: false,
-        start_date: null,
-        end_date: null,
-        description: "",
-        bidding_id: null,
-        assigned_to: null,
-        customer_id: null,
-    })
-
-    const selectedRowKeys = ref([])
-    const selectedRows = ref([])
-
-    const rowSelection = computed(() => ({
-        selectedRowKeys: selectedRowKeys.value,
-        onChange: (keys, rows) => {
-            selectedRowKeys.value = keys
-            selectedRows.value = rows
-        }
-    }))
+const formRef = ref(null)
+import {message, Modal} from 'ant-design-vue'
+import { getBiddingsAPI, getBiddingAPI } from '@/api/bidding'
+import {
+    SearchOutlined,
+    CheckCircleOutlined,
+    CloseCircleOutlined,
+    ClockCircleOutlined,
+    StopOutlined,
+    EyeOutlined,
+    EditOutlined,
+    DeleteOutlined
+} from '@ant-design/icons-vue'
+import {useRouter} from 'vue-router'
+import {formatDate} from '@/utils/formUtils'
+import {
+    getContractsAPI,
+    createContractAPI,
+    updateContractAPI,
+    deleteContractAPI,
+    canMarkContractAsCompleteAPI,
+    cloneStepsFromTemplateAPI
+} from '@/api/contract'
+import {getUsers} from '@/api/user'
+import {getCustomers} from '@/api/customer'
 
 
-    const handleBulkDelete = async () => {
-        try {
-            await Promise.all(selectedRowKeys.value.map(id => deleteContractAPI(id)))
-            message.success('Đã xoá các hợp đồng đã chọn')
-            selectedRowKeys.value = []
-            await getContracts()
-        } catch (e) {
-            message.error('Không thể xoá hợp đồng')
-        }
+// ✅ Tạo factory cho dữ liệu mặc định
+const defaultContract = () => ({
+    name: '',
+    code: '',
+    status: 0,
+    is_awarded: false,
+    start_date: null,
+    end_date: null,
+    description: '',
+    bidding_id: null,
+    assigned_to: null,
+    customer_id: null,
+    priority: 0,
+    manager_id: null,
+    collaborators: [],
+})
+
+
+const formData = ref(defaultContract())
+
+
+const isAwarded = computed(() => !!formData.value?.is_awarded)
+
+
+// Options cho select
+const awardedBiddings = ref([])       // gói thầu đã trúng
+const userOptions     = ref([])       // người phụ trách
+const customers       = ref([])       // danh sách KH
+
+const customerOptions = computed(() =>
+    customers.value.map(c => ({ label: c.name, value: String(c.id) }))
+)
+
+// Validate helpers
+const validateName = async (_r, v) => {
+    if (!v) return Promise.reject('Vui lòng nhập tên hợp đồng')
+    if (v.length > 200) return Promise.reject('Tên hợp đồng không vượt quá 200 ký tự')
+    return Promise.resolve()
+}
+const validateCode = async (_r, v) => {
+    if (!v) return Promise.reject('Vui lòng nhập mã hợp đồng')
+    if (v.length > 50) return Promise.reject('Mã hợp đồng không vượt quá 50 ký tự')
+    return Promise.resolve()
+}
+const validateDates = async () => {
+    const s = formData.value.start_date
+    const e = formData.value.end_date
+    if (!s || !e) return Promise.resolve()
+    if (dayjs(e).isBefore(s)) return Promise.reject('Ngày kết thúc phải sau ngày bắt đầu')
+    return Promise.resolve()
+}
+
+const rules = computed(() => ({
+    name: [{ required:true, validator: validateName, trigger:'change' }],
+    code: [{ required:true, validator: validateCode, trigger:'change' }],
+    status: [{ required:true, message:'Vui lòng chọn trạng thái', trigger:'change' }],
+    start_date: [{ required:true, message:'Vui lòng chọn ngày bắt đầu', trigger:'change' }],
+    end_date: [
+        { required:true, message:'Vui lòng chọn ngày kết thúc', trigger:'change' },
+        { validator: validateDates, trigger:'change' },
+    ],
+    description: [{ required:true, message:'Vui lòng nhập mô tả', trigger:'change' }],
+    bidding_id: [{ required: isAwarded.value, message:'Vui lòng chọn gói thầu đã trúng', trigger:'change' }],
+    customer_id: [{ required: !isAwarded.value, message:'Vui lòng chọn khách hàng', trigger:'change' }],
+}))
+
+// Gói thầu đã trúng (status WON = 2; nếu BE dùng 2 cho Hoàn tất)
+const fetchAwardedBiddings = async () => {
+    try {
+        const res = await getBiddingsAPI({ status: 2, per_page: 1000 })
+        const list = res?.data?.data ?? res?.data ?? []
+        awardedBiddings.value = list.map(b => ({ label: b.title, value: String(b.id) }))
+    } catch (e) {
+        console.error(e)
+        message.error('Không thể tải danh sách gói thầu đã trúng')
     }
+}
 
-    const truncateText = (text, length = 30) => {
-        if (!text) return '';
-        return text.length > length ? text.slice(0, length) + '...' : text;
+const fetchUsers = async () => {
+    try {
+        const res = await getUsers()
+        const raw = Array.isArray(res.data) ? res.data : res.data?.data || []
+        userOptions.value = raw.map(u => ({ label: u.name, value: String(u.id) }))
+    } catch (e) {
+        console.error(e)
     }
+}
 
-    const steps = ref([]) // hoặc dữ liệu thực tế từ API
-    const userOptions = ref([])
-
-
-    const goToContractDetail = (id) => {
-        router.push(`/contracts/${id}`)
+const fetchCustomers = async () => {
+    try {
+        const res = await getCustomers({ page: 1, per_page: 1000 })
+        customers.value = res?.data?.data ?? res?.data ?? []
+    } catch (e) {
+        console.error(e)
     }
+}
 
-    const awardedBiddings = ref([])
-    const customers = ref([])
-    const filtersCustomers = ref({
-        search: '',
-        page: 1,
-    })
-    const customerOptions = computed(() => {
-        if (customers.value.length === 0) {
-            return []
-        }
-        return customers.value.map(customer => ({
-            label: customer.name,
-            value: customer.id
-        }))
-    })
-
-    const columns = [
-        {title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px'},
-        {title: 'Tên hợp đồng', dataIndex: 'name', key: 'name'},
-        {title: 'Mã hợp đồng', dataIndex: 'code', key: 'code'},
-        {title: 'Trạng thái', dataIndex: 'status', key: 'status'},
-        {title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date'},
-        {title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date'},
-        {title: 'Hạn', dataIndex: 'due', key: 'due' },
-        {title: 'Hành động', dataIndex: 'action', key: 'action', width: '120px'},
-    ]
-
-    const getStatusColor = (status) => {
-        const colors = {
-            0: 'gray',
-            1: 'blue',
-            2: 'orange',
-            3: 'cyan',
-            4: 'green',
-            5: 'red'
-        }
-
-        return colors[status] || 'default'
+watch(() => formData.value.bidding_id, async (id) => {
+    if (!id) {
+        if (formData.value.is_awarded) formData.value.customer_id = null
+        return
     }
-
-    const getStatusLabel = (status) => {
-        const map = {
-            0: 'Nháp',
-            1: 'Đang thực hiện',
-            2: 'Chờ duyệt',
-            3: 'Đã duyệt',
-            4: 'Hoàn thành',
-            5: 'Đã hủy',
-        }
-
-        if (!(status in map)) {
-            console.warn('⚠️ Status không hợp lệ:', status)
-            return 'Không xác định'
-        }
-
-        return map[status]
+    try {
+        const res = await getBiddingAPI(id)
+        formData.value.customer_id = res?.data?.customer_id ?? null
+        formData.value.is_awarded = true
+    } catch (e) {
+        console.error(e)
     }
+})
 
 
-    const fetchAwardedBiddings = async () => {
-        try {
-            const res = await getBiddingsAPI({status: '3', per_page: 1000})
-
-            awardedBiddings.value = res.data.data.map(bid => ({
-                label: bid.title,
-                value: String(bid.id)
-            }))
-        } catch (e) {
-            console.error(e)
-            message.error('Không thể tải gói thầu đã trúng')
-        }
-    }
-
-
-    const fetchUsers = async () => {
-        try {
-            const res = await getUsers()
-            // Nếu là mảng phẳng
-            const rawUsers = Array.isArray(res.data) ? res.data : res.data?.data || []
-            userOptions.value = rawUsers.map(u => ({
-                label: u.name,
-                value: String(u.id)
-            }))
-        } catch (e) {
-            console.error('Không thể tải danh sách người dùng', e)
-        }
-    }
-
-
-    const validateName = async (_rule, value) => {
-        if (value === '') {
-            return Promise.reject('Vui lòng nhập tên hợp đồng');
-        } else if (value.length > 200) {
-            return Promise.reject('Tên hợp đồng không vượt quá 200 ký tự');
-        } else {
-            return Promise.resolve();
-        }
-    };
-
-    const validateCode = async (_rule, value) => {
-        if (value === '') {
-            return Promise.reject('Vui lòng nhập mã hợp đồng');
-        } else if (value.length > 50) {
-            return Promise.reject('Mã hợp đồng không vượt quá 50 ký tự');
-        } else {
-            return Promise.resolve();
-        }
-    };
-
-    const validateDates = async (_rule, value) => {
-        if (!formData.value.start_date || !formData.value.end_date) {
-            return Promise.resolve();
-        }
-        if (dayjs(formData.value.end_date).isBefore(formData.value.start_date)) {
-            return Promise.reject('Ngày kết thúc phải sau ngày bắt đầu');
-        }
-        return Promise.resolve();
-    };
-
-    const rules = computed(() => {
-        return {
-            name: [{required: true, validator: validateName, trigger: 'change'}],
-            code: [{required: true, validator: validateCode, trigger: 'change'}],
-            status: [{required: true, message: 'Vui lòng chọn trạng thái', trigger: 'change'}],
-            start_date: [{required: true, message: 'Vui lòng chọn ngày bắt đầu', trigger: 'change'}],
-            end_date: [
-                {required: true, message: 'Vui lòng chọn ngày kết thúc', trigger: 'change'},
-                {validator: validateDates, trigger: 'change'}
-            ],
-            description: [{required: true, message: 'Vui lòng nhập mô tả', trigger: 'change'}],
-            bidding_id: [{required: true, message: 'Vui lòng chọn gói thầu đã trúng', trigger: 'change'}],
-            customer_id: [{required: true, message: 'Không tìm thấy khách hàng', trigger: 'change'}],
-        }
-    })
-
-    const handleIsAwardedChange = (checked) => {
+const handleIsAwardedChange = () => {
+    if (!formData.value.is_awarded) {
         formData.value.bidding_id = null
     }
+}
 
-    const getContracts = async () => {
-        loading.value = true
-        try {
-            const response = await getContractsAPI()
-            tableData.value = response.data.map(item => ({
-                id: item.id,
-                name: item.name || item.title,
-                code: item.code,
-                status: item.status,
-                start_date: item.start_date || null,
-                end_date: item.end_date || null,
-                created_at: formatDate(item.created_at),
-                description: item.description,
-                bidding_id: item.bidding_id || null,
-                customer_id: item.customer_id || null,
-                assigned_to: item.assigned_to || null ,// ✅ THÊM DÒNG NÀY
-                days_overdue: item.days_overdue || null, // ✅ THÊM DÒNG NÀY
-                days_remaining: item.days_remaining || null // ✅ THÊM DÒNG NÀY
-            }))
-        } catch (e) {
-            console.error(e)
-            message.error('Không thể tải danh sách hợp đồng')
-        } finally {
-            loading.value = false
-        }
+
+const router = useRouter()
+
+/* ---------- State cơ bản ---------- */
+const tableData = ref([])
+const loading = ref(false)
+const pagination = ref({
+    current: 1, pageSize: 10, total: 0,
+    showSizeChanger: true, pageSizeOptions: ['10', '20', '50', '100'],
+    showTotal: (total, range) => `${range[0]}-${range[1]} / ${total} hợp đồng`
+})
+
+const selectedRowKeys = ref([])
+const selectedRows = ref([])
+const rowSelection = computed(() => ({
+    selectedRowKeys: selectedRowKeys.value,
+    onChange: (keys, rows) => {
+        selectedRowKeys.value = keys;
+        selectedRows.value = rows
     }
+}))
 
-    const fetchCustomers = async () => {
-        try {
-            const params = {
-                search: filtersCustomers.value.search,
-                page: filtersCustomers.value.page
-            }
-            const res = await getCustomers(params)
-            if (filtersCustomers.value.page === 1) {
-                customers.value = res.data.data
-            } else {
-                customers.value = [...customers.value, ...res.data.data]
-            }
+/* ---------- Search (debounce) ---------- */
+const searchTerm = ref('')
+let searchTimer = null
+watch(searchTerm, () => {
+    clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => {
+        pagination.value.current = 1
+        getContracts()
+    }, 300)
+})
 
-            if (res.data.pager.current_page * res.data.pager.per_page < res.data.pager.total) {
-                await fetchCustomers()
-            }
-        } catch (err) {
+/* ---------- Summary ---------- */
+const summary = ref({status_1: 0, status_2: 0, status_3: 0, important: 0, normal: 0, overdue: 0, total: 0})
 
-        } finally {
-        }
-    }
-    const submitForm = async () => {
-        try {
-            await formRef.value?.validate()
+// Map thẻ theo schema ContractController (status_1/2/3)
+const statsContracts = computed(() => [
+    {
+        key: 'status_2',
+        label: 'Hoàn tất',
+        count: summary.value.status_2,
+        color: '#52c41a',
+        bg: '#f6ffed',
+        icon: CheckCircleOutlined
+    },
+    {
+        key: 'important',
+        label: 'Quan trọng',
+        count: summary.value.important,
+        color: '#faad14',
+        bg: '#fffbe6',
+        icon: ClockCircleOutlined
+    },
+    {
+        key: 'normal',
+        label: 'Bình thường',
+        count: summary.value.normal,
+        color: '#1890ff',
+        bg: '#e6f7ff',
+        icon: ClockCircleOutlined
+    },
+    {
+        key: 'overdue',
+        label: 'Quá hạn',
+        count: summary.value.overdue,
+        color: '#ff4d4f',
+        bg: '#fff1f0',
+        icon: CloseCircleOutlined
+    },
+    {
+        key: 'status_3',
+        label: 'Đã hủy',
+        count: summary.value.status_3,
+        color: '#d9363e',
+        bg: '#fff1f0',
+        icon: StopOutlined
+    },
+])
 
-            const values = formRef.value?.getFieldsValue()
+/* ---------- Drawer list theo card ---------- */
+const drawerVisible = ref(false)
+const drawerContractTitle = ref('')
+const drawerKey = ref('')
+const drawerData = ref([])
+const drawerLoading = ref(false)
+const drawerPagination = ref({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+    showSizeChanger: true,
+    pageSizeOptions: ['10', '20', '50', '100']
+})
 
-            // Nếu đang sửa hợp đồng và muốn chuyển sang "Hoàn thành"
-            if (values.status === 4 && selectedContract.value?.id) {
-                const res = await canMarkContractAsCompleteAPI(selectedContract.value.id)
+const drawerColumns = [
+    {title: 'STT', dataIndex: 'index', key: 'index', width: '60px', align: 'center'},
+    {title: 'Tên hợp đồng', dataIndex: 'name', key: 'name'},
+    {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', align: 'center'},
+    {title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'center'},
+    {title: 'Trạng thái', dataIndex: 'status', key: 'status'},
+    {title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date'},
+    {title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date'},
+    {title: 'Hạn', dataIndex: 'due', key: 'due'},
+]
 
-                if (!res?.data?.allow) {
-                    message.warning('Bạn cần hoàn thành tất cả các bước trước khi chuyển trạng thái hợp đồng sang "Hoàn thành".')
-                    return
-                }
-            }
+const openContractDrawer = (key, title) => {
+    drawerKey.value = key
+    drawerContractTitle.value = title
+    drawerVisible.value = true
+    drawerData.value = []                // reset data cũ
+    drawerPagination.value.current = 1
+    drawerPagination.value.pageSize = 10
+    fetchDrawerList()
+}
 
-            if (selectedContract.value) {
-                await updateContract()
-            } else {
-                await createContract()
-            }
-        } catch (error) {
-            console.warn('Lỗi validate:', error)
-        }
-    }
+const handleDrawerTableChange = (pag) => {
+    drawerPagination.value.current = pag.current
+    drawerPagination.value.pageSize = pag.pageSize
+    if (drawerKey.value !== 'overdue') fetchDrawerList()
+}
 
-
-    const isFinalStep = (step) => {
-        if (!step) return false
-        const maxStepNo = Math.max(...steps.value.map(s => Number(s.step_number)))
-        return Number(step.step_number) === maxStepNo
-    }
-
-    const isStepAllowedToComplete = (step) => {
-        return isFinalStep(step) && areAllStepsCompleted()
-    }
-    const areAllStepsCompleted = () => {
-        if (!steps.value || !Array.isArray(steps.value)) return false
-        return steps.value.every(step => Number(step.status) === 2)
-    }
-    // const isStepAllowedToComplete = (step) => {
-    //     const index = steps.value.findIndex(s => s.id === step.id)
-    //     if (index === -1) return false
-    //     // ✅ Kiểm tra tất cả bước trước đã status = 2 (hoàn thành)
-    //     return steps.value.slice(0, index).every(s => s.status === '2')
-    // }
-
-    const createContract = async () => {
-        if (loadingCreate.value) return;
-        loadingCreate.value = true;
-        try {
-            const payload = {
-                ...formData.value,
-                title: formData.value.name
-            };
-
-            const res = await createContractAPI(payload);
-            const newContractId = res.data?.id;
-
-            if (newContractId) {
-                // ✅ Gọi API clone bước mẫu
-                await cloneStepsFromTemplateAPI(newContractId);
-            }
-
-            message.success('Thêm mới hợp đồng thành công');
-            await getContracts();
-            onCloseDrawer();
-        } catch (e) {
-            console.error(e);
-            message.error('Thêm mới hợp đồng không thành công');
-        } finally {
-            loadingCreate.value = false;
-        }
-    }
-
-
-    const updateContract = async () => {
-        if (loadingCreate.value) return;
-        loadingCreate.value = true;
-
-        try {
-            await updateContractAPI(selectedContract.value.id, {
-                ...formData.value,
-                title: formData.value.name
-            })
-            message.success('Cập nhật hợp đồng thành công');
-            await getContracts(); // Làm mới danh sách sau khi cập nhật
-            onCloseDrawer();      // Đóng form
-        } catch (e) {
-            console.error(e);
-            const msg = e?.response?.data?.messages?.error || 'Cập nhật hợp đồng không thành công';
-            message.error(msg);
-        } finally {
-            loadingCreate.value = false;
-        }
-    }
-
-    const deleteConfirm = async (contractId) => {
-        try {
-            await deleteContractAPI(contractId);
-            message.success('Xóa hợp đồng thành công');
-            await getContracts(); // Làm mới danh sách sau khi xóa
-        } catch (e) {
-            console.error(e);
-            const msg = e?.response?.data?.messages?.error || 'Xóa hợp đồng không thành công';
-            message.error(msg);
-        }
-    }
-
-    const showPopupDetail = async (record) => {
-        console.log("📌 RECORD TRUYỀN VÀO:", record)
-        selectedContract.value = record
-
-        openDrawer.value = true
-        await fetchAwardedBiddings()
-        await fetchUsers() // ✅ Bổ sung dòng này để đảm bảo userOptions có dữ liệu
-
-        formData.value = {
-            name: record.name,
-            code: record.code,
-            status: Number(record.status),
-            start_date: record.start_date ? dayjs(record.start_date) : null,
-            end_date: record.end_date ? dayjs(record.end_date) : null,
-            description: record.description,
-            bidding_id: record.bidding_id || null,
-            assigned_to: record.assigned_to !== null && record.assigned_to !== undefined
-                ? String(record.assigned_to)
-                : null
+const fetchDrawerList = async () => {
+    drawerLoading.value = true
+    try {
+        const base = {
+            page: drawerPagination.value.current,
+            per_page: drawerPagination.value.pageSize,
+            with_progress: 1,
+            _t: Date.now()               // chống cache
         }
 
-        // // ✅ CHÈN LOG SAU KHI GÁN
-        // console.log("assigned_to (formData):", formData.value.assigned_to)
-        // console.log("userOptions:", userOptions.value.map(x => typeof x.value + ':' + x.value))
-
-    }
-
-
-    const showPopupCreate = () => {
-        openDrawer.value = true
-        fetchAwardedBiddings()
-    }
-
-    const onCloseDrawer = () => {
-        openDrawer.value = false;
-        setDefaultData();
-        selectedContract.value = null;
-        resetFormValidate()
-    }
-
-    const setDefaultData = () => {
-        formData.value = {
-            name: "",
-            code: "",
-            status: "pending",
-            start_date: null,
-            end_date: null,
-            description: "",
-            bidding_id: null, // ✅ thêm dòng này
-        }
-    }
-
-    const resetFormValidate = () => {
-        formRef.value?.resetFields();
-    };
-
-    watch(() => formData.value.bidding_id, async (newVal) => {
-        if (!newVal) {
-            formData.value.customer_id = null
+        // Lọc theo key
+        if (drawerKey.value === 'status_2' || drawerKey.value === 'status_3') {
+            const st = drawerKey.value === 'status_2' ? 2 : 3
+            const res = await getContractsAPI({ ...base, status: st })
+            const { data, pager } = res.data || {}
+            drawerData.value = normalizeRows(data || [])
+            applyDrawerPager(pager)
             return
         }
 
-        try {
-            const biddingRes = await getBiddingAPI(newVal)
-
-            const customerId = biddingRes.data.customer_id
-
-            if (awardedBiddings.value.map(x => x.value).includes(formData.value.bidding_id)) {
-                formData.value.is_awarded = true
-            } else {
-                formData.value.is_awarded = false
-            }
-            formData.value.customer_id = customerId // ✅ Gán customer_id để lưu vào backend
-
-        } catch (e) {
-            console.error(e)
-            formData.value.customer_id = null
+        if (drawerKey.value === 'important' || drawerKey.value === 'normal') {
+            const pr = drawerKey.value === 'important' ? 1 : 0
+            const res = await getContractsAPI({ ...base, priority: pr })
+            const { data, pager } = res.data || {}
+            drawerData.value = normalizeRows(data || [])
+            applyDrawerPager(pager)
+            return
         }
-    })
 
-    onMounted(() => {
-        getContracts();
-        fetchUsers()
-        fetchCustomers()
-    })
+        if (drawerKey.value === 'overdue') {
+            // lấy nhiều rồi lọc client
+            const res = await getContractsAPI({ page: 1, per_page: 1000, with_progress: 1, _t: Date.now() })
+            const all = normalizeRows(res.data?.data || [])
+            drawerData.value = all.filter(r => Number(r.days_overdue) > 0)
+            drawerPagination.value.total = drawerData.value.length
+            drawerPagination.value.current = 1
+            return
+        }
 
+        // fallback
+        drawerData.value = []
+        drawerPagination.value.total = 0
+    } finally {
+        drawerLoading.value = false
+    }
+}
+
+const applyDrawerPager = (pager) => {
+    drawerPagination.value.total = Number(pager?.total ?? 0)
+    drawerPagination.value.current = Number(pager?.current_page ?? 1)
+    drawerPagination.value.pageSize = Number(pager?.per_page ?? drawerPagination.value.pageSize)
+}
+
+/* ---------- Columns chính ---------- */
+const columns = [
+    {title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px'},
+    {title: 'Tên hợp đồng', dataIndex: 'name', key: 'name'},
+    {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: '150px'}, // ✅ NEW
+    {title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'center'}, // ✅ NEW
+    {title: 'Mã hợp đồng', dataIndex: 'code', key: 'code'},
+    {title: 'Trạng thái', dataIndex: 'status', key: 'status'},
+    {title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date'},
+    {title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date'},
+    {title: 'Hạn', dataIndex: 'due', key: 'due', align: 'center'},
+    {title: 'Hành động', dataIndex: 'action', key: 'action', width: '140px'},
+]
+
+/* ---------- Helpers hiển thị ---------- */
+const progressPercent = (r) => r.progress_percent ?? r.progress?.contract_progress ?? 0
+const progressText = (r) => {
+    const done = Number(r.steps_done ?? r.progress?.steps_completed ?? 0)
+    const total = Number(r.steps_total ?? r.progress?.steps_total ?? 0)
+    if (!total) return 'Chưa có bước nào'
+    if (done === 0) return `Chưa bắt đầu (${total} bước)`
+    if (done < total) return `Đã hoàn thành ${done}/${total} bước`
+    return `Hoàn thành toàn bộ ${total} bước`
+}
+
+const getFirstLetter = (name) => (!name || name === 'N/A') ? '?' : name.charAt(0).toUpperCase()
+const getAvatarColor = (name) => {
+    if (!name || name === 'N/A') return '#d9d9d9'
+    const colors = ['#f5222d', '#fa8c16', '#fadb14', '#52c41a', '#13c2c2', '#1890ff', '#722ed1', '#eb2f96', '#fa541c', '#faad14', '#a0d911', '#52c41a', '#13c2c2', '#1890ff', '#722ed1', '#eb2f96']
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+    return colors[Math.abs(hash) % colors.length]
+}
+
+const getStatusColor = (status) => ({1: 'blue', 2: 'green', 3: 'red'}[Number(status)] || 'default')
+const getStatusLabel = (status) => ({
+    1: 'Đang thực hiện',
+    2: 'Hoàn tất',
+    3: 'Đã hủy'
+}[Number(status)] || 'Không xác định')
+
+const truncateText = (t, len = 30) => !t ? '' : (t.length > len ? t.slice(0, len) + '…' : t)
+
+/* ---------- Fetch list ---------- */
+const normalizeRows = (rows) => (rows || []).map(r => ({
+    ...r,
+    name: r.name ?? r.title, // BE có thể trả title
+    status: r.status != null ? Number(r.status) : null,
+    priority: r.priority != null ? Number(r.priority) : undefined,
+    progress_percent: r.progress_percent ?? r.progress?.contract_progress ?? 0,
+    steps_done: r.steps_done ?? r.progress?.steps_completed ?? 0,
+    steps_total: r.steps_total ?? r.progress?.steps_total ?? 0,
+    subtasks_done: r.subtasks_done ?? r.progress?.subtasks_approved ?? 0,
+    subtasks_total: r.subtasks_total ?? r.progress?.subtasks_total ?? 0,
+}))
+
+const getContracts = async () => {
+    loading.value = true
+    try {
+        const res = await getContractsAPI({
+            page: pagination.value.current,
+            per_page: pagination.value.pageSize, // ví dụ 10
+            with_progress: 1,
+            search: (searchTerm.value || '').trim() || undefined,
+        })
+        const {data, pager, summary: s} = res.data || {}
+        tableData.value = normalizeRows(data)
+
+        if (s) {
+            summary.value = {
+                status_1: +s.status_1 || 0,
+                status_2: +s.status_2 || 0,
+                status_3: +s.status_3 || 0,
+                important: +s.important || 0,
+                normal: +s.normal || 0,
+                overdue: +s.overdue || 0,
+                total: +s.total || 0
+            }
+        }
+        if (pager) {
+            pagination.value.total = +pager.total || 0
+            pagination.value.current = +pager.current_page || 1
+            pagination.value.pageSize = +pager.per_page || pagination.value.pageSize
+        }
+    } finally {
+        loading.value = false
+    }
+}
+
+const totalDisplay = computed(() => {
+    if ((searchTerm?.value || '').trim()) return tableData.value.length
+    return Number(pagination.value.total || summary.value.total || tableData.value.length)
+})
+
+const handleTableChange = (pag) => {
+    pagination.value.current = pag.current
+    pagination.value.pageSize = pag.pageSize
+    getContracts()
+}
+
+/* ---------- CRUD actions (tái dùng hàm cũ của bạn) ---------- */
+const openDrawer = ref(false)
+const selectedContract = ref(null)
+const loadingCreate = ref(false)
+
+const showPopupCreate = async () => {
+    // KHÔNG gọi resetFields ở đây
+    selectedContract.value = null
+    formData.value = defaultContract()   // reset bằng model
+    openDrawer.value = true              // hiển thị form
+
+    await nextTick()                     // chờ form mount
+    formRef.value?.clearValidate?.()     // xoá lỗi (nếu có)
+}
+const showPopupDetail = async (record) => {
+    selectedContract.value = record
+
+    formData.value = {
+        ...defaultContract(),
+        name: record.name ?? record.title ?? '',
+        code: record.code ?? '',
+        status: Number(record.status ?? 0),
+        start_date: record.start_date ? dayjs(record.start_date) : null,
+        end_date: record.end_date ? dayjs(record.end_date) : null,
+        description: record.description ?? '',
+        bidding_id: record.bidding_id ?? null,
+        assigned_to: record.assigned_to ?? null,
+        customer_id: record.customer_id ?? record.id_customer ?? null,
+        priority: Number(record.priority ?? 0),
+        manager_id: record.manager_id ?? null,
+        collaborators: Array.isArray(record.collaborators)
+            ? record.collaborators
+            : (typeof record.collaborators === 'string' && record.collaborators.trim()
+                ? (JSON.parse(record.collaborators || '[]') || [])
+                : []),
+    }
+
+    openDrawer.value = true
+    await nextTick()
+    formRef.value?.clearValidate?.()
+}
+
+
+const onCloseDrawer = async () => {
+    openDrawer.value = false
+    await nextTick()
+    formRef.value?.clearValidate?.()
+}
+
+watch(openDrawer, (open) => {
+    if (open && (!formData.value || typeof formData.value !== 'object')) {
+        formData.value = defaultContract();
+    }
+});
+
+const submitForm = async () => {
+    try {
+        await formRef.value?.validate?.()
+
+        const payload = {
+            title:        (formData.value.name || '').trim(),
+            code:         formData.value.code || '',
+            status:       Number(formData.value.status),
+            start_date:   formData.value.start_date ? dayjs(formData.value.start_date).format('YYYY-MM-DD') : null,
+            end_date:     formData.value.end_date ? dayjs(formData.value.end_date).format('YYYY-MM-DD') : null,
+            description:  formData.value.description || '',
+            bidding_id:   formData.value.bidding_id || null,
+            assigned_to:  formData.value.assigned_to || null,
+            customer_id:  formData.value.customer_id || null,
+            priority:     Number(formData.value.priority || 0),
+            manager_id:   formData.value.manager_id || null,
+            collaborators: Array.isArray(formData.value.collaborators) ? formData.value.collaborators : [],
+        }
+
+        if (selectedContract.value) {
+            await updateContractAPI(selectedContract.value.id, payload)
+            message.success('Cập nhật hợp đồng thành công')
+        } else {
+            const res = await createContractAPI(payload)
+            const newId = res?.data?.id
+            if (newId) await cloneStepsFromTemplateAPI(newId)
+            message.success('Thêm hợp đồng thành công')
+        }
+        openDrawer.value = false
+        await getContracts()
+    } catch (e) {
+        // nếu là lỗi validate thì bỏ qua popup lỗi
+        if (e?.errorFields) return
+        console.error(e)
+        message.error('Không thể lưu hợp đồng')
+    }
+}
+
+
+const handleBulkDelete = async () => {
+    try {
+        await Promise.all(selectedRowKeys.value.map(id => deleteContractAPI(id)))
+        message.success(`Đã xoá ${selectedRowKeys.value.length} hợp đồng`)
+        selectedRowKeys.value = []
+        await getContracts()
+    } catch {
+        message.error('Không thể xoá hợp đồng')
+    }
+}
+
+/* ---------- Nav ---------- */
+const goToContractDetail = (id) => router.push({name: 'contract-detail', params: {id}})
+
+/* ---------- Mount ---------- */
+onMounted(() => {
+    getContracts()
+    fetchUsers()
+    fetchCustomers()
+    fetchAwardedBiddings()
+})
 </script>
 
+<style>
+.summary-cards .ant-card-body {
+    cursor: pointer;
+}
+
+:deep(.ant-table-tbody > tr:hover) {
+    background-color: #f5faff !important;
+    transition: background-color .3s;
+}
+
+/* viền trái đỏ cho ô quá hạn */
+:deep(.overdue-cell) {
+    border-left: 3px solid #ff4d4f;
+    padding-left: 8px;
+}
+</style>
+
 <style scoped>
-    :deep(.ant-pagination) {
-        margin-bottom: 0 !important;
-    }
+.icon-action {
+    font-size: 18px;
+    margin-right: 16px;
+    cursor: pointer;
+}
 
-    .icon-action {
-        font-size: 18px;
-        margin-right: 24px;
-        cursor: pointer;
-    }
+.summary-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 8px;
+}
 
-    &
-    :last-child {
-        margin-right: 0;
-    }
-
-    .icon-action {
-        font-size: 18px;
-        margin-right: 16px;
-        cursor: pointer;
-    }
-</style> 
+.summary-cards .ant-card {
+    flex: 1;
+    min-width: 200px;
+    text-align: center;
+}
+</style>

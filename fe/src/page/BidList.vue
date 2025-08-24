@@ -6,8 +6,20 @@
                     <a-typography-title :level="4" style="margin:0">Danh sách gói thầu</a-typography-title>
                     <a-badge :count="totalDisplay" show-zero/>
                 </div>
-
-                <a-button type="primary" @click="showPopupCreate">Thêm gói thầu mới</a-button>
+                <a-space>
+                    <!-- 🔎 Tìm theo tiêu đề -->
+                    <a-input
+                        v-model:value="searchTerm"
+                        allow-clear
+                        style="width: 320px"
+                        placeholder="Tìm gói thầu theo tiêu đề…"
+                    >
+                        <template #prefix>
+                            <SearchOutlined/>
+                        </template>
+                    </a-input>
+                    <a-button type="primary" @click="showPopupCreate">Thêm gói thầu mới</a-button>
+                </a-space>
             </a-flex>
         </div>
         <div class="summary-cards">
@@ -32,17 +44,6 @@
                     </a-button>
                 </a-space>
             </div>
-            <!-- 🔎 Tìm theo tiêu đề -->
-            <a-input
-                v-model:value="searchTerm"
-                allow-clear
-                style="width: 320px"
-                placeholder="Tìm gói thầu theo tiêu đề…"
-            >
-                <template #prefix>
-                    <SearchOutlined/>
-                </template>
-            </a-input>
         </a-flex>
 
         <a-table
@@ -81,8 +82,6 @@
                         />
                     </a-tooltip>
                 </template>
-
-
 
                 <!-- Người phụ trách -->
                 <template v-else-if="column.dataIndex === 'assigned_to_name'">
