@@ -1,20 +1,12 @@
 <template>
     <div>
-        <!--        <a-flex justify="space-between">-->
-        <!--            <div>-->
-        <!--                <a-typography-title :level="5">Danh sách nhiệm vụ</a-typography-title>-->
-        <!--            </div>-->
-        <!--            <a-button type="primary" @click="showPopupCreate('internal')">Thêm nhiệm vụ mới</a-button>-->
-        <!--        </a-flex>-->
-
         <a-row  justify="space-between" :gutter="[12,12]">
             <!-- Trái: nhóm filter nhanh + icon mở drawer -->
             <a-col flex="auto">
                 <a-space wrap>
                     <!-- Lọc theo loại -->
                     <a-button-group>
-                        <a-button :type="dataFilter.linked_type === null ? 'primary' : 'default'"
-                                  @click="filterByType(null)">
+                        <a-button :type="dataFilter.linked_type === null ? 'primary' : 'default'" @click="filterByType(null)">
                             Tất cả ({{ totalTasks }})
                         </a-button>
                         <a-button :type="dataFilter.linked_type === 'bidding' ? 'primary' : 'default'"
@@ -74,13 +66,25 @@
         >
             <template #bodyCell="{ column, record, index, text }">
                 <template v-if="column.dataIndex === 'title'">
-                    <a-tooltip :title="text">
-                        <a-typography-text
-                            style="cursor: pointer; display: inline-block; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
-                            @click="showPopupDetail(record)">
-                            {{ text }}
-                        </a-typography-text>
-                    </a-tooltip>
+                    <div class="title-cell" @click="showPopupDetail(record)" style="cursor:pointer;">
+                        <a-tooltip>
+                            <template #title>
+                                <div>
+                                    <div v-for="(line, i) in getTitleInfo(record).lines" :key="i">{{ line }}</div>
+                                </div>
+                            </template>
+
+                            <div class="line-1">
+                                <a-typography-text strong class="ellipsis w-200">{{ text }}</a-typography-text>
+                            </div>
+
+                            <div class="line-2" v-if="getTitleInfo(record).subline">
+                                <a-typography-text type="secondary" class="ellipsis w-260">
+                                    {{ getTitleInfo(record).subline }}
+                                </a-typography-text>
+                            </div>
+                        </a-tooltip>
+                    </div>
                 </template>
 
                 <template v-if="column.dataIndex === 'priority'">
@@ -104,9 +108,7 @@
 
                 <template v-if="column.dataIndex === 'linked_id'">
                     <a-tooltip :title="getLinkedName(record.linked_type, text)">
-                        <span v-if="record.linked_type === 'bidding' || record.linked_type === 'contract'"
-                              style="color: #1890ff; cursor: pointer; display: inline-block; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
-                              @click="goToLinkedDetail(record)">
+                        <span v-if="record.linked_type === 'bidding' || record.linked_type === 'contract'" style="color: #1890ff; cursor: pointer; display: inline-block; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" @click="goToLinkedDetail(record)">
                           {{ getLinkedName(record.linked_type, text) }}
                         </span>
                     </a-tooltip>
@@ -130,10 +132,7 @@
                 <template v-if="column.dataIndex === 'progress'">
                     <a-progress
                         :percent="Number(record.progress)"
-                        :stroke-color="{
-                              '0%': '#108ee9',
-                              '100%': '#87d068',
-                            }"
+                        :stroke-color="{ '0%': '#108ee9', '100%': '#87d068'}"
                         :status="record.progress >= 100 ? 'success' : 'active'"
                         size="small"
                         :show-info="true"
@@ -142,7 +141,6 @@
                 <template v-if="column.dataIndex === 'start_date' || column.dataIndex === 'end_date'">
                     {{ formatDate(text) || '—' }}
                 </template>
-
                 <template v-if="column.dataIndex === 'deadline'">
                     <a-tag v-if="record.days_overdue > 0" color="error">
                         Quá hạn {{ record.days_overdue }} ngày
@@ -195,7 +193,6 @@
                         </template>
                     </a-dropdown>
                 </template>
-
             </template>
         </a-table>
         <DrawerCreateTask
@@ -307,9 +304,9 @@
                     </a-typography-text>
                     <span></span>
                     <a-space>
+                        <a-button type="primary" @click="applyDrawerFilters">Áp dụng</a-button>
                         <a-button @click="resetDrawerFilters" :disabled="!hasAnyAdvancedFilter">Reset</a-button>
                         <a-button @click="showFilterDrawer = false">Đóng</a-button>
-                        <a-button type="primary" @click="applyDrawerFilters">Áp dụng</a-button>
                     </a-space>
                 </div>
             </template>
@@ -436,6 +433,35 @@ const onTitleSearch = debounce(() => {
 const dateRange = ref([])
 const totalTasks = computed(() => pagination.value.total)
 const filteredCount = computed(() => tableData.value.length)
+
+
+const linkedTypeMap = {
+    internal:  { label: 'Nội bộ',  color: '' },
+    bidding:   { label: 'Gói thầu', color: 'geekblue' },
+    contract:  { label: 'Hợp đồng', color: 'green' },
+}
+// Build thông tin hiển thị cho cột Title
+const getTitleInfo = (r = {}) => {
+    const type = linkedTypeMap[r.linked_type] || { label: r.linked_type || '—', color: '' }
+    const isSub = !!r.parent_id || r.is_subtask === true
+
+    const bits = []
+    if (isSub && r.parent_title) bits.push(`Việc cha: ${r.parent_title}`)
+    if (r.linked_type === 'bidding' && r.linked_title) bits.push(`Gói thầu: ${r.linked_title}`)
+    else if (r.linked_type === 'contract' && r.linked_title) bits.push(`Hợp đồng: ${r.linked_title}`)
+    if (r.step_name) bits.push(`Bước: ${r.step_name}`)
+
+    // subline vẫn hiển thị dưới title (1 dòng)
+    const subline = bits.join(' · ')
+
+    // tooltip mỗi ý một dòng
+    const lines = [
+        r.title || '',
+        ...bits
+    ]
+
+    return { type, isSub, subline, lines }
+}
 
 const getAvatarColor = (name) => {
     if (!name) return '#ccc';
@@ -644,7 +670,6 @@ const buildTaskQuery = () => {
 };
 
 
-
 const listBidding = ref([])
 const listContract = ref([])
 
@@ -844,6 +869,13 @@ onMounted(() => {
 </script>
 
 <style>
+/* có thể để trong <style scoped> của bạn */
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; }
+.w-200 { max-width: 200px; }
+.w-260 { max-width: 260px; }
+.line-1 { display: flex; gap: 6px; align-items: center; }
+.line-2 { margin-top: 2px; }
+
 .custom_table_list_task td {
     white-space: normal !important;
 }

@@ -31,71 +31,78 @@ class TaskController extends ResourceController
     public function index()
     {
         $builder = $this->model->builder();
+        $params  = $this->request->getGet();
 
-        // Lấy input một lần duy nhất
-        $params = $this->request->getGet();
+        // ===== Select + JOIN (users, task cha, bidding/contract) =====
+        $builder->select("
+        tasks.*,
+        tasks.id AS task_id,
+        users.id   AS assignee_id,
+        users.name AS assignee_name,
+        parent.title AS parent_title,
+        /* tên liên kết theo linked_type */
+        IF(tasks.linked_type = 'bidding',  b.title,
+           IF(tasks.linked_type = 'contract', c.title, NULL)
+        ) AS linked_title
+    ");
 
-        // Select + join
-        $builder->select('tasks.*, tasks.id as task_id, users.id as assignee_id, users.name as assignee_name');
-        $builder->join('users', 'users.id = tasks.assigned_to', 'left');
+        $builder->join('users',        'users.id = tasks.assigned_to', 'left');
+        $builder->join('tasks parent', 'parent.id = tasks.parent_id',   'left');
+        $builder->join('biddings b',   "b.id = tasks.linked_id AND tasks.linked_type = 'bidding'",  'left');
+        $builder->join('contracts c',  "c.id = tasks.linked_id AND tasks.linked_type = 'contract'", 'left');
 
-        // Bộ lọc
+        // ===== Bộ lọc (luôn prefix tasks.) =====
         if (!empty($params['assigned_to'])) {
-            $builder->where('tasks.assigned_to', $params['assigned_to']);
+            $builder->where('tasks.assigned_to', (int)$params['assigned_to']);
         }
-
         if (!empty($params['created_by'])) {
-            $builder->where('created_by', $params['created_by']);
+            $builder->where('tasks.created_by', (int)$params['created_by']);
         }
-
         if (!empty($params['priority'])) {
-            $builder->where('priority', $params['priority']);
+            $builder->where('tasks.priority', $params['priority']);
         }
-
         if (!empty($params['status'])) {
-            $builder->where('status', $params['status']);
+            $builder->where('tasks.status', $params['status']);
         }
-
         if (!empty($params['linked_type'])) {
-            $builder->where('linked_type', $params['linked_type']);
+            $builder->where('tasks.linked_type', $params['linked_type']); // ⬅ hết mơ hồ
         }
-
         if (array_key_exists('id_department', $params) && $params['id_department'] !== '') {
             $builder->where('tasks.id_department', (int)$params['id_department']);
         }
-
         if (!empty($params['title'])) {
             $builder->like('tasks.title', $params['title']);
         }
-
         if (!empty($params['start_date'])) {
-            $builder->where('start_date >=', $params['start_date']);
+            $builder->where('tasks.start_date >=', $params['start_date']);
         }
-
         if (!empty($params['end_date'])) {
-            $builder->where('end_date <=', $params['end_date']);
+            $builder->where('tasks.end_date <=', $params['end_date']);
         }
 
-        // Phân trang
-        $page    = (int)($params['page'] ?? 1);
+        // ===== Phân trang an toàn =====
+        $page    = max(1, (int)($params['page'] ?? 1));
         $perPage = (int)($params['per_page'] ?? 10);
+        if ($perPage <= 0)   $perPage = 10;
+        if ($perPage > 200)  $perPage = 200;
         $offset  = ($page - 1) * $perPage;
 
+        // Đếm tổng (giữ nguyên builder state)
         $totalBuilder = clone $builder;
         $total = $totalBuilder->countAllResults(false);
 
+        // Sắp xếp + giới hạn
         $builder->orderBy('tasks.created_at', 'DESC');
         $builder->limit($perPage, $offset);
+
         $tasks = $builder->get()->getResultArray();
 
-        // Lấy bước tiến trình cho contract & bidding
+        // ===== Map tên bước cho contract/bidding =====
         $contractSteps = (new ContractStepTemplateModel())->findAll();
         $biddingSteps  = (new BiddingStepTemplateModel())->findAll();
-
         $contractMap = array_column($contractSteps, 'title', 'step_number');
-        $biddingMap  = array_column($biddingSteps, 'title', 'step_number');
+        $biddingMap  = array_column($biddingSteps,  'title', 'step_number');
 
-        // Xử lý dữ liệu đầu ra
         foreach ($tasks as &$task) {
             $stepCode = (int)($task['step_code'] ?? 0);
             if ($task['linked_type'] === 'contract') {
@@ -106,29 +113,35 @@ class TaskController extends ResourceController
                 $task['step_name'] = null;
             }
 
+            // Gói thông tin người phụ trách
             $task['assignee'] = [
-                'id' => $task['assignee_id'] ?? null,
-                'name' => $task['assignee_name'] ?? 'Chưa có'
+                'id'   => $task['assignee_id']   ?? null,
+                'name' => $task['assignee_name'] ?? 'Chưa có',
             ];
 
+            // Tính hạn
             $diff = calculateDeadlineDiff($task['end_date']);
             $task['days_remaining'] = $diff['days_remaining'];
             $task['days_overdue']   = $diff['days_overdue'];
+
+            // Flag nhanh
+            $task['is_subtask'] = !empty($task['parent_id']);
 
             unset($task['assignee_id'], $task['assignee_name']);
         }
 
         return $this->response->setJSON([
             'status' => 'success',
-            'data' => $tasks,
+            'data'   => $tasks,
             'pagination' => [
-                'total' => $total,
-                'page' => $page,
-                'per_page' => $perPage,
-                'last_page' => ceil($total / $perPage)
-            ]
+                'total'     => $total,
+                'page'      => $page,
+                'per_page'  => $perPage,
+                'last_page' => (int)ceil($total / $perPage),
+            ],
         ]);
     }
+
 
 
     /**
@@ -138,77 +151,96 @@ class TaskController extends ResourceController
      */
     public function show($id = null): ResponseInterface
     {
-        $task = $this->model->find($id);
+        if (!$id) {
+            return $this->failValidationErrors('Missing task id');
+        }
 
-        if (!$task) {
+        // Lấy 1 task + tên cha + tên liên kết + assignee
+        $db  = db_connect();
+        $row = $db->table('tasks t')
+            ->select("
+            t.*,
+            parent.title AS parent_title,
+            CASE
+                WHEN t.linked_type = 'bidding'  THEN b.title
+                WHEN t.linked_type = 'contract' THEN c.title
+                ELSE NULL
+            END AS linked_title,
+            u.id   AS assignee_id,
+            u.name AS assignee_name
+        ")
+            ->join('tasks parent',  'parent.id = t.parent_id', 'left')
+            ->join('biddings b',    "b.id = t.linked_id AND t.linked_type = 'bidding'",  'left')
+            ->join('contracts c',   "c.id = t.linked_id AND t.linked_type = 'contract'", 'left')
+            ->join('users u',       'u.id = t.assigned_to', 'left')
+            ->where('t.id', $id)
+            ->get()
+            ->getRowArray();
+
+        if (!$row) {
             return $this->failNotFound('Task not found');
         }
 
-        // ✅ Nếu đã duyệt mà progress < 100 → set 100 và lưu vào DB
-        if (($task['approval_status'] ?? null) === 'approved' && (int)($task['progress'] ?? 0) < 100) {
-            // Nếu có enum hằng số trạng thái
+        // 🔁 Nếu đã duyệt mà progress < 100 → auto 100 (và tùy chọn set status=done)
+        $row['progress'] = (int)($row['progress'] ?? 0);
+        if (($row['approval_status'] ?? null) === 'approved' && $row['progress'] < 100) {
             $done = class_exists(TaskStatus::class) ? TaskStatus::DONE : 'done';
 
+            // cập nhật DB
             $this->model->update($id, [
                 'progress' => 100,
-                'status'   => $done, // tùy bạn: muốn auto DONE khi approved hay không
+                'status'   => $done,
             ]);
 
-            $task['progress'] = 100;
-            $task['status']   = $done;
+            // đồng bộ bản trả về
+            $row['progress'] = 100;
+            $row['status']   = $done;
         }
 
-        // Lấy step name (nếu có)
-        $stepCode = (int) ($task['step_code'] ?? 0);
-        $task['step_name'] = null;
+        // 🔎 Tính step_name theo linked_type + step_code
+        $row['step_name'] = null;
+        $stepCode = (int)($row['step_code'] ?? 0);
+        if ($stepCode > 0) {
+            if ($row['linked_type'] === 'contract') {
+                $steps = (new ContractStepTemplateModel())
+                    ->select('step_number, title')->findAll();
+            } elseif ($row['linked_type'] === 'bidding') {
+                $steps = (new BiddingStepTemplateModel())
+                    ->select('step_number, title')->findAll();
+            } else {
+                $steps = [];
+            }
 
-        if ($task['linked_type'] === 'contract') {
-            $contractSteps = (new ContractStepTemplateModel())->findAll();
-            foreach ($contractSteps as $step) {
-                if ((int)$step['step_number'] === $stepCode) {
-                    $task['step_name'] = $step['title'];
+            foreach ($steps as $s) {
+                if ((int)$s['step_number'] === $stepCode) {
+                    $row['step_name'] = $s['title'];
                     break;
                 }
             }
-        } elseif ($task['linked_type'] === 'bidding') {
-            $biddingSteps = (new BiddingStepTemplateModel())->findAll();
-            foreach ($biddingSteps as $step) {
-                if ((int)$step['step_number'] === $stepCode) {
-                    $task['step_name'] = $step['title'];
-                    break;
-                }
-            }
         }
 
-        // Lấy danh sách extensions
-        $extensions = (new TaskExtensionModel())
+        // 🗂️ Extensions (lịch sử gia hạn)
+        $row['extensions'] = (new TaskExtensionModel())
             ->where('task_id', $id)
+            ->orderBy('updated_at', 'ASC')
             ->findAll();
 
-        $task['extensions'] = $extensions;
+        // ⏳ days_remaining / days_overdue (dựa vào end_date)
+        $diff = calculateDeadlineDiff($row['end_date'] ?? null); // helper của bạn
+        $row['days_remaining'] = $diff['days_remaining'] ?? null;
+        $row['days_overdue']   = $diff['days_overdue'] ?? null;
 
-        // Tính days_remaining & days_overdue nếu có end_date
-        $diff = calculateDeadlineDiff($task['end_date']);
-        $task['days_remaining'] = $diff['days_remaining'];
-        $task['days_overdue']   = $diff['days_overdue'];
+        // 👤 Chuẩn hoá assignee object giống FE đang dùng
+        $assigneeId   = $row['assignee_id']   ?? null;
+        $assigneeName = $row['assignee_name'] ?? null;
+        $row['assignee'] = ($assigneeId || $assigneeName)
+            ? ['id' => (string)$assigneeId, 'name' => $assigneeName]
+            : null;
+        unset($row['assignee_id'], $row['assignee_name']);
 
-        // Lấy title theo kiểu liên kết (bidding/contract)
-        if ($task['linked_type'] === 'bidding' && !empty($task['linked_id'])) {
-            $bidding = (new BiddingModel())->find($task['linked_id']);
-            $task['bidding_title'] = $bidding['title'] ?? null;
-        } else {
-            $task['bidding_title'] = null;
-        }
-
-        if ($task['linked_type'] === 'contract' && !empty($task['linked_id'])) {
-            $contract = (new ContractModel())->find($task['linked_id']);
-            $task['contract_title'] = $contract['title'] ?? null;
-        } else {
-            $task['contract_title'] = null;
-        }
-
-        return $this->respond($task);
+        return $this->respond($row);
     }
+
 
 
 
@@ -219,61 +251,102 @@ class TaskController extends ResourceController
     {
         $data = $this->request->getJSON(true) ?? [];
 
-        // ✅ Chuẩn hoá nhẹ
+        // Ép kiểu an toàn
+        $ints = ['assigned_to','created_by','proposed_by','parent_id','step_id','linked_id','id_department','approval_steps'];
+        foreach ($ints as $k) {
+            if (array_key_exists($k, $data) && $data[$k] !== null && $data[$k] !== '') {
+                $data[$k] = (int) $data[$k];
+            } else {
+                $data[$k] = ($k === 'approval_steps') ? 0 : (isset($data[$k]) ? null : ($data[$k] ?? null));
+            }
+        }
         $data['linked_type'] = $data['linked_type'] ?? null;
-        $data['step_id']     = $data['step_id'] ?? null;
-        $data['step_code']   = $data['step_code'] ?? null;
+        $data['status']      = $data['status'] ?? 'todo';
 
-        // ✅ Kiểm tra linked_type hợp lệ
-        $validTypes = ['bidding', 'contract', 'internal'];
+        // Validate linked_type
+        $validTypes = ['bidding','contract','internal'];
         if (empty($data['linked_type']) || !in_array($data['linked_type'], $validTypes, true)) {
             return $this->failValidationErrors(['linked_type' => 'Giá trị không hợp lệ (bidding/contract/internal)']);
         }
 
-        // ✅ Chỉ bắt buộc step_id với bidding/contract
-        if ($data['linked_type'] !== 'internal' && empty($data['step_id'])) {
-            return $this->failValidationErrors(['step_id' => 'Thiếu step_id']);
-        }
-
-        // (Tuỳ chọn) Với internal, luôn để trống step_id/step_code để tránh dữ liệu rác
+        // Nếu là task nội bộ thì không có step
         if ($data['linked_type'] === 'internal') {
             $data['step_id']   = null;
             $data['step_code'] = null;
+        } else {
+            // Bidding/Contract bắt buộc có step_id
+            if (empty($data['step_id'])) {
+                return $this->failValidationErrors(['step_id' => 'Thiếu step_id']);
+            }
         }
 
-        // ✅ Xử lý cấp duyệt (approval)
-        $approvalSteps = isset($data['approval_steps']) ? (int)$data['approval_steps'] : 0;
-        if ($approvalSteps > 0) {
+        // Nếu tạo task con: validate parent tồn tại
+        if (!empty($data['parent_id'])) {
+            $parent = $this->model->select('id, linked_type')->find($data['parent_id']);
+            if (!$parent) {
+                return $this->failValidationErrors(['parent_id' => 'Task cha không tồn tại']);
+            }
+            // Option: ép loại con giống loại cha (nếu bạn muốn)
+            if (empty($data['linked_type'])) {
+                $data['linked_type'] = $parent['linked_type'];
+            }
+        } else {
+            $data['parent_id'] = null; // bảo đảm null chứ không phải "" (tránh insert NULL "ảo")
+        }
+
+        // Xử lý cấp duyệt
+        if ($data['approval_steps'] > 0) {
             $data['approval_status'] = 'pending';
             $data['current_level']   = 1;
 
-            // Nếu đang DONE thì chuyển qua REQUEST_APPROVAL
-            if (isset($data['status']) && $data['status'] === TaskStatus::DONE) {
+            if (($data['status'] ?? null) === TaskStatus::DONE) {
                 $data['status'] = TaskStatus::REQUEST_APPROVAL;
             }
         }
 
-        // ✅ Lưu nhiệm vụ
+        $db = db_connect();
+        $db->transStart();
+
         if (!$this->model->insert($data)) {
+            $db->transRollback();
             return $this->failValidationErrors($this->model->errors());
         }
-        $taskId = $this->model->getInsertID(); // hoặc $this->model->insertID();
+        $taskId = (int)$this->model->getInsertID();
 
-        // ✅ Tạo dòng cấp duyệt đầu tiên nếu có
-        if ($approvalSteps > 0) {
+        if ($data['approval_steps'] > 0) {
             (new TaskApprovalModel())->insert([
                 'task_id'     => $taskId,
                 'level'       => 1,
                 'status'      => 'pending',
                 'approved_by' => null,
+                'approved_at' => null,
             ]);
         }
+
+        $db->transComplete();
+
+        // Re-fetch task vừa tạo (kèm parent_title & linked_title để FE dùng ngay)
+        $row = $db->table('tasks t')
+            ->select("
+            t.*,
+            parent.title AS parent_title,
+            IF(t.linked_type='bidding',  b.title,
+               IF(t.linked_type='contract', c.title, NULL)
+            ) AS linked_title
+        ")
+            ->join('tasks parent', "parent.id = t.parent_id", 'left')
+            ->join('biddings b',   "b.id = t.linked_id AND t.linked_type = 'bidding'", 'left')
+            ->join('contracts c',  "c.id = t.linked_id AND t.linked_type = 'contract'", 'left')
+            ->where('t.id', $taskId)
+            ->get()->getRowArray();
 
         return $this->respondCreated([
             'message' => 'Task created',
             'id'      => $taskId,
+            'data'    => $row,
         ]);
     }
+
 
 
 
@@ -449,8 +522,51 @@ class TaskController extends ResourceController
 
     public function subtasks($parent_id): ResponseInterface
     {
-        $tasks = $this->model->where('parent_id', $parent_id)->findAll();
-        return $this->respond($tasks);
+        $parent_id = (int) $parent_id;
+
+        $builder = $this->model->builder();
+        $builder->select("
+        tasks.*,
+        users.id   AS assignee_id,
+        users.name AS assignee_name,
+        parent.title AS parent_title,
+        IF(tasks.linked_type='bidding',  b.title,
+           IF(tasks.linked_type='contract', c.title, NULL)
+        ) AS linked_title
+    ");
+        $builder->join('users',        'users.id = tasks.assigned_to', 'left');
+        $builder->join('tasks parent', 'parent.id = tasks.parent_id',   'left');
+        $builder->join('biddings b',   "b.id = tasks.linked_id AND tasks.linked_type='bidding'",  'left');
+        $builder->join('contracts c',  "c.id = tasks.linked_id AND tasks.linked_type='contract'", 'left');
+
+        $builder->where('tasks.parent_id', $parent_id);
+        $builder->orderBy('tasks.created_at', 'DESC');
+
+        $rows = $builder->get()->getResultArray();
+
+        // Map step_name + days
+        $contractMap = array_column((new ContractStepTemplateModel())->findAll(), 'title', 'step_number');
+        $biddingMap  = array_column((new BiddingStepTemplateModel())->findAll(),  'title', 'step_number');
+
+        foreach ($rows as &$task) {
+            $stepCode = (int)($task['step_code'] ?? 0);
+            $task['step_name'] = $task['linked_type'] === 'contract'
+                ? ($contractMap[$stepCode] ?? null)
+                : ($task['linked_type'] === 'bidding' ? ($biddingMap[$stepCode] ?? null) : null);
+
+            $task['assignee'] = [
+                'id'   => $task['assignee_id']   ?? null,
+                'name' => $task['assignee_name'] ?? 'Chưa có',
+            ];
+
+            $diff = calculateDeadlineDiff($task['end_date']);
+            $task['days_remaining'] = $diff['days_remaining'];
+            $task['days_overdue']   = $diff['days_overdue'];
+
+            unset($task['assignee_id'], $task['assignee_name']);
+        }
+
+        return $this->respond($rows);
     }
 
     public function updateSubtask($id = null): ResponseInterface

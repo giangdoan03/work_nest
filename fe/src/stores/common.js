@@ -9,7 +9,8 @@ export const useCommonStore = defineStore('common', {
         linkedIdParent: null,
         biddingIdParent: null,
         createTaskSignal: 0,
-        createTaskType: 'internal'
+        createTaskType: 'internal',
+        parentTaskId: null
     }),
     getters: {
         getContractStep: state => state.contractStep,
@@ -39,6 +40,7 @@ export const useCommonStore = defineStore('common', {
         setBiddingIdParent(id) {     // <— ✅ action setter
             this.biddingIdParent = id
         },
+        setParentTaskId(id)   { this.parentTaskId = id ? Number(id) : null },
         triggerCreateTask(type = 'internal') {
             this.createTaskType = type
             this.createTaskSignal++ // tăng để trigger watcher

@@ -467,31 +467,50 @@ const getBiddingStep = async () => {
 const createDrawerInternal = async () => {
     if (loadingCreate.value) return;
 
-    formData.value.created_by = store.currentUser.id;
-    formData.value.step_id = selectedStep.value?.id ?? null;
+    // copy formData ra payload
+    const payload = { ...formData.value }
 
-    loadingCreate.value = true;
+    // ✅ luôn gán created_by từ user đang đăng nhập
+    payload.created_by = store.currentUser?.id || null
 
-    try {
-        // 1. Gọi API tạo task
-        const res = await createTask(formData.value);
-        message.success('Thêm mới nhiệm vụ thành công');
-
-        // 2. Làm mới danh sách nhiệm vụ của Step hiện tại
-        await refreshStepTasks();
-
-        // 3. Emit cho component cha
-        emit('submitForm', res.data);
-
-        // 4. Đóng drawer
-        onCloseDrawer();
-    } catch (err) {
-        console.error('[createDrawerInternal] error:', err);
-        message.error('Thêm mới nhiệm vụ không thành công');
-    } finally {
-        loadingCreate.value = false;
+    // ✅ Nếu đang tạo subtask nội bộ và có parent trong store
+    if (commonStore.createTaskType === 'internal' && commonStore.parentTaskId) {
+        payload.parent_id   = Number(commonStore.parentTaskId)
+        payload.linked_type = 'internal'
+        payload.step_code   = null
+        payload.step_id     = null
+        payload.linked_id   = null
     }
-};
+
+    // ✅ ép kiểu số cho các trường int
+    ;['created_by','assigned_to','proposed_by','parent_id','id_department','approval_steps']
+        .forEach(k => {
+            if (payload[k] !== undefined && payload[k] !== null && payload[k] !== '') {
+                payload[k] = Number(payload[k])
+            } else {
+                payload[k] = null
+            }
+        })
+
+    // Debug check
+    console.log('[createDrawerInternal] payload gửi API:', payload)
+
+    loadingCreate.value = true
+    try {
+        const res = await createTask(payload)
+        message.success('Thêm mới nhiệm vụ thành công')
+
+        await refreshStepTasks()
+        emit('submitForm', res.data)
+        onCloseDrawer()
+    } catch (err) {
+        console.error('[createDrawerInternal] error:', err)
+        message.error('Thêm mới nhiệm vụ không thành công')
+    } finally {
+        loadingCreate.value = false
+    }
+}
+
 
 // ==================== HÀM CON ====================
 async function refreshStepTasks() {

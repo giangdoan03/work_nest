@@ -36,6 +36,20 @@
                                                   placeholder="Chọn loại nhiệm vụ"/>
                                     </a-form-item>
                                 </a-col>
+                                <a-col :span="24">
+                                    <a-form-item label="Công việc cha">
+                                        <template v-if="formData.parent_id">
+                                            <a-tooltip :title="formData.parent_title || ('#' + formData.parent_id)">
+                                                <a-typography-link @click="goToTask(formData.parent_id)">
+                                                    {{ formData.parent_title || ('#' + formData.parent_id) }}
+                                                </a-typography-link>
+                                            </a-tooltip>
+                                        </template>
+                                        <template v-else>
+                                            <a-typography-text type="secondary">—</a-typography-text>
+                                        </template>
+                                    </a-form-item>
+                                </a-col>
                                 <!-- ================== BIDDING ================== -->
                                 <a-col :span="12" v-if="formData.linked_type === 'bidding'">
                                     <a-form-item label="Liên kết gói thầu" name="linked_id">
@@ -80,7 +94,7 @@
                                     </a-form-item>
                                 </a-col>
                                 <a-col :span="12" v-if="formData.linked_type === 'contract'">
-                                    <a-form-item label="Tiến trình hợp đồng" name="step_code">
+                                    <a-form-item label="Công việc cha" name="step_code">
                                         <a-typography-text v-if="!isEditMode">{{ getStepByStepNo(formData.step_code) }}</a-typography-text>
                                         <a-select
                                                 v-else
@@ -881,15 +895,25 @@ const cancelEditTask = () => {
 }
 
 
+
 const getDetailTaskById = async () => {
     try {
         const res = await getTaskDetail(route.params.id)
         formData.value = res.data
 
+        // ✅ Lưu id task hiện tại (task cha) vào store
+        const parentId = Number(route.params.id)
+        commonStore.setParentTaskId(parentId)
+
+        // ✅ Log ra console để kiểm tra
+        console.log('[TaskDetail] parentId lưu vào store =', parentId)
+        console.log('[TaskDetail] store.parentTaskId =', commonStore.parentTaskId)
+
     } catch (err) {
         console.error(err)
     }
 }
+
 
 const getListBidding = async () => {
     await getBiddingsAPI().then(res => {
@@ -1136,6 +1160,14 @@ const goBack = () => {
         router.push('/internal-tasks');
     }
 }
+
+const goToTask = (id) => {
+    if (!id) return;
+    router.push({
+        name: 'internal-tasks-info',
+        params: { id }
+    });
+};
 
 
 watch(() => formData.value.step_code, (newCode) => {
