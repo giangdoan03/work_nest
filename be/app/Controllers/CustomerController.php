@@ -2,7 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Models\ContractModel;
 use App\Models\CustomerModel;
+use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 
 class CustomerController extends ResourceController
@@ -111,8 +113,38 @@ class CustomerController extends ResourceController
     }
 
     // Lấy toàn bộ khách hàng (dành cho dropdown hoặc nội bộ)
-    public function all()
+    public function all(): ResponseInterface
     {
         return $this->respond($this->model->findAll());
     }
+
+    public function contracts($customerId = null): ResponseInterface
+    {
+        if (!$customerId) {
+            return $this->failValidationErrors(['customer_id' => 'Thiếu customer_id']);
+        }
+
+        $perPage = (int) ($this->request->getGet('per_page') ?? 10);
+        $page    = (int) ($this->request->getGet('page') ?? 1);
+
+        $model = new ContractModel();
+
+        $builder = $model->where('customer_id', $customerId)
+            ->orderBy('start_date', 'DESC');
+
+        $data  = $builder->paginate($perPage, 'default', $page);
+        $pager = $model->pager;
+
+        return $this->respond([
+            'data'  => $data ?? [],
+            'pager' => [
+                'total'        => $pager?->getTotal() ?? 0,
+                'per_page'     => $perPage,
+                'current_page' => $page,
+            ],
+        ]);
+    }
+
+
+
 }

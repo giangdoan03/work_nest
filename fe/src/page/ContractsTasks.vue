@@ -754,7 +754,7 @@ const showPopupDetail = async (record) => {
         description: record.description ?? '',
         bidding_id: record.bidding_id ?? null,
         assigned_to: record.assigned_to ?? null,
-        customer_id: record.customer_id ?? record.id_customer ?? null,
+        customer_id: record.customer_id ?? record.customer_id ?? null,
         priority: Number(record.priority ?? 0),
         manager_id: record.manager_id ?? null,
         collaborators: Array.isArray(record.collaborators)

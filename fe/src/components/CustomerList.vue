@@ -59,7 +59,7 @@
             row-key="id"
             :pagination="pagination"
             @change="handleTableChange"
-            :scroll="{ y: 'calc( 100vh - 430px )' }"
+            :scroll="{ x: 'max-content'}"
             :row-selection="rowSelection"
         >
             <template #bodyCell="{ column, record, index, text }">
@@ -473,7 +473,7 @@ const refreshCustomerData = async (customerId) => {
 const fetchContracts = async (customerId) => {
     try {
         const res = await getCustomerContracts(customerId)
-        contracts.value = Array.isArray(res.data) ? res.data : []
+        contracts.value = Array.isArray(res.data?.data) ? res.data.data : []
     } catch (err) {
         contracts.value = []
     }

@@ -21,6 +21,10 @@ $routes->group('api', function ($routes) {
 
     $routes->get('my-tasks', 'MyTaskController::index');
 
+    // Danh sách hợp đồng của 1 khách hàng
+    $routes->get('contracts/by-customer/(:num)', 'CustomerController::contracts/$1');
+
+
     // Tổng quan dự án (cho trưởng phòng)
     $routes->get('project-overview', 'ProjectOverviewController::index');  // Tổng hợp theo khách hàng/gói thầu/hợp đồng
 

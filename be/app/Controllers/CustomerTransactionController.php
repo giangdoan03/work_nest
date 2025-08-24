@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\CustomerTransactionModel;
 use App\Models\CustomerModel; // ✅ Thêm dòng này
+use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 
 class CustomerTransactionController extends ResourceController
@@ -14,7 +15,7 @@ class CustomerTransactionController extends ResourceController
     /**
      * Lấy danh sách tương tác của 1 khách hàng
      */
-    public function byCustomer($customerId)
+    public function byCustomer($customerId): ResponseInterface
     {
         $data = $this->model
             ->where('customer_id', $customerId)

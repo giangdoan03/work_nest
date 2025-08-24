@@ -18,10 +18,9 @@ class ContractModel extends Model
         'title', 'content', 'status',
         'department_id', 'assigned_to',
         'start_date', 'end_date',
-        'code', 'bidding_id', 'id_customer', 'description', // ← Thêm đầy đủ các trường cần cập nhật
+        'code', 'bidding_id', 'customer_id', 'description', // ← Thêm đầy đủ các trường cần cập nhật
         'created_at', 'updated_at',
         'department',
-        'assigned_to',
         'manager_id',
         'collaborators', // JSON
         'priority',

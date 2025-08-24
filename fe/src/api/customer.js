@@ -17,4 +17,5 @@ export const createCustomerTransaction = (data) => api.post('/customers/transact
 export const getCustomerTransactions = (customerId) => api.get(`/customers/${customerId}/transactions`) // GET lịch sử tương tác
 
 // Các hàm mở rộng nếu có thêm route trong tương lai
-export const getCustomerContracts = (customerId) => api.get(`/customers/${customerId}/contracts`) // Giả định có contracts (nếu có route này sau)
+export const getCustomerContracts = (customerId) =>
+    api.get(`/contracts/by-customer/${customerId}`);

@@ -27,7 +27,7 @@ class ProjectOverviewController extends ResourceController
         $countBuilder = $db->table('customers c')
             ->select('c.id')
             ->join('biddings b', 'b.customer_id = c.id', 'left')
-            ->join('contracts ct', 'ct.id_customer = c.id', 'left')
+            ->join('contracts ct', 'ct.customer_id = c.id', 'left')
             ->join('tasks t', "t.linked_type IN ('contract', 'bidding') AND (t.linked_id = ct.id OR t.linked_id = b.id)", 'left');
 
         switch ($timeframe) {
@@ -62,7 +62,7 @@ class ProjectOverviewController extends ResourceController
                 (
                     SELECT CONCAT('[', GROUP_CONCAT(DISTINCT JSON_OBJECT('id', ct.id, 'title', ct.title)), ']')
                     FROM contracts ct
-                    WHERE ct.id_customer = c.id
+                    WHERE ct.customer_id = c.id
                         AND EXISTS (
                             SELECT 1 FROM tasks t WHERE t.linked_type = 'contract' AND t.linked_id = ct.id
                         )
@@ -77,7 +77,7 @@ class ProjectOverviewController extends ResourceController
                 END)) AS progress") // ✅ GIỮ LẠI CỘT TIẾN ĐỘ
 
             ->join('biddings b', 'b.customer_id = c.id', 'left')
-            ->join('contracts ct', 'ct.id_customer = c.id', 'left')
+            ->join('contracts ct', 'ct.customer_id = c.id', 'left')
             ->join('tasks t', "t.linked_type IN ('contract', 'bidding') AND (t.linked_id = ct.id OR t.linked_id = b.id)", 'left')
             ->join('users u', 'u.id = t.assigned_to', 'left')
             ->groupBy('c.id')
@@ -134,7 +134,7 @@ class ProjectOverviewController extends ResourceController
             ->join('contracts ct', 't.linked_type = "contract" AND t.linked_id = ct.id', 'left')
             ->join('customers c', '
                 (t.linked_type = "bidding" AND b.customer_id = c.id)
-                OR (t.linked_type = "contract" AND ct.id_customer = c.id)
+                OR (t.linked_type = "contract" AND ct.customer_id = c.id)
             ', 'left')
             ->where('t.status IS NOT NULL')
             ->orderBy('t.linked_type')
