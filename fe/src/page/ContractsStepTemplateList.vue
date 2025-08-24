@@ -11,13 +11,14 @@
             :columns="columns"
             :data-source="tableData"
             :loading="loading"
-            style="margin-top: 12px"
             row-key="id"
-            :scroll="{ y: 'calc(100vh - 330px)' }"
+            :pagination="pagination"
+            :scroll="{ x: 'max-content'}"
+            @change="onTableChange"
         >
             <template #bodyCell="{ column, record, index }">
                 <template v-if="column.dataIndex === 'stt'">
-                    {{ index + 1 }}
+                    {{ rowNumber(index) }}
                 </template>
                 <template v-else-if="column.dataIndex === 'step_number'">
                     <a-tag color="blue">Bước {{ record.step_number }}</a-tag>
@@ -126,6 +127,39 @@ const formData = ref({
     department: []
 })
 
+// pagination state
+const pagination = ref({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+    showSizeChanger: true,
+    showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+})
+
+// STT liên tục theo trang
+const rowNumber = (index) =>
+    (pagination.value.current - 1) * pagination.value.pageSize + index + 1
+
+// đổi trang / đổi pageSize
+const onTableChange = (pag /*, filters, sorter*/) => {
+    const pageSizeChanged = pag.pageSize !== pagination.value.pageSize
+    pagination.value = {
+        ...pagination.value,
+        current: pageSizeChanged ? 1 : pag.current, // đổi size -> quay về trang 1
+        pageSize: pag.pageSize,
+    }
+    fetchSteps()
+}
+
+// util parse department
+const parseDept = (raw) => {
+    if (!raw) return []
+    try {
+        const v = typeof raw === 'string' ? JSON.parse(raw) : raw
+        return Array.isArray(v) ? v : []
+    } catch { return [] }
+}
+
 const columns = [
     { title: 'STT', dataIndex: 'stt', key: 'stt',  width: '60px' },
     { title: 'Bước số', dataIndex: 'step_number', key: 'step_number',  width: '100px' },
@@ -142,22 +176,50 @@ const rules = {
     department: [{ required: true, type: 'array', message: 'Vui lòng chọn ít nhất 1 phòng ban' }]
 }
 
+// Gọi API có phân trang và cập nhật total đúng cách
 const fetchSteps = async () => {
     loading.value = true
     try {
-        const res = await getContractStepTemplatesAPI()
-        tableData.value = Array.isArray(res.data)
-            ? res.data.map(item => ({
-                ...item,
-                department: (() => {
-                    try {
-                        return JSON.parse(item.department)
-                    } catch {
-                        return []
-                    }
-                })()
-            }))
-            : []
+        const { current, pageSize } = pagination.value
+
+        const res = await getContractStepTemplatesAPI({
+            page: current,
+            per_page: pageSize,
+        })
+
+        const list = Array.isArray(res.data?.data)
+            ? res.data.data
+            : Array.isArray(res.data)
+                ? res.data
+                : []
+
+        tableData.value = list.map(item => ({
+            ...item,
+            department: parseDept(item.department),
+        }))
+
+        // --- TÍNH TOTAL CHUẨN ---
+        // Ưu tiên meta.pagination.total; nếu không có thì dùng res.data.total; cuối cùng fallback list.length
+        const meta = res.data?.pagination
+        const newTotal =
+            (meta && typeof meta.total === 'number') ? meta.total
+                : (typeof res.data?.total === 'number') ? res.data.total
+                    : list.length
+
+        pagination.value = {
+            ...pagination.value,
+            current: meta?.page ?? current,
+            pageSize: meta?.per_page ?? pageSize,
+            total: newTotal, // luôn cập nhật total mới
+        }
+
+        // Nếu đang ở trang vượt quá tổng trang -> đưa về trang cuối và fetch lại
+        const maxPage = Math.max(1, Math.ceil(newTotal / pagination.value.pageSize))
+        if (pagination.value.current > maxPage) {
+            pagination.value.current = maxPage
+            await fetchSteps()
+            return
+        }
     } catch (err) {
         console.error(err)
         message.error('Không thể tải danh sách bước mẫu')

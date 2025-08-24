@@ -11,13 +11,14 @@
             :columns="columns"
             :data-source="tableData"
             :loading="loading"
-            style="margin-top: 12px"
             row-key="id"
-            :scroll="{ y: 'calc(100vh - 330px)' }"
+            :pagination="pagination"
+            :scroll="{ x: 'max-content'}"
+            @change="onTableChange"
         >
             <template #bodyCell="{ column, record, index }">
                 <template v-if="column.dataIndex === 'stt'">
-                    {{ index + 1 }}
+                    {{ rowNumber(index) }}
                 </template>
                 <template v-else-if="column.dataIndex === 'step_number'">
                     <a-tag color="blue">Bước {{ record.step_number }}</a-tag>
@@ -126,6 +127,14 @@ const formData = ref({
     department: []
 })
 
+const pagination = ref({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+    showSizeChanger: true,
+    showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`
+})
+
 const columns = [
     { title: 'STT', dataIndex: 'stt', key: 'stt', width: 60},
     { title: 'Bước số', dataIndex: 'step_number', key: 'step_number', width: 200 },
@@ -142,23 +151,65 @@ const rules = {
     department: [{ required: true, type: 'array', message: 'Vui lòng chọn ít nhất 1 phòng ban' }]
 }
 
+const rowNumber = (index) =>
+    (pagination.value.current - 1) * pagination.value.pageSize + index + 1
+
+
+const onTableChange = (pag) => {
+    pagination.value = { ...pagination.value, ...pag }
+    fetchStepTemplates()
+}
+
+const parseDept = (raw) => {
+    if (!raw) return []
+    try {
+        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+        return Array.isArray(parsed) ? parsed : []
+    } catch {
+        return []
+    }
+}
+
 const fetchStepTemplates = async () => {
     loading.value = true
     try {
-        const res = await getStepTemplatesAPI()
-        tableData.value = Array.isArray(res.data)
-            ? res.data.map(item => ({
-                ...item,
-                department: (() => {
-                    try {
-                        const parsed = JSON.parse(item.department)
-                        return Array.isArray(parsed) ? parsed : []
-                    } catch {
-                        return []
-                    }
-                })()
-            }))
-            : []
+        const { current, pageSize } = pagination.value
+
+        // gọi API có phân trang
+        const res = await getStepTemplatesAPI({
+            page: current,
+            per_page: pageSize,
+        })
+
+        // lấy list từ payload (hỗ trợ 2 dạng: có/không có wrapper data)
+        const list = Array.isArray(res.data?.data)
+            ? res.data.data
+            : Array.isArray(res.data)
+                ? res.data
+                : []
+
+        // map data + parse department
+        tableData.value = list.map(item => ({
+            ...item,
+            department: parseDept(item.department),
+        }))
+
+        // cập nhật pagination nếu BE trả meta
+        const meta = res.data?.pagination
+        if (meta) {
+            pagination.value = {
+                ...pagination.value,
+                current: meta.page || current,
+                pageSize: meta.per_page || pageSize,
+                total: meta.total ?? pagination.value.total,
+            }
+        } else {
+            // fallback: không có meta → total = độ dài list hiện tại
+            pagination.value = {
+                ...pagination.value,
+                total: pagination.value.total || list.length,
+            }
+        }
     } catch (err) {
         console.error(err)
         message.error('Không thể tải danh sách bước mẫu')
