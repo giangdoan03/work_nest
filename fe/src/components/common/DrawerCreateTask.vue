@@ -340,6 +340,15 @@ const validateApprovalSteps = async (_rule, value) => {
     }
 };
 
+const validateStep = async () => {
+    if (['bidding','contract'].includes(formData.value.linked_type)) {
+        if (!formData.value.step_code && !formData.value.step_id) {
+            return Promise.reject('Vui lòng chọn bước');
+        }
+    }
+    return Promise.resolve();
+};
+
 const rules = computed(() => {
     return {
         title: [{required: true, validator: validateTitle, trigger: 'change'}],
@@ -350,7 +359,8 @@ const rules = computed(() => {
         linked_type: [{required: true, validator: validateLinkedType, trigger: 'change'}],
         description: [{required: true, validator: validateDescription, trigger: 'change'}],
         department_id: [{required: true, validator: validateDepartment, trigger: 'change'}],
-        approval_steps: [{required: true, message: 'Vui lòng chọn cấp duyệt'}]
+        approval_steps: [{required: true, message: 'Vui lòng chọn cấp duyệt'}],
+        step_code: [{ validator: validateStep, trigger: 'change' }],
     }
 })
 
@@ -387,9 +397,12 @@ const linkedIdOption = computed(() => {
             label: ele.title,
         }))
     } else if (formData.value.linked_type === 'contract') {
-        return listContract.value.map(ele => ({
+        const arr = Array.isArray(listContract.value)
+            ? listContract.value
+            : (Array.isArray(listContract.value?.data) ? listContract.value.data : [])
+        return arr.map(ele => ({
             value: String(ele.id),
-            label: ele.title,
+            label: ele.title || ele.name || `Hợp đồng #${ele.id}`,
         }))
     } else return []
 })
@@ -466,83 +479,79 @@ const getBiddingStep = async () => {
 }
 const createDrawerInternal = async () => {
     if (loadingCreate.value) return;
+    const payload = { ...formData.value };
 
-    // copy formData ra payload
-    const payload = { ...formData.value }
-
-    // ✅ luôn gán created_by từ user đang đăng nhập
-    payload.created_by = store.currentUser?.id || null
-
-    // ✅ Nếu đang tạo subtask nội bộ và có parent trong store
-    if (commonStore.createTaskType === 'internal' && commonStore.parentTaskId) {
-        payload.parent_id   = Number(commonStore.parentTaskId)
-        payload.linked_type = 'internal'
-        payload.step_code   = null
-        payload.step_id     = null
-        payload.linked_id   = null
+    // map step_code -> step_id nếu thiếu
+    if (['bidding','contract'].includes(payload.linked_type)) {
+        if (!payload.step_id && payload.step_code) {
+            const found = stepOption.value.find(it => String(it.value) === String(payload.step_code));
+            payload.step_id = found?.step_id ?? null;
+        }
+        // fallback: nếu chỉ có 1 step thì chọn luôn
+        if (!payload.step_id && stepOption.value.length === 1) {
+            payload.step_id = stepOption.value[0].step_id;
+            payload.step_code = stepOption.value[0].value;
+        }
+        if (!payload.step_id) {
+            message.error('Vui lòng chọn bước trước khi lưu');
+            return;
+        }
     }
 
-    // ✅ ép kiểu số cho các trường int
-    ;['created_by','assigned_to','proposed_by','parent_id','id_department','approval_steps']
+    // ép kiểu số (thêm cả step_id)
+    ['created_by','assigned_to','proposed_by','parent_id','id_department','approval_steps','step_id']
         .forEach(k => {
-            if (payload[k] !== undefined && payload[k] !== null && payload[k] !== '') {
-                payload[k] = Number(payload[k])
-            } else {
-                payload[k] = null
-            }
-        })
+            payload[k] = payload[k] !== undefined && payload[k] !== null && payload[k] !== ''
+                ? Number(payload[k]) : null;
+        });
 
-    // Debug check
-    console.log('[createDrawerInternal] payload gửi API:', payload)
+    payload.created_by = store.currentUser?.id || null;
 
-    loadingCreate.value = true
+    loadingCreate.value = true;
     try {
-        const res = await createTask(payload)
-        message.success('Thêm mới nhiệm vụ thành công')
-
-        await refreshStepTasks()
-        emit('submitForm', res.data)
-        onCloseDrawer()
+        const res = await createTask(payload);
+        message.success('Thêm mới nhiệm vụ thành công');
+        await refreshStepTasks({ preferNewTaskStep: true });
+        emit('submitForm', res.data);
+        onCloseDrawer();
     } catch (err) {
-        console.error('[createDrawerInternal] error:', err)
-        message.error('Thêm mới nhiệm vụ không thành công')
+        console.error('[createDrawerInternal] error:', err);
+        message.error('Thêm mới nhiệm vụ không thành công');
     } finally {
-        loadingCreate.value = false
+        loadingCreate.value = false;
     }
-}
+};
+
 
 
 // ==================== HÀM CON ====================
-async function refreshStepTasks() {
-    const stepId = selectedStep.value?.id;
-    if (!stepId) return;
+async function refreshStepTasks({ preferNewTaskStep = true } = {}) {
+    // 1) Ưu tiên step_id & linked_type từ formData (chính là task vừa tạo)
+    const stepId = (preferNewTaskStep && formData.value.step_id)
+        ? formData.value.step_id
+        : (selectedStep.value?.id || null)
 
-    const filter = {};
-    const user = store.currentUser;
+    if (!stepId) return
 
-    // lọc theo role
-    if (user?.role_id === 3) {
-        filter.assigned_to = user.id;
-    } else if (user?.role_id === 2) {
-        filter.id_department = user.department_id;
-    }
+    const linkedType = (preferNewTaskStep && formData.value.linked_type)
+        ? formData.value.linked_type
+        : (selectedStep.value?.linked_type || formData.value.linked_type || 'bidding')
 
-    const linkedType = selectedStep.value?.linked_type || formData.value.linked_type || 'bidding';
+    // 2) BỎ lọc role khi vừa tạo để chắc chắn nhìn thấy task mới
+    const filter = {}
+    // Nếu muốn giữ lọc theo role cho các lần load khác thì bạn có thể truyền preferNewTaskStep=false
 
-    // gọi API phù hợp
-    let resTasks;
+    let resTasks
     if (linkedType === 'contract') {
-        resTasks = await getTasksByContractStep(stepId, filter);
+        resTasks = await getTasksByContractStep(stepId, filter)
     } else {
-        resTasks = await getTasksByBiddingStep(stepId, filter);
+        resTasks = await getTasksByBiddingStep(stepId, filter)
     }
 
-    const tasks = Array.isArray(resTasks.data?.data)
-        ? resTasks.data.data
-        : (resTasks.data || []);
-
-    stepStore.setRelatedTasks(tasks);
+    const tasks = Array.isArray(resTasks.data?.data) ? resTasks.data.data : (resTasks.data || [])
+    stepStore.setRelatedTasks(tasks)
 }
+
 
 const getNameLinked = async (id) => {
     if (!id) return 'Trống';
@@ -550,17 +559,20 @@ const getNameLinked = async (id) => {
     if (formData.value.linked_type === 'bidding') {
         const found = listBidding.value.find(x => x.id === id);
         if (found) return found.title;
-
         const res = await getBiddingAPI(id);
         return res.data?.title ?? 'Gói thầu không tồn tại';
     }
 
     if (formData.value.linked_type === 'contract') {
-        const found = listContract.value.find(x => x.id === id);
-        if (found) return found.title;
+        const arr = Array.isArray(listContract.value)
+            ? listContract.value
+            : (Array.isArray(listContract.value?.data) ? listContract.value.data : [])
 
-        const res = await getContractAPI(id);
-        return res.data?.title ?? 'Hợp đồng không tồn tại';
+        const found = arr.find(x => String(x.id) === String(id))
+        if (found) return found.title
+
+        const res = await getContractAPI(id)
+        return res.data?.title ?? res.data?.name ?? 'Hợp đồng không tồn tại'
     }
 
     return 'Trống';
@@ -618,8 +630,14 @@ const getBiddingTask = async () => {
 const getContractTask = async () => {
     loading.value = true
     try {
-        const response = await getContractsAPI();
-        listContract.value = response.data ? response.data : [];
+        const response = await getContractsAPI({ page: 1, per_page: 1000 })
+        // lấy đúng mảng contracts và chuẩn hoá id/title
+        const arr = Array.isArray(response.data?.data) ? response.data.data : []
+        listContract.value = arr.map(r => ({
+            ...r,
+            id: String(r.id),
+            title: r.title ?? r.name ?? ''   // FE dùng title thống nhất
+        }))
     } catch (e) {
         message.error('Không thể tải nhiệm vụ')
     } finally {

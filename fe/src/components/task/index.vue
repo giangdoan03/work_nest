@@ -83,7 +83,7 @@
                                 <!-- ================== CONTRACT ================== -->
                                 <a-col :span="12" v-if="formData.linked_type === 'contract'">
                                     <a-form-item label="Liên kết hợp đồng" name="linked_id">
-                                        <a-typography-text v-if="!isEditMode">{{ getNameLinked(formData.linked_id) }}</a-typography-text>
+                                        <a-typography-text v-if="!isEditMode">{{ linkedName }}</a-typography-text>
                                         <a-select
                                                 v-else
                                                 v-model:value="formData.linked_id"
@@ -129,22 +129,6 @@
                                                 />
                                             </a-config-provider>
                                         </template>
-
-                                        <!-- ✅ Luôn hiển thị lịch sử gia hạn -->
-                                        <!-- <a-timeline v-if="extensions.length" style="margin-top: 20px;">
-                                            <a-timeline-item v-for="item in sortedExtensions" :key="item.id">
-                                                <template #dot>
-                                                    <CalendarOutlined />
-                                                </template>
-                                                <span :style="{ color: extensionErrors[item.id] ? 'red' : 'inherit' }">
-                                                    {{ formatDate(item.old_end_date) }} → <b>{{ formatDate(item.new_end_date) }}</b>
-                                                    <span v-if="item.reason">({{ item.reason }})</span>
-                                                    <span v-if="extensionErrors[item.id]" style="margin-left: 8px; font-weight: bold;">
-                                                        {{ extensionErrors[item.id] }}
-                                                    </span>
-                                                </span>
-                                            </a-timeline-item>
-                                        </a-timeline> -->
                                     </a-form-item>
                                 </a-col>
 
@@ -512,26 +496,28 @@ const linkedName = ref('');
 
 // 2. hàm lấy tên (ưu tiên list, nếu không có thì call API)
 const getNameLinked = async (id) => {
-    if (!id) return 'Trống';
+    if (!id) return 'Trống'
+    const idStr = String(id)
 
     if (formData.value.linked_type === 'bidding') {
-        const found = listBidding.value.find(x => x.id === id);
-        if (found) return found.title;
-
-        const res = await getBiddingAPI(id);
-        return res.data?.title ?? 'Gói thầu không tồn tại';
+        const found = (Array.isArray(listBidding.value) ? listBidding.value : [])
+            .find(x => String(x.id) === idStr)
+        if (found) return found.title
+        const res = await getBiddingAPI(id)
+        return res.data?.title ?? 'Gói thầu không tồn tại'
     }
 
     if (formData.value.linked_type === 'contract') {
-        const found = listContract.value.find(x => x.id === id);
-        if (found) return found.title;
-
-        const res = await getContractAPI(id);
-        return res.data?.title ?? 'Hợp đồng không tồn tại';
+        const found = (Array.isArray(listContract.value) ? listContract.value : [])
+            .find(x => String(x.id) === idStr)
+        if (found) return found.title
+        const res = await getContractAPI(id)
+        return res.data?.title ?? 'Hợp đồng không tồn tại'
     }
 
-    return 'Trống';
-};
+    return 'Trống'
+}
+
 
 // 3. watch để cập nhật tên khi linked_id hoặc linked_type thay đổi
 watch(
@@ -627,17 +613,17 @@ const getProgressStatus = (progress) => {
 
 
 const linkedIdOption = computed(() => {
-    if (formData.value.linked_type === 'bidding') {
-        return listBidding.value.map(ele => {
-            return {value: ele.id, label: ele.title}
-        })
-    } else if (formData.value.linked_type === 'contract') {
-        return listContract.value.map(ele => {
-            return {value: ele.id, label: ele.title}
-        })
+    if (formData.value.linked_type === 'contract') {
+        const arr = Array.isArray(listContract.value) ? listContract.value : []
+        return arr.map(ele => ({ value: String(ele.id), label: ele.title }))
     }
-    return [];
+    if (formData.value.linked_type === 'bidding') {
+        const arr = Array.isArray(listBidding.value) ? listBidding.value : []
+        return arr.map(ele => ({ value: String(ele.id), label: ele.title }))
+    }
+    return []
 })
+
 const validateTitle = async (_rule, value) => {
     if (value === '') {
         return Promise.reject('Vui lòng nhập họ và tên');
@@ -900,14 +886,8 @@ const getDetailTaskById = async () => {
     try {
         const res = await getTaskDetail(route.params.id)
         formData.value = res.data
-
-        // ✅ Lưu id task hiện tại (task cha) vào store
         const parentId = Number(route.params.id)
         commonStore.setParentTaskId(parentId)
-
-        // ✅ Log ra console để kiểm tra
-        console.log('[TaskDetail] parentId lưu vào store =', parentId)
-        console.log('[TaskDetail] store.parentTaskId =', commonStore.parentTaskId)
 
     } catch (err) {
         console.error(err)
@@ -924,12 +904,13 @@ const getListBidding = async () => {
 }
 
 const getListContract = async () => {
-    await getContractsAPI().then(res => {
-
-        listContract.value = res.data;
-    }).catch(err => {
-
-    })
+    try {
+        const res = await getContractsAPI({ per_page: 1000, with_progress: 0 })
+        // ✅ chỉ lấy mảng
+        listContract.value = Array.isArray(res.data?.data) ? res.data.data : []
+    } catch {
+        listContract.value = []
+    }
 }
 
 const store = useUserStore();
