@@ -120,9 +120,9 @@
                 <a-step v-for="(step, index) in steps" :key="step.id" :status="mapStepStatus(step.status)">
                     <template #title>
                         <div
-                                @click.stop="openStepDrawer(step)"
-                                :class="{'active-step-title': activeStepId === step.id}"
-                                style="
+                            @click.stop="openStepDrawer(step)"
+                            :class="{'active-step-title': activeStepId === step.id}"
+                            style="
                                   display: flex;
                                   justify-content: space-between;
                                   align-items: center;
@@ -142,34 +142,158 @@
                     </template>
                     <template #description>
                         <a-descriptions
+                            class="desc-grid"
                             size="small"
-                            :column="1"
+                            :column="{ xs: 1, sm: 1, md: 2, lg: 2, xl: 2 }"
                             bordered
-                            style="background: #fafafa; padding: 12px; border-radius: 6px;"
                             :labelStyle="{ width: '200px' }"
                         >
+                            <!-- Phòng ban -->
                             <a-descriptions-item label="Phòng ban">
-                                <a-tag v-for="(dep, i) in parseDepartment(step.department)" :key="i" color="blue"
-                                       style="margin-right: 4px">
-                                    {{ dep }}
+                                <a-tag
+                                    v-for="(dep,i) in parseDepartment(step.department)"
+                                    :key="i"
+                                    color="blue"
+                                    style="margin:2px;"
+                                >{{ dep }}
                                 </a-tag>
                             </a-descriptions-item>
+
+                            <!-- Trạng thái (Popover + Select) -->
                             <a-descriptions-item label="Trạng thái">
-                                <a-tag :color="getStepStatusColor(step.status)">
-                                    {{ statusText(step.status) }}
-                                </a-tag>
+                                <a-popover
+                                    :open="openStatusForId === step.id"
+                                    trigger="click"
+                                    placement="bottomLeft"
+                                    @openChange="v => openStatusForId = v ? step.id : null"
+                                >
+                                    <template #content>
+                                        <a-select style="width:180px"
+                                                  :value="String(step.status)"
+                                                  @change="val => onChangeStatus(step, val)">
+                                            <a-select-option value="0">Chưa bắt đầu</a-select-option>
+                                            <a-select-option value="1">Đang xử lý</a-select-option>
+                                            <a-select-option value="2">Hoàn thành</a-select-option>
+                                            <a-select-option value="3">Bỏ qua</a-select-option>
+                                        </a-select>
+                                    </template>
+
+                                    <a-tag :color="getStepStatusColor(step.status)" class="status-tag">
+                                        {{ statusText(step.status) }}
+                                        <EditOutlined style="margin-left:6px;font-size:14px"/>
+                                    </a-tag>
+                                </a-popover>
                             </a-descriptions-item>
-                            <a-descriptions-item label="Người phụ trách">
-                                <a v-if="step.assigned_to" @click.stop="goToUserDetail(step.assigned_to)">
-                                    {{ getAssignedUserName(step.assigned_to) }}
-                                </a>
-                                <span v-else>Không xác định</span>
+
+                            <!-- Phụ trách bước (Popover + Select) -->
+                            <a-descriptions-item label="Phụ trách bước">
+                                <a-popover
+                                    :open="openAssignForId === step.id"
+                                    trigger="click"
+                                    placement="bottomLeft"
+                                    @openChange="v => openAssignForId = v ? step.id : null"
+                                >
+                                    <template #content>
+                                        <a-select style="width:200px"
+                                                  :value="step.assigned_to || null"
+                                                  placeholder="Chọn người phụ trách"
+                                                  allowClear
+                                                  @change="val => onChangeAssigned(step, val)">
+                                            <a-select-option v-for="u in users" :key="u.id" :value="u.id">
+                                                {{ u.name }}
+                                            </a-select-option>
+                                        </a-select>
+                                    </template>
+
+                                    <span class="assigned-display">
+                                      <a v-if="step.assigned_to" @click.stop.prevent style="color:#1890ff;">
+                                        {{ getAssignedUserName(step.assigned_to) }}
+                                      </a>
+                                      <span v-else>Không xác định</span>
+                                      <EditOutlined style="margin-left:6px;font-size:14px"/>
+                                    </span>
+                                </a-popover>
                             </a-descriptions-item>
+
+                            <!-- Ngày bắt đầu (click để sửa) -->
                             <a-descriptions-item label="Ngày bắt đầu">
-                                {{ formatDate(step.start_date) || '--' }}
+                                <a-typography-text
+                                    v-if="!showEditDateStart || activeStepId !== step.id"
+                                    type="secondary"
+                                    @click.stop="onClickEditStart(step)"
+                                >
+                                    {{ step.start_date ? formatDate(step.start_date) : '---' }}
+                                    <EditOutlined/>
+                                </a-typography-text>
+
+                                <a-date-picker
+                                    v-else
+                                    style="width:100%"
+                                    v-model:value="dateStart"
+                                    :format="'YYYY-MM-DD'"
+                                    :allowClear="true"
+                                    :disabledDate="cur => {
+                                      const e = step.end_date ? dayjs(step.end_date) : null
+                                      return e ? (cur && cur > e.endOf('day')) : false
+                                    }"
+                                    @change="updateStepStartDate"
+                                />
                             </a-descriptions-item>
+
+
+
+                            <!-- Hạn: full dòng để có không gian -->
+                            <a-descriptions-item label="Hạn">
+                                <template v-if="deadlineInfo(step.end_date).type === 'overdue'">
+                                    <a-tag color="error">Quá hạn {{ deadlineInfo(step.end_date).days }} ngày</a-tag>
+                                </template>
+                                <template v-else-if="deadlineInfo(step.end_date).type === 'today'">
+                                    <a-tag :color="'#faad14'">Hạn chót hôm nay</a-tag>
+                                </template>
+                                <template v-else-if="deadlineInfo(step.end_date).type === 'remaining'">
+                                    <a-tag color="green">Còn {{ deadlineInfo(step.end_date).days }} ngày</a-tag>
+                                </template>
+                                <template v-else>—</template>
+                            </a-descriptions-item>
+
+                            <!-- Ngày kết thúc (click để sửa) -->
                             <a-descriptions-item label="Ngày kết thúc">
-                                {{ formatDate(step.end_date) || '--' }}
+                                <a-typography-text
+                                    v-if="!showEditDateEnd || activeStepId !== step.id"
+                                    type="secondary"
+                                    @click.stop="onClickEditEnd(step)"
+                                >
+                                    {{ step.end_date ? formatDate(step.end_date) : '---' }}
+                                    <EditOutlined/>
+                                </a-typography-text>
+
+                                <a-date-picker
+                                    v-else
+                                    style="width:100%"
+                                    v-model:value="dateEnd"
+                                    :format="'YYYY-MM-DD'"
+                                    :allowClear="true"
+                                    :disabledDate="cur => {
+                                      const s = step.start_date ? dayjs(step.start_date) : null
+                                      return s ? (cur && cur < s.startOf('day')) : false
+                                    }"
+                                    @change="updateStepEndDate"
+                                />
+                            </a-descriptions-item>
+
+                            <!-- Người phối hợp thực hiện: full dòng để đủ chỗ avatar -->
+                            <a-descriptions-item label="Người phối hợp thực hiện">
+                                <template v-if="step.assignees_detail?.length">
+                                    <a-avatar-group size="small" :maxCount="8">
+                                        <a-tooltip v-for="u in step.assignees_detail" :key="u.id"
+                                                   :title="u.name || 'Không rõ'">
+                                            <a-avatar :style="{ backgroundColor: getAvatarColor(u.name) }">
+                                                {{ getInitials(u.name) }}
+                                            </a-avatar>
+                                        </a-tooltip>
+                                    </a-avatar-group>
+                                </template>
+                                <span v-else>—</span>
                             </a-descriptions-item>
                         </a-descriptions>
                     </template>
@@ -361,7 +485,7 @@ const relatedColumns = ref([
         title: 'Tên công việc',
         dataIndex: 'title',
         key: 'title',
-        width: 250,
+        width: 200,
         ellipsis: true
     },
     {
@@ -382,7 +506,7 @@ const relatedColumns = ref([
         title: 'Ưu tiên',
         dataIndex: 'priority',
         key: 'priority',
-        width: 100,
+        width: 150,
         align: 'center'
     },
     {
@@ -417,7 +541,7 @@ const relatedColumns = ref([
         title: 'Duyệt',
         dataIndex: 'approval_status',
         key: 'approval_status',
-        width: 150,
+        width: 200,
         align: 'center'
     }
 ])
@@ -439,47 +563,76 @@ const customerName = ref('Đang tải...')
 const allTasks = ref([])
 // const relatedTasks = ref([])
 
+const onClickEditStart = (step) => {
+    if (!step) return
+    selectedStep.value = step
+    dateStart.value = step.start_date ? dayjs(step.start_date) : null
+    showEditDateStart.value = true
+    showEditDateEnd.value = false
+    activeStepId.value = step.id
+}
+
+const onClickEditEnd = (step) => {
+    if (!step) return
+    selectedStep.value = step
+    dateEnd.value = step.end_date ? dayjs(step.end_date) : null
+    showEditDateStart.value = false
+    showEditDateEnd.value = true
+    activeStepId.value = step.id
+}
+
 const showEditDate = ref(false)
-const dateStart = ref()
-const dateEnd = ref()
+const dateStart = ref(null)
+const dateEnd = ref(null)
+// mở popover theo id step
+const openStatusForId = ref(null)
+const openAssignForId = ref(null)
+
 const showEditDateStart = ref(false)
 const showEditDateEnd = ref(false)
-const editDateStart = () => {
-    dateStart.value = selectedStep.value.start_date ? dayjs(selectedStep.value.start_date) : null
+const editDateStart = (step) => {
+    if (!step) return
+    selectedStep.value = step
+    dateStart.value = step.start_date ? dayjs(step.start_date) : null
     showEditDateStart.value = true
     showEditDateEnd.value = false
 }
-const editDateEnd = () => {
-    dateEnd.value = selectedStep.value.end_date ? dayjs(selectedStep.value.end_date) : null
+
+const editDateEnd = (step) => {
+    if (!step) return
+    selectedStep.value = step
+    dateEnd.value = step.end_date ? dayjs(step.end_date) : null
     showEditDateStart.value = false
     showEditDateEnd.value = true
 }
-const updateStepStartDate = async (value, option) => {
-    selectedStep.value.start_date = value.format('YYYY-MM-DD');
+const updateStepStartDate = async (value) => {
+    if (!selectedStep.value) return
+    const newStart = value ? dayjs(value).format('YYYY-MM-DD') : null
     try {
-        await updateContractStepAPI(selectedStep.value.id, {start_date: selectedStep.value.start_date})
+        await updateContractStepAPI(selectedStep.value.id, {start_date: newStart})
+        selectedStep.value.start_date = newStart
         message.success('Cập nhật ngày bắt đầu thành công')
         showEditDateStart.value = false
         await fetchSteps()
     } catch (e) {
-        const msg = 'Không thể cập nhật ngày bắt đầu'
-        message.error(msg)
-        console.warn('Lỗi cập nhật ngày bắt đầu:', msg)
+        message.error('Không thể cập nhật ngày bắt đầu')
     }
 }
-const updateStepEndDate = async (value, option) => {
-    selectedStep.value.end_date = value.format('YYYY-MM-DD')
+
+const updateStepEndDate = async (value) => {
+    if (!selectedStep.value) return
+    const newEnd = value ? dayjs(value).format('YYYY-MM-DD') : null
     try {
-        await updateContractStepAPI(selectedStep.value.id, {end_date: selectedStep.value.end_date})
+        await updateContractStepAPI(selectedStep.value.id, {end_date: newEnd})
+        selectedStep.value.end_date = newEnd
         message.success('Cập nhật ngày kết thúc thành công')
         showEditDateEnd.value = false
         await fetchSteps()
     } catch (e) {
-        const msg = 'Không thể cập nhật ngày kết thúc'
-        message.error(msg)
-        console.warn('Lỗi cập nhật ngày kết thúc:', msg)
+        message.error('Không thể cập nhật ngày kết thúc')
     }
 }
+
 const disabledDate = current => {
     return current && current < dayjs(selectedStep.value.start_date).endOf('day');
 };
@@ -538,12 +691,47 @@ const getAvatarColor = (name) => {
     const index = Math.abs(hash) % colors.length
     return colors[index]
 }
+
+// đổi trạng thái step (giống bidding, chú ý cast kiểu)
+const onChangeStatus = async (step, val) => {
+    const newVal = Number(val)
+    try {
+        if (newVal === 2 || String(newVal) === '2') {
+            await completeContractStepAPI(step.id)
+            message.success('Đã hoàn thành và mở bước kế tiếp')
+        } else {
+            await updateContractStepAPI(step.id, {status: newVal})
+            message.success('Đã cập nhật trạng thái bước')
+        }
+        step.status = newVal
+    } catch (e) {
+        const msg = e?.response?.data?.messages?.error || 'Đã xảy ra lỗi'
+        message.error(msg)
+    } finally {
+        openStatusForId.value = null
+        await fetchSteps()
+    }
+}
+
+// đổi người phụ trách step
+const onChangeAssigned = async (step, val) => {
+    try {
+        await updateContractStepAPI(step.id, {assigned_to: val || null})
+        message.success('Cập nhật người phụ trách thành công')
+        step.assigned_to = val || null
+    } catch (e) {
+        const msg = e?.response?.data?.messages?.error || 'Không thể cập nhật người phụ trách'
+        message.error(msg)
+    } finally {
+        openAssignForId.value = null
+        await fetchSteps()
+    }
+}
 const getInitials = (name) => {
     if (!name) return '?'
     const parts = name.trim().split(/\s+/)
-    return (parts[0][0] + (parts[parts.length-1]?.[0] || '')).toUpperCase()
+    return (parts[0][0] + (parts[parts.length - 1]?.[0] || '')).toUpperCase()
 }
-
 
 
 const getBiddingTitle = (id) => {
@@ -669,18 +857,18 @@ const getPriorityText = (priority) => {
 
 // Hàm tính toán thông tin deadline
 const deadlineInfo = (endDate) => {
-    if (!endDate) return { type: 'none', days: 0 }
-    
+    if (!endDate) return {type: 'none', days: 0}
+
     const today = dayjs()
     const deadline = dayjs(endDate)
     const diffDays = deadline.diff(today, 'day')
-    
+
     if (diffDays < 0) {
-        return { type: 'overdue', days: Math.abs(diffDays) }
+        return {type: 'overdue', days: Math.abs(diffDays)}
     } else if (diffDays === 0) {
-        return { type: 'today', days: 0 }
+        return {type: 'today', days: 0}
     } else {
-        return { type: 'remaining', days: diffDays }
+        return {type: 'remaining', days: diffDays}
     }
 }
 
@@ -990,23 +1178,64 @@ onMounted(() => {
 </script>
 
 <style>
-    .active-step-title .ant-statistic-content span {
-        color: #FFFFFF;
+.ant-descriptions-item-content {
+    width: 300px;
+}
+
+.active-step-title .ant-statistic-content span {
+    color: #FFFFFF;
+}
+
+/* Cân cột, đồng nhất label, bố cục gọn */
+.desc-grid :deep(.ant-descriptions-view) {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.desc-grid :deep(.ant-descriptions-item-label) {
+    width: 140px !important; /* đồng nhất label */
+    max-width: 140px;
+    white-space: nowrap;
+}
+
+.desc-grid :deep(.ant-descriptions-item-content) {
+    width: calc(100% - 140px); /* cột nội dung cố định thẳng hàng */
+}
+
+/* Item có control hiển thị đẹp hơn */
+.desc-grid .status-tag,
+.desc-grid .assigned-display {
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Tag list phòng ban gọn gàng */
+.desc-grid :deep(.ant-tag) {
+    margin: 2px 4px 2px 0;
+}
+
+/* Responsive: mobile 1 cột, label gọn hơn */
+@media (max-width: 575.98px) {
+    .desc-grid :deep(.ant-descriptions-item-label) {
+        width: 120px !important;
+        max-width: 120px;
     }
+}
+
 </style>
 
 <style scoped>
 
 
-    .active-step-title {
-        background-color: #91d5ff;
-        border-radius: 4px;
-        padding: 0 8px;
-    }
+.active-step-title {
+    background-color: #91d5ff;
+    border-radius: 4px;
+    padding: 0 8px;
+}
 
-    .active-step-title span {
-        color: #ffffff !important;
-    }
+.active-step-title span {
+    color: #ffffff !important;
+}
 
 .ant-list-item {
     padding-left: 0;

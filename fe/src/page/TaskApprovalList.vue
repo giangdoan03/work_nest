@@ -1,15 +1,17 @@
 <template>
     <div>
-        <a-typography-title :level="4">Nhiệm vụ cần duyệt</a-typography-title>
+        <a-flex justify="space-between" align="center">
+            <a-typography-title :level="4">Nhiệm vụ cần duyệt</a-typography-title>
 
-        <!-- 🔍 Tìm kiếm tên nhiệm vụ -->
-        <a-input-search
-            v-model:value="searchTitle"
-            placeholder="Tìm theo tên nhiệm vụ"
-            allow-clear
-            style="max-width: 300px; margin-bottom: 16px"
-            @pressEnter="handleSearch"
-        />
+            <!-- 🔍 Tìm kiếm tên nhiệm vụ -->
+            <a-input-search
+                v-model:value="searchTitle"
+                placeholder="Tìm theo tên nhiệm vụ"
+                allow-clear
+                style="max-width: 300px;"
+                @pressEnter="handleSearch"
+            />
+        </a-flex>
 
         <a-tabs v-model:activeKey="activeTab" @change="handleTabChange">
             <a-tab-pane key="resolved" tab="Đã duyệt / Từ chối" />
@@ -165,7 +167,7 @@ import {
     CheckCircleOutlined,
     CloseCircleOutlined,
     ClockCircleOutlined,
-    ArrowRightOutlined
+    ArrowRightOutlined, SearchOutlined
 } from '@ant-design/icons-vue'
 import debounce from 'lodash/debounce'
 import {

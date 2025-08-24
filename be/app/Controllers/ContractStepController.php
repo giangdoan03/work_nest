@@ -10,49 +10,136 @@ use App\Models\TaskModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use App\Models\StepTemplateModel;
+use Config\Database;
+use ReflectionException;
 
 class ContractStepController extends ResourceController
 {
     protected $modelName = ContractStepModel::class;
     protected $format    = 'json';
 
-    public function index($contractId = null)
+    public function index($contractId = null): ResponseInterface
     {
-        // Lấy tất cả các bước theo contract_id
+        // 1) Lấy steps
         $steps = $this->model
             ->where('contract_id', $contractId)
             ->orderBy('step_number', 'ASC')
             ->findAll();
 
+        if (!$steps) {
+            return $this->respond([]);
+        }
+
         $stepIds = array_column($steps, 'id');
 
+        // 2) Lấy tasks của các step
         $taskModel = new TaskModel();
-        $allTasks = [];
-
-        if (!empty($stepIds)) {
-            $allTasks = $taskModel
+        $tasks = $stepIds
+            ? $taskModel->asArray()
                 ->where('linked_type', 'contract')
                 ->whereIn('step_id', $stepIds)
+                ->findAll()
+            : [];
+
+        // 3) Tính days_remaining / days_overdue
+        $tz    = new \DateTimeZone('Asia/Ho_Chi_Minh');
+        $today = new \DateTimeImmutable('today', $tz);
+
+        foreach ($tasks as &$t) {
+            // ĐỔI 'end_date' thành 'due_date' nếu DB bạn dùng due_date
+            [$t['days_remaining'], $t['days_overdue']] = $this->calcRemOv($t['end_date'] ?? null, $today, $tz);
+        }
+        unset($t);
+
+        // 4) Gom theo step_id + gom userIds
+        $grouped = [];
+        $assigneeIds = [];
+        foreach ($tasks as $t) {
+            $grouped[$t['step_id']][] = $t;
+            if (!empty($t['assigned_to'])) {
+                $assigneeIds[(string)$t['assigned_to']] = true;
+            }
+        }
+
+        // 5) Lấy user detail 1 lần
+        $userById = [];
+        if ($assigneeIds) {
+            $ids = array_keys($assigneeIds);
+            $users = (new \App\Models\UserModel())
+                ->select('id, name')
+                ->whereIn('id', $ids)
                 ->findAll();
+            foreach ($users as $u) {
+                $userById[(string)$u['id']] = $u;
+            }
         }
 
-        // Nhóm tasks theo step_id
-        $tasksGrouped = [];
-        foreach ($allTasks as $task) {
-            $tasksGrouped[$task['step_id']][] = $task;
-        }
+        // 6) Map aggregate vào step (y hệt bidding)
+        foreach ($steps as &$s) {
+            $tArr = $grouped[$s['id']] ?? [];
 
-        // Gán tasks, task_count, task_done_count cho mỗi bước
-        foreach ($steps as &$step) {
-            $tasks = $tasksGrouped[$step['id']] ?? [];
+            $minRem = null; $maxOv = 0; $hasToday = false; $hasAny = false;
+            $uids   = [];   $approvedCount = 0;
 
-            $step['tasks'] = $tasks;
-            $step['task_count'] = count($tasks);
-            $step['task_done_count'] = count(array_filter($tasks, fn($t) => $t['status'] === 'done'));
+            foreach ($tArr as $t) {
+                // deadline aggregate
+                $r = $t['days_remaining'] ?? null;
+                $o = $t['days_overdue']   ?? null;
+                if ($r !== null || $o !== null) $hasAny = true;
+                if ((int)($r ?? -1) === 0 && !empty($t['end_date'])) $hasToday = true;
+                if ($r !== null && (int)$r > 0) $minRem = is_null($minRem) ? (int)$r : min($minRem, (int)$r);
+                if ($o !== null && (int)$o > 0) $maxOv  = max($maxOv, (int)$o);
+
+                // assignees aggregate
+                if (!empty($t['assigned_to'])) $uids[] = (string)$t['assigned_to'];
+
+                // chỉ tính DONE khi approved
+                $status   = (string)($t['status'] ?? '');
+                $progress = (int)($t['progress'] ?? 0);
+                $approved = (string)($t['approval_status'] ?? '') === 'approved';
+                if (($status === 'done' || $progress >= 100) && $approved) {
+                    $approvedCount++;
+                }
+            }
+
+            $uids    = array_values(array_unique($uids));
+            $details = array_values(array_filter(array_map(fn($id) => $userById[$id] ?? null, $uids)));
+
+            $totalTasks   = count($tArr);
+            $stepProgress = $totalTasks ? (int) round($approvedCount * 100 / $totalTasks) : 0;
+
+            $s['tasks']             = $tArr; // muốn nhẹ response thì bỏ dòng này
+            $s['task_count']        = $totalTasks;
+            $s['task_done_count']   = $approvedCount;
+            $s['step_progress']     = $stepProgress;
+            $s['is_step_completed'] = ($totalTasks > 0 && $approvedCount === $totalTasks) ? 1 : 0;
+            $s['days_remaining']    = $hasAny ? ($hasToday ? 0 : $minRem) : null;
+            $s['days_overdue']      = $hasAny ? $maxOv : null;
+            $s['assignees']         = $uids;
+            $s['assignees_detail']  = $details;
+            $s['assignees_count']   = count($uids);
+            $s['assignees_names']   = implode(', ', array_column($details, 'name'));
         }
+        unset($s);
 
         return $this->respond($steps);
     }
+
+// helper như bên bidding
+    private function calcRemOv(?string $endDate, \DateTimeImmutable $today, \DateTimeZone $tz): array
+    {
+        if (!$endDate) return [null, null];
+
+        $due = \DateTimeImmutable::createFromFormat('Y-m-d', $endDate, $tz);
+        if ($due === false) {
+            try { $due = new \DateTimeImmutable($endDate, $tz); }
+            catch (\Throwable) { return [null, null]; }
+        }
+
+        $diff = (int)$today->diff($due)->format('%r%a');
+        return [ max(0, $diff), max(0, -$diff) ];
+    }
+
 
 
 
@@ -150,65 +237,81 @@ class ContractStepController extends ResourceController
 
     public function reorder($contractId = null): ResponseInterface
     {
-        $contractModel = new ContractModel();
-        if (!$contractModel->find($contractId)) {
-            return $this->failNotFound("Không tìm thấy hợp đồng với ID $contractId");
-        }
-
         $stepIds = $this->request->getJSON(true)['step_ids'] ?? [];
-
         if (!is_array($stepIds) || empty($stepIds)) {
             return $this->failValidationErrors(['step_ids' => 'Danh sách bước không hợp lệ']);
         }
-
         foreach ($stepIds as $index => $stepId) {
-            $this->model->update($stepId, ['step_no' => $index + 1]);
+            $this->model->update($stepId, ['step_number' => $index + 1]);
         }
-
-        return $this->respond([
-            'status' => 'success',
-            'message' => 'Đã cập nhật thứ tự bước'
-        ]);
+        return $this->respond(['status' => 'success', 'message' => 'Đã cập nhật thứ tự bước']);
     }
 
     public function resequence($contractId = null): ResponseInterface
     {
         $steps = $this->model
             ->where('contract_id', $contractId)
-            ->orderBy('created_at', 'ASC') // có thể đổi sang 'id' nếu muốn
+            ->orderBy('created_at', 'ASC')
             ->findAll();
 
         $i = 1;
         foreach ($steps as $step) {
-            $this->model->update($step['id'], ['step_no' => $i]);
-            $i++;
+            $this->model->update($step['id'], ['step_number' => $i++]);
         }
 
         return $this->respond([
             'status' => 'success',
-            'message' => 'Đã cập nhật lại step_no theo thứ tự',
+            'message' => 'Đã cập nhật lại step_number theo thứ tự',
             'total' => count($steps)
         ]);
     }
 
     public function cloneFromTemplate($contractId = null): ResponseInterface
     {
-        $contractModel = new ContractModel();
-        if (!$contractModel->find($contractId)) {
+        $contract = (new ContractModel())->find($contractId);
+        if (!$contract) {
             return $this->failNotFound("Không tìm thấy hợp đồng với ID $contractId");
         }
 
-        $templateModel = new ContractStepTemplateModel();
-        $templates = $templateModel->orderBy('step_number')->findAll(); // ✅ Sửa đúng tên cột
+        $db = Database::connect();
+        $db->transStart();
 
-        $insertedIds = $this->getArr($contractId, $templates);
+        $templateModel = new ContractStepTemplateModel();
+        $templates = $templateModel->orderBy('step_number')->findAll();
+
+        // Xoá cũ (nếu cần)
+        $this->model->where('contract_id', $contractId)->delete();
+
+        // Insert mới, reindex 1..n
+        $rows = [];
+        $num = 1;
+        foreach ($templates as $t) {
+            $rows[] = [
+                'contract_id' => $contractId,
+                'step_number' => $num,
+                'title'       => $t['title'] ?? 'Không tên',
+                'department'  => $t['department'] ?? null,
+                'status'      => ($num === 1) ? 1 : 0, // mở bước đầu
+                'customer_id' => $contract['customer_id'] ?? null,
+            ];
+            $num++;
+        }
+        if ($rows) {
+            $this->model->insertBatch($rows);
+        }
+
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            return $this->fail('Không thể clone các bước từ mẫu.');
+        }
 
         return $this->respond([
-            'status'    => 'success',
-            'message'   => 'Đã clone các bước từ mẫu',
-            'step_ids'  => $insertedIds
+            'status'  => 'success',
+            'message' => 'Đã clone các bước từ mẫu',
         ]);
     }
+
 
 
     /**
@@ -251,53 +354,62 @@ class ContractStepController extends ResourceController
     }
 
     /**
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function complete($id = null): ResponseInterface
     {
-        $current = $this->model->find($id);
+        $db = Database::connect();
+        $db->transStart();
+
+        $current = $this->model->where('id', $id)->lockForUpdate()->first();
         if (!$current) {
+            $db->transComplete();
             return $this->failNotFound("Không tìm thấy bước với ID $id");
         }
 
-        // 🔒 Kiểm tra các bước trước đã hoàn thành chưa
+        // kiểm tra bước trước
         $unfinishedBefore = $this->model
             ->where('contract_id', $current['contract_id'])
             ->where('step_number <', $current['step_number'])
-            ->where('status !=', 2) // 2 = hoàn thành
+            ->where('status !=', 2)
             ->countAllResults();
 
         if ($unfinishedBefore > 0) {
+            $db->transComplete();
             return $this->fail('Bạn cần hoàn thành tất cả các bước trước đó.');
         }
 
-        // ✅ Cập nhật bước hiện tại thành hoàn thành
-        $updateData = [
-            'status' => 2,
+        // cập nhật current
+        $ok1 = $this->model->update($id, [
+            'status'       => 2,
             'completed_at' => date('Y-m-d H:i:s'),
-        ];
+        ]);
 
-        if (!$this->model->update($id, $updateData)) {
-            return $this->failValidationErrors($this->model->errors());
-        }
-
-        // ✅ Mở bước kế tiếp (nếu có)
+        // mở next
         $next = $this->model
             ->where('contract_id', $current['contract_id'])
             ->where('step_number >', $current['step_number'])
             ->orderBy('step_number', 'asc')
             ->first();
 
+        $ok2 = true;
         if ($next) {
-            $this->model->update($next['id'], ['status' => 1]); // 1 = đang xử lý
+            $ok2 = $this->model->update($next['id'], ['status' => 1]); // 1 = đang xử lý
+        }
+
+        $db->transComplete();
+
+        if ($db->transStatus() === false || !$ok1 || !$ok2) {
+            return $this->fail('Không thể hoàn thành bước do lỗi giao dịch.');
         }
 
         return $this->respond([
-            'message' => 'Bước đã hoàn thành và bước kế tiếp đã được mở.',
-            'step_id' => $id,
-            'next_step_id' => $next['id'] ?? null,
+            'message'     => 'Bước đã hoàn thành và bước kế tiếp đã được mở.',
+            'step_id'     => $id,
+            'next_step_id'=> $next['id'] ?? null,
         ]);
     }
+
 
     public function tasksByStep($stepId): ResponseInterface
     {

@@ -3,9 +3,9 @@
         <!-- Logo -->
         <div class="logo-container">
             <router-link to="/" class="logo">
-                <!-- Ảnh logo: dùng icon khi collapsed, dùng logo ngang khi mở -->
+                <!-- Dùng ảnh trong public -->
                 <img
-                    :src="collapsed ? logoMark : logoFull"
+                    :src="collapsed ? '/logoMark.png' : '/TTID_logo.png'"
                     class="logo-img"
                     :alt="collapsed ? 'WN' : 'Work Nest'"
                 />
@@ -362,9 +362,6 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
-// Dùng đúng đường dẫn tới file logo của bạn
-import logoFull from '@/assets/TTID_logo.png'   // logo ngang có chữ
-import logoMark from '@/assets/logoMark.png'   // logo icon (vuông)
 
 import {
     BarChartOutlined,
