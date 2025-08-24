@@ -18,7 +18,7 @@ app.use(router)
 app.use(Antd)
 
 // 🔹 Title động theo route meta
-const APP_NAME = import.meta.env.VITE_APP_TITLE || 'Work Nest'
+const APP_NAME = import.meta.env.VITE_APP_TITLE || 'TTID'
 router.afterEach((to) => {
     const rawTitle = typeof to.meta?.title === 'function'
         ? to.meta.title(to)
