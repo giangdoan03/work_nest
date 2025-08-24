@@ -43,6 +43,7 @@
                     <span class="value">{{ formatDate(bidding?.end_date) }}</span>
                 </div>
             </a-descriptions-item>
+
             <a-descriptions-item label="Tiến độ">
                 <a-tooltip :title="detailProgressText(bidding)">
                     <div class="desc-progress">
@@ -53,9 +54,6 @@
                             size="small"
                             :show-info="false"
                         />
-<!--                        <span class="progress-meta">-->
-<!--                            {{ detailProgressText(bidding) }}-->
-<!--                          </span>-->
                     </div>
                 </a-tooltip>
             </a-descriptions-item>
@@ -180,25 +178,25 @@
                             </a-popover>
                         </a-descriptions-item>
 
-                            <a-descriptions-item label="Ngày kết thúc" style="width: 150px">
-                                <a-typography-text
-                                    v-if="!isEditing(step, 'end')"
-                                    type="secondary"
-                                    @click.stop="editDateEnd(step)"
-                                >
-                                    {{ step.end_date ? formatDate(step.end_date) : '---' }}
-                                    <EditOutlined />
-                                </a-typography-text>
-                                <a-date-picker
-                                    v-else
-                                    style="width: 100%"
-                                    v-model:value="dateEnd"
-                                    :format="'YYYY-MM-DD'"
-                                    :allowClear="true"
-                                    :disabledDate="disabledEndDate"
-                                    @change="updateStepEndDate"
-                                />
-                            </a-descriptions-item>
+                        <a-descriptions-item label="Ngày kết thúc" style="width: 150px">
+                            <a-typography-text
+                                v-if="!isEditing(step, 'end')"
+                                type="secondary"
+                                @click.stop="editDateEnd(step)"
+                            >
+                                {{ step.end_date ? formatDate(step.end_date) : '---' }}
+                                <EditOutlined />
+                            </a-typography-text>
+                            <a-date-picker
+                                v-else
+                                style="width: 100%"
+                                v-model:value="dateEnd"
+                                :format="'YYYY-MM-DD'"
+                                :allowClear="true"
+                                :disabledDate="disabledEndDate"
+                                @change="updateStepEndDate"
+                            />
+                        </a-descriptions-item>
 
                         <a-descriptions-item label="Phụ trách bước">
                             <a-popover
@@ -594,8 +592,7 @@
     const PROGRESS_COLOR = '#1890ff'
 
     // % tổng của gói thầu trong trang chi tiết
-    const detailProgressPercent = (b) =>
-        Number(b?.progress?.bidding_progress ?? 0)
+    const detailProgressPercent = (b) => Number(b?.progress?.bidding_progress ?? 0)
 
     // Text hiển thị: "22% (2/9)"
     const detailProgressText = (b) => {

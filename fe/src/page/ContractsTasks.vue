@@ -631,8 +631,8 @@ const applyDrawerPager = (pager) => {
 const columns = [
     {title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px'},
     {title: 'Tên hợp đồng', dataIndex: 'name', key: 'name'},
-    {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: '150px'}, // ✅ NEW
-    {title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'center'}, // ✅ NEW
+    {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: '150px'},
+    {title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'center'},
     {title: 'Mã hợp đồng', dataIndex: 'code', key: 'code'},
     {title: 'Trạng thái', dataIndex: 'status', key: 'status'},
     {title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date'},
