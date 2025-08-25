@@ -153,27 +153,6 @@
                                 />
                             </a-descriptions-item>
 
-                            <!-- Ngày kết thúc -->
-                            <a-descriptions-item label="Ngày kết thúc">
-                                <a-typography-text
-                                    v-if="!isEditing(step, 'end')"
-                                    type="secondary"
-                                    @click.stop="editDateEnd(step)"
-                                >
-                                    {{ step.end_date ? formatDate(step.end_date) : '---' }}
-                                    <EditOutlined />
-                                </a-typography-text>
-                                <a-date-picker
-                                    v-else
-                                    style="width:100%"
-                                    v-model:value="dateEnd"
-                                    :format="'YYYY-MM-DD'"
-                                    :allowClear="true"
-                                    :disabledDate="disabledEndDate"
-                                    @change="updateStepEndDate"
-                                />
-                            </a-descriptions-item>
-
                             <!-- Trạng thái -->
                             <a-descriptions-item label="Trạng thái">
                                 <a-popover
@@ -202,6 +181,27 @@
                                 </a-popover>
                             </a-descriptions-item>
 
+                            <!-- Ngày kết thúc -->
+                            <a-descriptions-item label="Ngày kết thúc">
+                                <a-typography-text
+                                    v-if="!isEditing(step, 'end')"
+                                    type="secondary"
+                                    @click.stop="editDateEnd(step)"
+                                >
+                                    {{ step.end_date ? formatDate(step.end_date) : '---' }}
+                                    <EditOutlined />
+                                </a-typography-text>
+                                <a-date-picker
+                                    v-else
+                                    style="width:100%"
+                                    v-model:value="dateEnd"
+                                    :format="'YYYY-MM-DD'"
+                                    :allowClear="true"
+                                    :disabledDate="disabledEndDate"
+                                    @change="updateStepEndDate"
+                                />
+                            </a-descriptions-item>
+
                             <!-- Người phụ trách -->
                             <a-descriptions-item label="Phụ trách bước">
                                 <a-popover
@@ -225,12 +225,12 @@
                                     </template>
 
                                     <span class="assigned-display">
-          <a v-if="step.assigned_to" @click.stop.prevent style="color:#1890ff;">
-            {{ getAssignedUserName(step.assigned_to) }}
-          </a>
-          <span v-else>Không xác định</span>
-          <EditOutlined style="margin-left:6px;font-size:14px" />
-        </span>
+                                      <a v-if="step.assigned_to" @click.stop.prevent style="color:#1890ff;">
+                                        {{ getAssignedUserName(step.assigned_to) }}
+                                      </a>
+                                      <span v-else>Không xác định</span>
+                                      <EditOutlined style="margin-left:6px;font-size:14px" />
+                                    </span>
                                 </a-popover>
                             </a-descriptions-item>
 
@@ -267,12 +267,9 @@
                             </a-descriptions-item>
                         </a-descriptions>
                     </template>
-
-
                 </a-step>
             </a-steps>
         </a-spin>
-
 
         <!-- Drawer hiển thị chi tiết bước -->
         <a-drawer
