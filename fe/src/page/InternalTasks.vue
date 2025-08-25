@@ -900,8 +900,8 @@ table tr td span {
     font-size: 13px !important;
 }
 
-table .ant-progress-small:where(.css-dev-only-do-not-override-3m4nqy).ant-progress-line {
-    font-size: 14px !important;
+table .ant-progress-small {
+    font-size: 13px !important;
 }
 
 table .ant-table-thead > tr > th {
