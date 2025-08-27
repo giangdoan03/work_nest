@@ -7,17 +7,25 @@ use App\Models\ContractStepModel;
 use App\Models\ContractModel;
 use App\Models\ContractStepTemplateModel;
 use App\Models\TaskModel;
+use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use App\Models\StepTemplateModel;
 use Config\Database;
+use DateTimeImmutable;
+use DateTimeZone;
+use Exception;
 use ReflectionException;
+use Throwable;
 
 class ContractStepController extends ResourceController
 {
     protected $modelName = ContractStepModel::class;
     protected $format    = 'json';
 
+    /**
+     * @throws Exception
+     */
     public function index($contractId = null): ResponseInterface
     {
         // 1) Lấy steps
@@ -42,8 +50,8 @@ class ContractStepController extends ResourceController
             : [];
 
         // 3) Tính days_remaining / days_overdue
-        $tz    = new \DateTimeZone('Asia/Ho_Chi_Minh');
-        $today = new \DateTimeImmutable('today', $tz);
+        $tz    = new DateTimeZone('Asia/Ho_Chi_Minh');
+        $today = new DateTimeImmutable('today', $tz);
 
         foreach ($tasks as &$t) {
             // ĐỔI 'end_date' thành 'due_date' nếu DB bạn dùng due_date
@@ -65,7 +73,7 @@ class ContractStepController extends ResourceController
         $userById = [];
         if ($assigneeIds) {
             $ids = array_keys($assigneeIds);
-            $users = (new \App\Models\UserModel())
+            $users = (new UserModel())
                 ->select('id, name')
                 ->whereIn('id', $ids)
                 ->findAll();
@@ -126,14 +134,14 @@ class ContractStepController extends ResourceController
     }
 
 // helper như bên bidding
-    private function calcRemOv(?string $endDate, \DateTimeImmutable $today, \DateTimeZone $tz): array
+    private function calcRemOv(?string $endDate, DateTimeImmutable $today, DateTimeZone $tz): array
     {
         if (!$endDate) return [null, null];
 
-        $due = \DateTimeImmutable::createFromFormat('Y-m-d', $endDate, $tz);
+        $due = DateTimeImmutable::createFromFormat('Y-m-d', $endDate, $tz);
         if ($due === false) {
-            try { $due = new \DateTimeImmutable($endDate, $tz); }
-            catch (\Throwable) { return [null, null]; }
+            try { $due = new DateTimeImmutable($endDate, $tz); }
+            catch (Throwable) { return [null, null]; }
         }
 
         $diff = (int)$today->diff($due)->format('%r%a');

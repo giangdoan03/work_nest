@@ -23,3 +23,23 @@ export const completeBiddingStepAPI = (stepId) => instance.put(`/bidding-steps/$
 
 export const canMarkBiddingAsCompleteAPI = (biddingId) => instance.get(`/biddings/${biddingId}/can-complete`)
 
+// === Phê duyệt gói thầu (multi-level) ===
+
+// Gửi gói thầu đi phê duyệt (có danh sách approverIds)
+export const sendBiddingForApprovalAPI = (biddingId, approverIds = []) =>
+    instance.post(`/biddings/${biddingId}/send-approval`, { approver_ids: approverIds })
+
+// Approve cấp hiện tại
+export const approveBiddingAPI = (biddingId, note = null) =>
+    instance.post(`/biddings/${biddingId}/approve`, { note })
+
+// Reject cấp hiện tại
+export const rejectBiddingAPI = (biddingId, note = null) =>
+    instance.post(`/biddings/${biddingId}/reject`, { note })
+
+
+export const updateApprovalStepsAPI = (id, approverIds) =>
+    instance.put(`/biddings/${id}/approval-steps`, { approver_ids: approverIds })
+
+
+

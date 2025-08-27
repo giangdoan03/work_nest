@@ -15,7 +15,7 @@ class BiddingModel extends Model
         'assigned_to',     // người phụ trách
         'manager_id',      // người quản lý
         'collaborators',  // người phối hợp (có thể là JSON)
-        'priority',
+        'priority', 'approval_status','approval_steps','current_level'
     ];
 
     protected $useTimestamps = true;

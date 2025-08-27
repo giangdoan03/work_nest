@@ -19,7 +19,16 @@ class BiddingController extends ResourceController
     protected $modelName = BiddingModel::class;
     protected $format = 'json';
 
-    protected array $validStatuses = [1, 2, 3];
+    protected array $validStatuses = [1, 2, 3, 4]; // 4 = SENT_FOR_APPROVAL
+
+    private const STATUS_PREPARING = 1;
+    private const STATUS_WON       = 2;
+    private const STATUS_CANCELLED = 3;
+    private const STATUS_SENT      = 4;
+
+    private const AP_PENDING  = 'pending';
+    private const AP_APPROVED = 'approved';
+    private const AP_REJECTED = 'rejected';
 
     /**
      * Lấy danh sách gói thầu có lọc + phân trang
@@ -198,6 +207,9 @@ class BiddingController extends ResourceController
         if (isset($filters['priority']) && $filters['priority'] !== '') {
             $builder->where('biddings.priority', (int)$filters['priority']);
         }
+        if (!empty($filters['approval_status'])) {
+            $builder->where('biddings.approval_status', $filters['approval_status']); // pending/approved/rejected
+        }
         if (!empty($filters['search'])) {
             $builder->groupStart()
                 ->like('biddings.title', $filters['search'])
@@ -327,9 +339,6 @@ class BiddingController extends ResourceController
     }
 
 
-
-
-
     /**
      * Lấy chi tiết 1 gói thầu
      */
@@ -416,6 +425,25 @@ class BiddingController extends ResourceController
     public function update($id = null)
     {
         $data = $this->request->getJSON(true);
+
+        // Nếu client muốn set WON → bắt buộc approval_status = approved
+        if (isset($data['status']) && (int)$data['status'] === self::STATUS_WON) {
+            $bid = $this->model->find($id);
+            if (!$bid) return $this->failNotFound('Gói thầu không tồn tại.');
+
+            // 1) Kiểm tra phê duyệt
+            if (($bid['approval_status'] ?? '') !== self::AP_APPROVED) {
+                return $this->failValidationErrors(['approval' => 'Chưa hoàn tất 2 cấp phê duyệt.']);
+            }
+
+            // 2) (Giữ điều kiện cũ) kiểm tra các bước/ task đã hoàn thành
+            $can = $this->canMarkAsComplete($id);
+            $payload = json_decode($can->getBody(), true);
+            if (empty($payload['allow'])) {
+                return $this->failValidationErrors(['steps' => 'Cần hoàn tất tất cả bước trước khi chuyển "Trúng thầu".']);
+            }
+        }
+
         if (!$this->model->update($id, $data)) {
             return $this->failValidationErrors($this->model->errors());
         }
@@ -472,10 +500,229 @@ class BiddingController extends ResourceController
             ->where('status !=', 2) // 2 = Hoàn thành
             ->countAllResults();
 
+        $bid = $this->model->find($biddingId);
+        $apOK = (($bid['approval_status'] ?? '') === self::AP_APPROVED);
+
         return $this->respond([
-            'allow' => $unfinished === 0
+            'allow' => $unfinished === 0 && $apOK,
+            'unfinished_steps' => $unfinished,
+            'approval_ok' => $apOK
         ]);
     }
+
+
+
+    private function buildApprovalSteps(array $approverIds): array
+    {
+        // Mỗi phần tử: level (1-based), approver_id, status=pending, commented_at=null
+        $steps = [];
+        foreach ($approverIds as $i => $uid) {
+            $steps[] = [
+                'level'        => $i + 1,
+                'approver_id'  => (int)$uid,
+                'status'       => self::AP_PENDING,
+                'commented_at' => null,
+                'note'         => null,
+            ];
+        }
+        return $steps;
+    }
+
+    private function allStepsApproved(array $steps): bool
+    {
+        foreach ($steps as $s) {
+            if (($s['status'] ?? '') !== self::AP_APPROVED) return false;
+        }
+        return true;
+    }
+
+    private function stepApprove(array $steps, int $currentLevel, ?string $note = null): array
+    {
+        // currentLevel là 0-based trong DB
+        if (!isset($steps[$currentLevel])) return $steps;
+        $steps[$currentLevel]['status']       = self::AP_APPROVED;
+        $steps[$currentLevel]['commented_at'] = date('Y-m-d H:i:s');
+        if ($note !== null) $steps[$currentLevel]['note'] = $note;
+        return $steps;
+    }
+
+    private function stepReject(array $steps, int $currentLevel, ?string $note = null): array
+    {
+        if (!isset($steps[$currentLevel])) return $steps;
+        $steps[$currentLevel]['status']       = self::AP_REJECTED;
+        $steps[$currentLevel]['commented_at'] = date('Y-m-d H:i:s');
+        if ($note !== null) $steps[$currentLevel]['note'] = $note;
+        return $steps;
+    }
+
+
+    public function sendForApproval($id = null): ResponseInterface
+    {
+        $bidding = $this->model->find($id);
+        if (!$bidding) return $this->failNotFound('Gói thầu không tồn tại.');
+
+        // Đầu vào: { approver_ids: [uid1, uid2, ...] } — yêu cầu >= 2
+        $body = $this->request->getJSON(true) ?? [];
+        $approverIds = array_values(array_filter(array_map('intval', $body['approver_ids'] ?? [])));
+        if (count($approverIds) < 2) {
+            return $this->failValidationErrors(['approver_ids' => 'Cần tối thiểu 2 cấp duyệt.']);
+        }
+
+        // Không cho gửi nếu đang WON/CANCELLED
+        $status = (int)($bidding['status'] ?? 0);
+        if (in_array($status, [self::STATUS_WON, self::STATUS_CANCELLED], true)) {
+            return $this->failValidationErrors(['status' => 'Trạng thái hiện tại không cho phép gửi phê duyệt.']);
+        }
+
+        $steps = $this->buildApprovalSteps($approverIds);
+        $ok = $this->model->update($id, [
+            'status'          => self::STATUS_SENT,
+            'approval_status' => self::AP_PENDING,
+            'approval_steps'  => json_encode($steps, JSON_UNESCAPED_UNICODE),
+            'current_level'   => 0, // 0-based
+        ]);
+
+        if (!$ok) return $this->failValidationErrors($this->model->errors());
+        return $this->respond(['message' => 'Đã gửi phê duyệt', 'current_level' => 0, 'approval_steps' => $steps]);
+    }
+
+
+
+    public function approve($id = null): ResponseInterface
+    {
+        $bidding = $this->model->find($id);
+        if (!$bidding) return $this->failNotFound('Gói thầu không tồn tại.');
+
+        if (($bidding['approval_status'] ?? '') !== self::AP_PENDING) {
+            return $this->failValidationErrors(['approval_status' => 'Không ở trạng thái chờ duyệt.']);
+        }
+
+        $steps = json_decode($bidding['approval_steps'] ?? '[]', true) ?: [];
+        $curr  = (int)($bidding['current_level'] ?? 0);
+
+        // (Tùy chọn) kiểm tra đúng người duyệt
+        $session = session();
+        $userId  = (int)($session->get('user_id') ?? 0);
+        if (isset($steps[$curr]['approver_id']) && $userId > 0 && (int)$steps[$curr]['approver_id'] !== $userId) {
+            return $this->failForbidden('Bạn không phải người duyệt ở cấp hiện tại.');
+        }
+
+        $note  = $this->request->getPost('note') ?? ($this->request->getJSON(true)['note'] ?? null);
+        $steps = $this->stepApprove($steps, $curr, $note);
+
+        $nextLevel = $curr + 1;
+        $final     = $this->allStepsApproved($steps);
+
+        $update = [
+            'approval_steps'  => json_encode($steps, JSON_UNESCAPED_UNICODE),
+            'current_level'   => $final ? $curr : $nextLevel,
+            'approval_status' => $final ? self::AP_APPROVED : self::AP_PENDING,
+        ];
+
+        $this->model->update($id, $update);
+        return $this->respond([
+            'message'        => $final ? 'Đã phê duyệt hoàn tất.' : 'Đã phê duyệt cấp hiện tại.',
+            'approval_status'=> $update['approval_status'],
+            'current_level'  => $update['current_level'],
+            'approval_steps' => $steps
+        ]);
+    }
+
+
+
+    public function reject($id = null): ResponseInterface
+    {
+        $bidding = $this->model->find($id);
+        if (!$bidding) return $this->failNotFound('Gói thầu không tồn tại.');
+
+        if (($bidding['approval_status'] ?? '') !== self::AP_PENDING) {
+            return $this->failValidationErrors(['approval_status' => 'Không ở trạng thái chờ duyệt.']);
+        }
+
+        $steps = json_decode($bidding['approval_steps'] ?? '[]', true) ?: [];
+        $curr  = (int)($bidding['current_level'] ?? 0);
+
+        // (Tùy chọn) kiểm tra đúng người duyệt
+        $session = session();
+        $userId  = (int)($session->get('user_id') ?? 0);
+        if (isset($steps[$curr]['approver_id']) && $userId > 0 && (int)$steps[$curr]['approver_id'] !== $userId) {
+            return $this->failForbidden('Bạn không phải người duyệt ở cấp hiện tại.');
+        }
+
+        $note  = $this->request->getPost('note') ?? ($this->request->getJSON(true)['note'] ?? null);
+        $steps = $this->stepReject($steps, $curr, $note);
+
+        $update = [
+            'approval_steps'  => json_encode($steps, JSON_UNESCAPED_UNICODE),
+            'approval_status' => self::AP_REJECTED,
+            // giữ nguyên current_level để FE biết bị từ chối ở cấp nào
+        ];
+
+        $this->model->update($id, $update);
+        return $this->respond([
+            'message'        => 'Đã từ chối phê duyệt.',
+            'approval_status'=> self::AP_REJECTED,
+            'current_level'  => (int)$bidding['current_level'],
+            'approval_steps' => $steps
+        ]);
+    }
+
+
+    public function updateApprovalSteps($id): ResponseInterface
+    {
+        $id = (int) $id;
+        $bidding = $this->model->find($id);
+        if (!$bidding) return $this->failNotFound('Gói thầu không tồn tại.');
+
+        $body = $this->request->getJSON(true) ?? [];
+        $ids  = [];
+
+        // chấp nhận nhiều dạng payload
+        if (isset($body['approver_ids']) && is_array($body['approver_ids'])) {
+            $ids = $body['approver_ids'];
+        } elseif (isset($body['steps']) && is_array($body['steps'])) {
+            $ids = $body['steps'];
+        } elseif (array_is_list($body)) { // gửi thẳng [1,2,3]
+            $ids = $body;
+        }
+
+        // chuẩn hoá + bỏ trùng
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (count($ids) < 2) {
+            return $this->failValidationErrors(['approver_ids' => 'Cần tối thiểu 2 cấp duyệt.']);
+        }
+
+        if (($bidding['approval_status'] ?? '') === self::AP_APPROVED) {
+            return $this->failValidationErrors(['approval_status' => 'Đã duyệt xong, không thể thay đổi.']);
+        }
+
+        $steps = $this->buildApprovalSteps($ids);
+
+        $update = [
+            'approval_steps'  => json_encode($steps, JSON_UNESCAPED_UNICODE),
+            'approval_status' => self::AP_PENDING,
+            'current_level'   => 0,
+        ];
+
+        // nếu chưa WON/CANCELLED thì về trạng thái "Gửi phê duyệt"
+        $status = (int)($bidding['status'] ?? 0);
+        if (!in_array($status, [self::STATUS_WON, self::STATUS_CANCELLED], true)) {
+            $update['status'] = self::STATUS_SENT;
+        }
+
+        if (!$this->model->update($id, $update)) {
+            return $this->failValidationErrors($this->model->errors());
+        }
+
+        return $this->respond([
+            'message'         => 'Cập nhật người duyệt thành công',
+            'approval_steps'  => $steps,
+            'approval_status' => self::AP_PENDING,
+            'current_level'   => 0,
+        ]);
+    }
+
+
 
 
 }
