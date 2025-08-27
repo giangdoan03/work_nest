@@ -102,6 +102,7 @@
                 <template v-else-if="column.dataIndex === 'status'">
                     <a-tag v-if="Number(record.status) === STATUS.PREPARING" color="blue">Đang chuẩn bị</a-tag>
                     <a-tag v-else-if="Number(record.status) === STATUS.WON" color="green">Trúng thầu</a-tag>
+                    <a-tag v-else-if="Number(record.status) === STATUS.SENT_FOR_APPROVAL" color="green">Gửi phê duyệt</a-tag>
                     <a-tag v-else-if="Number(record.status) === STATUS.CANCELLED" color="gray">Hủy thầu</a-tag>
                     <span v-else style="color:#999">—</span>
                 </template>
@@ -215,8 +216,7 @@
                                 :options="customerOptions"
                                 placeholder="Chọn khách hàng"
                                 show-search
-                                :filter-option="(input, option) =>
-                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())"
+                                :filter-option="(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())"
                                 @popupScroll="handleCustomerScroll"
                             />
                         </a-form-item>
@@ -311,7 +311,6 @@
                     <template v-if="column.dataIndex === 'index'">
                         {{ index + 1 }}
                     </template>
-                    <!-- THAY cho block hiện có của cột progress -->
                     <!-- Drawer: cột progress -->
                     <template v-else-if="column.dataIndex === 'progress'">
                         <a-progress
@@ -354,9 +353,7 @@
                         <a-tag v-else-if="Number(record.status) === STATUS.CANCELLED" color="gray">Hủy thầu</a-tag>
                         <span v-else style="color:#999">—</span>
                     </template>
-                    <template v-else-if="column.dataIndex === 'start_date'">{{
-                            formatDate(record.start_date)
-                        }}
+                    <template v-else-if="column.dataIndex === 'start_date'">{{formatDate(record.start_date) }}
                     </template>
                     <template v-else-if="column.dataIndex === 'end_date'">{{ formatDate(record.end_date) }}</template>
                     <template v-else-if="column.dataIndex === 'due'">
@@ -462,13 +459,8 @@ const columns = [
     {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: '150px'},
     {title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'center'},
     {title: 'Chi phí dự toán', dataIndex: 'estimated_cost', key: 'estimated_cost'},
-
-    // ✅ Độ ưu tiên dùng đúng field
     {title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority'},
-
-    // ✅ Trạng thái dùng đúng field
     {title: 'Trạng thái', dataIndex: 'status', key: 'status'},
-
     {title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date'},
     {title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date'},
     {title: 'Hạn', dataIndex: 'due', key: 'due', align: 'center'},
@@ -543,14 +535,22 @@ const displayStatus = (b) => {
 }
 
 // ==== ENUMS & CONSTANTS: đặt TRƯỚC khi dùng ====
-const STATUS = Object.freeze({PREPARING: 1, WON: 2, CANCELLED: 3});
-const PRIORITY = Object.freeze({NORMAL: 0, IMPORTANT: 1});
+const STATUS = Object.freeze({
+    PREPARING: 1,
+    WON: 2,
+    CANCELLED: 3,
+    SENT_FOR_APPROVAL: 4,
+})
+
+const PRIORITY = Object.freeze({ NORMAL: 0, IMPORTANT: 1 })
 
 const STATUS_MAP = {
-    [STATUS.PREPARING]: {text: 'Đang chuẩn bị', color: 'blue'},
-    [STATUS.WON]: {text: 'Trúng thầu', color: 'green'},
-    [STATUS.CANCELLED]: {text: 'Hủy thầu', color: 'gray'},
-};
+    [STATUS.PREPARING]:        { text: 'Đang chuẩn bị',  color: 'blue' },
+    [STATUS.WON]:              { text: 'Trúng thầu',     color: 'green' },
+    [STATUS.CANCELLED]:        { text: 'Hủy thầu',       color: 'gray' },
+    [STATUS.SENT_FOR_APPROVAL]:{ text: 'Gửi phê duyệt',  color: 'gold' },
+}
+
 const PRIORITY_MAP = {
     [PRIORITY.NORMAL]: {text: 'Bình thường', color: 'blue'},
     [PRIORITY.IMPORTANT]: {text: 'Quan trọng', color: 'red'},
@@ -559,7 +559,7 @@ const PRIORITY_MAP = {
 // Chỉ 2 card có thể gọi API theo status trực tiếp
 const CARD_STATUS_MAP = {won: STATUS.WON, lost: STATUS.CANCELLED};
 
-const EDITABLE_STATUS_KEYS = [STATUS.PREPARING, STATUS.CANCELLED]
+const EDITABLE_STATUS_KEYS = [STATUS.PREPARING, STATUS.CANCELLED, STATUS.SENT_FOR_APPROVAL]
 
 const editableStatusOptions = computed(() =>
     EDITABLE_STATUS_KEYS.map(k => ({value: k, label: STATUS_MAP[k].text}))

@@ -16,6 +16,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\I18n\Time;
 use DateTime;
+use Exception;
 use ReflectionException;
 
 helper('task');
@@ -26,7 +27,7 @@ class TaskController extends ResourceController
     protected $format    = 'json';
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function index()
     {
@@ -147,7 +148,7 @@ class TaskController extends ResourceController
     /**
      * @param null $id
      * @return ResponseInterface
-     * @throws \Exception
+     * @throws Exception
      */
     public function show($id = null): ResponseInterface
     {

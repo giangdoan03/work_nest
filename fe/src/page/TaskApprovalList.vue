@@ -1,6 +1,6 @@
 <template>
     <div>
-        <a-flex justify="space-between" align="center">
+        <a-flex justify="space-between" align="center" class="mb-3">
             <a-typography-title :level="4">Nhiệm vụ cần duyệt</a-typography-title>
 
             <!-- 🔍 Tìm kiếm tên nhiệm vụ -->
@@ -13,150 +13,169 @@
             />
         </a-flex>
 
-        <a-tabs v-model:activeKey="activeTab" @change="handleTabChange">
-            <a-tab-pane key="resolved" tab="Đã duyệt / Từ chối" />
-            <a-tab-pane key="pending" tab="Cần duyệt" />
-        </a-tabs>
+        <!-- ================== TAB CHA ================== -->
+        <a-tabs v-model:activeKey="parentTab">
+            <!-- ===== Tab cha 1: chứa toàn bộ module duyệt ===== -->
+            <a-tab-pane key="tab1" tab="Tab 1">
+                <!-- ===== Tab con hiện có ===== -->
+                <a-tabs v-model:activeKey="activeTab" @change="handleTabChange">
+                    <a-tab-pane key="resolved" tab="Đã duyệt / Từ chối" />
+                    <a-tab-pane key="pending" tab="Cần duyệt" />
+                </a-tabs>
 
-        <a-table
-            :columns="columns"
-            :data-source="taskApprovals"
-            :loading="loading"
-            :pagination="pagination"
-            row-key="id"
-            :locale="{ emptyText: 'Không có nhiệm vụ nào' }"
-            @change="handleTableChange"
-        >
-            <template #bodyCell="{ column, record }">
-                <!-- Tên nhiệm vụ -->
-                <template v-if="column.dataIndex === 'title'">
-                    <router-link :to="`/internal-tasks/${record.task_id}/info`">
-                        {{ record.title }}
-                    </router-link>
-                </template>
-
-                <!-- Người thực hiện -->
-                <template v-else-if="column.dataIndex === 'assigned_to_name'">
-                    {{ record.assigned_to_name || '—' }}
-                </template>
-
-                <!-- Cấp hiện tại -->
-                <template v-else-if="column.dataIndex === 'level'">
-                    Cấp {{ record.level }}
-                </template>
-
-                <!-- Tổng cấp (fallback nếu BE chưa enrich) -->
-                <template v-else-if="column.dataIndex === 'approval_steps_total'">
-                    {{ record.approval_steps_total ?? record.approval_steps ?? '—' }}
-                </template>
-
-                <!-- Trạng thái -->
-                <template v-else-if="column.dataIndex === 'status'">
-                    <a-tag :color="getStatusColor(record.status)">
-                        {{ getStatusText(record.status) }}
-                    </a-tag>
-                </template>
-
-                <!-- Tiến độ -->
-                <template v-else-if="column.dataIndex === 'approval_progress'">
-                    <a-progress
-                        :percent="getProgressPercent(record)"
-                        :status="getProgressPercent(record) === 100 ? 'success' : 'active'"
-                        size="small"
-                    />
-                    <div class="text-xs text-gray-500">
-                        <a-tag :color="getLevelTagColorSmart(record)" style="font-size: 12px;">
-                            {{ getLevelTextSmart2(record) }}
-                        </a-tag>
-                    </div>
-                </template>
-
-                <template v-else-if="column.dataIndex === 'approved_at'">
-                    {{ formatTime(record.approved_at) || '—' }}
-                </template>
-
-                <!-- Hành động -->
-                <template v-else-if="column.dataIndex === 'action'">
-                    <a-space>
-                        <a-tooltip :title="!record.can_approve ? (record.cannot_reason || 'Không đủ quyền') : ''">
-                            <a-button
-                                type="primary"
-                                :disabled="!record.can_approve"
-                                @click="openModal(record, 'approve')"
-                            >
-                                Duyệt
-                            </a-button>
-                        </a-tooltip>
-
-                        <a-tooltip :title="!record.can_reject ? (record.cannot_reason || 'Không đủ quyền') : ''">
-                            <a-button
-                                danger
-                                :disabled="!record.can_reject"
-                                @click="openModal(record, 'reject')"
-                            >
-                                Từ chối
-                            </a-button>
-                        </a-tooltip>
-
-                        <a-button @click="viewTimeline(record)">Chi tiết</a-button>
-                    </a-space>
-                </template>
-            </template>
-        </a-table>
-
-        <!-- ✅ Modal nhập comment -->
-        <a-modal
-            v-model:open="modalVisible"
-            :title="modalAction === 'approve' ? 'Xác nhận duyệt' : 'Từ chối nhiệm vụ'"
-            ok-text="Xác nhận"
-            cancel-text="Hủy"
-            :confirm-loading="submitting"
-            @ok="handleModalSubmit"
-        >
-            <a-form layout="vertical">
-                <a-form-item label="Ghi chú (không bắt buộc)">
-                    <a-textarea v-model:value="comment" placeholder="Nhập lý do hoặc ghi chú..." />
-                </a-form-item>
-            </a-form>
-        </a-modal>
-
-        <!-- ✅ Modal dòng thời gian duyệt -->
-        <a-modal
-            v-model:open="timelineVisible"
-            title="Chi tiết duyệt nhiệm vụ"
-            :footer="null"
-            width="600px"
-        >
-            <a-timeline>
-                <a-timeline-item
-                    v-for="step in approvalTimeline"
-                    :key="step.level"
-                    :color="getTimelineColor(step.status)"
+                <!-- ===== Bảng danh sách ===== -->
+                <a-table
+                    :columns="columns"
+                    :data-source="taskApprovals"
+                    :loading="loading"
+                    :pagination="pagination"
+                    row-key="id"
+                    :locale="{ emptyText: 'Không có nhiệm vụ nào' }"
+                    @change="handleTableChange"
                 >
-                    <template v-if="step.status === 'approved'">
-                        <span><CheckCircleOutlined style="margin-right: 6px;" /></span>
-                        Cấp {{ step.level }}: {{ step.approved_by_name }} đã duyệt lúc {{ formatTime(step.approved_at) }}
-                        <div v-if="step.comment">📝 {{ step.comment }}</div>
-                    </template>
+                    <template #bodyCell="{ column, record }">
+                        <!-- Tên nhiệm vụ -->
+                        <template v-if="column.dataIndex === 'title'">
+                            <router-link :to="`/internal-tasks/${record.task_id}/info`">
+                                {{ record.title }}
+                            </router-link>
+                        </template>
 
-                    <template v-else-if="step.status === 'rejected'">
-                        <span><CloseCircleOutlined style="margin-right: 6px;" /></span>
-                        Cấp {{ step.level }}: {{ step.approved_by_name }} từ chối lúc {{ formatTime(step.approved_at) }}
-                        <div v-if="step.comment">📝 {{ step.comment }}</div>
-                    </template>
+                        <!-- Người thực hiện -->
+                        <template v-else-if="column.dataIndex === 'assigned_to_name'">
+                            {{ record.assigned_to_name || '—' }}
+                        </template>
 
-                    <template v-else-if="step.status === 'pending'">
-                        <span><ClockCircleOutlined style="margin-right: 6px;" /></span>
-                        Cấp {{ step.level }}: Đang chờ duyệt
-                    </template>
+                        <!-- Cấp hiện tại -->
+                        <template v-else-if="column.dataIndex === 'level'">
+                            Cấp {{ record.level }}
+                        </template>
 
-                    <template v-else>
-                        <span><ArrowRightOutlined style="margin-right: 6px;" /></span>
-                        Cấp {{ step.level }}: Chưa đến lượt
+                        <!-- Tổng cấp (fallback nếu BE chưa enrich) -->
+                        <template v-else-if="column.dataIndex === 'approval_steps_total'">
+                            {{ record.approval_steps_total ?? record.approval_steps ?? '—' }}
+                        </template>
+
+                        <!-- Trạng thái -->
+                        <template v-else-if="column.dataIndex === 'status'">
+                            <a-tag :color="getStatusColor(record.status)">
+                                {{ getStatusText(record.status) }}
+                            </a-tag>
+                        </template>
+
+                        <!-- Tiến độ -->
+                        <template v-else-if="column.dataIndex === 'approval_progress'">
+                            <a-progress
+                                :percent="getProgressPercent(record)"
+                                :status="getProgressPercent(record) === 100 ? 'success' : 'active'"
+                                size="small"
+                            />
+                            <div class="text-xs text-gray-500">
+                                <a-tag :color="getLevelTagColorSmart(record)" style="font-size: 12px;">
+                                    {{ getLevelTextSmart2(record) }}
+                                </a-tag>
+                            </div>
+                        </template>
+
+                        <!-- Thời gian duyệt -->
+                        <template v-else-if="column.dataIndex === 'approved_at'">
+                            {{ formatTime(record.approved_at) || '—' }}
+                        </template>
+
+                        <!-- Hành động -->
+                        <template v-else-if="column.dataIndex === 'action'">
+                            <a-space>
+                                <a-tooltip :title="!record.can_approve ? (record.cannot_reason || 'Không đủ quyền') : ''">
+                                    <a-button
+                                        type="primary"
+                                        :disabled="!record.can_approve"
+                                        @click="openModal(record, 'approve')"
+                                    >
+                                        Duyệt
+                                    </a-button>
+                                </a-tooltip>
+
+                                <a-tooltip :title="!record.can_reject ? (record.cannot_reason || 'Không đủ quyền') : ''">
+                                    <a-button
+                                        danger
+                                        :disabled="!record.can_reject"
+                                        @click="openModal(record, 'reject')"
+                                    >
+                                        Từ chối
+                                    </a-button>
+                                </a-tooltip>
+
+                                <a-button @click="viewTimeline(record)">Chi tiết</a-button>
+                            </a-space>
+                        </template>
                     </template>
-                </a-timeline-item>
-            </a-timeline>
-        </a-modal>
+                </a-table>
+
+                <!-- ✅ Modal nhập comment -->
+                <a-modal
+                    v-model:open="modalVisible"
+                    :title="modalAction === 'approve' ? 'Xác nhận duyệt' : 'Từ chối nhiệm vụ'"
+                    ok-text="Xác nhận"
+                    cancel-text="Hủy"
+                    :confirm-loading="submitting"
+                    @ok="handleModalSubmit"
+                >
+                    <a-form layout="vertical">
+                        <a-form-item label="Ghi chú (không bắt buộc)">
+                            <a-textarea v-model:value="comment" placeholder="Nhập lý do hoặc ghi chú..." />
+                        </a-form-item>
+                    </a-form>
+                </a-modal>
+
+                <!-- ✅ Modal dòng thời gian duyệt -->
+                <a-modal
+                    v-model:open="timelineVisible"
+                    title="Chi tiết duyệt nhiệm vụ"
+                    :footer="null"
+                    width="600px"
+                >
+                    <a-timeline>
+                        <a-timeline-item
+                            v-for="step in approvalTimeline"
+                            :key="step.level"
+                            :color="getTimelineColor(step.status)"
+                        >
+                            <template v-if="step.status === 'approved'">
+                                <span><CheckCircleOutlined style="margin-right: 6px;" /></span>
+                                Cấp {{ step.level }}: {{ step.approved_by_name }} đã duyệt lúc {{ formatTime(step.approved_at) }}
+                                <div v-if="step.comment">📝 {{ step.comment }}</div>
+                            </template>
+
+                            <template v-else-if="step.status === 'rejected'">
+                                <span><CloseCircleOutlined style="margin-right: 6px;" /></span>
+                                Cấp {{ step.level }}: {{ step.approved_by_name }} từ chối lúc {{ formatTime(step.approved_at) }}
+                                <div v-if="step.comment">📝 {{ step.comment }}</div>
+                            </template>
+
+                            <template v-else-if="step.status === 'pending'">
+                                <span><ClockCircleOutlined style="margin-right: 6px;" /></span>
+                                Cấp {{ step.level }}: Đang chờ duyệt
+                            </template>
+
+                            <template v-else>
+                                <span><ArrowRightOutlined style="margin-right: 6px;" /></span>
+                                Cấp {{ step.level }}: Chưa đến lượt
+                            </template>
+                        </a-timeline-item>
+                    </a-timeline>
+                </a-modal>
+            </a-tab-pane>
+
+            <!-- ===== Tab cha 2 ===== -->
+            <a-tab-pane key="tab2" tab="Tab 2">
+                <div class="p-3 text-gray-500">Nội dung tab 2</div>
+            </a-tab-pane>
+
+            <!-- ===== Tab cha 3 ===== -->
+            <a-tab-pane key="tab3" tab="Tab 3">
+                <div class="p-3 text-gray-500">Nội dung tab 3</div>
+            </a-tab-pane>
+        </a-tabs>
     </div>
 </template>
 
@@ -167,7 +186,7 @@ import {
     CheckCircleOutlined,
     CloseCircleOutlined,
     ClockCircleOutlined,
-    ArrowRightOutlined, SearchOutlined
+    ArrowRightOutlined,
 } from '@ant-design/icons-vue'
 import debounce from 'lodash/debounce'
 import {
@@ -178,10 +197,11 @@ import {
     canActApprovalAPI
 } from '@/api/taskApproval'
 
-// ===== State =====
+// ================== STATE ==================
+const parentTab = ref('tab1')            // <-- Tab cha (mặc định Tab 1)
 const taskApprovals = ref([])
 const loading = ref(false)
-const activeTab = ref('pending')
+const activeTab = ref('pending')         // tab con hiện có
 const searchTitle = ref('')
 
 const pagination = ref({
@@ -201,7 +221,7 @@ const modalAction = ref('approve')
 const timelineVisible = ref(false)
 const approvalTimeline = ref([])
 
-// ===== Columns =====
+// ================== COLUMNS ==================
 const columns = [
     { title: 'Tên nhiệm vụ', dataIndex: 'title', key: 'title', width: 250 },
     { title: 'Người thực hiện', dataIndex: 'assigned_to_name', key: 'assigned_to_name', width: 200 },
@@ -214,7 +234,7 @@ const columns = [
     { title: 'Hành động', dataIndex: 'action', key: 'action', width: 240 }
 ]
 
-// ===== Data Fetch =====
+// ================== FETCH DATA ==================
 const fetchData = async () => {
     loading.value = true
     try {
@@ -249,7 +269,7 @@ const handleSearch = () => {
     fetchData()
 }
 
-// ===== Actions =====
+// ================== ACTIONS ==================
 const openModal = async (record, action) => {
     selectedRecord.value = record
     modalAction.value = action
@@ -277,109 +297,6 @@ const openModal = async (record, action) => {
     }
 }
 
-// Lấy approved_levels & tổng cấp
-const getApprovedAndTotal = (record) => {
-    const approved = Number(record.approved_levels ?? 0)
-    const total    = Number(record.approval_steps_total ?? record.approval_steps ?? 0)
-    return { approved, total }
-}
-
-// % hiển thị trên UI
-const getProgressPercent = (record) => {
-    const total     = Number(record.approval_steps_total ?? record.approval_steps ?? 0)
-    const approved  = Number(record.approved_levels ?? 0)                 // tổng cấp đã duyệt (toàn task)
-    const level     = Number(record.level ?? 0)                           // cấp của bản ghi
-    const taskState = String(record.task_approval_status ?? '').toLowerCase()
-    const isResolvedRow = (activeTab.value === 'resolved') || (record.status !== 'pending')
-
-    if (total <= 0) return 0
-
-    // 👉 Ở tab "Đã duyệt/Từ chối": % theo cấp của CHÍNH DÒNG
-    if (isResolvedRow) {
-        if (record.status === 'rejected') {
-            // bị từ chối tại cấp X → tính theo (X-1)/total
-            return Math.max(0, Math.round(((level - 1) / total) * 100))
-        }
-        // approved tại cấp X
-        return Math.round((Math.min(level, total) / total) * 100)
-    }
-
-    // 👉 Ở tab "Cần duyệt": % theo tiến độ THỰC TẾ của task
-    if (total === 1) {
-        return approved >= 1 ? 100 : 0
-    }
-    if (taskState === 'approved') return 100
-    return Math.round((Math.min(approved, total) / total) * 100)
-}
-
-
-// Text “thông minh”
-const getLevelTextSmart2 = (record) => {
-    const total     = Number(record.approval_steps_total ?? record.approval_steps ?? 0)
-    const approved  = Number(record.approved_levels ?? 0)
-    const level     = Number(record.level ?? 0)
-    const cur       = Number(record.current_level ?? record.level ?? 0)
-    const taskState = String(record.task_approval_status ?? '').toLowerCase()
-    const isResolvedRow = (activeTab.value === 'resolved') || (record.status !== 'pending')
-
-    if (total === 0) return 'Không cần duyệt'
-
-    // 👉 Ở tab "Đã duyệt/Từ chối": mô tả theo cấp của CHÍNH DÒNG
-    if (isResolvedRow) {
-        if (record.status === 'rejected') {
-            const done = Math.max(0, level - 1)
-            return `Bị từ chối tại cấp ${level} (${done}/${total})`
-        }
-        // approved tại cấp X
-        if (level < total) return `Đã duyệt ${level}/${total} (${Math.round((level/total)*100)}%)`
-        return `Hoàn tất (${total}/${total})`
-    }
-
-    // 👉 Ở tab "Cần duyệt": mô tả theo tiến độ THỰC TẾ của task
-    if (total === 1) {
-        return approved >= 1 ? 'Hoàn tất (1/1)' : 'Chưa duyệt (0/1)'
-    }
-    if (taskState === 'approved' || approved >= total) return `Hoàn tất (${total}/${total})`
-    if (taskState === 'rejected') return `Bị từ chối (${approved}/${total})`
-    if (approved === 0) return cur > 0 ? `Đang chờ: Cấp ${cur}/${total}` : `Chưa bắt đầu (0/${total})`
-    return cur > 0
-        ? `Đang duyệt: Cấp ${cur}/${total} (đã ${approved}/${total})`
-        : `Đã duyệt ${approved}/${total}`
-}
-
-const getLevelTextSmart = (record) => {
-    const { approved, total } = getApprovedAndTotal(record)
-    const statusTask = String(record.task_approval_status ?? '').toLowerCase()
-    const cur = Number(record.current_level ?? record.level ?? 0)
-
-    if (total === 0) return 'Không cần duyệt'
-    if (statusTask === 'approved' || approved >= total) return `Hoàn tất (${total}/${total})`
-    if (statusTask === 'rejected') return `Bị từ chối (${approved}/${total})`
-
-    // chưa hoàn tất
-    if (approved === 0) {
-        // nếu có current_level => đang chờ cấp cur
-        return cur > 0 ? `Đang chờ: Cấp ${cur}/${total}` : `Chưa bắt đầu (0/${total})`
-    }
-    // đã duyệt được một số cấp
-    return cur > 0
-        ? `Đang duyệt: Cấp ${cur}/${total} (đã ${approved}/${total})`
-        : `Đã duyệt ${approved}/${total}`
-}
-
-const getLevelTagColorSmart = (record) => {
-    const { approved, total } = getApprovedAndTotal(record)
-    const statusTask = String(record.task_approval_status ?? '').toLowerCase()
-
-    if (total === 0) return 'default'
-    if (statusTask === 'rejected') return 'red'
-    // 1 cấp: xanh khi hoàn tất, xám khi chưa
-    if (total === 1) return approved >= 1 ? 'green' : 'gray'
-    // 2+ cấp
-    if (statusTask === 'approved' || approved >= total) return 'green'
-    if (approved === 0) return 'gray'
-    return 'orange'
-}
 const handleModalSubmit = async () => {
     if (!selectedRecord.value) return
     submitting.value = true
@@ -400,7 +317,7 @@ const handleModalSubmit = async () => {
     }
 }
 
-// ===== Timeline =====
+// ================== TIMELINE ==================
 const viewTimeline = async (record) => {
     if (!record?.task_id) return
     try {
@@ -416,7 +333,7 @@ watch(timelineVisible, (open) => {
     if (!open) approvalTimeline.value = []
 })
 
-// Màu timeline
+// ================== HELPERS ==================
 const getTimelineColor = (status) => {
     switch (status) {
         case 'approved': return 'green'
@@ -426,38 +343,75 @@ const getTimelineColor = (status) => {
     }
 }
 
-const getLevelText = (record) => {
-    const current = Number(record.current_level ?? record.level ?? 0)
-    const total   = Number(record.approval_steps_total ?? record.approval_steps ?? 0)
+const getApprovedAndTotal = (record) => {
+    const approved = Number(record.approved_levels ?? 0)
+    const total    = Number(record.approval_steps_total ?? record.approval_steps ?? 0)
+    return { approved, total }
+}
+
+const getProgressPercent = (record) => {
+    const total     = Number(record.approval_steps_total ?? record.approval_steps ?? 0)
+    const approved  = Number(record.approved_levels ?? 0)
+    const level     = Number(record.level ?? 0)
+    const taskState = String(record.task_approval_status ?? '').toLowerCase()
+    const isResolvedRow = (activeTab.value === 'resolved') || (record.status !== 'pending')
+
+    if (total <= 0) return 0
+
+    if (isResolvedRow) {
+        if (record.status === 'rejected') {
+            return Math.max(0, Math.round(((level - 1) / total) * 100))
+        }
+        return Math.round((Math.min(level, total) / total) * 100)
+    }
+
+    if (total === 1) {
+        return approved >= 1 ? 100 : 0
+    }
+    if (taskState === 'approved') return 100
+    return Math.round((Math.min(approved, total) / total) * 100)
+}
+
+const getLevelTextSmart2 = (record) => {
+    const total     = Number(record.approval_steps_total ?? record.approval_steps ?? 0)
+    const approved  = Number(record.approved_levels ?? 0)
+    const level     = Number(record.level ?? 0)
+    const cur       = Number(record.current_level ?? record.level ?? 0)
+    const taskState = String(record.task_approval_status ?? '').toLowerCase()
+    const isResolvedRow = (activeTab.value === 'resolved') || (record.status !== 'pending')
 
     if (total === 0) return 'Không cần duyệt'
 
-    if (current === 0) return `Chưa bắt đầu (0/${total})`
+    if (isResolvedRow) {
+        if (record.status === 'rejected') {
+            const done = Math.max(0, level - 1)
+            return `Bị từ chối tại cấp ${level} (${done}/${total})`
+        }
+        if (level < total) return `Đã duyệt ${level}/${total} (${Math.round((level/total)*100)}%)`
+        return `Hoàn tất (${total}/${total})`
+    }
 
-    if (current < total) return `Đang duyệt: Cấp ${current}/${total}`
-
-    if (current === total) return `Hoàn tất (${total}/${total})`
-
-    return `Cấp ${current}/${total}`
+    if (total === 1) {
+        return approved >= 1 ? 'Hoàn tất (1/1)' : 'Chưa duyệt (0/1)'
+    }
+    if (taskState === 'approved' || approved >= total) return `Hoàn tất (${total}/${total})`
+    if (taskState === 'rejected') return `Bị từ chối (${approved}/${total})`
+    if (approved === 0) return cur > 0 ? `Đang chờ: Cấp ${cur}/${total}` : `Chưa bắt đầu (0/${total})`
+    return cur > 0
+        ? `Đang duyệt: Cấp ${cur}/${total} (đã ${approved}/${total})`
+        : `Đã duyệt ${approved}/${total}`
 }
 
-const getLevelTagColor = (record) => {
-    const current = Number(record.current_level ?? record.level ?? 0)
-    const total   = Number(record.approval_steps_total ?? record.approval_steps ?? 0)
+const getLevelTagColorSmart = (record) => {
+    const { approved, total } = getApprovedAndTotal(record)
+    const statusTask = String(record.task_approval_status ?? '').toLowerCase()
 
     if (total === 0) return 'default'
-    if (current === 0) return 'gray'
-    if (current < total) return 'orange'
-    if (current === total) return 'green'
-    return 'blue'
-}
-
-// ===== Helpers =====
-const renderApprovalSteps = (steps) => {
-    if (!steps || steps === '0') return 'Không duyệt'
-    if (String(steps) === '1') return 'Cấp 1'
-    if (String(steps) === '2') return '2 cấp'
-    return `${steps} cấp`
+    if (statusTask === 'rejected') return 'red'
+    if (total === 1) return approved >= 1 ? 'green' : 'gray'
+    if (statusTask === 'approved' || approved >= total) return 'green'
+    if (approved === 0) return 'gray'
+    return 'orange'
 }
 
 const getStatusColor = (status) => {
@@ -488,3 +442,10 @@ watch(searchTitle, debounce(() => {
 
 onMounted(fetchData)
 </script>
+
+<style scoped>
+.mb-3 { margin-bottom: 12px; }
+.text-xs { font-size: 12px; }
+.text-gray-500 { color: #8c8c8c; }
+.p-3 { padding: 12px; }
+</style>

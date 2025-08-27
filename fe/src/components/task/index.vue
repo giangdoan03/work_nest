@@ -106,7 +106,6 @@
                                         />
                                     </a-form-item>
                                 </a-col>
-
                             </a-row>
                         </div>
                         <div class="task-in">
@@ -154,8 +153,7 @@
                                         <a-tag v-if="!isEditMode" :color="checkPriority(formData.priority).color">
                                             {{ checkPriority(formData.priority).label }}
                                         </a-tag>
-                                        <a-select v-else v-model:value="formData.priority" :options="priorityOption"
-                                                  placeholder="Chọn độ ưu tiên"/>
+                                        <a-select v-else v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên"/>
                                     </a-form-item>
                                 </a-col>
 
@@ -169,8 +167,7 @@
                                                 {{ checkStatus(formData.status).label }}
                                             </a-tag>
                                         </template>
-                                        <a-select v-else v-model:value="formData.status" :options="statusOption"
-                                                  placeholder="Chọn trạng thái"/>
+                                        <a-select v-else v-model:value="formData.status" :options="statusOption" placeholder="Chọn trạng thái"/>
                                     </a-form-item>
                                 </a-col>
 
