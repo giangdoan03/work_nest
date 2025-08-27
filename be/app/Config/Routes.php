@@ -124,17 +124,18 @@ $routes->group('api', function ($routes) {
     $routes->get('customers/(:num)/contracts', 'ContractController::byCustomer/$1');
     $routes->resource('customers', ['controller' => 'CustomerController']);
 
+    // 📌 Phê duyệt gói thầu (multi-level)
+    $routes->post('biddings/(:num)/send-approval', 'BiddingController::sendForApproval/$1');
+    $routes->post('biddings/(:num)/approve', 'BiddingController::approve/$1');
+    $routes->post('biddings/(:num)/reject',  'BiddingController::reject/$1');
+    $routes->put('biddings/(:num)/approval-steps', 'BiddingController::updateApprovalSteps/$1');
+
     // chức năng gói thầu
     $routes->get('biddings/(:num)/can-complete', 'BiddingController::canMarkAsComplete/$1');
     $routes->post('biddings/(:num)/init-steps', 'BiddingStepController::cloneFromTemplates/$1');
     $routes->resource('biddings', ['controller' => 'BiddingController']);
     $routes->resource('bidding-steps', ['controller' => 'BiddingStepController']);
     $routes->get('biddings/(:num)/steps', 'BiddingStepController::byBidding/$1');
-    // 📌 Phê duyệt gói thầu (multi-level)
-    $routes->post('biddings/(:num)/send-approval', 'BiddingController::sendForApproval/$1');
-    $routes->post('biddings/(:num)/approve', 'BiddingController::approve/$1');
-    $routes->post('biddings/(:num)/reject',  'BiddingController::reject/$1');
-    $routes->put('biddings/(:num)/approval-steps', 'BiddingController::updateApprovalSteps/$1');
 
 
     $routes->get('documents', 'DocumentController::index');
