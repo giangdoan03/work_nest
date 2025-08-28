@@ -770,9 +770,6 @@ class BiddingController extends ResourceController
     }
 
 
-
-
-
     public function updateApprovalSteps($id): ResponseInterface
     {
         $id = (int) $id;

@@ -75,15 +75,31 @@
                     </a-tooltip>
                 </template>
 
-                <!-- Tiến độ -->
+<!--                &lt;!&ndash; Tiến độ &ndash;&gt;-->
+<!--                <template v-else-if="slot.column?.dataIndex === 'progress'">-->
+<!--                    <a-tooltip :title="progressText(slot.record)">-->
+<!--                        <a-progress-->
+<!--                            :percent="progressPercent(slot.record)"-->
+<!--                            :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"-->
+<!--                            :status="progressPercent(slot.record) >= 100 ? 'success' : 'active'"-->
+<!--                            size="small"-->
+<!--                            :show-info="progressPercent(slot.record) >= 100"-->
+<!--                            style="cursor: pointer;"-->
+<!--                            @click="openProgressModal(slot.record)"-->
+<!--                        />-->
+<!--                    </a-tooltip>-->
+<!--                </template>-->
+
+                <!-- Tiến độ (theo mốc thời gian start_date → end_date) -->
+                <!-- Tiến độ (theo mốc thời gian + rule 90%/100%) -->
                 <template v-else-if="slot.column?.dataIndex === 'progress'">
-                    <a-tooltip :title="progressText(slot.record)">
+                    <a-tooltip :title="timeProgressText(slot.record)">
                         <a-progress
-                            :percent="progressPercent(slot.record)"
+                            :percent="visualProgressPercent(slot.record)"
                             :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
-                            :status="progressPercent(slot.record) >= 100 ? 'success' : 'active'"
+                            :status="visualProgressPercent(slot.record) >= 100 ? 'success' : 'active'"
                             size="small"
-                            :show-info="progressPercent(slot.record) >= 100"
+                            :show-info="visualProgressPercent(slot.record) >= 100"
                             style="cursor: pointer;"
                             @click="openProgressModal(slot.record)"
                         />
@@ -505,11 +521,11 @@ const drawerBidColumns = [
 const columns = [
     {title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px'},
     {title: 'Tên gói thầu', dataIndex: 'title', key: 'title'},
-    {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: '150px'},
+    {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: '150px', align: 'center'},
     {title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'center'},
     {title: 'Chi phí dự toán', dataIndex: 'estimated_cost', key: 'estimated_cost'},
     {title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority'},
-    {title: 'Trạng thái', dataIndex: 'status', key: 'status'},
+    {title: 'Trạng thái', dataIndex: 'status', key: 'status', align: 'center'},
     {title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date'},
     {title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date'},
     {title: 'Hạn', dataIndex: 'due', key: 'due', align: 'center'},
@@ -797,6 +813,86 @@ const progressText = (r) => {
 
     return `Hoàn thành toàn bộ ${total} bước`
 }
+
+
+
+
+
+
+// Tính % theo thời gian (0..100) – inclusive ngày đầu/cuối
+const timeProgressPercentRaw = (r) => {
+    if (!r?.start_date || !r?.end_date) {
+        // thiếu ngày thì fallback về % từ server
+        return Number(r?.progress_percent ?? r?.progress?.bidding_progress ?? 0)
+    }
+    const start = dayjs(r.start_date).startOf('day')
+    const end   = dayjs(r.end_date).startOf('day')
+    if (!start.isValid() || !end.isValid()) {
+        return Number(r?.progress_percent ?? r?.progress?.bidding_progress ?? 0)
+    }
+
+    let totalDays = end.diff(start, 'day') + 1
+    if (totalDays <= 0) totalDays = 1
+
+    const today = dayjs().startOf('day')
+
+    let elapsed
+    if (today.isBefore(start))      elapsed = 0
+    else if (today.isAfter(end))    elapsed = totalDays
+    else                            elapsed = today.diff(start, 'day') + 1
+
+    const pct = Math.round((elapsed / totalDays) * 100)
+    return Math.max(0, Math.min(100, pct))
+}
+
+// % cuối cùng để hiển thị theo yêu cầu “90% khi quá hạn, 100% chỉ khi đã duyệt”
+const visualProgressPercent = (r) => {
+    const isApproved = (r?.approval_status ?? 'pending') === 'approved'
+    const byTime = timeProgressPercentRaw(r)
+
+    // nếu không có ngày, đã fallback byWork ở trên; áp tiếp rule 100% chỉ khi approved
+    if (!r?.start_date || !r?.end_date) {
+        return isApproved ? 100 : Math.min(byTime, 99)
+    }
+
+    const end = dayjs(r.end_date).startOf('day')
+    const today = dayjs().startOf('day')
+
+    if (isApproved) return 100                    // chỉ khi đã duyệt
+
+    // quá hạn -> max 90%
+    if (today.isAfter(end)) return Math.min(byTime, 75)
+
+    // chưa quá hạn nhưng ra 100% theo thời gian thì chặn 99%
+    if (byTime >= 100) return 99
+
+    return byTime
+}
+
+// Tooltip mô tả
+const timeProgressText = (r) => {
+    if (!r?.start_date || !r?.end_date) {
+        return `Tiến độ: ${visualProgressPercent(r)}%`
+    }
+    const start = dayjs(r.start_date)
+    const end   = dayjs(r.end_date)
+    const today = dayjs()
+    let phase = 'đang diễn ra'
+    if (today.isBefore(start)) phase = 'chưa bắt đầu'
+    else if (today.isAfter(end)) phase = 'đã kết thúc'
+
+    const p = visualProgressPercent(r)
+    return `Tiến độ theo thời gian: ${p}% (${phase}) ${start.format('DD/MM')} → ${end.format('DD/MM')}`
+}
+
+
+
+
+
+
+
+
+
 
 
 
