@@ -131,19 +131,6 @@
                                 :count="`${Number(slot.record.current_level ?? 0) + 1}/${slot.record.approval_steps.length}`"
                             />
                         </a-space>
-
-                        <!-- Nhóm avatar người duyệt -->
-                        <a-avatar-group size="small" :max-count="4">
-                            <a-tooltip
-                                v-for="(step, idx) in slot.record.approval_steps"
-                                :key="idx"
-                                :title="step.approver_name || ('#' + step.approver_id)"
-                            >
-                                <a-avatar :style="{ backgroundColor: getAvatarColor(step.approver_name || String(step.approver_id)) }">
-                                    {{ getFirstLetter(step.approver_name || '?') }}
-                                </a-avatar>
-                            </a-tooltip>
-                        </a-avatar-group>
                     </a-space>
                 </template>
                 <!-- Ngày -->
@@ -169,8 +156,7 @@
 
                     <!-- Gửi phê duyệt lần đầu -->
                     <a-tooltip
-                        v-if="Number(slot.record.status) === STATUS.PREPARING
-        && (slot.record.approval_status ?? 'pending') === APPROVAL_STATUS.PENDING"
+                        v-if="Number(slot.record.status) === STATUS.PREPARING && (slot.record.approval_status ?? 'pending') === APPROVAL_STATUS.PENDING"
                         title="Gửi phê duyệt"
                     >
                         <SendOutlined class="icon-action" style="color:#faad14;" @click="openSendApproval(slot.record)" />
@@ -185,16 +171,17 @@
                     </a-tooltip>
                     <template
                         v-if="Number(slot.record.status) === STATUS.SENT_FOR_APPROVAL && (slot.record.approval_status ?? 'pending') === APPROVAL_STATUS.PENDING">
-                        <a-tooltip title="Phê duyệt">
-                            <CheckOutlined class="icon-action" style="color:#52c41a;" @click="approveCurrentLevel(slot.record)" />
-                        </a-tooltip>
-                        <a-tooltip title="Từ chối">
-                            <CloseOutlined class="icon-action" style="color:#ff4d4f;" @click="rejectCurrentLevel(slot.record)" />
-                        </a-tooltip>
+<!--                        <a-tooltip title="Phê duyệt">-->
+<!--                            <CheckOutlined class="icon-action" style="color:#52c41a;" @click="approveCurrentLevel(slot.record)" />-->
+<!--                        </a-tooltip>-->
+<!--                        <a-tooltip title="Từ chối">-->
+<!--                            <CloseOutlined class="icon-action" style="color:#ff4d4f;" @click="rejectCurrentLevel(slot.record)" />-->
+<!--                        </a-tooltip>-->
+                        <!-- Sửa người duyệt -->
                         <a-tooltip title="Sửa người duyệt">
-                            <EditOutlined
+                            <UserSwitchOutlined
                                 class="icon-action"
-                                style="color:#1890ff"
+                                style="color:#13c2c2"
                                 @click="editApproval(slot.record)"
                             />
                         </a-tooltip>
@@ -310,6 +297,94 @@
             </template>
         </a-drawer>
 
+        <!-- Drawer danh sách theo card (mới) -->
+        <a-drawer
+            v-model:open="drawerBidVisible"
+            :title="`Danh sách: ${drawerBidTitle}`"
+            :width="1200"
+            destroyOnClose
+            :footer="null"
+        >
+            <a-table
+                :columns="drawerBidColumns"
+                :data-source="drawerBidData"
+                :loading="drawerLoading"
+                row-key="id"
+                :pagination="drawerPagination"
+                :scroll="{ x: 'max-content' }"
+                @change="handleDrawerTableChange"
+            >
+                <template #bodyCell="slot">
+                    <!-- STT -->
+                    <template v-if="slot.column?.dataIndex === 'index'">
+                        {{ (drawerPagination.current - 1) * drawerPagination.pageSize + slot.index + 1 }}
+                    </template>
+
+                    <!-- Tên gói thầu -->
+                    <template v-else-if="slot.column?.key === 'title'">
+                        <a-tooltip :title="slot.record.title">
+                            <a-typography-text strong style="cursor:pointer" @click="goToDetail(slot.record.id)">
+                                {{ truncateText(slot.record.title, 32) }}
+                            </a-typography-text>
+                        </a-tooltip>
+                    </template>
+
+                    <!-- Tiến độ -->
+                    <template v-else-if="slot.column?.dataIndex === 'progress'">
+                        <a-tooltip :title="progressText(slot.record)">
+                            <a-progress
+                                :percent="progressPercent(slot.record)"
+                                size="small"
+                                :status="progressPercent(slot.record) >= 100 ? 'success' : 'active'"
+                                :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
+                            />
+                        </a-tooltip>
+                    </template>
+
+                    <!-- Người phụ trách -->
+                    <template v-else-if="slot.column?.dataIndex === 'assigned_to_name'">
+                        <a-tooltip :title="slot.record.assigned_to_name || 'N/A'">
+                            <a-avatar :style="{ backgroundColor: getAvatarColor(slot.record.assigned_to_name || 'N/A') }" size="small">
+                                {{ getFirstLetter(slot.record.assigned_to_name || '?') }}
+                            </a-avatar>
+                        </a-tooltip>
+                    </template>
+
+                    <!-- Độ ưu tiên -->
+                    <template v-else-if="slot.column?.dataIndex === 'priority'">
+                        <a-tag :color="Number(slot.record.priority) === 1 ? 'red' : 'blue'">
+                            {{ Number(slot.record.priority) === 1 ? 'Quan trọng' : 'Bình thường' }}
+                        </a-tag>
+                    </template>
+
+                    <!-- Trạng thái -->
+                    <template v-else-if="slot.column?.dataIndex === 'status'">
+                        <a-tag v-if="Number(slot.record.status) === STATUS.PREPARING" color="blue">Đang chuẩn bị</a-tag>
+                        <a-tag v-else-if="Number(slot.record.status) === STATUS.WON" color="green">Trúng thầu</a-tag>
+                        <a-tag v-else-if="Number(slot.record.status) === STATUS.SENT_FOR_APPROVAL" color="gold">Gửi phê duyệt</a-tag>
+                        <a-tag v-else-if="Number(slot.record.status) === STATUS.CANCELLED" color="gray">Hủy thầu</a-tag>
+                        <span v-else style="color:#999">—</span>
+                    </template>
+
+                    <!-- Ngày -->
+                    <template v-else-if="slot.column?.dataIndex === 'start_date' || slot.column?.dataIndex === 'end_date'">
+                        {{ formatDate(slot.record[slot.column.dataIndex]) }}
+                    </template>
+
+                    <!-- Hạn -->
+                    <template v-else-if="slot.column?.dataIndex === 'due'">
+                        <div :class="{ 'overdue-cell': Number(slot.record.days_overdue) > 0 }">
+                            <a-tag v-if="slot.record.days_remaining > 0" color="green">Còn {{ slot.record.days_remaining }} ngày</a-tag>
+                            <a-tag v-else-if="slot.record.days_remaining === 0 && slot.record.days_overdue === 0" color="gold">Hạn chót hôm nay</a-tag>
+                            <a-tag v-else-if="slot.record.days_overdue > 0" color="red">Quá hạn {{ slot.record.days_overdue }} ngày</a-tag>
+                            <a-tag v-else color="default">Không xác định</a-tag>
+                        </div>
+                    </template>
+                </template>
+            </a-table>
+        </a-drawer>
+
+
 
         <!-- Modal chọn người duyệt -->
         <a-modal
@@ -352,7 +427,8 @@ import {
     SearchOutlined,
     SendOutlined,      // 👈 THÊM
     CheckOutlined,     // 👈 THÊM (duyệt)
-    CloseOutlined      // 👈 THÊM (từ chối)
+    CloseOutlined,     // 👈 THÊM (từ chối)
+    UserSwitchOutlined
 } from '@ant-design/icons-vue';
 import dayjs from 'dayjs'
 import {
@@ -437,7 +513,7 @@ const columns = [
     {title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date'},
     {title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date'},
     {title: 'Hạn', dataIndex: 'due', key: 'due', align: 'center'},
-    { title: 'Phê duyệt', dataIndex: 'approval_status', key: 'approval_status', align: 'center', width: 150 },
+    { title: 'Phê duyệt', dataIndex: 'approval_status', key: 'approval_status', width: 150 },
     {title: 'Hành động', dataIndex: 'action', key: 'action'}
 ]
 
