@@ -7,6 +7,7 @@ use App\Models\BiddingStepModel;
 use App\Models\SettingModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use CodeIgniter\Session\Session;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeZone;
@@ -559,32 +560,96 @@ class BiddingController extends ResourceController
     public function sendForApproval($id = null): ResponseInterface
     {
         $bidding = $this->model->find($id);
-        if (!$bidding) return $this->failNotFound('Gói thầu không tồn tại.');
-
-        // Đầu vào: { approver_ids: [uid1, uid2, ...] } — yêu cầu >= 2
-        $body = $this->request->getJSON(true) ?? [];
-        $approverIds = array_values(array_filter(array_map('intval', $body['approver_ids'] ?? [])));
-        if (count($approverIds) < 2) {
-            return $this->failValidationErrors(['approver_ids' => 'Cần tối thiểu 2 cấp duyệt.']);
+        if (!$bidding) {
+            return $this->failNotFound('Gói thầu không tồn tại.');
         }
 
-        // Không cho gửi nếu đang WON/CANCELLED
+        // Nhận payload (JSON hoặc form)
+        $payload = $this->request->getJSON(true) ?? $this->request->getPost();
+        $ids = array_values(array_unique(array_map('intval', (array)($payload['approver_ids'] ?? []))));
+        // ≥ 1 cấp duyệt
+        if (count($ids) < 1) {
+            return $this->failValidationErrors(['approver_ids' => 'Cần tối thiểu 1 cấp duyệt.']);
+        }
+
+        // Chặn nếu đã duyệt xong
+        $apStatus = (string)($bidding['approval_status'] ?? '');
+        if ($apStatus === self::AP_APPROVED) {
+            return $this->failValidationErrors(['approval_status' => 'Gói thầu đã duyệt xong, không thể gửi lại.']);
+        }
+
+        // Chặn nếu WON/CANCELLED
         $status = (int)($bidding['status'] ?? 0);
         if (in_array($status, [self::STATUS_WON, self::STATUS_CANCELLED], true)) {
             return $this->failValidationErrors(['status' => 'Trạng thái hiện tại không cho phép gửi phê duyệt.']);
         }
 
-        $steps = $this->buildApprovalSteps($approverIds);
-        $ok = $this->model->update($id, [
-            'status'          => self::STATUS_SENT,
-            'approval_status' => self::AP_PENDING,
-            'approval_steps'  => json_encode($steps, JSON_UNESCAPED_UNICODE),
-            'current_level'   => 0, // 0-based
-        ]);
+        // Build lại bước duyệt theo danh sách mới
+        $steps = $this->buildApprovalSteps($ids);
 
-        if (!$ok) return $this->failValidationErrors($this->model->errors());
-        return $this->respond(['message' => 'Đã gửi phê duyệt', 'current_level' => 0, 'approval_steps' => $steps]);
+        $update = [
+            'approval_steps'  => json_encode($steps, JSON_UNESCAPED_UNICODE),
+            'current_level'   => 0,                    // reset về cấp 1 (0-based)
+            'approval_status' => self::AP_PENDING,     // reset trạng thái phê duyệt
+            'status'          => self::STATUS_SENT,    // 4 = Gửi phê duyệt
+        ];
+
+        if (!$this->model->update($id, $update)) {
+            return $this->failValidationErrors($this->model->errors());
+        }
+
+        return $this->respond([
+            'message'         => 'Đã gửi phê duyệt' . ($apStatus === self::AP_REJECTED ? ' lại' : '') . '.',
+            'approval_status' => $update['approval_status'],
+            'current_level'   => $update['current_level'],
+            'approval_steps'  => $steps,
+            'status'          => $update['status'],
+        ]);
     }
+
+
+
+    private function isAdminUser(int $userId, ?Session $session = null): bool
+    {
+        $session ??= session();
+
+        // 1) Ưu tiên theo session
+        $roleSession  = strtolower((string)($session->get('role') ?? ''));
+        $rolesSession = array_map('strtolower', (array)($session->get('roles') ?? []));
+        if ( (bool)($session->get('is_admin') ?? false)
+            || in_array($roleSession, ['admin','super admin'], true)
+            || in_array('admin', $rolesSession, true)
+            || in_array('super admin', $rolesSession, true)
+        ) {
+            return true;
+        }
+
+        // 2) Fallback đọc từ DB: chỉ SELECT các cột thực sự tồn tại
+        if ($userId > 0) {
+            $db   = db_connect();
+            $user = $db->table('users')
+                ->select('role_id, role')      // ❌ bỏ role_name
+                ->where('id', $userId)
+                ->get()->getRowArray();
+
+            if ($user) {
+                $rid = (int)($user['role_id'] ?? 0);
+                $r   = strtolower((string)($user['role'] ?? ''));
+
+                if ($rid === 1 || in_array($r, ['admin','super admin'], true)) {
+                    return true;
+                }
+
+                // (Tuỳ chọn) nếu có bảng roles thì JOIN để lấy tên quyền
+                // $roleName = $db->table('roles')->select('name')->where('id', $rid)->get()->getRow('name');
+                // if ($roleName && in_array(strtolower($roleName), ['admin','super admin'], true)) return true;
+            }
+        }
+
+        return false;
+    }
+
+
 
 
 
@@ -600,18 +665,39 @@ class BiddingController extends ResourceController
         $steps = json_decode($bidding['approval_steps'] ?? '[]', true) ?: [];
         $curr  = (int)($bidding['current_level'] ?? 0);
 
-        // (Tùy chọn) kiểm tra đúng người duyệt
         $session = session();
         $userId  = (int)($session->get('user_id') ?? 0);
-        if (isset($steps[$curr]['approver_id']) && $userId > 0 && (int)$steps[$curr]['approver_id'] !== $userId) {
+        $isAdmin = $this->isAdminUser($userId, $session);
+
+        // chỉ chặn nếu KHÔNG phải admin
+        if (
+            !$isAdmin
+            && isset($steps[$curr]['approver_id'])
+            && $userId > 0
+            && (int)$steps[$curr]['approver_id'] !== $userId
+        ) {
             return $this->failForbidden('Bạn không phải người duyệt ở cấp hiện tại.');
         }
 
-        $note  = $this->request->getPost('note') ?? ($this->request->getJSON(true)['note'] ?? null);
-        $steps = $this->stepApprove($steps, $curr, $note);
+        $note = $this->request->getPost('note') ?? ($this->request->getJSON(true)['note'] ?? null);
+        if (!isset($steps[$curr])) {
+            return $this->failValidationErrors(['steps' => 'Thiếu cấu hình cấp duyệt hiện tại.']);
+        }
+
+        // đánh dấu duyệt + audit
+        $steps[$curr]['status']       = self::AP_APPROVED;
+        $steps[$curr]['commented_at'] = date('Y-m-d H:i:s');
+        if ($note !== null) $steps[$curr]['note'] = $note;
+        $steps[$curr]['acted_by']     = $userId;
+        $steps[$curr]['acted_role']   = $isAdmin ? 'admin' : 'approver';
 
         $nextLevel = $curr + 1;
-        $final     = $this->allStepsApproved($steps);
+
+        // kiểm tra xong hết chưa
+        $final = true;
+        foreach ($steps as $s) {
+            if (($s['status'] ?? '') !== self::AP_APPROVED) { $final = false; break; }
+        }
 
         $update = [
             'approval_steps'  => json_encode($steps, JSON_UNESCAPED_UNICODE),
@@ -620,13 +706,15 @@ class BiddingController extends ResourceController
         ];
 
         $this->model->update($id, $update);
+
         return $this->respond([
-            'message'        => $final ? 'Đã phê duyệt hoàn tất.' : 'Đã phê duyệt cấp hiện tại.',
-            'approval_status'=> $update['approval_status'],
-            'current_level'  => $update['current_level'],
-            'approval_steps' => $steps
+            'message'         => $final ? 'Đã phê duyệt hoàn tất.' : 'Đã phê duyệt cấp hiện tại.',
+            'approval_status' => $update['approval_status'],
+            'current_level'   => $update['current_level'],
+            'approval_steps'  => $steps
         ]);
     }
+
 
 
 
@@ -642,30 +730,47 @@ class BiddingController extends ResourceController
         $steps = json_decode($bidding['approval_steps'] ?? '[]', true) ?: [];
         $curr  = (int)($bidding['current_level'] ?? 0);
 
-        // (Tùy chọn) kiểm tra đúng người duyệt
         $session = session();
         $userId  = (int)($session->get('user_id') ?? 0);
-        if (isset($steps[$curr]['approver_id']) && $userId > 0 && (int)$steps[$curr]['approver_id'] !== $userId) {
+        $isAdmin = $this->isAdminUser($userId, $session);
+
+        if (
+            !$isAdmin
+            && isset($steps[$curr]['approver_id'])
+            && $userId > 0
+            && (int)$steps[$curr]['approver_id'] !== $userId
+        ) {
             return $this->failForbidden('Bạn không phải người duyệt ở cấp hiện tại.');
         }
 
-        $note  = $this->request->getPost('note') ?? ($this->request->getJSON(true)['note'] ?? null);
-        $steps = $this->stepReject($steps, $curr, $note);
+        $note = $this->request->getPost('note') ?? ($this->request->getJSON(true)['note'] ?? null);
+        if (!isset($steps[$curr])) {
+            return $this->failValidationErrors(['steps' => 'Thiếu cấu hình cấp duyệt hiện tại.']);
+        }
+
+        $steps[$curr]['status']       = self::AP_REJECTED;
+        $steps[$curr]['commented_at'] = date('Y-m-d H:i:s');
+        if ($note !== null) $steps[$curr]['note'] = $note;
+        $steps[$curr]['acted_by']     = $userId;
+        $steps[$curr]['acted_role']   = $isAdmin ? 'admin' : 'approver';
 
         $update = [
             'approval_steps'  => json_encode($steps, JSON_UNESCAPED_UNICODE),
             'approval_status' => self::AP_REJECTED,
-            // giữ nguyên current_level để FE biết bị từ chối ở cấp nào
         ];
 
         $this->model->update($id, $update);
+
         return $this->respond([
-            'message'        => 'Đã từ chối phê duyệt.',
-            'approval_status'=> self::AP_REJECTED,
-            'current_level'  => (int)$bidding['current_level'],
-            'approval_steps' => $steps
+            'message'         => 'Đã từ chối phê duyệt.',
+            'approval_status' => self::AP_REJECTED,
+            'current_level'   => $curr,
+            'approval_steps'  => $steps
         ]);
     }
+
+
+
 
 
     public function updateApprovalSteps($id): ResponseInterface
@@ -689,7 +794,7 @@ class BiddingController extends ResourceController
         // chuẩn hoá + bỏ trùng
         $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
         if (count($ids) < 2) {
-            return $this->failValidationErrors(['approver_ids' => 'Cần tối thiểu 2 cấp duyệt.']);
+            return $this->failValidationErrors(['approver_ids' => 'Cần tối thiểu 1 cấp duyệt.']);
         }
 
         if (($bidding['approval_status'] ?? '') === self::AP_APPROVED) {
@@ -721,6 +826,16 @@ class BiddingController extends ResourceController
             'current_level'   => 0,
         ]);
     }
+
+    private function canOverrideApproval(array $bid, int $userId): bool
+    {
+        $session = session();
+        $isAdmin = (bool) ($session->get('is_admin') ?? false); // tuỳ bạn lưu flag gì
+        if ($isAdmin) return true;
+        return (int)($bid['manager_id'] ?? 0) === $userId; // cho manager gói thầu override
+    }
+
+
 
 
 

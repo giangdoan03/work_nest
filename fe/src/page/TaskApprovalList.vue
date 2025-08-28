@@ -16,7 +16,7 @@
         <!-- ================== TAB CHA ================== -->
         <a-tabs v-model:activeKey="parentTab">
             <!-- ===== Tab cha 1: chứa toàn bộ module duyệt ===== -->
-            <a-tab-pane key="tab1" tab="Tab 1">
+            <a-tab-pane key="tab1" tab="Nhiệm vụ con">
                 <!-- ===== Tab con hiện có ===== -->
                 <a-tabs v-model:activeKey="activeTab" @change="handleTabChange">
                     <a-tab-pane key="resolved" tab="Đã duyệt / Từ chối" />
@@ -167,8 +167,9 @@
             </a-tab-pane>
 
             <!-- ===== Tab cha 2 ===== -->
-            <a-tab-pane key="tab2" tab="Tab 2">
-                <div class="p-3 text-gray-500">Nội dung tab 2</div>
+            <a-tab-pane key="tab2" tab="Gói thầu" force-render>
+                <!-- Nhúng nguyên UI danh sách + duyệt gói thầu -->
+                <BidListForTab :embedded="true" ref="bidListRef" />
             </a-tab-pane>
 
             <!-- ===== Tab cha 3 ===== -->
@@ -196,6 +197,8 @@ import {
     getFullApprovalStatus,
     canActApprovalAPI
 } from '@/api/taskApproval'
+import BidList from "@/page/BidList.vue";
+import BidListForTab from "@/components/BidListForTab.vue";
 
 // ================== STATE ==================
 const parentTab = ref('tab1')            // <-- Tab cha (mặc định Tab 1)

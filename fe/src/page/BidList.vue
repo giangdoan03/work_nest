@@ -167,13 +167,22 @@
                         <EyeOutlined class="icon-action" style="color:#52c41a;" @click="goToDetail(slot.record.id)" />
                     </a-tooltip>
 
+                    <!-- Gửi phê duyệt lần đầu -->
                     <a-tooltip
-                        v-if="Number(slot.record.status) === STATUS.PREPARING && (slot.record.approval_status ?? 'pending') === APPROVAL_STATUS.PENDING"
+                        v-if="Number(slot.record.status) === STATUS.PREPARING
+        && (slot.record.approval_status ?? 'pending') === APPROVAL_STATUS.PENDING"
                         title="Gửi phê duyệt"
                     >
                         <SendOutlined class="icon-action" style="color:#faad14;" @click="openSendApproval(slot.record)" />
                     </a-tooltip>
 
+                    <!-- 👇 Gửi duyệt lại khi đã bị từ chối -->
+                    <a-tooltip
+                        v-else-if="(slot.record.approval_status ?? '') === APPROVAL_STATUS.REJECTED"
+                        title="Gửi lại phê duyệt"
+                    >
+                        <SendOutlined class="icon-action" style="color:#faad14;" @click="openSendApproval(slot.record)" />
+                    </a-tooltip>
                     <template
                         v-if="Number(slot.record.status) === STATUS.SENT_FOR_APPROVAL && (slot.record.approval_status ?? 'pending') === APPROVAL_STATUS.PENDING">
                         <a-tooltip title="Phê duyệt">
@@ -305,7 +314,7 @@
         <!-- Modal chọn người duyệt -->
         <a-modal
             v-model:open="sendApprovalVisible"
-            title="Chọn người duyệt (tối thiểu 2 cấp)"
+            title="Chọn người duyệt (≥ 1 cấp)"
             :confirm-loading="loadingCreate"
             @ok="confirmSendApproval"
         >
@@ -315,7 +324,7 @@
                         v-model:value="approverIdsSelected"
                         mode="multiple"
                         :options="userOptions"
-                        placeholder="Chọn ít nhất 2 người duyệt"
+                        placeholder="Chọn ít nhất 1 người duyệt"
                         :max-tag-count="3"
                     />
                 </a-form-item>
@@ -949,37 +958,84 @@ const getBiddings = async () => {
 
 const openSendApproval = (row) => {
     sendApprovalTarget.value = row
-    // gợi ý sẵn: manager trước, rồi trưởng bộ phận khác… nếu có
-    approverIdsSelected.value = row.manager_id ? [Number(row.manager_id)] : []
+    const prev = Array.isArray(row.approval_steps)
+        ? row.approval_steps.map(s => Number(s.approver_id)).filter(Boolean)
+        : []
+    approverIdsSelected.value = prev.length
+        ? prev                    // 👈 dùng lại thứ tự cũ
+        : (row.manager_id ? [Number(row.manager_id)] : [])
     sendApprovalVisible.value = true
 }
 
 const confirmSendApproval = async () => {
-    if (approverIdsSelected.value.length < 2) {
-        message.warning('Cần chọn tối thiểu 2 người duyệt.')
+    // ≥ 1 người duyệt
+    if (!Array.isArray(approverIdsSelected.value) || approverIdsSelected.value.length === 0) {
+        message.warning('Cần chọn tối thiểu 1 người duyệt.')
         return
     }
+
+    // Giữ thứ tự đã chọn + loại trùng + chỉ nhận số nguyên
+    const uniqueIds = [...new Set(
+        approverIdsSelected.value.map(n => Number(n)).filter(Number.isInteger)
+    )]
+    if (!uniqueIds.length) {
+        message.warning('Danh sách người duyệt không hợp lệ.')
+        return
+    }
+
+    const target = sendApprovalTarget.value
+    if (!target?.id) {
+        message.error('Thiếu thông tin gói thầu.')
+        return
+    }
+
+    const status = target.approval_status ?? APPROVAL_STATUS.PENDING
+    const hasOldSteps = Array.isArray(target.approval_steps) && target.approval_steps.length > 0
+
+    // Đã duyệt xong thì chặn
+    if (status === APPROVAL_STATUS.APPROVED) {
+        message.warning('Gói thầu đã phê duyệt xong, không thể thay đổi người duyệt.')
+        return
+    }
+
     try {
         loadingCreate.value = true
-        // Nếu là sửa lại sau khi đã gửi trước đó:
-        if (sendApprovalTarget.value?.id) {
-            await updateApprovalStepsAPI(sendApprovalTarget.value.id, approverIdsSelected.value)
-            message.success('Cập nhật người duyệt thành công.')
+
+        if (status === APPROVAL_STATUS.REJECTED) {
+            // 👉 Gửi lại (reset flow)
+            await sendBiddingForApprovalAPI(target.id, uniqueIds)
+            message.success('Đã gửi lại phê duyệt.')
+        } else if (hasOldSteps) {
+            // 👉 Đang pending & đã có cấu hình → chỉ cập nhật người duyệt
+            const oldIds = target.approval_steps.map(s => Number(s.approver_id)).filter(Boolean)
+            const same = oldIds.length === uniqueIds.length && oldIds.every((v, i) => v === uniqueIds[i])
+            if (same) {
+                message.info('Danh sách người duyệt không thay đổi.')
+            } else {
+                await updateApprovalStepsAPI(target.id, uniqueIds)
+                message.success('Cập nhật người duyệt thành công.')
+            }
         } else {
-            // Nhánh “gửi phê duyệt lần đầu” cũ của bạn
-            await sendBiddingForApprovalAPI(sendApprovalTarget.value.id, approverIdsSelected.value)
+            // 👉 Lần đầu gửi
+            await sendBiddingForApprovalAPI(target.id, uniqueIds)
             message.success('Đã gửi phê duyệt.')
         }
+
+        // Đóng modal + refresh
         sendApprovalVisible.value = false
         approverIdsSelected.value = []
         sendApprovalTarget.value  = null
         await getBiddings()
     } catch (e) {
-        message.error(e?.response?.data?.message || 'Thao tác thất bại.')
+        const msg = e?.response?.data?.message
+            || e?.response?.data?.errors?.approver_ids
+            || 'Thao tác thất bại.'
+        message.error(msg)
     } finally {
         loadingCreate.value = false
     }
 }
+
 
 
 
