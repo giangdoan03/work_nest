@@ -837,7 +837,4 @@ class BiddingController extends ResourceController
 
 
 
-
-
-
 }
