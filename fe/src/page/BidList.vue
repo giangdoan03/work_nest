@@ -75,36 +75,36 @@
                     </a-tooltip>
                 </template>
 
-<!--                &lt;!&ndash; Tiến độ &ndash;&gt;-->
-<!--                <template v-else-if="slot.column?.dataIndex === 'progress'">-->
-<!--                    <a-tooltip :title="progressText(slot.record)">-->
-<!--                        <a-progress-->
-<!--                            :percent="progressPercent(slot.record)"-->
-<!--                            :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"-->
-<!--                            :status="progressPercent(slot.record) >= 100 ? 'success' : 'active'"-->
-<!--                            size="small"-->
-<!--                            :show-info="progressPercent(slot.record) >= 100"-->
-<!--                            style="cursor: pointer;"-->
-<!--                            @click="openProgressModal(slot.record)"-->
-<!--                        />-->
-<!--                    </a-tooltip>-->
-<!--                </template>-->
-
-                <!-- Tiến độ (theo mốc thời gian start_date → end_date) -->
-                <!-- Tiến độ (theo mốc thời gian + rule 90%/100%) -->
+                <!-- Tiến độ -->
                 <template v-else-if="slot.column?.dataIndex === 'progress'">
-                    <a-tooltip :title="timeProgressText(slot.record)">
+                    <a-tooltip :title="progressText(slot.record)">
                         <a-progress
-                            :percent="visualProgressPercent(slot.record)"
+                            :percent="progressPercent(slot.record)"
                             :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
-                            :status="visualProgressPercent(slot.record) >= 100 ? 'success' : 'active'"
+                            :status="progressPercent(slot.record) >= 100 ? 'success' : 'active'"
                             size="small"
-                            :show-info="visualProgressPercent(slot.record) >= 100"
+                            :show-info="progressPercent(slot.record) >= 100"
                             style="cursor: pointer;"
                             @click="openProgressModal(slot.record)"
                         />
                     </a-tooltip>
                 </template>
+
+                <!-- Tiến độ (theo mốc thời gian start_date → end_date) -->
+                <!-- Tiến độ (theo mốc thời gian + rule 90%/100%) -->
+<!--                <template v-else-if="slot.column?.dataIndex === 'progress'">-->
+<!--                    <a-tooltip :title="timeProgressText(slot.record)">-->
+<!--                        <a-progress-->
+<!--                            :percent="visualProgressPercent(slot.record)"-->
+<!--                            :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"-->
+<!--                            :status="visualProgressPercent(slot.record) >= 100 ? 'success' : 'active'"-->
+<!--                            size="small"-->
+<!--                            :show-info="visualProgressPercent(slot.record) >= 100"-->
+<!--                            style="cursor: pointer;"-->
+<!--                            @click="openProgressModal(slot.record)"-->
+<!--                        />-->
+<!--                    </a-tooltip>-->
+<!--                </template>-->
 
                 <!-- Người phụ trách -->
                 <template v-else-if="slot.column?.dataIndex === 'assigned_to_name'">
