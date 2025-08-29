@@ -49,7 +49,7 @@
                         <a-progress
                             :percent="detailProgressPercent(bidding)"
                             :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
-                            :status="detailProgressPercent(bidding) >= 100 ? 'success' : 'active'"
+                            :status="isBiddingApproved(bidding) ? 'success' : 'active'"
                             size="small"
                             :show-info="false"
                         />
@@ -307,20 +307,37 @@
 
                     <!-- Danh sách nhiệm vụ -->
                     <a-table
-                        class="tiny-scroll"
-                        :columns="relatedColumns"
-                        :dataSource="relatedTasks"
+                        :columns="treeColumns"
+                        :dataSource="relatedTasksTree"
                         rowKey="id"
-                        bordered
-                        size="small"
                         :pagination="false"
-                        :scroll="{ x: 1200 }"
-                        :locale="{ emptyText: 'Không có dữ liệu' }"
+                        :childrenColumnName="'children'"
+                        :expandable="{
+      expandRowByClick: true,    // tùy chọn
+    defaultExpandAllRows: true,// tùy chọn
+    indentSize: 24,
+    // ⬇️ để icon expand vào cột 'Tên công việc' (index = 2)
+    expandIconColumnIndex: 2
+  }"
                     >
                         <template #bodyCell="{ column, record, index }">
                             <!-- STT -->
                             <template v-if="column.key === 'index'">
                                 {{ index + 1 }}
+                            </template>
+
+                            <!-- ➕ Nút thêm -->
+                            <template v-else-if="column.key === 'add'">
+                                <a-tooltip title="Thêm việc con cấp cuối cùng">
+                                    <a-button
+                                        type="text"
+                                        shape="circle"
+                                        @click.stop="openSubtaskDrawer(record)"
+                                    :style="{ width: '30px', height: '32px', padding: 0 }"
+                                    >
+                                    <PlusOutlined />
+                                    </a-button>
+                                </a-tooltip>
                             </template>
 
                             <!-- Tên công việc -->
@@ -338,10 +355,11 @@
                             <!-- Tiến trình -->
                             <template v-else-if="column.dataIndex === 'progress'">
                                 <a-progress
-                                    :percent="Number(record.progress)"
-                                    :status="Number(record.progress) >= 100 ? 'success' : 'active'"
+                                    :percent="detailProgressPercent(bidding)"
+                                    :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
+                                    :status="isBiddingApproved(bidding) ? 'success' : 'active'"
                                     size="small"
-                                    :show-info="true"
+                                    :show-info="false"
                                 />
                             </template>
 
@@ -401,6 +419,15 @@
             </template>
         </a-drawer>
 
+        <DrawerCreateSubtask
+            :open="subDrawerOpen"
+            :parentTask="subDrawerParent"
+            :listUser="users"
+            @update:open="v => subDrawerOpen = v"
+            @created="handleSubtaskCreated"
+        />
+
+
         <DrawerCreateTask
                 v-model:open-drawer="openDrawer"
                 :list-user="users"
@@ -433,6 +460,10 @@
     import {useRouter} from 'vue-router'
     import {EditOutlined} from '@ant-design/icons-vue'
     import {useStepStore} from '@/stores/step'
+    import DrawerCreateSubtask from '@/components/common/DrawerCreateSubtask.vue'
+
+    const subDrawerOpen = ref(false)
+    const subDrawerParent = ref(null)
 
     const stepStore = useStepStore()
     const router = useRouter()
@@ -455,7 +486,7 @@
     const userStore = useUserStore()
     const user = userStore.currentUser
 
-
+    import { PlusOutlined } from '@ant-design/icons-vue'
     import {getTasks, getTasksByBiddingStep, getTasksByContractStep} from '@/api/task'
     import DrawerCreateTask from "@/components/common/DrawerCreateTask.vue";
     import {updateContractStepAPI} from "@/api/contract-steps.js"; // nếu chưa import
@@ -469,33 +500,80 @@
     const showEditDateStart = ref(false)
     const showEditDateEnd = ref(false)
 
+    const quickDrawerVisible = ref(false)
+    const quickDrawerRecord = ref(null)
+
+    const openQuickDrawer = (record) => {
+        quickDrawerRecord.value = record ?? null
+        quickDrawerVisible.value = true
+    }
+    const closeQuickDrawer = () => {
+        quickDrawerVisible.value = false
+        quickDrawerRecord.value = null
+    }
+
+    function openSubtaskDrawer(parentRow) {
+        // truyền đủ khóa cha để component con “pre-fill”
+        subDrawerParent.value = {
+            id: parentRow.id,
+            linked_type: parentRow.linked_type ?? (stepStore.selectedStep ? 'bidding' : 'internal'),
+            linked_id: parentRow.linked_id ?? commonStore.biddingIdParent ?? null,
+            step_id: parentRow.step_id ?? stepStore.selectedStep?.id ?? null,
+            step_code: parentRow.step_code ?? stepStore.selectedStep?.step_number ?? null,
+            id_department: parentRow.id_department ?? null
+        }
+        subDrawerOpen.value = true
+    }
+
+
     // columns đầy đủ
-    const relatedColumns = [
+    const treeColumns = [
         { title: 'STT', key: 'index', width: 60, align: 'center', fixed: 'left' },
-        { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 280, ellipsis: true, fixed: 'left' },
+        { title: '', key: 'add', width: 48, align: 'center', fixed: 'left' }, // 👈 cột dấu +
+        { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 240, ellipsis: true },
         { title: 'Người thực hiện', dataIndex: 'assigned_to', key: 'assigned_to', width: 160 },
         { title: 'Tiến trình', dataIndex: 'progress', key: 'progress', width: 140, align: 'center' },
         { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', width: 120, align: 'center' },
-        {
-            title: 'Bắt đầu',
-            dataIndex: 'start_date',
-            key: 'start_date',
-            width: 120,
-            align: 'center',
-            sorter: (a, b) => new Date(a.start_date) - new Date(b.start_date),
-        },
-        {
-            title: 'Kết thúc',
-            dataIndex: 'end_date',
-            key: 'end_date',
-            width: 120,
-            align: 'center',
-            sorter: (a, b) => new Date(a.end_date) - new Date(b.end_date),
-        },
+        { title: 'Bắt đầu', dataIndex: 'start_date', key: 'start_date', width: 120, align: 'center' },
+        { title: 'Kết thúc', dataIndex: 'end_date', key: 'end_date', width: 120, align: 'center' },
         { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 140, align: 'center' },
         { title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 160, align: 'center' },
         { title: 'Duyệt', dataIndex: 'approval_status', key: 'approval_status', width: 160, align: 'center' },
     ]
+
+
+    const relatedTasksTree = computed(() => buildTree(relatedTasks.value))
+
+    function buildTree(list) {
+        const map = new Map()
+        list?.forEach(i => { i.children = i.children || []; map.set(i.id, i) })
+        const roots = []
+        list?.forEach(i => {
+            if (i.parent_id && map.get(i.parent_id)) map.get(i.parent_id).children.push(i)
+            else roots.push(i)
+        })
+        return roots
+    }
+
+
+    function handleSubtaskCreated(newTask) {
+        // newTask phải có parent_id = subDrawerParent.id
+        // 👉 cách 1: chèn vào cây hiện tại để phản hồi ngay
+        const parentId = Number(newTask.parent_id)
+        const list = stepStore.relatedTasks.slice()
+        const parent = list.find(x => Number(x.id) === parentId)
+        if (parent) {
+            parent.children = parent.children || []
+            parent.children.push(newTask)
+        } else {
+            list.push(newTask) // fallback
+        }
+        stepStore.setRelatedTasks(list)
+
+        // 👉 cách 2 (an toàn): reload lại danh sách từ API
+        // await handleDrawerSubmit()
+    }
+
 
     const editing = reactive({
         id: null,
@@ -579,8 +657,26 @@
     // màu cố định cho mọi thanh tiến độ
     const PROGRESS_COLOR = '#1890ff'
 
+    // ✅ Bidding đã duyệt khi approval_status = 'approved' hoặc status = 2 (Trúng thầu)
+    const isBiddingApproved = (b) => String(b?.approval_status) === 'approved' || Number(b?.status) === 2
+
     // % tổng của gói thầu trong trang chi tiết
-    const detailProgressPercent = (b) => Number(b?.progress?.bidding_progress ?? 0)
+    // ✅ Tính % tổng theo rule: overdue => cap 90%, approved => 100%
+    const detailProgressPercent = (b) => {
+        const base = Number(b?.progress?.bidding_progress ?? 0)
+
+        // đã duyệt => 100%
+        if (isBiddingApproved(b)) return 100
+
+        // xác định quá hạn: ưu tiên days_overdue > 0, fallback so sánh ngày
+        const overdueFlag =
+            Number(b?.days_overdue ?? 0) > 0 ||
+            (!!b?.end_date && dayjs().isAfter(dayjs(b.end_date), 'day'))
+
+        if (overdueFlag && base > 90) return 90
+        return base
+    }
+
 
     // Text hiển thị: "22% (2/9)"
     const detailProgressText = (b) => {
@@ -589,14 +685,12 @@
         const tt = Number(b?.progress?.steps_total ?? 0)
 
         if (!tt) return "Chưa có bước nào"
-
+        if (isBiddingApproved(b)) return `Đã hoàn thành toàn bộ ${tt} bước (100%)`
         if (dn === 0) return `Chưa bắt đầu (${dn}/${tt} bước)`
-
         if (dn < tt) return `Đã hoàn thành ${dn}/${tt} bước (~${p}%)`
-
-        return `Đã hoàn thành toàn bộ ${tt} bước (100%)`
+        // trường hợp hoàn tất steps nhưng chưa duyệt → vẫn áp dụng cap nếu quá hạn
+        return `Đã hoàn thành ${tt}/${tt} bước (~${p}%)`
     }
-
 
     const openStatusForId = ref(null)
 
@@ -1259,4 +1353,5 @@
         padding-left: 0;
         padding-right: 0;
     }
+    :deep(.ant-table-row-indent) { display: inline-block !important; }
 </style>
