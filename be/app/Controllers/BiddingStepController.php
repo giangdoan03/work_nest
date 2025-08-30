@@ -289,4 +289,115 @@ class BiddingStepController extends ResourceController
         ]);
     }
 
+    public function stepsByBidding(int $biddingId): ResponseInterface
+    {
+        if ($biddingId <= 0) {
+            return $this->failValidationErrors(['bidding_id' => 'Thiếu hoặc không hợp lệ.']);
+        }
+
+        // 1) Lấy tất cả step của gói
+        $steps = $this->model
+            ->asArray()
+            ->where('bidding_id', $biddingId)
+            ->orderBy('step_number', 'asc')
+            ->findAll();
+
+        if (!$steps) {
+            return $this->respond([]); // không có bước nào
+        }
+
+        $stepIds = array_column($steps, 'id');
+
+        // 2) Lấy tasks của các step (linked_type=bidding)
+        $taskModel = new \App\Models\TaskModel();
+        $tasks = $taskModel->asArray()
+            ->where('linked_type', 'bidding')
+            ->whereIn('step_id', $stepIds)
+            ->findAll();
+
+        // 3) Đánh dấu ngày cho mỗi task
+        $tz    = new \DateTimeZone('Asia/Ho_Chi_Minh');
+        $today = new \DateTimeImmutable('today', $tz);
+        foreach ($tasks as &$t) {
+            [$t['days_remaining'], $t['days_overdue']] = $this->calcRemOv($t['end_date'] ?? null, $today, $tz);
+        }
+        unset($t);
+
+        // 4) Lấy tên người phụ trách 1 lần
+        $assigneeIds = array_unique(array_filter(array_map(fn($t) => (int)($t['assigned_to'] ?? 0), $tasks)));
+        $userById = [];
+        if ($assigneeIds) {
+            $users = (new \App\Models\UserModel())
+                ->asArray()
+                ->select('id, name')
+                ->whereIn('id', $assigneeIds)
+                ->findAll();
+            foreach ($users as $u) {
+                $userById[(string)$u['id']] = $u;
+            }
+        }
+
+        // 5) Nhóm task theo step_id
+        $byStep = [];
+        foreach ($tasks as $t) {
+            $byStep[$t['step_id']][] = $t;
+        }
+
+        // 6) Gắn aggregate vào từng step
+        foreach ($steps as &$s) {
+            $tArr = $byStep[$s['id']] ?? [];
+
+            $minRem = null; $maxOv = 0; $hasToday = false; $hasAny = false;
+            $uids   = [];
+            $approvedCount = 0;
+
+            foreach ($tArr as $t) {
+                // deadline aggregate
+                if ($t['days_remaining'] !== null || $t['days_overdue'] !== null) $hasAny = true;
+                if ((int)($t['days_remaining'] ?? -1) === 0 && !empty($t['end_date'])) $hasToday = true;
+                if (($t['days_remaining'] ?? null) !== null && (int)$t['days_remaining'] > 0) {
+                    $minRem = is_null($minRem) ? (int)$t['days_remaining'] : min($minRem, (int)$t['days_remaining']);
+                }
+                if (($t['days_overdue'] ?? null) !== null && (int)$t['days_overdue'] > 0) {
+                    $maxOv = max($maxOv, (int)$t['days_overdue']);
+                }
+
+                // assignees
+                if (!empty($t['assigned_to'])) $uids[] = (string)$t['assigned_to'];
+
+                // chỉ tính hoàn thành khi ĐÃ DUYỆT
+                $status   = (string)($t['status'] ?? '');
+                $progress = (int)($t['progress'] ?? 0);
+                $approved = (string)($t['approval_status'] ?? '') === 'approved';
+                if (($status === 'done' || $progress >= 100) && $approved) {
+                    $approvedCount++;
+                }
+            }
+
+            $uids    = array_values(array_unique($uids));
+            $details = array_values(array_filter(array_map(fn($id) => $userById[$id] ?? null, $uids)));
+
+            $totalTasks   = count($tArr);
+            $stepProgress = $totalTasks > 0 ? (int) round($approvedCount * 100 / $totalTasks) : 0;
+
+            $s['tasks']             = $tArr;
+            $s['task_count']        = $totalTasks;
+            $s['task_done_count']   = $approvedCount;             // chỉ task đã DUYỆT
+            $s['step_progress']     = $stepProgress;              // %
+            $s['is_step_completed'] = ($totalTasks > 0 && $approvedCount === $totalTasks) ? 1 : 0;
+
+            $s['days_remaining']    = $hasAny ? ($hasToday ? 0 : $minRem) : null;
+            $s['days_overdue']      = $hasAny ? $maxOv : null;
+
+            $s['assignees']         = $uids;
+            $s['assignees_detail']  = $details;
+            $s['assignees_count']   = count($uids);
+            $s['assignees_names']   = implode(', ', array_column($details, 'name'));
+        }
+        unset($s);
+
+        return $this->respond($steps);
+    }
+
+
 }

@@ -44,6 +44,21 @@
                     </a-tooltip>
                 </template>
 
+                <template v-else-if="slot.column?.dataIndex === 'process'">
+                    <a-typography-link @click="openProcess(slot.record)">
+                        {{ processText(slot.record) }}
+                    </a-typography-link>
+                </template>
+
+
+                <!-- Bước duyệt -->
+                <template v-else-if="slot.column?.dataIndex === 'approval_step'">
+                  <span>
+                    Bước {{ (Number(slot.record.current_level ?? 0) + 1) }}
+                    / {{ slot.record.approval_steps?.length || 0 }}
+                  </span>
+                </template>
+
                 <!-- Người phụ trách -->
                 <template v-else-if="slot.column?.dataIndex === 'assigned_to_name'">
                     <a-tooltip :title="slot.record.assigned_to_name || 'N/A'">
@@ -134,6 +149,69 @@
                 </a-form-item>
             </a-form>
         </a-modal>
+
+        <!-- Modal Quy trình 20 bước -->
+        <a-modal
+            v-model:open="processVisible"
+            :title="`Quy trình gói thầu (${processRows.length || 0} bước)`"
+            :confirm-loading="processLoading"
+            :footer="null"
+            width="920px"
+            :destroyOnClose="true"
+        >
+            <a-table
+                :columns="processColumns"
+                :data-source="processRows"
+                :loading="processLoading"
+                row-key="id"
+                :pagination="false"
+                :scroll="{ y: 520 }"
+            >
+                <template #bodyCell="{ column, record, index }">
+                    <!-- STT -->
+                    <template v-if="column.dataIndex === 'stt'">
+                        {{ index + 1 }}
+                    </template>
+
+                    <!-- Tên bước -->
+                    <template v-else-if="column.dataIndex === 'step_name'">
+                        <a-typography-text>
+                            {{ record.step_name || record.title || (record.step_number ? `Bước ${record.step_number}` : '—') }}
+                        </a-typography-text>
+                    </template>
+
+                    <!-- Người phụ trách -->
+                    <template v-else-if="column.dataIndex === 'owner_name'">
+                        <a-typography-text>{{ record.owner_name || '—' }}</a-typography-text>
+                    </template>
+
+                    <!-- Trạng thái -->
+                    <template v-else-if="column.dataIndex === 'status'">
+                        <a-tag :color="PROCESS_STATUS_MAP[record.status]?.color || 'default'">
+                            {{ PROCESS_STATUS_MAP[record.status]?.text || '—' }}
+                        </a-tag>
+                    </template>
+
+                    <!-- Hạn -->
+                    <template v-else-if="column.dataIndex === 'due_date'">
+                        {{ record.due_date || '—' }}
+                    </template>
+
+                    <!-- Hoàn thành lúc -->
+                    <template v-else-if="column.dataIndex === 'completed_at'">
+                        {{ record.completed_at || '—' }}
+                    </template>
+
+                    <!-- 🔚 Fallback cho các cột chưa khai báo ở trên -->
+                    <template v-else>
+                        {{ record[column.dataIndex] ?? '—' }}
+                    </template>
+                </template>
+            </a-table>
+        </a-modal>
+
+
+
     </div>
 </template>
 
@@ -141,7 +219,16 @@
 import { ref, onMounted, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { EditOutlined, SearchOutlined, SendOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons-vue'
-import { getBiddingsAPI, sendBiddingForApprovalAPI, approveBiddingAPI, rejectBiddingAPI, updateApprovalStepsAPI } from '@/api/bidding'
+import {
+    getBiddingsAPI,
+    sendBiddingForApprovalAPI,
+    approveBiddingAPI,
+    rejectBiddingAPI,
+    updateApprovalStepsAPI,
+    getBiddingProcessAPI,
+    getBiddingStepsByBiddingIdAPI
+} from '@/api/bidding'
+
 import { getUsers } from '@/api/user.js'
 import { useRouter } from 'vue-router'
 
@@ -152,6 +239,36 @@ const tableData = ref([])
 const loading = ref(false)
 const loadingCreate = ref(false)
 const searchTerm = ref('')
+
+// Quy trình 20 bước
+const processVisible = ref(false)
+const processLoading = ref(false)
+const processRows = ref([])         // danh sách 20 bước
+const processTarget = ref(null)     // gói thầu hiện đang xem
+
+// Trạng thái của từng bước trong 20 bước
+const PROCESS_STATUS = Object.freeze({
+    PENDING: 'pending',
+    IN_PROGRESS: 'in_progress',
+    DONE: 'done',
+    BLOCKED: 'blocked'
+})
+const PROCESS_STATUS_MAP = {
+    [PROCESS_STATUS.PENDING]:     { text: 'Chưa bắt đầu', color: 'default' },
+    [PROCESS_STATUS.IN_PROGRESS]: { text: 'Đang thực hiện', color: 'gold' },
+    [PROCESS_STATUS.DONE]:        { text: 'Hoàn thành', color: 'green' },
+    [PROCESS_STATUS.BLOCKED]:     { text: 'Tắc/Chờ', color: 'red' },
+}
+
+const processColumns = [
+    { title: 'STT', dataIndex: 'stt', key: 'stt', width: 70, align: 'center' },
+    { title: 'Tên bước', dataIndex: 'step_name', key: 'step_name' },
+    { title: 'Người phụ trách', dataIndex: 'owner_name', key: 'owner_name', width: 180 },
+    { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 140, align: 'center' },
+    { title: 'Hạn', dataIndex: 'due_date', key: 'due_date', width: 130, align: 'center' },
+    { title: 'Hoàn thành lúc', dataIndex: 'completed_at', key: 'completed_at', width: 160, align: 'center' },
+]
+
 
 const pagination = ref({
     current: 1,
@@ -202,7 +319,24 @@ const getApprovalColor = s => (APPROVAL_STATUS_MAP[s]?.color ?? 'default')
 /** ===== COLUMNS ===== */
 const columns = [
     { title: 'STT', dataIndex: 'stt', key: 'stt', width: 70 },
-    { title: 'Tên gói thầu', dataIndex: 'title', key: 'title' },
+    { title: 'Tên gói thầu', dataIndex: 'title', key: 'title', width: 200 },
+
+    {
+        title: 'Quy trình (18 bước)',
+        dataIndex: 'process',
+        key: 'process',
+        width: 180
+    },
+
+    // 👇 Thêm cột Bước duyệt ở đây
+    {
+        title: 'Bước duyệt',
+        dataIndex: 'approval_step',
+        key: 'approval_step',
+        align: 'center',
+        width: 120
+    },
+
     { title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'center', width: 160 },
 
     // 3 cột phê duyệt
@@ -212,6 +346,109 @@ const columns = [
 
     { title: 'Hành động', dataIndex: 'action', key: 'action', width: 200 },
 ]
+
+const openProcess = async (row) => {
+    processTarget.value = row
+    processVisible.value = true
+    await fetchProcess(row.id)
+}
+
+
+const fetchProcess = async (biddingId) => {
+    processLoading.value = true
+    try {
+        let steps = []
+
+        // ✅ Thử API mới trước (không shadow biến)
+        try {
+            const resNew = await getBiddingStepsByBiddingIdAPI(biddingId, { withTasks: 0 })
+            steps = Array.isArray(resNew?.data) ? resNew.data : []
+        } catch (e) {
+            // ✅ Fallback API cũ
+            const resOld = await getBiddingProcessAPI(biddingId)
+            steps = Array.isArray(resOld?.data) ? resOld.data : []
+        }
+
+        // Nếu BE chưa trả gì -> tạo placeholder
+        if (!steps.length) {
+            steps = Array.from({ length: 20 }).map((_, i) => ({
+                id: `tmp-${i + 1}`,
+                step_number: i + 1,
+                title: `Bước ${i + 1}`,
+                step_name: `Bước ${i + 1}`,
+                owner_id: null,
+                owner_name: null,
+                status: PROCESS_STATUS.PENDING,
+                due_date: null,
+                completed_at: null,
+            }))
+        } else {
+            // Chuẩn hoá dữ liệu từ BE
+            const mapStatus = (raw) => {
+                if (raw === 2) return PROCESS_STATUS.DONE
+                if (raw === 1) return PROCESS_STATUS.IN_PROGRESS ?? PROCESS_STATUS.PENDING
+                return PROCESS_STATUS.PENDING
+            }
+
+            steps = steps.map((s) => {
+                const stepNo = Number(s.step_number ?? s.step ?? 0)
+                const name   = s.title ?? s.step_name ?? (stepNo ? `Bước ${stepNo}` : null)
+
+                return {
+                    id: s.id,
+                    step_number: stepNo,
+                    // ✅ chuẩn hoá 2 field hiển thị tên
+                    title: name,
+                    step_name: name,
+
+                    owner_id: Array.isArray(s.assignees) && s.assignees.length
+                        ? s.assignees[0]
+                        : (s.owner_id ?? null),
+                    owner_name: Array.isArray(s.assignees_detail) && s.assignees_detail.length
+                        ? (s.assignees_detail[0]?.name ?? null)
+                        : (s.owner_name ?? null),
+
+                    status: mapStatus(Number(s.status ?? 0)),
+                    due_date: s.end_date ?? s.due_date ?? null,
+                    completed_at: (s.is_step_completed ? (s.updated_at ?? null) : null) ?? s.completed_at ?? null,
+                }
+            })
+        }
+
+        // Sort theo số bước
+        steps.sort((a, b) => a.step_number - b.step_number)
+        processRows.value = steps
+    } catch (e) {
+        processRows.value = []
+        message.error(e?.response?.data?.message || 'Không lấy được quy trình.')
+    } finally {
+        processLoading.value = false
+    }
+}
+
+
+const getStepTotals = (row, stepsList = null) => {
+    const total =
+        Number(row?.steps_total ?? row?.progress?.steps_total ?? (Array.isArray(stepsList) ? stepsList.length : 0)) || 0
+    const done =
+        Number(row?.steps_done  ?? row?.progress?.steps_completed ?? 0)
+
+    return { total, done }
+}
+
+const processText = (row, stepsList = null) => {
+    const { total, done } = getStepTotals(row, stepsList)
+
+    if (total === 0) return 'Chưa có bước duyệt'
+    if (done <= 0)   return `Còn ${total}/${total} bước cần duyệt`
+
+    const remain = Math.max(total - done, 0)
+    if (done < total) return `Còn ${remain}/${total} bước cần duyệt`
+
+    return `Đã duyệt hết ${total}/${total} bước`
+}
+
+
 
 /** ===== HELPERS ===== */
 const truncateText = (text, len=30) => !text ? '' : (text.length > len ? text.slice(0, len) + '…' : text)

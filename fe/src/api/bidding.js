@@ -41,5 +41,14 @@ export const rejectBiddingAPI = (biddingId, note = null) =>
 export const updateApprovalStepsAPI = (id, approverIds) =>
     instance.put(`/biddings/${id}/approval-steps`, { approver_ids: approverIds })
 
+// 👇 Alias để FE cũ gọi vẫn chạy
+export const getBiddingProcessAPI = (biddingId) =>
+    instance.get(`/bidding-steps`, { params: { bidding_id: biddingId } })
+
+// Lấy 20 bước của 1 gói thầu (ưu tiên dùng)
+export const getBiddingStepsByBiddingIdAPI = (biddingId, { withTasks = 1 } = {}) =>
+    instance.get(`/biddings/${biddingId}/steps`, { params: { with_tasks: withTasks ? 1 : 0 } })
+
+
 
 

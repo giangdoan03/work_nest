@@ -23,11 +23,11 @@ class BiddingController extends ResourceController
     protected array $validStatuses = [1, 2, 3, 4]; // 4 = SENT_FOR_APPROVAL
 
     private const STATUS_PREPARING = 1;
-    private const STATUS_WON       = 2;
+    private const STATUS_WON = 2;
     private const STATUS_CANCELLED = 3;
-    private const STATUS_SENT      = 4;
+    private const STATUS_SENT = 4;
 
-    private const AP_PENDING  = 'pending';
+    private const AP_PENDING = 'pending';
     private const AP_APPROVED = 'approved';
     private const AP_REJECTED = 'rejected';
 
@@ -38,153 +38,163 @@ class BiddingController extends ResourceController
     public function index()
     {
         $filters = $this->request->getGet();
-
-        // --- Phân trang an toàn
         $perPage = max(1, (int)($filters['per_page'] ?? 40));
         $page    = max(1, (int)($filters['page'] ?? 1));
 
-        // === LIST (phân trang)
+        // 🔹 Subquery: đếm số bước theo bidding_id
+        $db  = db_connect();
+        $sub = $db->table('bidding_steps')
+            ->select('bidding_id, COUNT(*) AS steps_total')
+            ->groupBy('bidding_id');
+
+        // --- Base query + JOIN subquery steps ---
         $list = $this->model
-            ->select('biddings.*, u1.name AS assigned_to_name, u2.name AS manager_name')
+            ->select(
+            // COALESCE để null -> 0
+                'biddings.*, u1.name AS assigned_to_name, u2.name AS manager_name, COALESCE(bs.steps_total, 0) AS steps_total',
+                false
+            )
             ->join('users AS u1', 'u1.id = biddings.assigned_to', 'left')
-            ->join('users AS u2', 'u2.id = biddings.manager_id', 'left');
+            ->join('users AS u2', 'u2.id = biddings.manager_id', 'left')
+            ->join('(' . $sub->getCompiledSelect() . ') AS bs', 'bs.bidding_id = biddings.id', 'left');
 
         $this->applyFilters($list, $filters);
-        $list->orderBy('biddings.created_at', 'DESC'); // mới nhất lên đầu
+        $list->orderBy('biddings.created_at', 'DESC');
 
         $data  = $list->paginate($perPage, 'default', $page);
         $pager = $this->model->pager;
 
-        // === days_overdue & days_remaining
+        // === Deadline fields
         $tz    = new DateTimeZone('Asia/Ho_Chi_Minh');
         $today = new DateTimeImmutable('today', $tz);
+        $data  = $this->attachDeadlineInfo($data, $today, $tz);
 
-        $data = array_map(function ($row) use ($today, $tz) {
-            $endDateVal = is_array($row) ? ($row['end_date'] ?? null) : ($row->end_date ?? null);
-            if (empty($endDateVal)) {
-                if (is_array($row)) { $row['days_overdue']=null; $row['days_remaining']=null; }
-                else { $row->days_overdue=null; $row->days_remaining=null; }
-                return $row;
-            }
-            try {
-                $end = new DateTimeImmutable($endDateVal, $tz);
-                $end = new DateTimeImmutable($end->format('Y-m-d'), $tz);
-                $deltaDays     = (int)$today->diff($end)->format('%r%a'); // âm nếu đã quá hạn
-                $daysOverdue   = $deltaDays < 0 ? -$deltaDays : 0;
-                $daysRemaining = max($deltaDays, 0);
-
-                if (is_array($row)) {
-                    $row['days_overdue']   = $daysOverdue;
-                    $row['days_remaining'] = $daysRemaining;
-                } else {
-                    $row->days_overdue   = $daysOverdue;
-                    $row->days_remaining = $daysRemaining;
-                }
-            } catch (Throwable) {
-                if (is_array($row)) { $row['days_overdue']=null; $row['days_remaining']=null; }
-                else { $row->days_overdue=null; $row->days_remaining=null; }
-            }
-            return $row;
-        }, $data);
-
-        // -- GẮN PROGRESS CHO MỖI GÓI THẦU TRONG LIST (tuỳ chọn qua ?with_progress=1)
-        $withProgress = filter_var($filters['with_progress'] ?? '0', FILTER_VALIDATE_BOOLEAN);
-
-        if ($withProgress && !empty($data)) {
-            foreach ($data as &$row) {
-                $bidId = (int)(is_array($row) ? $row['id'] : $row->id);
-                $prog  = $this->computeProgressForBidding($bidId); // đã có sẵn ở dưới
-
-                if (is_array($row)) {
-                    $row['progress']          = $prog;
-                    $row['progress_percent']  = (int)($prog['bidding_progress'] ?? 0);
-                    $row['steps_done']        = (int)($prog['steps_completed'] ?? 0);
-                    $row['steps_total']       = (int)($prog['steps_total'] ?? 0);
-                    $row['subtasks_done']     = (int)($prog['subtasks_approved'] ?? 0);
-                    $row['subtasks_total']    = (int)($prog['subtasks_total'] ?? 0);
-                } else {
-                    $row->progress            = $prog;
-                    $row->progress_percent    = (int)($prog['bidding_progress'] ?? 0);
-                    $row->steps_done          = (int)($prog['steps_completed'] ?? 0);
-                    $row->steps_total         = (int)($prog['steps_total'] ?? 0);
-                    $row->subtasks_done       = (int)($prog['subtasks_approved'] ?? 0);
-                    $row->subtasks_total      = (int)($prog['subtasks_total'] ?? 0);
-                }
-
-                $col = $this->collaboratorsForBidding($bidId);
-                if (is_array($row)) {
-                    $row['collaborators']         = $col['ids'];
-                    $row['collaborators_detail']  = $col['details'];
-                    $row['collaborators_count']   = $col['count'];
-                    $row['collaborators_names']   = $col['names'];
-                } else {
-                    $row->collaborators        = $col['ids'];
-                    $row->collaborators_detail = $col['details'];
-                    $row->collaborators_count  = $col['count'];
-                    $row->collaborators_names  = $col['names'];
-                }
-            }
-            unset($row);
+        // === Progress fields (tuỳ chọn)
+        if (filter_var($filters['with_progress'] ?? '0', FILTER_VALIDATE_BOOLEAN)) {
+            // Lưu ý: attachProgressInfo sẽ KHÔNG overwrite steps_total nếu đã có từ JOIN
+            $data = $this->attachProgressInfo($data);
         }
 
+        // === Summary
+        $summary = $this->buildSummary($filters);
 
-        // === SUMMARY (không phân trang)
-        $tz       = new DateTimeZone('Asia/Ho_Chi_Minh');
-        $todayStr = (new DateTimeImmutable('today', $tz))->format('Y-m-d');
+        return $this->respond([
+            'data'  => $data,
+            'pager' => [
+                'total'        => (int) $pager->getTotal(),
+                'per_page'     => (int) $perPage,
+                'current_page' => (int) $page,
+            ],
+            'summary' => $summary,
+        ]);
+    }
 
-        // Khi tính summary, đừng khóa theo status người dùng đang lọc (nếu có)
+
+    // ===== Helpers =====
+    private function attachDeadlineInfo(array $rows, DateTimeImmutable $today, DateTimeZone $tz): array
+    {
+        return array_map(function ($row) use ($today, $tz) {
+            $endDateVal = is_array($row) ? ($row['end_date'] ?? null) : ($row->end_date ?? null);
+            $daysRemaining = $daysOverdue = null;
+            if (!empty($endDateVal)) {
+                try {
+                    $end = new DateTimeImmutable((new DateTimeImmutable($endDateVal, $tz))->format('Y-m-d'), $tz);
+                    $delta = (int)$today->diff($end)->format('%r%a');
+                    $daysRemaining = max($delta, 0);
+                    $daysOverdue = $delta < 0 ? -$delta : 0;
+                } catch (Throwable) {
+                }
+            }
+            if (is_array($row)) {
+                $row['days_overdue'] = $daysOverdue;
+                $row['days_remaining'] = $daysRemaining;
+            } else {
+                $row->days_overdue = $daysOverdue;
+                $row->days_remaining = $daysRemaining;
+            }
+            return $row;
+        }, $rows);
+    }
+
+    private function attachProgressInfo(array $rows): array
+    {
+        foreach ($rows as &$row) {
+            $bidId = (int)(is_array($row) ? $row['id'] : $row->id);
+            $prog = $this->computeProgressForBidding($bidId);
+            $col = $this->collaboratorsForBidding($bidId);
+
+            $target = is_array($row) ? $row : (array)$row;
+            $target['progress'] = $prog;
+            $target['progress_percent'] = (int)($prog['bidding_progress'] ?? 0);
+            $target['steps_done'] = (int)($prog['steps_completed'] ?? 0);
+            $target['steps_total'] = (int)($prog['steps_total'] ?? 0);
+            $target['subtasks_done'] = (int)($prog['subtasks_approved'] ?? 0);
+            $target['subtasks_total'] = (int)($prog['subtasks_total'] ?? 0);
+            $target['collaborators'] = $col['ids'];
+            $target['collaborators_detail'] = $col['details'];
+            $target['collaborators_count'] = $col['count'];
+            $target['collaborators_names'] = $col['names'];
+
+            $row = $target;
+        }
+        return $rows;
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function buildSummary(array $filters): array
+    {
         $filtersNoStatus = $filters;
         unset($filtersNoStatus['status']);
 
-        // Đếm theo status (1,2,3)
+        $tz = new DateTimeZone('Asia/Ho_Chi_Minh');
+        $todayStr = (new DateTimeImmutable('today', $tz))->format('Y-m-d');
+
+        // Đếm theo status
         $stBuilder = $this->model->builder();
         $this->applyFilters($stBuilder, $filtersNoStatus);
         $rows = $stBuilder
-            ->select('biddings.status AS status, COUNT(*) AS cnt', false)
+            ->select('biddings.status, COUNT(*) AS cnt')
             ->groupBy('biddings.status')
             ->get()->getResultArray();
-
-        $byStatus = [1=>0,2=>0,3=>0];
+        $byStatus = [1 => 0, 2 => 0, 3 => 0];
         foreach ($rows as $r) {
             $s = (int)($r['status'] ?? 0);
             if (isset($byStatus[$s])) $byStatus[$s] = (int)$r['cnt'];
         }
 
-        // Đếm priority trong trạng thái ĐANG CHUẨN BỊ
-        $impBuilder = $this->model->builder();
-        $this->applyFilters($impBuilder, $filtersNoStatus);
-        $important = (int)$impBuilder->where('biddings.priority', 1)->countAllResults();
+        // Đếm priority
+        $prioBuilder = $this->model->builder();
+        $this->applyFilters($prioBuilder, $filtersNoStatus);
+        $prioCounts = $prioBuilder
+            ->select('biddings.priority, COUNT(*) AS cnt')
+            ->groupBy('biddings.priority')
+            ->get()->getResultArray();
+        $important = $normal = 0;
+        foreach ($prioCounts as $r) {
+            if ((int)$r['priority'] === 1) $important = (int)$r['cnt'];
+            if ((int)$r['priority'] === 0) $normal = (int)$r['cnt'];
+        }
 
-        $norBuilder = $this->model->builder();
-        $this->applyFilters($norBuilder, $filtersNoStatus);
-        $normal    = (int)$norBuilder->where('biddings.priority', 0)->countAllResults();
-
-        // Quá hạn động: ĐANG CHUẨN BỊ & end_date < hôm nay
+        // Đếm quá hạn
         $ovBuilder = $this->model->builder();
-        $this->applyFilters($ovBuilder, $filtersNoStatus);     // vẫn áp các filter khác (khách hàng, ngày…)
+        $this->applyFilters($ovBuilder, $filtersNoStatus);
         $overdue = (int)$ovBuilder
             ->where('biddings.end_date IS NOT NULL', null, false)
-            ->where('DATE(biddings.end_date) <', $todayStr)    // ✅ tính quá hạn cho tất cả trạng thái
+            ->where('DATE(biddings.end_date) <', $todayStr)
             ->countAllResults();
 
-        // Trả về
-        return $this->respond([
-            'data'  => $data,
-            'pager' => [
-                'total'        => (int)$pager->getTotal(),
-                'per_page'     => (int)$perPage,
-                'current_page' => (int)$page,
-            ],
-            'summary' => [
-                'won'       => $byStatus[2],      // Trúng thầu
-                'lost'      => $byStatus[3],      // Hủy thầu
-                'important' => $important,        // Đang chuẩn bị + priority=1
-                'normal'    => $normal,           // Đang chuẩn bị + priority=0
-                'overdue'   => $overdue,          // Đang chuẩn bị + quá hạn
-                'total'     => (int)$pager->getTotal(),
-            ],
-        ]);
+        return [
+            'won' => $byStatus[2],
+            'lost' => $byStatus[3],
+            'important' => $important,
+            'normal' => $normal,
+            'overdue' => $overdue,
+            'total' => $this->model->pager->getTotal(),
+        ];
     }
+
 
     /**
      * Áp bộ lọc chung cho mọi truy vấn (list/summary).
@@ -234,11 +244,11 @@ class BiddingController extends ResourceController
         if (!$steps) {
             return [
                 'bidding_progress' => 0,
-                'steps_total'      => 0,
-                'steps_completed'  => 0,
-                'subtasks_total'   => 0,
-                'subtasks_approved'=> 0,
-                'per_steps'        => [],
+                'steps_total' => 0,
+                'steps_completed' => 0,
+                'subtasks_total' => 0,
+                'subtasks_approved' => 0,
+                'per_steps' => [],
             ];
         }
 
@@ -263,47 +273,47 @@ class BiddingController extends ResourceController
         $byStep = [];
         foreach ($rows as $r) {
             $byStep[(string)$r['step_id']] = [
-                'total'    => (int)$r['total_tasks'],
+                'total' => (int)$r['total_tasks'],
                 'approved' => (int)$r['approved_tasks'],
             ];
         }
 
         $perSteps = [];
-        $stepsCompleted   = 0;
-        $subtasksTotal    = 0;
+        $stepsCompleted = 0;
+        $subtasksTotal = 0;
         $subtasksApproved = 0;
-        $sumPercent       = 0;
+        $sumPercent = 0;
 
         foreach ($stepIds as $sid) {
             $sidStr = (string)$sid;
-            $agg = $byStep[$sidStr] ?? ['total'=>0, 'approved'=>0];
+            $agg = $byStep[$sidStr] ?? ['total' => 0, 'approved' => 0];
 
-            $percent   = $agg['total'] > 0 ? (int) round($agg['approved'] * 100 / $agg['total']) : 0;
+            $percent = $agg['total'] > 0 ? (int)round($agg['approved'] * 100 / $agg['total']) : 0;
             $completed = ($agg['total'] > 0 && $agg['approved'] === $agg['total']) ? 1 : 0;
 
             $perSteps[] = [
-                'step_id'       => (int)$sid,
+                'step_id' => (int)$sid,
                 'step_progress' => $percent,
-                'sub_total'     => $agg['total'],
-                'sub_done'      => $agg['approved'],
-                'completed'     => $completed,
+                'sub_total' => $agg['total'],
+                'sub_done' => $agg['approved'],
+                'completed' => $completed,
             ];
 
-            $stepsCompleted   += $completed;
-            $subtasksTotal    += $agg['total'];
+            $stepsCompleted += $completed;
+            $subtasksTotal += $agg['total'];
             $subtasksApproved += $agg['approved'];
-            $sumPercent       += $percent;
+            $sumPercent += $percent;
         }
 
-        $biddingProgress = count($stepIds) > 0 ? (int) round($sumPercent / count($stepIds)) : 0;
+        $biddingProgress = count($stepIds) > 0 ? (int)round($sumPercent / count($stepIds)) : 0;
 
         return [
             'bidding_progress' => $biddingProgress,   // %
-            'steps_total'      => count($stepIds),
-            'steps_completed'  => $stepsCompleted,
-            'subtasks_total'   => $subtasksTotal,
-            'subtasks_approved'=> $subtasksApproved,
-            'per_steps'        => $perSteps,
+            'steps_total' => count($stepIds),
+            'steps_completed' => $stepsCompleted,
+            'subtasks_total' => $subtasksTotal,
+            'subtasks_approved' => $subtasksApproved,
+            'per_steps' => $perSteps,
         ];
     }
 
@@ -327,15 +337,15 @@ class BiddingController extends ResourceController
         foreach ($rows as $r) {
             $id = (string)($r['assigned_to'] ?? '');
             if ($id === '') continue;
-            $byId[$id] = ['id' => $id, 'name' => $r['name'] ?? ('#'.$id)];
+            $byId[$id] = ['id' => $id, 'name' => $r['name'] ?? ('#' . $id)];
         }
 
         $details = array_values($byId);
         return [
-            'ids'    => array_column($details, 'id'),
-            'names'  => implode(', ', array_column($details, 'name')),
-            'details'=> $details,
-            'count'  => count($details),
+            'ids' => array_column($details, 'id'),
+            'names' => implode(', ', array_column($details, 'name')),
+            'details' => $details,
+            'count' => count($details),
         ];
     }
 
@@ -354,35 +364,35 @@ class BiddingController extends ResourceController
         // Tính days_remaining & days_overdue từ end_date
         $today = new DateTime('today');
         $daysRemaining = null;
-        $daysOverdue   = null;
+        $daysOverdue = null;
 
         if (!empty($bidding['end_date'])) {
             try {
                 $end = new DateTime(date('Y-m-d', strtotime($bidding['end_date'])));
                 if ($today <= $end) {
                     $daysRemaining = (int)$today->diff($end)->days; // 0 nếu đến hạn hôm nay
-                    $daysOverdue   = 0;
+                    $daysOverdue = 0;
                 } else {
-                    $daysOverdue   = (int)$end->diff($today)->days;
+                    $daysOverdue = (int)$end->diff($today)->days;
                     $daysRemaining = 0;
                 }
             } catch (Throwable $e) {
                 $daysRemaining = null;
-                $daysOverdue   = null;
+                $daysOverdue = null;
             }
         }
 
         $bidding['days_remaining'] = $daysRemaining;
-        $bidding['days_overdue']   = $daysOverdue;
+        $bidding['days_overdue'] = $daysOverdue;
 
         $progress = $this->computeProgressForBidding((int)$id);
         $bidding['progress'] = $progress;
 
         $col = $this->collaboratorsForBidding((int)$id);
-        $bidding['collaborators']        = $col['ids'];
+        $bidding['collaborators'] = $col['ids'];
         $bidding['collaborators_detail'] = $col['details'];
-        $bidding['collaborators_count']  = $col['count'];
-        $bidding['collaborators_names']  = $col['names'];
+        $bidding['collaborators_count'] = $col['count'];
+        $bidding['collaborators_names'] = $col['names'];
 
         return $this->respond($bidding);
     }
@@ -479,12 +489,12 @@ class BiddingController extends ResourceController
 
         foreach ($value['steps'] as $step) {
             $stepModel->insert([
-                'bidding_id'   => $biddingId,
-                'step_number'  => $step['step_number'],
-                'title'        => $step['title'],
-                'department'   => $step['department'] ?? '',
-                'status'       => 0,
-                'customer_id'  => $customerId
+                'bidding_id' => $biddingId,
+                'step_number' => $step['step_number'],
+                'title' => $step['title'],
+                'department' => $step['department'] ?? '',
+                'status' => 0,
+                'customer_id' => $customerId
             ]);
         }
     }
@@ -512,18 +522,17 @@ class BiddingController extends ResourceController
     }
 
 
-
     private function buildApprovalSteps(array $approverIds): array
     {
         // Mỗi phần tử: level (1-based), approver_id, status=pending, commented_at=null
         $steps = [];
         foreach ($approverIds as $i => $uid) {
             $steps[] = [
-                'level'        => $i + 1,
-                'approver_id'  => (int)$uid,
-                'status'       => self::AP_PENDING,
+                'level' => $i + 1,
+                'approver_id' => (int)$uid,
+                'status' => self::AP_PENDING,
                 'commented_at' => null,
-                'note'         => null,
+                'note' => null,
             ];
         }
         return $steps;
@@ -541,7 +550,7 @@ class BiddingController extends ResourceController
     {
         // currentLevel là 0-based trong DB
         if (!isset($steps[$currentLevel])) return $steps;
-        $steps[$currentLevel]['status']       = self::AP_APPROVED;
+        $steps[$currentLevel]['status'] = self::AP_APPROVED;
         $steps[$currentLevel]['commented_at'] = date('Y-m-d H:i:s');
         if ($note !== null) $steps[$currentLevel]['note'] = $note;
         return $steps;
@@ -550,7 +559,7 @@ class BiddingController extends ResourceController
     private function stepReject(array $steps, int $currentLevel, ?string $note = null): array
     {
         if (!isset($steps[$currentLevel])) return $steps;
-        $steps[$currentLevel]['status']       = self::AP_REJECTED;
+        $steps[$currentLevel]['status'] = self::AP_REJECTED;
         $steps[$currentLevel]['commented_at'] = date('Y-m-d H:i:s');
         if ($note !== null) $steps[$currentLevel]['note'] = $note;
         return $steps;
@@ -588,10 +597,10 @@ class BiddingController extends ResourceController
         $steps = $this->buildApprovalSteps($ids);
 
         $update = [
-            'approval_steps'  => json_encode($steps, JSON_UNESCAPED_UNICODE),
-            'current_level'   => 0,                    // reset về cấp 1 (0-based)
+            'approval_steps' => json_encode($steps, JSON_UNESCAPED_UNICODE),
+            'current_level' => 0,                    // reset về cấp 1 (0-based)
             'approval_status' => self::AP_PENDING,     // reset trạng thái phê duyệt
-            'status'          => self::STATUS_SENT,    // 4 = Gửi phê duyệt
+            'status' => self::STATUS_SENT,    // 4 = Gửi phê duyệt
         ];
 
         if (!$this->model->update($id, $update)) {
@@ -599,14 +608,13 @@ class BiddingController extends ResourceController
         }
 
         return $this->respond([
-            'message'         => 'Đã gửi phê duyệt' . ($apStatus === self::AP_REJECTED ? ' lại' : '') . '.',
+            'message' => 'Đã gửi phê duyệt' . ($apStatus === self::AP_REJECTED ? ' lại' : '') . '.',
             'approval_status' => $update['approval_status'],
-            'current_level'   => $update['current_level'],
-            'approval_steps'  => $steps,
-            'status'          => $update['status'],
+            'current_level' => $update['current_level'],
+            'approval_steps' => $steps,
+            'status' => $update['status'],
         ]);
     }
-
 
 
     private function isAdminUser(int $userId, ?Session $session = null): bool
@@ -614,10 +622,10 @@ class BiddingController extends ResourceController
         $session ??= session();
 
         // 1) Ưu tiên theo session
-        $roleSession  = strtolower((string)($session->get('role') ?? ''));
+        $roleSession = strtolower((string)($session->get('role') ?? ''));
         $rolesSession = array_map('strtolower', (array)($session->get('roles') ?? []));
-        if ( (bool)($session->get('is_admin') ?? false)
-            || in_array($roleSession, ['admin','super admin'], true)
+        if ((bool)($session->get('is_admin') ?? false)
+            || in_array($roleSession, ['admin', 'super admin'], true)
             || in_array('admin', $rolesSession, true)
             || in_array('super admin', $rolesSession, true)
         ) {
@@ -626,7 +634,7 @@ class BiddingController extends ResourceController
 
         // 2) Fallback đọc từ DB: chỉ SELECT các cột thực sự tồn tại
         if ($userId > 0) {
-            $db   = db_connect();
+            $db = db_connect();
             $user = $db->table('users')
                 ->select('role_id, role')      // ❌ bỏ role_name
                 ->where('id', $userId)
@@ -634,9 +642,9 @@ class BiddingController extends ResourceController
 
             if ($user) {
                 $rid = (int)($user['role_id'] ?? 0);
-                $r   = strtolower((string)($user['role'] ?? ''));
+                $r = strtolower((string)($user['role'] ?? ''));
 
-                if ($rid === 1 || in_array($r, ['admin','super admin'], true)) {
+                if ($rid === 1 || in_array($r, ['admin', 'super admin'], true)) {
                     return true;
                 }
 
@@ -650,9 +658,6 @@ class BiddingController extends ResourceController
     }
 
 
-
-
-
     public function approve($id = null): ResponseInterface
     {
         $bidding = $this->model->find($id);
@@ -663,10 +668,10 @@ class BiddingController extends ResourceController
         }
 
         $steps = json_decode($bidding['approval_steps'] ?? '[]', true) ?: [];
-        $curr  = (int)($bidding['current_level'] ?? 0);
+        $curr = (int)($bidding['current_level'] ?? 0);
 
         $session = session();
-        $userId  = (int)($session->get('user_id') ?? 0);
+        $userId = (int)($session->get('user_id') ?? 0);
         $isAdmin = $this->isAdminUser($userId, $session);
 
         // chỉ chặn nếu KHÔNG phải admin
@@ -685,37 +690,38 @@ class BiddingController extends ResourceController
         }
 
         // đánh dấu duyệt + audit
-        $steps[$curr]['status']       = self::AP_APPROVED;
+        $steps[$curr]['status'] = self::AP_APPROVED;
         $steps[$curr]['commented_at'] = date('Y-m-d H:i:s');
         if ($note !== null) $steps[$curr]['note'] = $note;
-        $steps[$curr]['acted_by']     = $userId;
-        $steps[$curr]['acted_role']   = $isAdmin ? 'admin' : 'approver';
+        $steps[$curr]['acted_by'] = $userId;
+        $steps[$curr]['acted_role'] = $isAdmin ? 'admin' : 'approver';
 
         $nextLevel = $curr + 1;
 
         // kiểm tra xong hết chưa
         $final = true;
         foreach ($steps as $s) {
-            if (($s['status'] ?? '') !== self::AP_APPROVED) { $final = false; break; }
+            if (($s['status'] ?? '') !== self::AP_APPROVED) {
+                $final = false;
+                break;
+            }
         }
 
         $update = [
-            'approval_steps'  => json_encode($steps, JSON_UNESCAPED_UNICODE),
-            'current_level'   => $final ? $curr : $nextLevel,
+            'approval_steps' => json_encode($steps, JSON_UNESCAPED_UNICODE),
+            'current_level' => $final ? $curr : $nextLevel,
             'approval_status' => $final ? self::AP_APPROVED : self::AP_PENDING,
         ];
 
         $this->model->update($id, $update);
 
         return $this->respond([
-            'message'         => $final ? 'Đã phê duyệt hoàn tất.' : 'Đã phê duyệt cấp hiện tại.',
+            'message' => $final ? 'Đã phê duyệt hoàn tất.' : 'Đã phê duyệt cấp hiện tại.',
             'approval_status' => $update['approval_status'],
-            'current_level'   => $update['current_level'],
-            'approval_steps'  => $steps
+            'current_level' => $update['current_level'],
+            'approval_steps' => $steps
         ]);
     }
-
-
 
 
     public function reject($id = null): ResponseInterface
@@ -728,10 +734,10 @@ class BiddingController extends ResourceController
         }
 
         $steps = json_decode($bidding['approval_steps'] ?? '[]', true) ?: [];
-        $curr  = (int)($bidding['current_level'] ?? 0);
+        $curr = (int)($bidding['current_level'] ?? 0);
 
         $session = session();
-        $userId  = (int)($session->get('user_id') ?? 0);
+        $userId = (int)($session->get('user_id') ?? 0);
         $isAdmin = $this->isAdminUser($userId, $session);
 
         if (
@@ -748,36 +754,36 @@ class BiddingController extends ResourceController
             return $this->failValidationErrors(['steps' => 'Thiếu cấu hình cấp duyệt hiện tại.']);
         }
 
-        $steps[$curr]['status']       = self::AP_REJECTED;
+        $steps[$curr]['status'] = self::AP_REJECTED;
         $steps[$curr]['commented_at'] = date('Y-m-d H:i:s');
         if ($note !== null) $steps[$curr]['note'] = $note;
-        $steps[$curr]['acted_by']     = $userId;
-        $steps[$curr]['acted_role']   = $isAdmin ? 'admin' : 'approver';
+        $steps[$curr]['acted_by'] = $userId;
+        $steps[$curr]['acted_role'] = $isAdmin ? 'admin' : 'approver';
 
         $update = [
-            'approval_steps'  => json_encode($steps, JSON_UNESCAPED_UNICODE),
+            'approval_steps' => json_encode($steps, JSON_UNESCAPED_UNICODE),
             'approval_status' => self::AP_REJECTED,
         ];
 
         $this->model->update($id, $update);
 
         return $this->respond([
-            'message'         => 'Đã từ chối phê duyệt.',
+            'message' => 'Đã từ chối phê duyệt.',
             'approval_status' => self::AP_REJECTED,
-            'current_level'   => $curr,
-            'approval_steps'  => $steps
+            'current_level' => $curr,
+            'approval_steps' => $steps
         ]);
     }
 
 
     public function updateApprovalSteps($id): ResponseInterface
     {
-        $id = (int) $id;
+        $id = (int)$id;
         $bidding = $this->model->find($id);
         if (!$bidding) return $this->failNotFound('Gói thầu không tồn tại.');
 
         $body = $this->request->getJSON(true) ?? [];
-        $ids  = [];
+        $ids = [];
 
         // chấp nhận nhiều dạng payload
         if (isset($body['approver_ids']) && is_array($body['approver_ids'])) {
@@ -801,9 +807,9 @@ class BiddingController extends ResourceController
         $steps = $this->buildApprovalSteps($ids);
 
         $update = [
-            'approval_steps'  => json_encode($steps, JSON_UNESCAPED_UNICODE),
+            'approval_steps' => json_encode($steps, JSON_UNESCAPED_UNICODE),
             'approval_status' => self::AP_PENDING,
-            'current_level'   => 0,
+            'current_level' => 0,
         ];
 
         // nếu chưa WON/CANCELLED thì về trạng thái "Gửi phê duyệt"
@@ -817,21 +823,20 @@ class BiddingController extends ResourceController
         }
 
         return $this->respond([
-            'message'         => 'Cập nhật người duyệt thành công',
-            'approval_steps'  => $steps,
+            'message' => 'Cập nhật người duyệt thành công',
+            'approval_steps' => $steps,
             'approval_status' => self::AP_PENDING,
-            'current_level'   => 0,
+            'current_level' => 0,
         ]);
     }
 
     private function canOverrideApproval(array $bid, int $userId): bool
     {
         $session = session();
-        $isAdmin = (bool) ($session->get('is_admin') ?? false); // tuỳ bạn lưu flag gì
+        $isAdmin = (bool)($session->get('is_admin') ?? false); // tuỳ bạn lưu flag gì
         if ($isAdmin) return true;
         return (int)($bid['manager_id'] ?? 0) === $userId; // cho manager gói thầu override
     }
-
 
 
 }

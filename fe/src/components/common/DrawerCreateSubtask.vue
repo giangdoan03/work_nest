@@ -23,9 +23,7 @@
                                 placeholder="Chọn người dùng"
                                 show-search
                                 option-filter-prop="label"
-                                :filter-option="(input, option) =>
-                  normalizeText(option?.label ?? '').includes(normalizeText(input))
-                "
+                                :filter-option="(input, option) => normalizeText(option?.label ?? '').includes(normalizeText(input))"
                                 :getPopupContainer="trigger => trigger.parentNode"
                             />
                         </a-form-item>
@@ -234,8 +232,7 @@ const statusOptions = ref([
     { value: 'overdue', label: 'Quá hạn' }
 ])
 
-const normalizeText = (s = '') =>
-    s.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+const normalizeText = (s = '') => s.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 
 const rules = computed(() => ({
     title: [{ required: true, message: 'Vui lòng nhập tên', trigger: 'blur' }],

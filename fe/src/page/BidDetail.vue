@@ -1,10 +1,10 @@
 <template>
     <div>
         <a-page-header
-                title="Chi tiết gói thầu"
-                sub-title="Xem thông tin và tiến trình xử lý"
-                @back="goBack"
-                style="padding: 0 0 20px;"
+            title="Chi tiết gói thầu"
+            sub-title="Xem thông tin và tiến trình xử lý"
+            @back="goBack"
+            style="padding: 0 0 20px;"
         />
         <a-descriptions bordered :column="2">
             <!-- Hàng 1 -->
@@ -26,7 +26,8 @@
 
             <!-- Hàng 3 -->
             <a-descriptions-item label="Người phụ trách">
-                <a v-if="bidding?.assigned_to" @click="goToUserDetail(bidding.assigned_to)" style="color: #1890ff; cursor: pointer;">
+                <a v-if="bidding?.assigned_to" @click="goToUserDetail(bidding.assigned_to)"
+                   style="color: #1890ff; cursor: pointer;">
                     {{ getAssignedUserName(bidding?.assigned_to) }}
                 </a>
                 <span v-else>Không xác định</span>
@@ -96,8 +97,8 @@
                 <a-step v-for="(step, index) in steps" :key="step.id" :status="mapStepStatus(step.status)">
                     <template #title>
                         <div @click.stop="openStepDrawer(step)"
-                                :class="{'active-step-title': activeStepId === step.id}"
-                                style="display: flex;
+                             :class="{'active-step-title': activeStepId === step.id}"
+                             style="display: flex;
                                  justify-content: space-between;
                                  align-items: center;
                                  cursor: pointer;
@@ -106,10 +107,10 @@
                                   Bước {{ step.step_number ?? '-' }}: {{ step.title ?? '-' }}
                                 </span>
                             <a-statistic
-                                    :value="step.task_done_count ?? 0"
-                                    :suffix="'/' + step.task_count + ' task đã xong'"
-                                    :value-style="{ fontSize: '13px', color: '#555' }"
-                                    style="padding-left: 10px;"
+                                :value="step.task_done_count ?? 0"
+                                :suffix="'/' + step.task_count + ' task đã xong'"
+                                :value-style="{ fontSize: '13px', color: '#555' }"
+                                style="padding-left: 10px;"
                             />
                         </div>
                     </template>
@@ -129,7 +130,8 @@
                                     :key="i"
                                     color="blue"
                                     style="margin-right:4px"
-                                >{{ dep }}</a-tag>
+                                >{{ dep }}
+                                </a-tag>
                             </a-descriptions-item>
 
                             <!-- Ngày bắt đầu -->
@@ -140,7 +142,7 @@
                                     @click.stop="editDateStart(step)"
                                 >
                                     {{ step.start_date ? formatDate(step.start_date) : '---' }}
-                                    <EditOutlined />
+                                    <EditOutlined/>
                                 </a-typography-text>
                                 <a-date-picker
                                     v-else
@@ -176,7 +178,7 @@
 
                                     <a-tag :color="getStepStatusColor(step.status)" class="status-tag">
                                         {{ statusText(step.status) }}
-                                        <EditOutlined style="margin-left:6px;font-size:14px" />
+                                        <EditOutlined style="margin-left:6px;font-size:14px"/>
                                     </a-tag>
                                 </a-popover>
                             </a-descriptions-item>
@@ -189,7 +191,7 @@
                                     @click.stop="editDateEnd(step)"
                                 >
                                     {{ step.end_date ? formatDate(step.end_date) : '---' }}
-                                    <EditOutlined />
+                                    <EditOutlined/>
                                 </a-typography-text>
                                 <a-date-picker
                                     v-else
@@ -229,7 +231,7 @@
                                         {{ getAssignedUserName(step.assigned_to) }}
                                       </a>
                                       <span v-else>Không xác định</span>
-                                      <EditOutlined style="margin-left:6px;font-size:14px" />
+                                      <EditOutlined style="margin-left:6px;font-size:14px"/>
                                     </span>
                                 </a-popover>
                             </a-descriptions-item>
@@ -273,11 +275,11 @@
 
         <!-- Drawer hiển thị chi tiết bước -->
         <a-drawer
-                title="Danh sách nhiệm vụ"
-                placement="right"
-                :visible="drawerVisible"
-                @close="closeDrawer"
-                width="1100"
+            title="Danh sách nhiệm vụ"
+            placement="right"
+            :visible="drawerVisible"
+            @close="closeDrawer"
+            width="1100"
         >
             <template v-if="selectedStep">
                 <a-row :gutter="16" justify="end">
@@ -308,18 +310,12 @@
                     <!-- Danh sách nhiệm vụ -->
                     <a-table
                         :columns="treeColumns"
-                        :dataSource="relatedTasksTree"
+                        :dataSource="relatedTasks"
                         rowKey="id"
                         :pagination="false"
-                        :childrenColumnName="'children'"
-                        :expandable="{
-      expandRowByClick: true,    // tùy chọn
-    defaultExpandAllRows: true,// tùy chọn
-    indentSize: 24,
-    // ⬇️ để icon expand vào cột 'Tên công việc' (index = 2)
-    expandIconColumnIndex: 2
-  }"
+                        :scroll="{ x: 'max-content'}"
                     >
+
                         <template #bodyCell="{ column, record, index }">
                             <!-- STT -->
                             <template v-if="column.key === 'index'">
@@ -333,9 +329,9 @@
                                         type="text"
                                         shape="circle"
                                         @click.stop="openSubtaskDrawer(record)"
-                                    :style="{ width: '30px', height: '32px', padding: 0 }"
+                                        :style="{ width: '30px', height: '32px', padding: 0 }"
                                     >
-                                    <PlusOutlined />
+                                        <PlusOutlined/>
                                     </a-button>
                                 </a-tooltip>
                             </template>
@@ -343,7 +339,12 @@
                             <!-- Tên công việc -->
                             <template v-else-if="column.dataIndex === 'title'">
                                 <router-link :to="`/internal-tasks/${record.id}/info`">
-                                    {{ record.title }}
+                                    <span
+                                        class="task-title"
+                                        :class="{ child: record.parent_id }"
+                                    >
+                                      {{ record.title }}
+                                    </span>
                                 </router-link>
                             </template>
 
@@ -413,8 +414,6 @@
                             </template>
                         </template>
                     </a-table>
-
-
                 </template>
             </template>
         </a-drawer>
@@ -429,795 +428,796 @@
 
 
         <DrawerCreateTask
-                v-model:open-drawer="openDrawer"
-                :list-user="users"
-                type="bidding"
-                @submitForm="handleDrawerSubmit"
+            v-model:open-drawer="openDrawer"
+            :list-user="users"
+            type="bidding"
+            @submitForm="handleDrawerSubmit"
         />
     </div>
 </template>
 
 <script setup>
-    import {ref, onMounted, computed, reactive} from 'vue'
-    import dayjs from 'dayjs'
+import {ref, onMounted, computed, reactive} from 'vue'
+import dayjs from 'dayjs'
 
-    dayjs.locale('vi');
-    import viVN from 'ant-design-vue/es/locale/vi_VN';
-    import {defineEmits, defineProps} from "@vue/runtime-core";
+dayjs.locale('vi');
+import viVN from 'ant-design-vue/es/locale/vi_VN';
+import {defineEmits, defineProps} from "@vue/runtime-core";
 
-    import {
-        getBiddingAPI,
-        cloneFromTemplatesAPI,
-        getBiddingStepsAPI,
-        updateBiddingStepAPI,
-        completeBiddingStepAPI
-    } from '@/api/bidding'
-    import {getUsers} from '@/api/user.js'
-    import {useRoute} from 'vue-router'
-    import {message} from 'ant-design-vue'
-    import {formatDate, formatCurrency, deadlineInfo} from '@/utils/formUtils'
-    import {getCustomers} from '../api/customer' // file API của bạn
-    import {useRouter} from 'vue-router'
-    import {EditOutlined} from '@ant-design/icons-vue'
-    import {useStepStore} from '@/stores/step'
-    import DrawerCreateSubtask from '@/components/common/DrawerCreateSubtask.vue'
+import {
+    getBiddingAPI,
+    cloneFromTemplatesAPI,
+    getBiddingStepsAPI,
+    updateBiddingStepAPI,
+    completeBiddingStepAPI
+} from '@/api/bidding'
+import {getUsers} from '@/api/user.js'
+import {useRoute} from 'vue-router'
+import {message} from 'ant-design-vue'
+import {formatDate, formatCurrency, deadlineInfo} from '@/utils/formUtils'
+import {getCustomers} from '../api/customer' // file API của bạn
+import {useRouter} from 'vue-router'
+import {EditOutlined, MinusOutlined} from '@ant-design/icons-vue'
+import {useStepStore} from '@/stores/step'
+import DrawerCreateSubtask from '@/components/common/DrawerCreateSubtask.vue'
 
-    const subDrawerOpen = ref(false)
-    const subDrawerParent = ref(null)
+const showEditTitle = ref(false)
+const editedTitle = ref('')
 
-    const stepStore = useStepStore()
-    const router = useRouter()
-    const route = useRoute()
-    const id = route.params.id
-    const bidding = ref({})
-    const steps = ref([])
-    const loadingSteps = ref(false)
+const subDrawerOpen = ref(false)
+const subDrawerParent = ref(null)
 
-    let drawerVisible = ref(false)
-    const selectedStep = ref(null)
-    const customers = ref([])
-    const users = ref([])
-    const openDrawer = ref(false)
-    const listUser = ref([])
-    const activeStepId = ref(null)
+const stepStore = useStepStore()
+const router = useRouter()
+const route = useRoute()
+const id = route.params.id
+const bidding = ref({})
+const steps = ref([])
+const loadingSteps = ref(false)
 
-    import {useUserStore} from '@/stores/user'
+let drawerVisible = ref(false)
+const selectedStep = ref(null)
+const customers = ref([])
+const users = ref([])
+const openDrawer = ref(false)
+const listUser = ref([])
+const activeStepId = ref(null)
 
-    const userStore = useUserStore()
-    const user = userStore.currentUser
+import {useUserStore} from '@/stores/user'
 
-    import { PlusOutlined } from '@ant-design/icons-vue'
-    import {getTasks, getTasksByBiddingStep, getTasksByContractStep} from '@/api/task'
-    import DrawerCreateTask from "@/components/common/DrawerCreateTask.vue";
-    import {updateContractStepAPI} from "@/api/contract-steps.js"; // nếu chưa import
+const userStore = useUserStore()
+const user = userStore.currentUser
 
-    const allTasks = ref([])
-    const relatedTasks = computed(() => stepStore.relatedTasks)
-    const loading = ref(false);
+import {PlusOutlined} from '@ant-design/icons-vue'
+import {getTasks, getTasksByBiddingStep, getTasksByContractStep} from '@/api/task'
+import DrawerCreateTask from "@/components/common/DrawerCreateTask.vue";
 
-    const dateStart = ref()
-    const dateEnd = ref()
-    const showEditDateStart = ref(false)
-    const showEditDateEnd = ref(false)
+const allTasks = ref([])
+const relatedTasks = computed(() => stepStore.relatedTasks)
+const loading = ref(false);
 
-    const quickDrawerVisible = ref(false)
-    const quickDrawerRecord = ref(null)
+const dateStart = ref()
+const dateEnd = ref()
+const showEditDateStart = ref(false)
+const showEditDateEnd = ref(false)
 
-    const openQuickDrawer = (record) => {
-        quickDrawerRecord.value = record ?? null
-        quickDrawerVisible.value = true
+const quickDrawerVisible = ref(false)
+const quickDrawerRecord = ref(null)
+
+
+function openSubtaskDrawer(parentRow) {
+    subDrawerParent.value = {
+        id: parentRow.id,
+        linked_type: parentRow.linked_type ?? (stepStore.selectedStep ? 'bidding' : 'internal'),
+        linked_id: parentRow.linked_id ?? commonStore.biddingIdParent ?? null,
+        step_id: parentRow.step_id ?? stepStore.selectedStep?.id ?? null,
+        step_code: parentRow.step_code ?? stepStore.selectedStep?.step_number ?? null,
+        id_department: parentRow.id_department ?? null
     }
-    const closeQuickDrawer = () => {
-        quickDrawerVisible.value = false
-        quickDrawerRecord.value = null
+    subDrawerOpen.value = true
+}
+
+// columns đầy đủ
+const treeColumns = [
+    {title: 'STT', key: 'index', width: 60, align: 'center', fixed: 'left'},
+    {title: 'Thêm việc con', key: 'add', width: 120, align: 'center', fixed: 'left'},
+    {title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 240, ellipsis: true},
+    {title: 'Người thực hiện', dataIndex: 'assigned_to', key: 'assigned_to', width: 160},
+    {title: 'Tiến trình', dataIndex: 'progress', key: 'progress', width: 140, align: 'center'},
+    {title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', width: 120, align: 'center'},
+    {title: 'Bắt đầu', dataIndex: 'start_date', key: 'start_date', width: 120, align: 'center'},
+    {title: 'Kết thúc', dataIndex: 'end_date', key: 'end_date', width: 120, align: 'center'},
+    {title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 140, align: 'center'},
+    {title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 160, align: 'center'},
+    {title: 'Duyệt', dataIndex: 'approval_status', key: 'approval_status', width: 160, align: 'center'},
+]
+
+
+const relatedTasksTree = computed(() => buildTree(relatedTasks.value))
+
+function buildTree(list) {
+    if (!Array.isArray(list)) return []
+    const nodes = list.map(item => ({
+        ...item,
+        id: String(item.id),
+        parent_id: item.parent_id != null ? String(item.parent_id) : null,
+        children: []
+    }))
+    const map = new Map(nodes.map(n => [n.id, n]))
+    const roots = []
+    for (const n of nodes) {
+        if (n.parent_id && map.has(n.parent_id)) map.get(n.parent_id).children.push(n)
+        else roots.push(n)
     }
-
-    function openSubtaskDrawer(parentRow) {
-        // truyền đủ khóa cha để component con “pre-fill”
-        subDrawerParent.value = {
-            id: parentRow.id,
-            linked_type: parentRow.linked_type ?? (stepStore.selectedStep ? 'bidding' : 'internal'),
-            linked_id: parentRow.linked_id ?? commonStore.biddingIdParent ?? null,
-            step_id: parentRow.step_id ?? stepStore.selectedStep?.id ?? null,
-            step_code: parentRow.step_code ?? stepStore.selectedStep?.step_number ?? null,
-            id_department: parentRow.id_department ?? null
-        }
-        subDrawerOpen.value = true
+    const setLevel = (node, lvl) => {
+        node.__level = lvl
+        node.children?.forEach(c => setLevel(c, lvl + 1))
     }
+    roots.forEach(r => setLevel(r, 0))
+    return roots
+}
 
 
-    // columns đầy đủ
-    const treeColumns = [
-        { title: 'STT', key: 'index', width: 60, align: 'center', fixed: 'left' },
-        { title: '', key: 'add', width: 48, align: 'center', fixed: 'left' }, // 👈 cột dấu +
-        { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 240, ellipsis: true },
-        { title: 'Người thực hiện', dataIndex: 'assigned_to', key: 'assigned_to', width: 160 },
-        { title: 'Tiến trình', dataIndex: 'progress', key: 'progress', width: 140, align: 'center' },
-        { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', width: 120, align: 'center' },
-        { title: 'Bắt đầu', dataIndex: 'start_date', key: 'start_date', width: 120, align: 'center' },
-        { title: 'Kết thúc', dataIndex: 'end_date', key: 'end_date', width: 120, align: 'center' },
-        { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 140, align: 'center' },
-        { title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 160, align: 'center' },
-        { title: 'Duyệt', dataIndex: 'approval_status', key: 'approval_status', width: 160, align: 'center' },
-    ]
-
-
-    const relatedTasksTree = computed(() => buildTree(relatedTasks.value))
-
-    function buildTree(list) {
-        const map = new Map()
-        list?.forEach(i => { i.children = i.children || []; map.set(i.id, i) })
-        const roots = []
-        list?.forEach(i => {
-            if (i.parent_id && map.get(i.parent_id)) map.get(i.parent_id).children.push(i)
-            else roots.push(i)
-        })
-        return roots
+function handleSubtaskCreated(newTask) {
+    const parentId = Number(newTask.parent_id)
+    const list = stepStore.relatedTasks.slice()
+    const parent = list.find(x => Number(x.id) === parentId)
+    if (parent) {
+        parent.children = parent.children || []
+        parent.children.push(newTask)
+    } else {
+        list.push(newTask) // fallback
     }
+    stepStore.setRelatedTasks(list)
+
+    // 👉 cách 2 (an toàn): reload lại danh sách từ API
+    // await handleDrawerSubmit()
+}
 
 
-    function handleSubtaskCreated(newTask) {
-        // newTask phải có parent_id = subDrawerParent.id
-        // 👉 cách 1: chèn vào cây hiện tại để phản hồi ngay
-        const parentId = Number(newTask.parent_id)
-        const list = stepStore.relatedTasks.slice()
-        const parent = list.find(x => Number(x.id) === parentId)
-        if (parent) {
-            parent.children = parent.children || []
-            parent.children.push(newTask)
-        } else {
-            list.push(newTask) // fallback
-        }
-        stepStore.setRelatedTasks(list)
+const editing = reactive({
+    id: null,
+    field: null
+})
 
-        // 👉 cách 2 (an toàn): reload lại danh sách từ API
-        // await handleDrawerSubmit()
+const isEditing = (step, field) =>
+    editing.id === step.id && editing.field === field
+
+const editDateStart = (step) => {
+    selectedStep.value = step
+    dateStart.value = step.start_date ? dayjs(step.start_date) : null
+    editing.id = step.id
+    editing.field = 'start'
+}
+
+const editDateEnd = (step) => {
+    selectedStep.value = step
+    dateEnd.value = step.end_date ? dayjs(step.end_date) : null
+    editing.id = step.id
+    editing.field = 'end'
+}
+
+/** Start không được > end (nếu end đã có) */
+const disabledStartDate = (current) => {
+    const end = dateEnd.value || (selectedStep.value && selectedStep.value.end_date ? dayjs(selectedStep.value.end_date) : null)
+    if (!end) return false
+    return current && current > end.endOf('day')
+}
+
+/** End không được < start (nếu start đã có) */
+const disabledEndDate = (current) => {
+    const start = dateStart.value || (selectedStep.value && selectedStep.value.start_date ? dayjs(selectedStep.value.start_date) : null)
+    if (!start) return false
+    return current && current < start.startOf('day')
+}
+
+
+const updateStepStartDate = async (value) => {
+    // value có thể null nếu user bấm clear
+    const newStart = value ? dayjs(value).format('YYYY-MM-DD') : null
+    const id = selectedStep.value && selectedStep.value.id
+    if (!id) return
+
+    try {
+        await updateBiddingStepAPI(id, {start_date: newStart})
+        message.success('Cập nhật ngày bắt đầu thành công')
+        // cập nhật local để UI phản hồi ngay
+        selectedStep.value.start_date = newStart
+        editing.id = null
+        editing.field = null
+        await fetchSteps()
+    } catch (e) {
+        message.error('Không thể cập nhật ngày bắt đầu')
+        console.warn('Lỗi cập nhật ngày bắt đầu:', e)
     }
+}
+
+// script setup (Vue 3, JS thuần)
+const deadlineText = (b) => {
+    if (!b || !b.end_date) return 'Không xác định';
+    const r = Number(b.days_remaining ?? 0);
+    const o = Number(b.days_overdue ?? 0);
+
+    if (o > 0) return `Quá hạn ${o} ngày`;
+    if (r > 0) return `Còn ${r} ngày`;
+    return 'Đến hạn hôm nay';
+};
+
+const deadlineColor = (b) => {
+    if (!b || !b.end_date) return 'default';
+    const r = Number(b.days_remaining ?? 0);
+    const o = Number(b.days_overdue ?? 0);
+
+    if (o > 0) return 'red';
+    if (r > 0) return 'green';
+    return 'orange'; // hôm nay đến hạn
+};
+
+// màu cố định cho mọi thanh tiến độ
+const PROGRESS_COLOR = '#1890ff'
+
+// ✅ Bidding đã duyệt khi approval_status = 'approved' hoặc status = 2 (Trúng thầu)
+const isBiddingApproved = (b) => String(b?.approval_status) === 'approved' || Number(b?.status) === 2
+
+// % tổng của gói thầu trong trang chi tiết
+// ✅ Tính % tổng theo rule: overdue => cap 90%, approved => 100%
+const detailProgressPercent = (b) => {
+    const base = Number(b?.progress?.bidding_progress ?? 0)
+
+    // đã duyệt => 100%
+    if (isBiddingApproved(b)) return 100
+
+    // xác định quá hạn: ưu tiên days_overdue > 0, fallback so sánh ngày
+    const overdueFlag =
+        Number(b?.days_overdue ?? 0) > 0 ||
+        (!!b?.end_date && dayjs().isAfter(dayjs(b.end_date), 'day'))
+
+    if (overdueFlag && base > 90) return 90
+    return base
+}
 
 
-    const editing = reactive({
-        id: null,
-        field: null
-    })
+// Text hiển thị: "22% (2/9)"
+const detailProgressText = (b) => {
+    const p = detailProgressPercent(b)
+    const dn = Number(b?.progress?.steps_completed ?? 0)
+    const tt = Number(b?.progress?.steps_total ?? 0)
 
-    const isEditing = (step, field) =>
-        editing.id === step.id && editing.field === field
+    if (!tt) return "Chưa có bước nào"
+    if (isBiddingApproved(b)) return `Đã hoàn thành toàn bộ ${tt} bước (100%)`
+    if (dn === 0) return `Chưa bắt đầu (${dn}/${tt} bước)`
+    if (dn < tt) return `Đã hoàn thành ${dn}/${tt} bước (~${p}%)`
+    // trường hợp hoàn tất steps nhưng chưa duyệt → vẫn áp dụng cap nếu quá hạn
+    return `Đã hoàn thành ${tt}/${tt} bước (~${p}%)`
+}
 
+const openStatusForId = ref(null)
 
-    const editDateStart = (step) => {
-        selectedStep.value = step
-        dateStart.value = step.start_date ? dayjs(step.start_date) : null
-        editing.id = step.id
-        editing.field = 'start'
+const onChangeStatus = async (step, val) => {
+    // đồng bộ kiểu dữ liệu nếu BE dùng số
+    const newVal = Number(val)
+    try {
+        await updateStepStatus(newVal, step)   // hàm của bạn
+        step.status = newVal                   // cập nhật UI
+    } finally {
+        openStatusForId.value = null           // đóng popover
     }
+}
 
-    const editDateEnd = (step) => {
-        selectedStep.value = step
-        dateEnd.value = step.end_date ? dayjs(step.end_date) : null
-        editing.id = step.id
-        editing.field = 'end'
-    }
+const openAssignForId = ref(null)
 
-    /** Start không được > end (nếu end đã có) */
-    const disabledStartDate = (current) => {
-        const end = dateEnd.value || (selectedStep.value && selectedStep.value.end_date ? dayjs(selectedStep.value.end_date) : null)
-        if (!end) return false
-        return current && current > end.endOf('day')
-    }
+const onChangeAssigned = async (step, val) => {
+    await updateStepAssignedTo(val, step)
+    step.assigned_to = val || null
+    openAssignForId.value = null // đóng popover
+}
 
-    /** End không được < start (nếu start đã có) */
-    const disabledEndDate = (current) => {
-        const start = dateStart.value || (selectedStep.value && selectedStep.value.start_date ? dayjs(selectedStep.value.start_date) : null)
-        if (!start) return false
-        return current && current < start.startOf('day')
-    }
+const submitForm = () => {
+    getInternalTask();
+}
 
+const showPopupCreate = () => {
+    const step = stepStore.selectedStep // hoặc từ selectedStep.value nếu bạn đang dùng ref
 
-    const updateStepStartDate = async (value) => {
-        // value có thể null nếu user bấm clear
-        const newStart = value ? dayjs(value).format('YYYY-MM-DD') : null
-        const id = selectedStep.value && selectedStep.value.id
-        if (!id) return
+    if (step) {
+        // Gán lại selectedStep nếu cần (đảm bảo có dữ liệu mới nhất)
+        stepStore.setSelectedStep({...step})
 
-        try {
-            await updateBiddingStepAPI(id, { start_date: newStart })
-            message.success('Cập nhật ngày bắt đầu thành công')
-            // cập nhật local để UI phản hồi ngay
-            selectedStep.value.start_date = newStart
-            editing.id = null
-            editing.field = null
-            await fetchSteps()
-        } catch (e) {
-            message.error('Không thể cập nhật ngày bắt đầu')
-            console.warn('Lỗi cập nhật ngày bắt đầu:', e)
-        }
-    }
-
-    // script setup (Vue 3, JS thuần)
-    const deadlineText = (b) => {
-        if (!b || !b.end_date) return 'Không xác định';
-        const r = Number(b.days_remaining ?? 0);
-        const o = Number(b.days_overdue ?? 0);
-
-        if (o > 0) return `Quá hạn ${o} ngày`;
-        if (r > 0) return `Còn ${r} ngày`;
-        return 'Đến hạn hôm nay';
-    };
-
-    const deadlineColor = (b) => {
-        if (!b || !b.end_date) return 'default';
-        const r = Number(b.days_remaining ?? 0);
-        const o = Number(b.days_overdue ?? 0);
-
-        if (o > 0) return 'red';
-        if (r > 0) return 'green';
-        return 'orange'; // hôm nay đến hạn
-    };
-
-    // màu cố định cho mọi thanh tiến độ
-    const PROGRESS_COLOR = '#1890ff'
-
-    // ✅ Bidding đã duyệt khi approval_status = 'approved' hoặc status = 2 (Trúng thầu)
-    const isBiddingApproved = (b) => String(b?.approval_status) === 'approved' || Number(b?.status) === 2
-
-    // % tổng của gói thầu trong trang chi tiết
-    // ✅ Tính % tổng theo rule: overdue => cap 90%, approved => 100%
-    const detailProgressPercent = (b) => {
-        const base = Number(b?.progress?.bidding_progress ?? 0)
-
-        // đã duyệt => 100%
-        if (isBiddingApproved(b)) return 100
-
-        // xác định quá hạn: ưu tiên days_overdue > 0, fallback so sánh ngày
-        const overdueFlag =
-            Number(b?.days_overdue ?? 0) > 0 ||
-            (!!b?.end_date && dayjs().isAfter(dayjs(b.end_date), 'day'))
-
-        if (overdueFlag && base > 90) return 90
-        return base
-    }
-
-
-    // Text hiển thị: "22% (2/9)"
-    const detailProgressText = (b) => {
-        const p  = detailProgressPercent(b)
-        const dn = Number(b?.progress?.steps_completed ?? 0)
-        const tt = Number(b?.progress?.steps_total ?? 0)
-
-        if (!tt) return "Chưa có bước nào"
-        if (isBiddingApproved(b)) return `Đã hoàn thành toàn bộ ${tt} bước (100%)`
-        if (dn === 0) return `Chưa bắt đầu (${dn}/${tt} bước)`
-        if (dn < tt) return `Đã hoàn thành ${dn}/${tt} bước (~${p}%)`
-        // trường hợp hoàn tất steps nhưng chưa duyệt → vẫn áp dụng cap nếu quá hạn
-        return `Đã hoàn thành ${tt}/${tt} bước (~${p}%)`
-    }
-
-    const openStatusForId = ref(null)
-
-    const onChangeStatus = async (step, val) => {
-        // đồng bộ kiểu dữ liệu nếu BE dùng số
-        const newVal = Number(val)
-        try {
-            await updateStepStatus(newVal, step)   // hàm của bạn
-            step.status = newVal                   // cập nhật UI
-        } finally {
-            openStatusForId.value = null           // đóng popover
-        }
-    }
-
-    const openAssignForId = ref(null)
-
-    const onChangeAssigned = async (step, val) => {
-        await updateStepAssignedTo(val, step)
-        step.assigned_to = val || null
-        openAssignForId.value = null // đóng popover
-    }
-
-    const submitForm = () => {
-        getInternalTask();
-    }
-
-    const showPopupCreate = () => {
-        const step = stepStore.selectedStep // hoặc từ selectedStep.value nếu bạn đang dùng ref
-
-        if (step) {
-            // Gán lại selectedStep nếu cần (đảm bảo có dữ liệu mới nhất)
-            stepStore.setSelectedStep({...step})
-
-            // Optional: load lại task nếu bạn muốn đảm bảo sau khi thêm sẽ update danh sách
-            const dataFilter = {}
-            if (String(user.role_id) === '3') {
-                dataFilter.assigned_to = user.id
-            } else if (String(user.role_id) === '2') {
-                dataFilter.id_department = user.department_id
-            }
-
-            getTasksByBiddingStep(step.id, dataFilter)
-                .then(res => {
-                    stepStore.setRelatedTasks(Array.isArray(res.data) ? res.data : [])
-                })
-                .catch(() => {
-                    stepStore.setRelatedTasks([])
-                })
-        }
-
-        openDrawer.value = true
-    }
-
-
-    const handleDrawerSubmit = async () => {
-        const user = userStore.currentUser
+        // Optional: load lại task nếu bạn muốn đảm bảo sau khi thêm sẽ update danh sách
         const dataFilter = {}
-
-        if (String(user?.role_id) === '3') {
+        if (String(user.role_id) === '3') {
             dataFilter.assigned_to = user.id
-        } else if (String(user?.role_id) === '2') {
+        } else if (String(user.role_id) === '2') {
             dataFilter.id_department = user.department_id
         }
 
-        if (stepStore.selectedStep?.id) {
-            try {
-                // ⏳ Đợi một chút để backend hoàn tất insert (nếu cần)
-                await new Promise(resolve => setTimeout(resolve, 500))
-
-                const res = await getTasksByBiddingStep(stepStore.selectedStep.id, dataFilter)
-
-                const tasks = Array.isArray(res.data)
-                    ? res.data
-                    : Array.isArray(res.data?.data)
-                        ? res.data.data
-                        : []
-
-                stepStore.setRelatedTasks(tasks)
-                await fetchSteps()
-
-                setTimeout(() => {
-                    console.log('✅ Tasks trong store:', stepStore.relatedTasks)
-                }, 300)
-
-            } catch (err) {
-                console.error('❌ Không thể load task sau khi tạo:', err)
-                message.error('Không thể tải danh sách công việc sau khi tạo')
-            }
-        }
+        getTasksByBiddingStep(step.id, dataFilter)
+            .then(res => {
+                stepStore.setRelatedTasks(Array.isArray(res.data) ? res.data : [])
+            })
+            .catch(() => {
+                stepStore.setRelatedTasks([])
+            })
     }
 
-    const getInternalTask = async () => {
-        loading.value = true
+    openDrawer.value = true
+}
+
+
+const handleDrawerSubmit = async () => {
+    const user = userStore.currentUser
+    const dataFilter = {}
+
+    if (String(user?.role_id) === '3') {
+        dataFilter.assigned_to = user.id
+    } else if (String(user?.role_id) === '2') {
+        dataFilter.id_department = user.department_id
+    }
+
+    if (stepStore.selectedStep?.id) {
         try {
-            const response = await getTasks(dataFilter.value)
+            // ⏳ Đợi một chút để backend hoàn tất insert (nếu cần)
+            await new Promise(resolve => setTimeout(resolve, 500))
 
-            tableData.value = response.data.data ?? []
+            const res = await getTasksByBiddingStep(stepStore.selectedStep.id, dataFilter)
 
-            const pg = response.data.pagination
-            pagination.value = {
-                ...pagination.value,
-                current: pg.page,
-                total: pg.total,
-                pageSize: pg.per_page
-            }
-        } catch (e) {
-            message.error('Không thể tải nhiệm vụ')
-        } finally {
-            loading.value = false
+            const tasks = Array.isArray(res.data)
+                ? res.data
+                : Array.isArray(res.data?.data)
+                    ? res.data.data
+                    : []
+
+            stepStore.setRelatedTasks(tasks)
+            await fetchSteps()
+
+            setTimeout(() => {
+                console.log('✅ Tasks trong store:', stepStore.relatedTasks)
+            }, 300)
+
+        } catch (err) {
+            console.error('❌ Không thể load task sau khi tạo:', err)
+            message.error('Không thể tải danh sách công việc sau khi tạo')
         }
     }
+}
 
-    const showEditTitle = ref(false)
-    const editedTitle = ref('')
+const getInternalTask = async () => {
+    loading.value = true
+    try {
+        const response = await getTasks(dataFilter.value)
 
-    const editTitle = () => {
-        editedTitle.value = selectedStep.value.title || ''
-        showEditTitle.value = true
+        tableData.value = response.data.data ?? []
+
+        const pg = response.data.pagination
+        pagination.value = {
+            ...pagination.value,
+            current: pg.page,
+            total: pg.total,
+            pageSize: pg.per_page
+        }
+    } catch (e) {
+        message.error('Không thể tải nhiệm vụ')
+    } finally {
+        loading.value = false
+    }
+}
+
+// Hàm cập nhật tiêu đề bước
+const updateStepTitle = async () => {
+    if (editedTitle.value.trim() === '') {
+        message.warning('Tiêu đề không được để trống')
+        return
     }
 
-    // Hàm cập nhật tiêu đề bước
-    const updateStepTitle = async () => {
-        if (editedTitle.value.trim() === '') {
-            message.warning('Tiêu đề không được để trống')
+    try {
+        await updateBiddingStepAPI(selectedStep.value.id, {
+            title: editedTitle.value.trim()
+        })
+        selectedStep.value.title = editedTitle.value.trim()
+        message.success('Cập nhật tiêu đề thành công')
+        showEditTitle.value = false
+        await fetchSteps()
+    } catch (e) {
+        console.error('Không thể cập nhật tiêu đề bước', e)
+        message.error('Lỗi khi cập nhật tiêu đề')
+    }
+}
+
+
+const updateStepEndDate = async (value) => {
+    const newEnd = value ? dayjs(value).format('YYYY-MM-DD') : null
+    const id = selectedStep.value && selectedStep.value.id
+    if (!id) return
+
+    try {
+        await updateBiddingStepAPI(id, {end_date: newEnd})
+        message.success('Cập nhật ngày kết thúc thành công')
+        selectedStep.value.end_date = newEnd
+        editing.id = null
+        editing.field = null
+        await fetchSteps()
+    } catch (e) {
+        message.error('Không thể cập nhật ngày kết thúc')
+        console.warn('Lỗi cập nhật ngày kết thúc:', e)
+    }
+}
+
+
+const openStepDrawer = async (step) => {
+    selectedStep.value = {...step}
+    stepStore.setSelectedStep({...step})
+    activeStepId.value = step.id // 👈 đánh dấu bước đang mở
+    drawerVisible.value = true
+
+    const dataFilter = {}
+
+    if (String(user.role_id) === '3') {
+        // Nhân viên → chỉ xem nhiệm vụ của mình
+        dataFilter.assigned_to = user.id
+    } else if (String(user.role_id) === '2') {
+        // Trưởng phòng → xem được nhiệm vụ của cả phòng
+        dataFilter.id_department = user.department_id
+    }
+
+    try {
+        const res = await getTasksByBiddingStep(step.id, dataFilter)
+        stepStore.setRelatedTasks(Array.isArray(res.data) ? res.data : [])
+    } catch (e) {
+        console.error('❌ Không thể tải công việc của bước', e)
+        stepStore.setRelatedTasks([])
+    }
+}
+
+
+const closeDrawer = () => {
+    drawerVisible.value = false
+    activeStepId.value = null
+    showEditDateStart.value = false
+    showEditDateEnd.value = false
+    dateStart.value = null
+    dateEnd.value = null
+}
+
+const statusText = (status) => {
+    return {
+        '0': 'Chưa bắt đầu',
+        '1': 'Đang xử lý',
+        '2': 'Đã hoàn thành',
+        '3': 'Bỏ qua',
+    }[status] || 'Không rõ'
+}
+
+const getApprovalStatusText = (status) => {
+    switch (status) {
+        case 'approved':
+            return 'Đã duyệt';
+        case 'pending':
+            return 'Chờ duyệt';
+        case 'rejected':
+            return 'Từ chối';
+        default:
+            return 'Không rõ';
+    }
+}
+
+const getApprovalStatusColor = (status) => {
+    switch (status) {
+        case 'approved':
+            return 'green';
+        case 'pending':
+            return 'blue';
+        case 'rejected':
+            return 'red';
+        default:
+            return 'gray';
+    }
+
+}
+
+const lastCompletedIndex = () => {
+    for (let i = steps.value.length - 1; i >= 0; i--) {
+        if (steps.value[i].status === '2') return i
+    }
+    return -1
+}
+
+const getStepStatusColor = (status) => {
+    return {
+        '0': 'default',
+        '1': 'blue',
+        '2': 'green',
+        '3': 'orange',
+    }[status] || 'default'
+}
+
+const mapStepStatus = (status) => {
+    return {
+        '0': 'wait',
+        '1': 'process',
+        '2': 'finish',
+        '3': 'error',
+    }[status] || 'wait'
+}
+
+const getStatusColor = (status) => {
+    switch (Number(status)) {
+        case 1:
+            return 'blue'     // Đang chuẩn bị
+        case 2:
+            return 'green'    // Trúng thầu
+        case 3:
+            return 'red'      // Hủy thầu
+        default:
+            return 'default'
+    }
+}
+const getPriorityText = (priority) => {
+    switch (priority) {
+        case 'high':
+            return 'Cao'
+        case 'normal':
+            return 'Bình thường'
+        case 'low':
+            return 'Thấp'
+        default:
+            return 'Không xác định'
+    }
+}
+const getPriorityColor = (priority) => {
+    switch (priority) {
+        case 'high':
+            return 'red'
+        case 'normal':
+            return 'orange'
+        case 'low':
+            return 'blue'
+        default:
+            return 'default'
+    }
+}
+
+const getInitials = (name) => {
+    if (!name) return '?'
+    const parts = name.trim().split(/\s+/)
+    return (parts[0][0] + (parts[parts.length - 1]?.[0] || '')).toUpperCase()
+}
+
+
+const getProgressStatus = (progress) => {
+    if (!progress) return 'normal'
+    if (progress >= 100) return 'success'
+    if (progress >= 80) return 'normal'
+    if (progress >= 50) return 'active'
+    return 'exception'
+}
+
+const getFirstLetter = (name) => {
+    if (!name || name === 'N/A') return '?'
+    return name.charAt(0).toUpperCase()
+}
+
+const getAvatarColor = (name) => {
+    if (!name || name === 'N/A') return '#d9d9d9'
+
+    // Generate consistent color based on name
+    const colors = [
+        '#f5222d', '#fa8c16', '#fadb14', '#52c41a',
+        '#13c2c2', '#1890ff', '#722ed1', '#eb2f96',
+        '#fa541c', '#faad14', '#a0d911', '#52c41a',
+        '#13c2c2', '#1890ff', '#722ed1', '#eb2f96'
+    ]
+
+    // Simple hash function to get consistent color for same name
+    let hash = 0
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash)
+    }
+    const index = Math.abs(hash) % colors.length
+    return colors[index]
+}
+
+
+const currentStepIndex = () => {
+    const last = lastCompletedIndex()
+    const next = last + 1
+    return next >= steps.value.length ? steps.value.length - 1 : next
+}
+
+const parseDepartment = (val) => {
+    try {
+        const parsed = JSON.parse(val)
+        return Array.isArray(parsed) ? parsed : [val]
+    } catch (e) {
+        return val ? [val] : []
+    }
+}
+
+
+const getTaskStatusText = (status) => ({
+    todo: 'Chưa bắt đầu',
+    doing: 'Đang làm',
+    done: 'Hoàn thành',
+    overdue: 'Trễ hạn'
+}[status] || 'Không rõ')
+
+const getTaskStatusColor = (status) => ({
+    todo: 'default',
+    doing: 'blue',
+    done: 'green',
+    overdue: 'red'
+}[status] || 'default')
+
+const updateStepStatus = async (newStatus, step) => {
+    try {
+        if (newStatus === '2') {
+            await completeBiddingStepAPI(step.id)
+            message.success('Bước đã hoàn thành và bước kế tiếp đã được mở')
+        } else {
+            await updateBiddingStepAPI(step.id, {status: newStatus})
+            message.success('Đã cập nhật trạng thái bước')
+        }
+
+        drawerVisible.value = false
+        await fetchData()
+    } catch (e) {
+        console.warn('⚠️ Lỗi cập nhật bước:', e)
+
+        // Ưu tiên lấy thông báo cụ thể từ server nếu có
+        const errMsg =
+            e?.response?.data?.messages?.error || // CodeIgniter 4 style
+            e?.response?.data?.message ||         // Generic REST error
+            '❌ Đã xảy ra lỗi khi cập nhật bước'
+
+        if (e?.response?.status === 400) {
+            message.warning(errMsg) // Lỗi logic (ví dụ: chưa hoàn thành bước trước)
+        } else {
+            message.error(errMsg)   // Lỗi nghiêm trọng (server, network,...)
+        }
+    }
+}
+
+const updateStepDate = async (field, date, step) => {
+    try {
+        const payload = {[field]: date ? date.format('YYYY-MM-DD') : null}
+        await updateBiddingStepAPI(step.id, payload)
+        message.success(`Đã cập nhật ${field === 'start_date' ? 'ngày bắt đầu' : 'ngày kết thúc'}`)
+        await fetchSteps()
+    } catch (e) {
+        console.error(`Lỗi cập nhật ${field}:`, e)
+        message.error(`Không thể cập nhật ${field}`)
+    }
+}
+
+const fetchUsers = async () => {
+    try {
+        const res = await getUsers()
+        users.value = res.data;
+    } catch (e) {
+        console.error('Không thể tải danh sách người dùng:', e)
+    }
+}
+
+const getAssignedUserName = (userId) => {
+    if (!userId || !users.value.length) return 'Không xác định'
+    const found = users.value.find(u => String(u.id) === String(userId))
+    return found?.name || `Người dùng #${userId}`
+}
+
+const goToUserDetail = (userId) => {
+    if (!userId) return
+    router.push({name: 'user-detail', params: {id: userId}})
+}
+
+
+const fetchSteps = async () => {
+    try {
+        loadingSteps.value = true
+        const stepRes = await getBiddingStepsAPI(id)
+        steps.value = stepRes.data.filter(step => step.bidding_id === id)
+    } catch (e) {
+        console.error('Lỗi khi tải bước:', e)
+        message.error('Không thể tải tiến trình xử lý')
+    } finally {
+        loadingSteps.value = false
+    }
+}
+
+
+const updateStepAssignedTo = async (userId, step) => {
+    try {
+        if (!userId) {
+            message.warning('Vui lòng chọn người phụ trách hợp lệ')
             return
         }
 
-        try {
-            await updateBiddingStepAPI(selectedStep.value.id, {
-                title: editedTitle.value.trim()
-            })
-            selectedStep.value.title = editedTitle.value.trim()
-            message.success('Cập nhật tiêu đề thành công')
-            showEditTitle.value = false
-            await fetchSteps()
-        } catch (e) {
-            console.error('Không thể cập nhật tiêu đề bước', e)
-            message.error('Lỗi khi cập nhật tiêu đề')
-        }
+        await updateBiddingStepAPI(step.id, {assigned_to: userId})
+        message.success('Đã cập nhật người phụ trách')
+        await fetchSteps()
+    } catch (e) {
+        console.error('Lỗi khi cập nhật người phụ trách:', e)
+        const msg =
+            e?.response?.data?.messages?.error ||
+            e?.response?.data?.message ||
+            'Cập nhật người phụ trách thất bại'
+        message.error(msg)
     }
+}
 
 
+const goToCustomerDetail = (customerId) => {
+    if (!customerId) return
+    router.push({name: 'customer-detail', params: {id: customerId.toString()}})
+}
 
-    const updateStepEndDate = async (value) => {
-        const newEnd = value ? dayjs(value).format('YYYY-MM-DD') : null
-        const id = selectedStep.value && selectedStep.value.id
-        if (!id) return
-
-        try {
-            await updateBiddingStepAPI(id, { end_date: newEnd })
-            message.success('Cập nhật ngày kết thúc thành công')
-            selectedStep.value.end_date = newEnd
-            editing.id = null
-            editing.field = null
-            await fetchSteps()
-        } catch (e) {
-            message.error('Không thể cập nhật ngày kết thúc')
-            console.warn('Lỗi cập nhật ngày kết thúc:', e)
-        }
+const fetchCustomers = async () => {
+    try {
+        const res = await getCustomers()
+        customers.value = res.data?.data || [] // fix ở đây
+    } catch (e) {
+        console.error(e)
+        message.error('Không thể tải danh sách khách hàng')
     }
+}
 
-    const disabledDate = current => {
-        return current && current < dayjs(selectedStep.value.start_date).endOf('day');
-    };
+const getCustomerName = (id) => {
+    if (!id || !customers.value.length) return 'Đang tải...'
+    const customer = customers.value.find(c => String(c.id) === String(id))
+    return customer ? customer.name : `Khách hàng #${id}`
+}
 
-    const openStepDrawer = async (step) => {
-        selectedStep.value = {...step}
-        stepStore.setSelectedStep({...step})
-        activeStepId.value = step.id // 👈 đánh dấu bước đang mở
-        drawerVisible.value = true
+import {useCommonStore} from '@/stores/common'
 
-        const dataFilter = {}
-
-        if (String(user.role_id) === '3') {
-            // Nhân viên → chỉ xem nhiệm vụ của mình
-            dataFilter.assigned_to = user.id
-        } else if (String(user.role_id) === '2') {
-            // Trưởng phòng → xem được nhiệm vụ của cả phòng
-            dataFilter.id_department = user.department_id
-        }
-
-        try {
-            const res = await getTasksByBiddingStep(step.id, dataFilter)
-            stepStore.setRelatedTasks(Array.isArray(res.data) ? res.data : [])
-        } catch (e) {
-            console.error('❌ Không thể tải công việc của bước', e)
-            stepStore.setRelatedTasks([])
-        }
-    }
+const commonStore = useCommonStore()
 
 
-    const closeDrawer = () => {
-        drawerVisible.value = false
-        activeStepId.value = null
-        showEditDateStart.value = false
-        showEditDateEnd.value = false
-        dateStart.value = null
-        dateEnd.value = null
-    }
+const fetchData = async () => {
+    try {
+        const res = await getBiddingAPI(id)
+        bidding.value = res.data
 
-    const statusText = (status) => {
-        return {
-            '0': 'Chưa bắt đầu',
-            '1': 'Đang xử lý',
-            '2': 'Đã hoàn thành',
-            '3': 'Bỏ qua',
-        }[status] || 'Không rõ'
-    }
+        loadingSteps.value = true
+        let stepRes = await getBiddingStepsAPI(id)
 
-    const getApprovalStatusText = (status) => {
-        switch (status) {
-            case 'approved':
-                return 'Đã duyệt';
-            case 'pending':
-                return 'Chờ duyệt';
-            case 'rejected':
-                return 'Từ chối';
-            default:
-                return 'Không rõ';
-        }
-    }
-
-    const getApprovalStatusColor = (status) => {
-        switch (status) {
-            case 'approved':
-                return 'green';
-            case 'pending':
-                return 'blue';
-            case 'rejected':
-                return 'red';
-            default:
-                return 'gray';
+        if (!stepRes.data?.length) {
+            await cloneFromTemplatesAPI(id)
+            stepRes = await getBiddingStepsAPI(id)
         }
 
+        steps.value = stepRes.data.filter((step) => step.bidding_id === id)// res.data.id = bidding_id
+        commonStore.setBiddingIdParent(res.data.id)   // <— ✅ lưu luôn bidding_id cha
+    } catch (e) {
+        console.error(e)
+        message.error('Không thể tải dữ liệu')
+    } finally {
+        loadingSteps.value = false
     }
+}
 
-    const lastCompletedIndex = () => {
-        for (let i = steps.value.length - 1; i >= 0; i--) {
-            if (steps.value[i].status === '2') return i
-        }
-        return -1
+const getStatusText = (status) => {
+    const map = {
+        1: 'Đang chuẩn bị',
+        2: 'Trúng thầu',
+        3: 'Hủy thầu',
     }
+    return map[status] ?? `Không rõ`
+}
 
-    const getStepStatusColor = (status) => {
-        return {
-            '0': 'default',
-            '1': 'blue',
-            '2': 'green',
-            '3': 'orange',
-        }[status] || 'default'
+const goBack = () => {
+    if (window.history.length > 1) {
+        router.back();
+    } else {
+        router.push('/bid-list'); // fallback nếu không có trang trước
     }
+}
 
-    const mapStepStatus = (status) => {
-        return {
-            '0': 'wait',
-            '1': 'process',
-            '2': 'finish',
-            '3': 'error',
-        }[status] || 'wait'
-    }
+onMounted(async () => {
 
-    const getStatusColor = (status) => {
-        switch (Number(status)) {
-            case 1: return 'blue'     // Đang chuẩn bị
-            case 2: return 'green'    // Trúng thầu
-            case 3: return 'red'      // Hủy thầu
-            default: return 'default'
-        }
-    }
-    const getPriorityText = (priority) => {
-        switch (priority) {
-            case 'high': return 'Cao'
-            case 'normal': return 'Bình thường'
-            case 'low': return 'Thấp'
-            default: return 'Không xác định'
-        }
-    }
-    const getPriorityColor = (priority) => {
-        switch (priority) {
-            case 'high': return 'red'
-            case 'normal': return 'orange'
-            case 'low': return 'blue'
-            default: return 'default'
-        }
-    }
-
-    const getInitials = (name) => {
-        if (!name) return '?'
-        const parts = name.trim().split(/\s+/)
-        return (parts[0][0] + (parts[parts.length-1]?.[0] || '')).toUpperCase()
-    }
-
-
-    const getProgressStatus = (progress) => {
-        if (!progress) return 'normal'
-        if (progress >= 100) return 'success'
-        if (progress >= 80) return 'normal'
-        if (progress >= 50) return 'active'
-        return 'exception'
-    }
-
-    const getFirstLetter = (name) => {
-        if (!name || name === 'N/A') return '?'
-        return name.charAt(0).toUpperCase()
-    }
-
-    const getAvatarColor = (name) => {
-        if (!name || name === 'N/A') return '#d9d9d9'
-
-        // Generate consistent color based on name
-        const colors = [
-            '#f5222d', '#fa8c16', '#fadb14', '#52c41a',
-            '#13c2c2', '#1890ff', '#722ed1', '#eb2f96',
-            '#fa541c', '#faad14', '#a0d911', '#52c41a',
-            '#13c2c2', '#1890ff', '#722ed1', '#eb2f96'
-        ]
-
-        // Simple hash function to get consistent color for same name
-        let hash = 0
-        for (let i = 0; i < name.length; i++) {
-            hash = name.charCodeAt(i) + ((hash << 5) - hash)
-        }
-        const index = Math.abs(hash) % colors.length
-        return colors[index]
-    }
-
-
-    const currentStepIndex = () => {
-        const last = lastCompletedIndex()
-        const next = last + 1
-        return next >= steps.value.length ? steps.value.length - 1 : next
-    }
-
-    const parseDepartment = (val) => {
-        try {
-            const parsed = JSON.parse(val)
-            return Array.isArray(parsed) ? parsed : [val]
-        } catch (e) {
-            return val ? [val] : []
-        }
-    }
-
-
-    const getTaskStatusText = (status) => ({
-        todo: 'Chưa bắt đầu',
-        doing: 'Đang làm',
-        done: 'Hoàn thành',
-        overdue: 'Trễ hạn'
-    }[status] || 'Không rõ')
-
-    const getTaskStatusColor = (status) => ({
-        todo: 'default',
-        doing: 'blue',
-        done: 'green',
-        overdue: 'red'
-    }[status] || 'default')
-
-    const updateStepStatus = async (newStatus, step) => {
-        try {
-            if (newStatus === '2') {
-                await completeBiddingStepAPI(step.id)
-                message.success('Bước đã hoàn thành và bước kế tiếp đã được mở')
-            } else {
-                await updateBiddingStepAPI(step.id, {status: newStatus})
-                message.success('Đã cập nhật trạng thái bước')
-            }
-
-            drawerVisible.value = false
-            await fetchData()
-        } catch (e) {
-            console.warn('⚠️ Lỗi cập nhật bước:', e)
-
-            // Ưu tiên lấy thông báo cụ thể từ server nếu có
-            const errMsg =
-                e?.response?.data?.messages?.error || // CodeIgniter 4 style
-                e?.response?.data?.message ||         // Generic REST error
-                '❌ Đã xảy ra lỗi khi cập nhật bước'
-
-            if (e?.response?.status === 400) {
-                message.warning(errMsg) // Lỗi logic (ví dụ: chưa hoàn thành bước trước)
-            } else {
-                message.error(errMsg)   // Lỗi nghiêm trọng (server, network,...)
-            }
-        }
-    }
-
-    const updateStepDate = async (field, date, step) => {
-        try {
-            const payload = {[field]: date ? date.format('YYYY-MM-DD') : null}
-            await updateBiddingStepAPI(step.id, payload)
-            message.success(`Đã cập nhật ${field === 'start_date' ? 'ngày bắt đầu' : 'ngày kết thúc'}`)
-            await fetchSteps()
-        } catch (e) {
-            console.error(`Lỗi cập nhật ${field}:`, e)
-            message.error(`Không thể cập nhật ${field}`)
-        }
-    }
-
-    const fetchUsers = async () => {
-        try {
-            const res = await getUsers()
-            users.value = res.data;
-        } catch (e) {
-            console.error('Không thể tải danh sách người dùng:', e)
-        }
-    }
-
-    const getAssignedUserName = (userId) => {
-        if (!userId || !users.value.length) return 'Không xác định'
-        const found = users.value.find(u => String(u.id) === String(userId))
-        return found?.name || `Người dùng #${userId}`
-    }
-
-    const goToUserDetail = (userId) => {
-        if (!userId) return
-        router.push({name: 'user-detail', params: {id: userId}})
-    }
-
-
-    const fetchSteps = async () => {
-        try {
-            loadingSteps.value = true
-            const stepRes = await getBiddingStepsAPI(id)
-            steps.value = stepRes.data.filter(step => step.bidding_id === id)
-        } catch (e) {
-            console.error('Lỗi khi tải bước:', e)
-            message.error('Không thể tải tiến trình xử lý')
-        } finally {
-            loadingSteps.value = false
-        }
-    }
-
-
-    const updateStepAssignedTo = async (userId, step) => {
-        try {
-            if (!userId) {
-                message.warning('Vui lòng chọn người phụ trách hợp lệ')
-                return
-            }
-
-            await updateBiddingStepAPI(step.id, {assigned_to: userId})
-            message.success('Đã cập nhật người phụ trách')
-            await fetchSteps()
-        } catch (e) {
-            console.error('Lỗi khi cập nhật người phụ trách:', e)
-            const msg =
-                e?.response?.data?.messages?.error ||
-                e?.response?.data?.message ||
-                'Cập nhật người phụ trách thất bại'
-            message.error(msg)
-        }
-    }
-
-
-    const goToCustomerDetail = (customerId) => {
-        if (!customerId) return
-        router.push({name: 'customer-detail', params: {id: customerId.toString()}})
-    }
-
-    const fetchCustomers = async () => {
-        try {
-            const res = await getCustomers()
-            customers.value = res.data?.data || [] // fix ở đây
-        } catch (e) {
-            console.error(e)
-            message.error('Không thể tải danh sách khách hàng')
-        }
-    }
-
-    const getCustomerName = (id) => {
-        if (!id || !customers.value.length) return 'Đang tải...'
-        const customer = customers.value.find(c => String(c.id) === String(id))
-        return customer ? customer.name : `Khách hàng #${id}`
-    }
-
-    import { useCommonStore } from '@/stores/common'
-    const commonStore = useCommonStore()
-
-
-    const fetchData = async () => {
-        try {
-            const res = await getBiddingAPI(id)
-            bidding.value = res.data
-
-            loadingSteps.value = true
-            let stepRes = await getBiddingStepsAPI(id)
-
-            if (!stepRes.data?.length) {
-                await cloneFromTemplatesAPI(id)
-                stepRes = await getBiddingStepsAPI(id)
-            }
-
-            steps.value = stepRes.data.filter((step) => step.bidding_id === id)// res.data.id = bidding_id
-            commonStore.setBiddingIdParent(res.data.id)   // <— ✅ lưu luôn bidding_id cha
-        } catch (e) {
-            console.error(e)
-            message.error('Không thể tải dữ liệu')
-        } finally {
-            loadingSteps.value = false
-        }
-    }
-
-    const getStatusText = (status) => {
-        const map = {
-            1: 'Đang chuẩn bị',
-            2: 'Trúng thầu',
-            3: 'Hủy thầu',
-        }
-        return map[status] ?? `Không rõ`
-    }
-
-    const goBack = () => {
-        if (window.history.length > 1) {
-            router.back();
-        } else {
-            router.push('/bid-list'); // fallback nếu không có trang trước
-        }
-    }
-
-    onMounted(async () => {
-
-        await Promise.all([
-            fetchData(),
-            fetchCustomers(),
-            fetchUsers()
-        ])
-    })
+    await Promise.all([
+        fetchData(),
+        fetchCustomers(),
+        fetchUsers()
+    ])
+})
 
 </script>
 
@@ -1259,99 +1259,190 @@
 }
 
 /* Responsive: mobile 1 cột, label gọn hơn */
-@media (max-width: 575.98px) {
+@media (max-width: 576px) {
     .desc-grid :deep(.ant-descriptions-item-label) {
         width: 120px !important;
         max-width: 120px;
     }
 }
 
-    .active-step-title .ant-statistic-content span {
-        color: #FFFFFF;
-    }
-    .time-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 4px;
-        font-size: 14px;
-    }
-    .time-item .label {
-        font-weight: 500;
-        color: #555;
-        min-width: 70px; /* để thẳng hàng */
-    }
-    .time-item .value {
-        color: #1890ff;
-    }
-    .time-item.start .value {
-        color: #52c41a; /* xanh lá cho ngày bắt đầu */
-    }
-    .time-item.end .value {
-        color: #f5222d; /* đỏ cho ngày kết thúc */
-    }
+.active-step-title .ant-statistic-content span {
+    color: #FFFFFF;
+}
 
-    .status-tag {
-        cursor: pointer;
-        user-select: none;
-        display: inline-flex;
-        align-items: center;
-    }
+.time-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
 
-    .assigned-display {
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-    }
+.time-item .label {
+    font-weight: 500;
+    color: #555;
+    min-width: 70px; /* để thẳng hàng */
+}
 
-    .desc-progress {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        min-width: 80px; /* rộng hơn 1 chút cho đẹp */
-        cursor: default;  /* hoặc pointer nếu muốn click mở chi tiết */
-    }
-    .desc-progress :deep(.ant-progress) { flex: 1; }
-    .progress-meta { white-space: nowrap; font-size: 12px; color: rgba(0,0,0,.65); }
+.time-item .value {
+    color: #1890ff;
+}
 
-    /* Nếu thấy progress vẫn đổi sang xanh lá ở trạng thái success của AntD */
-    :deep(.ant-progress-bg),
-    :deep(.ant-progress-success-bg) { background-color: #1890ff !important; }
+.time-item.start .value {
+    color: #52c41a; /* xanh lá cho ngày bắt đầu */
+}
+
+.time-item.end .value {
+    color: #f5222d; /* đỏ cho ngày kết thúc */
+}
+
+.status-tag {
+    cursor: pointer;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.assigned-display {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+}
+
+.desc-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 80px; /* rộng hơn 1 chút cho đẹp */
+    cursor: default; /* hoặc pointer nếu muốn click mở chi tiết */
+}
+
+.desc-progress :deep(.ant-progress) {
+    flex: 1;
+}
+
+.progress-meta {
+    white-space: nowrap;
+    font-size: 12px;
+    color: rgba(0, 0, 0, .65);
+}
+
+/* Nếu thấy progress vẫn đổi sang xanh lá ở trạng thái success của AntD */
+:deep(.ant-progress-bg),
+:deep(.ant-progress-success-bg) {
+    background-color: #1890ff !important;
+}
 
 </style>
 
 <style scoped>
-    .active-step-title {
-        background-color: #91d5ff;
-        border-radius: 4px;
-        padding: 0 8px;
-    }
+.active-step-title {
+    background-color: #91d5ff;
+    border-radius: 4px;
+    padding: 0 8px;
+}
 
-    .active-step-title span {
-        color: #ffffff !important;
-    }
+.active-step-title span {
+    color: #ffffff !important;
+}
 
-    .step-actions {
-        margin-top: 12px;
-        text-align: right;
-    }
+.step-actions {
+    margin-top: 12px;
+    text-align: right;
+}
 
-    .ant-steps-item-title {
-        color: rgba(0, 0, 0, 0.85) !important;
-        font-weight: 500;
-        cursor: pointer;
-    }
+.ant-steps-item-title {
+    color: rgba(0, 0, 0, 0.85) !important;
+    font-weight: 500;
+    cursor: pointer;
+}
 
-    .mt-30 {
-        margin-top: 30px;
-    }
+.mt-30 {
+    margin-top: 30px;
+}
 
-    .mb-30 {
-        margin-bottom: 30px;
-    }
+.mb-30 {
+    margin-bottom: 30px;
+}
 
-    .ant-list-items li {
-        padding-left: 0;
-        padding-right: 0;
-    }
-    :deep(.ant-table-row-indent) { display: inline-block !important; }
+.ant-list-items li {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+:deep(.ant-table-row-indent) {
+    display: inline-block !important;
+}
+/* === Antd Table: thu nhỏ thanh cuộn === */
+
+/* Firefox */
+:deep(.ant-table-content),
+:deep(.ant-table-body) {
+    scrollbar-width: thin;                  /* mảnh hơn */
+    scrollbar-color: rgba(0,0,0,.25) transparent;
+}
+
+/* WebKit (Chrome/Edge/Safari) – CUỘN NGANG của bảng */
+:deep(.ant-table-content::-webkit-scrollbar) { height: 6px; }
+:deep(.ant-table-content::-webkit-scrollbar-thumb) {
+    background: rgba(0,0,0,0.25);
+    border-radius: 4px;
+}
+:deep(.ant-table-content::-webkit-scrollbar-thumb:hover) {
+    background: rgba(0,0,0,0.45);
+}
+:deep(.ant-table-content::-webkit-scrollbar-track) { background: transparent; }
+
+/* Nếu sau này dùng scroll.y (cuộn DỌC) thì áp thêm: */
+:deep(.ant-table-body::-webkit-scrollbar) { width: 6px; }
+:deep(.ant-table-body::-webkit-scrollbar-thumb) {
+    background: rgba(0,0,0,0.25);
+    border-radius: 4px;
+}
+:deep(.ant-table-body::-webkit-scrollbar-thumb:hover) {
+    background: rgba(0,0,0,0.45);
+}
+:deep(.ant-table-body::-webkit-scrollbar-track) { background: transparent; }
+
+/* Áp dụng cho toàn bộ bảng Antd */
+:deep(td) {
+    font-size: 12px;
+    padding: 0 12px; /* tuỳ chỉnh thêm nếu muốn */
+}
+
+/* Task cha */
+:deep(.task-title) {
+    display: inline-block;
+    font-weight: 500;
+    font-size: 13px;
+    color: #1890ff;
+}
+
+/* Task con */
+:deep(.task-title.child) {
+    position: relative;
+    padding-left: 30px; /* thụt vào */
+    font-weight: normal;
+    font-size: 12px;
+    color: #555;
+}
+
+/* Đường nối cha–con */
+:deep(.task-title.child)::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    width: 14px;
+    height: 1px;
+    background: #ccc; /* gạch ngang */
+}
+
+:deep(.task-title.child)::after {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 50%;
+    border-left: 1px solid #ccc; /* gạch dọc */
+}
 </style>

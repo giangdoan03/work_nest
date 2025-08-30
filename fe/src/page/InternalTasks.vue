@@ -1,7 +1,6 @@
 <template>
     <div>
         <a-row  justify="space-between" :gutter="[12,12]">
-            <!-- Trái: nhóm filter nhanh + icon mở drawer -->
             <a-col flex="auto">
                 <a-space wrap>
                     <!-- Lọc theo loại -->
@@ -26,8 +25,6 @@
 
                 </a-space>
             </a-col>
-
-            <!-- Phải: nút Xoá (sát mép phải) -->
             <a-col flex="none" style="text-align: right">
                 <a-popconfirm
                     :title="`Bạn chắc chắn muốn xoá ${selectedRowKeys.length} nhiệm vụ?`"
@@ -311,7 +308,6 @@
                 </div>
             </template>
         </a-drawer>
-
     </div>
 </template>
 
@@ -347,6 +343,8 @@ const showFilterDrawer = ref(false)
 
 // computed kiểm tra xem có đang lọc không
 const hasText = (v) => ((v ?? '').toString().trim().length > 0)
+const listBidding = ref([])
+const listContract = ref([])
 
 const activeFilterCount = computed(() => {
     const f = dataFilter.value
@@ -384,7 +382,6 @@ const resetDrawerFilters = () => {
     dataFilter.value.end_date = null
     dataFilter.value.linked_type = null
     dateRange.value = []
-    // GIỮ nguyên dataFilter.value.linked_type (bộ lọc nhanh bên ngoài)
     applyDrawerFilters() // gọi luôn để reload
 }
 
@@ -425,15 +422,9 @@ const rowSelection = computed(() => ({
     }
 }))
 
-const onTitleSearch = debounce(() => {
-    dataFilter.value.page = 1
-    getInternalTask()
-}, 500)
 
 const dateRange = ref([])
 const totalTasks = computed(() => pagination.value.total)
-const filteredCount = computed(() => tableData.value.length)
-
 
 const linkedTypeMap = {
     internal:  { label: 'Nội bộ',  color: '' },
@@ -604,7 +595,6 @@ const columns = [
         align: 'center',
     },
 
-    // {title: 'Hành động', dataIndex: 'action', key: 'action', width: 100, align: 'center'},
 ];
 
 const changeDateTime = (day, date) => {
@@ -620,13 +610,8 @@ const getInternalTask = async () => {
     loading.value = true;
     try {
         const payload = buildTaskQuery();
-        // Debug xem thật sự đã có id_department chưa
-        // console.log('[tasks] payload =', payload);
-
         const response = await getTasks(payload);
-
         tableData.value = response?.data?.data ?? [];
-
         const pg = response?.data?.pagination ?? {};
         pagination.value = {
             ...pagination.value,
@@ -668,10 +653,6 @@ const buildTaskQuery = () => {
 
     return f;
 };
-
-
-const listBidding = ref([])
-const listContract = ref([])
 
 const getBiddings = async () => {
     try {
@@ -771,26 +752,6 @@ const checkPriority = (text) => {
             return {title: "", color: ""};
     }
 };
-
-const getUserById = (userId) => {
-    let data = listUser.value.find(ele => ele.id === userId);
-    if (!data) {
-        return "";
-    }
-    return data.name;
-}
-const getLinkedType = (text) => {
-    switch (text) {
-        case 'bidding':
-            return "Gói thầu";
-        case 'contract':
-            return "Hợp đồng";
-        case 'internal':
-            return "Nhiệm vụ nội bộ";
-        default:
-            return ""
-    }
-}
 
 const getUser = async () => {
     loading.value = true
