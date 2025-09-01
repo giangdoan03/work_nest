@@ -156,7 +156,7 @@
             :title="`Quy trình gói thầu (${processRows.length || 0} bước)`"
             :confirm-loading="processLoading"
             :footer="null"
-            width="920px"
+            width="1100px"
             :destroyOnClose="true"
         >
             <a-table

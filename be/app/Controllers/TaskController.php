@@ -358,6 +358,7 @@ class TaskController extends ResourceController
     {
         $data = $this->request->getJSON(true);
         $task = $this->model->find($id);
+        $this->createApprovalInstanceForTask($task, [$task['assigned_to']]);
 
         if (!$task) {
             return $this->failNotFound('Task not found');
@@ -666,6 +667,46 @@ class TaskController extends ResourceController
 
         return $task ? $this->respond($task) : $this->failNotFound("Task không tồn tại.");
     }
+
+    private function createApprovalInstanceForTask(array $task, array $approverIds): void
+    {
+        $db = db_connect();
+        $db->transStart();
+
+        // 1) Tạo bản ghi phiên duyệt
+        $aiData = [
+            'target_type'   => 'task',
+            'target_id'     => (int) $task['id'],
+            'status'        => 'pending',
+            'current_level' => 0,  // luôn =0 khi mới gửi
+            'submitted_by'  => (int) (session()->get('user_id') ?? 0),
+            'submitted_at'  => date('Y-m-d H:i:s'),
+            'meta_json'     => json_encode([
+                'title' => $task['title'],
+                'url'   => '/internal-tasks/'.$task['id'].'/info',
+                'assignee_name' => $task['assignee']['name'] ?? null,
+            ], JSON_UNESCAPED_UNICODE),
+        ];
+        $db->table('approval_instances')->insert($aiData);
+        $aiId = (int) $db->insertID();
+
+        // 2) Thêm các cấp duyệt
+        $rows = [];
+        foreach (array_values($approverIds) as $i => $uid) {
+            $rows[] = [
+                'approval_instance_id' => $aiId,
+                'level'       => $i + 1, // 1-based
+                'approver_id' => $uid,
+                'status'      => 'pending',
+            ];
+        }
+        if ($rows) {
+            $db->table('approval_steps')->insertBatch($rows);
+        }
+
+        $db->transComplete();
+    }
+
 
 
 }

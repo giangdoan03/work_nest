@@ -124,34 +124,48 @@ class Auth extends Controller
     public function login(): ResponseInterface
     {
         $session = session();
-        $request = service('request');
+        $req = service('request');
 
-        $data = $request->getJSON();
-        $email = $data->email ?? '';
-        $password = $data->password ?? '';
+        $data = $req->getJSON(true) ?? [];
+        $email = $data['email'] ?? '';
+        $password = $data['password'] ?? '';
 
+        // ❌ KHÔNG log password
         log_message('debug', 'Email received: ' . $email);
-        log_message('debug', 'Password received: ' . $password);
 
-        $userModel = new UserModel();
-        $user = $userModel->where('email', $email)->first();
+        $user = (new UserModel())
+            ->where('email', $email)
+            ->first();
+
         log_message('debug', 'User from DB: ' . print_r($user, true));
 
         if ($user && password_verify($password, $user['password'])) {
             $session->regenerate();
+
+            // TÍNH is_admin từ role_id / role
+            $roleId = (int)($user['role_id'] ?? 0);
+            $role   = strtolower((string)($user['role'] ?? '')); // nếu có cột 'role'
+            $isAdmin = $roleId === 1 || in_array($role, ['admin', 'super admin'], true);
+
+            // Lưu đủ thông tin vào session
             $session->set([
-                'user_id'    => $user['id'],
+                'user_id'    => (int)$user['id'],
                 'user_email' => $user['email'],
                 'logged_in'  => true,
+
+                // 👇 thêm các field quyền
+                'role_id'    => $roleId,
+                'role'       => $user['role'] ?? null,
+                'is_admin'   => $isAdmin,
+                // 'roles'    => $user['roles'] ?? [], // nếu bạn có multi-roles
             ]);
 
-            // Xoá mật khẩu trước khi trả về
             unset($user['password']);
 
             return $this->response->setJSON([
                 'status'  => 'success',
                 'message' => 'Login successful',
-                'user'    => $user
+                'user'    => $user,   // có thể là "1" dạng string, không sao
             ]);
         }
 
@@ -160,6 +174,7 @@ class Auth extends Controller
             'message' => 'Invalid credentials'
         ]);
     }
+
 
 
 

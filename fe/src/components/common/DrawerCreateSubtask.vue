@@ -3,7 +3,7 @@
         <a-drawer
             :open="open"
             title="Thêm việc con"
-            :width="700"
+            :width="800"
             :body-style="{ paddingBottom: '80px' }"
             :footer-style="{ textAlign: 'right' }"
             @close="onClose"

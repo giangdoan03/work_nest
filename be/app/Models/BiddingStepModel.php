@@ -9,7 +9,18 @@ class BiddingStepModel extends Model
     protected $table = 'bidding_steps';
     protected $primaryKey = 'id';
     protected $allowedFields = [
-        'bidding_id', 'step_number', 'title', 'department', 'status', 'customer_id', 'assigned_to', 'task_id', 'start_date', 'end_date'
+        'bidding_id',
+        'step_number',
+        'title', 'department',
+        'status',
+        'customer_id',
+        'assigned_to',
+        'task_id',
+        'start_date',
+        'end_date',
+        'approval_steps',
+        'current_level',
+        'approval_status',
     ];
     protected $useTimestamps = true;
 }

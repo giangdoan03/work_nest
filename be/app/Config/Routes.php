@@ -185,5 +185,33 @@ $routes->group('api', function ($routes) {
     $routes->get('tasks/(:num)/approvals',         'TaskApprovalController::history/$1');
 
 
+    // ✅ Approval (multi-entity) routes
+    $routes->group('approvals', static function ($routes) {
+        // Lấy trạng thái theo đối tượng (not_sent nếu chưa gửi): ?target_type=&target_id=
+        $routes->get('inbox', 'ApprovalInboxController::index');
+
+        $routes->get('/', 'ApprovalController::index');
+
+        $routes->get('list', 'ApprovalController::list');
+
+        // Danh sách "cần duyệt" của user hiện tại
+
+
+        // Xem 1 phiên duyệt + các cấp
+        $routes->get('(:num)', 'ApprovalController::show/$1');
+
+        // Gửi duyệt (khởi tạo/khởi động phiên active)
+        $routes->post('send', 'ApprovalController::send');
+
+        // Duyệt / Từ chối cấp hiện tại
+        $routes->post('(:num)/approve', 'ApprovalController::approve/$1');
+        $routes->post('(:num)/reject',  'ApprovalController::reject/$1');
+
+        // Cập nhật lại tuyến duyệt (reset steps, giữ phiên)
+        $routes->put('(:num)/steps',   'ApprovalController::updateSteps/$1');
+        $routes->patch('(:num)/steps', 'ApprovalController::updateSteps/$1');
+    });
+
+
 
 });

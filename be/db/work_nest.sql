@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost
--- Generation Time: Aug 14, 2025 at 10:50 PM
--- Server version: 8.0.24
--- PHP Version: 8.3.14
+-- Host: localhost:3306
+-- Generation Time: Sep 01, 2025 at 09:12 AM
+-- Server version: 8.0.30
+-- PHP Version: 8.1.10
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -24,6 +24,164 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `approval_instances`
+--
+
+CREATE TABLE `approval_instances` (
+  `id` bigint UNSIGNED NOT NULL,
+  `target_type` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `target_id` bigint UNSIGNED NOT NULL,
+  `version` int NOT NULL DEFAULT '1',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `status` enum('not_sent','pending','approved','rejected') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'not_sent',
+  `current_level` int NOT NULL DEFAULT '0',
+  `submitted_by` bigint UNSIGNED DEFAULT NULL,
+  `submitted_at` datetime DEFAULT NULL,
+  `finalized_at` datetime DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `meta_json` json DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `approval_instances`
+--
+
+INSERT INTO `approval_instances` (`id`, `target_type`, `target_id`, `version`, `is_active`, `status`, `current_level`, `submitted_by`, `submitted_at`, `finalized_at`, `notes`, `meta_json`, `created_at`, `updated_at`) VALUES
+(1, 'task', 26, 1, 1, 'approved', 0, 3, '2025-08-31 17:16:27', '2025-08-31 10:42:14', NULL, '{\"url\": \"/internal-tasks/26/info\", \"title\": \"Thiết kế giao diện phu-task con 3\"}', '2025-08-31 17:16:27', '2025-08-31 10:42:14'),
+(2, 'task', 240, 1, 1, 'approved', 0, 3, '2025-08-31 10:20:41', '2025-08-31 10:52:01', NULL, '{\"url\": \"/internal-tasks/240/info\", \"title\": \"34535345\", \"assignee_name\": null}', '2025-08-31 17:20:41', '2025-08-31 10:52:01'),
+(3, 'bidding', 4, 1, 1, 'approved', 1, 3, '2025-08-31 10:39:36', '2025-08-31 14:05:26', NULL, '{\"url\": \"/bid-detail/4\", \"title\": \"Cung cấp hệ thống điều khiển trung tâm cho Nhiệt điện Hải Phòng\"}', '2025-08-31 10:39:36', '2025-09-01 11:11:55'),
+(4, 'bidding', 38, 1, 0, 'approved', 0, 3, '2025-08-31 14:11:36', '2025-08-31 14:12:08', NULL, '{\"url\": \"/bid-detail/38/\", \"title\": \"gói thầu mới 3\"}', '2025-08-31 14:11:36', '2025-09-01 04:18:42'),
+(5, 'bidding', 37, 1, 1, 'approved', 0, 3, '2025-08-31 14:11:42', '2025-08-31 14:11:56', NULL, '{\"url\": \"/bid-detail/37/\", \"title\": \"gói thầu mới 23-08\"}', '2025-08-31 14:11:42', '2025-09-01 11:12:11'),
+(6, 'bidding', 9, 1, 1, 'approved', 0, 3, '2025-08-31 14:21:11', '2025-08-31 14:21:23', NULL, '{\"url\": \"/bid-detail/9/\", \"title\": \"Lắp đặt hệ thống điện chiếu sáng – Nhiệt điện Sông Hậu\"}', '2025-08-31 14:21:11', '2025-09-01 11:12:17'),
+(7, 'bidding', 7, 1, 1, 'approved', 0, 3, '2025-08-31 14:22:21', '2025-08-31 14:23:14', NULL, '{\"url\": \"/bid-detail/7/\", \"title\": \"Cung cấp vật tư phòng cháy chữa cháy – Nhiệt điện Ô Môn\"}', '2025-08-31 14:22:21', '2025-09-01 11:12:24'),
+(8, 'bidding', 6, 1, 1, 'approved', 0, 3, '2025-08-31 14:23:47', '2025-08-31 14:24:09', NULL, '{\"url\": \"/bid-detail/6/\", \"title\": \"Gói thầu bảo trì định kỳ năm 2025 – Nhiệt điện Mông Dương\"}', '2025-08-31 14:23:47', '2025-09-01 11:12:30'),
+(9, 'bidding', 2, 1, 1, 'approved', 0, 3, '2025-08-31 14:55:02', '2025-08-31 14:55:09', NULL, '{\"url\": \"/bid-detail/2/\", \"title\": \"Gói thầu cung cấp turbine cho Nhiệt điện Quảng Ninh\"}', '2025-08-31 14:55:02', '2025-09-01 11:12:36'),
+(10, 'bidding', 11, 1, 1, 'approved', 0, 3, '2025-08-31 14:58:23', '2025-08-31 14:58:32', NULL, '{\"url\": \"/bid-detail/11/\", \"title\": \"Gói thầu thuê ngoài dịch vụ an ninh – Nhiệt điện Thái Bình 2\"}', '2025-08-31 14:58:23', '2025-09-01 11:12:44'),
+(11, 'task', 238, 1, 1, 'pending', 0, 3, '2025-08-31 14:59:25', NULL, NULL, '{\"url\": \"/internal-tasks/238/info\", \"title\": \"xxxxxx\", \"assignee_name\": null}', '2025-08-31 21:59:25', '2025-08-31 21:59:25'),
+(12, 'task', 243, 1, 1, 'pending', 0, 3, '2025-08-31 15:25:06', NULL, NULL, '{\"url\": \"/internal-tasks/243/info\", \"title\": \"4233243242\", \"assignee_name\": null}', '2025-08-31 22:25:06', '2025-08-31 22:25:06'),
+(13, 'bidding', 10, 1, 0, 'pending', 0, 3, '2025-09-01 01:34:21', NULL, NULL, '{\"url\": \"/bid-detail/10/\", \"title\": \"Cung cấp hệ thống xử lý nước thải công nghiệp – Nhiệt điện Phú Mỹ\"}', '2025-09-01 01:34:21', '2025-09-01 11:12:51'),
+(14, 'bidding', 10, 2, 1, 'approved', 0, 3, '2025-09-01 01:53:06', '2025-09-01 04:17:22', NULL, '{\"url\": \"/bid-detail/10/\", \"title\": \"Cung cấp hệ thống xử lý nước thải công nghiệp – Nhiệt điện Phú Mỹ\"}', '2025-09-01 01:53:06', '2025-09-01 04:17:22'),
+(15, 'bidding', 38, 2, 1, 'pending', 0, 3, '2025-09-01 04:18:42', NULL, NULL, '{\"url\": \"/bid-detail/38\", \"title\": \"gói thầu mới 3\"}', '2025-09-01 04:18:42', '2025-09-01 11:31:40'),
+(16, 'task', 199, 1, 1, 'approved', 0, 3, '2025-09-01 05:28:41', '2025-09-01 05:28:56', NULL, '{\"url\": \"/internal-tasks/199/info\", \"title\": \"tesst mới\", \"assignee_name\": null}', '2025-09-01 12:28:41', '2025-09-01 05:28:56'),
+(17, 'task', 200, 1, 1, 'approved', 0, 3, '2025-09-01 05:29:17', '2025-09-01 05:29:25', NULL, '{\"url\": \"/internal-tasks/200/info\", \"title\": \"test 2\", \"assignee_name\": null}', '2025-09-01 12:29:17', '2025-09-01 05:29:25'),
+(18, 'bidding_step', 284, 1, 1, 'pending', 0, 3, '2025-09-01 06:51:06', NULL, NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 1: Nhận nhu cầu khách hàng\"}', '2025-09-01 06:51:06', '2025-09-01 06:51:06'),
+(19, 'bidding_step', 285, 1, 1, 'pending', 0, 3, '2025-09-01 06:51:27', NULL, NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 2: Đánh giá tính khả thi\"}', '2025-09-01 06:51:27', '2025-09-01 06:51:27'),
+(20, 'bidding_step', 286, 1, 1, 'pending', 0, 3, '2025-09-01 07:59:15', NULL, NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 3: Lập kế hoạch triển khai\"}', '2025-09-01 07:59:15', '2025-09-01 07:59:15'),
+(21, 'bidding_step', 290, 1, 1, 'pending', 0, 3, '2025-09-01 08:48:33', NULL, NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 7: Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)\"}', '2025-09-01 08:48:33', '2025-09-01 08:48:33');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `approval_logs`
+--
+
+CREATE TABLE `approval_logs` (
+  `id` bigint UNSIGNED NOT NULL,
+  `approval_instance_id` bigint UNSIGNED NOT NULL,
+  `actor_id` bigint UNSIGNED NOT NULL,
+  `action` enum('send','approve','reject','update_steps','cancel','reset') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `data_json` json DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `approval_logs`
+--
+
+INSERT INTO `approval_logs` (`id`, `approval_instance_id`, `actor_id`, `action`, `data_json`, `created_at`) VALUES
+(1, 3, 3, 'send', '\"{\\\"approver_ids\\\":[5,3],\\\"meta\\\":{\\\"title\\\":\\\"Cung cấp hệ thống điều khiển trung tâm cho Nhiệt điện Hải Phòng\\\",\\\"url\\\":\\\"\\\\/biddings\\\\/4\\\\/info\\\"}}\"', '2025-08-31 10:39:36'),
+(2, 1, 3, 'approve', '\"{\\\"note\\\":\\\"ok duyệt\\\"}\"', '2025-08-31 10:42:14'),
+(3, 2, 3, 'approve', '\"{\\\"note\\\":\\\"ok nhá nhá\\\"}\"', '2025-08-31 10:52:01'),
+(4, 3, 3, 'approve', '{\"note\": \"dsadadadadad\"}', '2025-08-31 14:02:17'),
+(5, 3, 3, 'approve', '{\"note\": \"ewrwrwrr\"}', '2025-08-31 14:05:26'),
+(6, 4, 3, 'send', '{\"meta\": {\"url\": \"/biddings/38/info\", \"title\": \"gói thầu mới 3\"}, \"approver_ids\": [1]}', '2025-08-31 14:11:36'),
+(7, 4, 3, '', '{\"approver_ids\": [1]}', '2025-08-31 14:11:36'),
+(8, 5, 3, 'send', '{\"meta\": {\"url\": \"/biddings/37/info\", \"title\": \"gói thầu mới 23-08\"}, \"approver_ids\": [5]}', '2025-08-31 14:11:42'),
+(9, 5, 3, '', '{\"approver_ids\": [5]}', '2025-08-31 14:11:42'),
+(10, 5, 3, 'approve', '{\"note\": \"duyệt này nhé\"}', '2025-08-31 14:11:56'),
+(11, 4, 3, 'approve', '{\"note\": \"duyệt gói thầu này\"}', '2025-08-31 14:12:08'),
+(12, 6, 3, 'send', '{\"meta\": {\"url\": \"/biddings/9/info\", \"title\": \"Lắp đặt hệ thống điện chiếu sáng – Nhiệt điện Sông Hậu\"}, \"approver_ids\": [5]}', '2025-08-31 14:21:11'),
+(13, 6, 3, '', '{\"approver_ids\": [5]}', '2025-08-31 14:21:11'),
+(14, 6, 3, 'approve', '{\"note\": \"53455353535\"}', '2025-08-31 14:21:23'),
+(15, 7, 3, 'send', '{\"meta\": {\"url\": \"/biddings/7/info\", \"title\": \"Cung cấp vật tư phòng cháy chữa cháy – Nhiệt điện Ô Môn\"}, \"approver_ids\": [23]}', '2025-08-31 14:22:21'),
+(16, 7, 3, '', '{\"approver_ids\": [23]}', '2025-08-31 14:22:21'),
+(17, 7, 3, 'approve', '{\"note\": null}', '2025-08-31 14:23:14'),
+(18, 8, 3, 'send', '{\"meta\": {\"url\": \"/biddings/6/info\", \"title\": \"Gói thầu bảo trì định kỳ năm 2025 – Nhiệt điện Mông Dương\"}, \"approver_ids\": [24]}', '2025-08-31 14:23:47'),
+(19, 8, 3, '', '{\"approver_ids\": [24]}', '2025-08-31 14:23:47'),
+(20, 8, 3, 'approve', '{\"note\": \"4354353535\"}', '2025-08-31 14:24:09'),
+(21, 9, 3, 'send', '{\"meta\": {\"url\": \"/biddings/2/info\", \"title\": \"Gói thầu cung cấp turbine cho Nhiệt điện Quảng Ninh\"}, \"approver_ids\": [23]}', '2025-08-31 14:55:02'),
+(22, 9, 3, '', '{\"approver_ids\": [23]}', '2025-08-31 14:55:02'),
+(23, 9, 3, 'approve', '{\"note\": \"eweqewqe\"}', '2025-08-31 14:55:09'),
+(24, 10, 3, 'send', '{\"meta\": {\"url\": \"/biddings/11/info\", \"title\": \"Gói thầu thuê ngoài dịch vụ an ninh – Nhiệt điện Thái Bình 2\"}, \"approver_ids\": [6]}', '2025-08-31 14:58:23'),
+(25, 10, 3, '', '{\"approver_ids\": [6]}', '2025-08-31 14:58:23'),
+(26, 10, 3, 'approve', '{\"note\": \"rưerwerrw\"}', '2025-08-31 14:58:32'),
+(27, 13, 3, 'send', '{\"meta\": {\"url\": \"/biddings/10/info\", \"title\": \"Cung cấp hệ thống xử lý nước thải công nghiệp – Nhiệt điện Phú Mỹ\"}, \"approver_ids\": [15]}', '2025-09-01 01:34:21'),
+(28, 13, 3, '', '{\"approver_ids\": [15]}', '2025-09-01 01:34:21'),
+(29, 14, 3, 'send', '{\"meta\": {\"url\": \"/biddings/10/info\", \"title\": \"Cung cấp hệ thống xử lý nước thải công nghiệp – Nhiệt điện Phú Mỹ\"}, \"approver_ids\": [15]}', '2025-09-01 01:53:06'),
+(30, 14, 3, '', '{\"approver_ids\": [15]}', '2025-09-01 01:53:06'),
+(31, 14, 3, 'approve', '{\"note\": \"duyệt gói thầu này nhé\"}', '2025-09-01 04:17:22'),
+(32, 15, 3, 'send', '{\"meta\": {\"url\": \"/bid-detail//38\", \"title\": \"gói thầu mới 3\"}, \"approver_ids\": [4]}', '2025-09-01 04:18:42'),
+(33, 15, 3, '', '{\"approver_ids\": [4]}', '2025-09-01 04:18:42'),
+(34, 16, 3, 'approve', '{\"note\": null}', '2025-09-01 05:28:56'),
+(35, 17, 3, 'approve', '{\"note\": \"ok nhé\"}', '2025-09-01 05:29:25'),
+(36, 18, 3, 'send', '{\"meta\": {\"url\": \"/biddings/35/info\", \"title\": \"Bước 1: Nhận nhu cầu khách hàng\"}, \"approver_ids\": [17]}', '2025-09-01 06:51:06'),
+(37, 19, 3, 'send', '{\"meta\": {\"url\": \"/biddings/35/info\", \"title\": \"Bước 2: Đánh giá tính khả thi\"}, \"approver_ids\": [19]}', '2025-09-01 06:51:27'),
+(38, 20, 3, 'send', '{\"meta\": {\"url\": \"/biddings/35/info\", \"title\": \"Bước 3: Lập kế hoạch triển khai\"}, \"approver_ids\": [15]}', '2025-09-01 07:59:15'),
+(39, 21, 3, 'send', '{\"meta\": {\"url\": \"/biddings/35/info\", \"title\": \"Bước 7: Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)\"}, \"approver_ids\": [23]}', '2025-09-01 08:48:33');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `approval_steps`
+--
+
+CREATE TABLE `approval_steps` (
+  `id` bigint UNSIGNED NOT NULL,
+  `approval_instance_id` bigint UNSIGNED NOT NULL,
+  `level` int NOT NULL,
+  `approver_id` bigint UNSIGNED NOT NULL,
+  `status` enum('pending','approved','rejected') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `commented_at` datetime DEFAULT NULL,
+  `note` text COLLATE utf8mb4_unicode_ci,
+  `acted_by` bigint UNSIGNED DEFAULT NULL,
+  `acted_role` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `approval_steps`
+--
+
+INSERT INTO `approval_steps` (`id`, `approval_instance_id`, `level`, `approver_id`, `status`, `commented_at`, `note`, `acted_by`, `acted_role`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, 5, 'approved', '2025-08-31 10:42:13', 'ok duyệt', 3, 'admin', '2025-08-31 17:16:27', '2025-08-31 10:42:13'),
+(2, 2, 1, 5, 'approved', '2025-08-31 10:52:01', 'ok nhá nhá', 3, 'admin', '2025-08-31 17:20:41', '2025-08-31 10:52:01'),
+(3, 3, 1, 5, 'approved', '2025-08-31 14:02:17', 'dsadadadadad', 3, 'admin', '2025-08-31 10:39:36', '2025-08-31 14:02:17'),
+(4, 3, 2, 3, 'approved', '2025-08-31 14:05:26', 'ewrwrwrr', 3, 'admin', '2025-08-31 10:39:36', '2025-08-31 14:05:26'),
+(5, 4, 1, 1, 'approved', '2025-08-31 14:12:08', 'duyệt gói thầu này', 3, 'admin', '2025-08-31 14:11:36', '2025-08-31 14:12:08'),
+(6, 5, 1, 5, 'approved', '2025-08-31 14:11:56', 'duyệt này nhé', 3, 'admin', '2025-08-31 14:11:42', '2025-08-31 14:11:56'),
+(7, 6, 1, 5, 'approved', '2025-08-31 14:21:23', '53455353535', 3, 'admin', '2025-08-31 14:21:11', '2025-08-31 14:21:23'),
+(8, 7, 1, 23, 'approved', '2025-08-31 14:23:14', NULL, 3, 'admin', '2025-08-31 14:22:21', '2025-08-31 14:23:14'),
+(9, 8, 1, 24, 'approved', '2025-08-31 14:24:09', '4354353535', 3, 'admin', '2025-08-31 14:23:47', '2025-08-31 14:24:09'),
+(10, 9, 1, 23, 'approved', '2025-08-31 14:55:09', 'eweqewqe', 3, 'admin', '2025-08-31 14:55:02', '2025-08-31 14:55:09'),
+(11, 10, 1, 6, 'approved', '2025-08-31 14:58:32', 'rưerwerrw', 3, 'admin', '2025-08-31 14:58:23', '2025-08-31 14:58:32'),
+(12, 11, 1, 24, 'pending', NULL, NULL, NULL, NULL, '2025-08-31 21:59:25', '2025-08-31 21:59:25'),
+(13, 12, 1, 5, 'pending', NULL, NULL, NULL, NULL, '2025-08-31 22:25:06', '2025-08-31 22:25:06'),
+(14, 13, 1, 15, 'pending', NULL, NULL, NULL, NULL, '2025-09-01 01:34:21', '2025-09-01 01:34:21'),
+(15, 14, 1, 15, 'approved', '2025-09-01 04:17:22', 'duyệt gói thầu này nhé', 3, 'admin', '2025-09-01 01:53:06', '2025-09-01 04:17:22'),
+(16, 15, 1, 4, 'pending', NULL, NULL, NULL, NULL, '2025-09-01 04:18:42', '2025-09-01 04:18:42'),
+(17, 16, 1, 4, 'approved', '2025-09-01 05:28:56', NULL, 3, 'admin', '2025-09-01 12:28:41', '2025-09-01 05:28:56'),
+(18, 17, 1, 4, 'approved', '2025-09-01 05:29:25', 'ok nhé', 3, 'admin', '2025-09-01 12:29:17', '2025-09-01 05:29:25'),
+(19, 18, 1, 17, 'pending', NULL, NULL, NULL, NULL, '2025-09-01 06:51:06', '2025-09-01 06:51:06'),
+(20, 19, 1, 19, 'pending', NULL, NULL, NULL, NULL, '2025-09-01 06:51:27', '2025-09-01 06:51:27'),
+(21, 20, 1, 15, 'pending', NULL, NULL, NULL, NULL, '2025-09-01 07:59:15', '2025-09-01 07:59:15'),
+(22, 21, 1, 23, 'pending', NULL, NULL, NULL, NULL, '2025-09-01 08:48:33', '2025-09-01 08:48:33');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `biddings`
 --
 
@@ -34,28 +192,39 @@ CREATE TABLE `biddings` (
   `customer_id` int NOT NULL,
   `estimated_cost` decimal(18,2) DEFAULT NULL,
   `assigned_to` int DEFAULT NULL,
+  `manager_id` int DEFAULT NULL,
+  `collaborators` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `start_date` date DEFAULT NULL,
   `end_date` date DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `status` int DEFAULT '0'
+  `status` tinyint NOT NULL DEFAULT '1' COMMENT '1=Đang chuẩn bị, 2=Trúng thầu, 3=Hủy thầu',
+  `priority` tinyint(1) NOT NULL DEFAULT '0' COMMENT '0=Bình thường, 1=Quan trọng',
+  `approval_status` enum('pending','approved','rejected') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `approval_steps` json DEFAULT NULL,
+  `current_level` int UNSIGNED DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `biddings`
 --
 
-INSERT INTO `biddings` (`id`, `title`, `description`, `customer_id`, `estimated_cost`, `assigned_to`, `start_date`, `end_date`, `created_at`, `updated_at`, `status`) VALUES
-(2, 'Gói thầu cung cấp turbine cho Nhiệt điện Quảng Ninh', 'Turbine hơi công suất 300MW cho tổ máy số 3', 1, 4500000000.00, 4, '2025-06-15', '2025-07-30', '2025-06-11 04:16:44', '2025-06-22 21:38:15', 4),
-(3, 'Gói thầu xây dựng nhà điều hành Nhiệt điện Duyên Hải', 'Thi công hoàn thiện trụ sở ban quản lý nhà máy', 2, 1200000000.00, 23, '2025-06-20', '2025-08-10', '2025-06-11 04:16:50', '2025-06-22 21:39:45', 3),
-(4, 'Cung cấp hệ thống điều khiển trung tâm cho Nhiệt điện Hải Phòng', 'SCADA & HMI cho toàn nhà máy', 3, 2500000000.00, 22, '2025-06-10', '2025-07-15', '2025-06-11 04:16:56', '2025-06-22 21:38:15', 3),
-(5, 'Cung cấp ống khói chịu nhiệt cao', 'Ống khói chịu nhiệt độ trên 1000°C cho Nhiệt điện Vĩnh Tân', 4, 1750000000.00, 24, '2025-06-25', '2025-07-30', '2025-06-11 04:17:01', '2025-06-11 04:17:01', 0),
-(6, 'Gói thầu bảo trì định kỳ năm 2025 – Nhiệt điện Mông Dương', 'Bảo trì tổ máy số 2 theo tiêu chuẩn EVN', 5, 980000000.00, 18, '2025-06-20', '2025-07-05', '2025-06-11 04:17:10', '2025-06-22 21:39:45', 2),
-(7, 'Cung cấp vật tư phòng cháy chữa cháy – Nhiệt điện Ô Môn', 'Thiết bị PCCC tiêu chuẩn châu Âu', 6, 800000000.00, 18, '2025-06-22', '2025-07-10', '2025-06-11 04:17:15', '2025-06-11 04:17:15', 1),
-(8, 'Cải tạo hệ thống cấp than – Nhiệt điện Na Dương', 'Băng tải và phễu tiếp nhận than đá', 7, 1350000000.00, 6, '2025-06-24', '2025-08-05', '2025-06-11 04:17:20', '2025-06-11 04:17:20', 2),
-(9, 'Lắp đặt hệ thống điện chiếu sáng – Nhiệt điện Sông Hậu', 'Chiếu sáng toàn khu vực sân và hành lang', 8, 460000000.00, 17, '2025-06-28', '2025-07-25', '2025-06-11 04:17:26', '2025-06-22 21:38:15', 0),
-(10, 'Cung cấp hệ thống xử lý nước thải công nghiệp – Nhiệt điện Phú Mỹ', 'Thiết bị xử lý hóa lý và sinh học', 9, 2600000000.00, 21, '2025-07-01', '2025-08-15', '2025-06-11 04:17:31', '2025-06-11 04:17:31', 0),
-(11, 'Gói thầu thuê ngoài dịch vụ an ninh – Nhiệt điện Thái Bình 2', 'Thuê bảo vệ 24/7 trong 12 tháng', 10, 500000000.00, 8, '2025-06-15', '2025-07-15', '2025-06-11 04:17:36', '2025-06-22 21:39:45', 2);
+INSERT INTO `biddings` (`id`, `title`, `description`, `customer_id`, `estimated_cost`, `assigned_to`, `manager_id`, `collaborators`, `start_date`, `end_date`, `created_at`, `updated_at`, `status`, `priority`, `approval_status`, `approval_steps`, `current_level`) VALUES
+(2, 'Gói thầu cung cấp turbine cho Nhiệt điện Quảng Ninh', 'Turbine hơi công suất 300MW cho tổ máy số 3', 1, 4500000000.00, 4, 23, NULL, '2025-06-15', '2025-10-31', '2025-06-11 04:16:44', '2025-08-31 14:55:35', 1, 0, 'approved', '[{\"note\": \"eweqewqe\", \"level\": 1, \"status\": \"approved\", \"approver_id\": 23, \"commented_at\": \"2025-08-31 14:55:09\"}]', 0),
+(3, 'Gói thầu xây dựng nhà điều hành Nhiệt điện Duyên Hải', 'Thi công hoàn thiện trụ sở ban quản lý nhà máy', 2, 1200000000.00, 23, NULL, NULL, '2025-06-20', '2025-08-10', '2025-06-11 04:16:50', '2025-08-21 21:12:34', 3, 0, 'pending', NULL, 0),
+(4, 'Cung cấp hệ thống điều khiển trung tâm cho Nhiệt điện Hải Phòng', 'SCADA & HMI cho toàn nhà máy', 3, 2500000000.00, 22, 17, NULL, '2025-06-10', '2025-07-15', '2025-06-11 04:16:56', '2025-08-31 15:38:59', 4, 1, 'pending', '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 5, \"commented_at\": null}, {\"note\": null, \"level\": 2, \"status\": \"pending\", \"approver_id\": 3, \"commented_at\": null}]', 0),
+(5, 'Cung cấp ống khói chịu nhiệt cao', 'Ống khói chịu nhiệt độ trên 1000°C cho Nhiệt điện Vĩnh Tân', 4, 1750000000.00, 24, NULL, NULL, '2025-06-25', '2025-07-30', '2025-06-11 04:17:01', '2025-08-21 21:12:34', 2, 0, 'pending', NULL, 0),
+(6, 'Gói thầu bảo trì định kỳ năm 2025 – Nhiệt điện Mông Dương', 'Bảo trì tổ máy số 2 theo tiêu chuẩn EVN', 5, 980000000.00, 18, 24, NULL, '2025-06-20', '2025-07-05', '2025-06-11 04:17:10', '2025-08-31 15:38:04', 1, 0, 'approved', '[{\"note\": \"4354353535\", \"level\": 1, \"status\": \"approved\", \"approver_id\": 24, \"commented_at\": \"2025-08-31 14:24:09\"}]', 0),
+(7, 'Cung cấp vật tư phòng cháy chữa cháy – Nhiệt điện Ô Môn', 'Thiết bị PCCC tiêu chuẩn châu Âu', 6, 800000000.00, 18, 22, NULL, '2025-06-22', '2025-07-10', '2025-06-11 04:17:15', '2025-08-31 14:23:14', 1, 0, 'approved', '[{\"note\": null, \"level\": 1, \"status\": \"approved\", \"approver_id\": 23, \"commented_at\": \"2025-08-31 14:23:14\"}]', 0),
+(8, 'Cải tạo hệ thống cấp than – Nhiệt điện Na Dương', 'Băng tải và phễu tiếp nhận than đá', 7, 1350000000.00, 6, 4, NULL, '2025-06-24', '2025-08-05', '2025-06-11 04:17:20', '2025-08-31 16:19:45', 4, 1, 'pending', '\"[{\\\"level\\\":1,\\\"approver_id\\\":18,\\\"status\\\":\\\"pending\\\",\\\"commented_at\\\":null,\\\"note\\\":null},{\\\"level\\\":2,\\\"approver_id\\\":5,\\\"status\\\":\\\"pending\\\",\\\"commented_at\\\":null,\\\"note\\\":null}]\"', 0),
+(9, 'Lắp đặt hệ thống điện chiếu sáng – Nhiệt điện Sông Hậu', 'Chiếu sáng toàn khu vực sân và hành lang', 8, 460000000.00, 17, 5, NULL, '2025-06-28', '2025-07-25', '2025-06-11 04:17:26', '2025-08-31 14:57:40', 1, 0, 'approved', '[{\"note\": \"53455353535\", \"level\": 1, \"status\": \"approved\", \"approver_id\": 5, \"commented_at\": \"2025-08-31 14:21:23\"}]', 0),
+(10, 'Cung cấp hệ thống xử lý nước thải công nghiệp – Nhiệt điện Phú Mỹ', 'Thiết bị xử lý hóa lý và sinh học', 9, 2600000000.00, 15, 15, NULL, '2025-07-01', '2025-08-15', '2025-06-11 04:17:31', '2025-09-01 04:17:22', 4, 0, 'approved', '[{\"note\": \"duyệt gói thầu này nhé\", \"level\": 1, \"status\": \"approved\", \"approver_id\": 15, \"commented_at\": \"2025-09-01 04:17:22\"}]', 0),
+(11, 'Gói thầu thuê ngoài dịch vụ an ninh – Nhiệt điện Thái Bình 2', 'Thuê bảo vệ 24/7 trong 12 tháng', 10, 500000000.00, 8, 6, NULL, '2025-06-15', '2025-07-15', '2025-06-11 04:17:36', '2025-08-31 14:58:49', 1, 0, 'approved', '[{\"note\": \"rưerwerrw\", \"level\": 1, \"status\": \"approved\", \"approver_id\": 6, \"commented_at\": \"2025-08-31 14:58:32\"}]', 0),
+(35, 'test gói thầu mới tên dài', 'test gói thầu mới', 1, 200000000.00, 5, 8, '[8,6,5,7]', '2025-08-05', '2025-08-31', '2025-08-04 17:26:30', '2025-09-01 04:18:19', 1, 0, 'approved', '[{\"note\": {\"note\": null}, \"level\": 1, \"status\": \"approved\", \"acted_by\": 3, \"acted_role\": \"admin\", \"approver_id\": 8, \"commented_at\": \"2025-08-30 16:07:12\"}]', 0),
+(37, 'gói thầu mới 23-08', 'gói thầu mới', 7, 60000000000.00, 16, 5, NULL, '2025-08-23', '2025-11-30', '2025-08-23 02:16:14', '2025-08-31 14:40:10', 4, 0, 'pending', '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 5, \"commented_at\": null}]', 0),
+(38, 'gói thầu mới 3', 'gói thầu mới 3', 6, 30000000000.00, 19, 4, NULL, '2025-08-23', '2025-08-31', '2025-08-23 02:18:51', '2025-09-01 04:18:42', 4, 0, 'pending', '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 4, \"commented_at\": null}]', 0),
+(39, 'test thầu mới', 'test thầu mới', 10, 3000000.00, 5, 5, NULL, '2025-08-28', '2025-08-31', '2025-08-27 20:02:39', '2025-08-30 15:52:54', 4, 0, 'approved', '[{\"note\": {\"note\": null}, \"level\": 1, \"status\": \"approved\", \"acted_by\": 3, \"acted_role\": \"admin\", \"approver_id\": 5, \"commented_at\": \"2025-08-30 15:52:49\"}, {\"note\": {\"note\": null}, \"level\": 2, \"status\": \"approved\", \"acted_by\": 3, \"acted_role\": \"admin\", \"approver_id\": 19, \"commented_at\": \"2025-08-30 15:52:54\"}]', 1),
+(40, 'thầu mới 1/09', 'thầu mới 1/09', 4, 600000000.00, 23, 22, NULL, '2025-09-01', '2025-09-30', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 1, 0, 'pending', NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -70,6 +239,9 @@ CREATE TABLE `bidding_steps` (
   `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `start_date` datetime DEFAULT NULL,
   `end_date` datetime DEFAULT NULL,
+  `approval_steps` json DEFAULT NULL,
+  `current_level` int NOT NULL DEFAULT '0',
+  `approval_status` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `department` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -83,263 +255,318 @@ CREATE TABLE `bidding_steps` (
 -- Dumping data for table `bidding_steps`
 --
 
-INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `start_date`, `end_date`, `department`, `created_at`, `updated_at`, `status`, `customer_id`, `assigned_to`, `task_id`) VALUES
-(1, NULL, 1, 'Nhận nhu cầu của khách hàng', NULL, NULL, 'Khách hàng', '2025-06-05 03:50:22', '2025-06-29 17:12:28', 0, 1, NULL, 1),
-(2, NULL, 2, 'Đánh giá tính khả thi', NULL, NULL, 'P.KD, P.DVKT', '2025-06-05 03:51:59', '2025-06-29 17:12:28', 0, 4, NULL, 17),
-(3, NULL, 3, 'Chỉnh sửa tiêu đề bước', NULL, NULL, 'P.KD', '2025-06-05 03:52:32', '2025-06-29 17:12:28', 2, 10, NULL, 2),
-(4, NULL, 4, 'Duyệt kế hoạch', NULL, NULL, 'Ban Giám đốc', '2025-06-05 03:52:39', '2025-06-29 17:12:28', 2, 2, NULL, 16),
-(5, NULL, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, 'Ban Giám đốc, P.KD, P.DVKT, P.KHNS, P.TCKT', '2025-06-05 03:52:46', '2025-06-29 17:12:28', 1, 1, NULL, 15),
-(6, NULL, 6, 'Chấm thầu', NULL, NULL, 'Khách hàng', '2025-06-05 03:52:53', '2025-06-29 17:12:28', 0, 4, NULL, 6),
-(7, NULL, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, 'P.KD', '2025-06-05 03:53:00', '2025-06-29 17:12:28', 0, 4, NULL, 4),
-(8, NULL, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, 'P.KD, P.TCKT, P.DVKT', '2025-06-05 03:53:07', '2025-06-29 17:12:28', 0, 5, NULL, 20),
-(9, NULL, 9, 'Duyệt hợp đồng bán', NULL, NULL, 'Ban Giám đốc', '2025-06-05 03:53:14', '2025-06-29 17:12:28', 0, 3, NULL, 10),
-(10, NULL, 10, 'Duyệt hợp đồng bán', NULL, NULL, 'Ban Giám đốc', '2025-06-10 15:18:36', '2025-06-29 17:12:28', 1, 10, NULL, 9),
-(11, 1, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, 'Khách hàng', '2025-06-16 09:06:25', '2025-06-29 17:12:28', 2, NULL, NULL, 14),
-(12, 1, 2, 'Đánh giá tính khả thi', NULL, NULL, 'P.KD, P.DVKT', '2025-06-16 09:06:25', '2025-06-29 17:12:28', 1, NULL, NULL, 1),
-(13, 1, 3, 'Lập kế hoạch triển khai', NULL, NULL, 'P.KD, P.DVKT', '2025-06-16 09:06:25', '2025-06-29 17:12:28', 0, NULL, NULL, 2),
-(14, 1, 4, 'Duyệt kế hoạch', NULL, NULL, 'Ban Giám đốc', '2025-06-16 09:06:25', '2025-06-29 17:12:28', 0, NULL, NULL, 9),
-(15, 1, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, 'Ban Giám đốc, P.KD, P.DVKT, P.KHNS, P.TCKT', '2025-06-16 09:06:25', '2025-06-29 17:12:28', 0, NULL, NULL, 17),
-(16, 1, 6, 'Chấm thầu', NULL, NULL, 'Khách hàng', '2025-06-16 09:06:25', '2025-06-29 17:12:28', 0, NULL, NULL, 17),
-(17, 1, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, 'P.KD', '2025-06-16 09:06:25', '2025-06-29 17:12:28', 0, NULL, NULL, 13),
-(18, 1, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, 'P.KD, P.TCKT, P.DVKT', '2025-06-16 09:06:25', '2025-06-29 17:12:28', 0, NULL, NULL, 14),
-(19, 1, 9, 'Duyệt hợp đồng bán', NULL, NULL, 'Ban Giám đốc', '2025-06-16 09:06:25', '2025-06-29 17:12:28', 0, NULL, NULL, 9),
-(20, 1, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, 'Khách hàng', '2025-06-20 08:34:44', '2025-06-29 17:12:28', 2, NULL, NULL, 3),
-(21, 1, 2, 'Đánh giá tính khả thi', NULL, NULL, 'P.KD, P.DVKT', '2025-06-20 08:34:44', '2025-06-29 17:12:28', 0, NULL, NULL, 7),
-(22, 1, 3, 'Lập kế hoạch triển khai', NULL, NULL, 'P.KD, P.DVKT', '2025-06-20 08:34:44', '2025-06-29 17:12:28', 0, NULL, NULL, 5),
-(23, 1, 4, 'Duyệt kế hoạch', NULL, NULL, 'Ban Giám đốc', '2025-06-20 08:34:44', '2025-06-29 17:12:28', 0, NULL, NULL, 5),
-(24, 1, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, 'Ban Giám đốc, P.KD, P.DVKT, P.KHNS, P.TCKT', '2025-06-20 08:34:44', '2025-06-29 17:12:28', 0, NULL, NULL, 10),
-(25, 1, 6, 'Chấm thầu', NULL, NULL, 'Khách hàng', '2025-06-20 08:34:44', '2025-06-29 17:12:28', 0, NULL, NULL, 15),
-(26, 1, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, 'P.KD', '2025-06-20 08:34:44', '2025-06-29 17:12:28', 0, NULL, NULL, 3),
-(27, 1, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, 'P.KD, P.TCKT, P.DVKT', '2025-06-20 08:34:44', '2025-06-29 17:12:28', 0, NULL, NULL, 11),
-(28, 1, 9, 'Duyệt hợp đồng bán', NULL, NULL, 'Ban Giám đốc', '2025-06-20 08:34:44', '2025-06-29 17:12:28', 0, NULL, NULL, 6),
-(29, 12, 1, 'Nhận nhu cầu khách hàng  Khách hàng', NULL, NULL, 'KT', '2025-06-21 01:51:18', '2025-06-29 17:12:28', 0, 1, NULL, 15),
-(30, 12, 2, 'Đánh giá tính khả thi', NULL, NULL, '', '2025-06-21 01:51:18', '2025-06-29 17:12:28', 0, 1, NULL, 16),
-(31, 12, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-21 01:51:18', '2025-06-29 17:12:28', 0, NULL, NULL, 15),
-(32, 12, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-21 01:51:18', '2025-06-29 17:12:28', 0, NULL, NULL, 7),
-(33, 12, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-21 01:51:18', '2025-06-29 17:12:28', 0, NULL, NULL, 7),
-(34, 12, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-21 01:51:18', '2025-06-29 17:12:28', 0, NULL, NULL, 15),
-(35, 12, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-21 01:51:18', '2025-06-29 17:12:28', 0, NULL, NULL, 15),
-(36, 12, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-21 01:51:18', '2025-06-29 17:12:28', 0, NULL, NULL, 10),
-(37, 12, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-21 01:51:18', '2025-06-29 17:12:28', 0, NULL, NULL, 5),
-(38, 12, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-21 01:51:18', '2025-06-29 17:12:28', 0, NULL, NULL, 14),
-(39, 12, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-21 01:51:18', '2025-06-29 17:12:28', 0, NULL, NULL, 12),
-(40, 13, 1, 'Nhận nhu cầu khách hàng  Khách hàng', NULL, NULL, 'KT', '2025-06-22 03:09:31', '2025-06-29 17:12:28', 0, 1, NULL, 19),
-(41, 13, 2, 'Đánh giá tính khả thi', NULL, NULL, '', '2025-06-22 03:09:31', '2025-06-29 17:12:28', 0, 1, NULL, 19),
-(42, 13, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:09:32', '2025-06-29 17:12:28', 0, NULL, NULL, 17),
-(43, 13, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:09:32', '2025-06-29 17:12:28', 0, NULL, NULL, 6),
-(44, 13, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:09:32', '2025-06-29 17:12:28', 0, NULL, NULL, 1),
-(45, 13, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:09:32', '2025-06-29 17:12:28', 0, NULL, NULL, 7),
-(46, 13, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:09:32', '2025-06-29 17:12:28', 0, NULL, NULL, 9),
-(47, 13, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:09:32', '2025-06-29 17:12:28', 0, NULL, NULL, 7),
-(48, 13, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:09:32', '2025-06-29 17:12:28', 0, NULL, NULL, 4),
-(49, 13, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 03:09:32', '2025-06-29 17:12:28', 0, NULL, NULL, 1),
-(50, 13, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:09:32', '2025-06-29 17:12:28', 0, NULL, NULL, 13),
-(51, 14, 1, 'Nhận nhu cầu khách hàng  Khách hàng', NULL, NULL, 'KT', '2025-06-22 03:18:58', '2025-06-29 17:12:28', 0, 1, NULL, 19),
-(52, 14, 2, 'Đánh giá tính khả thi', NULL, NULL, '', '2025-06-22 03:18:58', '2025-06-29 17:12:28', 0, 1, NULL, 18),
-(53, 14, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:18:58', '2025-06-29 17:12:28', 1, 1, NULL, 13),
-(54, 14, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:18:58', '2025-06-29 17:12:28', 0, 1, NULL, 11),
-(55, 14, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:18:58', '2025-06-29 17:12:28', 0, 1, NULL, 16),
-(56, 14, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:18:58', '2025-06-29 17:12:28', 0, 1, NULL, 3),
-(57, 14, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:18:58', '2025-06-29 17:12:28', 0, 1, NULL, 10),
-(58, 14, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:18:58', '2025-06-29 17:12:28', 0, 1, NULL, 19),
-(59, 14, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:18:58', '2025-06-29 17:12:28', 0, 1, NULL, 4),
-(60, 14, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 03:18:58', '2025-06-29 17:12:28', 0, 1, NULL, 3),
-(61, 14, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:18:58', '2025-06-29 17:12:28', 0, 1, NULL, 1),
-(62, 15, 1, 'Nhận nhu cầu khách hàng  Khách hàng', NULL, NULL, 'KT', '2025-06-22 03:22:22', '2025-06-29 17:12:28', 0, 1, NULL, 19),
-(63, 15, 2, 'Đánh giá tính khả thi', NULL, NULL, '', '2025-06-22 03:22:22', '2025-06-29 17:12:28', 0, 1, NULL, 8),
-(64, 15, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:22:22', '2025-06-29 17:12:28', 1, 1, NULL, 4),
-(65, 15, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:22:22', '2025-06-29 17:12:28', 0, 1, NULL, 14),
-(66, 15, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:22:22', '2025-06-29 17:12:28', 0, 1, NULL, 1),
-(67, 15, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:22:22', '2025-06-29 17:12:28', 0, 1, NULL, 19),
-(68, 15, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:22:22', '2025-06-29 17:12:28', 0, 1, NULL, 12),
-(69, 15, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:22:22', '2025-06-29 17:12:28', 0, 1, NULL, 2),
-(70, 15, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:22:22', '2025-06-29 17:12:28', 0, 1, NULL, 14),
-(71, 15, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 03:22:22', '2025-06-29 17:12:28', 0, 1, NULL, 5),
-(72, 15, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:22:22', '2025-06-29 17:12:28', 0, 1, NULL, 20),
-(73, 8, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:43:42', '2025-06-29 17:12:28', 1, 7, NULL, 6),
-(74, 8, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:43:42', '2025-06-29 17:12:28', 0, 7, NULL, 10),
-(75, 8, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:43:42', '2025-06-29 17:12:28', 0, 7, NULL, 10),
-(76, 8, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:43:42', '2025-06-29 17:12:28', 0, 7, NULL, 19),
-(77, 8, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:43:42', '2025-06-29 17:12:28', 0, 7, NULL, 6),
-(78, 8, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:43:42', '2025-06-29 17:12:28', 0, 7, NULL, 10),
-(79, 8, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:43:42', '2025-07-20 09:32:53', 0, 7, NULL, 35),
-(80, 8, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 03:43:42', '2025-06-29 17:38:34', 0, 7, NULL, 35),
-(81, 8, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:43:42', '2025-06-29 17:12:28', 0, 7, NULL, 10),
-(82, 10, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:44:10', '2025-06-29 17:12:28', 1, 9, NULL, 9),
-(83, 10, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:44:10', '2025-06-29 17:12:28', 0, 9, NULL, 14),
-(84, 10, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:44:10', '2025-06-29 17:12:28', 0, 9, NULL, 4),
-(85, 10, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:44:10', '2025-06-29 17:12:28', 0, 9, NULL, 17),
-(86, 10, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:44:10', '2025-06-29 17:12:28', 0, 9, NULL, 11),
-(87, 10, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:44:10', '2025-06-29 17:12:28', 0, 9, NULL, 4),
-(88, 10, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:44:10', '2025-06-29 17:12:28', 0, 9, NULL, 7),
-(89, 10, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 03:44:10', '2025-06-29 17:12:28', 0, 9, NULL, 2),
-(90, 10, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:44:10', '2025-08-02 01:48:29', 0, 9, NULL, 83),
-(91, 11, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:44:20', '2025-08-02 04:28:21', 1, 10, 4, 5),
-(92, 11, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:44:20', '2025-06-29 17:12:28', 0, 10, NULL, 12),
-(93, 11, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:44:20', '2025-06-29 17:12:28', 0, 10, NULL, 7),
-(94, 11, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:44:20', '2025-06-29 17:12:28', 0, 10, NULL, 16),
-(95, 11, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:44:20', '2025-06-29 17:12:28', 0, 10, NULL, 1),
-(96, 11, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:44:20', '2025-06-29 17:12:28', 0, 10, NULL, 17),
-(97, 11, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:44:20', '2025-06-29 17:12:28', 0, 10, NULL, 1),
-(98, 11, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 03:44:20', '2025-06-29 17:12:28', 0, 10, NULL, 12),
-(99, 11, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:44:20', '2025-06-29 17:12:28', 0, 10, NULL, 16),
-(100, 5, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:44:51', '2025-06-29 17:12:28', 2, 4, NULL, 3),
-(101, 5, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:44:51', '2025-06-29 17:12:28', 1, 4, NULL, 9),
-(102, 5, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:44:51', '2025-06-29 17:12:28', 0, 4, NULL, 14),
-(103, 5, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:44:51', '2025-06-29 17:12:28', 0, 4, NULL, 2),
-(104, 5, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:44:51', '2025-07-06 15:53:08', 0, 4, NULL, 29),
-(105, 5, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:44:51', '2025-06-29 17:12:28', 0, 4, NULL, 10),
-(106, 5, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:44:51', '2025-06-29 17:12:28', 0, 4, NULL, 7),
-(107, 5, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 03:44:51', '2025-06-29 17:12:28', 0, 4, NULL, 7),
-(108, 5, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:44:51', '2025-06-29 17:12:28', 0, 4, NULL, 11),
-(109, 2, 1, 'Nhận nhu cầu khách hàng', '2025-07-07 00:00:00', '2025-07-31 00:00:00', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:48:05', '2025-07-08 14:24:18', 2, 1, 8, 32),
-(110, 2, 2, 'Đánh giá tính khả thi', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:48:05', '2025-08-04 15:04:55', 2, 1, 22, 34),
-(111, 2, 3, 'Lập kế hoạch triển khai', '2025-07-19 00:00:00', '2025-07-31 00:00:00', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:48:05', '2025-08-05 08:22:19', 2, 1, 24, 50),
-(112, 2, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:48:05', '2025-07-20 12:47:51', 2, 1, NULL, 1),
-(113, 2, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:48:05', '2025-07-01 11:11:05', 1, 1, NULL, 1),
-(114, 2, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:48:05', '2025-08-05 17:35:44', 0, 1, NULL, 40),
-(115, 2, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:48:05', '2025-06-29 17:12:28', 0, 1, NULL, 12),
-(116, 2, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 03:48:05', '2025-06-29 17:12:28', 0, 1, NULL, 10),
-(117, 2, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:48:05', '2025-06-29 17:12:28', 0, 1, NULL, 14),
-(118, 3, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:56:49', '2025-07-10 05:53:50', 2, 2, 22, 49),
-(119, 3, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:56:49', '2025-06-29 17:12:28', 2, 2, 8, 14),
-(120, 3, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:56:49', '2025-06-29 17:12:28', 2, 2, 17, 9),
-(121, 3, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:56:49', '2025-06-29 18:06:56', 2, 2, 5, 1),
-(122, 3, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:56:49', '2025-06-29 17:10:31', 2, 2, 6, 1),
-(123, 3, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:56:49', '2025-07-20 09:38:16', 2, 2, 19, 45),
-(124, 3, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:56:49', '2025-06-29 17:12:28', 2, 2, 17, 17),
-(125, 3, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 03:56:49', '2025-06-29 17:12:28', 2, 2, 16, 15),
-(126, 3, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:56:49', '2025-06-29 17:12:28', 2, 2, 17, 4),
-(127, 4, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:57:46', '2025-06-29 17:12:28', 2, 3, 24, 14),
-(128, 4, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:57:46', '2025-06-29 17:12:28', 2, 3, 11, 19),
-(129, 4, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:57:46', '2025-06-29 17:12:28', 2, 3, 12, 10),
-(130, 4, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:57:46', '2025-07-01 11:32:47', 2, 3, 22, 49),
-(131, 4, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:57:46', '2025-06-29 17:12:28', 2, 3, 7, 20),
-(132, 4, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:57:46', '2025-06-29 17:12:28', 2, 3, 23, 16),
-(133, 4, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:57:46', '2025-06-29 17:12:28', 2, 3, 20, 20),
-(134, 4, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 03:57:46', '2025-06-29 17:12:28', 2, 3, 6, 11),
-(135, 4, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 03:57:46', '2025-06-29 17:12:28', 2, 3, 7, 16),
-(158, 26, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:04:45', '2025-06-29 17:12:28', 1, 1, NULL, 7),
-(159, 26, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 05:04:45', '2025-06-29 17:12:28', 0, 1, NULL, 5),
-(160, 26, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 05:04:45', '2025-06-29 17:12:28', 0, 1, NULL, 2),
-(161, 26, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 05:04:45', '2025-06-29 17:12:28', 0, 1, NULL, 17),
-(162, 26, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 05:04:45', '2025-06-29 17:12:28', 0, 1, NULL, 18),
-(163, 26, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:04:45', '2025-06-29 17:12:28', 0, 1, NULL, 20),
-(164, 26, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 05:04:45', '2025-06-29 17:12:28', 0, 1, NULL, 6),
-(165, 26, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 05:04:45', '2025-06-29 17:12:28', 0, 1, NULL, 7),
-(166, 26, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 05:04:45', '2025-06-29 17:12:28', 0, 1, NULL, 19),
-(169, 27, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:06:25', '2025-06-29 17:12:28', 1, 1, NULL, 14),
-(170, 27, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 05:06:25', '2025-06-29 17:12:28', 0, 1, NULL, 11),
-(171, 27, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 05:06:25', '2025-06-29 17:12:28', 0, 1, NULL, 11),
-(172, 27, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 05:06:25', '2025-06-29 17:12:28', 0, 1, NULL, 3),
-(173, 27, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 05:06:25', '2025-06-29 17:12:28', 0, 1, NULL, 1),
-(174, 27, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:06:25', '2025-06-29 17:12:28', 0, 1, NULL, 17),
-(175, 27, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 05:06:25', '2025-06-29 17:12:28', 0, 1, NULL, 3),
-(176, 27, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 05:06:25', '2025-06-29 17:12:28', 0, 1, NULL, 1),
-(177, 27, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 05:06:25', '2025-06-29 17:12:28', 0, 1, NULL, 15),
-(189, 29, 1, 'Nhận nhu cầu khách hàng  Khách hàng', NULL, NULL, 'KT', '2025-06-22 05:16:54', '2025-06-29 17:12:28', 0, 1, NULL, 12),
-(190, 29, 2, 'Đánh giá tính khả thi', NULL, NULL, '', '2025-06-22 05:16:54', '2025-06-29 17:12:28', 0, 1, NULL, 15),
-(191, 29, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:16:54', '2025-06-29 17:12:28', 1, 1, NULL, 19),
-(192, 29, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 05:16:54', '2025-06-29 17:12:28', 0, 1, NULL, 9),
-(193, 29, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 05:16:54', '2025-06-29 17:12:28', 0, 1, NULL, 5),
-(194, 29, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 05:16:54', '2025-06-29 17:12:28', 0, 1, NULL, 1),
-(195, 29, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 05:16:54', '2025-06-29 17:12:28', 0, 1, NULL, 9),
-(196, 29, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:16:54', '2025-06-29 17:12:28', 0, 1, NULL, 1),
-(197, 29, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 05:16:54', '2025-06-29 17:12:28', 0, 1, NULL, 18),
-(198, 29, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 05:16:54', '2025-06-29 17:12:28', 0, 1, NULL, 5),
-(199, 29, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 05:16:54', '2025-06-29 17:12:28', 0, 1, NULL, 12),
-(200, 30, 1, 'Nhận nhu cầu khách hàng  Khách hàng', NULL, NULL, 'KT', '2025-06-22 05:20:16', '2025-06-29 17:12:28', 0, 1, NULL, 3),
-(201, 30, 2, 'Đánh giá tính khả thi', NULL, NULL, '', '2025-06-22 05:20:16', '2025-06-29 17:12:28', 0, 1, NULL, 20),
-(202, 30, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:20:16', '2025-06-29 17:12:28', 1, 1, NULL, 11),
-(203, 30, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 05:20:16', '2025-06-29 17:12:28', 0, 1, NULL, 13),
-(204, 30, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 05:20:16', '2025-06-29 17:12:28', 0, 1, NULL, 13),
-(205, 30, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 05:20:16', '2025-06-29 17:12:28', 0, 1, NULL, 7),
-(206, 30, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 05:20:16', '2025-06-29 17:12:28', 0, 1, NULL, 13),
-(207, 30, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:20:16', '2025-06-29 17:12:28', 0, 1, NULL, 4),
-(208, 30, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 05:20:16', '2025-06-29 17:12:28', 0, 1, NULL, 1),
-(209, 30, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 05:20:16', '2025-06-29 17:12:28', 0, 1, NULL, 14),
-(210, 30, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 05:20:16', '2025-06-29 17:12:28', 0, 1, NULL, 5),
-(213, 31, 1, 'Nhận nhu cầu khách hàng', '2025-08-04 00:00:00', '2025-08-31 00:00:00', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:22:47', '2025-08-05 08:55:45', 1, 1, 5, 119),
-(214, 31, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 05:22:47', '2025-06-29 17:12:28', 0, 1, NULL, 14),
-(215, 31, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 05:22:47', '2025-06-29 17:12:28', 0, 1, NULL, 5),
-(216, 31, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 05:22:47', '2025-06-29 17:12:28', 0, 1, NULL, 4),
-(217, 31, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 05:22:47', '2025-06-29 17:12:28', 0, 1, NULL, 3),
-(218, 31, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:22:47', '2025-06-29 17:12:28', 0, 1, NULL, 2),
-(219, 31, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 05:22:47', '2025-06-29 17:12:28', 0, 1, NULL, 20),
-(220, 31, 8, 'Triển khai ký hợp đồng bán', '2025-08-05 00:00:00', '2025-08-31 00:00:00', '[\"Phòng Thương mại\"]', '2025-06-22 05:22:47', '2025-08-04 17:22:18', 0, 1, 5, 15),
-(221, 31, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 05:22:47', '2025-08-04 17:24:27', 0, 1, NULL, 14),
-(224, 32, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:23:23', '2025-08-04 17:16:57', 2, 1, 5, 4),
-(225, 32, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 05:23:23', '2025-06-29 17:12:28', 2, 1, NULL, 18),
-(226, 32, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 05:23:23', '2025-06-29 17:12:28', 2, 1, NULL, 18),
-(227, 32, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 05:23:23', '2025-06-29 17:12:28', 2, 1, NULL, 13),
-(228, 32, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 05:23:23', '2025-06-29 17:12:28', 2, 1, 24, 13),
-(229, 32, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:23:23', '2025-06-29 17:12:28', 2, 1, NULL, 7),
-(230, 32, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 05:23:23', '2025-06-29 17:12:28', 2, 1, 6, 13),
-(231, 32, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 05:23:23', '2025-06-29 17:12:28', 2, 1, 22, 5),
-(232, 32, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 05:23:23', '2025-06-29 17:12:28', 2, 1, 14, 6),
-(233, 6, 1, 'Nhận nhu cầu khách hàng', '2025-07-10 00:00:00', '2025-07-28 00:00:00', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 06:55:02', '2025-07-10 03:28:01', 1, 5, 6, 15),
-(234, 6, 2, 'Đánh giá tính khả thi', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 06:55:02', '2025-08-04 15:28:40', 0, 5, NULL, 16),
-(235, 6, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 06:55:02', '2025-06-29 17:12:28', 0, 5, NULL, 14),
-(236, 6, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 06:55:02', '2025-06-29 17:12:28', 0, 5, NULL, 1),
-(237, 6, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 06:55:02', '2025-07-06 13:45:23', 0, 5, NULL, 2),
-(238, 6, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 06:55:02', '2025-06-29 17:12:28', 0, 5, NULL, 13),
-(239, 6, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 06:55:02', '2025-06-29 17:11:33', 0, 5, NULL, 2),
-(240, 6, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 06:55:02', '2025-06-29 17:12:28', 0, 5, NULL, 11),
-(241, 6, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 06:55:02', '2025-06-29 17:12:28', 0, 5, NULL, 11),
-(244, 33, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 14:53:19', '2025-06-29 17:12:28', 1, 1, 7, 3),
-(245, 33, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 14:53:19', '2025-06-29 17:12:28', 0, 1, NULL, 1),
-(246, 33, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 14:53:19', '2025-06-29 17:12:28', 0, 1, NULL, 15),
-(247, 33, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 14:53:19', '2025-06-29 17:12:28', 0, 1, NULL, 14),
-(248, 33, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 14:53:19', '2025-06-29 17:12:28', 0, 1, NULL, 1),
-(249, 33, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 14:53:19', '2025-06-29 17:12:28', 0, 1, NULL, 6),
-(250, 33, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 14:53:19', '2025-06-29 17:12:28', 0, 1, NULL, 4),
-(251, 33, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 14:53:19', '2025-06-29 17:12:28', 0, 1, NULL, 4),
-(252, 33, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 14:53:19', '2025-06-29 17:12:28', 0, 1, NULL, 7),
-(253, 9, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 15:07:34', '2025-06-29 17:12:28', 1, 8, NULL, 2),
-(254, 9, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 15:07:34', '2025-06-29 17:12:28', 0, 8, NULL, 10),
-(255, 9, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 15:07:34', '2025-06-29 17:12:28', 0, 8, NULL, 4),
-(256, 9, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 15:07:34', '2025-06-29 17:12:28', 0, 8, NULL, 7),
-(257, 9, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 15:07:34', '2025-06-29 17:12:28', 0, 8, NULL, 4),
-(258, 9, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 15:07:34', '2025-06-29 17:12:28', 0, 8, NULL, 20),
-(259, 9, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 15:07:34', '2025-07-20 09:38:40', 0, 8, NULL, 46),
-(260, 9, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 15:07:34', '2025-07-20 09:37:49', 0, 8, NULL, 38),
-(261, 9, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 15:07:34', '2025-07-20 09:38:04', 0, 8, NULL, 39),
-(264, 34, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 15:21:11', '2025-08-06 12:39:28', 2, 1, 6, 43),
-(265, 34, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 15:21:11', '2025-07-06 17:05:22', 2, 1, 8, 3),
-(266, 34, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 15:21:11', '2025-06-29 17:12:28', 2, 1, 7, 16),
-(267, 34, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 15:21:11', '2025-06-29 17:12:28', 2, 1, 20, 5),
-(268, 34, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 15:21:11', '2025-06-29 17:12:28', 2, 1, NULL, 16),
-(269, 34, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 15:21:11', '2025-06-29 17:12:28', 2, 1, 22, 5),
-(270, 34, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 15:21:11', '2025-06-29 17:12:28', 2, 1, 21, 18),
-(271, 34, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-22 15:21:11', '2025-06-29 17:12:28', 2, 1, 5, 12),
-(272, 34, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-22 15:21:11', '2025-06-29 17:12:28', 2, 1, 11, 8),
-(273, 28, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-29 02:35:13', '2025-06-29 17:12:28', 1, 1, NULL, 4),
-(274, 28, 2, 'Đánh giá tính khả thi', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-29 02:35:13', '2025-06-29 17:12:28', 0, 1, NULL, 13),
-(275, 28, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-29 02:35:13', '2025-06-29 17:12:28', 0, 1, NULL, 15),
-(276, 28, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-29 02:35:13', '2025-06-29 17:12:28', 0, 1, NULL, 12),
-(277, 28, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-29 02:35:13', '2025-06-29 17:12:28', 0, 1, NULL, 17),
-(278, 28, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-06-29 02:35:13', '2025-06-29 17:12:28', 0, 1, NULL, 9),
-(279, 28, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-29 02:35:13', '2025-06-29 17:12:28', 0, 1, NULL, 12),
-(280, 28, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-06-29 02:35:13', '2025-06-29 17:12:28', 0, 1, NULL, 14),
-(281, 28, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-06-29 02:35:13', '2025-06-29 17:12:28', 0, 1, NULL, 15),
-(284, 35, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-08-04 17:26:31', '2025-08-04 17:26:31', 1, 1, NULL, NULL),
-(285, 35, 2, 'Đánh giá tính khả thi', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-08-04 17:26:31', '2025-08-04 17:26:31', 0, 1, NULL, NULL),
-(286, 35, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-08-04 17:26:31', '2025-08-04 17:26:31', 0, 1, NULL, NULL),
-(287, 35, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-08-04 17:26:31', '2025-08-04 17:26:31', 0, 1, NULL, NULL),
-(288, 35, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-08-04 17:26:31', '2025-08-04 17:26:31', 0, 1, NULL, NULL),
-(289, 35, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-08-04 17:26:31', '2025-08-04 17:26:31', 0, 1, NULL, NULL),
-(290, 35, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-08-04 17:26:31', '2025-08-04 17:26:31', 0, 1, NULL, NULL),
-(291, 35, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-08-04 17:26:31', '2025-08-04 17:26:31', 0, 1, NULL, NULL),
-(292, 35, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-08-04 17:26:31', '2025-08-04 17:26:31', 0, 1, NULL, NULL),
-(293, 7, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-08-04 17:40:14', '2025-08-04 17:40:14', 1, 6, NULL, NULL),
-(294, 7, 2, 'Đánh giá tính khả thi', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-08-04 17:40:14', '2025-08-04 17:40:14', 0, 6, NULL, NULL),
-(295, 7, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-08-04 17:40:14', '2025-08-04 17:40:14', 0, 6, NULL, NULL),
-(296, 7, 4, 'Duyệt kế hoạch', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-08-04 17:40:14', '2025-08-04 17:40:14', 0, 6, NULL, NULL),
-(297, 7, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-08-04 17:40:14', '2025-08-04 17:40:14', 0, 6, NULL, NULL),
-(298, 7, 6, 'Chấm thầu', NULL, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-08-04 17:40:14', '2025-08-04 17:40:14', 0, 6, NULL, NULL),
-(299, 7, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-08-04 17:40:14', '2025-08-04 17:40:14', 0, 6, NULL, NULL),
-(300, 7, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, '[\"Phòng Thương mại\"]', '2025-08-04 17:40:14', '2025-08-04 17:40:14', 0, 6, NULL, NULL),
-(301, 7, 9, 'Duyệt hợp đồng bán', NULL, NULL, '[\"Phòng Kinh doanh\"]', '2025-08-04 17:40:14', '2025-08-04 17:40:14', 0, 6, NULL, NULL);
+INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `start_date`, `end_date`, `approval_steps`, `current_level`, `approval_status`, `department`, `created_at`, `updated_at`, `status`, `customer_id`, `assigned_to`, `task_id`) VALUES
+(1, NULL, 1, 'Nhận nhu cầu của khách hàng', NULL, NULL, NULL, 0, 'draft', 'Khách hàng', '2025-06-05 03:50:22', '2025-09-01 13:40:50', 0, 1, NULL, 1),
+(2, NULL, 2, 'Đánh giá tính khả thi', NULL, NULL, NULL, 0, 'draft', 'P.KD, P.DVKT', '2025-06-05 03:51:59', '2025-09-01 13:40:50', 0, 4, NULL, 17),
+(3, NULL, 3, 'Chỉnh sửa tiêu đề bước', NULL, NULL, NULL, 0, 'draft', 'P.KD', '2025-06-05 03:52:32', '2025-09-01 13:40:50', 2, 10, NULL, 2),
+(4, NULL, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', 'Ban Giám đốc', '2025-06-05 03:52:39', '2025-09-01 13:40:50', 2, 2, NULL, 16),
+(5, NULL, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', 'Ban Giám đốc, P.KD, P.DVKT, P.KHNS, P.TCKT', '2025-06-05 03:52:46', '2025-09-01 13:40:50', 1, 1, NULL, 15),
+(6, NULL, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', 'Khách hàng', '2025-06-05 03:52:53', '2025-09-01 13:40:50', 0, 4, NULL, 6),
+(7, NULL, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', 'P.KD', '2025-06-05 03:53:00', '2025-09-01 13:40:50', 0, 4, NULL, 4),
+(8, NULL, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', 'P.KD, P.TCKT, P.DVKT', '2025-06-05 03:53:07', '2025-09-01 13:40:50', 0, 5, NULL, 20),
+(9, NULL, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', 'Ban Giám đốc', '2025-06-05 03:53:14', '2025-09-01 13:40:50', 0, 3, NULL, 10),
+(10, NULL, 10, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', 'Ban Giám đốc', '2025-06-10 15:18:36', '2025-09-01 13:40:50', 1, 10, NULL, 9),
+(11, 1, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', 'Khách hàng', '2025-06-16 09:06:25', '2025-09-01 13:40:50', 2, NULL, NULL, 14),
+(12, 1, 2, 'Đánh giá tính khả thi', NULL, NULL, NULL, 0, 'draft', 'P.KD, P.DVKT', '2025-06-16 09:06:25', '2025-09-01 13:40:50', 1, NULL, NULL, 1),
+(13, 1, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', 'P.KD, P.DVKT', '2025-06-16 09:06:25', '2025-09-01 13:40:50', 0, NULL, NULL, 2),
+(14, 1, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', 'Ban Giám đốc', '2025-06-16 09:06:25', '2025-09-01 13:40:50', 0, NULL, NULL, 9),
+(15, 1, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', 'Ban Giám đốc, P.KD, P.DVKT, P.KHNS, P.TCKT', '2025-06-16 09:06:25', '2025-09-01 13:40:50', 0, NULL, NULL, 17),
+(16, 1, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', 'Khách hàng', '2025-06-16 09:06:25', '2025-09-01 13:40:50', 0, NULL, NULL, 17),
+(17, 1, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', 'P.KD', '2025-06-16 09:06:25', '2025-09-01 13:40:50', 0, NULL, NULL, 13),
+(18, 1, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', 'P.KD, P.TCKT, P.DVKT', '2025-06-16 09:06:25', '2025-09-01 13:40:50', 0, NULL, NULL, 14),
+(19, 1, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', 'Ban Giám đốc', '2025-06-16 09:06:25', '2025-09-01 13:40:50', 0, NULL, NULL, 9),
+(20, 1, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', 'Khách hàng', '2025-06-20 08:34:44', '2025-09-01 13:40:50', 2, NULL, NULL, 3),
+(21, 1, 2, 'Đánh giá tính khả thi', NULL, NULL, NULL, 0, 'draft', 'P.KD, P.DVKT', '2025-06-20 08:34:44', '2025-09-01 13:40:50', 0, NULL, NULL, 7),
+(22, 1, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', 'P.KD, P.DVKT', '2025-06-20 08:34:44', '2025-09-01 13:40:50', 0, NULL, NULL, 5),
+(23, 1, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', 'Ban Giám đốc', '2025-06-20 08:34:44', '2025-09-01 13:40:50', 0, NULL, NULL, 5),
+(24, 1, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', 'Ban Giám đốc, P.KD, P.DVKT, P.KHNS, P.TCKT', '2025-06-20 08:34:44', '2025-09-01 13:40:50', 0, NULL, NULL, 10),
+(25, 1, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', 'Khách hàng', '2025-06-20 08:34:44', '2025-09-01 13:40:50', 0, NULL, NULL, 15),
+(26, 1, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', 'P.KD', '2025-06-20 08:34:44', '2025-09-01 13:40:50', 0, NULL, NULL, 3),
+(27, 1, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', 'P.KD, P.TCKT, P.DVKT', '2025-06-20 08:34:44', '2025-09-01 13:40:50', 0, NULL, NULL, 11),
+(28, 1, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', 'Ban Giám đốc', '2025-06-20 08:34:44', '2025-09-01 13:40:50', 0, NULL, NULL, 6),
+(29, 12, 1, 'Nhận nhu cầu khách hàng  Khách hàng', NULL, NULL, NULL, 0, 'draft', 'KT', '2025-06-21 01:51:18', '2025-09-01 13:40:50', 0, 1, NULL, 15),
+(30, 12, 2, 'Đánh giá tính khả thi', NULL, NULL, NULL, 0, 'draft', '', '2025-06-21 01:51:18', '2025-09-01 13:40:50', 0, 1, NULL, 16),
+(31, 12, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-21 01:51:18', '2025-09-01 13:40:50', 0, NULL, NULL, 15),
+(32, 12, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-21 01:51:18', '2025-09-01 13:40:50', 0, NULL, NULL, 7),
+(33, 12, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-21 01:51:18', '2025-09-01 13:40:50', 0, NULL, NULL, 7),
+(34, 12, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-21 01:51:18', '2025-09-01 13:40:50', 0, NULL, NULL, 15),
+(35, 12, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-21 01:51:18', '2025-09-01 13:40:50', 0, NULL, NULL, 15),
+(36, 12, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-21 01:51:18', '2025-09-01 13:40:50', 0, NULL, NULL, 10),
+(37, 12, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-21 01:51:18', '2025-09-01 13:40:50', 0, NULL, NULL, 5),
+(38, 12, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-21 01:51:18', '2025-09-01 13:40:50', 0, NULL, NULL, 14),
+(39, 12, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-21 01:51:18', '2025-09-01 13:40:50', 0, NULL, NULL, 12),
+(40, 13, 1, 'Nhận nhu cầu khách hàng  Khách hàng', NULL, NULL, NULL, 0, 'draft', 'KT', '2025-06-22 03:09:31', '2025-09-01 13:40:50', 0, 1, NULL, 19),
+(41, 13, 2, 'Đánh giá tính khả thi', NULL, NULL, NULL, 0, 'draft', '', '2025-06-22 03:09:31', '2025-09-01 13:40:50', 0, 1, NULL, 19),
+(42, 13, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:09:32', '2025-09-01 13:40:50', 0, NULL, NULL, 17),
+(43, 13, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:09:32', '2025-09-01 13:40:50', 0, NULL, NULL, 6),
+(44, 13, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:09:32', '2025-09-01 13:40:50', 0, NULL, NULL, 1),
+(45, 13, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:09:32', '2025-09-01 13:40:50', 0, NULL, NULL, 7),
+(46, 13, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:09:32', '2025-09-01 13:40:50', 0, NULL, NULL, 9),
+(47, 13, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:09:32', '2025-09-01 13:40:50', 0, NULL, NULL, 7),
+(48, 13, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:09:32', '2025-09-01 13:40:50', 0, NULL, NULL, 4),
+(49, 13, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 03:09:32', '2025-09-01 13:40:50', 0, NULL, NULL, 1),
+(50, 13, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:09:32', '2025-09-01 13:40:50', 0, NULL, NULL, 13),
+(51, 14, 1, 'Nhận nhu cầu khách hàng  Khách hàng', NULL, NULL, NULL, 0, 'draft', 'KT', '2025-06-22 03:18:58', '2025-09-01 13:40:50', 0, 1, NULL, 19),
+(52, 14, 2, 'Đánh giá tính khả thi', NULL, NULL, NULL, 0, 'draft', '', '2025-06-22 03:18:58', '2025-09-01 13:40:50', 0, 1, NULL, 18),
+(53, 14, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:18:58', '2025-09-01 13:40:50', 1, 1, NULL, 13),
+(54, 14, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:18:58', '2025-09-01 13:40:50', 0, 1, NULL, 11),
+(55, 14, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:18:58', '2025-09-01 13:40:50', 0, 1, NULL, 16),
+(56, 14, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:18:58', '2025-09-01 13:40:50', 0, 1, NULL, 3),
+(57, 14, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:18:58', '2025-09-01 13:40:50', 0, 1, NULL, 10),
+(58, 14, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:18:58', '2025-09-01 13:40:50', 0, 1, NULL, 19),
+(59, 14, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:18:58', '2025-09-01 13:40:50', 0, 1, NULL, 4),
+(60, 14, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 03:18:58', '2025-09-01 13:40:50', 0, 1, NULL, 3),
+(61, 14, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:18:58', '2025-09-01 13:40:50', 0, 1, NULL, 1),
+(62, 15, 1, 'Nhận nhu cầu khách hàng  Khách hàng', NULL, NULL, NULL, 0, 'draft', 'KT', '2025-06-22 03:22:22', '2025-09-01 13:40:50', 0, 1, NULL, 19),
+(63, 15, 2, 'Đánh giá tính khả thi', NULL, NULL, NULL, 0, 'draft', '', '2025-06-22 03:22:22', '2025-09-01 13:40:50', 0, 1, NULL, 8),
+(64, 15, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:22:22', '2025-09-01 13:40:50', 1, 1, NULL, 4),
+(65, 15, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:22:22', '2025-09-01 13:40:50', 0, 1, NULL, 14),
+(66, 15, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:22:22', '2025-09-01 13:40:50', 0, 1, NULL, 1),
+(67, 15, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:22:22', '2025-09-01 13:40:50', 0, 1, NULL, 19),
+(68, 15, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:22:22', '2025-09-01 13:40:50', 0, 1, NULL, 12),
+(69, 15, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:22:22', '2025-09-01 13:40:50', 0, 1, NULL, 2),
+(70, 15, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:22:22', '2025-09-01 13:40:50', 0, 1, NULL, 14),
+(71, 15, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 03:22:22', '2025-09-01 13:40:50', 0, 1, NULL, 5),
+(72, 15, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:22:22', '2025-09-01 13:40:50', 0, 1, NULL, 20),
+(73, 8, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:43:42', '2025-09-01 13:40:50', 2, 7, NULL, 6),
+(74, 8, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:43:42', '2025-09-01 13:40:50', 0, 7, NULL, 10),
+(75, 8, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:43:42', '2025-09-01 13:40:50', 0, 7, NULL, 10),
+(76, 8, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:43:42', '2025-09-01 13:40:50', 0, 7, NULL, 19),
+(77, 8, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:43:42', '2025-09-01 13:40:50', 0, 7, NULL, 6),
+(78, 8, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:43:42', '2025-09-01 13:40:50', 0, 7, NULL, 10),
+(79, 8, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:43:42', '2025-09-01 13:40:50', 0, 7, NULL, 35),
+(80, 8, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 03:43:42', '2025-09-01 13:40:50', 0, 7, NULL, 35),
+(81, 8, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:43:42', '2025-09-01 13:40:50', 0, 7, NULL, 10),
+(82, 10, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:44:10', '2025-09-01 13:40:50', 1, 9, NULL, 83),
+(83, 10, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:44:10', '2025-09-01 13:40:50', 0, 9, NULL, 14),
+(84, 10, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:44:10', '2025-09-01 13:40:50', 0, 9, NULL, 4),
+(85, 10, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:44:10', '2025-09-01 13:40:50', 0, 9, NULL, 17),
+(86, 10, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:44:10', '2025-09-01 13:40:50', 0, 9, NULL, 11),
+(87, 10, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:44:10', '2025-09-01 13:40:50', 0, 9, NULL, 4),
+(88, 10, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:44:10', '2025-09-01 13:40:50', 0, 9, NULL, 7),
+(89, 10, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 03:44:10', '2025-09-01 13:40:50', 0, 9, NULL, 2),
+(90, 10, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:44:10', '2025-09-01 13:40:50', 0, 9, NULL, 83),
+(91, 11, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:44:20', '2025-09-01 13:40:50', 2, 10, 4, 203),
+(92, 11, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:44:20', '2025-09-01 13:40:50', 0, 10, NULL, 12),
+(93, 11, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:44:20', '2025-09-01 13:40:50', 0, 10, NULL, 7),
+(94, 11, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:44:20', '2025-09-01 13:40:50', 0, 10, NULL, 16),
+(95, 11, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:44:20', '2025-09-01 13:40:50', 0, 10, NULL, 1),
+(96, 11, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:44:20', '2025-09-01 13:40:50', 0, 10, NULL, 17),
+(97, 11, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:44:20', '2025-09-01 13:40:50', 0, 10, NULL, 1),
+(98, 11, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 03:44:20', '2025-09-01 13:40:50', 0, 10, NULL, 12),
+(99, 11, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:44:20', '2025-09-01 13:40:50', 0, 10, NULL, 16),
+(100, 5, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:44:51', '2025-09-01 13:40:50', 2, 4, NULL, 3),
+(101, 5, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:44:51', '2025-09-01 13:40:50', 1, 4, NULL, 9),
+(102, 5, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:44:51', '2025-09-01 13:40:50', 0, 4, NULL, 14),
+(103, 5, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:44:51', '2025-09-01 13:40:50', 0, 4, NULL, 2),
+(104, 5, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:44:51', '2025-09-01 13:40:50', 0, 4, NULL, 29),
+(105, 5, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:44:51', '2025-09-01 13:40:50', 0, 4, NULL, 10),
+(106, 5, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:44:51', '2025-09-01 13:40:50', 0, 4, NULL, 7),
+(107, 5, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 03:44:51', '2025-09-01 13:40:50', 0, 4, NULL, 7),
+(108, 5, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:44:51', '2025-09-01 13:40:50', 0, 4, NULL, 33),
+(118, 3, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:56:49', '2025-09-01 13:40:50', 2, 2, 22, 49),
+(119, 3, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:56:49', '2025-09-01 13:40:50', 2, 2, 8, 14),
+(120, 3, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:56:49', '2025-09-01 13:40:50', 2, 2, 17, 9),
+(121, 3, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:56:49', '2025-09-01 13:40:50', 2, 2, 5, 1),
+(122, 3, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:56:49', '2025-09-01 13:40:50', 2, 2, 6, 1),
+(123, 3, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:56:49', '2025-09-01 13:40:50', 2, 2, 19, 45),
+(124, 3, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:56:49', '2025-09-01 13:40:50', 2, 2, 17, 17),
+(125, 3, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 03:56:49', '2025-09-01 13:40:50', 2, 2, 16, 15),
+(126, 3, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:56:49', '2025-09-01 13:40:50', 2, 2, 17, 4),
+(127, 4, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:57:46', '2025-09-01 13:40:50', 2, 3, 24, 14),
+(128, 4, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:57:46', '2025-09-01 13:40:50', 2, 3, 11, 19),
+(129, 4, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:57:46', '2025-09-01 13:40:50', 2, 3, 12, 10),
+(130, 4, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:57:46', '2025-09-01 13:40:50', 2, 3, 22, 49),
+(131, 4, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 03:57:46', '2025-09-01 13:40:50', 2, 3, 7, 20),
+(132, 4, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:57:46', '2025-09-01 13:40:50', 2, 3, 23, 16),
+(133, 4, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:57:46', '2025-09-01 13:40:50', 2, 3, 20, 20),
+(134, 4, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 03:57:46', '2025-09-01 13:40:50', 2, 3, 6, 11),
+(135, 4, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:57:46', '2025-09-01 13:40:50', 2, 3, 7, 16),
+(158, 26, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:04:45', '2025-09-01 13:40:50', 1, 1, NULL, 7),
+(159, 26, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 05:04:45', '2025-09-01 13:40:50', 0, 1, NULL, 5),
+(160, 26, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 05:04:45', '2025-09-01 13:40:50', 0, 1, NULL, 2),
+(161, 26, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 05:04:45', '2025-09-01 13:40:50', 0, 1, NULL, 17),
+(162, 26, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 05:04:45', '2025-09-01 13:40:50', 0, 1, NULL, 18),
+(163, 26, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:04:45', '2025-09-01 13:40:50', 0, 1, NULL, 20),
+(164, 26, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 05:04:45', '2025-09-01 13:40:50', 0, 1, NULL, 6),
+(165, 26, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 05:04:45', '2025-09-01 13:40:50', 0, 1, NULL, 7),
+(166, 26, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 05:04:45', '2025-09-01 13:40:50', 0, 1, NULL, 19),
+(169, 27, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:06:25', '2025-09-01 13:40:50', 1, 1, NULL, 14),
+(170, 27, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 05:06:25', '2025-09-01 13:40:50', 0, 1, NULL, 11),
+(171, 27, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 05:06:25', '2025-09-01 13:40:50', 0, 1, NULL, 11),
+(172, 27, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 05:06:25', '2025-09-01 13:40:50', 0, 1, NULL, 3),
+(173, 27, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 05:06:25', '2025-09-01 13:40:50', 0, 1, NULL, 1),
+(174, 27, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:06:25', '2025-09-01 13:40:50', 0, 1, NULL, 17),
+(175, 27, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 05:06:25', '2025-09-01 13:40:50', 0, 1, NULL, 3),
+(176, 27, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 05:06:25', '2025-09-01 13:40:50', 0, 1, NULL, 1),
+(177, 27, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 05:06:25', '2025-09-01 13:40:50', 0, 1, NULL, 15),
+(189, 29, 1, 'Nhận nhu cầu khách hàng  Khách hàng', NULL, NULL, NULL, 0, 'draft', 'KT', '2025-06-22 05:16:54', '2025-09-01 13:40:50', 0, 1, NULL, 12),
+(190, 29, 2, 'Đánh giá tính khả thi', NULL, NULL, NULL, 0, 'draft', '', '2025-06-22 05:16:54', '2025-09-01 13:40:50', 0, 1, NULL, 15),
+(191, 29, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:16:54', '2025-09-01 13:40:50', 1, 1, NULL, 19),
+(192, 29, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 05:16:54', '2025-09-01 13:40:50', 0, 1, NULL, 9),
+(193, 29, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 05:16:54', '2025-09-01 13:40:50', 0, 1, NULL, 5),
+(194, 29, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 05:16:54', '2025-09-01 13:40:50', 0, 1, NULL, 1),
+(195, 29, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 05:16:54', '2025-09-01 13:40:50', 0, 1, NULL, 9),
+(196, 29, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:16:54', '2025-09-01 13:40:50', 0, 1, NULL, 1),
+(197, 29, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 05:16:54', '2025-09-01 13:40:50', 0, 1, NULL, 18),
+(198, 29, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 05:16:54', '2025-09-01 13:40:50', 0, 1, NULL, 5),
+(199, 29, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 05:16:54', '2025-09-01 13:40:50', 0, 1, NULL, 12),
+(200, 30, 1, 'Nhận nhu cầu khách hàng  Khách hàng', NULL, NULL, NULL, 0, 'draft', 'KT', '2025-06-22 05:20:16', '2025-09-01 13:40:50', 0, 1, NULL, 3),
+(201, 30, 2, 'Đánh giá tính khả thi', NULL, NULL, NULL, 0, 'draft', '', '2025-06-22 05:20:16', '2025-09-01 13:40:50', 0, 1, NULL, 20),
+(202, 30, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:20:16', '2025-09-01 13:40:50', 1, 1, NULL, 11),
+(203, 30, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 05:20:16', '2025-09-01 13:40:50', 0, 1, NULL, 13),
+(204, 30, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 05:20:16', '2025-09-01 13:40:50', 0, 1, NULL, 13),
+(205, 30, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 05:20:16', '2025-09-01 13:40:50', 0, 1, NULL, 7),
+(206, 30, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 05:20:16', '2025-09-01 13:40:50', 0, 1, NULL, 13),
+(207, 30, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:20:16', '2025-09-01 13:40:50', 0, 1, NULL, 4),
+(208, 30, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 05:20:16', '2025-09-01 13:40:50', 0, 1, NULL, 1),
+(209, 30, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 05:20:16', '2025-09-01 13:40:50', 0, 1, NULL, 14),
+(210, 30, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 05:20:16', '2025-09-01 13:40:50', 0, 1, NULL, 5),
+(213, 31, 1, 'Nhận nhu cầu khách hàng', '2025-08-04 00:00:00', '2025-08-31 00:00:00', NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:22:47', '2025-09-01 13:40:50', 1, 1, 5, 119),
+(214, 31, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 05:22:47', '2025-09-01 13:40:50', 0, 1, NULL, 14),
+(215, 31, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 05:22:47', '2025-09-01 13:40:50', 0, 1, NULL, 5),
+(216, 31, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 05:22:47', '2025-09-01 13:40:50', 0, 1, NULL, 4),
+(217, 31, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 05:22:47', '2025-09-01 13:40:50', 0, 1, NULL, 3),
+(218, 31, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:22:47', '2025-09-01 13:40:50', 0, 1, NULL, 2),
+(219, 31, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 05:22:47', '2025-09-01 13:40:50', 0, 1, NULL, 20),
+(220, 31, 8, 'Triển khai ký hợp đồng bán', '2025-08-05 00:00:00', '2025-08-31 00:00:00', NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 05:22:47', '2025-09-01 13:40:50', 0, 1, 5, 15),
+(221, 31, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 05:22:47', '2025-09-01 13:40:50', 0, 1, NULL, 14),
+(224, 32, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:23:23', '2025-09-01 13:40:50', 2, 1, 5, 4),
+(225, 32, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 05:23:23', '2025-09-01 13:40:50', 2, 1, NULL, 18),
+(226, 32, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 05:23:23', '2025-09-01 13:40:50', 2, 1, NULL, 18),
+(227, 32, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 05:23:23', '2025-09-01 13:40:50', 2, 1, NULL, 13),
+(228, 32, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 05:23:23', '2025-09-01 13:40:50', 2, 1, 24, 13),
+(229, 32, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 05:23:23', '2025-09-01 13:40:50', 2, 1, NULL, 7),
+(230, 32, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 05:23:23', '2025-09-01 13:40:50', 2, 1, 6, 13),
+(231, 32, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 05:23:23', '2025-09-01 13:40:50', 2, 1, 22, 5),
+(232, 32, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 05:23:23', '2025-09-01 13:40:50', 2, 1, 14, 6),
+(233, 6, 1, 'Nhận nhu cầu khách hàng', '2025-07-10 00:00:00', '2025-07-28 00:00:00', NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 06:55:02', '2025-09-01 13:40:50', 1, 5, 6, 15),
+(234, 6, 2, 'Đánh giá tính khả thi', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 06:55:02', '2025-09-01 13:40:50', 0, 5, NULL, 16),
+(235, 6, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 06:55:02', '2025-09-01 13:40:50', 0, 5, NULL, 14),
+(236, 6, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 06:55:02', '2025-09-01 13:40:50', 0, 5, NULL, 1),
+(237, 6, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 06:55:02', '2025-09-01 13:40:50', 0, 5, NULL, 2),
+(238, 6, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 06:55:02', '2025-09-01 13:40:50', 0, 5, NULL, 13),
+(239, 6, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 06:55:02', '2025-09-01 13:40:50', 0, 5, NULL, 2),
+(240, 6, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 06:55:02', '2025-09-01 13:40:50', 0, 5, NULL, 11),
+(241, 6, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 06:55:02', '2025-09-01 13:40:50', 0, 5, NULL, 11),
+(244, 33, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 14:53:19', '2025-09-01 13:40:50', 1, 1, 7, 3),
+(245, 33, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 14:53:19', '2025-09-01 13:40:50', 0, 1, NULL, 1),
+(246, 33, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 14:53:19', '2025-09-01 13:40:50', 0, 1, NULL, 15),
+(247, 33, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 14:53:19', '2025-09-01 13:40:50', 0, 1, NULL, 14),
+(248, 33, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 14:53:19', '2025-09-01 13:40:50', 0, 1, NULL, 1),
+(249, 33, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 14:53:19', '2025-09-01 13:40:50', 0, 1, NULL, 6),
+(250, 33, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 14:53:19', '2025-09-01 13:40:50', 0, 1, NULL, 4),
+(251, 33, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 14:53:19', '2025-09-01 13:40:50', 0, 1, NULL, 4),
+(252, 33, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 14:53:19', '2025-09-01 13:40:50', 0, 1, NULL, 7),
+(253, 9, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 15:07:34', '2025-09-01 13:40:50', 1, 8, NULL, 2),
+(254, 9, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 15:07:34', '2025-09-01 13:40:50', 0, 8, NULL, 10),
+(255, 9, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 15:07:34', '2025-09-01 13:40:50', 0, 8, NULL, 4),
+(256, 9, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 15:07:34', '2025-09-01 13:40:50', 0, 8, NULL, 7),
+(257, 9, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 15:07:34', '2025-09-01 13:40:50', 0, 8, NULL, 4),
+(258, 9, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 15:07:34', '2025-09-01 13:40:50', 0, 8, NULL, 20),
+(259, 9, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 15:07:34', '2025-09-01 13:40:50', 0, 8, NULL, 46),
+(260, 9, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 15:07:34', '2025-09-01 13:40:50', 0, 8, NULL, 38),
+(261, 9, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 15:07:34', '2025-09-01 13:40:50', 0, 8, NULL, 39),
+(264, 34, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 15:21:11', '2025-09-01 13:40:50', 2, 1, 6, 42),
+(265, 34, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 15:21:11', '2025-09-01 13:40:50', 2, 1, 8, 3),
+(266, 34, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 15:21:11', '2025-09-01 13:40:50', 2, 1, 7, 16),
+(267, 34, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 15:21:11', '2025-09-01 13:40:50', 2, 1, 20, 5),
+(268, 34, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-22 15:21:11', '2025-09-01 13:40:50', 2, 1, NULL, 16),
+(269, 34, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-22 15:21:11', '2025-09-01 13:40:50', 2, 1, 22, 5),
+(270, 34, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 15:21:11', '2025-09-01 13:40:50', 2, 1, 21, 18),
+(271, 34, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 15:21:11', '2025-09-01 13:40:50', 2, 1, 5, 12),
+(272, 34, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 15:21:11', '2025-09-01 13:40:50', 2, 1, 11, 8),
+(273, 28, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-29 02:35:13', '2025-09-01 13:40:50', 1, 1, NULL, 4),
+(274, 28, 2, 'Đánh giá tính khả thi', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-29 02:35:13', '2025-09-01 13:40:50', 0, 1, NULL, 13),
+(275, 28, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-29 02:35:13', '2025-09-01 13:40:50', 0, 1, NULL, 15),
+(276, 28, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-29 02:35:13', '2025-09-01 13:40:50', 0, 1, NULL, 12),
+(277, 28, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-29 02:35:13', '2025-09-01 13:40:50', 0, 1, NULL, 17),
+(278, 28, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-29 02:35:13', '2025-09-01 13:40:50', 0, 1, NULL, 9),
+(279, 28, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-29 02:35:13', '2025-09-01 13:40:50', 0, 1, NULL, 12),
+(280, 28, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-29 02:35:13', '2025-09-01 13:40:50', 0, 1, NULL, 14),
+(281, 28, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-29 02:35:13', '2025-09-01 13:40:50', 0, 1, NULL, 15),
+(284, 35, 1, 'Nhận nhu cầu khách hàng', '2025-08-30 00:00:00', '2025-10-31 00:00:00', '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 17, \"commented_at\": null}]', 0, 'pending', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-08-04 17:26:31', '2025-09-01 06:51:06', 1, 1, 17, 200),
+(285, 35, 2, 'Đánh giá tính khả thi', NULL, NULL, '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 19, \"commented_at\": null}]', 0, 'pending', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-08-04 17:26:31', '2025-09-01 06:51:27', 2, 1, 19, 201),
+(286, 35, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 15, \"commented_at\": null}]', 0, 'pending', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-08-04 17:26:31', '2025-09-01 07:59:15', 2, 1, 15, 202),
+(287, 35, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-04 17:26:31', '2025-09-01 13:40:50', 2, 1, NULL, NULL),
+(288, 35, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-08-04 17:26:31', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
+(289, 35, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-08-04 17:26:31', '2025-09-01 13:40:50', 2, 1, NULL, NULL),
+(290, 35, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 23, \"commented_at\": null}]', 0, 'pending', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-08-04 17:26:31', '2025-09-01 08:48:33', 2, 1, 23, 209),
+(291, 35, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-08-04 17:26:31', '2025-09-01 13:40:50', 2, 1, NULL, NULL),
+(292, 35, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-04 17:26:31', '2025-09-01 13:40:50', 0, 1, NULL, 208),
+(293, 7, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-08-04 17:40:14', '2025-09-01 13:40:50', 1, 6, NULL, 240),
+(294, 7, 2, 'Đánh giá tính khả thi', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-08-04 17:40:14', '2025-09-01 13:40:50', 0, 6, NULL, NULL),
+(295, 7, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-08-04 17:40:14', '2025-09-01 13:40:50', 0, 6, NULL, NULL),
+(296, 7, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-04 17:40:14', '2025-09-01 13:40:50', 0, 6, NULL, NULL),
+(297, 7, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-08-04 17:40:14', '2025-09-01 13:40:50', 0, 6, NULL, NULL),
+(298, 7, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-08-04 17:40:14', '2025-09-01 13:40:50', 0, 6, NULL, NULL),
+(299, 7, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-08-04 17:40:14', '2025-09-01 13:40:50', 0, 6, NULL, NULL),
+(300, 7, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-08-04 17:40:14', '2025-09-01 13:40:50', 0, 6, NULL, NULL),
+(301, 7, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-04 17:40:14', '2025-09-01 13:40:50', 0, 6, NULL, NULL),
+(302, 2, 1, 'Nhận nhu cầu khách hàng', '2025-08-14 00:00:00', '2025-08-31 00:00:00', NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-08-14 10:22:14', '2025-09-01 13:40:50', 1, 1, 4, NULL),
+(303, 2, 2, 'Đánh giá tính khả thi', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-08-14 10:22:14', '2025-09-01 13:40:50', 1, 1, NULL, NULL),
+(304, 2, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-08-14 10:22:14', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
+(305, 2, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-14 10:22:14', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
+(306, 2, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-08-14 10:22:14', '2025-09-01 13:40:50', 2, 1, NULL, NULL),
+(307, 2, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-08-14 10:22:14', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
+(308, 2, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-08-14 10:22:14', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
+(309, 2, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-08-14 10:22:14', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
+(310, 2, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-14 10:22:14', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
+(313, 36, 1, 'Lấy KH: SXKD, SCL, SCTK hoặc KHK của khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-08-18 15:18:59', '2025-09-01 13:40:50', 1, 1, NULL, NULL),
+(314, 36, 2, 'Phân tích và lập kế hoạch bóc', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-08-18 15:18:59', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
+(315, 36, 3, 'Làm rõ tính chất kỹ thuật, NSX của hàng hóa, dịch vụ', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-08-18 15:18:59', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
+(316, 36, 4, 'Làm việc với NSX, NCC', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-18 15:18:59', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
+(317, 36, 5, 'Kiểm tra', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-08-18 15:18:59', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
+(318, 36, 6, 'Nhận báo giá, kiểm tra và cơ sở đàm phán (nếu có)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-08-18 15:18:59', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
+(319, 36, 7, 'Đánh giá, báo cáo tính khả thi', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-08-18 15:18:59', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
+(320, 36, 8, 'Duyệt', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-08-18 15:18:59', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
+(321, 36, 9, 'Xây dựng kịch bản HSMT', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-18 15:18:59', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
+(322, 36, 10, 'Duyệt', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-18 15:18:59', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
+(325, 37, 1, 'Lấy KH: SXKD, SCL, SCTK hoặc KHK của khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-08-23 02:16:14', '2025-09-01 13:40:50', 1, 7, 19, 212),
+(326, 37, 2, 'Phân tích và lập kế hoạch bóc', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-08-23 02:16:14', '2025-09-01 13:40:50', 0, 7, NULL, NULL),
+(327, 37, 3, 'Làm rõ tính chất kỹ thuật, NSX của hàng hóa, dịch vụ', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-08-23 02:16:14', '2025-09-01 13:40:50', 0, 7, NULL, NULL),
+(328, 37, 4, 'Làm việc với NSX, NCC', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-23 02:16:14', '2025-09-01 13:40:50', 0, 7, NULL, NULL),
+(329, 37, 5, 'Kiểm tra', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-08-23 02:16:14', '2025-09-01 13:40:50', 0, 7, NULL, NULL),
+(330, 37, 6, 'Nhận báo giá, kiểm tra và cơ sở đàm phán (nếu có)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-08-23 02:16:14', '2025-09-01 13:40:50', 0, 7, NULL, NULL),
+(331, 37, 7, 'Đánh giá, báo cáo tính khả thi', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-08-23 02:16:14', '2025-09-01 13:40:50', 0, 7, NULL, NULL),
+(332, 37, 8, 'Duyệt', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-08-23 02:16:14', '2025-09-01 13:40:50', 0, 7, NULL, NULL),
+(333, 37, 9, 'Xây dựng kịch bản HSMT', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-23 02:16:14', '2025-09-01 13:40:50', 0, 7, NULL, NULL),
+(334, 37, 10, 'Duyệt', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-23 02:16:14', '2025-09-01 13:40:50', 0, 7, NULL, NULL),
+(337, 38, 1, 'Lấy KH: SXKD, SCL, SCTK hoặc KHK của khách hàng', '2025-08-24 00:00:00', '2025-08-31 00:00:00', NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-08-23 02:18:51', '2025-09-01 13:40:50', 2, 6, NULL, 214),
+(338, 38, 2, 'Phân tích và lập kế hoạch bóc', '2025-08-24 00:00:00', '2025-08-27 00:00:00', NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-08-23 02:18:51', '2025-09-01 13:40:50', 0, 6, NULL, 215),
+(339, 38, 3, 'Làm rõ tính chất kỹ thuật, NSX của hàng hóa, dịch vụ', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-08-23 02:18:51', '2025-09-01 13:40:50', 0, 6, NULL, 216),
+(340, 38, 4, 'Làm việc với NSX, NCC', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-23 02:18:51', '2025-09-01 13:40:50', 0, 6, NULL, 217),
+(341, 38, 5, 'Kiểm tra', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-08-23 02:18:51', '2025-09-01 13:40:50', 0, 6, NULL, 218),
+(342, 38, 6, 'Nhận báo giá, kiểm tra và cơ sở đàm phán (nếu có)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-08-23 02:18:51', '2025-09-01 13:40:50', 0, 6, NULL, 219),
+(343, 38, 7, 'Đánh giá, báo cáo tính khả thi', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-08-23 02:18:51', '2025-09-01 13:40:50', 0, 6, NULL, 220),
+(344, 38, 8, 'Duyệt', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-08-23 02:18:51', '2025-09-01 13:40:50', 0, 6, NULL, 243),
+(345, 38, 9, 'Xây dựng kịch bản HSMT', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-23 02:18:51', '2025-09-01 13:40:50', 0, 6, NULL, 222),
+(346, 38, 10, 'Duyệt', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-23 02:18:51', '2025-09-01 13:40:50', 0, 6, NULL, 224),
+(349, 39, 1, 'Lấy KH: SXKD, SCL, SCTK hoặc KHK của khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 1, 10, NULL, NULL),
+(350, 39, 2, 'Phân tích và lập kế hoạch bóc', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
+(351, 39, 3, 'Làm rõ tính chất kỹ thuật, NSX của hàng hóa, dịch vụ', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
+(352, 39, 4, 'Làm việc với NSX, NCC', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL);
+INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `start_date`, `end_date`, `approval_steps`, `current_level`, `approval_status`, `department`, `created_at`, `updated_at`, `status`, `customer_id`, `assigned_to`, `task_id`) VALUES
+(353, 39, 5, 'Kiểm tra', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
+(354, 39, 6, 'Nhận báo giá, kiểm tra và cơ sở đàm phán (nếu có)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
+(355, 39, 7, 'Đánh giá, báo cáo tính khả thi', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
+(356, 39, 8, 'Duyệt', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
+(357, 39, 9, 'Xây dựng kịch bản HSMT', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
+(358, 39, 10, 'Duyệt', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
+(359, 39, 11, '11', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
+(360, 39, 22, '22', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
+(363, 40, 1, 'Lấy KH: SXKD, SCL, SCTK hoặc KHK của khách hàng', NULL, NULL, NULL, 0, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 1, 4, NULL, NULL),
+(364, 40, 2, 'Phân tích và lập kế hoạch bóc', NULL, NULL, NULL, 0, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
+(365, 40, 3, 'Làm rõ tính chất kỹ thuật, NSX của hàng hóa, dịch vụ', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
+(366, 40, 4, 'Làm việc với NSX, NCC', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
+(367, 40, 5, 'Kiểm tra', NULL, NULL, NULL, 0, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
+(368, 40, 6, 'Nhận báo giá, kiểm tra và cơ sở đàm phán (nếu có)', NULL, NULL, NULL, 0, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
+(369, 40, 7, 'Đánh giá, báo cáo tính khả thi', NULL, NULL, NULL, 0, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
+(370, 40, 8, 'Duyệt', NULL, NULL, NULL, 0, NULL, '[\"Phòng Thương mại\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
+(371, 40, 9, 'Xây dựng kịch bản HSMT', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
+(372, 40, 10, 'Duyệt', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
+(373, 40, 11, '11', NULL, NULL, NULL, 0, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
+(374, 40, 22, '22', NULL, NULL, NULL, 0, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -362,15 +589,18 @@ CREATE TABLE `bidding_step_templates` (
 --
 
 INSERT INTO `bidding_step_templates` (`id`, `step_number`, `step_code`, `title`, `department`, `created_at`, `updated_at`) VALUES
-(1, 1, 'bidding_step_01', 'Nhận nhu cầu khách hàng', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
-(2, 2, 'bidding_step_02', 'Đánh giá tính khả thi', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
-(3, 3, 'bidding_step_03', 'Lập kế hoạch triển khai', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
-(4, 4, 'bidding_step_04', 'Duyệt kế hoạch', '[\"Phòng Kinh doanh\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
-(5, 5, 'bidding_step_05', 'Triển khai hồ sơ dự thầu', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
-(6, 6, 'bidding_step_06', 'Chấm thầu', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
-(7, 7, 'bidding_step_07', 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
-(8, 8, 'bidding_step_08', 'Triển khai ký hợp đồng bán', '[\"Phòng Thương mại\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
-(9, 9, 'bidding_step_09', 'Duyệt hợp đồng bán', '[\"Phòng Kinh doanh\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25');
+(1, 1, 'bidding_step_01', 'Lấy KH: SXKD, SCL, SCTK hoặc KHK của khách hàng', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
+(2, 2, 'bidding_step_02', 'Phân tích và lập kế hoạch bóc', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
+(3, 3, 'bidding_step_03', 'Làm rõ tính chất kỹ thuật, NSX của hàng hóa, dịch vụ', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
+(4, 4, 'bidding_step_04', 'Làm việc với NSX, NCC', '[\"Phòng Kinh doanh\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
+(5, 5, 'bidding_step_05', 'Kiểm tra', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
+(6, 6, 'bidding_step_06', 'Nhận báo giá, kiểm tra và cơ sở đàm phán (nếu có)', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
+(7, 7, 'bidding_step_07', 'Đánh giá, báo cáo tính khả thi', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
+(8, 8, 'bidding_step_08', 'Duyệt', '[\"Phòng Thương mại\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
+(9, 9, 'bidding_step_09', 'Xây dựng kịch bản HSMT', '[\"Phòng Kinh doanh\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
+(10, 10, 'bidding_step_10', 'Duyệt', '[\"Phòng Kinh doanh\"]', '2025-08-14 23:07:38', '2025-08-14 23:07:38'),
+(11, 11, '111', '11', '[\"Phòng Tài chính - Kế toán\"]', '2025-08-24 17:05:07', '2025-08-24 17:05:07'),
+(12, 22, '22', '22', '[\"Phòng Tài chính - Kế toán\"]', '2025-08-24 17:05:31', '2025-08-24 17:05:31');
 
 -- --------------------------------------------------------
 
@@ -450,7 +680,10 @@ CREATE TABLE `contracts` (
   `status` tinyint NOT NULL DEFAULT '0',
   `department_id` int DEFAULT NULL,
   `assigned_to` int DEFAULT NULL,
-  `id_customer` int DEFAULT NULL,
+  `manager_id` int DEFAULT NULL,
+  `collaborators` json DEFAULT NULL,
+  `priority` tinyint(1) NOT NULL DEFAULT '0',
+  `customer_id` int DEFAULT NULL,
   `bidding_id` int DEFAULT NULL,
   `start_date` date DEFAULT NULL,
   `end_date` date DEFAULT NULL,
@@ -464,12 +697,14 @@ CREATE TABLE `contracts` (
 -- Dumping data for table `contracts`
 --
 
-INSERT INTO `contracts` (`id`, `title`, `code`, `content`, `status`, `department_id`, `assigned_to`, `id_customer`, `bidding_id`, `start_date`, `end_date`, `created_at`, `updated_at`, `updated_by`, `description`) VALUES
-(30, 'Hợp đồng bảo trì hệ thống SCADA - Nhiệt điện Phả Lại', '#5465435', NULL, 1, NULL, 22, 8, 9, '2025-06-05', '2025-06-14', '2025-06-21 04:41:38', '2025-08-01 09:29:17', NULL, 'Mô tả demo'),
-(31, 'Cung cấp thiết bị điều khiển lò hơi - Nhiệt điện Vĩnh Tân 4', '#5222222', NULL, 4, NULL, 20, 8, 9, '2025-06-07', '2025-06-16', '2025-06-21 14:24:12', '2025-06-22 14:26:44', NULL, '2343565879sdfgsdfsdfdfsf'),
-(32, 'Tư vấn nâng cấp hệ thống điều khiển DCS - Nhiệt điện Mông Dương', '#44444444', NULL, 4, NULL, 14, 3, 4, '2025-06-07', '2025-06-16', '2025-06-21 14:56:49', '2025-06-22 14:29:14', NULL, '3432544656fghfgbcvbvbvc'),
-(33, 'Cung cấp than tổ hợp - Nhiệt điện Nghi Sơn', '#66666', NULL, 1, NULL, 22, 1, 29, '2025-06-18', '2025-06-26', '2025-06-22 06:34:46', '2025-08-14 10:38:57', NULL, 'ưerrewrrrwwr'),
-(34, 'test hợp đồng 2', '#444444', NULL, 1, NULL, 19, 2, 3, '2025-07-18', '2025-07-29', '2025-07-20 11:51:50', '2025-07-20 12:43:15', NULL, 'demo');
+INSERT INTO `contracts` (`id`, `title`, `code`, `content`, `status`, `department_id`, `assigned_to`, `manager_id`, `collaborators`, `priority`, `customer_id`, `bidding_id`, `start_date`, `end_date`, `created_at`, `updated_at`, `updated_by`, `description`) VALUES
+(30, 'Hợp đồng bảo trì hệ thống SCADA - Nhiệt điện Phả Lại', '#5465435', NULL, 1, NULL, 22, NULL, NULL, 0, 8, 9, '2025-06-04', '2025-09-29', '2025-06-21 04:41:38', '2025-08-14 23:25:36', NULL, 'Mô tả demo'),
+(31, 'Cung cấp thiết bị điều khiển lò hơi - Nhiệt điện Vĩnh Tân 4', '#5222222', NULL, 4, NULL, 20, NULL, NULL, 0, 8, 9, '2025-06-07', '2025-06-16', '2025-06-21 14:24:12', '2025-06-22 14:26:44', NULL, '2343565879sdfgsdfsdfdfsf'),
+(32, 'Tư vấn nâng cấp hệ thống điều khiển DCS - Nhiệt điện Mông Dương', '#44444444', NULL, 4, NULL, 14, NULL, NULL, 0, 3, 4, '2025-06-07', '2025-06-16', '2025-06-21 14:56:49', '2025-06-22 14:29:14', NULL, '3432544656fghfgbcvbvbvc'),
+(33, 'Cung cấp than tổ hợp - Nhiệt điện Nghi Sơn', '#66666', NULL, 3, NULL, 22, NULL, NULL, 0, 1, 29, '2025-06-19', '2025-06-27', '2025-06-22 06:34:46', '2025-06-29 09:41:57', NULL, 'ưerrewrrrwwr'),
+(34, 'test hợp đồng 2', '#444444', NULL, 1, NULL, 19, NULL, NULL, 0, 2, 3, '2025-07-18', '2025-07-29', '2025-07-20 11:51:50', '2025-07-20 12:43:15', NULL, 'demo'),
+(65, 'HĐ gia công ống khói chịu nhiệt – Nhiệt điện Vĩnh Tân', 'HD001', NULL, 1, NULL, 4, NULL, '[\"5\"]', 0, NULL, 10, '2025-08-24', '2025-08-24', '2025-08-24 07:17:31', '2025-08-24 09:49:43', NULL, '423424244'),
+(66, 'hợp đồng xxxx', 'xxxxxx', NULL, 1, NULL, 17, NULL, '[\"5\", \"22\"]', 0, 5, 6, '2025-08-24', '2025-08-31', '2025-08-24 08:44:13', '2025-08-24 11:01:37', NULL, 'xxxxxxx');
 
 -- --------------------------------------------------------
 
@@ -584,7 +819,45 @@ INSERT INTO `contract_steps` (`id`, `contract_id`, `customer_id`, `step_number`,
 (340, 34, NULL, 23, 'Xử lý sai lệch hoặc chứng từ', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"P.KD\", \"P.DVKT\", \"P.TMĐ\"]', NULL),
 (341, 34, NULL, 24, 'Hỏi hồ sơ thanh quyết toán', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"P.KD\", \"P.TM\", \"P.TCKT\"]', NULL),
 (342, 34, NULL, 25, 'Thanh toán', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"Khách hàng\"]', NULL),
-(343, 34, NULL, 26, 'Thoả hồ sơ lưu chứng từ & kết thúc', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"P.KD\", \"P.TCKT\", \"P.TM\", \"P.KHNS\"]', NULL);
+(343, 34, NULL, 26, 'Thoả hồ sơ lưu chứng từ & kết thúc', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"P.KD\", \"P.TCKT\", \"P.TM\", \"P.KHNS\"]', NULL),
+(344, 65, NULL, 1, 'Đặt hàng NCC', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"P.KD\",\"TP.M\",\"TP.TCKT\"]', NULL),
+(345, 65, NULL, 2, 'Phát hành bảo lãnh', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"Ban Giám đốc\"]', NULL),
+(346, 65, NULL, 3, 'Hoàn thiện hồ sơ tạm ứng (nếu có)', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"P.TCKT\",\"P.KD\",\"P.DVKT\"]', NULL),
+(347, 65, NULL, 4, 'Đề nghị nhập hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"Ban Giám đốc\"]', NULL),
+(348, 65, NULL, 5, 'Đặt hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"P.TM\",\"P.TCKT\"]', NULL),
+(349, 65, NULL, 6, 'Giám sát, kiểm tra tình trạng đặt hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"P.TM\"]', NULL),
+(350, 65, NULL, 7, 'Thực hiện điều chỉnh nội dung hợp đồng (nếu có)', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"P.TM\",\"P.KD\",\"P.DVKT\"]', NULL),
+(351, 65, NULL, 8, 'Nghiệm thu hàng hoá (nội bộ)', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"P.TM\"]', NULL),
+(352, 65, NULL, 9, 'Nghiệm thu chứng từ bằng hoá (nội bộ)', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"P.KHNS\",\"P.TCKT\"]', NULL),
+(353, 65, NULL, 10, 'Lập kế hoạch giao hàng hoá và nghiệm thu kỹ thuật tới khách hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"P.KD\",\"P.TCKT\"]', NULL),
+(354, 65, NULL, 11, 'Bàn giao hàng hoá và nghiệm thu kỹ thuật tới khách hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"Ban Giám đốc\"]', NULL),
+(355, 65, NULL, 12, 'Xuất hoá đơn GTGT bằng hàng hoá, dịch vụ', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"P.KD\",\"P.KHNS\",\"P.TCKT\"]', NULL),
+(356, 65, NULL, 13, 'Nghiệm thu thương mại', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"Khách hàng\"]', NULL),
+(357, 65, NULL, 14, 'Phát hành bảo lãnh', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"P.KD\",\"P.DVKT\",\"P.TMĐ\"]', NULL),
+(358, 65, NULL, 15, 'Hoàn thiện hồ sơ thanh quyết toán', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"P.KD\",\"P.TM\",\"P.TCKT\"]', NULL),
+(359, 65, NULL, 16, 'Thu hồi công nợ', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"Khách hàng\"]', NULL),
+(360, 65, NULL, 17, 'Thu hồi chứng từ', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"P.KD\",\"P.TCKT\",\"P.TM\",\"P.KHNS\"]', NULL),
+(361, 65, NULL, 18, 'Thanh lý hợp đồng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"Phòng Kinh doanh\"]', NULL),
+(362, 65, NULL, 19, 'Lưu hồ sơ', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"Phòng Kinh doanh\"]', NULL),
+(363, 66, NULL, 1, 'Đặt hàng NCC', 1, 19, '2025-08-24', NULL, '2025-08-31 00:00:00', NULL, '2025-08-24 08:44:13', '2025-08-24 15:32:39', '[\"P.KD\",\"TP.M\",\"TP.TCKT\"]', NULL),
+(364, 66, NULL, 2, 'Phát hành bảo lãnh', 1, 4, '2025-08-24', NULL, '2025-08-30 00:00:00', NULL, '2025-08-24 08:44:13', '2025-08-24 16:20:21', '[\"Ban Giám đốc\"]', NULL),
+(365, 66, NULL, 3, 'Hoàn thiện hồ sơ tạm ứng (nếu có)', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.TCKT\",\"P.KD\",\"P.DVKT\"]', NULL),
+(366, 66, NULL, 4, 'Đề nghị nhập hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"Ban Giám đốc\"]', NULL),
+(367, 66, NULL, 5, 'Đặt hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.TM\",\"P.TCKT\"]', NULL),
+(368, 66, NULL, 6, 'Giám sát, kiểm tra tình trạng đặt hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.TM\"]', NULL),
+(369, 66, NULL, 7, 'Thực hiện điều chỉnh nội dung hợp đồng (nếu có)', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.TM\",\"P.KD\",\"P.DVKT\"]', NULL),
+(370, 66, NULL, 8, 'Nghiệm thu hàng hoá (nội bộ)', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.TM\"]', NULL),
+(371, 66, NULL, 9, 'Nghiệm thu chứng từ bằng hoá (nội bộ)', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.KHNS\",\"P.TCKT\"]', NULL),
+(372, 66, NULL, 10, 'Lập kế hoạch giao hàng hoá và nghiệm thu kỹ thuật tới khách hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.KD\",\"P.TCKT\"]', NULL),
+(373, 66, NULL, 11, 'Bàn giao hàng hoá và nghiệm thu kỹ thuật tới khách hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"Ban Giám đốc\"]', NULL),
+(374, 66, NULL, 12, 'Xuất hoá đơn GTGT bằng hàng hoá, dịch vụ', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.KD\",\"P.KHNS\",\"P.TCKT\"]', NULL),
+(375, 66, NULL, 13, 'Nghiệm thu thương mại', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"Khách hàng\"]', NULL),
+(376, 66, NULL, 14, 'Phát hành bảo lãnh', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.KD\",\"P.DVKT\",\"P.TMĐ\"]', NULL),
+(377, 66, NULL, 15, 'Hoàn thiện hồ sơ thanh quyết toán', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.KD\",\"P.TM\",\"P.TCKT\"]', NULL),
+(378, 66, NULL, 16, 'Thu hồi công nợ', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"Khách hàng\"]', NULL),
+(379, 66, NULL, 17, 'Thu hồi chứng từ', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.KD\",\"P.TCKT\",\"P.TM\",\"P.KHNS\"]', NULL),
+(380, 66, NULL, 18, 'Thanh lý hợp đồng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"Phòng Kinh doanh\"]', NULL),
+(381, 66, NULL, 19, 'Lưu hồ sơ', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"Phòng Kinh doanh\"]', NULL);
 
 -- --------------------------------------------------------
 
@@ -622,23 +895,25 @@ CREATE TABLE `contract_step_templates` (
 --
 
 INSERT INTO `contract_step_templates` (`id`, `step_number`, `step_code`, `title`, `department`, `created_at`, `updated_at`) VALUES
-(1, 10, 'contract_step_10', 'Đặt hàng NCC', '[\"P.KD\", \"TP.M\", \"TP.TCKT\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43'),
-(2, 11, 'contract_step_11', 'Duyệt đặt hàng', '[\"Ban Giám đốc\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43'),
-(3, 12, 'contract_step_12', 'Triển khai hợp đồng mua', '[\"P.TCKT\", \"P.KD\", \"P.DVKT\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43'),
-(4, 13, 'contract_step_13', 'Duyệt hợp đồng mua', '[\"Ban Giám đốc\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43'),
-(5, 14, 'contract_step_14', 'Thanh toán hợp đồng mua', '[\"P.TM\", \"P.TCKT\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43'),
-(6, 15, 'contract_step_15', 'Kiểm tra hàng hóa', '[\"P.TM\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43'),
-(7, 16, 'contract_step_16', 'Nghiệm thu', '[\"P.TM\", \"P.KD\", \"P.DVKT\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43'),
-(8, 17, 'contract_step_17', 'Thông báo lỗi hàng', '[\"P.TM\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43'),
-(9, 18, 'contract_step_18', 'Nhập kho hàng hóa', '[\"P.KHNS\", \"P.TCKT\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43'),
-(10, 19, 'contract_step_19', 'Xuất kho hàng hóa', '[\"P.KD\", \"P.TCKT\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43'),
-(11, 20, 'contract_step_20', 'Duyệt phiếu xuất', '[\"Ban Giám đốc\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43'),
-(12, 21, 'contract_step_21', 'Giao hàng', '[\"P.KD\", \"P.KHNS\", \"P.TCKT\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43'),
-(13, 22, 'contract_step_22', 'Nghiệm thu từ phía KH', '[\"Khách hàng\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43'),
-(14, 23, 'contract_step_23', 'Xử lý sai lệch hoặc chứng từ', '[\"P.KD\", \"P.DVKT\", \"P.TMĐ\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43'),
-(15, 24, 'contract_step_24', 'Hỏi hồ sơ thanh quyết toán', '[\"P.KD\", \"P.TM\", \"P.TCKT\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43'),
-(16, 25, 'contract_step_25', 'Thanh toán', '[\"Khách hàng\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43'),
-(17, 26, 'contract_step_26', 'Thoả hồ sơ lưu chứng từ & kết thúc', '[\"P.KD\", \"P.TCKT\", \"P.TM\", \"P.KHNS\"]', '2025-06-20 23:49:21', '2025-06-29 16:07:43');
+(1, 1, 'contract_step_1', 'Xây dựng Bảng kế hoạch triển khai hợp đồng bán', '[\"P.KD\",\"TP.M\",\"TP.TCKT\"]', '2025-06-20 23:49:21', '2025-08-24 16:49:50'),
+(2, 2, 'contract_step_11', 'Phát hành bảo lãnh', '[\"Ban Giám đốc\"]', '2025-06-20 23:49:21', '2025-08-15 00:00:50'),
+(3, 3, 'contract_step_12', 'Hoàn thiện hồ sơ tạm ứng (nếu có)', '[\"P.TCKT\",\"P.KD\",\"P.DVKT\"]', '2025-06-20 23:49:21', '2025-08-15 00:01:13'),
+(4, 4, 'contract_step_13', 'Đề nghị nhập hàng', '[\"Ban Giám đốc\"]', '2025-06-20 23:49:21', '2025-08-15 00:01:30'),
+(5, 5, 'contract_step_14', 'Đặt hàng', '[\"P.TM\",\"P.TCKT\"]', '2025-06-20 23:49:21', '2025-08-15 00:01:41'),
+(6, 6, 'contract_step_15', 'Giám sát, kiểm tra tình trạng đặt hàng', '[\"P.TM\"]', '2025-06-20 23:49:21', '2025-08-15 00:01:54'),
+(7, 7, 'contract_step_16', 'Thực hiện điều chỉnh nội dung hợp đồng (nếu có)', '[\"P.TM\",\"P.KD\",\"P.DVKT\"]', '2025-06-20 23:49:21', '2025-08-15 00:02:07'),
+(8, 8, 'contract_step_17', 'Nghiệm thu hàng hoá (nội bộ)', '[\"P.TM\"]', '2025-06-20 23:49:21', '2025-08-15 00:02:20'),
+(9, 9, 'contract_step_18', 'Nghiệm thu chứng từ bằng hoá (nội bộ)', '[\"P.KHNS\",\"P.TCKT\"]', '2025-06-20 23:49:21', '2025-08-15 00:02:32'),
+(10, 10, 'contract_step_19', 'Lập kế hoạch giao hàng hoá và nghiệm thu kỹ thuật tới khách hàng', '[\"P.KD\",\"P.TCKT\"]', '2025-06-20 23:49:21', '2025-08-15 00:02:44'),
+(11, 11, 'contract_step_20', 'Bàn giao hàng hoá và nghiệm thu kỹ thuật tới khách hàng', '[\"Ban Giám đốc\"]', '2025-06-20 23:49:21', '2025-08-15 00:03:00'),
+(12, 12, 'contract_step_21', 'Xuất hoá đơn GTGT bằng hàng hoá, dịch vụ', '[\"P.KD\",\"P.KHNS\",\"P.TCKT\"]', '2025-06-20 23:49:21', '2025-08-15 00:03:09'),
+(13, 13, 'contract_step_22', 'Nghiệm thu thương mại', '[\"Khách hàng\"]', '2025-06-20 23:49:21', '2025-08-15 00:03:27'),
+(14, 14, 'contract_step_23', 'Phát hành bảo lãnh', '[\"P.KD\",\"P.DVKT\",\"P.TMĐ\"]', '2025-06-20 23:49:21', '2025-08-15 00:03:38'),
+(15, 15, 'contract_step_24', 'Hoàn thiện hồ sơ thanh quyết toán', '[\"P.KD\",\"P.TM\",\"P.TCKT\"]', '2025-06-20 23:49:21', '2025-08-15 00:03:49'),
+(16, 16, 'contract_step_25', 'Thu hồi công nợ', '[\"Khách hàng\"]', '2025-06-20 23:49:21', '2025-08-15 00:04:00'),
+(17, 17, 'contract_step_26', 'Thu hồi chứng từ', '[\"P.KD\",\"P.TCKT\",\"P.TM\",\"P.KHNS\"]', '2025-06-20 23:49:21', '2025-08-15 00:04:15'),
+(18, 18, NULL, 'Thanh lý hợp đồng', '[\"Phòng Kinh doanh\"]', '2025-08-15 00:04:43', '2025-08-15 00:04:43'),
+(19, 19, NULL, 'Lưu hồ sơ', '[\"Phòng Kinh doanh\"]', '2025-08-15 00:05:04', '2025-08-15 00:05:04');
 
 -- --------------------------------------------------------
 
@@ -666,16 +941,17 @@ CREATE TABLE `customers` (
 --
 
 INSERT INTO `customers` (`id`, `name`, `phone`, `email`, `address`, `city`, `customer_group`, `avatar`, `assigned_to`, `last_interaction`, `created_at`, `updated_at`) VALUES
-(1, 'Nhà máy Nhiệt điện Vĩnh Tân 4', '0252.3703.701', 'https://www.vinhtan4tpp.vn/', 'Xã Vĩnh Hảo, Lâm Đồng', 'Hà Nội', 'khách cũ', '/uploads/evn.jpg', 25, '2025-06-13', '2025-06-11 02:10:10', '2025-08-14 09:11:37'),
-(2, 'Công ty Nhiệt điện Thái Bình (Thái Bình 1)', '0227.2491.999', 'https://thaibinhtpc.vn/', 'Thôn Chỉ Thiện, xã Đông Thái Ninh, Hưng Yên', 'Hải Dương', 'tiềm năng', '/uploads/phalai.jpg', 25, '2025-06-18', '2025-06-11 02:10:22', '2025-08-14 09:13:20'),
-(3, 'Trung tâm dịch vụ sửa chữa EVN (EVN PSC)', '02466.941.676', 'http://evnpsc.com.vn', 'Phường Ba Đình, Hà Nội', 'Đà Nẵng', 'thử nghiệm', '/uploads/uongbi.jpg', 25, '2025-06-19', '2025-06-11 02:10:29', '2025-08-14 09:15:13'),
-(4, 'Công ty Thuỷ điện Hoà Bình', '0218.3852.043', 'https://www.thuydienhoabinh.vn/', ' Phường Hòa Bình, Phú Thọ', 'Cần Thơ', 'tiềm năng', '/uploads/cantho.jpg', 25, '2025-06-20', '2025-06-11 02:10:35', '2025-08-14 09:17:26'),
-(5, 'Công ty Thuỷ điện Sơn La (EVNHPC Son La)', '\'0212. 224.0030', 'https://sonlahpc.com.vn/', 'Phường Tô Hiệu, Sơn La', 'Quảng Ninh', 'vip', '/uploads/quangninh.jpg', 25, '2025-06-21', '2025-06-11 02:10:41', '2025-08-14 09:18:43'),
-(6, 'Tổng công ty Phát điện 1 (EVN GENCO 1)', '024.7308.9789', 'https://www.evngenco1.vn/', 'Phường Yên Hòa, Hà Nội', 'Trà Vinh', 'khách mới', '/uploads/duyenhai.jpg', 25, '2025-06-12', '2025-06-11 02:10:47', '2025-08-14 09:21:37'),
-(7, 'Công ty CP Nhiệt điện Quảng Ninh', '0203.3657.539', 'http://www.quangninhtpc.com.vn/', 'Phường Cao Xanh, Quảng Ninh', 'Bình Thuận', 'tiềm năng', '/uploads/vinhtan.jpg', 25, '2025-06-30', '2025-06-11 02:10:53', '2025-08-14 09:25:29'),
-(8, 'Công ty Nhiệt Điện Nghi Sơn (Nghi Sơn 1)', '023.7361.3456', 'https://www.nghison.evn.vn/', 'Phường Nghi Sơn, Thanh Hóa', 'Thanh Hóa', 'khách cũ', '/uploads/nghison1.jpg', 25, '2025-06-14', '2025-06-11 02:10:58', '2025-08-14 09:26:52'),
-(9, 'Công ty Nhiệt điện Duyên Hải', '0000000000', 'https://www.tpcduyenhai.com.vn/', 'Phường Duyên Hải, Vĩnh Long', 'Hải Phòng', 'vip', '/uploads/haiphong.jpg', 25, NULL, '2025-06-11 02:11:04', '2025-08-14 09:28:20'),
-(10, 'Nhà máy NĐ Duyên Hải 1', 'chưa cập nhật', 'chưa cập nhật', 'Phường Duyên Hải, Vĩnh Long', 'Quảng Ninh', 'khách mới', '/uploads/mongduong.jpg', 25, NULL, '2025-06-11 02:11:09', '2025-08-14 09:29:22');
+(1, 'Tập đoàn Điện lực Việt Nam (EVN) ', '02422210000', 'contact@evn.com.vn', '11 Cửa Bắc, Ba Đình', 'Hà Nội', 'khách cũ', '/uploads/evn.jpg', 6, '2025-06-13', '2025-06-11 02:10:10', '2025-06-22 06:46:30'),
+(2, 'Công ty Nhiệt điện Phả Lại', '02203713901', 'info@plaipower.vn', 'Phả Lại, Chí Linh', 'Hải Dương', 'tiềm năng', '/uploads/phalai.jpg', 5, '2025-06-18', '2025-06-11 02:10:22', '2025-06-11 16:18:23'),
+(3, 'Nhà máy nhiệt điện thái bình', '02033855600', 'ubpower@evn.com.vn', 'Uông Bí, Quảng Ninh', 'Đà Nẵng', 'thử nghiệm', '/uploads/uongbi.jpg', 5, '2025-06-19', '2025-06-11 02:10:29', '2025-08-24 14:24:01'),
+(4, 'Công ty Nhiệt điện Cần Thơ', '02923836411', 'cantho@evn.com.vn', 'Ô Môn, Cần Thơ', 'Cần Thơ', 'tiềm năng', '/uploads/cantho.jpg', 23, '2025-06-20', '2025-06-11 02:10:35', '2025-06-20 09:13:13'),
+(5, 'Công ty Nhiệt điện Quảng Ninh', '02033655355', 'qnpower@evn.com.vn', 'Cẩm Phả, Quảng Ninh', 'Quảng Ninh', 'vip', '/uploads/quangninh.jpg', 1, '2025-06-21', '2025-06-11 02:10:41', '2025-06-11 16:44:52'),
+(6, 'Nhà máy nhiệt điện Duyên Hải', '02943923999', 'duyenhai@evn.com.vn', 'Duyên Hải, Trà Vinh', 'Trà Vinh', 'khách mới', '/uploads/duyenhai.jpg', 1, '2025-06-12', '2025-06-11 02:10:47', '2025-06-11 16:45:59'),
+(7, 'Công ty Nhiệt điện Vĩnh Tân', '02523695252', 'vinhtan@evn.com.vn', 'Tuy Phong, Bình Thuận', 'Bình Thuận', 'tiềm năng', '/uploads/vinhtan.jpg', 20, '2025-06-30', '2025-06-11 02:10:53', '2025-06-20 09:13:29'),
+(8, 'Công ty Nhiệt điện Nghi Sơn 1', '02373898888', 'nghison1@evn.com.vn', 'Hải Hà, Thanh Hóa', 'Thanh Hóa', 'khách cũ', '/uploads/nghison1.jpg', 4, '2025-06-14', '2025-06-11 02:10:58', '2025-06-11 16:51:18'),
+(9, 'Công ty Nhiệt điện Hải Phòng', '02253717171', 'haiphongpower@evn.com.vn', 'Thủy Nguyên, Hải Phòng', 'Hải Phòng', 'vip', '/uploads/haiphong.jpg', 1, NULL, '2025-06-11 02:11:04', '2025-06-11 09:22:51'),
+(10, 'Công ty Nhiệt điện Mông Dương', '02033933777', 'mongduong@evn.com.vn', 'Cẩm Phả, Quảng Ninh', 'Quảng Ninh', 'khách mới', '/uploads/mongduong.jpg', 5, NULL, '2025-06-11 02:11:09', '2025-06-11 09:22:51'),
+(12, 'test khách 1', '0912345678', 'doangiang665@gmail.com', 'i3 vinsmart ', NULL, NULL, NULL, 12, NULL, '2025-08-21 14:50:45', '2025-08-21 14:50:45');
 
 -- --------------------------------------------------------
 
@@ -739,7 +1015,7 @@ CREATE TABLE `departments` (
 --
 
 INSERT INTO `departments` (`id`, `name`, `description`, `created_at`, `updated_at`) VALUES
-(1, 'Phòng Hành chính - Nhân sự', 'Phụ trách Hành chính và Nhân sự', '2025-05-25 02:55:43', '2025-08-14 09:01:20'),
+(1, 'Phòng Hành chính - Nhân sự', 'Cập nhật mô tả phòng ban', '2025-05-25 02:55:43', '2025-05-25 02:57:44'),
 (2, 'Phòng Tài chính - Kế toán', 'Quản lý tài chính và kế toán', '2025-06-04 09:01:59', '2025-06-04 09:01:59'),
 (3, 'Phòng Kinh doanh', 'Phụ trách phát triển kinh doanh', '2025-06-04 09:02:11', '2025-06-04 09:02:11'),
 (4, 'Phòng Thương mại', 'Quản lý hợp đồng và thương mại', '2025-06-04 09:02:29', '2025-06-04 09:02:29'),
@@ -1261,51 +1537,41 @@ CREATE TABLE `tasks` (
 --
 
 INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `proposed_by`, `start_date`, `end_date`, `status`, `approval_status`, `linked_type`, `linked_id`, `step_code`, `step_id`, `created_by`, `priority`, `comments_count`, `created_at`, `updated_at`, `approval_steps`, `current_level`, `id_department`, `progress`, `overdue_reason`) VALUES
-(1, NULL, 'Thiết kế hồ sơ thầu', 'Chuẩn bị file bản vẽ và hồ sơ năng lực', 5, 4, '2025-07-01', '2025-08-25', 'done', 'approved', 'bidding', 2, 4, 112, 1, 'normal', 0, '2025-06-04 01:23:15', '2025-08-05 00:19:40', 1, 1, 4, 10, NULL),
-(2, NULL, 'Thiết kế hồ sơ thầu', 'Mô tả công việc thiết kế hồ sơ thầu', 3, 2, '2025-06-25', '2025-07-31', 'done', 'approved', 'bidding', 6, 5, 237, 2, 'high', 1, '2025-06-04 01:37:15', '2025-08-05 18:05:52', 1, 1, 5, 50, NULL),
-(3, NULL, 'Nghiên cứu yêu cầu khách hàng', 'Mô tả công việc nghiên cứu yêu cầu khách hàng', 9, 4, '2025-06-29', '2025-07-31', 'todo', 'rejected', 'contract', 30, 16, 265, 1, 'high', 3, '2025-06-04 01:37:24', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
-(10, NULL, 'Mua sắm vật tư', 'Mô tả công việc mua sắm vật tư', 10, 2, '2025-06-25', '2025-07-31', 'todo', 'rejected', 'bidding', 2, 3, 111, 2, 'high', 5, '2025-06-04 01:38:26', '2025-08-04 06:53:04', 1, 1, 5, 0, 'tesst'),
-(26, 3, 'Thiết kế giao diện phụ - task con 3', 'Thiết kế giao diện cho phần chi tiết', 9, 2, '2025-06-15', '2025-06-16', 'todo', 'pending', 'bidding', 2, 3, 111, 1, 'high', 0, '2025-06-05 05:38:39', '2025-08-06 06:03:54', 1, 1, 3, 50, 'Tổng Bí thư: Trung ương khóa mới dự kiến có 200 ủy viên ddd\n- test\n- test 2'),
-(27, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, 4, '2025-06-10', '2025-06-14', 'done', 'approved', 'bidding', 2, 1, 109, 3, 'high', 0, '2025-06-05 06:16:42', '2025-07-20 15:21:54', 1, 1, 1, 0, NULL),
+(1, NULL, 'Thiết kế hồ sơ thầu', 'Chuẩn bị file bản vẽ và hồ sơ năng lực', 5, 4, '2025-07-01', '2025-08-25', 'done', 'approved', 'bidding', 2, 4, 112, 1, 'normal', 0, '2025-06-04 01:23:15', '2025-08-05 07:14:49', 1, 1, 4, 50, NULL),
+(2, NULL, 'Thiết kế hồ sơ thầu', 'Mô tả công việc thiết kế hồ sơ thầu', 3, 2, '2025-06-25', '2025-07-31', 'done', 'approved', 'bidding', 6, 5, 237, 2, 'high', 1, '2025-06-04 01:37:15', '2025-08-22 19:19:43', 1, 1, 5, 100, NULL),
+(3, NULL, 'Nghiên cứu yêu cầu khách hàng', 'Mô tả công việc nghiên cứu yêu cầu khách hàng', 9, 4, '2025-06-29', '2025-07-31', 'todo', 'rejected', 'contract', 30, 16, 265, 1, 'high', 3, '2025-06-04 01:37:24', '2025-08-05 09:04:44', 1, 1, 5, 75, NULL),
+(10, NULL, 'Mua sắm vật tư', 'Mô tả công việc mua sắm vật tư', 10, 2, '2025-06-25', '2025-07-31', 'todo', 'rejected', 'bidding', 2, 3, 111, 2, 'high', 5, '2025-06-04 01:38:26', '2025-08-14 07:20:14', 1, 1, 5, 75, 'tesst'),
+(26, 3, 'Thiết kế giao diện phụ - task con 3', 'Thiết kế giao diện cho phần chi tiết', 9, 2, '2025-06-15', '2025-06-16', 'todo', 'pending', 'bidding', 2, 3, 111, 1, 'high', 0, '2025-06-05 05:38:39', '2025-08-14 07:20:46', 1, 1, 3, 75, 'Tổng Bí thư: Trung ương khóa mới dự kiến có 200 ủy viên ddd\n- test\n- test 2'),
+(27, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, 4, '2025-06-10', '2025-06-14', 'done', 'approved', 'bidding', 2, 1, 109, 3, 'high', 0, '2025-06-05 06:16:42', '2025-08-05 09:58:25', 1, 1, 1, 100, NULL),
 (28, 3, 'Thiết kế giao diện phụ - task con 3 có ngay bat dau - ngay ket thuc', 'Thiết kế giao diện cho phần chi tiết', 17, 4, '2025-06-25', '2025-07-31', 'done', 'approved', 'bidding', 2, 3, 111, 1, 'normal', 0, '2025-06-05 06:19:14', '2025-07-20 15:21:54', 1, 1, 3, 0, NULL),
 (29, 18, 'sub task 1', 'tesst subtask', 13, 4, '2025-06-24', '2025-07-31', '', 'pending', 'bidding', 5, 5, 104, 1, 'normal', 0, '2025-06-23 18:15:50', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
 (30, NULL, 'test', 'tesst tesst', 22, 1, '2025-06-24', '2025-07-30', 'done', 'approved', 'bidding', 5, 5, 104, 1, 'normal', 0, '2025-06-23 18:52:15', '2025-07-20 15:21:54', 1, 1, 1, 0, NULL),
-(31, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, 4, '2025-08-29', '2025-08-31', 'overdue', 'pending', 'bidding', 2, 3, 111, 3, 'high', 0, '2025-06-24 18:47:18', '2025-07-20 15:21:54', 1, 1, 4, 0, NULL),
+(31, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, 4, '2025-08-29', '2025-08-31', 'overdue', 'pending', 'bidding', 2, 3, 111, 3, 'high', 0, '2025-06-24 18:47:18', '2025-08-05 09:07:21', 1, 1, 4, 50, NULL),
 (32, 1, 'tesst subtask', 'xxxxxxx', 22, 4, '2025-06-28', '2025-07-31', 'done', 'approved', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-06-28 08:01:02', '2025-07-20 15:21:54', 1, 1, 3, 0, NULL),
-(33, NULL, 'test task mới', 'test', 3, 4, '2025-06-29', '2025-07-31', 'doing', 'pending', 'bidding', 5, 9, 130, 1, 'normal', 0, '2025-06-29 01:28:22', '2025-07-20 15:21:54', 1, 1, 2, 0, NULL),
+(33, NULL, 'test task mới', 'test', 3, 4, '2025-06-29', '2025-07-31', 'done', 'approved', 'bidding', 5, 9, 108, 1, 'normal', 0, '2025-06-29 01:28:22', '2025-08-22 19:20:30', 1, 1, 2, 100, NULL),
 (34, NULL, 'test nhiêm vụ mới', 'test test', 7, 4, '2025-06-29', '2025-07-31', 'doing', 'pending', 'bidding', 2, 2, 110, 1, 'normal', 0, '2025-06-29 01:36:07', '2025-07-20 15:21:54', 1, 1, 1, 0, NULL),
 (35, NULL, 'test mới 3', 'test nhé', 7, 2, '2025-06-29', '2025-08-07', 'doing', 'pending', 'bidding', 8, 7, 79, 1, 'high', 0, '2025-06-29 01:51:48', '2025-07-20 15:21:54', 1, 1, 3, 0, NULL),
 (36, NULL, 'mới', 'đasadd', 9, 1, '2025-06-30', '2025-07-31', 'doing', 'pending', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-06-29 11:25:28', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
 (37, NULL, 'test nhiệm vụ hợp đồng 1', 'test nhiệm vụ hợp đồng 1', 23, 1, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 10, 259, 1, 'normal', 0, '2025-06-30 09:33:07', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
 (38, NULL, 'test nhiệm vụ hợp đồng 2', 'test nhiệm vụ hợp đồng 2', 19, 4, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 11, 260, 1, 'high', 0, '2025-06-30 09:37:45', '2025-08-03 20:30:08', 1, 1, 4, 50, NULL),
 (39, NULL, 'duyệt hợp đồng mua', 'duyệt hợp đồng mua', 21, 4, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 12, 261, 1, 'high', 0, '2025-06-30 09:48:27', '2025-07-20 15:21:54', 1, 1, 2, 0, NULL),
-(40, NULL, 'nhiệm vụ cho gói thầu 1', 'test chấm thầu', 4, 1, '2025-07-10', '2025-08-05', 'doing', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-06-30 09:54:52', '2025-07-20 15:21:54', 1, 1, 2, 75, NULL),
+(40, NULL, 'nhiệm vụ cho gói thầu 1', 'test chấm thầu', 4, 1, '2025-07-10', '2025-08-05', 'doing', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-06-30 09:54:52', '2025-08-05 09:04:31', 1, 1, 2, 50, NULL),
 (41, NULL, 'nhiệm vụ hợp đồng 2', 'nghiệm thu', 23, 1, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 16, 265, 1, 'normal', 0, '2025-06-30 09:58:15', '2025-07-20 15:21:54', 1, 1, 4, 0, NULL),
-(42, NULL, 'test nhiệm vụ hợp đồng 4', 'kiểm tra hàng hóa', 5, 4, '2025-08-13', '2025-08-21', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'high', 0, '2025-06-30 10:05:48', '2025-08-11 18:20:43', 1, 1, 4, 75, NULL),
-(43, NULL, 'test nhiệm vụ hợp đồng 5', 'kiểm tra hàng hóa', 1, 2, '2025-07-01', '2025-08-31', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'normal', 0, '2025-06-30 10:10:57', '2025-07-20 15:21:54', 1, 1, 1, 75, NULL),
+(42, NULL, 'test nhiệm vụ hợp đồng 4', 'kiểm tra hàng hóa', 5, 4, '2025-08-13', '2025-08-21', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'high', 0, '2025-06-30 10:05:48', '2025-07-20 15:21:54', 1, 1, 4, 0, NULL),
+(43, NULL, 'test nhiệm vụ hợp đồng 5', 'kiểm tra hàng hóa', 1, 2, '2025-07-01', '2025-08-31', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'normal', 0, '2025-06-30 10:10:57', '2025-07-20 15:21:54', 1, 1, 1, 0, NULL),
 (44, NULL, 'test nhiệm vụ hợp đồng 6', 'nghiệm thu', 24, 2, '2025-07-01', '2025-08-31', 'doing', 'pending', 'contract', 33, 16, 316, 1, 'normal', 0, '2025-06-30 10:12:22', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
-(45, NULL, 'test nhiệm vụ gói thầu 7', 'chấm thầu', 24, 2, '2025-07-31', '2025-08-29', 'doing', 'pending', 'bidding', 3, 6, 123, 1, 'high', 0, '2025-06-30 10:13:58', '2025-07-20 15:21:54', 1, 1, 3, 0, NULL),
-(46, NULL, 'test hợp đồng 8', 'test hợp đồng 8', 1, 4, '2025-07-24', '2025-08-28', 'doing', 'pending', 'contract', 30, 10, 259, 1, 'high', 0, '2025-06-30 10:23:23', '2025-08-05 10:30:39', 1, 1, 1, 50, NULL),
+(45, NULL, 'test nhiệm vụ gói thầu 7', 'chấm thầu', 24, 2, '2025-07-31', '2025-08-29', 'doing', 'pending', 'bidding', 3, 6, 123, 1, 'high', 0, '2025-06-30 10:13:58', '2025-08-05 09:04:52', 1, 1, 3, 50, NULL),
+(46, NULL, 'test hợp đồng 8', 'test hợp đồng 8', 1, 4, '2025-07-24', '2025-08-28', 'doing', 'pending', 'contract', 30, 10, 259, 1, 'high', 0, '2025-06-30 10:23:23', '2025-08-11 06:41:09', 1, 1, 1, 50, NULL),
 (47, NULL, 'nhiệm vụ mới', 'mô tả mẫu', 15, 4, '2025-07-01', '2025-08-28', 'doing', 'pending', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-07-01 04:00:46', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
-(48, NULL, 'nhiệm vụ cho hợp đồng mới', 'mô tả mẫu', 20, 4, '2025-07-01', '2025-08-30', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'normal', 0, '2025-07-01 04:07:24', '2025-08-11 19:16:53', 1, 1, 4, 75, NULL),
-(49, NULL, 'nhiệm vụ  phát sinh', 'nhiêm vụ phát sinh', 1, 4, '2025-08-30', '2025-08-31', 'doing', 'pending', 'bidding', 3, 1, 118, 1, 'high', 0, '2025-07-01 04:31:44', '2025-07-20 15:21:54', 1, 1, 2, 0, NULL),
-(50, NULL, 'nhiệm vụ mới 06/07', 'test task mới', 1, 1, '2025-07-06', '2025-08-27', 'request_approval', 'pending', 'bidding', 2, 3, 111, 1, 'high', 0, '2025-07-06 03:52:58', '2025-07-20 15:21:54', 2, 1, 3, 0, NULL),
-(51, NULL, 'test nhiệm vụ mới', 'demo', 6, 9, '2025-07-15', '2025-08-28', 'doing', 'pending', 'contract', 34, 16, 333, 1, 'high', 0, '2025-07-20 04:53:06', '2025-07-31 01:36:25', 0, 1, 5, 75, NULL),
-(52, NULL, 'nhiệm vụ cho gói thầu 08/01/2025', 'test nhiệm vụ gói thàu 08/01/2025', 6, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 5, 113, 1, 'high', 0, '2025-07-31 20:58:15', '2025-07-31 20:58:15', 0, 1, 3, 0, NULL),
-(53, NULL, 'nhiệm vụ cho gói thầu 2 08/01/2025', 'test nhiệm vụ cho gói thầu 2 08/01/2025', 7, 9, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 5, 113, 1, 'high', 0, '2025-07-31 21:00:50', '2025-08-05 18:05:57', 0, 1, 3, 25, NULL),
-(54, NULL, 'task test Duyệt kế hoạch 08/01/2025', 'test task test Duyệt kế hoạch', 9, 4, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 4, 112, 1, 'normal', 0, '2025-07-31 21:11:37', '2025-07-31 21:11:37', 0, 1, 3, 0, NULL),
-(55, NULL, 'task test triển khai hồ sơ sự thầu', '324234234', 5, 4, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 5, 113, 1, 'normal', 0, '2025-07-31 21:42:38', '2025-07-31 21:42:38', 0, 1, 3, 0, NULL),
-(56, NULL, 'nhiệm vụ triển khai hồ sơ dự thầu mới 3', '2343242424324', 9, 4, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 5, 113, 1, 'high', 0, '2025-07-31 22:12:15', '2025-07-31 22:12:15', 0, 1, 3, 0, NULL),
-(57, NULL, 'nhiệm vụ duyệt 2', '43242424', 7, 6, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 4, 112, 1, 'normal', 0, '2025-07-31 22:16:03', '2025-07-31 22:16:03', 0, 1, 3, 0, NULL),
-(58, NULL, 'nhiệm vụ duyệt 3', 'ewqqe', 8, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 4, 112, 1, 'normal', 0, '2025-07-31 22:17:14', '2025-07-31 22:17:14', 0, 1, 3, 0, NULL),
+(48, NULL, 'nhiệm vụ cho hợp đồng mới', 'mô tả mẫu', 20, 4, '2025-07-01', '2025-08-30', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'normal', 0, '2025-07-01 04:07:24', '2025-07-20 15:21:54', 1, 1, 4, 0, NULL),
 (59, NULL, 'duyệt 5', '234322424', 9, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 4, NULL, 1, 'normal', 0, '2025-07-31 22:19:12', '2025-07-31 22:19:12', 0, 1, 3, 0, NULL),
 (60, NULL, 'duyệt 6', '3432424', 5, 4, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 4, NULL, 1, 'normal', 0, '2025-07-31 22:22:38', '2025-07-31 22:22:38', 0, 1, 3, 0, NULL),
 (61, NULL, 'duyệt 4', '4234234324', 4, 5, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 4, NULL, 1, 'normal', 0, '2025-07-31 22:59:44', '2025-07-31 22:59:44', 0, 1, 3, 0, NULL),
-(62, NULL, 'tesst 6', '432424', 4, 4, '2025-08-01', '2025-09-30', '', 'pending', 'bidding', 2, 4, 112, 1, 'high', 0, '2025-07-31 23:22:55', '2025-08-05 18:06:04', 0, 1, 3, 75, NULL),
+(62, NULL, 'tesst 6', '432424', 4, 4, '2025-08-01', '2025-09-30', '', 'pending', 'bidding', 2, 4, 112, 1, 'high', 0, '2025-07-31 23:22:55', '2025-08-05 09:04:11', 0, 1, 3, 25, NULL),
 (63, NULL, 'tesst 7', '423424', 9, 5, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 4, 112, 1, 'normal', 0, '2025-07-31 23:24:39', '2025-07-31 23:24:39', 0, 1, 3, 0, NULL),
 (64, NULL, 'hồ sơ dự thầu 1', '3545345435435', 6, 4, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 5, 113, 1, 'normal', 0, '2025-07-31 23:26:27', '2025-07-31 23:26:27', 0, 1, 3, 0, NULL),
 (65, NULL, 'hồ sơ dự thầu 2', '433535345', 8, 7, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 5, 113, 1, 'normal', 0, '2025-07-31 23:28:19', '2025-07-31 23:28:19', 0, 1, 3, 0, NULL),
-(66, NULL, 'nhiệm vụ lập 1', '43543535435', 9, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 3, NULL, 1, 'normal', 0, '2025-07-31 23:39:43', '2025-08-11 19:17:06', 0, 1, 3, 100, NULL),
+(66, NULL, 'nhiệm vụ lập 1', '43543535435', 9, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 3, NULL, 1, 'normal', 0, '2025-07-31 23:39:43', '2025-07-31 23:39:43', 0, 1, 3, 0, NULL),
 (67, NULL, 'nhiệm vụ triển khai 1', '3423432434', 8, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 5, 113, 1, 'normal', 0, '2025-07-31 23:41:24', '2025-07-31 23:41:24', 0, 1, 3, 0, NULL),
 (68, NULL, 'triển khai 6', '434324324', 8, 5, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 5, 113, 1, 'normal', 0, '2025-07-31 23:43:47', '2025-07-31 23:43:47', 0, 1, 3, 0, NULL),
 (69, NULL, 'chấm 1', '4432424', 8, 6, '2025-08-01', '2025-09-24', 'doing', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-07-31 23:49:57', '2025-07-31 23:49:57', 0, 1, 3, 0, NULL),
@@ -1317,96 +1583,70 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (75, NULL, 'hợp đồng 2', '423432424242', 7, 19, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 8, 116, 1, 'normal', 0, '2025-08-01 00:06:51', '2025-08-01 00:06:51', 0, 1, 3, 0, NULL),
 (76, NULL, 'hợp đồng 3', '435435353535', 20, 13, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 8, 116, 1, 'normal', 0, '2025-08-01 00:10:44', '2025-08-01 00:10:44', 0, 1, 3, 0, NULL),
 (77, NULL, 'nhập dữ liệu 1', '4324342424324', 18, 19, '2025-08-01', '2025-09-30', '', 'pending', 'bidding', 2, 7, 115, 1, 'normal', 0, '2025-08-01 00:11:29', '2025-08-01 00:11:29', 0, 1, 3, 0, NULL),
-(78, NULL, 'nhập dữ liệu 2', '65465465464646', 10, 15, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 7, 115, 1, 'normal', 0, '2025-08-01 00:12:13', '2025-08-11 19:16:58', 0, 1, 3, 50, NULL),
+(78, NULL, 'nhập dữ liệu 2', '65465465464646', 10, 15, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 7, 115, 1, 'normal', 0, '2025-08-01 00:12:13', '2025-08-01 00:12:13', 0, 1, 3, 0, NULL),
 (79, NULL, 'nhập dữ liệu 3', '453535353', 12, 17, '2025-08-01', '2025-08-31', '', 'pending', 'bidding', 2, 7, 115, 1, 'normal', 0, '2025-08-01 00:12:46', '2025-08-01 00:12:46', 0, 1, 4, 0, NULL),
-(80, NULL, 'nhập dữ liệu 4', '42432424', 1, 19, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 7, 115, 1, 'normal', 0, '2025-08-01 00:13:22', '2025-08-01 00:13:22', 0, 1, 3, 0, NULL),
+(80, NULL, 'nhập dữ liệu 4', '42432424', 1, 19, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 7, 115, 1, 'normal', 0, '2025-08-01 00:13:22', '2025-08-05 09:06:48', 0, 1, 3, 75, NULL),
 (81, NULL, 'duyệt 1', '4234242424', 18, 5, '2025-08-01', '2025-09-30', '', 'pending', 'bidding', 2, 9, NULL, 1, 'low', 0, '2025-08-01 00:15:01', '2025-08-01 00:15:01', 0, 1, 3, 0, NULL),
 (82, NULL, 'duyệt 2', '34242434', 19, 7, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 9, 117, 1, 'normal', 0, '2025-08-01 00:15:51', '2025-08-01 00:15:51', 0, 1, 3, 0, NULL),
-(83, NULL, 'duyệt 1', '543535', 21, 5, '2025-08-01', '2025-09-30', 'request_approval', 'pending', 'bidding', 10, 9, 90, 1, 'normal', 0, '2025-08-01 00:16:45', '2025-08-01 00:16:45', 0, 1, 3, 0, NULL),
+(83, NULL, 'duyệt 1', '543535', 21, 5, '2025-08-01', '2025-09-30', 'request_approval', 'pending', 'bidding', 10, 1, 82, 1, 'normal', 0, '2025-08-01 00:16:45', '2025-08-01 00:16:45', 0, 1, 3, 0, NULL),
 (84, NULL, 'nhận 1', '42432424', 24, 6, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 10, 1, 82, 1, 'normal', 0, '2025-08-01 00:17:30', '2025-08-01 00:17:30', 0, 1, 3, 0, NULL),
 (85, NULL, 'thanh toán 1', '432432424', 22, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'contract', 30, 14, 263, 1, 'normal', 0, '2025-08-01 01:58:36', '2025-08-01 01:58:36', 0, 1, 3, 0, NULL),
 (86, NULL, 'thanh toán 2', '453453535', 21, 19, '2025-08-01', '2025-09-30', 'request_approval', 'pending', 'contract', 30, 14, 263, 1, 'low', 0, '2025-08-01 01:59:17', '2025-08-01 01:59:17', 0, 1, 3, 0, NULL),
 (87, NULL, 'nhập kho hàng 1', '24234243', 24, 19, '2025-08-01', '2025-09-30', 'todo', 'pending', 'contract', 30, 18, 267, 1, 'normal', 0, '2025-08-01 01:59:52', '2025-08-01 01:59:52', 0, 1, 3, 0, NULL),
-(88, NULL, 'nhập kho hàng 2', '4324424', 23, 20, '2025-08-01', '2025-09-30', '', 'pending', 'contract', 30, 18, 267, 1, 'high', 0, '2025-08-01 02:00:26', '2025-08-01 02:00:26', 0, 1, 4, 0, NULL),
+(88, NULL, 'nhập kho hàng 2', '4324424', 23, 20, '2025-08-01', '2025-09-30', '', 'pending', 'contract', 30, 18, 267, 1, 'high', 0, '2025-08-01 02:00:26', '2025-08-05 09:04:55', 0, 1, 4, 25, NULL),
 (89, NULL, 'đánh giá 1', 'ưqeqeqeqe', 12, 5, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 2, 110, 1, 'normal', 0, '2025-08-01 02:03:52', '2025-08-01 02:03:52', 0, 1, 5, 0, NULL),
-(90, NULL, 'nội bộ 01/08/2025', '342342424', 23, 21, '2025-08-01', '2025-09-30', 'todo', 'pending', 'internal', NULL, 1, 109, 1, 'normal', 0, '2025-08-01 02:04:48', '2025-08-01 02:04:48', 0, 1, 1, 0, NULL),
-(91, NULL, 'tiếp nhận thông tin khách hàng 1', '342343242424', 19, 23, '2025-08-02', '2025-09-30', 'todo', 'pending', 'bidding', 11, 1, 91, 1, 'normal', 0, '2025-08-01 21:29:09', '2025-08-01 21:29:09', 0, 1, 3, 0, NULL),
-(92, NULL, 'test nhiệm vụ', '234342424', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'contract', 30, 18, 267, 1, 'normal', 0, '2025-08-04 02:14:19', '2025-08-04 02:14:19', 0, 1, 3, 0, NULL),
-(93, NULL, 'test nhiệm vụ', '343242424', 5, 5, '2025-08-04', '2025-09-30', 'todo', 'pending', 'contract', 34, 10, 259, 1, 'normal', 0, '2025-08-04 02:18:42', '2025-08-04 02:18:42', 0, 1, 2, 0, NULL),
-(94, NULL, 'test nhiệm cho 04/08', '42344242', 4, 4, '2025-08-04', '2025-09-30', 'todo', 'pending', 'contract', 31, 10, 276, 1, 'normal', 0, '2025-08-04 02:23:38', '2025-08-04 02:23:38', 0, 1, 4, 0, NULL),
-(95, NULL, 'test nhiệm vụ của Ái', '342432243432', 1, 1, '2025-08-04', '2025-09-30', 'todo', 'pending', 'contract', 31, 10, 276, 1, 'normal', 0, '2025-08-04 02:31:25', '2025-08-04 02:31:25', 0, 1, 2, 0, NULL),
-(96, NULL, 'test duyệt nhiệm vụ', 'test nhiệm vụ 2 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'todo', 'pending', 'bidding', 2, 2, 110, 5, 'normal', 0, '2025-08-04 07:39:30', '2025-08-04 07:39:30', 2, 1, 3, 0, NULL),
-(97, NULL, 'test task của vân anh', 'task của vân anh 2 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'todo', 'pending', 'bidding', 2, 2, 110, 5, 'normal', 0, '2025-08-04 07:47:07', '2025-08-04 07:47:07', 2, 1, 3, 0, NULL),
-(98, NULL, 'test nhiệm vụ của vân anh 4', 'test nhiệm vụ của vân anh 4, 2 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 2, 2, 110, 5, 'low', 0, '2025-08-04 07:48:51', '2025-08-04 07:48:51', 2, 1, 3, 0, NULL),
-(99, NULL, 'test nhiệm vụ vân anh 2 cấp duyệt', 'test nhiệm vụ 2 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'contract', 30, 10, 259, 5, 'normal', 0, '2025-08-04 08:12:56', '2025-08-04 08:12:56', 2, 1, 3, 0, NULL),
-(100, NULL, 'test nhiệm vụ vân anh 4', 'test nhiệm vụ vân anh 4 2 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'contract', 30, 10, 259, 5, 'normal', 0, '2025-08-04 08:16:00', '2025-08-04 08:16:00', 2, 1, 3, 0, NULL),
-(101, NULL, 'nhiệm vụ của vân anh 1 cấp duyệt', 'nhiệm vụ 1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'contract', 30, 14, 263, 5, 'low', 0, '2025-08-04 08:18:36', '2025-08-04 08:18:36', 1, 1, 3, 0, NULL),
-(102, NULL, 'task duyệt đơn hàng vân anh', 'task 1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'contract', 30, 11, NULL, 5, 'normal', 0, '2025-08-04 08:23:31', '2025-08-04 08:23:31', 1, 1, 3, 0, NULL),
-(103, NULL, 'task 1 cấp duyệt vân anh', 'tast 1 cấp duyệt của vân anh', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'contract', 30, 11, NULL, 5, 'normal', 0, '2025-08-04 08:24:33', '2025-08-04 08:24:33', 1, 1, 3, 0, NULL),
-(104, NULL, 'test task va', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'todo', 'rejected', 'bidding', 6, 1, NULL, 5, 'normal', 0, '2025-08-04 08:25:44', '2025-08-04 23:26:07', 1, 1, 3, 0, NULL),
-(105, NULL, 'test task 1', 'test 1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 6, 1, NULL, 5, 'normal', 0, '2025-08-04 08:27:11', '2025-08-04 08:27:11', 1, 1, 3, 0, NULL),
-(106, NULL, 'test test', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 6, 1, 233, 5, 'normal', 0, '2025-08-04 08:30:39', '2025-08-04 08:30:39', 1, 1, 3, 0, NULL),
-(107, NULL, 'sub task 1', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 6, 1, NULL, 5, 'normal', 0, '2025-08-04 08:32:16', '2025-08-04 08:32:16', 1, 1, 3, 0, NULL),
-(108, NULL, 'test 2', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 6, 1, NULL, 5, 'normal', 0, '2025-08-04 08:33:33', '2025-08-04 08:33:33', 1, 1, 3, 0, NULL),
-(109, NULL, 'test 2', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'todo', 'pending', 'bidding', 6, 1, NULL, 5, 'low', 0, '2025-08-04 08:38:59', '2025-08-04 08:38:59', 1, 1, 3, 0, NULL),
-(110, NULL, 'test 1', '2 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 6, 2, 234, 5, 'low', 0, '2025-08-04 08:39:48', '2025-08-04 08:39:48', 2, 1, 3, 0, NULL),
-(111, NULL, 'test 2', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 6, 2, 234, 5, 'normal', 0, '2025-08-04 08:40:24', '2025-08-04 08:40:24', 2, 1, 3, 0, NULL),
-(112, NULL, 'test 3', 'không cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'todo', 'pending', 'bidding', 6, 2, 234, 5, 'low', 0, '2025-08-04 08:40:57', '2025-08-04 08:40:57', 0, 1, 1, 0, NULL),
-(113, NULL, 'test 4', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 6, 2, 234, 5, 'normal', 0, '2025-08-04 08:41:24', '2025-08-04 08:41:24', 1, 1, 5, 0, NULL),
-(114, NULL, 'test xxxxxx', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 2, 9, 241, 5, 'normal', 0, '2025-08-04 08:42:46', '2025-08-04 08:42:46', 1, 1, 3, 0, NULL),
-(115, NULL, 'test 1', '2 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 31, 1, NULL, 5, 'normal', 0, '2025-08-04 08:44:07', '2025-08-04 08:44:07', 2, 1, 3, 0, NULL),
-(116, NULL, 'test xxxx', 'không cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 31, 1, 213, 5, 'normal', 0, '2025-08-04 08:45:18', '2025-08-04 08:45:18', 0, 1, 3, 0, NULL),
-(117, NULL, 'test 33', '2 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'todo', 'pending', 'bidding', 31, 1, 213, 5, 'normal', 0, '2025-08-04 08:45:53', '2025-08-04 08:45:53', 2, 1, 4, 0, NULL),
-(118, NULL, 'test mnmnmn', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 31, 1, NULL, 5, 'normal', 0, '2025-08-04 08:46:56', '2025-08-04 08:46:56', 1, 1, 4, 0, NULL),
-(119, NULL, 'test mới 32443242', '2 cấp duyệt nhé', 5, 5, '2025-08-04', '2025-09-30', 'todo', 'pending', 'bidding', 31, 1, 213, 5, 'high', 0, '2025-08-04 08:47:53', '2025-08-04 08:47:53', 2, 1, 3, 95, NULL),
-(120, NULL, 'test 1 cấp duyệt', 'test 2 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 31, 1, 213, 5, 'normal', 0, '2025-08-04 08:48:26', '2025-08-04 08:48:26', 1, 1, 5, 0, NULL),
-(121, NULL, 'test 111', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 31, 1, 213, 5, 'high', 0, '2025-08-04 08:49:18', '2025-08-04 08:49:18', 1, 1, 3, 0, NULL),
-(122, NULL, 'test mới 3333', 'ko cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 31, 2, 214, 5, 'normal', 0, '2025-08-04 08:50:09', '2025-08-04 08:50:09', 0, 1, 3, 0, NULL),
-(123, NULL, '1 cấp duyệt nhé', '1 cấp duyệt nhé', 5, 5, '2025-08-04', '2025-09-30', 'todo', 'pending', 'bidding', 31, 2, 214, 5, 'high', 0, '2025-08-04 08:50:45', '2025-08-04 08:50:45', 1, 1, 3, 0, NULL),
-(124, NULL, 'nhiệm vụ cho hợp đồng mới nhé', '1 cấp duyệt cho nhiệm vụ thuộc hợp đồng', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'contract', 34, 10, NULL, 5, 'normal', 0, '2025-08-04 08:51:57', '2025-08-04 08:51:57', 1, 1, 3, 0, NULL),
-(125, NULL, 'nhiệm vụ mới thử lưu', '2 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'todo', 'pending', 'contract', 34, 10, 327, 5, 'high', 0, '2025-08-04 08:53:49', '2025-08-04 08:53:49', 2, 1, 3, 0, NULL),
-(126, NULL, '1 cấp duyệt', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'contract', 34, 10, 327, 5, 'high', 0, '2025-08-04 08:55:16', '2025-08-04 08:55:16', 1, 1, 3, 0, NULL),
-(127, NULL, 'test 1', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'contract', 33, 10, 310, 5, 'normal', 0, '2025-08-04 08:56:51', '2025-08-04 08:56:51', 1, 1, 3, 0, NULL),
-(128, NULL, 'test lại nhiệm vụ', 'ko cấp duyệt xxxx', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'contract', 33, 13, 313, 5, 'high', 0, '2025-08-04 08:57:38', '2025-08-04 08:57:38', 0, 1, 4, 0, NULL),
-(129, NULL, 'nhiệm vụ duyệt', '1 cấp nhé nhé', 5, 5, '2025-08-04', '2025-09-30', '', 'pending', 'contract', 33, 15, 315, 5, 'normal', 0, '2025-08-04 08:58:50', '2025-08-04 08:58:50', 1, 1, 5, 0, NULL),
-(130, NULL, 'thêm nhiệm vụ test nữa', '1 cấp duyệt nhé nhé nhé', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'contract', 32, 10, 310, 5, 'normal', 0, '2025-08-04 09:00:14', '2025-08-04 09:00:14', 1, 1, 3, 0, NULL),
-(131, NULL, 'thêm mới nhiệm vụ', '1 cấp nhá nhé', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'contract', 32, 10, 293, 5, 'normal', 0, '2025-08-04 09:03:03', '2025-08-04 09:03:03', 1, 1, 5, 0, NULL),
-(132, NULL, 'test nhiệm vụ mới xxxxx', '554353535', 5, 5, '2025-08-04', '2025-08-31', 'doing', 'pending', 'bidding', 32, 1, NULL, 5, 'normal', 0, '2025-08-04 09:09:41', '2025-08-04 09:09:41', 0, 1, 3, 0, NULL),
-(133, NULL, 'test mới 4534535', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 32, 1, NULL, 5, 'normal', 0, '2025-08-04 09:15:35', '2025-08-04 09:15:35', 1, 1, 3, 0, NULL),
-(134, NULL, 'test nhiệm vụ mới nhé', '1 cấp duyệt này', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 32, 1, 224, 5, 'normal', 0, '2025-08-04 09:28:32', '2025-08-04 09:28:32', 1, 1, 3, 0, NULL),
-(135, NULL, 'test thử nhiệm vụ mới', '42423432424', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 29, 1, 189, 5, 'normal', 0, '2025-08-04 09:34:10', '2025-08-04 09:34:10', 0, 1, 3, 0, NULL),
-(136, NULL, 'test nữa', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 29, 1, 189, 5, 'normal', 0, '2025-08-04 09:35:32', '2025-08-04 09:35:32', 1, 1, 3, 0, NULL),
-(137, NULL, 'test mới này', '1 cấp duyệt nhé', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 29, 1, 191, 5, 'normal', 0, '2025-08-04 09:44:14', '2025-08-04 09:44:14', 1, 1, 3, 0, NULL),
-(138, NULL, 'thử task mới', '1 cấp duyệt', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 29, 2, 190, 5, 'normal', 0, '2025-08-04 09:49:38', '2025-08-04 09:49:38', 1, 1, 3, 0, NULL),
-(139, NULL, 'sub task 1', '1 cấp', 5, 5, '2025-08-04', '2025-09-30', 'doing', 'pending', 'bidding', 29, 1, 191, 5, 'high', 0, '2025-08-04 09:50:41', '2025-08-04 09:50:41', 1, 1, 2, 0, NULL),
-(140, NULL, 'test nhiệm vụ mới', '32423432424', 5, 5, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 9, 292, 5, 'normal', 0, '2025-08-04 11:12:27', '2025-08-04 11:12:27', 0, 1, 3, 0, NULL),
-(141, NULL, 'test mới 2', '3242342424', 5, 5, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 1, 284, 5, 'normal', 0, '2025-08-04 11:17:11', '2025-08-04 11:17:11', 0, 1, 3, 0, NULL),
-(142, NULL, 'test mới 3', '34242424', 5, 5, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 1, 284, 5, 'normal', 0, '2025-08-04 11:19:10', '2025-08-04 11:19:10', 1, 1, 3, 0, NULL),
-(143, NULL, 'test 3', '4234234324', 5, 5, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 1, 284, 5, 'normal', 0, '2025-08-04 11:22:00', '2025-08-04 11:22:00', 1, 1, 3, 0, NULL),
-(144, NULL, 'test 5', '4234234234', 5, 5, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 1, 284, 5, 'normal', 0, '2025-08-04 11:25:27', '2025-08-04 11:25:27', 1, 1, 3, 0, NULL),
-(145, NULL, 'task mới', 'xxxxx', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 3, 286, 1, 'normal', 0, '2025-08-04 18:41:00', '2025-08-04 18:41:00', 0, 1, 3, 0, NULL),
-(146, NULL, 'test 5', '2 cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 5, 288, 1, 'normal', 0, '2025-08-04 18:59:19', '2025-08-04 18:59:19', 2, 1, 3, 0, NULL),
-(147, NULL, 'đánh giá 2', '1 cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'todo', 'pending', 'bidding', 35, 2, 285, 1, 'normal', 0, '2025-08-04 19:03:30', '2025-08-04 19:03:30', 1, 1, 3, 0, NULL),
-(148, NULL, 'đánh giá 3', '2 cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 2, 285, 1, 'normal', 0, '2025-08-04 19:06:33', '2025-08-04 19:06:33', 2, 1, 3, 0, NULL),
-(149, NULL, 'đánh giá 4', '1 cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'todo', 'pending', 'bidding', 35, 2, 285, 1, 'low', 0, '2025-08-04 19:08:02', '2025-08-04 19:08:02', 1, 1, 3, 0, NULL),
-(150, NULL, 'duyệt 4', '1 cấp', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 4, 287, 1, 'normal', 0, '2025-08-04 19:15:17', '2025-08-04 19:15:17', 1, 1, 3, 0, NULL),
-(151, NULL, 'duyệt 5', '1 cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'todo', 'pending', 'bidding', 35, 4, 287, 1, 'high', 0, '2025-08-04 19:22:30', '2025-08-04 19:22:30', 0, 1, 3, 0, NULL),
-(152, NULL, 'test mới 222', 'ko cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 7, 290, 1, 'normal', 0, '2025-08-04 19:46:14', '2025-08-04 19:46:14', 0, 1, 3, 0, NULL),
-(153, NULL, 'tesst mới 3333', '3423424', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 5, 288, 1, 'normal', 0, '2025-08-04 20:04:52', '2025-08-04 20:04:52', 1, 1, 2, 0, NULL),
-(154, NULL, 'tesst mới ', '432432424', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 1, 284, 1, 'normal', 0, '2025-08-04 20:14:31', '2025-08-05 02:31:56', 0, 1, 3, 100, NULL),
-(155, NULL, 'chấm 1', 'chấm 1', 1, 1, '2025-08-05', '2025-09-30', 'todo', 'pending', 'bidding', 35, 6, 289, 1, 'normal', 0, '2025-08-04 20:18:33', '2025-08-04 20:18:33', 0, 1, 3, 0, NULL),
-(156, NULL, 'chấm 2', '2 cấp', 1, 1, '2025-08-05', '2025-09-30', 'todo', 'pending', 'bidding', 35, 6, 289, 1, 'normal', 0, '2025-08-04 20:19:16', '2025-08-04 20:19:16', 2, 1, 3, 0, NULL),
-(157, NULL, 'khiển khai 2', 'cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 8, 291, 1, 'normal', 0, '2025-08-04 20:20:40', '2025-08-04 20:20:40', 2, 1, 3, 0, NULL),
-(158, NULL, 'duyệt 2', '1 cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 9, 292, 1, 'normal', 0, '2025-08-04 20:32:19', '2025-08-04 20:32:19', 1, 1, 5, 0, NULL),
-(159, NULL, 'duyệt 3', 'không cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'bidding', 35, 9, 292, 1, 'high', 0, '2025-08-04 20:32:51', '2025-08-04 20:32:51', 0, 1, 3, 0, NULL),
-(160, NULL, 'triển khai 3', '2 cấp duyệt', 1, 1, '2025-08-05', '2025-09-30', 'todo', 'pending', 'bidding', 35, 8, 291, 1, 'high', 0, '2025-08-04 20:33:41', '2025-08-04 20:33:41', 2, 1, 3, 0, NULL),
-(161, NULL, 'test mới 432432424', '34242424', 1, 1, '2025-08-05', '2025-09-30', 'doing', 'pending', 'contract', 34, 11, 328, 1, 'normal', 0, '2025-08-04 20:49:30', '2025-08-04 20:49:30', 0, 1, 4, 0, NULL),
-(162, NULL, 'tesst mới 45345435435', '43242424324', 1, 1, '2025-08-05', '2025-09-30', 'done', 'approved', 'contract', 34, 11, 328, 1, 'high', 0, '2025-08-04 20:50:07', '2025-08-04 23:25:12', 1, 1, 2, 0, NULL),
-(163, NULL, 'nhiệm vụ thuộc gói thầu', '4535354353', 1, 1, '2025-08-05', '2025-09-30', 'todo', 'pending', 'bidding', 2, 8, 116, 1, 'normal', 0, '2025-08-04 21:11:21', '2025-08-04 21:11:21', 0, 1, 5, 0, NULL),
-(164, NULL, 'nhiệm vụ mới', '2 cấp', 1, 1, '2025-08-05', '2025-09-30', 'done', 'approved', 'bidding', 2, 8, 116, 1, 'high', 0, '2025-08-04 21:11:51', '2025-08-04 23:29:22', 2, 2, 2, 0, NULL),
-(165, NULL, 'Mua máy in cho P.KD', 'Mua máy in màu', 1, 3, '2025-08-13', '2025-08-20', 'todo', 'pending', 'internal', NULL, 5, 104, 3, 'high', 0, '2025-08-14 01:21:06', '2025-08-14 01:21:06', 1, 1, 1, 0, NULL),
-(166, 165, 'Tờ trình đề xuất ', 'Tờ trình đề xuất của P.KD', 1, 1, '2025-08-14', '2025-08-14', 'todo', 'pending', 'internal', NULL, 5, 104, 3, 'normal', 0, '2025-08-14 01:25:51', '2025-08-14 01:25:51', 1, 1, 1, 0, NULL),
-(167, 165, 'Lấy báo giá', 'Lấy 3 báo giá', 1, 1, '2025-08-14', '2025-08-15', NULL, 'pending', 'internal', NULL, 5, 104, 3, 'high', 0, '2025-08-14 01:34:32', '2025-08-14 01:34:32', 1, 1, 1, 0, NULL);
+(190, NULL, 'nhiệm vụ nội bộ 18/08', '324234243', 14, 17, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:29:09', '2025-08-18 07:29:09', 0, 1, 2, 0, NULL),
+(191, 190, 'task con 1', '45435435', 23, 22, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:29:41', '2025-08-18 07:29:41', 0, 1, 2, 0, NULL),
+(192, 190, 'task con 2', '42343242', 23, 20, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:30:05', '2025-08-18 07:30:05', 0, 1, 2, 0, NULL),
+(193, 190, 'task con 3', '4232342', 24, 23, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:30:28', '2025-08-18 07:30:28', 0, 1, 2, 0, NULL),
+(194, 190, 'task con 4', '423423432', 16, 19, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:30:55', '2025-08-18 07:30:55', 0, 1, 1, 0, NULL),
+(195, 190, 'task con 5', '3432432424', 13, 22, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:31:34', '2025-08-18 07:31:34', 0, 1, 2, 0, NULL),
+(196, NULL, 'test nhiệm vụ gói thầu', '423432424', 19, 5, '2025-08-18', '2025-09-30', 'todo', 'pending', 'bidding', 2, 1, 302, 3, 'normal', 0, '2025-08-18 08:17:01', '2025-08-18 08:17:01', 0, 1, 2, 0, NULL),
+(197, NULL, 'việc 1', '42332424', 5, 4, '2025-08-18', '2025-09-30', '', 'pending', 'bidding', 36, 1, 313, 3, 'normal', 0, '2025-08-18 08:19:37', '2025-08-18 08:19:37', 0, 1, 4, 0, NULL),
+(198, NULL, 'việc 2', '4324324324', 12, 4, '2025-08-18', '2025-09-30', 'doing', 'pending', 'bidding', 36, 1, 313, 3, 'normal', 0, '2025-08-18 08:20:04', '2025-08-18 08:20:04', 0, 1, 1, 0, NULL),
+(199, NULL, 'tesst mới', 'ok', 4, 4, '2025-08-21', '2025-09-30', 'request_approval', 'approved', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-08-21 08:33:49', '2025-08-31 22:28:56', 0, 0, 3, 100, NULL),
+(200, NULL, 'test 2', '32424423', 4, 17, '2025-08-21', '2025-09-30', 'request_approval', 'approved', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-08-21 08:45:12', '2025-08-31 22:29:25', 0, 0, 3, 100, NULL),
+(201, NULL, 'test mới 22-08 pm', '422342424', 4, 4, '2025-08-22', '2025-09-30', 'done', 'approved', 'bidding', 35, 2, 285, 3, 'normal', 0, '2025-08-22 07:51:20', '2025-08-22 07:52:11', 1, 1, 2, 100, NULL),
+(202, NULL, 'test 3', '342432424', 5, 5, '2025-08-22', '2025-09-25', 'done', 'approved', 'bidding', 35, 3, 286, 3, 'high', 0, '2025-08-22 08:05:13', '2025-08-22 08:05:37', 1, 1, 2, 100, NULL),
+(203, NULL, 'test mới 3', '42342424', 5, 5, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 11, 1, 91, 3, 'normal', 0, '2025-08-22 10:13:27', '2025-08-22 10:14:07', 1, 1, 2, 100, NULL),
+(204, NULL, 'test mới', '34234324', 5, 19, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 35, 4, 287, 3, 'normal', 0, '2025-08-22 10:51:58', '2025-08-23 08:31:05', 1, 1, 3, 100, NULL),
+(205, NULL, 'mới nữa', '32424234324', 21, 21, '2025-08-23', '2025-09-30', 'todo', 'rejected', 'bidding', 35, 6, 289, 3, 'normal', 0, '2025-08-22 10:53:12', '2025-08-23 08:35:50', 1, 1, 3, 0, NULL),
+(206, NULL, 'mới 222', '3453534534', 17, 17, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 35, 8, 291, 3, 'normal', 0, '2025-08-22 10:53:50', '2025-08-23 08:50:26', 1, 1, 3, 100, NULL),
+(207, NULL, 'tesst 5', '3424324', 18, 18, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 35, 7, 290, 3, 'normal', 0, '2025-08-22 18:56:00', '2025-08-27 07:15:14', 1, 1, 2, 100, NULL),
+(208, NULL, 'tesst 6', '3423432', 13, 13, '2025-08-23', '2025-09-30', 'request_approval', 'pending', 'bidding', 35, 9, 292, 3, 'normal', 0, '2025-08-22 18:57:27', '2025-08-22 18:57:27', 1, 1, 2, 0, NULL),
+(209, NULL, 'gói thầu mới tên dài gói thầu mới tên dài  gói thầu mới tên dài  gói thầu mới tên dài  gói thầu mới tên dài  gói thầu mới tên dài  gói thầu mới tên dài  gói thầu mới tên dài ', '3243243224', 16, 16, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 35, 7, 290, 3, 'normal', 0, '2025-08-22 19:00:57', '2025-08-23 08:51:17', 1, 1, 2, 100, NULL),
+(210, NULL, 'test nhiệm vụ mới', '3424324324', 17, 17, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 37, 1, 325, 3, 'normal', 0, '2025-08-22 19:17:35', '2025-08-22 19:23:23', 1, 1, 2, 100, NULL),
+(211, NULL, 'nhiệm vụ mới gói thầu', '23423423424', 18, 22, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 37, 1, 325, 3, 'normal', 0, '2025-08-22 19:21:39', '2025-08-22 19:22:05', 1, 1, 2, 100, NULL),
+(212, NULL, 'thêm việc 3', '34422424', 24, 24, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 37, 1, 325, 3, 'normal', 0, '2025-08-22 19:51:39', '2025-08-22 19:52:06', 1, 1, 1, 100, NULL),
+(214, NULL, 'việc 4', '324234324', 13, 13, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 38, 1, 337, 3, 'normal', 0, '2025-08-22 19:55:10', '2025-08-22 19:55:34', 1, 1, 2, 100, NULL),
+(215, NULL, 'việc 5', '432424234', 22, 22, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 38, 2, 338, 3, 'normal', 0, '2025-08-22 19:56:24', '2025-08-22 19:56:39', 1, 1, 4, 100, NULL),
+(216, NULL, 'việc xxx', '234234324', 22, 4, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 38, 3, 339, 3, 'normal', 0, '2025-08-22 19:58:33', '2025-08-22 19:58:52', 1, 1, 2, 100, NULL),
+(217, NULL, 'việc xxx2423', '42342424', 23, 23, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 38, 4, 340, 3, 'normal', 0, '2025-08-22 19:59:57', '2025-08-22 20:00:17', 1, 1, 1, 100, NULL),
+(226, NULL, 'test việc mới nhé', 'ư3434534535', 19, 19, '2025-08-23', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 02:59:02', '2025-08-23 02:59:02', 1, 1, 2, 75, NULL),
+(227, NULL, 'test 3534535435', '3243243244', 18, 17, '2025-08-23', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 03:01:02', '2025-08-23 03:01:02', 1, 1, 4, 0, NULL),
+(228, NULL, 'nhiệm vụ 2 cấp duyệt', 'nhiệm vụ 2 cấp duyệt', 5, 5, '2025-08-23', '2025-09-30', 'done', 'approved', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 08:43:04', '2025-08-23 08:44:13', 2, 2, 1, 100, NULL),
+(229, NULL, 'nhiệm vụ con 24/08', '3424234234', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:17:16', '2025-08-23 19:17:16', 1, 1, 2, 0, NULL),
+(230, NULL, 'nhiệm vụ con', '342342342', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:19:10', '2025-08-23 19:19:10', 1, 1, 2, 0, NULL),
+(231, 228, 'nhiệm vụ con 2', '23424234234', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:19:46', '2025-08-23 19:19:46', 1, 1, 2, 0, NULL),
+(232, NULL, 'nhiệm vụ con test', '242343432424', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:23:48', '2025-08-23 19:23:48', 1, 1, 2, 0, NULL),
+(233, NULL, 'xxxxx', 'ẻwrwrwrwr', 4, 4, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:36:09', '2025-08-23 19:36:09', 1, 1, 1, 0, NULL),
+(234, NULL, '4342424234', '42342424', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:38:53', '2025-08-23 19:38:53', 1, 1, 2, 0, NULL),
+(235, 226, 'xxxx', '342424243', 6, 6, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:42:09', '2025-08-23 19:42:09', 1, 1, 2, 0, NULL),
+(236, NULL, 'xxxxx', 'rưerwerewrewr', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'low', 0, '2025-08-23 19:53:52', '2025-08-23 19:53:52', 1, 1, 1, 0, NULL),
+(237, 227, '324234234234', '234242424', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'low', 0, '2025-08-23 20:07:19', '2025-08-23 20:07:19', 1, 1, 2, 0, NULL),
+(238, 227, 'xxxxxx', 'đasadsad', 24, 22, '2025-08-24', '2025-09-30', 'request_approval', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 20:07:54', '2025-08-23 20:07:54', 1, 1, 1, 0, NULL),
+(239, NULL, 'xxxxx', '543454353535', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:09:11', '2025-08-24 02:09:11', 1, 1, 2, 0, NULL),
+(240, NULL, '34535345', '5435353535', 5, 5, '2025-08-24', '2025-09-30', 'request_approval', 'pending', 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:10:23', '2025-08-24 02:10:23', 1, 1, 1, 0, NULL),
+(241, NULL, '3542342342', '4324324324', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:14:06', '2025-08-24 02:14:06', 1, 1, 1, 0, NULL),
+(242, NULL, 'xxxxxxx', '4242342342', 5, 5, '2025-08-24', '2025-09-30', 'request_approval', 'pending', 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:20:07', '2025-08-24 02:20:07', 1, 1, 1, 0, NULL),
+(243, NULL, '4233243242', '23424234234', 5, 5, '2025-08-24', '2025-09-30', 'request_approval', 'pending', 'contract', 65, 1, 344, 3, 'normal', 0, '2025-08-24 02:33:59', '2025-08-24 02:41:22', 1, 1, 2, 100, NULL),
+(244, NULL, 'xxxxxx', '32424234243', 5, 5, '2025-08-24', '2025-09-30', 'done', 'approved', 'contract', 65, 1, 344, 3, 'normal', 0, '2025-08-24 02:38:58', '2025-08-24 02:40:34', 1, 1, 2, 100, NULL),
+(245, NULL, 'x22222', 'dsadsadsadasd', 5, 5, '2025-08-24', '2025-09-30', 'done', 'approved', 'contract', 66, 1, 363, 3, 'normal', 0, '2025-08-24 02:39:55', '2025-08-24 02:42:35', 1, 1, 1, 100, NULL),
+(246, NULL, 'task con 2222', 'dsaddadada', 22, 22, '2025-08-24', '2025-09-30', 'done', 'approved', 'contract', 66, 2, 364, 3, 'normal', 0, '2025-08-24 02:43:18', '2025-08-24 02:43:48', 1, 1, 2, 100, NULL),
+(247, 201, '43424242', '42342424', 21, 17, '2025-09-01', '2025-10-31', '', 'pending', 'bidding', 35, 2, 285, 3, 'normal', 0, '2025-09-01 01:02:20', '2025-09-01 01:02:20', 1, 1, 2, 0, NULL),
+(248, NULL, 'việc mới', '453454355', 24, 5, '2025-09-01', '2025-10-31', 'doing', 'pending', 'bidding', 40, 1, 363, 3, 'normal', 0, '2025-09-01 01:39:12', '2025-09-01 01:39:12', 1, 1, 2, 0, NULL),
+(249, NULL, 'việc mới 2', '422343243242', 17, 19, '2025-09-01', '2025-10-31', 'doing', 'pending', 'bidding', 40, 1, 363, 3, 'normal', 0, '2025-09-01 01:39:40', '2025-09-01 01:39:40', 1, 1, 4, 0, NULL),
+(250, 200, 'việc con mới', '23432432424', 19, 17, '2025-09-01', '2025-10-31', '', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-01 01:51:50', '2025-09-01 01:51:50', 1, 1, 3, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -1470,7 +1710,7 @@ INSERT INTO `task_approvals` (`id`, `task_id`, `level`, `status`, `approved_by`,
 (44, 130, 1, 'pending', NULL, NULL, NULL),
 (45, 131, 1, 'pending', NULL, NULL, NULL),
 (46, 133, 1, 'pending', NULL, NULL, NULL),
-(47, 134, 1, 'pending', NULL, NULL, NULL),
+(47, 134, 1, 'approved', 1, '2025-08-05 16:46:20', '{\"comment\":\"ok nhé\"}'),
 (48, 136, 1, 'pending', NULL, NULL, NULL),
 (49, 137, 1, 'pending', NULL, NULL, NULL),
 (50, 138, 1, 'pending', NULL, NULL, NULL),
@@ -1492,9 +1732,59 @@ INSERT INTO `task_approvals` (`id`, `task_id`, `level`, `status`, `approved_by`,
 (66, 164, 1, 'approved', 1, '2025-08-05 06:28:15', 'ok'),
 (67, 164, 2, 'approved', 1, '2025-08-05 06:29:22', 'ok'),
 (68, 50, 1, 'pending', NULL, NULL, NULL),
-(69, 165, 1, 'pending', NULL, NULL, NULL),
-(70, 166, 1, 'pending', NULL, NULL, NULL),
-(71, 167, 1, 'pending', NULL, NULL, NULL);
+(69, 166, 1, 'pending', NULL, NULL, NULL),
+(71, 201, 1, 'approved', 3, '2025-08-22 14:52:11', '{\"comment\":\"ok duyệt\"}'),
+(73, 202, 1, 'approved', 3, '2025-08-22 15:05:37', '{\"comment\":\"ok\"}'),
+(75, 203, 1, 'approved', 3, '2025-08-22 17:14:07', '{\"comment\":\"ok nhé\"}'),
+(76, 204, 1, 'approved', 3, '2025-08-23 15:31:05', 'ok'),
+(77, 205, 1, 'rejected', 3, '2025-08-23 15:35:50', 'chưa dc nhé, cần xem xét lại'),
+(78, 206, 1, 'approved', 3, '2025-08-23 15:50:26', 'test duyệt'),
+(80, 207, 1, 'approved', 3, '2025-08-27 14:15:14', 'ok nhes'),
+(82, 208, 1, 'pending', NULL, NULL, NULL),
+(84, 209, 1, 'approved', 1, '2025-08-23 15:51:17', 'Ái duyệt'),
+(86, 33, 1, 'approved', 3, '2025-08-23 02:20:30', '{\"comment\":\"ok nhé\"}'),
+(88, 211, 1, 'approved', 3, '2025-08-23 02:22:05', '{\"comment\":\"ok rồi\"}'),
+(89, 210, 1, 'approved', 3, '2025-08-23 02:23:23', '{\"comment\":\"\"}'),
+(91, 212, 1, 'approved', 3, '2025-08-23 02:52:06', '{\"comment\":\"ok\"}'),
+(93, 213, 1, 'approved', 3, '2025-08-23 02:53:54', '{\"comment\":\"ok\"}'),
+(95, 214, 1, 'approved', 3, '2025-08-23 02:55:34', '{\"comment\":\"xxxx\"}'),
+(97, 215, 1, 'approved', 3, '2025-08-23 02:56:39', '{\"comment\":\"534543535\"}'),
+(99, 216, 1, 'approved', 3, '2025-08-23 02:58:52', '{\"comment\":\"32424324\"}'),
+(101, 217, 1, 'approved', 3, '2025-08-23 03:00:17', '{\"comment\":\"42342342\"}'),
+(103, 218, 1, 'approved', 3, '2025-08-23 03:02:07', '{\"comment\":\"\"}'),
+(105, 219, 1, 'approved', 3, '2025-08-23 03:03:28', '{\"comment\":\"32424324\"}'),
+(107, 220, 1, 'approved', 3, '2025-08-23 03:05:11', '{\"comment\":\"34424\"}'),
+(109, 221, 1, 'approved', 3, '2025-08-23 03:06:27', '{\"comment\":\"424324\"}'),
+(111, 222, 1, 'approved', 3, '2025-08-23 03:07:31', '{\"comment\":\"3224234\"}'),
+(113, 223, 1, 'approved', 3, '2025-08-23 03:08:16', '{\"comment\":\"rưerewrw\"}'),
+(115, 224, 1, 'approved', 3, '2025-08-23 03:09:38', '{\"comment\":\"eqwewqe\"}'),
+(116, 225, 1, 'pending', NULL, NULL, NULL),
+(117, 226, 1, 'pending', NULL, NULL, NULL),
+(118, 227, 1, 'pending', NULL, NULL, NULL),
+(120, 228, 1, 'approved', 3, '2025-08-23 15:43:46', 'ok rồi'),
+(121, 228, 2, 'approved', 3, '2025-08-23 15:44:13', 'bước 2 ok'),
+(122, 229, 1, 'pending', NULL, NULL, NULL),
+(123, 230, 1, 'pending', NULL, NULL, NULL),
+(124, 231, 1, 'pending', NULL, NULL, NULL),
+(125, 232, 1, 'pending', NULL, NULL, NULL),
+(126, 233, 1, 'pending', NULL, NULL, NULL),
+(127, 234, 1, 'pending', NULL, NULL, NULL),
+(128, 235, 1, 'pending', NULL, NULL, NULL),
+(129, 236, 1, 'pending', NULL, NULL, NULL),
+(130, 237, 1, 'pending', NULL, NULL, NULL),
+(132, 239, 1, 'pending', NULL, NULL, NULL),
+(134, 241, 1, 'pending', NULL, NULL, NULL),
+(139, 244, 1, 'approved', 3, '2025-08-24 09:40:34', 'ok nhé'),
+(141, 245, 1, 'approved', 3, '2025-08-24 09:42:35', 'ok duyệt'),
+(143, 246, 1, 'approved', 3, '2025-08-24 09:43:48', 'duyệt nhé'),
+(144, 242, 1, 'pending', NULL, NULL, NULL),
+(145, 240, 1, 'pending', NULL, NULL, NULL),
+(146, 238, 1, 'pending', NULL, NULL, NULL),
+(147, 243, 1, 'pending', NULL, NULL, NULL),
+(148, 247, 1, 'pending', NULL, NULL, NULL),
+(149, 248, 1, 'pending', NULL, NULL, NULL),
+(150, 249, 1, 'pending', NULL, NULL, NULL),
+(151, 250, 1, 'pending', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1526,7 +1816,40 @@ INSERT INTO `task_approval_logs` (`id`, `task_id`, `level`, `status`, `approved_
 (6, 104, 1, 'rejected', 1, '2025-08-05 06:26:07', 'ko', '2025-08-05 06:26:07'),
 (7, 164, 1, 'approved', 1, '2025-08-05 06:28:15', 'ok', '2025-08-05 06:28:15'),
 (8, 164, 2, 'approved', 1, '2025-08-05 06:29:22', 'ok', '2025-08-05 06:29:22'),
-(9, 1, 1, 'approved', 1, '2025-08-05 07:19:40', 'ok', '2025-08-05 07:19:40');
+(9, 1, 1, 'approved', 1, '2025-08-05 07:19:40', 'ok', '2025-08-05 07:19:40'),
+(10, 134, 1, 'approved', 1, '2025-08-05 16:45:07', '{\"comment\":\"duyệt nhé :))\"}', '2025-08-05 16:45:07'),
+(11, 134, 1, 'approved', 1, '2025-08-05 16:46:20', '{\"comment\":\"ok nhé\"}', '2025-08-05 16:46:20'),
+(12, 201, 1, 'approved', 3, '2025-08-22 14:52:10', '{\"comment\":\"ok duyệt\"}', '2025-08-22 14:52:10'),
+(13, 201, 1, 'approved', 3, '2025-08-22 14:52:11', '{\"comment\":\"ok duyệt\"}', '2025-08-22 14:52:11'),
+(14, 202, 1, 'approved', 3, '2025-08-22 15:05:37', '{\"comment\":\"ok\"}', '2025-08-22 15:05:37'),
+(15, 203, 1, 'approved', 3, '2025-08-22 17:14:07', '{\"comment\":\"ok nhé\"}', '2025-08-22 17:14:07'),
+(16, 33, 1, 'approved', 3, '2025-08-23 02:20:30', '{\"comment\":\"ok nhé\"}', '2025-08-23 02:20:30'),
+(17, 211, 1, 'approved', 3, '2025-08-23 02:22:05', '{\"comment\":\"ok rồi\"}', '2025-08-23 02:22:05'),
+(18, 210, 1, 'approved', 3, '2025-08-23 02:23:23', '{\"comment\":\"\"}', '2025-08-23 02:23:23'),
+(19, 212, 1, 'approved', 3, '2025-08-23 02:52:06', '{\"comment\":\"ok\"}', '2025-08-23 02:52:06'),
+(20, 213, 1, 'approved', 3, '2025-08-23 02:53:54', '{\"comment\":\"ok\"}', '2025-08-23 02:53:54'),
+(21, 214, 1, 'approved', 3, '2025-08-23 02:55:34', '{\"comment\":\"xxxx\"}', '2025-08-23 02:55:34'),
+(22, 215, 1, 'approved', 3, '2025-08-23 02:56:39', '{\"comment\":\"534543535\"}', '2025-08-23 02:56:39'),
+(23, 216, 1, 'approved', 3, '2025-08-23 02:58:52', '{\"comment\":\"32424324\"}', '2025-08-23 02:58:52'),
+(24, 217, 1, 'approved', 3, '2025-08-23 03:00:17', '{\"comment\":\"42342342\"}', '2025-08-23 03:00:17'),
+(25, 218, 1, 'approved', 3, '2025-08-23 03:02:07', '{\"comment\":\"\"}', '2025-08-23 03:02:07'),
+(26, 219, 1, 'approved', 3, '2025-08-23 03:03:28', '{\"comment\":\"32424324\"}', '2025-08-23 03:03:28'),
+(27, 220, 1, 'approved', 3, '2025-08-23 03:05:11', '{\"comment\":\"34424\"}', '2025-08-23 03:05:11'),
+(28, 221, 1, 'approved', 3, '2025-08-23 03:06:27', '{\"comment\":\"424324\"}', '2025-08-23 03:06:27'),
+(29, 222, 1, 'approved', 3, '2025-08-23 03:07:31', '{\"comment\":\"3224234\"}', '2025-08-23 03:07:31'),
+(30, 223, 1, 'approved', 3, '2025-08-23 03:08:16', '{\"comment\":\"rưerewrw\"}', '2025-08-23 03:08:16'),
+(31, 224, 1, 'approved', 3, '2025-08-23 03:09:38', '{\"comment\":\"eqwewqe\"}', '2025-08-23 03:09:38'),
+(32, 204, 1, 'approved', 3, '2025-08-23 15:31:05', 'ok', '2025-08-23 15:31:05'),
+(33, 205, 1, 'rejected', 3, '2025-08-23 15:35:50', 'chưa dc nhé, cần xem xét lại', '2025-08-23 15:35:50'),
+(34, 228, 1, 'approved', 3, '2025-08-23 15:43:46', 'ok rồi', '2025-08-23 15:43:46'),
+(35, 228, 2, 'approved', 3, '2025-08-23 15:44:13', 'bước 2 ok', '2025-08-23 15:44:13'),
+(36, 206, 1, 'approved', 3, '2025-08-23 15:50:26', 'test duyệt', '2025-08-23 15:50:26'),
+(37, 209, 1, 'approved', 1, '2025-08-23 15:51:17', 'Ái duyệt', '2025-08-23 15:51:17'),
+(38, 244, 1, 'approved', 3, '2025-08-24 09:40:34', 'ok nhé', '2025-08-24 09:40:34'),
+(39, 243, 1, 'approved', 3, '2025-08-24 09:41:22', 'ok duyệt', '2025-08-24 09:41:22'),
+(40, 245, 1, 'approved', 3, '2025-08-24 09:42:35', 'ok duyệt', '2025-08-24 09:42:35'),
+(41, 246, 1, 'approved', 3, '2025-08-24 09:43:48', 'duyệt nhé', '2025-08-24 09:43:48'),
+(42, 207, 1, 'approved', 3, '2025-08-27 14:15:14', 'ok nhes', '2025-08-27 14:15:14');
 
 -- --------------------------------------------------------
 
@@ -1691,25 +2014,59 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `name`, `phone`, `avatar`, `role`, `department_id`, `role_id`) VALUES
-(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-08-14 08:53:15', 'Đinh Văn Vịnh', '0989268613', 'avatars/1749049795_4087ec00b95ac222533a.png', 'Trưởng phòng', 1, 3),
-(3, 'superadmin@example.com', '$2y$10$kJ6V.Isy8GCV6kRwFekdEuS/PvVzBe4PTeQUqpWvnW3efeyhbg4Hq', '2025-04-20 14:02:38', '2025-08-14 08:54:09', 'Super Admin', '0988888888', NULL, 'super admin', 1, 1),
-(4, 'tu.dinh@ttid.vn', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-05-26 04:33:21', '2025-08-14 11:29:47', 'Đinh Thị Tú', '0353334327', NULL, 'Nhân viên', 2, 3),
-(5, 'thuy.vu@ttid.com.vn', '$2y$10$fPUyT/hhSHhPknmvWgPtxelsaQfNLRiOVZ3Wayj2tbcNo4lApUFEW', '2025-06-04 09:10:50', '2025-08-14 11:30:24', 'Vũ Thị Thuỷ', '0977587939', NULL, 'user', 2, 2),
-(6, 'tho.ta@ttid.com.vn', '$2y$10$ZKKb/DZ/dk0eFQW/xfG3Ne8Ozrdt1TcQcR1alq4KP5biJpmUm2Uuy', '2025-06-04 09:11:21', '2025-08-14 11:31:02', 'Tạ Quý Thọ', '0979412583', NULL, 'user', 3, 2),
-(7, 'chieu.nguyenvan@ttid.com.vn', '$2y$10$0M2AJM7k/CXzGKJCeeEh1.g2tFjFCZfeOLDGKqGgm3dUHqqpNtciW', '2025-06-04 09:11:44', '2025-08-14 11:31:34', 'Nguyễn Văn Chiểu', '0985412304', NULL, 'user', 3, 3),
-(8, 'tuan.pham@ttid.com.vn', '$2y$10$UfmfTcnJd1Hc1wcH0Utaz.w9IFmXwNCzoFUQdahizBIri0BTfsDp2', '2025-06-04 09:12:07', '2025-08-14 11:32:08', 'Phạm Xuân Tuân', '0333094031', NULL, 'user', 3, 3),
-(9, 'dung.hoang@ttid.com.vn', '$2y$10$hGqQg.IGey/1/3a6Dt/3rOQKKdPgz2U787lWDghxeDqCmCk30v7SW', '2025-06-04 09:12:52', '2025-08-14 11:32:48', 'Hoàng Văn Dũng', '0966140205', NULL, 'user', 3, 3),
-(10, 'tm1@ttid.vn', '$2y$10$In9Y8TToyh9hICfylJG.Iesgd1mvrE4L./GTSwgcuXX8zXe.tGqM2', '2025-06-04 09:13:10', '2025-08-14 11:33:41', 'Hoàng Thị Lan Anh', '0966865092', NULL, 'user', 4, 3),
-(11, 'tm2@ttid.vn', '$2y$10$HVsxejThJCOYfidLz.xreOCpRGZp8QI001kHhekDGq9tVFW0TWv0K', '2025-06-04 09:13:37', '2025-08-14 11:34:18', 'Nguyễn Thị Hạnh', '0982565691', NULL, 'user', 4, 3),
-(12, 'anh.nguyen@ttid.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-14 11:20:20', 'Nguyễn Thị Ngọc Anh', '0984683647', NULL, 'user', 2, 3),
-(13, 'hcns1@ttid.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-14 11:22:10', 'Trần Thị Hiền', '0945317398', NULL, 'user', 1, 3),
-(14, 'kd1@ttid.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-14 11:24:06', 'Nhạc Quang Huy', '0344322102', NULL, 'user', 3, 3),
-(15, 'binh.nguyen@ttid.com.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-14 11:26:00', 'Nguyễn Danh Vương Bình', '0966140205', NULL, 'user', 3, 3),
-(16, 'hop.nguyen@ttid.com.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-14 11:27:57', 'Nguyễn Cảnh Hợp', '0973197806', NULL, 'user', 3, 2);
+(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-08-04 14:01:30', 'Nguyễn Văn Ái', '0988888888', 'avatars/1749049795_4087ec00b95ac222533a.png', 'Trưởng phòng', 1, 2),
+(3, 'superadmin@example.com', '$2y$10$kJ6V.Isy8GCV6kRwFekdEuS/PvVzBe4PTeQUqpWvnW3efeyhbg4Hq', '2025-04-20 14:02:38', '2025-07-14 22:52:57', 'Super Admin', '0988888888', NULL, 'super admin', 2, 1),
+(4, 'nguyenvana@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-05-26 04:33:21', '2025-08-04 16:27:31', 'Nguyễn Văn Tuấn', '0909123456', NULL, 'Nhân viên', 2, 3),
+(5, 'a@worknest.vn', '$2y$10$fPUyT/hhSHhPknmvWgPtxelsaQfNLRiOVZ3Wayj2tbcNo4lApUFEW', '2025-06-04 09:10:50', '2025-08-04 06:31:02', 'Nguyễn Vân Anh', '0911111111', NULL, 'user', 1, 3),
+(6, 'b@worknest.vn', '$2y$10$ZKKb/DZ/dk0eFQW/xfG3Ne8Ozrdt1TcQcR1alq4KP5biJpmUm2Uuy', '2025-06-04 09:11:21', '2025-08-04 06:31:07', 'Trần Thị B', '0911111112', NULL, 'user', 1, 2),
+(7, 'c@worknest.vn', '$2y$10$0M2AJM7k/CXzGKJCeeEh1.g2tFjFCZfeOLDGKqGgm3dUHqqpNtciW', '2025-06-04 09:11:44', '2025-08-04 06:31:16', 'Lê Văn C', '0911111113', NULL, 'user', 2, 3),
+(8, 'd@worknest.vn', '$2y$10$UfmfTcnJd1Hc1wcH0Utaz.w9IFmXwNCzoFUQdahizBIri0BTfsDp2', '2025-06-04 09:12:07', '2025-08-04 06:31:20', 'Phạm Thị D', '0911111114', NULL, 'user', 2, 3),
+(9, 't@worknest.vn', '$2y$10$hGqQg.IGey/1/3a6Dt/3rOQKKdPgz2U787lWDghxeDqCmCk30v7SW', '2025-06-04 09:12:52', '2025-08-04 06:31:24', 'Bùi Minh T', '0911111115', NULL, 'user', 3, 3),
+(10, 'l@worknest.vn', '$2y$10$In9Y8TToyh9hICfylJG.Iesgd1mvrE4L./GTSwgcuXX8zXe.tGqM2', '2025-06-04 09:13:10', '2025-08-04 06:31:29', 'Nguyễn Thị L', '0911111116', NULL, 'user', 3, 3),
+(11, 'h@worknest.vn', '$2y$10$HVsxejThJCOYfidLz.xreOCpRGZp8QI001kHhekDGq9tVFW0TWv0K', '2025-06-04 09:13:37', '2025-08-04 06:31:33', 'Vũ Văn H', '0911111117', NULL, 'user', 4, 3),
+(12, 'hq@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:31:41', 'Đào Quang H', '0911111118', NULL, 'user', 4, 3),
+(13, 'bich@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:31:45', 'Trần Thị Bích', '0911111119', NULL, 'user', 5, 3),
+(14, 'tuan@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:31:49', 'Mai Văn Tuấn', '0911111120', NULL, 'user', 5, 3),
+(15, 'phuc@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:31:53', 'Lê Hồng Phúc', '0911111121', NULL, 'user', 1, 3),
+(16, 'hiep@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:31:57', 'Nguyễn Văn Hiệp', '0911111122', NULL, 'user', 1, 3),
+(17, 'huong@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:32:00', 'Trần Thanh Hương', '0911111123', NULL, 'user', 2, 3),
+(18, 'thang@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:32:04', 'Đinh Hữu Thắng', '0911111124', NULL, 'user', 2, 3),
+(19, 'trang@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:32:08', 'Phạm Thu Trang', '0911111125', NULL, 'user', 3, 3),
+(20, 'hai@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:32:12', 'Ngô Minh Hải', '0911111126', NULL, 'user', 3, 3),
+(21, 'mai@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:32:16', 'Vũ Thị Mai', '0911111127', NULL, 'user', 4, 3),
+(22, 'huy@worknest.vn', '$2y$10$8qPYhSpBnDSx5t9admiFmO92DYr/yXNseT4b/qd6sBxxnv2n8r9Iq', '2025-06-04 16:15:57', '2025-08-04 06:32:23', 'Nguyễn Khắc Huy', '0911111128', NULL, 'user', 4, 3),
+(23, 'loan@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:32:26', 'Bùi Thị Loan', '0911111129', NULL, 'user', 5, 3),
+(24, 'tri@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:32:30', 'Lê Minh Trí', '0911111130', NULL, 'user', 5, 3),
+(25, 'testuser@gmail.com', '$2y$10$HOa3vdg9C.Xhs92CPRvMPOdSWMgctBsukYFiRwsJY6OhYnE6XDLK2', '2025-06-08 09:27:07', '2025-08-04 06:48:02', 'user1', '0912345688', NULL, 'user', 5, 3);
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `approval_instances`
+--
+ALTER TABLE `approval_instances`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_target_active` (`target_type`,`target_id`,`is_active`),
+  ADD UNIQUE KEY `uq_target_version` (`target_type`,`target_id`,`version`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_current_level` (`current_level`);
+
+--
+-- Indexes for table `approval_logs`
+--
+ALTER TABLE `approval_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_instance` (`approval_instance_id`);
+
+--
+-- Indexes for table `approval_steps`
+--
+ALTER TABLE `approval_steps`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_instance_level` (`approval_instance_id`,`level`),
+  ADD KEY `idx_instance` (`approval_instance_id`);
 
 --
 -- Indexes for table `biddings`
@@ -1890,22 +2247,40 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `approval_instances`
+--
+ALTER TABLE `approval_instances`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+
+--
+-- AUTO_INCREMENT for table `approval_logs`
+--
+ALTER TABLE `approval_logs`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+
+--
+-- AUTO_INCREMENT for table `approval_steps`
+--
+ALTER TABLE `approval_steps`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+
+--
 -- AUTO_INCREMENT for table `biddings`
 --
 ALTER TABLE `biddings`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `bidding_steps`
 --
 ALTER TABLE `bidding_steps`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=302;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=375;
 
 --
 -- AUTO_INCREMENT for table `bidding_step_templates`
 --
 ALTER TABLE `bidding_step_templates`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `categories`
@@ -1923,13 +2298,13 @@ ALTER TABLE `comments`
 -- AUTO_INCREMENT for table `contracts`
 --
 ALTER TABLE `contracts`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
 
 --
 -- AUTO_INCREMENT for table `contract_steps`
 --
 ALTER TABLE `contract_steps`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=344;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=382;
 
 --
 -- AUTO_INCREMENT for table `contract_step_files`
@@ -1941,13 +2316,13 @@ ALTER TABLE `contract_step_files`
 -- AUTO_INCREMENT for table `contract_step_templates`
 --
 ALTER TABLE `contract_step_templates`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `customer_transactions`
@@ -2019,19 +2394,19 @@ ALTER TABLE `step_templates`
 -- AUTO_INCREMENT for table `tasks`
 --
 ALTER TABLE `tasks`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=168;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=251;
 
 --
 -- AUTO_INCREMENT for table `task_approvals`
 --
 ALTER TABLE `task_approvals`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=152;
 
 --
 -- AUTO_INCREMENT for table `task_approval_logs`
 --
 ALTER TABLE `task_approval_logs`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
 -- AUTO_INCREMENT for table `task_comments`
@@ -2060,6 +2435,18 @@ ALTER TABLE `users`
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `approval_logs`
+--
+ALTER TABLE `approval_logs`
+  ADD CONSTRAINT `fk_logs_instance` FOREIGN KEY (`approval_instance_id`) REFERENCES `approval_instances` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `approval_steps`
+--
+ALTER TABLE `approval_steps`
+  ADD CONSTRAINT `fk_steps_instance` FOREIGN KEY (`approval_instance_id`) REFERENCES `approval_instances` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `comments`

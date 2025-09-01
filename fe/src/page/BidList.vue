@@ -559,9 +559,9 @@ const APPROVAL_STATUS = Object.freeze({
     REJECTED: 'rejected',
 })
 const APPROVAL_STATUS_MAP = {
-    [APPROVAL_STATUS.PENDING]:  { text: 'Chờ duyệt',   color: 'gold'  },
+    [APPROVAL_STATUS.PENDING]:  { text: 'Chưa duyệt',   color: 'gold' },
     [APPROVAL_STATUS.APPROVED]: { text: 'Đã duyệt',    color: 'green' },
-    [APPROVAL_STATUS.REJECTED]: { text: 'Bị từ chối',  color: 'red'   },
+    [APPROVAL_STATUS.REJECTED]: { text: 'Bị từ chối',  color: 'red' },
 }
 const getApprovalText  = s => (APPROVAL_STATUS_MAP[s]?.text ?? '—')
 const getApprovalColor = s => (APPROVAL_STATUS_MAP[s]?.color ?? 'default')
@@ -892,10 +892,6 @@ const timeProgressText = (r) => {
 
 
 
-
-
-
-
 const getFirstLetter = (name) => {
     if (!name || name === 'N/A') return '?'
     return name.charAt(0).toUpperCase()
@@ -1130,12 +1126,8 @@ const getBiddings = async () => {
 
 const openSendApproval = (row) => {
     sendApprovalTarget.value = row
-    const prev = Array.isArray(row.approval_steps)
-        ? row.approval_steps.map(s => Number(s.approver_id)).filter(Boolean)
-        : []
-    approverIdsSelected.value = prev.length
-        ? prev                    // 👈 dùng lại thứ tự cũ
-        : (row.manager_id ? [Number(row.manager_id)] : [])
+    const prev = Array.isArray(row.approval_steps) ? row.approval_steps.map(s => Number(s.approver_id)).filter(Boolean) : []
+    approverIdsSelected.value = prev.length ? prev : (row.manager_id ? [Number(row.manager_id)] : [])
     sendApprovalVisible.value = true
 }
 
@@ -1146,10 +1138,8 @@ const confirmSendApproval = async () => {
         return
     }
 
-    // Giữ thứ tự đã chọn + loại trùng + chỉ nhận số nguyên
-    const uniqueIds = [...new Set(
-        approverIdsSelected.value.map(n => Number(n)).filter(Number.isInteger)
-    )]
+    // chuẩn hoá danh sách id
+    const uniqueIds = [...new Set(approverIdsSelected.value.map(n => Number(n)).filter(Number.isInteger))]
     if (!uniqueIds.length) {
         message.warning('Danh sách người duyệt không hợp lệ.')
         return
@@ -1161,32 +1151,30 @@ const confirmSendApproval = async () => {
         return
     }
 
-    const status = target.approval_status ?? APPROVAL_STATUS.PENDING
+    const status      = target.approval_status ?? APPROVAL_STATUS.PENDING
     const hasOldSteps = Array.isArray(target.approval_steps) && target.approval_steps.length > 0
-
-    // Đã duyệt xong thì chặn
-    if (status === APPROVAL_STATUS.APPROVED) {
-        message.warning('Gói thầu đã phê duyệt xong, không thể thay đổi người duyệt.')
-        return
-    }
 
     try {
         loadingCreate.value = true
 
-        if (status === APPROVAL_STATUS.REJECTED) {
-            // 👉 Gửi lại (reset flow)
+        if (status === APPROVAL_STATUS.APPROVED) {
+            // ✅ phiên trước đã duyệt xong → tạo phiên mới từ cấp 1
+            const ok = await confirmAsync({
+                title: 'Tạo phiên duyệt mới?',
+                content: 'Phiên trước đã duyệt hoàn tất. Bạn có muốn tạo một phiên duyệt mới từ cấp 1?',
+            })
+            if (!ok) return
+
+            await sendBiddingForApprovalAPI(target.id, uniqueIds) // /approvals/send (BE tự deactivate phiên cũ và +version)
+            message.success('Đã tạo phiên duyệt mới.')
+        } else if (status === APPROVAL_STATUS.REJECTED) {
+            // 👉 Gửi lại từ đầu
             await sendBiddingForApprovalAPI(target.id, uniqueIds)
             message.success('Đã gửi lại phê duyệt.')
         } else if (hasOldSteps) {
-            // 👉 Đang pending & đã có cấu hình → chỉ cập nhật người duyệt
-            const oldIds = target.approval_steps.map(s => Number(s.approver_id)).filter(Boolean)
-            const same = oldIds.length === uniqueIds.length && oldIds.every((v, i) => v === uniqueIds[i])
-            if (same) {
-                message.info('Danh sách người duyệt không thay đổi.')
-            } else {
-                await updateApprovalStepsAPI(target.id, uniqueIds)
-                message.success('Cập nhật người duyệt thành công.')
-            }
+            // 👉 Đang pending: reset về cấp 1 (kể cả khi danh sách không đổi)
+            await updateApprovalStepsAPI(target.id, uniqueIds) // /approvals/{id}/steps (BE reset current_level=0, status=pending)
+            message.success('Đã khởi động lại luồng phê duyệt từ cấp 1.')
         } else {
             // 👉 Lần đầu gửi
             await sendBiddingForApprovalAPI(target.id, uniqueIds)

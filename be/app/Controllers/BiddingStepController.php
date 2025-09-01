@@ -191,7 +191,11 @@ class BiddingStepController extends ResourceController
     public function create()
     {
         $data = $this->request->getJSON(true);
-        $data['status'] = 0; // Mặc định là 'chưa bắt đầu'
+        $data['status']          = $data['status'] ?? 0;
+        $data['current_level']   = $data['current_level'] ?? 0;
+        $data['approval_status'] = $data['approval_status'] ?? 'pending';
+        $data['approval_steps']  = $data['approval_steps'] ?? null; // hoặc [] nếu đã cast JSON
+
         if (!$this->model->insert($data)) {
             return $this->failValidationErrors($this->model->errors());
         }
@@ -224,34 +228,31 @@ class BiddingStepController extends ResourceController
 
     public function completeStep($id): ResponseInterface
     {
-        // Tìm bước hiện tại
-        $current = $this->model->find($id);
+        $db = db_connect();
+        $db->transStart();
+
+        $current = $this->model->lockForUpdate()->find($id);
         if (!$current) {
+            $db->transComplete();
             return $this->failNotFound("Không tìm thấy bước với ID $id.");
         }
 
-        // 🔒 Kiểm tra các bước trước đã hoàn thành chưa
         $unfinishedBefore = $this->model
             ->where('bidding_id', $current['bidding_id'])
             ->where('step_number <', $current['step_number'])
-            ->where('status !=', 2) // 2 = hoàn thành
+            ->where('status !=', 2)
             ->countAllResults();
 
         if ($unfinishedBefore > 0) {
+            $db->transComplete();
             return $this->fail('Bạn cần hoàn thành tất cả các bước trước đó.');
         }
 
-        // ✅ Cập nhật bước hiện tại thành hoàn thành
-        $updateData = [
-            'status' => 2,
-            'updated_at' => date('Y-m-d H:i:s'), // đảm bảo cập nhật thời gian
-        ];
-
-        if (!$this->model->update($id, $updateData)) {
+        if (!$this->model->update($id, ['status' => 2, 'updated_at' => date('Y-m-d H:i:s')])) {
+            $db->transComplete();
             return $this->failValidationErrors($this->model->errors());
         }
 
-        // ✅ Mở bước tiếp theo (nếu có)
         $next = $this->model
             ->where('bidding_id', $current['bidding_id'])
             ->where('step_number >', $current['step_number'])
@@ -261,6 +262,8 @@ class BiddingStepController extends ResourceController
         if ($next) {
             $this->model->update($next['id'], ['status' => 1]);
         }
+
+        $db->transComplete();
 
         return $this->respond([
             'message' => 'Bước đã hoàn thành và bước kế tiếp đã được mở.',

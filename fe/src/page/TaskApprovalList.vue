@@ -3,208 +3,164 @@
         <a-flex justify="space-between" align="center" class="mb-3">
             <a-typography-title :level="4">Nhiệm vụ cần duyệt</a-typography-title>
 
-            <!-- 🔍 Tìm kiếm tên nhiệm vụ -->
             <a-input-search
                 v-model:value="searchTitle"
-                placeholder="Tìm theo tên nhiệm vụ"
+                placeholder="Tìm theo tiêu đề (meta_json.title)"
                 allow-clear
-                style="max-width: 300px;"
+                style="max-width: 320px"
                 @pressEnter="handleSearch"
             />
         </a-flex>
 
-        <!-- ================== TAB CHA ================== -->
-        <a-tabs v-model:activeKey="parentTab">
-            <!-- ===== Tab cha 1: chứa toàn bộ module duyệt ===== -->
-            <a-tab-pane key="tab1" tab="Nhiệm vụ con">
-                <!-- ===== Tab con hiện có ===== -->
-                <a-tabs v-model:activeKey="activeTab" @change="handleTabChange">
-                    <a-tab-pane key="resolved" tab="Đã duyệt / Từ chối" />
-                    <a-tab-pane key="pending" tab="Cần duyệt" />
-                </a-tabs>
-
-                <!-- ===== Bảng danh sách ===== -->
-                <a-table
-                    :columns="columns"
-                    :data-source="taskApprovals"
-                    :loading="loading"
-                    :pagination="pagination"
-                    row-key="id"
-                    :locale="{ emptyText: 'Không có nhiệm vụ nào' }"
-                    @change="handleTableChange"
-                >
-                    <template #bodyCell="{ column, record }">
-                        <!-- Tên nhiệm vụ -->
-                        <template v-if="column.dataIndex === 'title'">
-                            <router-link :to="`/internal-tasks/${record.task_id}/info`">
-                                {{ record.title }}
-                            </router-link>
-                        </template>
-
-                        <!-- Người thực hiện -->
-                        <template v-else-if="column.dataIndex === 'assigned_to_name'">
-                            {{ record.assigned_to_name || '—' }}
-                        </template>
-
-                        <!-- Cấp hiện tại -->
-                        <template v-else-if="column.dataIndex === 'level'">
-                            Cấp {{ record.level }}
-                        </template>
-
-                        <!-- Tổng cấp (fallback nếu BE chưa enrich) -->
-                        <template v-else-if="column.dataIndex === 'approval_steps_total'">
-                            {{ record.approval_steps_total ?? record.approval_steps ?? '—' }}
-                        </template>
-
-                        <!-- Trạng thái -->
-                        <template v-else-if="column.dataIndex === 'status'">
-                            <a-tag :color="getStatusColor(record.status)">
-                                {{ getStatusText(record.status) }}
-                            </a-tag>
-                        </template>
-
-                        <!-- Tiến độ -->
-                        <template v-else-if="column.dataIndex === 'approval_progress'">
-                            <a-progress
-                                :percent="getProgressPercent(record)"
-                                :status="getProgressPercent(record) === 100 ? 'success' : 'active'"
-                                size="small"
-                            />
-                            <div class="text-xs text-gray-500">
-                                <a-tag :color="getLevelTagColorSmart(record)" style="font-size: 12px;">
-                                    {{ getLevelTextSmart2(record) }}
-                                </a-tag>
-                            </div>
-                        </template>
-
-                        <!-- Thời gian duyệt -->
-                        <template v-else-if="column.dataIndex === 'approved_at'">
-                            {{ formatTime(record.approved_at) || '—' }}
-                        </template>
-
-                        <!-- Hành động -->
-                        <template v-else-if="column.dataIndex === 'action'">
-                            <a-space>
-                                <a-tooltip :title="!record.can_approve ? (record.cannot_reason || 'Không đủ quyền') : ''">
-                                    <a-button
-                                        type="primary"
-                                        :disabled="!record.can_approve"
-                                        @click="openModal(record, 'approve')"
-                                    >
-                                        Duyệt
-                                    </a-button>
-                                </a-tooltip>
-
-                                <a-tooltip :title="!record.can_reject ? (record.cannot_reason || 'Không đủ quyền') : ''">
-                                    <a-button
-                                        danger
-                                        :disabled="!record.can_reject"
-                                        @click="openModal(record, 'reject')"
-                                    >
-                                        Từ chối
-                                    </a-button>
-                                </a-tooltip>
-
-                                <a-button @click="viewTimeline(record)">Chi tiết</a-button>
-                            </a-space>
-                        </template>
-                    </template>
-                </a-table>
-
-                <!-- ✅ Modal nhập comment -->
-                <a-modal
-                    v-model:open="modalVisible"
-                    :title="modalAction === 'approve' ? 'Xác nhận duyệt' : 'Từ chối nhiệm vụ'"
-                    ok-text="Xác nhận"
-                    cancel-text="Hủy"
-                    :confirm-loading="submitting"
-                    @ok="handleModalSubmit"
-                >
-                    <a-form layout="vertical">
-                        <a-form-item label="Ghi chú (không bắt buộc)">
-                            <a-textarea v-model:value="comment" placeholder="Nhập lý do hoặc ghi chú..." />
-                        </a-form-item>
-                    </a-form>
-                </a-modal>
-
-                <!-- ✅ Modal dòng thời gian duyệt -->
-                <a-modal
-                    v-model:open="timelineVisible"
-                    title="Chi tiết duyệt nhiệm vụ"
-                    :footer="null"
-                    width="600px"
-                >
-                    <a-timeline>
-                        <a-timeline-item
-                            v-for="step in approvalTimeline"
-                            :key="step.level"
-                            :color="getTimelineColor(step.status)"
-                        >
-                            <template v-if="step.status === 'approved'">
-                                <span><CheckCircleOutlined style="margin-right: 6px;" /></span>
-                                Cấp {{ step.level }}: {{ step.approved_by_name }} đã duyệt lúc {{ formatTime(step.approved_at) }}
-                                <div v-if="step.comment">📝 {{ step.comment }}</div>
-                            </template>
-
-                            <template v-else-if="step.status === 'rejected'">
-                                <span><CloseCircleOutlined style="margin-right: 6px;" /></span>
-                                Cấp {{ step.level }}: {{ step.approved_by_name }} từ chối lúc {{ formatTime(step.approved_at) }}
-                                <div v-if="step.comment">📝 {{ step.comment }}</div>
-                            </template>
-
-                            <template v-else-if="step.status === 'pending'">
-                                <span><ClockCircleOutlined style="margin-right: 6px;" /></span>
-                                Cấp {{ step.level }}: Đang chờ duyệt
-                            </template>
-
-                            <template v-else>
-                                <span><ArrowRightOutlined style="margin-right: 6px;" /></span>
-                                Cấp {{ step.level }}: Chưa đến lượt
-                            </template>
-                        </a-timeline-item>
-                    </a-timeline>
-                </a-modal>
-            </a-tab-pane>
-
-            <!-- ===== Tab cha 2 ===== -->
-            <a-tab-pane key="tab2" tab="Gói thầu" force-render>
-                <!-- Nhúng nguyên UI danh sách + duyệt gói thầu -->
-                <BidListForTab :embedded="true" ref="bidListRef" />
-            </a-tab-pane>
-
-            <!-- ===== Tab cha 3 ===== -->
-            <a-tab-pane key="tab3" tab="Tab 3">
-                <div class="p-3 text-gray-500">Nội dung tab 3</div>
-            </a-tab-pane>
+        <!-- ✅ Chỉ còn 2 tab: Cần duyệt / Đã xử lý -->
+        <a-tabs v-model:activeKey="activeTab" @change="handleTabChange">
+            <a-tab-pane key="pending" tab="Cần duyệt" />
+            <a-tab-pane key="resolved" tab="Đã xử lý" />
         </a-tabs>
+
+        <a-table
+            :columns="columns"
+            :data-source="rows"
+            :loading="loading"
+            :pagination="pagination"
+            row-key="id"
+            :locale="{ emptyText: 'Không có bản ghi' }"
+            @change="handleTableChange"
+        >
+            <template #bodyCell="{ column, record }">
+                <!-- Loại -->
+                <template v-if="column.dataIndex === 'target_type'">
+                    <a-tag>{{ mapTypeLabel(record.target_type) }}</a-tag>
+                </template>
+
+                <!-- Tiêu đề + Link -->
+                <template v-else-if="column.dataIndex === 'title'">
+                    <router-link
+                        v-if="record.meta_json?.url"
+                        :to="record.meta_json.url"
+                        class="link"
+                    >
+                        {{ record.meta_json?.title || displayFallbackTitle(record) }}
+                    </router-link>
+                    <span v-else>{{ record.meta_json?.title || displayFallbackTitle(record) }}</span>
+                </template>
+
+                <!-- Cấp hiện tại -->
+                <template v-else-if="column.dataIndex === 'current_level'">
+                    Cấp {{ (record.current_level ?? 0) + 1 }}
+                </template>
+
+                <!-- Tổng cấp -->
+                <template v-else-if="column.dataIndex === 'total_steps'">
+                    {{ record._total_steps ?? '—' }}
+                </template>
+
+                <!-- Tiến độ -->
+                <template v-else-if="column.dataIndex === 'progress'">
+                    <a-progress
+                        :percent="progressPercent(record)"
+                        :status="progressPercent(record) === 100 ? 'success' : 'active'"
+                        size="small"
+                    />
+                    <div class="text-xs text-gray-500">
+                        <a-tag :color="progressColor(record)" style="font-size:12px;">
+                            {{ progressText(record) }}
+                        </a-tag>
+                    </div>
+                </template>
+
+                <!-- Trạng thái -->
+                <template v-else-if="column.dataIndex === 'status'">
+                    <a-tag :color="statusColor(record.status)">{{ statusText(record.status) }}</a-tag>
+                </template>
+
+                <!-- Người gửi -->
+                <template v-else-if="column.dataIndex === 'submitted_by'">
+                    {{ record._submitted_by_name || ('#' + (record.submitted_by ?? '—')) }}
+                </template>
+
+                <!-- Thời điểm gửi -->
+                <template v-else-if="column.dataIndex === 'submitted_at'">
+                    {{ formatTime(record.submitted_at) || '—' }}
+                </template>
+
+                <!-- Hành động -->
+                <template v-else-if="column.dataIndex === 'action'">
+                    <a-space>
+                        <a-button
+                            v-if="activeTab === 'pending'"
+                            type="primary"
+                            @click="openModal(record, 'approve')"
+                        >Duyệt</a-button>
+                        <a-button
+                            v-if="activeTab === 'pending'"
+                            danger
+                            @click="openModal(record, 'reject')"
+                        >Từ chối</a-button>
+                        <a-button @click="viewTimeline(record)">Chi tiết</a-button>
+                    </a-space>
+                </template>
+            </template>
+        </a-table>
+
+        <!-- Modal nhập comment -->
+        <a-modal
+            v-model:open="modalVisible"
+            :title="modalAction === 'approve' ? 'Xác nhận duyệt' : 'Từ chối phê duyệt'"
+            ok-text="Xác nhận"
+            cancel-text="Hủy"
+            :confirm-loading="submitting"
+            @ok="handleModalSubmit"
+        >
+            <a-form layout="vertical">
+                <a-form-item label="Ghi chú (không bắt buộc)">
+                    <a-textarea v-model:value="comment" placeholder="Nhập ghi chú…" />
+                </a-form-item>
+            </a-form>
+        </a-modal>
+
+        <!-- Modal Timeline -->
+        <a-modal v-model:open="timelineVisible" title="Chi tiết phê duyệt" :footer="null" width="620px">
+            <a-timeline>
+                <a-timeline-item
+                    v-for="st in timelineSteps"
+                    :key="st.level"
+                    :color="timelineColor(st.status)"
+                >
+                    <template v-if="st.status === 'approved'">
+                        Cấp {{ st.level }}: {{ st._approver_name || ('#' + st.approver_id) }} đã duyệt lúc {{ formatTime(st.commented_at) }}
+                        <div v-if="st.note">📝 {{ st.note }}</div>
+                    </template>
+                    <template v-else-if="st.status === 'rejected'">
+                        Cấp {{ st.level }}: {{ st._approver_name || ('#' + st.approver_id) }} từ chối lúc {{ formatTime(st.commented_at) }}
+                        <div v-if="st.note">📝 {{ st.note }}</div>
+                    </template>
+                    <template v-else>
+                        Cấp {{ st.level }}: Đang chờ duyệt
+                    </template>
+                </a-timeline-item>
+            </a-timeline>
+        </a-modal>
     </div>
 </template>
+
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { message } from 'ant-design-vue'
-import {
-    CheckCircleOutlined,
-    CloseCircleOutlined,
-    ClockCircleOutlined,
-    ArrowRightOutlined,
-} from '@ant-design/icons-vue'
 import debounce from 'lodash/debounce'
 import {
-    getTaskApprovals,
-    approveTaskAPI,
-    rejectTaskAPI,
-    getFullApprovalStatus,
-    canActApprovalAPI
-} from '@/api/taskApproval'
-import BidList from "@/page/BidList.vue";
-import BidListForTab from "@/components/BidListForTab.vue";
+    getApprovalInbox,
+    getApproval,
+    approveApproval,
+    rejectApproval,
+    listApprovals
+} from '@/api/approvals'
 
 // ================== STATE ==================
-const parentTab = ref('tab1')            // <-- Tab cha (mặc định Tab 1)
-const taskApprovals = ref([])
-const loading = ref(false)
-const activeTab = ref('pending')         // tab con hiện có
+const activeTab   = ref('pending')   // 'pending' | 'resolved'
+const rows        = ref([])
+const loading     = ref(false)
 const searchTitle = ref('')
 
 const pagination = ref({
@@ -212,109 +168,157 @@ const pagination = ref({
     pageSize: 10,
     total: 0,
     showSizeChanger: true,
-    showTotal: (t) => `Tổng ${t} nhiệm vụ`
+    showTotal: (t) => `Tổng ${t} bản ghi`
 })
 
-const modalVisible = ref(false)
-const submitting = ref(false)
-const comment = ref('')
+const modalVisible   = ref(false)
+const submitting     = ref(false)
+const comment        = ref('')
+const modalAction    = ref('approve') // 'approve' | 'reject'
 const selectedRecord = ref(null)
-const modalAction = ref('approve')
 
 const timelineVisible = ref(false)
-const approvalTimeline = ref([])
+const timelineSteps   = ref([])
 
 // ================== COLUMNS ==================
 const columns = [
-    { title: 'Tên nhiệm vụ', dataIndex: 'title', key: 'title', width: 250 },
-    { title: 'Người thực hiện', dataIndex: 'assigned_to_name', key: 'assigned_to_name', width: 200 },
-    { title: 'Cấp hiện tại', dataIndex: 'level', key: 'level', width: 100, align: 'center'  },
-    { title: 'Tổng cấp', dataIndex: 'approval_steps_total', key: 'approval_steps_total', width: 100, align: 'center' },
-    { title: 'Tiến độ', dataIndex: 'approval_progress', key: 'approval_progress', width: 160},
-    { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 120, align: 'center'},
-    { title: 'Người duyệt', dataIndex: 'approved_by_name', key: 'approved_by_name', width: 160 },
-    { title: 'Thời gian duyệt', dataIndex: 'approved_at', key: 'approved_at', width: 180 },
-    { title: 'Hành động', dataIndex: 'action', key: 'action', width: 240 }
+    { title: 'Loại',         dataIndex: 'target_type',   key: 'target_type',   width: 120 },
+    { title: 'Tiêu đề',      dataIndex: 'title',         key: 'title',         width: 300 },
+    { title: 'Cấp hiện tại', dataIndex: 'current_level', key: 'current_level', width: 120, align: 'center' },
+    { title: 'Tổng cấp',     dataIndex: 'total_steps',   key: 'total_steps',   width: 110, align: 'center' },
+    { title: 'Tiến độ',      dataIndex: 'progress',      key: 'progress',      width: 180 },
+    { title: 'Trạng thái',   dataIndex: 'status',        key: 'status',        width: 120, align: 'center' },
+    { title: 'Người gửi',    dataIndex: 'submitted_by',  key: 'submitted_by',  width: 160 },
+    { title: 'Gửi lúc',      dataIndex: 'submitted_at',  key: 'submitted_at',  width: 180 },
+    { title: 'Hành động',    dataIndex: 'action',        key: 'action',        width: 240 }
 ]
 
-// ================== FETCH DATA ==================
+// ================== UTILS ==================
+const toInt = (v, d = 0) => {
+    const n = Number(v)
+    return Number.isFinite(n) ? n : d
+}
+
+const safeParseJSON = (v) => {
+    if (v == null) return null
+    if (typeof v === 'object') return v
+    try { return JSON.parse(v) } catch { return null }
+}
+
+const normalizeApprovalRow = (ai = {}) => {
+    const meta = safeParseJSON(ai.meta_json)
+    return {
+        ...ai,
+        meta_json: meta,
+        current_level: toInt(ai.current_level),
+        _total_steps: ai._total_steps != null ? toInt(ai._total_steps) : undefined,
+    }
+}
+
+// ================== FETCH ==================
 const fetchData = async () => {
     loading.value = true
     try {
-        const res = await getTaskApprovals({
+        const common = {
             page: pagination.value.current,
-            limit: pagination.value.pageSize,
-            status: activeTab.value === 'pending' ? 'pending' : 'resolved',
-            search: (searchTitle.value || '').trim()
-        })
-        taskApprovals.value = res.data?.data || []
-        pagination.value.total = Number(res.data?.total || 0)
+            per_page: pagination.value.pageSize,
+            search: (searchTitle.value || '').trim() || undefined, // ⚠️ chỉ có tác dụng nếu BE inbox có xử lý search
+        }
+
+        // gợi ý: nếu bạn là admin và muốn xem tất cả pending, đổi scope: 'all'
+        const scope = 'mine' // hoặc 'all'
+
+        const { data } = activeTab.value === 'pending'
+            ? await getApprovalInbox({
+                page: pagination.value.current,
+                per_page: pagination.value.pageSize,
+                search: (searchTitle.value || '').trim() || undefined,
+                target_types: 'bidding,contract,bidding_step,contract_step,task', // lấy đủ
+                // scope: 'all'  // nếu bạn muốn luôn ép hiển thị tất cả bất kể admin hay không
+            })
+            : await listApprovals({
+                page: pagination.value.current,
+                per_page: pagination.value.pageSize,
+                status: 'approved,rejected',
+                acted_by_me: 1,
+                target_types: 'bidding,contract,bidding_step,contract_step,task',
+            })
+
+        // debug
+        if (activeTab.value === 'pending') {
+            console.log('Inbox data:', data?.data)
+            console.log('Pager:', data?.pager)
+        } else {
+            console.log('Resolved data:', data?.data)
+            console.log('Pager:', data?.pager)
+        }
+
+        const items = Array.isArray(data?.data) ? data.data : []
+        rows.value = items.map(normalizeApprovalRow)
+        pagination.value.total = toInt(data?.pager?.total, items.length)
     } catch (e) {
-        message.error('Không thể tải danh sách duyệt')
+        message.error('Không thể tải danh sách phê duyệt')
     } finally {
         loading.value = false
     }
 }
 
+
+
+// (giữ nếu template vẫn @change trên <a-tabs>)
 const handleTabChange = () => {
     pagination.value.current = 1
     fetchData()
 }
-
-const handleTableChange = (paginationChange) => {
-    pagination.value.current = paginationChange.current
-    pagination.value.pageSize = paginationChange.pageSize
+const handleTableChange = (pg) => {
+    pagination.value.current = pg.current
+    pagination.value.pageSize = pg.pageSize
     fetchData()
 }
-
 const handleSearch = () => {
     pagination.value.current = 1
     fetchData()
 }
 
 // ================== ACTIONS ==================
-const openModal = async (record, action) => {
+const openModal = (record, action) => {
     selectedRecord.value = record
-    modalAction.value = action
+    modalAction.value = action === 'reject' ? 'reject' : 'approve'
     comment.value = ''
-
-    try {
-        // Nếu list đã có quyền và đang ở tab pending → tiết kiệm 1 call
-        if (activeTab.value === 'pending' && (record.can_approve || record.can_reject)) {
-            if (action === 'approve' && !record.can_approve) return message.warning(record.cannot_reason || 'Bạn không thể duyệt bản ghi này')
-            if (action === 'reject' && !record.can_reject) return message.warning(record.cannot_reason || 'Bạn không thể từ chối bản ghi này')
-            modalVisible.value = true
-            return
-        }
-
-        const { data } = await canActApprovalAPI(record.id)
-        if (action === 'approve' && !data.can_approve) {
-            return message.warning(data.cannot_reason || 'Bạn không thể duyệt bản ghi này')
-        }
-        if (action === 'reject' && !data.can_reject) {
-            return message.warning(data.cannot_reason || 'Bạn không thể từ chối bản ghi này')
-        }
-        modalVisible.value = true
-    } catch {
-        message.error('Không kiểm tra được quyền hành động')
-    }
+    modalVisible.value = true
 }
 
 const handleModalSubmit = async () => {
-    if (!selectedRecord.value) return
+    if (!selectedRecord.value?.id || submitting.value) return
     submitting.value = true
     try {
+        const id = selectedRecord.value.id
+        const payload = comment.value ? { note: comment.value } : {}
+
         if (modalAction.value === 'approve') {
-            await approveTaskAPI(selectedRecord.value.id, { comment: comment.value })
+            await approveApproval(id, payload)
             message.success('Duyệt thành công')
         } else {
-            await rejectTaskAPI(selectedRecord.value.id, { comment: comment.value })
+            await rejectApproval(id, payload)
             message.success('Từ chối thành công')
         }
+
         modalVisible.value = false
+
+        // Optimistic update + cập nhật phân trang mượt
+        rows.value = rows.value.filter(r => r.id !== id)
+        pagination.value.total = Math.max(0, pagination.value.total - 1)
+        if (rows.value.length === 0 && pagination.value.current > 1) {
+            pagination.value.current -= 1
+        }
+
+        if (activeTab.value === 'pending') activeTab.value = 'resolved'
         await fetchData()
-    } catch {
-        message.error(modalAction.value === 'approve' ? 'Duyệt thất bại' : 'Từ chối thất bại')
+    } catch (e) {
+        message.error(
+            e?.response?.data?.message ||
+            (modalAction.value === 'approve' ? 'Duyệt thất bại' : 'Từ chối thất bại')
+        )
     } finally {
         submitting.value = false
     }
@@ -322,122 +326,59 @@ const handleModalSubmit = async () => {
 
 // ================== TIMELINE ==================
 const viewTimeline = async (record) => {
-    if (!record?.task_id) return
     try {
-        const res = await getFullApprovalStatus(record.task_id)
-        approvalTimeline.value = res.data || []
+        const { data } = await getApproval(record.id)
+        timelineSteps.value = Array.isArray(data?.steps) ? data.steps : []
         timelineVisible.value = true
     } catch {
-        message.error('Không thể tải chi tiết duyệt')
+        message.error('Không thể tải chi tiết phê duyệt')
     }
 }
 
-watch(timelineVisible, (open) => {
-    if (!open) approvalTimeline.value = []
-})
+// ================== UI HELPERS ==================
+const mapTypeLabel = (t) => ({
+    bidding: 'Gói thầu',
+    contract: 'Hợp đồng',
+    bidding_step: 'Bước gói thầu',
+    contract_step: 'Bước hợp đồng',
+    task: 'Nhiệm vụ',
+}[t] || t || '—')
 
-// ================== HELPERS ==================
-const getTimelineColor = (status) => {
-    switch (status) {
-        case 'approved': return 'green'
-        case 'rejected': return 'red'
-        case 'pending':  return 'orange'
-        default:         return 'gray'
-    }
+const statusColor = (s) => s === 'approved' ? 'green' : s === 'rejected' ? 'red' : s === 'pending' ? 'orange' : ''
+
+const statusText = (s) => s === 'approved' ? 'Đã duyệt' : s === 'rejected' ? 'Từ chối' : s === 'pending' ? 'Đang chờ' : '—'
+
+const progressPercent = (r) => {
+    const total = toInt(r._total_steps ?? r.total_steps, 0)
+    if (total <= 0) return r.status === 'approved' ? 100 : 0
+    if (r.status === 'approved') return 100
+    const approvedCount = Math.min(total, toInt(r.current_level))
+    return Math.round((approvedCount / total) * 100)
 }
 
-const getApprovedAndTotal = (record) => {
-    const approved = Number(record.approved_levels ?? 0)
-    const total    = Number(record.approval_steps_total ?? record.approval_steps ?? 0)
-    return { approved, total }
+const progressText = (r) => {
+    const total = toInt(r._total_steps ?? r.total_steps, 0)
+    if (total <= 0) {
+        return r.status === 'pending' ? 'Chưa chọn người duyệt' : 'Không cần phê duyệt'
+    }
+    if (r.status === 'approved') return `Hoàn tất (${total}/${total})`
+    if (r.status === 'rejected') return `Bị từ chối tại cấp ${toInt(r.current_level) + 1}`
+    return `Đang duyệt: Cấp ${toInt(r.current_level) + 1}/${total}`
 }
 
-const getProgressPercent = (record) => {
-    const total     = Number(record.approval_steps_total ?? record.approval_steps ?? 0)
-    const approved  = Number(record.approved_levels ?? 0)
-    const level     = Number(record.level ?? 0)
-    const taskState = String(record.task_approval_status ?? '').toLowerCase()
-    const isResolvedRow = (activeTab.value === 'resolved') || (record.status !== 'pending')
 
-    if (total <= 0) return 0
 
-    if (isResolvedRow) {
-        if (record.status === 'rejected') {
-            return Math.max(0, Math.round(((level - 1) / total) * 100))
-        }
-        return Math.round((Math.min(level, total) / total) * 100)
-    }
+const progressColor = (r) => r.status === 'approved' ? 'green' : r.status === 'rejected' ? 'red' : 'orange'
 
-    if (total === 1) {
-        return approved >= 1 ? 100 : 0
-    }
-    if (taskState === 'approved') return 100
-    return Math.round((Math.min(approved, total) / total) * 100)
-}
-
-const getLevelTextSmart2 = (record) => {
-    const total     = Number(record.approval_steps_total ?? record.approval_steps ?? 0)
-    const approved  = Number(record.approved_levels ?? 0)
-    const level     = Number(record.level ?? 0)
-    const cur       = Number(record.current_level ?? record.level ?? 0)
-    const taskState = String(record.task_approval_status ?? '').toLowerCase()
-    const isResolvedRow = (activeTab.value === 'resolved') || (record.status !== 'pending')
-
-    if (total === 0) return 'Không cần duyệt'
-
-    if (isResolvedRow) {
-        if (record.status === 'rejected') {
-            const done = Math.max(0, level - 1)
-            return `Bị từ chối tại cấp ${level} (${done}/${total})`
-        }
-        if (level < total) return `Đã duyệt ${level}/${total} (${Math.round((level/total)*100)}%)`
-        return `Hoàn tất (${total}/${total})`
-    }
-
-    if (total === 1) {
-        return approved >= 1 ? 'Hoàn tất (1/1)' : 'Chưa duyệt (0/1)'
-    }
-    if (taskState === 'approved' || approved >= total) return `Hoàn tất (${total}/${total})`
-    if (taskState === 'rejected') return `Bị từ chối (${approved}/${total})`
-    if (approved === 0) return cur > 0 ? `Đang chờ: Cấp ${cur}/${total}` : `Chưa bắt đầu (0/${total})`
-    return cur > 0
-        ? `Đang duyệt: Cấp ${cur}/${total} (đã ${approved}/${total})`
-        : `Đã duyệt ${approved}/${total}`
-}
-
-const getLevelTagColorSmart = (record) => {
-    const { approved, total } = getApprovedAndTotal(record)
-    const statusTask = String(record.task_approval_status ?? '').toLowerCase()
-
-    if (total === 0) return 'default'
-    if (statusTask === 'rejected') return 'red'
-    if (total === 1) return approved >= 1 ? 'green' : 'gray'
-    if (statusTask === 'approved' || approved >= total) return 'green'
-    if (approved === 0) return 'gray'
-    return 'orange'
-}
-
-const getStatusColor = (status) => {
-    switch (status) {
-        case 'pending':  return 'orange'
-        case 'approved': return 'green'
-        case 'rejected': return 'red'
-        default:         return ''
-    }
-}
-
-const getStatusText = (status) => {
-    switch (status) {
-        case 'pending':  return 'Đang chờ'
-        case 'approved': return 'Đã duyệt'
-        case 'rejected': return 'Từ chối'
-        default:         return '—'
-    }
-}
-
+const displayFallbackTitle = (r) => `[${mapTypeLabel(r.target_type)}] #${r.target_id}`
 const formatTime = (ts) => (ts ? new Date(ts).toLocaleString('vi-VN') : '')
+const timelineColor = (s) => (s === 'approved' ? 'green' : s === 'rejected' ? 'red' : 'orange')
 
-// Debounce tìm kiếm
+// ================== WATCHERS ==================
+watch(activeTab, () => {
+    pagination.value.current = 1
+    fetchData()
+})
 watch(searchTitle, debounce(() => {
     pagination.value.current = 1
     fetchData()
@@ -446,9 +387,11 @@ watch(searchTitle, debounce(() => {
 onMounted(fetchData)
 </script>
 
+
 <style scoped>
 .mb-3 { margin-bottom: 12px; }
 .text-xs { font-size: 12px; }
 .text-gray-500 { color: #8c8c8c; }
 .p-3 { padding: 12px; }
+.link { color: #1677ff; }
 </style>
