@@ -215,6 +215,19 @@ const routes = [
                 meta: { breadcrumb: 'Biểu đồ thống kê' }
             },
 
+            {
+                path: '/bidding-steps/:id/info',
+                name: 'BiddingStepDetail',
+                component: () => import('../components/StepDetail.vue'),
+                props: route => ({ id: Number(route.params.id), type: 'bidding' })
+            },
+            {
+                path: '/contract-steps/:id/info',
+                name: 'ContractStepDetail',
+                component: () => import('../components/StepDetail.vue'),
+                props: route => ({ id: Number(route.params.id), type: 'contract' })
+            }
+
         ]
     }
 ]

@@ -638,9 +638,7 @@ const detailProgressPercent = b => {
     const base = safeToNumber(b?.progress?.bidding_progress)
     if (isBiddingApproved(b)) return 100
 
-    const expired =
-        safeToNumber(b?.days_overdue) > 0 ||
-        (!!b?.end_date && dayjs().isAfter(dayjs(b.end_date), 'day'))
+    const expired = safeToNumber(b?.days_overdue) > 0 || (!!b?.end_date && dayjs().isAfter(dayjs(b.end_date), 'day'))
 
     return expired && base > 90 ? 90 : base
 }

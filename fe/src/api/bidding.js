@@ -49,6 +49,9 @@ export const getBiddingProcessAPI = (biddingId) =>
 export const getBiddingStepsByBiddingIdAPI = (biddingId, { withTasks = 1 } = {}) =>
     instance.get(`/biddings/${biddingId}/steps`, { params: { with_tasks: withTasks ? 1 : 0 } })
 
+export const getBiddingStepAPI = (id) => instance.get(`/bidding-steps/${id}`)
+export const getTasksByBiddingStepAPI = (id) => instance.get(`/bidding-steps/${id}/tasks`)
+
 
 
 

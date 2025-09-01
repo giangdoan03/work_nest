@@ -349,7 +349,7 @@ class BiddingStepController extends ResourceController
         // 2) Lấy tasks theo step (tuỳ chọn)
         $tasks = [];
         if ($withTasks && !empty($stepIds)) {
-            $tasks = (new \App\Models\TaskModel())
+            $tasks = (new TaskModel())
                 ->asArray()
                 ->where('linked_type', 'bidding')
                 ->whereIn('step_id', $stepIds)
@@ -471,6 +471,139 @@ class BiddingStepController extends ResourceController
 
         return $this->respond($steps);
     }
+
+    public function stepDetail(int $biddingId, int $stepId): ResponseInterface
+    {
+        // 0) Validate
+        if ($biddingId <= 0 || $stepId <= 0) {
+            return $this->failValidationErrors(['id' => 'Thiếu hoặc không hợp lệ.']);
+        }
+
+        // 1) Lấy step và đảm bảo step thuộc về gói thầu
+        $step = $this->model
+            ->asArray()
+            ->where('id', $stepId)
+            ->where('bidding_id', $biddingId)
+            ->first();
+
+        if (!$step) {
+            return $this->failNotFound("Không tìm thấy bước #{$stepId} của gói thầu #{$biddingId}.");
+        }
+
+        // allow skip tasks to reduce payload: ?with_tasks=0
+        $withTasks = (int)($this->request->getGet('with_tasks') ?? 1) === 1;
+
+        // 2) Lấy tasks của step
+        $tasks = [];
+        if ($withTasks) {
+            $tasks = (new \App\Models\TaskModel())
+                ->asArray()
+                ->where('linked_type', 'bidding')
+                ->where('step_id', $stepId)
+                ->findAll();
+        }
+
+        // 3) Tính days_remaining / days_overdue cho task
+        $tz    = new \DateTimeZone('Asia/Ho_Chi_Minh');
+        $today = new \DateTimeImmutable('today', $tz);
+
+        foreach ($tasks as &$t) {
+            [$t['days_remaining'], $t['days_overdue']] = $this->calcRemOv($t['end_date'] ?? null, $today, $tz);
+        }
+        unset($t);
+
+        // 4) Gom assignees từ task + fallback step.assigned_to
+        $assigneeIds = [];
+        foreach ($tasks as $t) {
+            if (!empty($t['assigned_to'])) $assigneeIds[] = (int)$t['assigned_to'];
+        }
+        if (!empty($step['assigned_to'])) {
+            $assigneeIds[] = (int)$step['assigned_to'];
+        }
+        $assigneeIds = array_values(array_unique(array_filter($assigneeIds)));
+
+        $userById = [];
+        if ($assigneeIds) {
+            $users = (new \App\Models\UserModel())
+                ->asArray()
+                ->select('id, name')
+                ->whereIn('id', $assigneeIds)
+                ->findAll();
+            foreach ($users as $u) {
+                $userById[(string)$u['id']] = $u;
+            }
+        }
+
+        // 5) Tổng hợp progress & deadline ở cấp bước
+        $minRem = null; $maxOv = 0; $hasToday = false; $hasAnyTaskDate = false;
+        $uids = [];
+        $approvedCount = 0;
+
+        foreach ($tasks as $t) {
+            if ($t['days_remaining'] !== null || $t['days_overdue'] !== null) $hasAnyTaskDate = true;
+            if ((int)($t['days_remaining'] ?? -1) === 0 && !empty($t['end_date'])) $hasToday = true;
+            if (($t['days_remaining'] ?? null) !== null && (int)$t['days_remaining'] > 0) {
+                $minRem = is_null($minRem) ? (int)$t['days_remaining'] : min($minRem, (int)$t['days_remaining']);
+            }
+            if (($t['days_overdue'] ?? null) !== null && (int)$t['days_overdue'] > 0) {
+                $maxOv = max($maxOv, (int)$t['days_overdue']);
+            }
+
+            if (!empty($t['assigned_to'])) $uids[] = (string)(int)$t['assigned_to'];
+
+            // Chỉ tính DONE khi đã được duyệt
+            $status   = (string)($t['status'] ?? '');
+            $progress = (int)($t['progress'] ?? 0);
+            $approved = (string)($t['approval_status'] ?? '') === 'approved';
+            if (($status === 'done' || $progress >= 100) && $approved) {
+                $approvedCount++;
+            }
+        }
+
+        if (!empty($step['assigned_to'])) {
+            $uids[] = (string)(int)$step['assigned_to'];
+        }
+        $uids    = array_values(array_unique(array_filter($uids)));
+        $details = array_values(array_filter(array_map(fn($id) => $userById[$id] ?? null, $uids)));
+
+        $totalTasks = count($tasks);
+
+        // Progress: nếu không có task → dùng trạng thái step (2 = hoàn thành)
+        if ($totalTasks > 0) {
+            $stepProgress = (int) round($approvedCount * 100 / $totalTasks);
+            $isCompleted  = ($approvedCount === $totalTasks) ? 1 : 0;
+        } else {
+            $stepProgress = ((int)($step['status'] ?? 0) === 2) ? 100 : 0;
+            $isCompleted  = ((int)($step['status'] ?? 0) === 2) ? 1   : 0;
+        }
+
+        // Deadline: ưu tiên aggregate từ task, nếu không có thì fallback end_date của step
+        $daysRemaining = null; $daysOverdue = null;
+        if ($hasAnyTaskDate) {
+            $daysRemaining = $hasToday ? 0 : $minRem;
+            $daysOverdue   = $maxOv;
+        } else {
+            [$daysRemaining, $daysOverdue] = $this->calcRemOv($step['end_date'] ?? null, $today, $tz);
+        }
+
+        // 6) Gộp output
+        $step['tasks']             = $withTasks ? $tasks : [];
+        $step['task_count']        = $totalTasks;
+        $step['task_done_count']   = $approvedCount;
+        $step['step_progress']     = $stepProgress;
+        $step['is_step_completed'] = $isCompleted;
+
+        $step['days_remaining']    = $daysRemaining;
+        $step['days_overdue']      = $daysOverdue;
+
+        $step['assignees']         = $uids;
+        $step['assignees_detail']  = $details;
+        $step['assignees_count']   = count($uids);
+        $step['assignees_names']   = implode(', ', array_column($details, 'name'));
+
+        return $this->respond($step);
+    }
+
 
 
 

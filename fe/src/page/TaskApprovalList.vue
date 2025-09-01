@@ -12,8 +12,8 @@
             />
         </a-flex>
 
-        <!-- ✅ Chỉ còn 2 tab: Cần duyệt / Đã xử lý -->
-        <a-tabs v-model:activeKey="activeTab" @change="handleTabChange">
+        <!-- ✅ Chỉ còn 2 tab: Cần duyệt / Đã xử lý (bỏ @change để tránh fetch đôi) -->
+        <a-tabs v-model:activeKey="activeTab">
             <a-tab-pane key="pending" tab="Cần duyệt" />
             <a-tab-pane key="resolved" tab="Đã xử lý" />
         </a-tabs>
@@ -25,6 +25,7 @@
             :pagination="pagination"
             row-key="id"
             :locale="{ emptyText: 'Không có bản ghi' }"
+            :scroll="{ x: 1300 }"
             @change="handleTableChange"
         >
             <template #bodyCell="{ column, record }">
@@ -33,17 +34,41 @@
                     <a-tag>{{ mapTypeLabel(record.target_type) }}</a-tag>
                 </template>
 
-                <!-- Tiêu đề + Link -->
+                <!-- Tiêu đề + Link (tự nhận diện external/internal) -->
                 <template v-else-if="column.dataIndex === 'title'">
-                    <router-link
-                        v-if="record.meta_json?.url"
-                        :to="record.meta_json.url"
-                        class="link"
-                    >
-                        {{ record.meta_json?.title || displayFallbackTitle(record) }}
-                    </router-link>
+                    <!-- Ưu tiên route chi tiết step nếu là step -->
+                    <template v-if="isStep(record)">
+                        <router-link
+                            :to="stepDetailRoute(record)"
+                            class="link"
+                        >
+                            {{ record.meta_json?.title || displayFallbackTitle(record) }}
+                        </router-link>
+                    </template>
+
+                    <!-- Nếu không phải step: dùng url sẵn có -->
+                    <template v-else-if="record.meta_json?.url">
+                        <a
+                            v-if="isExternalUrl(record.meta_json.url)"
+                            :href="record.meta_json.url"
+                            class="link"
+                            target="_blank"
+                            rel="noopener"
+                        >
+                            {{ record.meta_json?.title || displayFallbackTitle(record) }}
+                        </a>
+                        <router-link
+                            v-else
+                            :to="record.meta_json.url"
+                            class="link"
+                        >
+                            {{ record.meta_json?.title || displayFallbackTitle(record) }}
+                        </router-link>
+                    </template>
+
                     <span v-else>{{ record.meta_json?.title || displayFallbackTitle(record) }}</span>
                 </template>
+
 
                 <!-- Cấp hiện tại -->
                 <template v-else-if="column.dataIndex === 'current_level'">
@@ -59,7 +84,7 @@
                 <template v-else-if="column.dataIndex === 'progress'">
                     <a-progress
                         :percent="progressPercent(record)"
-                        :status="progressPercent(record) === 100 ? 'success' : 'active'"
+                        :status="progressStatus(record)"
                         size="small"
                     />
                     <div class="text-xs text-gray-500">
@@ -144,7 +169,6 @@
     </div>
 </template>
 
-
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { message } from 'ant-design-vue'
@@ -186,7 +210,7 @@ const columns = [
     { title: 'Tiêu đề',      dataIndex: 'title',         key: 'title',         width: 300 },
     { title: 'Cấp hiện tại', dataIndex: 'current_level', key: 'current_level', width: 120, align: 'center' },
     { title: 'Tổng cấp',     dataIndex: 'total_steps',   key: 'total_steps',   width: 110, align: 'center' },
-    { title: 'Tiến độ',      dataIndex: 'progress',      key: 'progress',      width: 180 },
+    { title: 'Tiến độ',      dataIndex: 'progress',      key: 'progress',      width: 200 },
     { title: 'Trạng thái',   dataIndex: 'status',        key: 'status',        width: 120, align: 'center' },
     { title: 'Người gửi',    dataIndex: 'submitted_by',  key: 'submitted_by',  width: 160 },
     { title: 'Gửi lúc',      dataIndex: 'submitted_at',  key: 'submitted_at',  width: 180 },
@@ -198,6 +222,7 @@ const toInt = (v, d = 0) => {
     const n = Number(v)
     return Number.isFinite(n) ? n : d
 }
+const clamp = (n, min, max) => Math.max(min, Math.min(max, n))
 
 const safeParseJSON = (v) => {
     if (v == null) return null
@@ -215,26 +240,19 @@ const normalizeApprovalRow = (ai = {}) => {
     }
 }
 
+const isExternalUrl = (u) => /^https?:\/\//i.test(u)
+
 // ================== FETCH ==================
 const fetchData = async () => {
     loading.value = true
     try {
-        const common = {
-            page: pagination.value.current,
-            per_page: pagination.value.pageSize,
-            search: (searchTitle.value || '').trim() || undefined, // ⚠️ chỉ có tác dụng nếu BE inbox có xử lý search
-        }
-
-        // gợi ý: nếu bạn là admin và muốn xem tất cả pending, đổi scope: 'all'
-        const scope = 'mine' // hoặc 'all'
-
         const { data } = activeTab.value === 'pending'
             ? await getApprovalInbox({
                 page: pagination.value.current,
                 per_page: pagination.value.pageSize,
                 search: (searchTitle.value || '').trim() || undefined,
-                target_types: 'bidding,contract,bidding_step,contract_step,task', // lấy đủ
-                // scope: 'all'  // nếu bạn muốn luôn ép hiển thị tất cả bất kể admin hay không
+                target_types: 'bidding,contract,bidding_step,contract_step,task',
+                // scope: 'all' // mở nếu muốn luôn xem tất cả pending
             })
             : await listApprovals({
                 page: pagination.value.current,
@@ -243,15 +261,6 @@ const fetchData = async () => {
                 acted_by_me: 1,
                 target_types: 'bidding,contract,bidding_step,contract_step,task',
             })
-
-        // debug
-        if (activeTab.value === 'pending') {
-            console.log('Inbox data:', data?.data)
-            console.log('Pager:', data?.pager)
-        } else {
-            console.log('Resolved data:', data?.data)
-            console.log('Pager:', data?.pager)
-        }
 
         const items = Array.isArray(data?.data) ? data.data : []
         rows.value = items.map(normalizeApprovalRow)
@@ -263,13 +272,17 @@ const fetchData = async () => {
     }
 }
 
+const isStep = (r) => r?.target_type === 'bidding_step' || r?.target_type === 'contract_step'
 
-
-// (giữ nếu template vẫn @change trên <a-tabs>)
-const handleTabChange = () => {
-    pagination.value.current = 1
-    fetchData()
+// Điều hướng sang trang chi tiết theo loại step, dùng chính target_id (id của step)
+const stepDetailRoute = (r) => {
+    const id = Number(r?.target_id)
+    if (!id) return '/'
+    return r.target_type === 'bidding_step'
+        ? { name: 'BiddingStepDetail', params: { id } }
+        : { name: 'ContractStepDetail', params: { id } }
 }
+
 const handleTableChange = (pg) => {
     pagination.value.current = pg.current
     pagination.value.pageSize = pg.pageSize
@@ -344,16 +357,30 @@ const mapTypeLabel = (t) => ({
     task: 'Nhiệm vụ',
 }[t] || t || '—')
 
-const statusColor = (s) => s === 'approved' ? 'green' : s === 'rejected' ? 'red' : s === 'pending' ? 'orange' : ''
+const statusColor = (s) =>
+    s === 'approved' ? 'green'
+        : s === 'rejected' ? 'red'
+            : s === 'pending' ? 'orange'
+                : 'default'
 
-const statusText = (s) => s === 'approved' ? 'Đã duyệt' : s === 'rejected' ? 'Từ chối' : s === 'pending' ? 'Đang chờ' : '—'
+const statusText = (s) =>
+    s === 'approved' ? 'Đã duyệt'
+        : s === 'rejected' ? 'Từ chối'
+            : s === 'pending' ? 'Đang chờ'
+                : '—'
 
 const progressPercent = (r) => {
     const total = toInt(r._total_steps ?? r.total_steps, 0)
     if (total <= 0) return r.status === 'approved' ? 100 : 0
     if (r.status === 'approved') return 100
     const approvedCount = Math.min(total, toInt(r.current_level))
-    return Math.round((approvedCount / total) * 100)
+    return clamp(Math.round((approvedCount / total) * 100), 0, 100)
+}
+
+const progressStatus = (r) => {
+    if (r.status === 'approved') return 'success'
+    if (r.status === 'rejected') return 'exception'
+    return undefined // để antd tự xử lý (hiệu ứng mặc định)
 }
 
 const progressText = (r) => {
@@ -366,9 +393,10 @@ const progressText = (r) => {
     return `Đang duyệt: Cấp ${toInt(r.current_level) + 1}/${total}`
 }
 
-
-
-const progressColor = (r) => r.status === 'approved' ? 'green' : r.status === 'rejected' ? 'red' : 'orange'
+const progressColor = (r) =>
+    r.status === 'approved' ? 'green'
+        : r.status === 'rejected' ? 'red'
+            : 'orange'
 
 const displayFallbackTitle = (r) => `[${mapTypeLabel(r.target_type)}] #${r.target_id}`
 const formatTime = (ts) => (ts ? new Date(ts).toLocaleString('vi-VN') : '')
@@ -386,7 +414,6 @@ watch(searchTitle, debounce(() => {
 
 onMounted(fetchData)
 </script>
-
 
 <style scoped>
 .mb-3 { margin-bottom: 12px; }

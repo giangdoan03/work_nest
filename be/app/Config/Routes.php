@@ -112,6 +112,7 @@ $routes->group('api', function ($routes) {
 //    $routes->get('bidding-steps/(:num)/tasks', 'BiddingStepController::tasksByStep/$1');
     $routes->resource('bidding-steps', ['controller' => 'BiddingStepController']);
     $routes->get('biddings/(:num)/steps', 'BiddingStepController::stepsByBidding/$1');
+    $routes->get('biddings/(:num)/steps/(:num)', 'BiddingStepController::stepDetail/$1/$2');
 
     $routes->put('comments/(:num)', 'CommentController::update/$1');
     $routes->delete('comments/(:num)', 'CommentController::delete/$1');
