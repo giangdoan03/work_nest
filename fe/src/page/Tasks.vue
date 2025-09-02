@@ -5,7 +5,7 @@
                 <a-space wrap>
                     <!-- Nhóm thông tin / bộ đếm -->
                     <a-typography-text type="secondary">
-                        Tổng {{ totalTasks }} nhiệm vụ nội bộ
+                        Tổng {{ totalTasks }} nhiệm vụ
                     </a-typography-text>
 
                     <!-- Icon mở drawer filter chi tiết -->
