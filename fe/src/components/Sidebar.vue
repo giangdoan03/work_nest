@@ -61,6 +61,21 @@
                 <span class="menu-text">Việc không quy trình</span>
             </div>
 
+
+            <!-- 7. Quản lý dữ liệu công việc (Việc quy trình) -->
+            <a-tooltip placement="right" title="Việc quy trình" v-if="collapsed">
+                <div class="menu-item" :class="{ active: isInternalTaskActive }" @click="navigateTo('/internal-tasks')">
+                    <ProjectOutlined />
+                    <div class="menu-text-collapsed">Việc quy trình</div>
+                </div>
+            </a-tooltip>
+            <div v-else class="menu-item" :class="{ active: isInternalTaskActive }" @click="navigateTo('/internal-tasks')">
+                <ProjectOutlined />
+                <span class="menu-text">Việc quy trình</span>
+            </div>
+
+
+
             <!-- 5. Công việc cá nhân -->
             <a-tooltip placement="right" title="Công việc cá nhân" v-if="collapsed">
                 <div class="menu-item" :class="{ active: currentRoute === '/my-tasks' }" @click="navigateTo('/my-tasks')">
@@ -83,18 +98,6 @@
             <div v-else class="menu-item" :class="{ active: currentRoute === '/task-approvals' }" @click="navigateTo('/task-approvals')">
                 <CheckCircleOutlined />
                 <span class="menu-text">Duyệt nhiệm vụ</span>
-            </div>
-
-            <!-- 7. Quản lý dữ liệu công việc (Việc quy trình) -->
-            <a-tooltip placement="right" title="Việc quy trình" v-if="collapsed">
-                <div class="menu-item" :class="{ active: isInternalTaskActive }" @click="navigateTo('/internal-tasks')">
-                    <ProjectOutlined />
-                    <div class="menu-text-collapsed">Việc quy trình</div>
-                </div>
-            </a-tooltip>
-            <div v-else class="menu-item" :class="{ active: isInternalTaskActive }" @click="navigateTo('/internal-tasks')">
-                <ProjectOutlined />
-                <span class="menu-text">Việc quy trình</span>
             </div>
 
             <!-- 8. Tài liệu (submenu) -->
