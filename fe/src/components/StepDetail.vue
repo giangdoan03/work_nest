@@ -10,7 +10,7 @@
         <a-button class="mb-3" @click="goBack">← Quay lại</a-button>
 
         <!-- THÔNG TIN BƯỚC -->
-        <a-card :loading="loadingStep" class="mb-4" :title="step?.title || `Bước #${id}`">
+        <a-card :loading="loadingStep" class="mb-4" :title="step?.title || `Bước #${id}`" style="margin-bottom: 15px">
             <template #extra>
                 <a-tag :color="statusColor(toInt(step?.status))">{{ statusText(toInt(step?.status)) }}</a-tag>
             </template>
@@ -39,7 +39,7 @@
             </div>
 
             <!-- chi tiết thêm -->
-            <a-descriptions class="mt-4" bordered size="small" :column="3">
+            <a-descriptions class="mt-4" bordered size="small" :column="{ xs: 1, sm: 1, md: 2, lg: 2, xl: 2 }">
                 <a-descriptions-item label="ID bước">#{{ step?.id }}</a-descriptions-item>
                 <a-descriptions-item label="Gói thầu">#{{ step?.bidding_id }}</a-descriptions-item>
                 <a-descriptions-item label="Số thứ tự">{{ step?.step_number }}</a-descriptions-item>
@@ -67,7 +67,7 @@
         </a-card>
 
         <!-- TIMELINE PHÊ DUYỆT -->
-        <a-card v-if="approvalSteps.length" class="mb-4" title="Timeline phê duyệt">
+        <a-card v-if="approvalSteps.length" class="mb-4" title="Timeline phê duyệt" style="margin-bottom: 15px">
             <a-timeline>
                 <a-timeline-item v-for="st in approvalSteps" :key="st.level" :color="timelineColor(st.status)">
                     Cấp {{ st.level }}:
@@ -158,7 +158,7 @@ const typeLabel = computed(() => props.type === 'bidding' ? 'Gói thầu' : 'H�
 /** ===== Columns cho bảng task ===== */
 const taskColumns = [
     { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
-    { title: 'Tiêu đề', dataIndex: 'title', key: 'title', width: 360, ellipsis: true },
+    { title: 'Tiêu đề', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
     { title: 'Người thực hiện', dataIndex: 'assignee_name', key: 'assignee_name', width: 200 },
     { title: 'Duyệt', dataIndex: 'approval_status', key: 'approval_status', width: 120 },
     { title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: 160 },
