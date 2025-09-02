@@ -80,31 +80,31 @@ class TaskController extends ResourceController
             WHEN tasks.linked_type = 'contract' THEN c.title
             ELSE NULL
         END AS linked_title
-    ";
-        } elseif ($needJoinBidding) {
-            $linkedTitleExpr = "
-        CASE
-            WHEN tasks.linked_type = 'bidding' THEN b.title
-            ELSE NULL
-        END AS linked_title
-    ";
-        } elseif ($needJoinContract) {
-            $linkedTitleExpr = "
-        CASE
-            WHEN tasks.linked_type = 'contract' THEN c.title
-            ELSE NULL
-        END AS linked_title
-    ";
-        }
+            ";
+                } elseif ($needJoinBidding) {
+                    $linkedTitleExpr = "
+                CASE
+                    WHEN tasks.linked_type = 'bidding' THEN b.title
+                    ELSE NULL
+                END AS linked_title
+            ";
+                } elseif ($needJoinContract) {
+                    $linkedTitleExpr = "
+                CASE
+                    WHEN tasks.linked_type = 'contract' THEN c.title
+                    ELSE NULL
+                END AS linked_title
+            ";
+                }
 
-        $builder->select("
-    tasks.*,
-    tasks.id AS task_id,
-    users.id   AS assignee_id,
-    users.name AS assignee_name,
-    parent.title AS parent_title,
-    {$linkedTitleExpr}
-", false); // false để không escape biểu thức CASE
+                $builder->select("
+            tasks.*,
+            tasks.id AS task_id,
+            users.id   AS assignee_id,
+            users.name AS assignee_name,
+            parent.title AS parent_title,
+            {$linkedTitleExpr}
+        ", false); // false để không escape biểu thức CASE
 
         $builder->join('users', 'users.id = tasks.assigned_to', 'left');
         $builder->join('tasks parent', 'parent.id = tasks.parent_id', 'left');
