@@ -31,6 +31,7 @@ import UserDetail from '../page/UserDetail.vue' // 👈 đảm bảo file này t
 import MyTasks from '../page/MyTasks.vue' // 👈 đảm bảo file này tồn tại
 import ProjectOverview from '../page/ProjectOverview.vue' // 👈 đảm bảo file này tồn tại
 import GanttChart from '../page/GanttChart.vue'
+import Tasks from '../page/Tasks.vue'                // 👈 THÊM DÒNG NÀY
 import {getPermissionMatrix} from "@/api/permission.js";
 import Forbidden403 from "@/page/Forbidden403.vue"; // 👈 đảm bảo file này tồn tại
 
@@ -81,8 +82,8 @@ const routes = [
             { path: 'user-management', name: 'user-management', component: UserManagement, meta: { breadcrumb: 'Quản lý người dùng' } },
 
             // Internal Tasks
-            { path: 'internal-tasks', name: 'internal-tasks', component: InternalTasks, meta: { breadcrumb: 'Nhiệm vụ nội bộ' } },
-            { path: 'internal-tasks/:id/info', name: 'internal-tasks-info', component: TaskDetail, meta: { breadcrumb: 'Nhiệm vụ nội bộ', parent: 'internal-tasks' } },
+            { path: 'internal-tasks', name: 'internal-tasks', component: InternalTasks, meta: { breadcrumb: 'Việc quy trình' } },
+            { path: 'internal-tasks/:id/info', name: 'internal-tasks-info', component: TaskDetail, meta: { breadcrumb: 'Việc quy trình', parent: 'internal-tasks' } },
 
             // Contracts Tasks
             { path: 'contracts-tasks', name: 'contracts-tasks', component: ContractsTasks, meta: { breadcrumb: 'Danh sách hợp đồng' } },
@@ -226,7 +227,20 @@ const routes = [
                 name: 'ContractStepDetail',
                 component: () => import('../components/StepDetail.vue'),
                 props: route => ({ id: Number(route.params.id), type: 'contract' })
-            }
+            },
+            // Việc không quy trình
+            {
+                path: '/tasks',
+                name: 'tasks',
+                component: Tasks,
+                meta: { breadcrumb: 'Việc không quy trình' }
+            },
+            {
+                path: '/tasks/:id/info',
+                name: 'tasks-detail',
+                component: TaskDetail,
+                meta: { breadcrumb: 'Chi tiết nhiệm vụ', parent: 'tasks' }
+            },
 
         ]
     }
@@ -265,6 +279,8 @@ const routePermissionMap = {
     'task-approvals': 'approval',
     'GanttChart': 'gantt',
     'project-overview': 'project',
+    'tasks': 'task',
+    'tasks-detail': 'task',
 }
 
 

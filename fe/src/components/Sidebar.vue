@@ -1,9 +1,8 @@
 <template>
-    <div class="sidebar" :class="{ 'collapsed': collapsed }">
+    <div class="sidebar" :class="{ collapsed }">
         <!-- Logo -->
         <div class="logo-container">
             <router-link to="/" class="logo">
-                <!-- Dùng ảnh trong public -->
                 <img
                     :src="collapsed ? '/logoMark.png' : '/TTID_logo.png'"
                     class="logo-img"
@@ -14,203 +13,99 @@
 
         <!-- Menu -->
         <nav class="menu">
+            <!-- 1. Tổng quan -->
             <a-tooltip placement="right" title="Tổng quan" v-if="collapsed">
-                <div 
-                    class="menu-item"
-                    :class="{ active: currentRoute === '/project-overview' }"
-                    @click="navigateTo('/project-overview')"
-                >
+                <div class="menu-item" :class="{ active: isOverviewActive }" @click="navigateTo('/project-overview')">
                     <BarChartOutlined />
                     <div class="menu-text-collapsed">Tổng quan</div>
                 </div>
             </a-tooltip>
-            <div 
-                v-else
-                class="menu-item"
-                :class="{ active: currentRoute === '/project-overview' }"
-                @click="navigateTo('/project-overview')"
-            >
+            <div v-else class="menu-item" :class="{ active: isOverviewActive }" @click="navigateTo('/project-overview')">
                 <BarChartOutlined />
                 <span class="menu-text">Tổng quan</span>
             </div>
-            
-            <a-tooltip placement="right" title="Công việc cá nhân" v-if="collapsed">
-                <div 
-                    class="menu-item"
-                    :class="{ active: currentRoute === '/my-tasks' }"
-                    @click="navigateTo('/my-tasks')"
-                >
-                    <ScheduleOutlined />
-                    <div class="menu-text-collapsed">Công việc cá nhân</div>
-                </div>
-            </a-tooltip>
-            <div 
-                v-else
-                class="menu-item"
-                :class="{ active: currentRoute === '/my-tasks' }"
-                @click="navigateTo('/my-tasks')"
-            >
-                <ScheduleOutlined />
-                <span class="menu-text">Công việc cá nhân</span>
-            </div>
-            
-            <a-tooltip placement="right" title="Duyệt nhiệm vụ" v-if="collapsed">
-                <div 
-                    class="menu-item"
-                    :class="{ active: currentRoute === '/task-approvals' }"
-                    @click="navigateTo('/task-approvals')"
-                >
-                    <CheckCircleOutlined />
-                    <div class="menu-text-collapsed">Duyệt nhiệm vụ</div>
-                </div>
-            </a-tooltip>
-            <div 
-                v-else
-                class="menu-item"
-                :class="{ active: currentRoute === '/task-approvals' }"
-                @click="navigateTo('/task-approvals')"
-            >
-                <CheckCircleOutlined />
-                <span class="menu-text">Duyệt nhiệm vụ</span>
-            </div>
-            
-            <a-tooltip placement="right" title="Quản lý khách hàng" v-if="collapsed">
-                <div 
-                    class="menu-item"
-                    :class="{ active: isCustomerActive }"
-                    @click="navigateTo('/customers')"
-                >
-                    <TeamOutlined />
-                    <div class="menu-text-collapsed">Quản lý khách hàng</div>
-                </div>
-            </a-tooltip>
-            <div 
-                v-else
-                class="menu-item"
-                :class="{ active: isCustomerActive }"
-                @click="navigateTo('/customers')"
-            >
-                <TeamOutlined />
-                <span class="menu-text">Quản lý khách hàng</span>
-            </div>
-            
+
+            <!-- 2. Gói thầu -->
             <a-tooltip placement="right" title="Gói thầu" v-if="collapsed">
-                <div 
-                    class="menu-item"
-                    :class="{ active: isBiddingActive }"
-                    @click="navigateTo('/bid-list')"
-                >
+                <div class="menu-item" :class="{ active: isBiddingActive }" @click="navigateTo('/bid-list')">
                     <FileSearchOutlined />
                     <div class="menu-text-collapsed">Gói thầu</div>
                 </div>
             </a-tooltip>
-            <div 
-                v-else
-                class="menu-item"
-                :class="{ active: isBiddingActive }"
-                @click="navigateTo('/bid-list')"
-            >
+            <div v-else class="menu-item" :class="{ active: isBiddingActive }" @click="navigateTo('/bid-list')">
                 <FileSearchOutlined />
                 <span class="menu-text">Gói thầu</span>
             </div>
-            
+
+            <!-- 3. Hợp đồng -->
             <a-tooltip placement="right" title="Hợp đồng" v-if="collapsed">
-                <div 
-                    class="menu-item"
-                    :class="{ active: isContractActive }"
-                    @click="navigateTo('/contracts-tasks')"
-                >
+                <div class="menu-item" :class="{ active: isContractActive }" @click="navigateTo('/contracts-tasks')">
                     <FileTextOutlined />
                     <div class="menu-text-collapsed">Hợp đồng</div>
                 </div>
             </a-tooltip>
-            <div 
-                v-else
-                class="menu-item"
-                :class="{ active: isContractActive }"
-                @click="navigateTo('/contracts-tasks')"
-            >
+            <div v-else class="menu-item" :class="{ active: isContractActive }" @click="navigateTo('/contracts-tasks')">
                 <FileTextOutlined />
                 <span class="menu-text">Hợp đồng</span>
             </div>
-            
-            <a-tooltip placement="right" title="Công việc" v-if="collapsed">
-                <div 
-                    class="menu-item"
-                    :class="{ active: isInternalTaskActive }"
-                    @click="navigateTo('/internal-tasks')"
-                >
-                    <ToolOutlined />
-                    <div class="menu-text-collapsed">Công việc</div>
+
+            <!-- 4. Việc không quy trình -->
+            <a-tooltip placement="right" title="Việc không quy trình" v-if="collapsed">
+                <div class="menu-item" :class="{ active: isTaskActive }" @click="navigateTo('/tasks')">
+                    <UnorderedListOutlined />
+                    <div class="menu-text-collapsed">Việc không quy trình</div>
                 </div>
             </a-tooltip>
-            <div 
-                v-else
-                class="menu-item"
-                :class="{ active: isInternalTaskActive }"
-                @click="navigateTo('/internal-tasks')"
-            >
-                <ToolOutlined />
-                <span class="menu-text">Công việc</span>
+            <div v-else class="menu-item" :class="{ active: isTaskActive }" @click="navigateTo('/tasks')">
+                <UnorderedListOutlined />
+                <span class="menu-text">Việc không quy trình</span>
             </div>
-            
-            <a-tooltip placement="right" title="Danh sách phòng ban" v-if="collapsed">
-                <div 
-                    class="menu-item"
-                    :class="{ active: currentRoute === '/departments' }"
-                    @click="navigateTo('/departments')"
-                >
-                    <ApartmentOutlined />
-                    <div class="menu-text-collapsed">Danh sách phòng ban</div>
+
+            <!-- 5. Công việc cá nhân -->
+            <a-tooltip placement="right" title="Công việc cá nhân" v-if="collapsed">
+                <div class="menu-item" :class="{ active: currentRoute === '/my-tasks' }" @click="navigateTo('/my-tasks')">
+                    <UserOutlined />
+                    <div class="menu-text-collapsed">Công việc cá nhân</div>
                 </div>
             </a-tooltip>
-            <div 
-                v-else
-                class="menu-item"
-                :class="{ active: currentRoute === '/departments' }"
-                @click="navigateTo('/departments')"
-            >
-                <ApartmentOutlined />
-                <span class="menu-text">Danh sách phòng ban</span>
+            <div v-else class="menu-item" :class="{ active: currentRoute === '/my-tasks' }" @click="navigateTo('/my-tasks')">
+                <UserOutlined />
+                <span class="menu-text">Công việc cá nhân</span>
             </div>
-            
-            <a-tooltip placement="right" title="Quản lý người dùng" v-if="collapsed">
-                <div 
-                    class="menu-item"
-                    :class="{ active: currentRoute === '/user-management' }"
-                    @click="navigateTo('/user-management')"
-                >
-                    <TeamOutlined />
-                    <div class="menu-text-collapsed">Quản lý người dùng</div>
+
+            <!-- 6. Duyệt nhiệm vụ -->
+            <a-tooltip placement="right" title="Duyệt nhiệm vụ" v-if="collapsed">
+                <div class="menu-item" :class="{ active: currentRoute === '/task-approvals' }" @click="navigateTo('/task-approvals')">
+                    <CheckCircleOutlined />
+                    <div class="menu-text-collapsed">Duyệt nhiệm vụ</div>
                 </div>
             </a-tooltip>
-            <div 
-                v-else
-                class="menu-item"
-                :class="{ active: currentRoute === '/user-management' }"
-                @click="navigateTo('/user-management')"
-            >
-                <TeamOutlined />
-                <span class="menu-text">Quản lý người dùng</span>
+            <div v-else class="menu-item" :class="{ active: currentRoute === '/task-approvals' }" @click="navigateTo('/task-approvals')">
+                <CheckCircleOutlined />
+                <span class="menu-text">Duyệt nhiệm vụ</span>
             </div>
-            
-                        <!-- Submenu Documents -->
+
+            <!-- 7. Quản lý dữ liệu công việc (Việc quy trình) -->
+            <a-tooltip placement="right" title="Việc quy trình" v-if="collapsed">
+                <div class="menu-item" :class="{ active: isInternalTaskActive }" @click="navigateTo('/internal-tasks')">
+                    <ProjectOutlined />
+                    <div class="menu-text-collapsed">Việc quy trình</div>
+                </div>
+            </a-tooltip>
+            <div v-else class="menu-item" :class="{ active: isInternalTaskActive }" @click="navigateTo('/internal-tasks')">
+                <ProjectOutlined />
+                <span class="menu-text">Việc quy trình</span>
+            </div>
+
+            <!-- 8. Tài liệu (submenu) -->
             <div class="submenu">
                 <div v-if="!collapsed">
-                    <a-dropdown 
-                        placement="rightTop" 
-                        :trigger="['hover']"
-                        :getPopupContainer="triggerNode => triggerNode.parentNode"
-                    >
-                        <div 
-                            class="submenu-header"
-                            :class="{ active: isDocumentsActive }"
-                        >
-                              <FileTextOutlined />
+                    <a-dropdown placement="rightTop" :trigger="['hover']" :getPopupContainer="p => p.parentNode">
+                        <div class="submenu-header" :class="{ active: isDocumentsActive }">
+                            <FileTextOutlined />
                             <span class="menu-text">Tài liệu</span>
                             <span class="submenu-arrow">▼</span>
                         </div>
-                        
                         <template #overlay>
                             <a-menu :selectedKeys="documentsSelectedKeys">
                                 <a-menu-item key="documents-my" @click="navigateTo('/documents/my')">
@@ -234,20 +129,12 @@
                     </a-dropdown>
                 </div>
                 <div v-else>
-                    <a-dropdown 
-                        placement="rightTop" 
-                        :trigger="['hover']"
-                        :getPopupContainer="triggerNode => triggerNode.parentNode"
-                    >
-                        <div 
-                            class="submenu-header"
-                            :class="{ active: isDocumentsActive }"
-                        >
+                    <a-dropdown placement="rightTop" :trigger="['hover']" :getPopupContainer="p => p.parentNode">
+                        <div class="submenu-header" :class="{ active: isDocumentsActive }">
                             <FileTextOutlined />
                             <span class="menu-text-collapsed">Tài liệu</span>
                             <span class="submenu-arrow-collapsed">▼</span>
                         </div>
-                        
                         <template #overlay>
                             <a-menu :selectedKeys="documentsSelectedKeys">
                                 <a-menu-item key="documents-my" @click="navigateTo('/documents/my')">
@@ -271,24 +158,52 @@
                     </a-dropdown>
                 </div>
             </div>
-            
-                        <!-- Submenu Settings -->
+
+            <!-- 9. Danh sách khách hàng -->
+            <a-tooltip placement="right" title="Khách hàng" v-if="collapsed">
+                <div class="menu-item" :class="{ active: isCustomerActive }" @click="navigateTo('/customers')">
+                    <TeamOutlined />
+                    <div class="menu-text-collapsed">Khách hàng</div>
+                </div>
+            </a-tooltip>
+            <div v-else class="menu-item" :class="{ active: isCustomerActive }" @click="navigateTo('/customers')">
+                <TeamOutlined />
+                <span class="menu-text">Khách hàng</span>
+            </div>
+
+            <!-- 10. Danh sách phòng/ban -->
+            <a-tooltip placement="right" title="Phòng ban" v-if="collapsed">
+                <div class="menu-item" :class="{ active: currentRoute === '/departments' }" @click="navigateTo('/departments')">
+                    <ApartmentOutlined />
+                    <div class="menu-text-collapsed">Phòng ban</div>
+                </div>
+            </a-tooltip>
+            <div v-else class="menu-item" :class="{ active: currentRoute === '/departments' }" @click="navigateTo('/departments')">
+                <ApartmentOutlined />
+                <span class="menu-text">Phòng ban</span>
+            </div>
+
+            <!-- 11. Quản lý người dùng -->
+            <a-tooltip placement="right" title="Quản lý người dùng" v-if="collapsed">
+                <div class="menu-item" :class="{ active: currentRoute === '/user-management' }" @click="navigateTo('/user-management')">
+                    <TeamOutlined />
+                    <div class="menu-text-collapsed">Quản lý người dùng</div>
+                </div>
+            </a-tooltip>
+            <div v-else class="menu-item" :class="{ active: currentRoute === '/user-management' }" @click="navigateTo('/user-management')">
+                <TeamOutlined />
+                <span class="menu-text">Quản lý người dùng</span>
+            </div>
+
+            <!-- 12. Cấu hình chung (submenu) -->
             <div class="submenu">
                 <div v-if="!collapsed">
-                    <a-dropdown 
-                        placement="rightTop" 
-                        :trigger="['hover']"
-                        :getPopupContainer="triggerNode => triggerNode.parentNode"
-                    >
-                        <div 
-                            class="submenu-header"
-                            :class="{ active: isSettingsActive }"
-                        >
-                          <SettingOutlined />
+                    <a-dropdown placement="rightTop" :trigger="['hover']" :getPopupContainer="p => p.parentNode">
+                        <div class="submenu-header" :class="{ active: isSettingsActive }">
+                            <SettingOutlined />
                             <span class="menu-text">Cấu hình chung</span>
                             <span class="submenu-arrow">▼</span>
                         </div>
-                        
                         <template #overlay>
                             <a-menu :selectedKeys="settingsSelectedKeys">
                                 <a-menu-item key="settings-bidding" @click="navigateTo('/settings/bidding')">
@@ -304,20 +219,12 @@
                     </a-dropdown>
                 </div>
                 <div v-else>
-                    <a-dropdown 
-                        placement="rightTop" 
-                        :trigger="['hover']"
-                        :getPopupContainer="triggerNode => triggerNode.parentNode"
-                    >
-                        <div 
-                            class="submenu-header"
-                            :class="{ active: isSettingsActive }"
-                        >
+                    <a-dropdown placement="rightTop" :trigger="['hover']" :getPopupContainer="p => p.parentNode">
+                        <div class="submenu-header" :class="{ active: isSettingsActive }">
                             <SettingOutlined />
                             <span class="menu-text-collapsed">Cấu hình chung</span>
                             <span class="submenu-arrow-collapsed">▼</span>
                         </div>
-                        
                         <template #overlay>
                             <a-menu :selectedKeys="settingsSelectedKeys">
                                 <a-menu-item key="settings-bidding" @click="navigateTo('/settings/bidding')">
@@ -333,23 +240,15 @@
                     </a-dropdown>
                 </div>
             </div>
-            
+
+            <!-- 13. Phân quyền -->
             <a-tooltip placement="right" title="Phân quyền" v-if="collapsed">
-                <div 
-                    class="menu-item"
-                    :class="{ active: currentRoute === '/permissions' }"
-                    @click="navigateTo('/permissions')"
-                >
+                <div class="menu-item" :class="{ active: currentRoute === '/permissions' }" @click="navigateTo('/permissions')">
                     <TeamOutlined />
                     <div class="menu-text-collapsed">Phân quyền</div>
                 </div>
             </a-tooltip>
-            <div 
-                v-else
-                class="menu-item"
-                :class="{ active: currentRoute === '/permissions' }"
-                @click="navigateTo('/permissions')"
-            >
+            <div v-else class="menu-item" :class="{ active: currentRoute === '/permissions' }" @click="navigateTo('/permissions')">
                 <TeamOutlined />
                 <span class="menu-text">Phân quyền</span>
             </div>
@@ -358,140 +257,79 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
-import { storeToRefs } from 'pinia'
 
 import {
     BarChartOutlined,
-    ScheduleOutlined,
-    CheckCircleOutlined,
-    TeamOutlined,
     FileSearchOutlined,
     FileTextOutlined,
-    ToolOutlined,
-    ApartmentOutlined,
+    UnorderedListOutlined,
+    UserOutlined,
+    CheckCircleOutlined,
+    ProjectOutlined,
     FileOutlined,
+    ApartmentOutlined,
     LockOutlined,
     SettingOutlined,
     FileDoneOutlined,
-    ProfileOutlined
+    ProfileOutlined,
+    TeamOutlined,
 } from '@ant-design/icons-vue'
 
 const props = defineProps({
-    collapsed: {
-        type: Boolean,
-        default: false
-    },
-    selectedKeys: {
-        type: Array,
-        default: () => []
-    }
+    collapsed: { type: Boolean, default: false },
 })
-
-const emit = defineEmits(['update:collapsed', 'update:selectedKeys'])
 
 const route = useRoute()
 const router = useRouter()
-const userStore = useUserStore()
-const { user: currentUser } = storeToRefs(userStore)
 
-// Current route
+// === Route helpers ===
 const currentRoute = computed(() => route.path)
 const currentRouteId = computed(() => route.params.id)
 
-const isBiddingActive = computed(() => {
-    return ['/bid-list', `/bid-detail/${currentRouteId.value}`].includes(currentRoute.value)
-})
+// === Active states ===
+const isOverviewActive = computed(() => currentRoute.value === '/project-overview')
+const isBiddingActive = computed(() =>
+    ['/bid-list', `/bid-detail/${currentRouteId.value}`].includes(currentRoute.value)
+)
+const isContractActive = computed(() =>
+    ['/contracts-tasks', `/contracts/${currentRouteId.value}`].includes(currentRoute.value)
+)
+const isTaskActive = computed(() => currentRoute.value.startsWith('/tasks'))
+const isInternalTaskActive = computed(() =>
+    ['/internal-tasks', `/internal-tasks/${currentRouteId.value}/info`].includes(currentRoute.value)
+)
+const isCustomerActive = computed(() =>
+    ['/customers', `/customers/${currentRouteId.value}`].includes(currentRoute.value)
+)
+const isDocumentsActive = computed(() =>
+    ['/documents/my', '/documents/shared', '/documents/department', '/documents/permission', '/documents/settings']
+        .includes(currentRoute.value)
+)
+const isSettingsActive = computed(() =>
+    ['/settings/bidding', '/settings/contract'].includes(currentRoute.value)
+)
 
-const isContractActive = computed(() => {    
-    return ['/contracts-tasks', `/contracts/${currentRouteId.value}`].includes(currentRoute.value)
-})
-
-const isInternalTaskActive = computed(() => {
-    return ['/internal-tasks', `/internal-tasks/${currentRouteId.value}/info`].includes(currentRoute.value)
-})
-
-const isCustomerActive = computed(() => {
-    return ['/customers', `/customers/${currentRouteId.value}`].includes(currentRoute.value)
-})
-
-const isDocumentsActive = computed(() => {
-    return ['/documents/my', '/documents/shared', '/documents/department', '/documents/permission', '/documents/settings'].includes(currentRoute.value)
-})
-
-const isSettingsActive = computed(() => {
-    return ['/settings/bidding', '/settings/contract'].includes(currentRoute.value)
-})
-
+// === Submenu selected keys (Documents/Settings) ===
 const pathToKeyMap = {
-    '/dashboard': 'dashboard',
-    '/project-overview': 'project-overview',
-    '/my-tasks': 'my-tasks',
-    '/task-approvals': 'task-approvals',
-    '/customers': 'quan-ly-khach-hang',
-    '/permissions': 'permission',
-    '/departments': 'list-phong-ban',
-    '/user-management': 'user-management',
-    '/internal-tasks': 'internal-tasks',
-    '/contracts-tasks': 'contracts-tasks',
-    '/contracts': 'contracts-tasks',
-    '/bid-list': 'bid-list',
-    '/bid-detail': 'bid-list',
-
-    // Tài liệu (sub menu)
+    // Documents
     '/documents/my': 'documents-my',
     '/documents/shared': 'documents-shared',
     '/documents/department': 'documents-department',
     '/documents/permission': 'documents-permission',
     '/documents/settings': 'documents-settings',
-
+    // Settings
     '/settings/bidding': 'settings-bidding',
     '/settings/contract': 'settings-contract',
 }
 
-// Key to parent mapping (same as Sidebar.vue)
-const keyToParentMap = {
-    // Các menu chính
-    'project-overview': 'project-overview',
-    'my-tasks': 'my-tasks',
-    'task-approvals': 'task-approvals',
-    'dashboard': 'dashboard',
-    'quan-ly-khach-hang': 'dashboard',
-    'cau-hinh': 'dashboard',
-    'lich-su-mua-goi': 'dashboard',
-    'permission': 'permission',
-    'list-phong-ban': 'list-phong-ban',
-    'user-management': 'user-management',
-    'internal-tasks': 'internal-tasks',
-    'contracts-tasks': 'contracts-tasks',
-    'bid-list': 'bid-list',
-    'bid-detail': 'bid-list',
-
-    // Tài liệu
-    'documents-my': 'documents',
-    'documents-shared': 'documents',
-    'documents-department': 'documents',
-    'documents-permission': 'documents',
-    'documents-settings': 'documents',
-
-    'settings-bidding': 'cau-hinh',
-    'settings-contract': 'cau-hinh'
-}
-
-// Cho phép match cả path con: /documents/my/123
 const mapPathToKey = (path) => {
-    // ưu tiên match chính xác
     if (pathToKeyMap[path]) return pathToKeyMap[path]
-    // sau đó match theo prefix
-    const hit = Object.entries(pathToKeyMap).find(([p]) =>
-        path.startsWith(p + '/')
-    )
+    const hit = Object.entries(pathToKeyMap).find(([p]) => path.startsWith(p + '/'))
     return hit ? hit[1] : undefined
 }
 
-// Nhóm key thuộc submenu Documents / Settings
 const documentKeys = new Set([
     'documents-my',
     'documents-shared',
@@ -499,36 +337,23 @@ const documentKeys = new Set([
     'documents-permission',
     'documents-settings',
 ])
-const settingKeys = new Set([
-    'settings-bidding',
-    'settings-contract',
-    'settings',
-])
+const settingKeys = new Set(['settings-bidding', 'settings-contract'])
 
-// selectedKeys cho menu overlay
 const documentsSelectedKeys = computed(() => {
     const k = mapPathToKey(currentRoute.value)
     return k && documentKeys.has(k) ? [k] : []
 })
-
 const settingsSelectedKeys = computed(() => {
     const k = mapPathToKey(currentRoute.value)
     return k && settingKeys.has(k) ? [k] : []
 })
 
-
-// Navigation function
-const navigateTo = (path) => {
-    router.push(path)
-}
-
-// Toggle collapsed state
-const toggleCollapsed = () => {
-    emit('update:collapsed', !props.collapsed)
-}
-
-
+// === Navigation ===
+const navigateTo = (path) => router.push(path)
 </script>
+
+
+
 
 <style scoped>
 .sidebar {

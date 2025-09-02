@@ -1,14 +1,15 @@
 <template>
     <div class="header">
-        <a-layout-header style="background: #fff; padding: 0; display: flex; justify-content: space-between; align-items: center;">
+        <a-layout-header
+            style="background: #fff; padding: 0; display: flex; justify-content: space-between; align-items: center;">
             <!-- Toggle button -->
             <div style="margin-left: 16px;">
                 <a-button type="text" @click="$emit('toggle')" style="border: none; box-shadow: none;">
-                    <MenuFoldOutlined v-if="!collapsed" />
-                    <MenuUnfoldOutlined v-else />
+                    <MenuFoldOutlined v-if="!collapsed"/>
+                    <MenuUnfoldOutlined v-else/>
                 </a-button>
             </div>
-    
+
             <!-- Breadcrumb -->
             <div style="flex: 1; margin-left: 16px;">
                 <a-breadcrumb>
@@ -21,38 +22,38 @@
                         <template v-else>
                           <span style="display: inline-flex; align-items: center; gap: 4px;">
                             {{ route.meta.breadcrumb }}
-
-<a-button
-    v-if="currentRoute.path === '/internal-tasks'"
-    size="small"
-    @click="onClickCreateTask"
-    style="margin-left: 8px"
->
-  <template #icon><PlusOutlined /></template>
-</a-button>
+                                <a-button
+                                    v-if="currentRoute.path === '/tasks'"
+                                    size="small"
+                                    @click="onClickCreateTask"
+                                    style="margin-left: 8px"
+                                >
+                                  <template #icon><PlusOutlined/></template>
+                                </a-button>
                           </span>
                         </template>
-
                     </a-breadcrumb-item>
                 </a-breadcrumb>
             </div>
-    
+
             <!-- User Dropdown -->
             <div style="margin-right: 24px; display: flex; align-items: center;">
                 <a-dropdown v-if="user" trigger="click" :getPopupContainer="triggerNode => triggerNode.parentNode">
                     <div @click.prevent style="display: flex; align-items: center; cursor: pointer;">
                         <a-avatar size="small" style="margin-right: 8px;">
-                            <template #icon><UserOutlined /></template>
+                            <template #icon>
+                                <UserOutlined/>
+                            </template>
                         </a-avatar>
                         <span>{{ user.name }}</span>
                     </div>
-    
+
                     <template #overlay>
                         <a-menu>
                             <a-menu-item key="profile" @click="redirectToProfile">
                                 Thông tin cá nhân
                             </a-menu-item>
-                            <a-menu-divider />
+                            <a-menu-divider/>
                             <a-menu-item key="logout" @click="handleLogout">
                                 Đăng xuất
                             </a-menu-item>
@@ -60,16 +61,16 @@
                     </template>
                 </a-dropdown>
             </div>
-    
+
         </a-layout-header>
     </div>
 </template>
 
 <script setup>
-import { useRoute, useRouter } from 'vue-router'
-import { computed } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useUserStore } from '../stores/user'
+import {useRoute, useRouter} from 'vue-router'
+import {computed} from 'vue'
+import {storeToRefs} from 'pinia'
+import {useUserStore} from '../stores/user'
 import {
     MenuUnfoldOutlined,
     MenuFoldOutlined,
@@ -85,12 +86,12 @@ const props = defineProps({
 })
 
 
-import { useCommonStore } from '@/stores/common'
+import {useCommonStore} from '@/stores/common'
 
 const common = useCommonStore()
 
 const onClickCreateTask = () => {
-    if (currentRoute.path === '/internal-tasks') {
+    if (currentRoute.path === '/tasks') {
         common.triggerCreateTask('internal')
     }
 }
@@ -98,7 +99,7 @@ const onClickCreateTask = () => {
 const emit = defineEmits(['toggle', 'logout'])
 
 const userStore = useUserStore()
-const { user } = storeToRefs(userStore)
+const {user} = storeToRefs(userStore)
 
 const currentRoute = useRoute()
 const router = useRouter()
@@ -133,9 +134,10 @@ const redirectToProfile = () => {
 </script>
 
 <style scoped>
-.header{
+.header {
     width: 100%;
 }
+
 .trigger {
     font-size: 18px;
     line-height: 64px;
