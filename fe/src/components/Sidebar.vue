@@ -74,8 +74,6 @@
                 <span class="menu-text">Việc quy trình</span>
             </div>
 
-
-
             <!-- 5. Công việc cá nhân -->
             <a-tooltip placement="right" title="Công việc cá nhân" v-if="collapsed">
                 <div class="menu-item" :class="{ active: currentRoute === '/my-tasks' }" @click="navigateTo('/my-tasks')">
