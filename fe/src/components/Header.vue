@@ -117,7 +117,6 @@
             :user-id="user?.id"
             :user-name="user?.name"
             :user-phone="user?.phone"
-            @changed="handlePasswordChanged"
         />
     </div>
 </template>
@@ -226,11 +225,6 @@ const redirectToProfile = () => {
             id: user.value.id
         }
     })
-}
-const handlePasswordChanged = () => {
-    message.success('Đổi mật khẩu thành công')
-    // ví dụ: refresh gì đó nếu cần
-    // window.location.reload()
 }
 </script>
 
