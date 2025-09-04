@@ -109,11 +109,16 @@
 
                         <!-- Người phụ trách -->
                         <template v-else-if="slot.column?.dataIndex === 'assigned_to_name'">
-                            <a-tooltip :title="slot.record.assigned_to_name">
-                                <a-avatar :style="{ backgroundColor: getAvatarColor(slot.record.assigned_to_name) }" size="small">
-                                    {{ getFirstLetter(slot.record.assigned_to_name) }}
-                                </a-avatar>
-                            </a-tooltip>
+                            <a-space :size="8" class="user-cell">
+                                <BaseAvatar
+                                    :src="slot.record.assigned_to_avatar_url || slot.record.assigned_to_avatar"
+                                :name="slot.record.assigned_to_name"
+                                :size="24"
+                                shape="circle"
+                                :preferApiOrigin="true"
+                                />
+                                <span>{{ slot.record.assigned_to_name || 'N/A' }}</span>
+                            </a-space>
                         </template>
 
                         <!-- Chi phí -->
@@ -464,6 +469,7 @@ import {getUsers} from '@/api/user.js'
 import {useRouter} from 'vue-router'
 import {updateTask} from "@/api/task.js";
 import {getCustomers} from "@/api/customer.js";
+import BaseAvatar from "@/components/common/BaseAvatar.vue";
 
 const router = useRouter()
 
@@ -512,7 +518,7 @@ const drawerBidColumns = [
     {title: 'STT', dataIndex: 'index', key: 'index', width: '50px', align: 'center'},
     {title: 'Tên gói thầu', dataIndex: 'title', key: 'title'},
     {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', align: 'center'},
-    {title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'center'},
+    {title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'left'},
     {title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority'},
     {title: 'Trạng thái', dataIndex: 'status', key: 'status'},
     {title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date'},
@@ -524,7 +530,7 @@ const columns = [
     {title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px'},
     {title: 'Tên gói thầu', dataIndex: 'title', key: 'title'},
     {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: '150px', align: 'center'},
-    {title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'center'},
+    {title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'left'},
     {title: 'Chi phí dự toán', dataIndex: 'estimated_cost', key: 'estimated_cost'},
     {title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority'},
     {title: 'Trạng thái', dataIndex: 'status', key: 'status', align: 'center'},
