@@ -120,7 +120,7 @@ const routes = [
 
 
             // Contracts Tasks
-            { path: 'contracts-tasks', name: 'contracts-tasks', component: ContractsTasks, meta: { breadcrumb: 'Danh sách hợp đồng' } },
+            { path: 'contracts-tasks', name: 'contracts-tasks', component: ContractsTasks, meta: { breadcrumb: 'Hợp đồng' } },
 
             {
                 path: 'contract-tasks/:id/info',
