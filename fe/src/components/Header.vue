@@ -37,9 +37,9 @@
             <!-- User Dropdown -->
             <!-- Right actions -->
             <div class="right-actions">
-                <a-tooltip title="Đánh dấu">
-                    <BookOutlined class="ha-icon" @click="onBookmark"/>
-                </a-tooltip>
+<!--                <a-tooltip title="Đánh dấu">-->
+<!--                    <BookOutlined class="ha-icon" @click="onBookmark"/>-->
+<!--                </a-tooltip>-->
 
                 <a-tooltip title="Trang chủ">
                     <a-button class="home-chip" shape="circle" @click="goHome">
@@ -207,7 +207,7 @@ const breadcrumbs = computed(() => {
 })
 
 const unreadChat = ref(1)         // badge "1" như ảnh
-const unreadNotify = ref(0)
+const unreadNotify = ref(3)
 
 const goHome = () => router.push('/project-overview')
 const openChat = () => router.push('/tasks')          // đổi route chat thật của bạn
