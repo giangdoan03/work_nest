@@ -1,29 +1,20 @@
 <!-- src/views/BiddingStepTasks.vue -->
 <template>
     <div class="p-4">
-        <a-breadcrumb class="mb-3">
-            <a-breadcrumb-item><router-link to="/bid-list">Gói thầu</router-link></a-breadcrumb-item>
-            <a-breadcrumb-item>
-                <router-link :to="`/bid-detail/${bidId}/info`">Chi tiết #{{ bidId }}</router-link>
-            </a-breadcrumb-item>
-            <a-breadcrumb-item>Bước #{{ step?.step_number || stepId }} · Nhiệm vụ</a-breadcrumb-item>
-        </a-breadcrumb>
-
         <a-page-header
             :title="`Bước ${step?.step_number || stepId}: ${step?.title || ''}`"
             sub-title="Danh sách nhiệm vụ"
             @back="() => router.back()"
             style="padding:0 0 12px"
-        />
+        >
+            <template #extra>
+                <a-button type="primary" @click="openCreateTask">Thêm nhiệm vụ mới</a-button>
+            </template>
+        </a-page-header>
 
-        <a-space class="mb-3">
-            <a-button type="primary" @click="openCreateTask">Thêm nhiệm vụ mới</a-button>
-            <a-tag v-if="step" :color="getStepStatusColor(step.status)">{{ statusText(step.status) }}</a-tag>
-            <a-tag v-if="step?.end_date" :color="deadlineColor(step)">{{ deadlineText(step) }}</a-tag>
-        </a-space>
 
         <a-spin :spinning="loading">
-            <a-empty v-if="tasks.length === 0" description="Không có công việc"/>
+            <a-empty v-if="tasks.length === 0" description="Không có công việc" />
             <a-table
                 v-else
                 :columns="treeColumns"
@@ -35,17 +26,16 @@
                 <template #bodyCell="{ column, record, index }">
                     <template v-if="column.key === 'index'">{{ index + 1 }}</template>
 
-                    <template v-else-if="column.key === 'add'">
-                        <a-tooltip title="Thêm việc con cấp cuối cùng">
-                            <a-button type="text" shape="circle" @click.stop="openSubtaskDrawer(record)">
-                                <PlusOutlined/>
-                            </a-button>
-                        </a-tooltip>
-                    </template>
+                    <template v-else-if="column.key === 'add'">x</template>
 
                     <template v-else-if="column.dataIndex === 'title'">
-                        <router-link :to="`/internal-tasks/${record.id}/info`">
-                            <span class="task-title" :class="{ child: record.parent_id }">{{ record.title }}</span>
+                        <router-link
+                            :to="{ name: 'bidding-task-info', params: { id: record.id } }"
+                            class="task-title-cell"
+                        >
+                        <span class="task-title" :class="{ child: record.parent_id }">
+                          {{ truncateText(record.title, 25) }}
+                        </span>
                         </router-link>
                     </template>
 
@@ -96,7 +86,6 @@
             </a-table>
         </a-spin>
 
-        <!-- tái dùng drawer tạo task/subtask nếu bạn muốn -->
         <DrawerCreateTask
             v-model:open-drawer="openDrawer"
             :list-user="users"
@@ -112,6 +101,7 @@
         />
     </div>
 </template>
+
 
 <script setup>
 import {ref, onMounted, computed} from 'vue'
@@ -193,8 +183,14 @@ const getStepStatusColor = s => STEP_STATUS_COLOR[String(s)] || 'default'
 // cột bảng (tương thích với template cũ)
 const treeColumns = [
     { title:'STT', key:'index', width:60, align:'center' },
-    { title:'Thêm việc con', key:'add', width:120, align:'center' },
-    { title:'Tên công việc', dataIndex:'title', key:'title', width:240, ellipsis:true },
+    {
+        title:'Tên công việc',
+        dataIndex:'title',
+        key:'title',
+        width:240,
+        ellipsis: { showTitle: false }
+    },
+    { title:'Việc con', key:'add', width:120, align:'center' },
     { title:'Người thực hiện', dataIndex:'assigned_to', key:'assigned_to', width:160 },
     { title:'Tiến trình', dataIndex:'progress', key:'progress', width:140, align:'center' },
     { title:'Ưu tiên', dataIndex:'priority', key:'priority', width:120, align:'center' },
@@ -204,6 +200,11 @@ const treeColumns = [
     { title:'Hạn', dataIndex:'deadline', key:'deadline', width:160, align:'center' },
     { title:'Duyệt', dataIndex:'approval_status', key:'approval_status', width:160, align:'center' },
 ]
+
+const truncateText = (text, length = 30) => {
+    if (!text) return '';
+    return text.length > length ? text.slice(0, length) + '...' : text;
+}
 
 // fetch
 const load = async () => {

@@ -33,7 +33,8 @@ import ProjectOverview from '../page/ProjectOverview.vue' // 👈 đảm bảo f
 import GanttChart from '../page/GanttChart.vue'
 import Tasks from '../page/Tasks.vue'                // 👈 THÊM DÒNG NÀY
 import {getPermissionMatrix} from "@/api/permission.js";
-import Forbidden403 from "@/page/Forbidden403.vue"; // 👈 đảm bảo file này tồn tại
+import Forbidden403 from "@/page/Forbidden403.vue";
+import BiddingStepTasks from "@/components/BiddingStepTask/BiddingStepTasks.vue"; // 👈 đảm bảo file này tồn tại
 
 const routes = [
     {
@@ -84,6 +85,39 @@ const routes = [
             // Internal Tasks
             { path: 'internal-tasks', name: 'internal-tasks', component: InternalTasks, meta: { breadcrumb: 'Việc quy trình' } },
             { path: 'internal-tasks/:id/info', name: 'internal-tasks-info', component: TaskDetail, meta: { breadcrumb: 'Việc quy trình', parent: 'internal-tasks' } },
+            // bid-list (gốc)
+            {
+                path: '/bid-list',
+                name: 'bid-list',
+                component: BidList,
+                meta: { breadcrumb: 'Gói thầu' }
+            },
+            {
+                path: '/biddings/:id/info',
+                name: 'biddings-info',
+                component: BidDetail,
+                meta: { breadcrumb: 'Chi tiết gói thầu', parent: 'bid-list' },
+                props: true,
+            },
+            {
+                path: '/biddings/:bidId/steps/:stepId/tasks',
+                name: 'bidding-step-tasks',               // 👈 DÙNG tên này xuyên suốt
+                component: () => import('../components/BiddingStepTask/BiddingStepTasks.vue'),
+                meta: { breadcrumb: 'Nhiệm vụ', parent: 'biddings-info' },
+                props: route => ({
+                    bidId: Number(route.params.bidId),
+                    stepId: Number(route.params.stepId),
+                }),
+            },
+            {
+                path: '/bidding-tasks/:id/info',
+                name: 'bidding-task-info',
+                component: TaskDetail,
+                meta: { breadcrumb: 'Chi tiết nhiệm vụ', parent: 'bidding-step-tasks' },
+                props: true,
+            },
+
+
 
             // Contracts Tasks
             { path: 'contracts-tasks', name: 'contracts-tasks', component: ContractsTasks, meta: { breadcrumb: 'Danh sách hợp đồng' } },
@@ -245,7 +279,7 @@ const routes = [
             {
                 path: '/biddings/:bidId/steps/:stepId/tasks',
                 name: 'BiddingStepTasks',
-                component: () => import('../page/BiddingStepTasks.vue'),
+                component: () => import('../components/BiddingStepTask/BiddingStepTasks.vue'),
                 // tiện lấy sẵn kiểu number trong props
                 props: route => ({
                     bidId: Number(route.params.bidId),

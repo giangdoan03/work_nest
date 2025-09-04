@@ -1128,9 +1128,10 @@ const goBack = () => {
 }
 
 const goToStepTasks = (step) => {
+    const bidId = Number(route.params.id) // 👈 lấy id gói thầu từ route hiện tại
     router.push({
-        name: 'BiddingStepTasks',
-        params: { bidId: id, stepId: step.id },
+        name: 'bidding-step-tasks',
+        params: { bidId, stepId: Number(step.id) }
     })
 }
 

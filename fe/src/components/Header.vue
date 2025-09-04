@@ -12,24 +12,22 @@
 
             <!-- Breadcrumb -->
             <div style="flex: 1; margin-left: 16px;">
-                <a-breadcrumb>
+                <a-breadcrumb :key="$route.fullPath" style="margin-left:16px;">
                     <a-breadcrumb-item v-for="(route, index) in breadcrumbs" :key="index">
-                        <router-link v-if="route.name !== currentRoute.name" :to="{ name: route.name }">
+                        <router-link v-if="route.name !== currentRoute.name" :to="route.to || { name: route.name }">
                             {{ route.meta.breadcrumb }}
                         </router-link>
-
-                        <!-- Nếu là trang internal-tasks thì hiển thị thêm nút + -->
                         <template v-else>
-                          <span style="display: inline-flex; align-items: center; gap: 4px;">
+                          <span style="display:inline-flex;align-items:center;gap:4px;">
                             {{ route.meta.breadcrumb }}
-                                <a-button
-                                    v-if="currentRoute.path === '/tasks'"
-                                    size="small"
-                                    @click="onClickCreateTask"
-                                    style="margin-left: 8px"
-                                >
-                                  <template #icon><PlusOutlined/></template>
-                                </a-button>
+                            <a-button
+                                v-if="currentRoute.name === 'tasks'"
+                                size="small"
+                                @click="onClickCreateTask"
+                                style="margin-left:8px"
+                            >
+                              <template #icon><PlusOutlined/></template>
+                            </a-button>
                           </span>
                         </template>
                     </a-breadcrumb-item>
@@ -91,10 +89,11 @@ import {useCommonStore} from '@/stores/common'
 const common = useCommonStore()
 
 const onClickCreateTask = () => {
-    if (currentRoute.path === '/tasks') {
+    if (currentRoute.name === 'tasks' /* hoặc 'internal-tasks' */) {
         common.triggerCreateTask('internal')
     }
 }
+
 
 const emit = defineEmits(['toggle', 'logout'])
 
@@ -104,19 +103,37 @@ const {user} = storeToRefs(userStore)
 const currentRoute = useRoute()
 const router = useRouter()
 
+// Header.vue <script setup> — cập nhật breadcrumbs
 const breadcrumbs = computed(() => {
-    const matched = []
-    let current = router.getRoutes().find(r => r.name === currentRoute.name)
+    const all = router.getRoutes()
+    const p = currentRoute.params
 
-    while (current) {
-        if (current.meta?.breadcrumb) {
-            matched.unshift(current)
-        }
-        const parentName = current.meta?.parent
-        current = parentName ? router.getRoutes().find(r => r.name === parentName) : null
+    const buildParams = {
+        'bid-list':            () => ({}),
+        'biddings-info':       () => ({ id: p.id || p.bidId }),     // id của gói
+        'bidding-step-tasks':  () => ({ bidId: p.bidId, stepId: p.stepId }),
+        'bidding-task-info':   () => ({ id: p.id }),
+        'internal-tasks':      () => ({}),
+        'internal-tasks-info': () => ({ id: p.id }),
+        'tasks':               () => ({}),
     }
 
-    return matched
+    const trail = []
+    let cur = all.find(r => r.name === currentRoute.name)
+
+    while (cur) {
+        if (cur.meta?.breadcrumb) {
+            trail.unshift({
+                name: cur.name,
+                meta: cur.meta,
+                to: { name: cur.name, params: (buildParams[cur.name]?.() || {}) }
+            })
+        }
+        const parentName = cur.meta?.parent
+        cur = parentName ? all.find(r => r.name === parentName) : null
+    }
+
+    return trail
 })
 
 const handleLogout = () => {
