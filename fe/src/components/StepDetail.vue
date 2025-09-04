@@ -139,9 +139,7 @@ import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { useRouter } from 'vue-router'
 const router = useRouter()
-import {
-    getBiddingStepAPI, getTasksByBiddingStepAPI,
-} from '@/api/bidding.js' // đảm bảo file này export đủ 4 hàm như mình gợi ý
+import { getBiddingStepAPI, getTasksByBiddingStepAPI } from '@/api/bidding.js' // đảm bảo file này export đủ 4 hàm như mình gợi ý
 
 const props = defineProps({
     id:   { type: Number, required: true },

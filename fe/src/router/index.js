@@ -242,6 +242,17 @@ const routes = [
                 meta: { breadcrumb: 'Chi tiết nhiệm vụ', parent: 'tasks' }
             },
 
+            {
+                path: '/biddings/:bidId/steps/:stepId/tasks',
+                name: 'BiddingStepTasks',
+                component: () => import('../page/BiddingStepTasks.vue'),
+                // tiện lấy sẵn kiểu number trong props
+                props: route => ({
+                    bidId: Number(route.params.bidId),
+                    stepId: Number(route.params.stepId),
+                }),
+            }
+
         ]
     }
 ]

@@ -17,9 +17,7 @@
                                 placeholder="Chọn người dùng"
                                 show-search
                                 option-filter-prop="label"
-                                :filter-option="(input, option) =>
-        normalizeText(option?.label ?? '').includes(normalizeText(input))
-      "
+                                :filter-option="(input, option) =>normalizeText(option?.label ?? '').includes(normalizeText(input))"
                                 :getPopupContainer="trigger => trigger.parentNode"
                             />
                         </a-form-item>
@@ -57,9 +55,7 @@
                                 placeholder="Chọn người dùng"
                                 show-search
                                 option-filter-prop="label"
-                                :filter-option="(input, option) =>
-        normalizeText(option?.label ?? '').includes(normalizeText(input))
-      "
+                                :filter-option="(input, option) => normalizeText(option?.label ?? '').includes(normalizeText(input))"
                                 :getPopupContainer="trigger => trigger.parentNode"
                             />
                         </a-form-item>

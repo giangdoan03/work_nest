@@ -99,10 +99,11 @@
                         <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
                             <!-- Bên trái: tiêu đề + statistic -->
                             <div
-                                @click.stop="openStepDrawer(step)"
+                                @click.stop="goToStepTasks(step)"
+                                @keydown.enter.prevent="goToStepTasks(step)"
+                                @keydown.space.prevent="goToStepTasks(step)"
                                 :class="{ 'active-step-title': activeStepId === step.id }"
-                                role="button"
-                                tabindex="0"
+                                role="button" tabindex="0"
                                 style="display:flex;align-items:center;cursor:pointer;color:#1890ff;gap:12px;"
                             ><span style="text-decoration: underline;">
                                     Bước {{ step.step_number ?? '-' }}: {{ step.title ?? '-' }}
@@ -305,7 +306,7 @@
             placement="right"
             :visible="drawerVisible"
             @close="closeDrawer"
-            width="1100"
+            width="1200"
         >
             <template v-if="selectedStep">
                 <a-row :gutter="16" justify="end">
@@ -1124,6 +1125,13 @@ const getInternalTask = async () => {
 const goBack = () => {
     if (window.history.length > 1) router.back()
     else router.push('/bid-list')
+}
+
+const goToStepTasks = (step) => {
+    router.push({
+        name: 'BiddingStepTasks',
+        params: { bidId: id, stepId: step.id },
+    })
 }
 
 /* =========================
