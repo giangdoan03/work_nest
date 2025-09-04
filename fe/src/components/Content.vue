@@ -4,7 +4,6 @@
             :style="{
             margin: '15px 15px',
             padding: '15px',
-            background: '#fff',
             }"
         >
             <router-view :key="$route.fullPath"/>

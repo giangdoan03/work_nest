@@ -1,219 +1,220 @@
 <template>
     <div class="custom-overview">
-        <a-tabs v-model:activeKey="activeTabKey" @change="handleTabChange">
-            <a-tab-pane key="1">
-                <template #tab>
-                    <ShopOutlined /> P.Kinh Doanh
-                </template>
-                <DepartmentTasks v-if="activeTabKey === '1'" :departmentId="1" />
-            </a-tab-pane>
-            <a-tab-pane key="2">
-                <template #tab>
-                    <DollarOutlined /> P.Tài Chính Kế toán
-                </template>
-                <DepartmentTasks v-if="activeTabKey === '2'" :departmentId="2" />
-            </a-tab-pane>
-            <a-tab-pane key="3">
-                <template #tab>
-                    <ShoppingOutlined /> P.Thương Mại
-                </template>
-                <DepartmentTasks v-if="activeTabKey === '3'" :departmentId="3" />
-            </a-tab-pane>
-<!--            <a-tab-pane key="4">-->
-<!--                <template #tab>-->
-<!--                    <ToolOutlined /> P.Dịch Vụ Kỹ Thuật-->
-<!--                </template>-->
-<!--                <DepartmentTasks v-if="activeTabKey === '4'" :departmentId="4" />-->
-<!--            </a-tab-pane>-->
-            <a-tab-pane key="4">
-                <template #tab>
-                    <TeamOutlined /> P.Hành Chính Nhân Sự
-                </template>
-                <DepartmentTasks v-if="activeTabKey === '4'" :departmentId="4" />
-            </a-tab-pane>
-            <a-tab-pane key="5" :departmentId="5">
-                <template #tab>
-                    <AppstoreOutlined /> Tổng quan gói thầu - hợp đồng
-                </template>
-                <!--                <div class="header-actions">-->
-                <!--                    <a :href="`${origin}/gantt-chart`" target="_blank" class="gantt-link">📊 Xem biểu đồ Gantt</a>-->
-                <!--                </div>-->
+        <a-card>
+            <a-tabs v-model:activeKey="activeTabKey" @change="handleTabChange">
+                <a-tab-pane key="1">
+                    <template #tab>
+                        <ShopOutlined /> P.Kinh Doanh
+                    </template>
+                    <DepartmentTasks v-if="activeTabKey === '1'" :departmentId="1" />
+                </a-tab-pane>
+                <a-tab-pane key="2">
+                    <template #tab>
+                        <DollarOutlined /> P.Tài Chính Kế toán
+                    </template>
+                    <DepartmentTasks v-if="activeTabKey === '2'" :departmentId="2" />
+                </a-tab-pane>
+                <a-tab-pane key="3">
+                    <template #tab>
+                        <ShoppingOutlined /> P.Thương Mại
+                    </template>
+                    <DepartmentTasks v-if="activeTabKey === '3'" :departmentId="3" />
+                </a-tab-pane>
+                <!--            <a-tab-pane key="4">-->
+                <!--                <template #tab>-->
+                <!--                    <ToolOutlined /> P.Dịch Vụ Kỹ Thuật-->
+                <!--                </template>-->
+                <!--                <DepartmentTasks v-if="activeTabKey === '4'" :departmentId="4" />-->
+                <!--            </a-tab-pane>-->
+                <a-tab-pane key="4">
+                    <template #tab>
+                        <TeamOutlined /> P.Hành Chính Nhân Sự
+                    </template>
+                    <DepartmentTasks v-if="activeTabKey === '4'" :departmentId="4" />
+                </a-tab-pane>
+                <a-tab-pane key="5" :departmentId="5">
+                    <template #tab>
+                        <AppstoreOutlined /> Tổng quan gói thầu - hợp đồng
+                    </template>
+                    <!--                <div class="header-actions">-->
+                    <!--                    <a :href="`${origin}/gantt-chart`" target="_blank" class="gantt-link">📊 Xem biểu đồ Gantt</a>-->
+                    <!--                </div>-->
 
-                <div class="table-scroll tiny-scroll">
-                    <table class="custom-table">
-                        <thead>
-                        <tr>
-                            <th style="min-width: 80px;">Khách hàng</th>
-                            <th style="min-width: 50px">Loại</th>
-                            <th style="min-width: 50px">Tên</th>
-                            <th style="min-width: 90px">Bước quy trình</th>
-                            <th style="min-width: 95px">Task đang chạy</th>
-                            <th style="min-width: 60px;">Đề nghị</th>
-                            <th style="min-width: 50px;">Người thực hiện</th>
-                            <th style="min-width: 80px">Bắt đầu</th>
-                            <th style="min-width: 80px">Kết thúc</th>
-                            <th style="min-width: 80px">Tiến độ</th>
-                            <th style="min-width: 70px;">Độ ưu tiên</th>
-                            <th style="min-width: 100px">Trạng thái</th>
-                            <th style="min-width: 100px">Hạn</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <template v-for="customer in data" :key="customer.customer_id">
-                            <template v-for="(group, groupIdx) in getGroupedRows(customer)" :key="groupIdx">
-                                <template v-for="(item, itemIdx) in group.items.filter(it => it.tasks?.length)" :key="itemIdx">
-                                    <template v-for="(stepTasks, stepTitle, stepIdx) in groupByStep(item.tasks)" :key="stepTitle">
-                                        <template v-for="(task, taskIdx) in stepTasks" :key="taskIdx">
-                                            <tr class="row-hover">
-                                                <!-- Khách hàng -->
-                                                <td v-if="groupIdx === 0 && itemIdx === 0 && stepIdx === 0 && taskIdx === 0" :rowspan="getTotalRows(customer)" class="customer-cell vertical-text name_customer">
-                                                    <a-tooltip :title="customer.customer_name">
+                    <div class="table-scroll tiny-scroll">
+                        <table class="custom-table">
+                            <thead>
+                            <tr>
+                                <th style="min-width: 80px;">Khách hàng</th>
+                                <th style="min-width: 50px">Loại</th>
+                                <th style="min-width: 50px">Tên</th>
+                                <th style="min-width: 90px">Bước quy trình</th>
+                                <th style="min-width: 95px">Task đang chạy</th>
+                                <th style="min-width: 60px;">Đề nghị</th>
+                                <th style="min-width: 50px;">Người thực hiện</th>
+                                <th style="min-width: 80px">Bắt đầu</th>
+                                <th style="min-width: 80px">Kết thúc</th>
+                                <th style="min-width: 80px">Tiến độ</th>
+                                <th style="min-width: 70px;">Độ ưu tiên</th>
+                                <th style="min-width: 100px">Trạng thái</th>
+                                <th style="min-width: 100px">Hạn</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template v-for="customer in data" :key="customer.customer_id">
+                                <template v-for="(group, groupIdx) in getGroupedRows(customer)" :key="groupIdx">
+                                    <template v-for="(item, itemIdx) in group.items.filter(it => it.tasks?.length)" :key="itemIdx">
+                                        <template v-for="(stepTasks, stepTitle, stepIdx) in groupByStep(item.tasks)" :key="stepTitle">
+                                            <template v-for="(task, taskIdx) in stepTasks" :key="taskIdx">
+                                                <tr class="row-hover">
+                                                    <!-- Khách hàng -->
+                                                    <td v-if="groupIdx === 0 && itemIdx === 0 && stepIdx === 0 && taskIdx === 0" :rowspan="getTotalRows(customer)" class="customer-cell vertical-text name_customer">
+                                                        <a-tooltip :title="customer.customer_name">
                                                   <span>
                                                     {{ truncatedName(customer.customer_name) }}
                                                   </span>
-                                                    </a-tooltip>
-                                                </td>
+                                                        </a-tooltip>
+                                                    </td>
 
-                                                <!-- Loại -->
-                                                <td v-if="itemIdx === 0 && stepIdx === 0 && taskIdx === 0"
-                                                    :rowspan="group.items.reduce((sum, it) => sum + it.tasks.length, 0)"
-                                                    class="type-cell" style="border-right: 1px solid #e0e0e0">
-                                                    {{ group.type === 'bidding' ? 'Gói thầu' : 'Hợp đồng' }}
-                                                </td>
+                                                    <!-- Loại -->
+                                                    <td v-if="itemIdx === 0 && stepIdx === 0 && taskIdx === 0"
+                                                        :rowspan="group.items.reduce((sum, it) => sum + it.tasks.length, 0)"
+                                                        class="type-cell" style="border-right: 1px solid #e0e0e0">
+                                                        {{ group.type === 'bidding' ? 'Gói thầu' : 'Hợp đồng' }}
+                                                    </td>
 
-                                                <!-- Tên -->
-                                                <td v-if="stepIdx === 0 && taskIdx === 0"
-                                                    :rowspan="item.tasks.length"
-                                                    class="title-cell" style="max-width: 150px;border-right: 1px solid #e0e0e0">
-                                                    <a-tooltip :title="item.title">
-                                                        <span class="ellipsis-text">{{ item.title }}</span>
-                                                    </a-tooltip>
-                                                </td>
+                                                    <!-- Tên -->
+                                                    <td v-if="stepIdx === 0 && taskIdx === 0"
+                                                        :rowspan="item.tasks.length"
+                                                        class="title-cell" style="max-width: 150px;border-right: 1px solid #e0e0e0">
+                                                        <a-tooltip :title="item.title">
+                                                            <span class="ellipsis-text">{{ item.title }}</span>
+                                                        </a-tooltip>
+                                                    </td>
 
 
-                                                <!-- Bước quy trình -->
-                                                <td v-if="taskIdx === 0" :rowspan="stepTasks.length" class="step_code" style="max-width: 150px">
-                                                    <a-tooltip :title="task.step_title">
-                                                        <router-link :to="getLinkedRoute(task)" class="ellipsis-text" style="color: #096dd9; text-decoration: none">
-                                                            <span v-if="task.step_code">B{{ task.step_code }} - </span>{{ task.step_title }}
-                                                        </router-link>
-                                                    </a-tooltip>
-                                                </td>
+                                                    <!-- Bước quy trình -->
+                                                    <td v-if="taskIdx === 0" :rowspan="stepTasks.length" class="step_code" style="max-width: 150px">
+                                                        <a-tooltip :title="task.step_title">
+                                                            <router-link :to="getLinkedRoute(task)" class="ellipsis-text" style="color: #096dd9; text-decoration: none">
+                                                                <span v-if="task.step_code">B{{ task.step_code }} - </span>{{ task.step_title }}
+                                                            </router-link>
+                                                        </a-tooltip>
+                                                    </td>
 
-                                                <!-- Các ô còn lại -->
-                                                <td class="task-cell" style="border-left: 1px solid #e0e0e0">
-                                                    <a-tooltip :title="task.title" v-if="task.title">
-                                                        <router-link :to="`/internal-tasks/${task.id}/info`" class="ellipsis-text" style="color: #1890ff">
-                                                            {{ task.title }}
-                                                        </router-link>
-                                                    </a-tooltip>
-                                                    <span v-else class="muted">Chưa có nhiệm vụ</span>
-                                                </td>
+                                                    <!-- Các ô còn lại -->
+                                                    <td class="task-cell" style="border-left: 1px solid #e0e0e0">
+                                                        <a-tooltip :title="task.title" v-if="task.title">
+                                                            <router-link :to="`/internal-tasks/${task.id}/info`" class="ellipsis-text" style="color: #1890ff">
+                                                                {{ task.title }}
+                                                            </router-link>
+                                                        </a-tooltip>
+                                                        <span v-else class="muted">Chưa có nhiệm vụ</span>
+                                                    </td>
 
-                                                <td style="text-align: center; width: 100px">
-                                                    <a-tooltip :title="task.proposed_name || 'Chưa có'">
-                                                        <a-avatar size="small"
-                                                                  :style="{
+                                                    <td style="text-align: center; width: 100px">
+                                                        <a-tooltip :title="task.proposed_name || 'Chưa có'">
+                                                            <a-avatar size="small"
+                                                                      :style="{
                                                                 backgroundColor: getAvatarColor(task.proposed_name),
                                                                 verticalAlign: 'middle',
                                                                 cursor: 'default',
                                                                 marginRight: '4px'
                                                               }"
-                                                        >
-                                                            {{ task.proposed_name?.charAt(0).toUpperCase() || '?' }}
-                                                        </a-avatar>
-                                                    </a-tooltip>
-                                                </td>
+                                                            >
+                                                                {{ task.proposed_name?.charAt(0).toUpperCase() || '?' }}
+                                                            </a-avatar>
+                                                        </a-tooltip>
+                                                    </td>
 
-                                                <td style="text-align: center; width: 100px">
-                                                    <a-tooltip :title="task.assignee?.name || 'Chưa có'">
-                                                        <a-avatar
-                                                            size="small"
-                                                            :style="{
+                                                    <td style="text-align: center; width: 100px">
+                                                        <a-tooltip :title="task.assignee?.name || 'Chưa có'">
+                                                            <a-avatar
+                                                                size="small"
+                                                                :style="{
                                                             backgroundColor: getAvatarColor(task.assignee?.name),
                                                             verticalAlign: 'middle',
                                                             cursor: 'default',
                                                             marginRight: '4px'
                                                           }"
-                                                        >
-                                                            {{ task.assignee?.name?.charAt(0).toUpperCase() || '?' }}
-                                                        </a-avatar>
-                                                    </a-tooltip>
-                                                </td>
+                                                            >
+                                                                {{ task.assignee?.name?.charAt(0).toUpperCase() || '?' }}
+                                                            </a-avatar>
+                                                        </a-tooltip>
+                                                    </td>
 
-                                                <td @click="openDateModal(task)" style="cursor: pointer;">
-                                                    <div style="display: flex; flex-direction: column; align-items: center; line-height: 1.4;">
+                                                    <td @click="openDateModal(task)" style="cursor: pointer;">
+                                                        <div style="display: flex; flex-direction: column; align-items: center; line-height: 1.4;">
                                                     <span>
                                                       {{ task.start_date ? formatDate(task.start_date) : '—' }}
                                                     </span>
-                                                    </div>
-                                                </td>
+                                                        </div>
+                                                    </td>
 
-                                                <td @click="openDateModal(task)" style="cursor: pointer;">
-                                                    <div style="display: flex; flex-direction: column; align-items: center; line-height: 1.4;">
+                                                    <td @click="openDateModal(task)" style="cursor: pointer;">
+                                                        <div style="display: flex; flex-direction: column; align-items: center; line-height: 1.4;">
                                                         <span style="color: #f5222d;">
                                                       {{ task.end_date ? formatDate(task.end_date) : '—' }}
                                                     </span>
-                                                    </div>
-                                                </td>
+                                                        </div>
+                                                    </td>
 
-                                                <td style="cursor: pointer">
-                                                    <a-tooltip title="Click để cập nhật tiến độ">
-                                                        <div @click="openProgressModal(task)" style="cursor: pointer; width: 100px; margin: 0 auto">
-                                                            <a-progress
-                                                                :percent="Number(task.progress) || 0"
-                                                                size="small"
-                                                                :status="getProgressStatus(task.progress)"
-                                                                :format="(percent) => `${percent}%`"
-                                                                :stroke-color="{
+                                                    <td style="cursor: pointer">
+                                                        <a-tooltip title="Click để cập nhật tiến độ">
+                                                            <div @click="openProgressModal(task)" style="cursor: pointer; width: 100px; margin: 0 auto">
+                                                                <a-progress
+                                                                    :percent="Number(task.progress) || 0"
+                                                                    size="small"
+                                                                    :status="getProgressStatus(task.progress)"
+                                                                    :format="(percent) => `${percent}%`"
+                                                                    :stroke-color="{
                                                                   '0%': '#108ee9',
                                                                   '100%': '#87d068',
                                                                 }"
-                                                                :show-info="true"
-                                                            />
-                                                        </div>
-                                                    </a-tooltip>
-                                                </td>
-                                                <td style="text-align: center">
-                                                    <a-tag v-if="task.priority" :color="getPriorityColor(task.priority)" bordered>
-                                                        {{ task.priority === 'high' ? 'Cao' : task.priority === 'normal' ? 'Trung bình' : 'Thấp' }}
-                                                    </a-tag>
-                                                    <span v-else class="muted">—</span>
-                                                </td>
-                                                <td style="text-align: center">
-                                                    <a-tag v-if="task.status" :color="getStatusColor(task.status)">
-                                                        {{ getTaskStatusText(task.status) }}
-                                                    </a-tag>
-                                                    <span v-else class="muted">—</span>
-                                                </td>
-
-                                                <td style="text-align: center">
-                                                    <a-tooltip v-if="task.days_overdue > 0" :title="task.overdue_reason || 'Chưa rõ lý do'">
-                                                        <a-tag color="red" style="cursor: pointer;" @click="openOverdueReasonModal(task)">
-                                                            Quá hạn {{ task.days_overdue }} ngày
+                                                                    :show-info="true"
+                                                                />
+                                                            </div>
+                                                        </a-tooltip>
+                                                    </td>
+                                                    <td style="text-align: center">
+                                                        <a-tag v-if="task.priority" :color="getPriorityColor(task.priority)" bordered>
+                                                            {{ task.priority === 'high' ? 'Cao' : task.priority === 'normal' ? 'Trung bình' : 'Thấp' }}
                                                         </a-tag>
-                                                    </a-tooltip>
-                                                    <a-tag v-else-if="task.days_remaining > 0" color="orange">
-                                                        Còn {{ task.days_remaining }} ngày
-                                                    </a-tag>
+                                                        <span v-else class="muted">—</span>
+                                                    </td>
+                                                    <td style="text-align: center">
+                                                        <a-tag v-if="task.status" :color="getStatusColor(task.status)">
+                                                            {{ getTaskStatusText(task.status) }}
+                                                        </a-tag>
+                                                        <span v-else class="muted">—</span>
+                                                    </td>
 
-                                                    <a-tag v-else color="#faad14" style="color: black; font-weight: bold;">
-                                                        Hạn hôm nay
-                                                    </a-tag>
-                                                </td>
+                                                    <td style="text-align: center">
+                                                        <a-tooltip v-if="task.days_overdue > 0" :title="task.overdue_reason || 'Chưa rõ lý do'">
+                                                            <a-tag color="red" style="cursor: pointer;" @click="openOverdueReasonModal(task)">
+                                                                Quá hạn {{ task.days_overdue }} ngày
+                                                            </a-tag>
+                                                        </a-tooltip>
+                                                        <a-tag v-else-if="task.days_remaining > 0" color="orange">
+                                                            Còn {{ task.days_remaining }} ngày
+                                                        </a-tag>
 
-                                            </tr>
+                                                        <a-tag v-else color="#faad14" style="color: black; font-weight: bold;">
+                                                            Hạn hôm nay
+                                                        </a-tag>
+                                                    </td>
+
+                                                </tr>
+                                            </template>
                                         </template>
                                     </template>
                                 </template>
                             </template>
-                        </template>
-                        </tbody>
+                            </tbody>
 
-                    </table>
-                </div>
+                        </table>
+                    </div>
 
-                <a-pagination
+                    <a-pagination
                         v-model:current="pagination.page"
                         :total="pagination.total"
                         :page-size="pagination.limit"
@@ -222,9 +223,10 @@
                         @change="fetchOverview"
                         @showSizeChange="onPageSizeChange"
                         style="margin-top: 16px; text-align: right"
-                />
-            </a-tab-pane>
-        </a-tabs>
+                    />
+                </a-tab-pane>
+            </a-tabs>
+        </a-card>
 
         <!-- Progress Change Modal -->
         <a-modal

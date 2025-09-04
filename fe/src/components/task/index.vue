@@ -1,360 +1,393 @@
 <template>
     <div class="task">
-        <a-page-header
-            title="Chi tiết nhiệm vụ"
-            @back="goBack"
-            style="padding: 0 0 20px;"
-        />
-        <div class="action">
-            <a-button type="primary" v-if="!isEditMode" style="margin-right: 8px;" @click="editTask">Chỉnh sửa
-            </a-button>
-            <a-button type="primary" v-if="isEditMode" style="margin-right: 8px;" @click="saveEditTask">Lưu</a-button>
-            <a-button v-if="isEditMode" style="margin-right: 8px;" @click="cancelEditTask">Hủy</a-button>
-            <a-button>
-                <EllipsisOutlined/>
-            </a-button>
+        <div class="header-wrapper">
+            <a-page-header
+                title="Chi tiết nhiệm vụ"
+                @back="goBack"
+                style="padding: 0;"
+            />
+            <div class="action">
+                <a-button type="primary" v-if="!isEditMode" @click="editTask">Chỉnh sửa</a-button>
+                <a-button type="primary" v-if="isEditMode" @click="saveEditTask">Lưu</a-button>
+                <a-button v-if="isEditMode" @click="cancelEditTask">Hủy</a-button>
+                <a-button><EllipsisOutlined/></a-button>
+            </div>
         </div>
         <div class="task-info">
-            <div class="task-info-left">
-                <div class="task-info-content">
-                    <a-form ref="formRef" :model="formData" :rules="isEditMode ? rules : {}" layout="vertical">
-                        <div class="task-in">
-                            <a-row :gutter="16">
-                                <a-col :span="12">
-                                    <a-form-item label="Tên công việc" name="title">
-                                        <a-typography-text v-if="!isEditMode">{{ formData.title }}</a-typography-text>
-                                        <a-input v-else v-model:value="formData.title" placeholder="Nhập tên nhiệm vụ"/>
-                                    </a-form-item>
-                                </a-col>
-                                <a-col :span="12">
-                                    <a-form-item label="Loại nhiệm vụ" name="linked_type">
-                                        <a-tag v-if="!isEditMode">
-                                            <strong>{{ getTextLinkedType }}</strong>
-                                        </a-tag>
-                                        <a-select v-else v-model:value="formData.linked_type"
-                                                  :options="linkedTypeOption" @change="handleChangeLinkedType()"
-                                                  placeholder="Chọn loại nhiệm vụ"/>
-                                    </a-form-item>
-                                </a-col>
-                                <a-col :span="24">
-                                    <a-form-item label="Công việc cha">
-                                        <template v-if="formData.parent_id">
-                                            <a-tooltip :title="formData.parent_title || ('#' + formData.parent_id)">
-                                                <a-typography-link @click="goToTask(formData.parent_id)">
-                                                    {{ formData.parent_title || ('#' + formData.parent_id) }}
-                                                </a-typography-link>
-                                            </a-tooltip>
-                                        </template>
-                                        <template v-else>
-                                            <a-typography-text type="secondary">—</a-typography-text>
-                                        </template>
-                                    </a-form-item>
-                                </a-col>
-                                <!-- ================== BIDDING ================== -->
-                                <a-col :span="12" v-if="formData.linked_type === 'bidding'">
-                                    <a-form-item label="Liên kết gói thầu" name="linked_id">
-                                        <a-typography-text v-if="!isEditMode">{{ linkedName }}</a-typography-text>
-                                        <a-select
-                                                v-else
-                                                v-model:value="formData.linked_id"
-                                                show-search
-                                                :filterOption="false"
-                                                placeholder="Chọn gói thầu"
-                                                :options="linkedIdOption"
-                                                @search="searchBidding"
-                                                @change="handleChangeLinkedId(formData.linked_id)"
-                                        />
-                                    </a-form-item>
-                                </a-col>
-                                <a-col :span="12" v-if="formData.linked_type === 'bidding'">
-                                    <a-form-item label="Công việc cha" name="step_code">
-                                        <a-typography-text v-if="!isEditMode">{{ getStepByStepNo(formData.step_code) }}</a-typography-text>
-                                        <a-select
-                                                v-else
-                                                v-model:value="formData.step_code"
-                                                :options="stepOption"
-                                                @change="handleChangeStep"
-                                                :disabled="!formData.linked_id"
-                                                placeholder="Chọn tiến trình"
-                                        />
-                                    </a-form-item>
-                                </a-col>
+            <a-row :gutter="16">
+                <!-- LEFT: 2/3 — Thông tin nhiệm vụ -->
+                <a-col :span="16" :xs="24" :lg="16" :xl="16">
+                    <a-card title="Chi tiết nhiệm vụ" bordered>
+                        <div>
+                            <a-tabs v-model:activeKey="leftTab" class="task-left-tabs">
+                                <!-- Tab 1: Thông tin nhiệm vụ -->
+                                <a-tab-pane key="info" tab="Thông tin">
+                                    <div class="task-info-left">
+                                        <div class="task-info-content">
+                                            <a-form ref="formRef" :model="formData" :rules="isEditMode ? rules : {}" layout="vertical">
+                                                <div class="task-in">
+                                                    <a-row :gutter="16">
+                                                        <a-col :span="12">
+                                                            <a-form-item label="Tên công việc" name="title">
+                                                                <a-typography-text v-if="!isEditMode">{{ formData.title }}</a-typography-text>
+                                                                <a-input v-else v-model:value="formData.title" placeholder="Nhập tên nhiệm vụ"/>
+                                                            </a-form-item>
+                                                        </a-col>
+                                                        <a-col :span="12">
+                                                            <a-form-item label="Loại nhiệm vụ" name="linked_type">
+                                                                <a-tag v-if="!isEditMode">
+                                                                    <strong>{{ getTextLinkedType }}</strong>
+                                                                </a-tag>
+                                                                <a-select v-else v-model:value="formData.linked_type"
+                                                                          :options="linkedTypeOption" @change="handleChangeLinkedType()"
+                                                                          placeholder="Chọn loại nhiệm vụ"/>
+                                                            </a-form-item>
+                                                        </a-col>
+                                                        <a-col :span="24">
+                                                            <a-form-item label="Công việc cha">
+                                                                <template v-if="formData.parent_id">
+                                                                    <a-tooltip :title="formData.parent_title || ('#' + formData.parent_id)">
+                                                                        <a-typography-link @click="goToTask(formData.parent_id)">
+                                                                            {{ formData.parent_title || ('#' + formData.parent_id) }}
+                                                                        </a-typography-link>
+                                                                    </a-tooltip>
+                                                                </template>
+                                                                <template v-else>
+                                                                    <a-typography-text type="secondary">—</a-typography-text>
+                                                                </template>
+                                                            </a-form-item>
+                                                        </a-col>
+                                                        <!-- ================== BIDDING ================== -->
+                                                        <a-col :span="12" v-if="formData.linked_type === 'bidding'">
+                                                            <a-form-item label="Liên kết gói thầu" name="linked_id">
+                                                                <a-typography-text v-if="!isEditMode">{{ linkedName }}</a-typography-text>
+                                                                <a-select
+                                                                    v-else
+                                                                    v-model:value="formData.linked_id"
+                                                                    show-search
+                                                                    :filterOption="false"
+                                                                    placeholder="Chọn gói thầu"
+                                                                    :options="linkedIdOption"
+                                                                    @search="searchBidding"
+                                                                    @change="handleChangeLinkedId(formData.linked_id)"
+                                                                />
+                                                            </a-form-item>
+                                                        </a-col>
+                                                        <a-col :span="12" v-if="formData.linked_type === 'bidding'">
+                                                            <a-form-item label="Công việc cha" name="step_code">
+                                                                <a-typography-text v-if="!isEditMode">{{ getStepByStepNo(formData.step_code) }}</a-typography-text>
+                                                                <a-select
+                                                                    v-else
+                                                                    v-model:value="formData.step_code"
+                                                                    :options="stepOption"
+                                                                    @change="handleChangeStep"
+                                                                    :disabled="!formData.linked_id"
+                                                                    placeholder="Chọn tiến trình"
+                                                                />
+                                                            </a-form-item>
+                                                        </a-col>
 
-                                <!-- ================== CONTRACT ================== -->
-                                <a-col :span="12" v-if="formData.linked_type === 'contract'">
-                                    <a-form-item label="Liên kết hợp đồng" name="linked_id">
-                                        <a-typography-text v-if="!isEditMode">{{ linkedName }}</a-typography-text>
-                                        <a-select
-                                                v-else
-                                                v-model:value="formData.linked_id"
-                                                :options="linkedIdOption"
-                                                @change="handleChangeLinkedId"
-                                                placeholder="Chọn hợp đồng"
-                                        />
-                                    </a-form-item>
-                                </a-col>
-                                <a-col :span="12" v-if="formData.linked_type === 'contract'">
-                                    <a-form-item label="Công việc cha" name="step_code">
-                                        <a-typography-text v-if="!isEditMode">{{ getStepByStepNo(formData.step_code) }}</a-typography-text>
-                                        <a-select
-                                                v-else
-                                                v-model:value="formData.step_code"
-                                                :options="stepOption"
-                                                @change="handleChangeStep"
-                                                :disabled="!formData.linked_id"
-                                                placeholder="Chọn tiến trình"
-                                        />
-                                    </a-form-item>
-                                </a-col>
-                            </a-row>
-                        </div>
-                        <div class="task-in">
-                            <a-row :gutter="16">
-                                <a-col :span="12">
-                                    <a-form-item label="Thời gian" name="time">
-                                        <template v-if="!isEditMode">
-                                            <a-typography-text>
-                                                {{(formatDate(formData.start_date) || "Trống") + " → " + (formatDate(formData.end_date) || "Trống") }}
-                                            </a-typography-text>
-                                        </template>
-                                        <template v-else>
-                                            <a-config-provider :locale="locale">
-                                                <a-range-picker
-                                                    v-model:value="dateRange"
-                                                    format="DD/MM/YYYY"
-                                                    @change="changeDateTime"
-                                                    :getPopupContainer="triggerNode => triggerNode.parentNode"
-                                                    style="width: 100%;"
-                                                />
-                                            </a-config-provider>
-                                        </template>
-                                    </a-form-item>
-                                </a-col>
+                                                        <!-- ================== CONTRACT ================== -->
+                                                        <a-col :span="12" v-if="formData.linked_type === 'contract'">
+                                                            <a-form-item label="Liên kết hợp đồng" name="linked_id">
+                                                                <a-typography-text v-if="!isEditMode">{{ linkedName }}</a-typography-text>
+                                                                <a-select
+                                                                    v-else
+                                                                    v-model:value="formData.linked_id"
+                                                                    :options="linkedIdOption"
+                                                                    @change="handleChangeLinkedId"
+                                                                    placeholder="Chọn hợp đồng"
+                                                                />
+                                                            </a-form-item>
+                                                        </a-col>
+                                                        <a-col :span="12" v-if="formData.linked_type === 'contract'">
+                                                            <a-form-item label="Công việc cha" name="step_code">
+                                                                <a-typography-text v-if="!isEditMode">{{ getStepByStepNo(formData.step_code) }}</a-typography-text>
+                                                                <a-select
+                                                                    v-else
+                                                                    v-model:value="formData.step_code"
+                                                                    :options="stepOption"
+                                                                    @change="handleChangeStep"
+                                                                    :disabled="!formData.linked_id"
+                                                                    placeholder="Chọn tiến trình"
+                                                                />
+                                                            </a-form-item>
+                                                        </a-col>
+                                                    </a-row>
+                                                </div>
+                                                <div class="task-in">
+                                                    <a-row :gutter="16">
+                                                        <a-col :span="12">
+                                                            <a-form-item label="Thời gian" name="time">
+                                                                <template v-if="!isEditMode">
+                                                                    <a-typography-text>
+                                                                        {{(formatDate(formData.start_date) || "Trống") + " → " + (formatDate(formData.end_date) || "Trống") }}
+                                                                    </a-typography-text>
+                                                                </template>
+                                                                <template v-else>
+                                                                    <a-config-provider :locale="locale">
+                                                                        <a-range-picker
+                                                                            v-model:value="dateRange"
+                                                                            format="DD/MM/YYYY"
+                                                                            @change="changeDateTime"
+                                                                            :getPopupContainer="triggerNode => triggerNode.parentNode"
+                                                                            style="width: 100%;"
+                                                                        />
+                                                                    </a-config-provider>
+                                                                </template>
+                                                            </a-form-item>
+                                                        </a-col>
 
-                                <a-col :span="12">
-                                    <a-form-item label="Ngày còn lại">
-                                        <a-tag v-if="formData.days_overdue > 0" color="error">
-                                            Quá hạn {{ formData.days_overdue }} ngày
-                                        </a-tag>
-                                        <a-tag v-else-if="formData.days_remaining > 0" color="green">
-                                            Còn {{ formData.days_remaining }} ngày
-                                        </a-tag>
-                                        <a-tag v-else-if="formData.days_remaining === 0" :color="'#faad14'">
-                                            Hạn chót hôm nay
-                                        </a-tag>
-                                        <a-tag v-else>
-                                            —
-                                        </a-tag>
-                                    </a-form-item>
-                                </a-col>
+                                                        <a-col :span="12">
+                                                            <a-form-item label="Ngày còn lại">
+                                                                <a-tag v-if="formData.days_overdue > 0" color="error">
+                                                                    Quá hạn {{ formData.days_overdue }} ngày
+                                                                </a-tag>
+                                                                <a-tag v-else-if="formData.days_remaining > 0" color="green">
+                                                                    Còn {{ formData.days_remaining }} ngày
+                                                                </a-tag>
+                                                                <a-tag v-else-if="formData.days_remaining === 0" :color="'#faad14'">
+                                                                    Hạn chót hôm nay
+                                                                </a-tag>
+                                                                <a-tag v-else>
+                                                                    —
+                                                                </a-tag>
+                                                            </a-form-item>
+                                                        </a-col>
 
-                                <a-col :span="12">
-                                    <a-form-item label="Độ ưu tiên" name="priority">
-                                        <a-tag v-if="!isEditMode" :color="checkPriority(formData.priority).color">
-                                            {{ checkPriority(formData.priority).label }}
-                                        </a-tag>
-                                        <a-select v-else v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên"/>
-                                    </a-form-item>
-                                </a-col>
+                                                        <a-col :span="12">
+                                                            <a-form-item label="Độ ưu tiên" name="priority">
+                                                                <a-tag v-if="!isEditMode" :color="checkPriority(formData.priority).color">
+                                                                    {{ checkPriority(formData.priority).label }}
+                                                                </a-tag>
+                                                                <a-select v-else v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên"/>
+                                                            </a-form-item>
+                                                        </a-col>
 
-                                <a-col :span="12">
-                                    <a-form-item label="Trạng thái" name="status">
-                                        <template v-if="!isEditMode">
-                                            <a-tag v-if="formData.approval_status === 'approved'" color="success">Hoàn
-                                                thành
-                                            </a-tag>
-                                            <a-tag v-else :color="checkStatus(formData.status).color">
-                                                {{ checkStatus(formData.status).label }}
-                                            </a-tag>
-                                        </template>
-                                        <a-select v-else v-model:value="formData.status" :options="statusOption" placeholder="Chọn trạng thái"/>
-                                    </a-form-item>
-                                </a-col>
+                                                        <a-col :span="12">
+                                                            <a-form-item label="Trạng thái" name="status">
+                                                                <template v-if="!isEditMode">
+                                                                    <a-tag v-if="formData.approval_status === 'approved'" color="success">Hoàn
+                                                                        thành
+                                                                    </a-tag>
+                                                                    <a-tag v-else :color="checkStatus(formData.status).color">
+                                                                        {{ checkStatus(formData.status).label }}
+                                                                    </a-tag>
+                                                                </template>
+                                                                <a-select v-else v-model:value="formData.status" :options="statusOption" placeholder="Chọn trạng thái"/>
+                                                            </a-form-item>
+                                                        </a-col>
 
-                                <a-col :span="12">
-                                    <a-form-item label="Phê duyệt" name="approval_status">
-                                        <a-tag :color="formData.approval_status === 'approved' ? 'green' : 'orange'">
-                                            {{ formData.approval_status === 'approved' ? 'Đã duyệt' : 'Chưa duyệt' }}
-                                        </a-tag>
-                                    </a-form-item>
-                                </a-col>
+                                                        <a-col :span="12">
+                                                            <a-form-item label="Phê duyệt" name="approval_status">
+                                                                <a-tag :color="formData.approval_status === 'approved' ? 'green' : 'orange'">
+                                                                    {{ formData.approval_status === 'approved' ? 'Đã duyệt' : 'Chưa duyệt' }}
+                                                                </a-tag>
+                                                            </a-form-item>
+                                                        </a-col>
 
-                                <a-col :span="6" v-if="formData.status === 'request_approval'">
-                                    <a-form-item label="Cấp hiện tại">
-                                        <span>{{ formData.current_level || '—' }}</span>
-                                    </a-form-item>
-                                </a-col>
+                                                        <a-col :span="6" v-if="formData.status === 'request_approval'">
+                                                            <a-form-item label="Cấp hiện tại">
+                                                                <span>{{ formData.current_level || '—' }}</span>
+                                                            </a-form-item>
+                                                        </a-col>
 
-                                <a-col :span="6" v-if="formData.status === 'request_approval'">
-                                    <a-form-item label="Tổng cấp duyệt">
-                                        <span>{{ formData.approval_steps || '—' }}</span>
-                                    </a-form-item>
-                                </a-col>
+                                                        <a-col :span="6" v-if="formData.status === 'request_approval'">
+                                                            <a-form-item label="Tổng cấp duyệt">
+                                                                <span>{{ formData.approval_steps || '—' }}</span>
+                                                            </a-form-item>
+                                                        </a-col>
 
-                                <a-col :span="12">
-                                    <a-form-item label="Người thực hiện" name="assigned_to">
-                                        <a-typography-text v-if="!isEditMode">{{getUserById(formData.assigned_to) }}
-                                        </a-typography-text>
-                                        <a-select v-else v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng"/>
-                                    </a-form-item>
-                                </a-col>
+                                                        <a-col :span="12">
+                                                            <a-form-item label="Người thực hiện" name="assigned_to">
+                                                                <a-typography-text v-if="!isEditMode">{{getUserById(formData.assigned_to) }}
+                                                                </a-typography-text>
+                                                                <a-select v-else v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng"/>
+                                                            </a-form-item>
+                                                        </a-col>
 
-                                <a-col :span="12">
-                                    <a-form-item label="Phòng ban" name="id_department">
-                                        <a-typography-text v-if="!isEditMode">
-                                            {{ getDepartmentById(formData.id_department) }}
-                                        </a-typography-text>
-                                        <a-select v-else v-model:value="formData.id_department"
-                                                  :options="departmentOptions" placeholder="Chọn người dùng"/>
-                                    </a-form-item>
-                                </a-col>
+                                                        <a-col :span="12">
+                                                            <a-form-item label="Phòng ban" name="id_department">
+                                                                <a-typography-text v-if="!isEditMode">
+                                                                    {{ getDepartmentById(formData.id_department) }}
+                                                                </a-typography-text>
+                                                                <a-select v-else v-model:value="formData.id_department"
+                                                                          :options="departmentOptions" placeholder="Chọn người dùng"/>
+                                                            </a-form-item>
+                                                        </a-col>
 
-                                <a-col :span="12">
-                                    <a-form-item label="Tiến độ" name="progress">
-                                        <template v-if="!isEditMode">
-                                            <a-progress
-                                                :percent="numericProgress"
-                                                :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
-                                                :status="numericProgress >= 100 ? 'success' : 'active'"
-                                                size="small"
-                                                :show-info="true"
-                                            />
-                                        </template>
-                                        <template v-else>
-                                            <a-slider
-                                                v-model:value="numericProgress"
-                                                :min="0"
-                                                :max="100"
-                                                :step="5"
-                                                :marks="{ 0: '0%', 25: '25%', 50: '50%', 75: '75%', 100: '100%' }"
-                                                style="width: calc(83% + 50px); margin: 0 auto; display: block;"
-                                            />
-                                        </template>
-                                    </a-form-item>
-                                </a-col>
-                            </a-row>
-                        </div>
-
-                        <div class="task-in-end">
-                            <a-row :gutter="16">
-                                <a-col :span="24">
-                                    <a-form-item label="Mô tả" name="description">
-                                        <a-typography-text v-if="!isEditMode">
-                                            {{ formData.description ? formData.description : "Trống" }}
-                                        </a-typography-text>
-                                        <a-textarea v-else v-model:value="formData.description" :rows="4" placeholder="Nhập mô tả "/>
-                                    </a-form-item>
-                                </a-col>
-                                <a-col :span="24">
-                                    <a-form-item label="Tài liệu" name="file">
-                                        <a-upload
-                                            :file-list="computedUploadList"
-                                            :show-upload-list="true"
-                                            :before-upload="handleBeforeUpload"
-                                            :on-remove="handleRemoveFile"
-                                            :multiple="true"
-                                            :disabled="loadingUploadFile"
-                                            list-type="text"
-                                        >
-                                            <a-button size="large" style="margin-top: 12px;">
-                                                <template #icon>
-                                                    <PaperClipOutlined/>
-                                                </template>
-                                            </a-button>
-                                        </a-upload>
-                                    </a-form-item>
-
-                                    <!-- ✅ Nhập link tài liệu thủ công -->
-                                    <a-form-item label="Link tài liệu">
-                                        <div style="margin-bottom: 10px;">
-                                            <a-input
-                                                v-model:value="manualLink.title"
-                                                placeholder="Tiêu đề tài liệu"
-                                                style="margin-bottom: 5px;"
-                                            />
-                                            <a-input
-                                                v-model:value="manualLink.url"
-                                                placeholder="URL tài liệu (https://...)"
-                                                type="url"
-                                            />
-                                            <a-button
-                                                type="primary"
-                                                size="small"
-                                                @click="addManualLink"
-                                                :disabled="!manualLink.title || !manualLink.url"
-                                                style="margin-top: 5px;"
-                                            >
-                                                Thêm link
-                                            </a-button>
+                                                        <a-col :span="12">
+                                                            <a-form-item label="Tiến độ" name="progress">
+                                                                <template v-if="!isEditMode">
+                                                                    <a-progress
+                                                                        :percent="numericProgress"
+                                                                        :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
+                                                                        :status="numericProgress >= 100 ? 'success' : 'active'"
+                                                                        size="small"
+                                                                        :show-info="true"
+                                                                    />
+                                                                </template>
+                                                                <template v-else>
+                                                                    <a-slider
+                                                                        v-model:value="numericProgress"
+                                                                        :min="0"
+                                                                        :max="100"
+                                                                        :step="5"
+                                                                        :marks="{ 0: '0%', 25: '25%', 50: '50%', 75: '75%', 100: '100%' }"
+                                                                        style="width: calc(83% + 50px); margin: 0 auto; display: block;"
+                                                                    />
+                                                                </template>
+                                                            </a-form-item>
+                                                        </a-col>
+                                                    </a-row>
+                                                </div>
+                                            </a-form>
                                         </div>
-                                    </a-form-item>
-
-                                    <!-- ✅ Hiển thị danh sách link đã thêm -->
-                                    <a-form-item v-if="manualLinks.length" label="Link đã thêm">
-                                        <a-list bordered size="small" :data-source="manualLinks">
-                                            <template #renderItem="{ item, index }">
-                                                <a-list-item :key="index">
-                                                    <div style="width: 100%">
-                                                        <strong>{{ item.title }}</strong><br/>
-                                                        <a :href="item.url" target="_blank">{{ item.url }}</a>
-                                                        <a style="color: red; float: right;"
-                                                           @click="manualLinks.splice(index, 1)">Xoá</a>
-                                                    </div>
-                                                </a-list-item>
-                                            </template>
-                                        </a-list>
-
-                                    </a-form-item>
-
-                                    <!-- ✅ Tách form item khác để nhập tiêu đề -->
-                                    <a-form-item v-if="pendingFiles.length" label="Tiêu đề tài liệu">
-                                        <div v-for="(file, index) in pendingFiles" :key="index"
-                                             style="margin-bottom: 10px;">
-                                            <a-input
-                                                v-model:value="file.title"
-                                                placeholder="Nhập tiêu đề file"
-                                                :status="!file.title ? 'error' : ''"
-                                            />
+                                    </div>
+                                    <div>
+                                        <div class="task-info-content">
+                                            <div class="task-in-end">
+                                                <SubTasks :list-user="listUser" />
+                                            </div>
                                         </div>
-                                    </a-form-item>
+                                    </div>
+                                </a-tab-pane>
+                                <!-- Tab 2: Lịch sử phê duyệt -->
+                                <a-tab-pane key="approval-history" tab="Lịch sử phê duyệt">
+                                    <div class="task-info-content p-14">
+                                        <a-row :gutter="16">
+                                            <a-col :span="24">
+                                                <a-typography-title :level="5">Lịch sử phê duyệt</a-typography-title>
+                                                <a-table :columns="logColumns" :data-source="logData" row-key="id">
+                                                    <template #bodyCell="{ column, record }">
+                                                        <template v-if="column.dataIndex === 'level'">Cấp {{ record.level }}</template>
+                                                        <template v-else-if="column.dataIndex === 'status'">
+                                                            <a-tag :color="getStatusColor(record.status)">
+                                                                {{ getStatusText(record.status) }}
+                                                            </a-tag>
+                                                        </template>
+                                                        <template v-else-if="column.dataIndex === 'approved_by_name'">
+                                                            {{ record.approved_by_name || '—' }}
+                                                        </template>
+                                                        <template v-else-if="column.dataIndex === 'comment'">
+                                                            {{ record.comment || '—' }}
+                                                        </template>
+                                                    </template>
+                                                </a-table>
+                                            </a-col>
+                                        </a-row>
+                                    </div>
+                                </a-tab-pane>
 
-                                </a-col>
-                            </a-row>
+                                <!-- Tab 3: Tài liệu (MỚI) -->
+                                <a-tab-pane key="attachments" tab="Tài liệu">
+                                    <div class="task-info-content">
+                                        <div class="task-in-end">
+                                            <a-row :gutter="16">
+                                                <a-col :span="24">
+                                                    <!-- Mô tả -->
+                                                    <a-form-item label="Mô tả" name="description">
+                                                        <a-typography-text v-if="!isEditMode">
+                                                            {{ formData.description ? formData.description : "Trống" }}
+                                                        </a-typography-text>
+                                                        <a-textarea v-else v-model:value="formData.description" :rows="4" placeholder="Nhập mô tả"/>
+                                                    </a-form-item>
+
+                                                    <!-- Upload file -->
+                                                    <a-form-item label="Tài liệu" name="file">
+                                                        <a-upload
+                                                            :file-list="computedUploadList"
+                                                            :show-upload-list="true"
+                                                            :before-upload="handleBeforeUpload"
+                                                            :on-remove="handleRemoveFile"
+                                                            :multiple="true"
+                                                            :disabled="loadingUploadFile"
+                                                            list-type="text"
+                                                        >
+                                                            <a-button size="large" style="margin-top: 12px;">
+                                                                <template #icon><PaperClipOutlined/></template>
+                                                            </a-button>
+                                                        </a-upload>
+                                                    </a-form-item>
+
+                                                    <!-- Nhập link thủ công -->
+                                                    <a-form-item label="Link tài liệu">
+                                                        <div style="margin-bottom: 10px;">
+                                                            <a-input v-model:value="manualLink.title" placeholder="Tiêu đề tài liệu" style="margin-bottom: 5px;"/>
+                                                            <a-input v-model:value="manualLink.url" placeholder="URL tài liệu (https://...)" type="url"/>
+                                                            <a-button
+                                                                type="primary" size="small" @click="addManualLink"
+                                                                :disabled="!manualLink.title || !manualLink.url" style="margin-top: 5px;"
+                                                            >
+                                                                Thêm link
+                                                            </a-button>
+                                                        </div>
+                                                    </a-form-item>
+
+                                                    <!-- Danh sách link -->
+                                                    <a-form-item v-if="manualLinks.length" label="Link đã thêm">
+                                                        <a-list bordered size="small" :data-source="manualLinks">
+                                                            <template #renderItem="{ item, index }">
+                                                                <a-list-item :key="index">
+                                                                    <div style="width: 100%">
+                                                                        <strong>{{ item.title }}</strong><br/>
+                                                                        <a :href="item.url" target="_blank">{{ item.url }}</a>
+                                                                        <a style="color: red; float: right;" @click="manualLinks.splice(index, 1)">Xoá</a>
+                                                                    </div>
+                                                                </a-list-item>
+                                                            </template>
+                                                        </a-list>
+                                                    </a-form-item>
+
+                                                    <!-- Tiêu đề tài liệu cho file chờ upload -->
+                                                    <a-form-item v-if="pendingFiles.length" label="Tiêu đề tài liệu">
+                                                        <div v-for="(file, index) in pendingFiles" :key="index" style="margin-bottom: 10px;">
+                                                            <a-input v-model:value="file.title" placeholder="Nhập tiêu đề file" :status="!file.title ? 'error' : ''"/>
+                                                        </div>
+                                                    </a-form-item>
+                                                </a-col>
+                                            </a-row>
+                                        </div>
+                                    </div>
+                                </a-tab-pane>
+
+                                <!-- Tab 4: Nhiệm vụ con -->
+
+                            </a-tabs>
                         </div>
-                    </a-form>
-                </div>
-            </div>
-            <div class="task-info-left" v-if="!formData.parent_id">
-                <div class="task-info-content">
-                    <div class="task-in-end">
-                        <SubTasks :list-user="listUser"/>
-                    </div>
-                </div>
-            </div>
-            <div class="task-info-left">
-                <div class="task-info-content">
-                    <div class="task-in-end">
-                        <Comment/>
-                    </div>
-                </div>
-            </div>
-            <a-typography-title :level="5">Lịch sử phê duyệt</a-typography-title>
-            <a-table :columns="logColumns" :data-source="logData" row-key="id">
-                <template #bodyCell="{ column, record }">
-                    <template v-if="column.dataIndex === 'level'">Cấp {{ record.level }}</template>
-                    <template v-if="column.dataIndex === 'status'">
-                        <a-tag :color="getStatusColor(record.status)">
-                            {{ getStatusText(record.status) }}
-                        </a-tag>
-                    </template>
-                    <template v-if="column.dataIndex === 'approved_by_name'">
-                        {{ record.approved_by_name || '—' }}
-                    </template>
-                    <template v-if="column.dataIndex === 'comment'">
-                        {{ record.comment || '—' }}
-                    </template>
-                </template>
-            </a-table>
+                    </a-card>
+                </a-col>
+                <!-- RIGHT: 1/3 — Subtasks + Thảo luận -->
+                <a-col :span="8" :xs="24" :lg="8" :xl="8">
+                    <a-card title="Thảo luận" bordered>
+                        <div class="task-info-left">
+                            <div class="task-info-content">
+                                <div class="task-in-end">
+                                    <Comment/>
+                                </div>
+                            </div>
+                        </div>
+                    </a-card>
+                </a-col>
+            </a-row>
+
+<!--            <a-typography-title :level="5">Lịch sử phê duyệt</a-typography-title>-->
+<!--            <a-table :columns="logColumns" :data-source="logData" row-key="id">-->
+<!--                <template #bodyCell="{ column, record }">-->
+<!--                    <template v-if="column.dataIndex === 'level'">Cấp {{ record.level }}</template>-->
+<!--                    <template v-if="column.dataIndex === 'status'">-->
+<!--                        <a-tag :color="getStatusColor(record.status)">-->
+<!--                            {{ getStatusText(record.status) }}-->
+<!--                        </a-tag>-->
+<!--                    </template>-->
+<!--                    <template v-if="column.dataIndex === 'approved_by_name'">-->
+<!--                        {{ record.approved_by_name || '—' }}-->
+<!--                    </template>-->
+<!--                    <template v-if="column.dataIndex === 'comment'">-->
+<!--                        {{ record.comment || '—' }}-->
+<!--                    </template>-->
+<!--                </template>-->
+<!--            </a-table>-->
         </div>
     </div>
 </template>
@@ -416,6 +449,7 @@ const logData = ref([])
 const taskId = route.params.id;
 const drawerVisible = ref(false);
 
+const leftTab = ref('info') // tab mặc định
 
 const drawerStore = useTaskDrawerStore();
 
@@ -476,6 +510,18 @@ const getTextLinkedType = computed(() => {
         return "Nhiệm vụ nội bộ"
     }
 })
+
+// ✅ parent_id khác null/undefined/''/0 mới coi là "có cha"
+const hasParent = computed(() => {
+    const pid = formData.value?.parent_id
+    return pid !== null && pid !== undefined && pid !== '' && pid !== 0
+})
+
+// Nếu có cha thì không cho ở tab "Việc con"
+watch(hasParent, (v) => {
+    if (v && leftTab.value === 'subtasks') leftTab.value = 'info'
+})
+
 const userOption = computed(() => {
     if (!listUser.value || !listUser.value.length) {
         return []
@@ -1195,10 +1241,6 @@ onMounted(async () => {
 
 </script>
 <style scoped>
-.task {
-    max-height: calc(100vh - 160px);
-    overflow-y: auto;
-}
 
 .task-info {
     margin-top: 16px;
@@ -1209,7 +1251,6 @@ onMounted(async () => {
 }
 
 .task-info-content {
-    border: 1px solid #bebebece;
     border-radius: 8px;
 }
 
@@ -1246,4 +1287,50 @@ onMounted(async () => {
 :deep(.ant-select-dropdown .ant-select-item) {
     position: relative;
 }
+.panel {
+    border: 1px solid #bebebece;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.mt16 { margin-top: 16px; }
+.mb16 { margin-bottom: 16px; }
+
+/* các khối form cũ giữ nguyên */
+.task-in {
+    border-bottom: 1px solid #bebebece;
+    padding: 14px;
+    padding-bottom: 0;
+}
+.task-in-end {
+    padding: 14px;
+    border-bottom: none;
+}
+
+/* cột phải bám theo khi cuộn, dừng ở dưới header */
+.sticky {
+    position: sticky;
+    top: 76px; /* chỉnh theo chiều cao header của bạn */
+}
+
+.task-left-tabs :deep(.ant-tabs-tab) { font-weight: 500; }
+.mt16 { margin-top: 16px; }
+.task-info-content { border-radius:8px; background:#fff; }
+.task-in { border-bottom:1px solid #bebebece; padding:14px; padding-bottom:0; }
+.task-in-end { padding:14px; border-bottom:none; }
+.p-14 {
+    padding: 14px;
+}
+.header-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px; /* giữ khoảng cách dưới */
+}
+
+.action {
+    display: flex;
+    gap: 8px; /* khoảng cách giữa nút */
+}
+
 </style>

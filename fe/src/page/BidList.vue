@@ -1,226 +1,228 @@
 <template>
     <div>
-        <div style="margin-bottom: 10px">
-            <a-flex justify="space-between" align="center">
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <a-typography-title :level="4" style="margin:0">Danh sách gói thầu</a-typography-title>
-                    <a-badge :count="totalDisplay" show-zero />
-                </div>
-                <a-space>
-                    <!-- 🔎 Tìm theo tiêu đề -->
-                    <a-input
-                        v-model:value="searchTerm"
-                        allow-clear
-                        style="width: 320px"
-                        placeholder="Tìm gói thầu theo tiêu đề…"
-                    >
-                        <template #prefix>
-                            <SearchOutlined />
-                        </template>
-                    </a-input>
-                    <a-button type="primary" @click="showPopupCreate">Thêm gói thầu mới</a-button>
-                </a-space>
-            </a-flex>
-        </div>
-
-        <div class="summary-cards">
-            <a-card
-                v-for="item in statsBiddings"
-                :key="item.key"
-                :style="{ backgroundColor: item.bg, cursor: 'pointer' }"
-                @click="openBidDrawer(item.key, item.label)"
-            >
-                <a-space direction="vertical" align="center">
-                    <component :is="item.icon" :style="{ fontSize: '32px', color: item.color }" />
-                    <div>{{ item.label }}</div>
-                    <h2 class="number" :style="{ color: item.color }">{{ item.count }}</h2>
-                </a-space>
-            </a-card>
-        </div>
-
-        <a-flex justify="space-between" align="center" style="margin-top: 12px">
-            <div>
-                <a-space>
-                    <a-button danger v-if="selectedRowKeys.length" @click="handleBulkDelete">
-                        Xóa {{ selectedRowKeys.length }} gói thầu
-                    </a-button>
-                </a-space>
-            </div>
-        </a-flex>
-
-        <a-table
-            :columns="columns"
-            :data-source="tableData"
-            :loading="loading"
-            style="margin-top: 4px"
-            row-key="id"
-            :pagination="pagination"
-            :scroll="{ x: 'max-content' }"
-            :row-selection="rowSelection"
-            @change="handleTableChange"
-        >
-            <!-- SLOT an toàn: dùng biến 'slot' -->
-            <template #bodyCell="slot">
-                <!-- STT -->
-                <template v-if="slot.column?.dataIndex === 'stt'">
-                    {{ (pagination.current - 1) * pagination.pageSize + slot.index + 1 }}
-                </template>
-
-                <!-- Tiêu đề -->
-                <template v-else-if="slot.column?.key === 'title'">
-                    <a-tooltip :title="slot.record.title">
-                        <a-typography-text strong style="cursor: pointer" @click="goToDetail(slot.record.id)">
-                            {{ truncateText(slot.record.title, 25) }}
-                        </a-typography-text>
-                    </a-tooltip>
-                </template>
-
-                <!-- Tiến độ -->
-                <template v-else-if="slot.column?.dataIndex === 'progress'">
-                    <a-tooltip :title="progressText(slot.record)">
-                        <a-progress
-                            :percent="progressPercent(slot.record)"
-                            :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
-                            :status="progressPercent(slot.record) >= 100 ? 'success' : 'active'"
-                            size="small"
-                            :show-info="progressPercent(slot.record) >= 100"
-                            style="cursor: pointer;"
-                            @click="openProgressModal(slot.record)"
-                        />
-                    </a-tooltip>
-                </template>
-
-                <!-- Tiến độ (theo mốc thời gian start_date → end_date) -->
-                <!-- Tiến độ (theo mốc thời gian + rule 90%/100%) -->
-<!--                <template v-else-if="slot.column?.dataIndex === 'progress'">-->
-<!--                    <a-tooltip :title="timeProgressText(slot.record)">-->
-<!--                        <a-progress-->
-<!--                            :percent="visualProgressPercent(slot.record)"-->
-<!--                            :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"-->
-<!--                            :status="visualProgressPercent(slot.record) >= 100 ? 'success' : 'active'"-->
-<!--                            size="small"-->
-<!--                            :show-info="visualProgressPercent(slot.record) >= 100"-->
-<!--                            style="cursor: pointer;"-->
-<!--                            @click="openProgressModal(slot.record)"-->
-<!--                        />-->
-<!--                    </a-tooltip>-->
-<!--                </template>-->
-
-                <!-- Người phụ trách -->
-                <template v-else-if="slot.column?.dataIndex === 'assigned_to_name'">
-                    <a-tooltip :title="slot.record.assigned_to_name">
-                        <a-avatar :style="{ backgroundColor: getAvatarColor(slot.record.assigned_to_name) }" size="small">
-                            {{ getFirstLetter(slot.record.assigned_to_name) }}
-                        </a-avatar>
-                    </a-tooltip>
-                </template>
-
-                <!-- Chi phí -->
-                <template v-else-if="slot.column?.dataIndex === 'estimated_cost'">
-                    {{ formatCurrency(slot.record.estimated_cost) }}
-                </template>
-
-                <!-- Độ ưu tiên -->
-                <template v-else-if="slot.column?.dataIndex === 'priority'">
-                    <a-tag :color="Number(slot.record.priority) === 1 ? 'red' : 'blue'">
-                        {{ Number(slot.record.priority) === 1 ? 'Quan trọng' : 'Bình thường' }}
-                    </a-tag>
-                </template>
-
-                <!-- Trạng thái -->
-                <template v-else-if="slot.column?.dataIndex === 'status'">
-                    <a-tag v-if="Number(slot.record.status) === STATUS.PREPARING" color="blue">Đang chuẩn bị</a-tag>
-                    <a-tag v-else-if="Number(slot.record.status) === STATUS.WON" color="green">Trúng thầu</a-tag>
-                    <a-tag v-else-if="Number(slot.record.status) === STATUS.SENT_FOR_APPROVAL" color="gold">Gửi phê duyệt</a-tag>
-                    <a-tag v-else-if="Number(slot.record.status) === STATUS.CANCELLED" color="gray">Hủy thầu</a-tag>
-                    <span v-else style="color:#999">—</span>
-                </template>
-                <!-- Cột Phê duyệt trong template -->
-                <template v-else-if="slot.column?.dataIndex === 'approval_status'">
-                    <a-space direction="vertical" size="small">
+            <a-card title="Chi tiết nhiệm vụ" bordere>
+                <div style="margin-bottom: 10px">
+                    <a-flex justify="space-between" align="center">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <a-typography-title :level="4" style="margin:0">Danh sách gói thầu</a-typography-title>
+                            <a-badge :count="totalDisplay" show-zero />
+                        </div>
                         <a-space>
-                            <a-tag :color="getApprovalColor(slot.record.approval_status)">
-                                {{ getApprovalText(slot.record.approval_status) }}
-                            </a-tag>
-                            <a-badge
-                                v-if="slot.record.approval_steps?.length"
-                                :count="`${Number(slot.record.current_level ?? 0) + 1}/${slot.record.approval_steps.length}`"
-                            />
+                            <!-- 🔎 Tìm theo tiêu đề -->
+                            <a-input
+                                v-model:value="searchTerm"
+                                allow-clear
+                                style="width: 320px"
+                                placeholder="Tìm gói thầu theo tiêu đề…"
+                            >
+                                <template #prefix>
+                                    <SearchOutlined />
+                                </template>
+                            </a-input>
+                            <a-button type="primary" @click="showPopupCreate">Thêm gói thầu mới</a-button>
                         </a-space>
-                    </a-space>
-                </template>
-                <!-- Ngày -->
-                <template v-else-if="slot.column?.dataIndex === 'start_date' || slot.column?.dataIndex === 'end_date'">
-                    {{ formatDate(slot.record[slot.column.dataIndex]) }}
-                </template>
+                    </a-flex>
+                </div>
 
-                <!-- Hạn -->
-                <template v-else-if="slot.column?.dataIndex === 'due'">
-                    <div :class="{ 'overdue-cell': Number(slot.record.days_overdue) > 0 }">
-                        <a-tag v-if="slot.record.days_remaining > 0" color="green">Còn {{ slot.record.days_remaining }} ngày</a-tag>
-                        <a-tag v-else-if="slot.record.days_remaining === 0 && slot.record.days_overdue === 0" color="gold">Hạn chót hôm nay</a-tag>
-                        <a-tag v-else-if="slot.record.days_overdue > 0" color="red">Quá hạn {{ slot.record.days_overdue }} ngày</a-tag>
-                        <a-tag v-else color="default">Không xác định</a-tag>
+                <div class="summary-cards">
+                    <a-card
+                        v-for="item in statsBiddings"
+                        :key="item.key"
+                        :style="{ backgroundColor: item.bg, cursor: 'pointer' }"
+                        @click="openBidDrawer(item.key, item.label)"
+                    >
+                        <a-space direction="vertical" align="center">
+                            <component :is="item.icon" :style="{ fontSize: '32px', color: item.color }" />
+                            <div>{{ item.label }}</div>
+                            <h2 class="number" :style="{ color: item.color }">{{ item.count }}</h2>
+                        </a-space>
+                    </a-card>
+                </div>
+
+                <a-flex justify="space-between" align="center" style="margin-top: 12px">
+                    <div>
+                        <a-space>
+                            <a-button danger v-if="selectedRowKeys.length" @click="handleBulkDelete">
+                                Xóa {{ selectedRowKeys.length }} gói thầu
+                            </a-button>
+                        </a-space>
                     </div>
-                </template>
+                </a-flex>
 
-                <!-- Hành động (chỉ ở cột action) -->
-                <template v-else-if="slot.column?.dataIndex === 'action'">
-                    <a-tooltip title="Xem chi tiết">
-                        <EyeOutlined class="icon-action" style="color:#52c41a;" @click="goToDetail(slot.record.id)" />
-                    </a-tooltip>
+                <a-table
+                    :columns="columns"
+                    :data-source="tableData"
+                    :loading="loading"
+                    style="margin-top: 4px"
+                    row-key="id"
+                    :pagination="pagination"
+                    :scroll="{ x: 'max-content' }"
+                    :row-selection="rowSelection"
+                    @change="handleTableChange"
+                >
+                    <!-- SLOT an toàn: dùng biến 'slot' -->
+                    <template #bodyCell="slot">
+                        <!-- STT -->
+                        <template v-if="slot.column?.dataIndex === 'stt'">
+                            {{ (pagination.current - 1) * pagination.pageSize + slot.index + 1 }}
+                        </template>
 
-                    <!-- Gửi phê duyệt lần đầu -->
-                    <a-tooltip
-                        v-if="Number(slot.record.status) === STATUS.PREPARING && (slot.record.approval_status ?? 'pending') === APPROVAL_STATUS.PENDING"
-                        title="Gửi phê duyệt"
-                    >
-                        <SendOutlined class="icon-action" style="color:#faad14;" @click="openSendApproval(slot.record)" />
-                    </a-tooltip>
+                        <!-- Tiêu đề -->
+                        <template v-else-if="slot.column?.key === 'title'">
+                            <a-tooltip :title="slot.record.title">
+                                <a-typography-text strong style="cursor: pointer" @click="goToDetail(slot.record.id)">
+                                    {{ truncateText(slot.record.title, 25) }}
+                                </a-typography-text>
+                            </a-tooltip>
+                        </template>
 
-                    <!-- 👇 Gửi duyệt lại khi đã bị từ chối -->
-                    <a-tooltip
-                        v-else-if="(slot.record.approval_status ?? '') === APPROVAL_STATUS.REJECTED"
-                        title="Gửi lại phê duyệt"
-                    >
-                        <SendOutlined class="icon-action" style="color:#faad14;" @click="openSendApproval(slot.record)" />
-                    </a-tooltip>
-                    <template
-                        v-if="Number(slot.record.status) === STATUS.SENT_FOR_APPROVAL && (slot.record.approval_status ?? 'pending') === APPROVAL_STATUS.PENDING">
-<!--                        <a-tooltip title="Phê duyệt">-->
-<!--                            <CheckOutlined class="icon-action" style="color:#52c41a;" @click="approveCurrentLevel(slot.record)" />-->
-<!--                        </a-tooltip>-->
-<!--                        <a-tooltip title="Từ chối">-->
-<!--                            <CloseOutlined class="icon-action" style="color:#ff4d4f;" @click="rejectCurrentLevel(slot.record)" />-->
-<!--                        </a-tooltip>-->
-                        <!-- Sửa người duyệt -->
-                        <a-tooltip title="Sửa người duyệt">
-                            <UserSwitchOutlined
-                                class="icon-action"
-                                style="color:#13c2c2"
-                                @click="editApproval(slot.record)"
-                            />
-                        </a-tooltip>
+                        <!-- Tiến độ -->
+                        <template v-else-if="slot.column?.dataIndex === 'progress'">
+                            <a-tooltip :title="progressText(slot.record)">
+                                <a-progress
+                                    :percent="progressPercent(slot.record)"
+                                    :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
+                                    :status="progressPercent(slot.record) >= 100 ? 'success' : 'active'"
+                                    size="small"
+                                    :show-info="progressPercent(slot.record) >= 100"
+                                    style="cursor: pointer;"
+                                    @click="openProgressModal(slot.record)"
+                                />
+                            </a-tooltip>
+                        </template>
+
+                        <!-- Tiến độ (theo mốc thời gian start_date → end_date) -->
+                        <!-- Tiến độ (theo mốc thời gian + rule 90%/100%) -->
+                        <!--                <template v-else-if="slot.column?.dataIndex === 'progress'">-->
+                        <!--                    <a-tooltip :title="timeProgressText(slot.record)">-->
+                        <!--                        <a-progress-->
+                        <!--                            :percent="visualProgressPercent(slot.record)"-->
+                        <!--                            :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"-->
+                        <!--                            :status="visualProgressPercent(slot.record) >= 100 ? 'success' : 'active'"-->
+                        <!--                            size="small"-->
+                        <!--                            :show-info="visualProgressPercent(slot.record) >= 100"-->
+                        <!--                            style="cursor: pointer;"-->
+                        <!--                            @click="openProgressModal(slot.record)"-->
+                        <!--                        />-->
+                        <!--                    </a-tooltip>-->
+                        <!--                </template>-->
+
+                        <!-- Người phụ trách -->
+                        <template v-else-if="slot.column?.dataIndex === 'assigned_to_name'">
+                            <a-tooltip :title="slot.record.assigned_to_name">
+                                <a-avatar :style="{ backgroundColor: getAvatarColor(slot.record.assigned_to_name) }" size="small">
+                                    {{ getFirstLetter(slot.record.assigned_to_name) }}
+                                </a-avatar>
+                            </a-tooltip>
+                        </template>
+
+                        <!-- Chi phí -->
+                        <template v-else-if="slot.column?.dataIndex === 'estimated_cost'">
+                            {{ formatCurrency(slot.record.estimated_cost) }}
+                        </template>
+
+                        <!-- Độ ưu tiên -->
+                        <template v-else-if="slot.column?.dataIndex === 'priority'">
+                            <a-tag :color="Number(slot.record.priority) === 1 ? 'red' : 'blue'">
+                                {{ Number(slot.record.priority) === 1 ? 'Quan trọng' : 'Bình thường' }}
+                            </a-tag>
+                        </template>
+
+                        <!-- Trạng thái -->
+                        <template v-else-if="slot.column?.dataIndex === 'status'">
+                            <a-tag v-if="Number(slot.record.status) === STATUS.PREPARING" color="blue">Đang chuẩn bị</a-tag>
+                            <a-tag v-else-if="Number(slot.record.status) === STATUS.WON" color="green">Trúng thầu</a-tag>
+                            <a-tag v-else-if="Number(slot.record.status) === STATUS.SENT_FOR_APPROVAL" color="gold">Gửi phê duyệt</a-tag>
+                            <a-tag v-else-if="Number(slot.record.status) === STATUS.CANCELLED" color="gray">Hủy thầu</a-tag>
+                            <span v-else style="color:#999">—</span>
+                        </template>
+                        <!-- Cột Phê duyệt trong template -->
+                        <template v-else-if="slot.column?.dataIndex === 'approval_status'">
+                            <a-space direction="vertical" size="small">
+                                <a-space>
+                                    <a-tag :color="getApprovalColor(slot.record.approval_status)">
+                                        {{ getApprovalText(slot.record.approval_status) }}
+                                    </a-tag>
+                                    <a-badge
+                                        v-if="slot.record.approval_steps?.length"
+                                        :count="`${Number(slot.record.current_level ?? 0) + 1}/${slot.record.approval_steps.length}`"
+                                    />
+                                </a-space>
+                            </a-space>
+                        </template>
+                        <!-- Ngày -->
+                        <template v-else-if="slot.column?.dataIndex === 'start_date' || slot.column?.dataIndex === 'end_date'">
+                            {{ formatDate(slot.record[slot.column.dataIndex]) }}
+                        </template>
+
+                        <!-- Hạn -->
+                        <template v-else-if="slot.column?.dataIndex === 'due'">
+                            <div :class="{ 'overdue-cell': Number(slot.record.days_overdue) > 0 }">
+                                <a-tag v-if="slot.record.days_remaining > 0" color="green">Còn {{ slot.record.days_remaining }} ngày</a-tag>
+                                <a-tag v-else-if="slot.record.days_remaining === 0 && slot.record.days_overdue === 0" color="gold">Hạn chót hôm nay</a-tag>
+                                <a-tag v-else-if="slot.record.days_overdue > 0" color="red">Quá hạn {{ slot.record.days_overdue }} ngày</a-tag>
+                                <a-tag v-else color="default">Không xác định</a-tag>
+                            </div>
+                        </template>
+
+                        <!-- Hành động (chỉ ở cột action) -->
+                        <template v-else-if="slot.column?.dataIndex === 'action'">
+                            <a-tooltip title="Xem chi tiết">
+                                <EyeOutlined class="icon-action" style="color:#52c41a;" @click="goToDetail(slot.record.id)" />
+                            </a-tooltip>
+
+                            <!-- Gửi phê duyệt lần đầu -->
+                            <a-tooltip
+                                v-if="Number(slot.record.status) === STATUS.PREPARING && (slot.record.approval_status ?? 'pending') === APPROVAL_STATUS.PENDING"
+                                title="Gửi phê duyệt"
+                            >
+                                <SendOutlined class="icon-action" style="color:#faad14;" @click="openSendApproval(slot.record)" />
+                            </a-tooltip>
+
+                            <!-- 👇 Gửi duyệt lại khi đã bị từ chối -->
+                            <a-tooltip
+                                v-else-if="(slot.record.approval_status ?? '') === APPROVAL_STATUS.REJECTED"
+                                title="Gửi lại phê duyệt"
+                            >
+                                <SendOutlined class="icon-action" style="color:#faad14;" @click="openSendApproval(slot.record)" />
+                            </a-tooltip>
+                            <template
+                                v-if="Number(slot.record.status) === STATUS.SENT_FOR_APPROVAL && (slot.record.approval_status ?? 'pending') === APPROVAL_STATUS.PENDING">
+                                <!--                        <a-tooltip title="Phê duyệt">-->
+                                <!--                            <CheckOutlined class="icon-action" style="color:#52c41a;" @click="approveCurrentLevel(slot.record)" />-->
+                                <!--                        </a-tooltip>-->
+                                <!--                        <a-tooltip title="Từ chối">-->
+                                <!--                            <CloseOutlined class="icon-action" style="color:#ff4d4f;" @click="rejectCurrentLevel(slot.record)" />-->
+                                <!--                        </a-tooltip>-->
+                                <!-- Sửa người duyệt -->
+                                <a-tooltip title="Sửa người duyệt">
+                                    <UserSwitchOutlined
+                                        class="icon-action"
+                                        style="color:#13c2c2"
+                                        @click="editApproval(slot.record)"
+                                    />
+                                </a-tooltip>
+                            </template>
+
+                            <a-tooltip title="Chỉnh sửa">
+                                <EditOutlined class="icon-action" style="color:#1890ff;" @click="showPopupDetail(slot.record)" />
+                            </a-tooltip>
+
+                            <a-popconfirm
+                                title="Bạn chắc chắn muốn xoá gói thầu này?"
+                                ok-text="Xoá"
+                                cancel-text="Huỷ"
+                                @confirm="deleteConfirm(slot.record.id)"
+                                placement="topRight"
+                            >
+                                <a-tooltip title="Xoá">
+                                    <DeleteOutlined class="icon-action" style="color:red;" />
+                                </a-tooltip>
+                            </a-popconfirm>
+                        </template>
                     </template>
-
-                    <a-tooltip title="Chỉnh sửa">
-                        <EditOutlined class="icon-action" style="color:#1890ff;" @click="showPopupDetail(slot.record)" />
-                    </a-tooltip>
-
-                    <a-popconfirm
-                        title="Bạn chắc chắn muốn xoá gói thầu này?"
-                        ok-text="Xoá"
-                        cancel-text="Huỷ"
-                        @confirm="deleteConfirm(slot.record.id)"
-                        placement="topRight"
-                    >
-                        <a-tooltip title="Xoá">
-                            <DeleteOutlined class="icon-action" style="color:red;" />
-                        </a-tooltip>
-                    </a-popconfirm>
-                </template>
-            </template>
-        </a-table>
+                </a-table>
+            </a-card>
 
         <!-- Drawer danh sách theo card -->
         <a-drawer
