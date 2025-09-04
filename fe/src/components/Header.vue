@@ -35,37 +35,97 @@
             </div>
 
             <!-- User Dropdown -->
-            <div style="margin-right: 24px; display: flex; align-items: center;">
-                <a-dropdown v-if="user" trigger="click" :getPopupContainer="triggerNode => triggerNode.parentNode">
-                    <div @click.prevent style="display: flex; align-items: center; cursor: pointer;">
-                        <a-avatar size="small" style="margin-right: 8px;">
-                            <template #icon>
-                                <UserOutlined/>
-                            </template>
+            <!-- Right actions -->
+            <div class="right-actions">
+                <a-tooltip title="Đánh dấu">
+                    <BookOutlined class="ha-icon" @click="onBookmark"/>
+                </a-tooltip>
+
+                <a-tooltip title="Trang chủ">
+                    <a-button class="home-chip" shape="circle" @click="goHome">
+                        <HomeOutlined />
+                    </a-button>
+                </a-tooltip>
+
+                <a-tooltip title="Tin nhắn">
+                    <a-badge :count="unreadChat" size="small">
+                        <MessageOutlined class="ha-icon" @click="openChat"/>
+                    </a-badge>
+                </a-tooltip>
+
+                <a-tooltip title="Thông báo">
+                    <a-badge :count="unreadNotify" size="small">
+                        <BellOutlined class="ha-icon" @click="openNotify"/>
+                    </a-badge>
+                </a-tooltip>
+
+                <!-- Avatar dropdown -->
+                <a-dropdown v-if="user" trigger="click" placement="bottomRight" :getPopupContainer="n => n.parentNode">
+                    <div @click.prevent class="user-chip">
+                        <a-avatar size="large" :src="user.avatarUrl">
+                            <template #icon><UserOutlined/></template>
                         </a-avatar>
-                        <span>{{ user.name }}</span>
                     </div>
 
                     <template #overlay>
-                        <a-menu>
-                            <a-menu-item key="profile" @click="redirectToProfile">
-                                Thông tin cá nhân
-                            </a-menu-item>
-                            <a-menu-divider/>
-                            <a-menu-item key="logout" @click="handleLogout">
-                                Đăng xuất
-                            </a-menu-item>
-                        </a-menu>
+                        <div class="user-dropdown">
+                            <!-- Header -->
+                            <div class="user-header">
+                                <a-avatar size="large" :src="user.avatarUrl" />
+                                <div class="user-info">
+                                    <div class="name">{{ user.name }}</div>
+                                    <div class="position">{{ user.position || 'Chức danh' }}</div>
+                                    <div class="department">{{ user.department || 'Phòng ban' }}</div>
+                                </div>
+                            </div>
+
+                            <div class="user-menu">
+                                <div class="user-item" @click="redirectToProfile">
+                                    <UserOutlined /> Tài khoản
+                                </div>
+                                <div class="user-item">
+                                    <SettingOutlined /> Cài đặt hệ thống
+                                </div>
+                                <div class="user-item">
+                                    <FileTextOutlined /> Thông tin đối soát
+                                </div>
+                                <div class="user-item">
+                                    <QuestionCircleOutlined /> Hướng dẫn sử dụng
+                                </div>
+                                <div class="user-item">
+                                    <BgColorsOutlined /> Màu giao diện
+                                    <div class="color-dot"></div>
+                                </div>
+                                <div class="user-item">
+                                    <GlobalOutlined /> Ngôn ngữ <span style="margin-left:auto">VN</span>
+                                </div>
+                                <div class="user-item" @click="changePwdOpen = true">
+                                    <KeyOutlined /> Đổi mật khẩu
+                                </div>
+                                <div class="user-item danger" @click="handleLogout">
+                                    <LogoutOutlined /> Đăng xuất
+                                </div>
+                            </div>
+                        </div>
                     </template>
                 </a-dropdown>
-            </div>
 
+            </div>
         </a-layout-header>
+        <ChangePasswordModal
+            v-model:open="changePwdOpen"
+            :user-id="user?.id"
+            :user-name="user?.name"
+            :user-phone="user?.phone"
+            @changed="handlePasswordChanged"
+        />
     </div>
 </template>
 
 <script setup>
 import {useRoute, useRouter} from 'vue-router'
+import { message } from 'ant-design-vue';
+import { ref } from 'vue'
 import {computed} from 'vue'
 import {storeToRefs} from 'pinia'
 import {useUserStore} from '../stores/user'
@@ -75,8 +135,19 @@ import {
     LogoutOutlined,
     DownOutlined,
     UserOutlined,
-    PlusOutlined
+    PlusOutlined,
+    BookOutlined, HomeOutlined, MessageOutlined, BellOutlined,
+    SettingOutlined,
+    FileTextOutlined,
+    QuestionCircleOutlined,
+    BgColorsOutlined,
+    GlobalOutlined,
+    KeyOutlined
 } from '@ant-design/icons-vue'
+
+import ChangePasswordModal from '../components/common/ChangePasswordModal.vue'
+
+const changePwdOpen = ref(false)
 
 const props = defineProps({
     collapsed: Boolean,
@@ -136,6 +207,14 @@ const breadcrumbs = computed(() => {
     return trail
 })
 
+const unreadChat = ref(1)         // badge "1" như ảnh
+const unreadNotify = ref(0)
+
+const goHome = () => router.push('/project-overview')
+const openChat = () => router.push('/tasks')          // đổi route chat thật của bạn
+const openNotify = () => router.push('/task-approvals')  // đổi route thông báo thật
+const onBookmark = () => { /* toggle đánh dấu… */ }
+
 const handleLogout = () => {
     userStore.clearUser()     // 👉 Xoá user + quyền
     router.push('/')          // 👉 Về trang login/home
@@ -147,6 +226,11 @@ const redirectToProfile = () => {
             id: user.value.id
         }
     })
+}
+const handlePasswordChanged = () => {
+    message.success('Đổi mật khẩu thành công')
+    // ví dụ: refresh gì đó nếu cần
+    // window.location.reload()
 }
 </script>
 
@@ -166,4 +250,91 @@ const redirectToProfile = () => {
 .trigger:hover {
     color: #1890ff;
 }
+.right-actions{
+    margin-right: 16px;
+    display:flex; align-items:center; gap:16px;
+}
+
+/* Icon xám, hover cam */
+.ha-icon{
+    font-size:20px; color:#8c8c8c; cursor:pointer; transition:color .2s, transform .2s;
+}
+.ha-icon:hover{ color:#fa8c16; transform: translateY(-1px); }
+
+/* Nút nhà màu cam (nền nhạt + icon cam) */
+.home-chip{
+    width:36px; height:36px; padding:0; border:none;
+    background:#fff7e6; /* cam nhạt */
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:none;
+}
+.home-chip :deep(.anticon){ color:#fa8c16; font-size:18px; }
+.home-chip:hover{ background:#ffe7ba; }
+
+/* Avatar */
+.user-chip{ display:flex; align-items:center; cursor:pointer; }
+
+.user-dropdown {
+    width: 320px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    overflow: hidden;
+}
+
+.user-header {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.user-info {
+    margin-left: 12px;
+    flex: 1;
+}
+
+.user-info .name {
+    font-weight: 600;
+    font-size: 16px;
+    color: #fa541c; /* cam */
+}
+
+.user-info .position,
+.user-info .department {
+    font-size: 13px;
+    color: #888;
+}
+
+.user-menu {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 14px;
+}
+
+.user-item:hover {
+    background: #f5f5f5;
+}
+
+.user-item.danger {
+    color: #ff4d4f;
+}
+
+.color-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fa541c;
+    margin-left: auto;
+}
+
 </style>

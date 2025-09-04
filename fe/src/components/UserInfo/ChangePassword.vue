@@ -16,7 +16,7 @@
 </template>
 <script setup>
 import { ref } from 'vue';
-import { updateUser } from '../../api/user'
+import { updateUser } from '@/api/user.js'
 import { message } from 'ant-design-vue';
 
 const props = defineProps({
