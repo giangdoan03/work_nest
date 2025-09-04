@@ -38,7 +38,7 @@ class BiddingController extends ResourceController
      * Lấy danh sách gói thầu có lọc + phân trang
      * @throws Exception
      */
-    public function index()
+    public function index(): ResponseInterface
     {
         $filters = $this->request->getGet();
         $perPage = max(1, (int)($filters['per_page'] ?? 40));
@@ -50,7 +50,6 @@ class BiddingController extends ResourceController
             ->select('bidding_id, COUNT(*) AS steps_total')
             ->groupBy('bidding_id');
 
-        // --- Base query + JOIN subquery steps ---
         // --- Base query + JOIN subquery steps ---
         $list = $this->model
             ->select(
@@ -71,19 +70,21 @@ class BiddingController extends ResourceController
                     'biddings.end_date',
                     'biddings.created_at',
 
-                    // tên người
+                    // tên + avatar user
                     'u1.name AS assigned_to_name',
                     'u2.name AS manager_name',
+                    'u1.avatar AS assigned_to_avatar',
+                    'u2.avatar AS manager_avatar',
 
                     // tổng step kỹ thuật (bidding_steps)
                     'COALESCE(bs.steps_total, 0) AS steps_total',
 
-                    // ✅ tổng cấp phê duyệt, xử lý cả 2 dạng: JSON chuẩn hoặc JSON bị bọc string
+                    // tổng cấp phê duyệt (xử lý JSON/JSON string)
                     "CASE
-                WHEN JSON_VALID(biddings.approval_steps) THEN JSON_LENGTH(biddings.approval_steps)
-                WHEN JSON_VALID(JSON_UNQUOTE(biddings.approval_steps)) THEN JSON_LENGTH(JSON_UNQUOTE(biddings.approval_steps))
-                ELSE 0
-             END AS approval_steps_count",
+                    WHEN JSON_VALID(biddings.approval_steps) THEN JSON_LENGTH(biddings.approval_steps)
+                    WHEN JSON_VALID(JSON_UNQUOTE(biddings.approval_steps)) THEN JSON_LENGTH(JSON_UNQUOTE(biddings.approval_steps))
+                    ELSE 0
+                 END AS approval_steps_count",
                 ]),
                 false
             )
@@ -98,8 +99,8 @@ class BiddingController extends ResourceController
         $pager = $this->model->pager;
 
         // === Deadline fields
-        $tz    = new DateTimeZone('Asia/Ho_Chi_Minh');
-        $today = new DateTimeImmutable('today', $tz);
+        $tz    = new \DateTimeZone('Asia/Ho_Chi_Minh');
+        $today = new \DateTimeImmutable('today', $tz);
         $data  = $this->attachDeadlineInfo($data, $today, $tz);
 
         // === Progress fields (tuỳ chọn)
@@ -107,6 +108,13 @@ class BiddingController extends ResourceController
             // Lưu ý: attachProgressInfo sẽ KHÔNG overwrite steps_total nếu đã có từ JOIN
             $data = $this->attachProgressInfo($data);
         }
+
+        // === Chuẩn hoá avatar URL cho u1/u2
+        $data = array_map(function (array $row): array {
+            $row['assigned_to_avatar_url'] = $this->toFullUrl($row['assigned_to_avatar'] ?? null);
+            $row['manager_avatar_url']     = $this->toFullUrl($row['manager_avatar'] ?? null);
+            return $row;
+        }, $data);
 
         // === Summary
         $summary = $this->buildSummary($filters);
@@ -120,6 +128,23 @@ class BiddingController extends ResourceController
             ],
             'summary' => $summary,
         ]);
+    }
+
+    /**
+     * Chuẩn hoá path avatar về URL đầy đủ.
+     * - Nếu $path rỗng → null
+     * - Nếu đã là URL tuyệt đối → giữ nguyên
+     * - Nếu là relative (uploads/avatars/...) → base_url($path)
+     */
+    private function toFullUrl(?string $path): ?string
+    {
+        if ($path === null || $path === '') {
+            return null;
+        }
+        if (preg_match('~^https?://~i', $path)) {
+            return $path;
+        }
+        return base_url(ltrim($path, '/'));
     }
 
 

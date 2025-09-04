@@ -1040,9 +1040,6 @@ span.ant-divider-inner-text {
 }
 </style>
 <style scoped>
-.dashboard {
-    padding: 16px;
-}
 .summary-cards {
     display: flex;
     flex-wrap: wrap;

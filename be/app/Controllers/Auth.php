@@ -7,6 +7,7 @@ use CodeIgniter\Controller;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
 use CodeIgniter\API\ResponseTrait;
+use ReflectionException;
 
 class Auth extends Controller
 {
@@ -62,7 +63,7 @@ class Auth extends Controller
 
 
     /**
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function create(): ResponseInterface
     {
@@ -90,7 +91,7 @@ class Auth extends Controller
     }
 
     /**
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function update($id = null): ResponseInterface
     {
@@ -179,35 +180,85 @@ class Auth extends Controller
 
 
     /**
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function uploadAvatar(): ResponseInterface
     {
-        $file = $this->request->getFile('file');
-        $userId = $this->request->getPost('user_id');
+        $userId = (int) $this->request->getPost('user_id');
+        if (! $userId) return $this->failValidationErrors(['user_id' => 'Thiếu user_id']);
 
-        if (!$file->isValid()) {
-            return $this->fail('File không hợp lệ');
+        $user = $this->model->find($userId);
+        if (! $user) return $this->failNotFound('User not found');
+
+        // 1) Validate file
+        $rules = [
+            'file' => [
+                'label' => 'Avatar',
+                'rules' => [
+                    'uploaded[file]',
+                    'max_size[file,4096]',
+                    'is_image[file]',
+                    'mime_in[file,image/jpg,image/jpeg,image/png,image/gif,image/webp]',
+                    'ext_in[file,jpg,jpeg,png,gif,webp]',
+                ],
+            ],
+        ];
+        if (! $this->validate($rules)) {
+            return $this->failValidationErrors($this->validator->getErrors());
         }
 
-        $uploadPath = getenv('UPLOAD_PATH_AVATAR');
-        $baseUrl    = getenv('AVATAR_BASE_URL');
+        $file = $this->request->getFile('file');
+        if (! $file || ! $file->isValid()) return $this->fail('File không hợp lệ');
 
+        // 2) Đường dẫn (yêu cầu có sẵn public/uploads)
+        $publicPath = rtrim(FCPATH, '/\\');                // ...\be\public
+        $uploadsDir = $publicPath . DIRECTORY_SEPARATOR . 'uploads';
+        if (! is_dir($uploadsDir)) {
+            return $this->failServerError('Thiếu thư mục: ' . $uploadsDir . ' (hãy tạo tay)');
+        }
+
+        $avatarDir = $uploadsDir . DIRECTORY_SEPARATOR . 'avatars';
+        if (! is_dir($avatarDir) && ! @mkdir($avatarDir, 0777, true)) {
+            return $this->failServerError('Không thể tạo thư mục: ' . $avatarDir);
+        }
+        if (! is_writable($avatarDir)) {
+            return $this->failServerError('Thư mục không có quyền ghi: ' . $avatarDir);
+        }
+
+        // 3) Lưu file
         $newName = $file->getRandomName();
-        $file->move($uploadPath, $newName);
+        if (! $file->move($avatarDir, $newName)) {
+            return $this->failServerError('Upload thất bại.');
+        }
 
-        $relativePath = 'avatars/' . $newName;
+        // 4) Đọc MIME/size từ file ĐÃ LƯU (tránh đụng tmp)
+        $savedPath = $avatarDir . DIRECTORY_SEPARATOR . $newName;
+        $saved     = new \CodeIgniter\Files\File($savedPath);
+        $mime      = $saved->getMimeType();
+        $size      = $saved->getSize();
 
-        // Lưu vào DB
-        $this->model->update($userId, [
-            'avatar' => $relativePath
-        ]);
+        // 5) Cập nhật DB & xoá avatar cũ (nếu cùng thư mục)
+        $relativePath = 'uploads/avatars/' . $newName;
 
-        return $this->respond([
-            'status' => 'success',
-            'avatar_url' => $baseUrl . '/' . $newName
+        if (! empty($user['avatar']) && str_starts_with((string)$user['avatar'], 'uploads/avatars/')) {
+            $oldAbs = $publicPath . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $user['avatar']);
+            if (is_file($oldAbs)) @unlink($oldAbs);
+        }
+
+        $this->model->update($userId, ['avatar' => $relativePath]);
+
+        // 6) Trả kết quả
+        return $this->respondCreated([
+            'status'       => 'success',
+            'avatar_url'   => base_url($relativePath), // dùng để hiển thị
+            'avatar_path'  => $relativePath,           // dùng để lưu DB nếu muốn lưu relative
+            'name'         => $newName,
+            'mime'         => $mime,
+            'size'         => $size,
         ]);
     }
+
+
 
 
     public function check(): ResponseInterface

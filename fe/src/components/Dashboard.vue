@@ -126,9 +126,6 @@ const option = ref({
 </script>
 
 <style scoped>
-.dashboard {
-    padding: 24px;
-}
 .card {
     border-radius: 10px;
     cursor: pointer;

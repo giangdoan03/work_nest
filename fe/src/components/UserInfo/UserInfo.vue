@@ -3,17 +3,14 @@
         <a-typography-title :level="4" style="margin-bottom: 24px;">Thông tin cá nhân</a-typography-title>
         <a-form :model="form" :rules="rules" layout="vertical" @finish="handleSubmit" ref="formRef">
             <!-- Ảnh đại diện -->
-            <a-form-item label="Ảnh đại diện" name="avatar" v-if="!form.avatar">
+            <a-form-item key="avatar-empty" label="Ảnh đại diện" name="avatar" v-if="!hasAvatar">
                 <a-upload
                     list-type="picture-card"
-                    :file-list="avatarFileList"
                     :show-upload-list="false"
                     :maxCount="1"
-                    :multiple="true"
-                    :on-remove="(file) => handleRemoveFile('avatar', file)"
-                    :before-upload="(file) => handleBeforeUpload('avatar', file)"
-                    ref="uploadAvatar"
-                    :customRequest="({ file }) => handleBeforeUpload('avatar', file)"
+                    :before-upload="beforeAvatarValidate"
+                    :customRequest="uploadAvatarRequest"
+                    accept="image/*"
                 >
                     <div>
                         <upload-outlined/>
@@ -21,19 +18,19 @@
                     </div>
                 </a-upload>
             </a-form-item>
-            <a-form-item label="Ảnh đại diện" name="avatar_isset" v-else>
+
+            <a-form-item key="avatar-set" label="Ảnh đại diện" name="avatar_isset" v-else>
                 <div class="avatar" @mouseover="isHoverAvatar = true" @mouseleave="isHoverAvatar = false">
-                    <a-avatar :size="110" shape="square" :src="form.avatar">
-                    </a-avatar>
+                    <a-avatar :size="110" shape="square" :src="avatarSrc" />
                     <div class="action-icon" v-if="isHoverAvatar">
                         <a-button type="link" style="margin-right: 16px;" @click="handleChangeAvatar">
                             <template #icon>
-                                <EditOutlined style="font-size: 22px; color: rgba(0, 0, 0, 0.85);"/>
+                                <EditOutlined style="font-size:22px;color:rgba(0,0,0,.85)"/>
                             </template>
                         </a-button>
-                        <a-button  type="link" @click="handlePreview">
+                        <a-button type="link" @click="handlePreview">
                             <template #icon>
-                                <EyeOutlined style="font-size: 22px; color: rgba(0, 0, 0, 0.85);"/>
+                                <EyeOutlined style="font-size:22px;color:rgba(0,0,0,.85)"/>
                             </template>
                         </a-button>
                     </div>
@@ -62,7 +59,7 @@
 
             <!-- Loại tài khoản -->
             <a-form-item label="Loại tài khoản" name="role">
-                <a-input :value="form.role" placeholder="VD: Nhân viên, Trưởng phòng" disabled />
+                <a-input :value="form.role" placeholder="VD: Nhân viên, Trưởng phòng" disabled/>
             </a-form-item>
 
 
@@ -82,21 +79,21 @@
 
         <!-- Modal xem ảnh -->
         <a-modal :open="previewVisible" :footer="null" @cancel="cancelPreview">
-            <img alt="example" style="width: 100%; max-width: 600px; max-height: 600px;" :src="form.avatar" />
+            <img alt="example" style="width: 100%; max-width: 600px; max-height: 600px;" :src="avatarSrc"/>
         </a-modal>
     </div>
 </template>
 
 <script setup>
-import {ref, onMounted, computed, watch } from 'vue'
+import {ref, onMounted, computed, watch} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
-import { uploadFile, updateUser } from '@/api/user.js'
+import {uploadFile, updateUser, uploadAvatar} from '@/api/user.js'
 import {message} from 'ant-design-vue'
-import {UploadOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons-vue'
+import {UploadOutlined, EyeOutlined, EditOutlined} from '@ant-design/icons-vue'
 import cloneDeep from 'lodash/cloneDeep'
 
 import {useUserStore} from '@/stores/user.js'
-import { getDepartments } from '@/api/department'
+import {getDepartments} from '@/api/department'
 
 const userStore = useUserStore()
 const route = useRoute()
@@ -120,7 +117,6 @@ const form = ref({
 })
 const formSaved = ref()
 const formRef = ref()
-const uploadAvatar = ref(null);
 
 const avatarFileList = ref([])
 const previewVisible = ref(false)
@@ -129,38 +125,60 @@ const departments = ref([])
 const isHoverAvatar = ref(false);
 const isEditMode = ref(false)
 
-const validateName = async (_rule, value) => {    
+// script setup
+const hasAvatar = computed(() => !!(form.value.avatar && String(form.value.avatar).trim()))
+
+
+const ORIGIN = new URL(import.meta.env.VITE_API_URL).origin; // http://api.worknest.local
+
+const avatarSrc = computed(() => {
+    const v = String(form.value.avatar || '').trim();
+    if (!v) return '';
+    const base = new URL(ORIGIN);
+    const u = new URL(v, ORIGIN);    // nhận cả relative & absolute
+    u.protocol = base.protocol;      // ép về api.*
+    u.host     = base.host;
+    return u.href;
+});
+
+const validateName = async (_rule, value) => {
     if (value === '') {
         return Promise.reject('Vui lòng nhập họ và tên');
-    } else if(value.length > 200){
+    } else if (value.length > 200) {
         return Promise.reject('Họ và tên không vượt quá 200 ký tự');
     } else {
         return Promise.resolve();
     }
 };
-const validatePhone = async (_rule, value) => {    
+const validatePhone = async (_rule, value) => {
     if (value === '') {
         return Promise.reject('Vui lòng nhập số điện thoại');
-    } else if(value.length > 20){
+    } else if (value.length > 20) {
         return Promise.reject('Số điện thoại không vượt quá 20 ký tự');
-    } else if(!isValidPhoneNumber(value)){
+    } else if (!isValidPhoneNumber(value)) {
         return Promise.reject('Vui lòng nhập đúng số điện thoại');
     } else {
         return Promise.resolve();
     }
 };
+
 function isValidPhoneNumber(phone) {
-  const regex = /^(0|\+84)(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-5]|9[0-9])[0-9]{7}$/;
-  return regex.test(phone);
+    const regex = /^(0|\+84)(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-5]|9[0-9])[0-9]{7}$/;
+    return regex.test(phone);
 }
 
 const rules = computed(() => {
     if (isEditMode.value) {
         return {
-            name: [{ required: true, validator: validateName, message: 'Họ và tên là bắt buộc', trigger: 'change' }],
-            phone: [{ required: true, validator: validatePhone, message: 'Số điện thoại là bắt buộc', trigger: 'change' }],
+            name: [{required: true, validator: validateName, message: 'Họ và tên là bắt buộc', trigger: 'change'}],
+            phone: [{
+                required: true,
+                validator: validatePhone,
+                message: 'Số điện thoại là bắt buộc',
+                trigger: 'change'
+            }],
         }
-    }else{
+    } else {
         return {}
     }
 })
@@ -177,35 +195,40 @@ const handleSubmit = async () => {
         phone: form.value.phone,
     }
     await updateUser(form.value.id, params).then(res => {
-        if(res.data.status == "success"){
+        if (res.data.status === "success") {
             message.destroy();
             message.success('Cập nhật thông tin thành công')
             emit('reload');
             isEditMode.value = false;
-        }else{
+        } else {
             message.destroy();
             message.error('Cập nhật thông tin thất bại')
         }
     })
 }
 
-const handlePreview = async file => {    
+const handlePreview = async file => {
     previewVisible.value = true;
 };
-const cancelPreview = () =>{
+const cancelPreview = () => {
     previewVisible.value = false;
 }
 const handleChangeAvatar = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
     input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            handleBeforeUpload('avatar', file);
-        }
-    };
-    input.click();
+        const file = e.target.files?.[0]
+        if (!file) return
+        if (beforeAvatarValidate(file) !== true) return
+        uploadAvatarRequest({
+            file, onSuccess: () => {
+            }, onError: () => {
+            }, onProgress: () => {
+            }
+        })
+    }
+    input.click()
 }
 
 const handleBeforeUpload = async (field, file) => {
@@ -216,7 +239,7 @@ const handleBeforeUpload = async (field, file) => {
             user_id: route.params.id
         }
         const response = await uploadFile(params)
-        const url = response.data.avatar_url        
+        const url = response.data.avatar_url
         form.value.avatar = url
         avatarFileList.value = [
             {
@@ -259,50 +282,97 @@ const getListDepartments = async () => {
         }
     });
 }
+
+// Validate trước khi upload (size + loại file). Trả false để chặn auto upload của AntD.
+const beforeAvatarValidate = (file) => {
+    const isImage = /image\/(jpeg|png|gif|webp)/.test(file.type);
+    if (!isImage) {
+        message.error('Chỉ hỗ trợ JPEG/PNG/GIF/WebP');
+        return Upload.LIST_IGNORE; // bỏ file khỏi danh sách
+    }
+    const isLt4M = file.size / 1024 / 1024 < 4;
+    if (!isLt4M) {
+        message.error('Ảnh phải nhỏ hơn 4MB');
+        return Upload.LIST_IGNORE;
+    }
+    return true; // cho phép tiếp tục, nhưng vẫn dùng customRequest
+};
+
+// Thực hiện upload “custom”
+const uploadAvatarRequest = async ({file, onSuccess, onError, onProgress}) => {
+    const hide = message.loading('Đang tải lên...', 0)
+    try {
+        const res = await uploadAvatar(file, form.value.id || route.params.id, (percent) => {
+            onProgress && onProgress({percent})
+        })
+        const rel = res.data?.avatar_path || res.data?.avatar_url
+        if (!rel) throw new Error('Không nhận được đường dẫn ảnh')
+        form.value.avatar = rel  // lưu relative path
+
+        message.success('Upload & lưu avatar thành công')
+        onSuccess && onSuccess({}, file)
+
+    } catch (e) {
+        console.error(e)
+        message.error('Upload thất bại')
+        onError && onError(e)
+    } finally {
+        hide()
+    }
+}
+
+watch(() => props.dataUser, (v) => {
+    if (!v) return
+    isEditMode.value = false
+    const incoming = cloneDeep(v)
+    // Nếu props chưa có avatar nhưng local có rồi → giữ local
+    if (!incoming.avatar && form.value.avatar) {
+        incoming.avatar = form.value.avatar
+    }
+    form.value = incoming
+    formSaved.value = cloneDeep(incoming)
+}, { deep: false })
+
+
 onMounted(async () => {
-    if(props.dataUser){
+    if (props.dataUser) {
         isEditMode.value = false;
         form.value = cloneDeep(props.dataUser);
         formSaved.value = cloneDeep(props.dataUser);
     }
     await getListDepartments();
 })
-watch(() => 
-props.dataUser, function (value) {
-    if(value){
-        isEditMode.value = false;
-        form.value = cloneDeep(props.dataUser);
-        formSaved.value = cloneDeep(props.dataUser);
-    }
-}, {deep: true})
 
 </script>
 
 <style scoped>
-    :deep(.ant-input-disabled) {
-        cursor: auto;
-    }
-    .margin-bot-0 {
-        margin-bottom: 0 !important;
-    }
-    .avatar{
-        position: relative;
-        z-index: 1;
-        width: 110px;
-        height: 110px;
-    }
-    
-    .action-icon{
-        position: absolute;
-        top: 0;
-        width: 110px;
-        height: 110px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 2;
-    }
-    .action-icon:hover {
-        background: rgba(255, 255, 255, 0.397);
-    }
+:deep(.ant-input-disabled) {
+    cursor: auto;
+}
+
+.margin-bot-0 {
+    margin-bottom: 0 !important;
+}
+
+.avatar {
+    position: relative;
+    z-index: 1;
+    width: 110px;
+    height: 110px;
+}
+
+.action-icon {
+    position: absolute;
+    top: 0;
+    width: 110px;
+    height: 110px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+}
+
+.action-icon:hover {
+    background: rgba(255, 255, 255, 0.397);
+}
 </style>

@@ -34,12 +34,8 @@
                 </a-breadcrumb>
             </div>
 
-            <!-- User Dropdown -->
             <!-- Right actions -->
             <div class="right-actions">
-<!--                <a-tooltip title="Đánh dấu">-->
-<!--                    <BookOutlined class="ha-icon" @click="onBookmark"/>-->
-<!--                </a-tooltip>-->
 
                 <a-tooltip title="Trang chủ">
                     <a-button class="home-chip" shape="circle" @click="goHome">
@@ -60,24 +56,40 @@
                 </a-tooltip>
 
                 <!-- Avatar dropdown -->
-                <a-dropdown v-if="user" trigger="click" placement="bottomRight" :getPopupContainer="n => n.parentNode">
+                <a-dropdown v-if="user" trigger="click" placement="bottomRight">
                     <div @click.prevent class="user-chip">
-                        <a-avatar size="large" :src="user.avatarUrl">
-                            <template #icon><UserOutlined/></template>
-                        </a-avatar>
+                        <BaseAvatar :src="user.avatar"
+                        :name="user.name"
+                        :size="36"
+                        shape="circle"
+                        :preferApiOrigin="true"
+                        />
                     </div>
 
                     <template #overlay>
                         <div class="user-dropdown">
                             <!-- Header -->
                             <div class="user-header">
-                                <a-avatar size="large" :src="user.avatarUrl" />
+                                <!-- dùng BaseAvatar thay cho a-avatar -->
+                                <BaseAvatar
+                                    size="large"
+                                    :src="user.avatar"
+                                :name="user.name"
+                                :preferApiOrigin="true"
+                                />
                                 <div class="user-info">
                                     <div class="name">{{ user.name }}</div>
-                                    <div class="position">{{ user.position || 'Chức danh' }}</div>
-                                    <div class="department">{{ user.department || 'Phòng ban' }}</div>
+                                    <div class="position">
+                                        <IdcardOutlined style="margin-right:6px;color:#1890ff" />
+                                        {{ user.position || 'Chức danh' }}
+                                    </div>
+                                    <div class="department">
+                                        <TeamOutlined style="margin-right:6px;color:#52c41a" />
+                                        {{ user.department || 'Phòng ban' }}
+                                    </div>
                                 </div>
                             </div>
+
 
                             <div class="user-menu">
                                 <div class="user-item" @click="redirectToProfile">
@@ -85,9 +97,6 @@
                                 </div>
                                 <div class="user-item">
                                     <SettingOutlined /> Cài đặt hệ thống
-                                </div>
-                                <div class="user-item">
-                                    <FileTextOutlined /> Thông tin đối soát
                                 </div>
                                 <div class="user-item">
                                     <QuestionCircleOutlined /> Hướng dẫn sử dụng
@@ -109,7 +118,6 @@
                         </div>
                     </template>
                 </a-dropdown>
-
             </div>
         </a-layout-header>
         <ChangePasswordModal
@@ -132,19 +140,19 @@ import {
     MenuUnfoldOutlined,
     MenuFoldOutlined,
     LogoutOutlined,
-    DownOutlined,
     UserOutlined,
     PlusOutlined,
-    BookOutlined, HomeOutlined, MessageOutlined, BellOutlined,
+    HomeOutlined, MessageOutlined, BellOutlined,
     SettingOutlined,
-    FileTextOutlined,
     QuestionCircleOutlined,
     BgColorsOutlined,
     GlobalOutlined,
-    KeyOutlined
+    KeyOutlined,
+    IdcardOutlined, TeamOutlined
 } from '@ant-design/icons-vue'
 
 import ChangePasswordModal from '../components/common/ChangePasswordModal.vue'
+import BaseAvatar from '../components/common/BaseAvatar.vue' // đường dẫn tới file bạn lưu
 
 const changePwdOpen = ref(false)
 
