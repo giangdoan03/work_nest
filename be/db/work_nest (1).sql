@@ -1,9 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Sep 02, 2025 at 04:27 PM
+-- Generation Time: Sep 05, 2025 at 09:22 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -29,16 +29,16 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `approval_instances` (
   `id` bigint UNSIGNED NOT NULL,
-  `target_type` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `target_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `target_id` bigint UNSIGNED NOT NULL,
   `version` int NOT NULL DEFAULT '1',
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
-  `status` enum('not_sent','pending','approved','rejected') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'not_sent',
+  `status` enum('not_sent','pending','approved','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'not_sent',
   `current_level` int NOT NULL DEFAULT '0',
   `submitted_by` bigint UNSIGNED DEFAULT NULL,
   `submitted_at` datetime DEFAULT NULL,
   `finalized_at` datetime DEFAULT NULL,
-  `notes` text COLLATE utf8mb4_unicode_ci,
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `meta_json` json DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -81,7 +81,7 @@ CREATE TABLE `approval_logs` (
   `id` bigint UNSIGNED NOT NULL,
   `approval_instance_id` bigint UNSIGNED NOT NULL,
   `actor_id` bigint UNSIGNED NOT NULL,
-  `action` enum('send','approve','reject','update_steps','cancel','reset') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `action` enum('send','approve','reject','update_steps','cancel','reset') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `data_json` json DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -134,6 +134,19 @@ INSERT INTO `approval_logs` (`id`, `approval_instance_id`, `actor_id`, `action`,
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `approval_reads`
+--
+
+CREATE TABLE `approval_reads` (
+  `id` bigint NOT NULL,
+  `user_id` bigint NOT NULL,
+  `step_id` bigint NOT NULL,
+  `read_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `approval_steps`
 --
 
@@ -142,11 +155,11 @@ CREATE TABLE `approval_steps` (
   `approval_instance_id` bigint UNSIGNED NOT NULL,
   `level` int NOT NULL,
   `approver_id` bigint UNSIGNED NOT NULL,
-  `status` enum('pending','approved','rejected') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `status` enum('pending','approved','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
   `commented_at` datetime DEFAULT NULL,
-  `note` text COLLATE utf8mb4_unicode_ci,
+  `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `acted_by` bigint UNSIGNED DEFAULT NULL,
-  `acted_role` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `acted_role` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -193,14 +206,14 @@ CREATE TABLE `biddings` (
   `estimated_cost` decimal(18,2) DEFAULT NULL,
   `assigned_to` int DEFAULT NULL,
   `manager_id` int DEFAULT NULL,
-  `collaborators` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `collaborators` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `start_date` date DEFAULT NULL,
   `end_date` date DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `status` tinyint NOT NULL DEFAULT '1' COMMENT '1=Đang chuẩn bị, 2=Trúng thầu, 3=Hủy thầu',
   `priority` tinyint(1) NOT NULL DEFAULT '0' COMMENT '0=Bình thường, 1=Quan trọng',
-  `approval_status` enum('pending','approved','rejected') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `approval_status` enum('pending','approved','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
   `approval_steps` json DEFAULT NULL,
   `current_level` int UNSIGNED DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -241,7 +254,7 @@ CREATE TABLE `bidding_steps` (
   `end_date` datetime DEFAULT NULL,
   `approval_steps` json DEFAULT NULL,
   `current_level` int NOT NULL DEFAULT '0',
-  `approval_status` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `approval_status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `department` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -355,7 +368,7 @@ INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `start_
 (97, 11, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-22 03:44:20', '2025-09-01 13:40:50', 0, 10, NULL, 1),
 (98, 11, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-22 03:44:20', '2025-09-01 13:40:50', 0, 10, NULL, 12),
 (99, 11, 9, 'Duyệt hợp đồng bán xxxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:44:20', '2025-09-01 13:40:50', 0, 10, NULL, 16),
-(100, 5, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:44:51', '2025-09-01 13:40:50', 2, 4, NULL, 3),
+(100, 5, 1, 'Nhận nhu cầu khách hàng', '2025-09-04 00:00:00', '2025-10-07 00:00:00', NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-22 03:44:51', '2025-09-04 02:15:42', 2, 4, 5, 3),
 (101, 5, 2, 'Đánh giá tính khả thi xxx', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-22 03:44:51', '2025-09-01 13:40:50', 1, 4, NULL, 9),
 (102, 5, 3, 'Lập kế hoạch triển khai', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-22 03:44:51', '2025-09-01 13:40:50', 0, 4, NULL, 14),
 (103, 5, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-22 03:44:51', '2025-09-01 13:40:50', 0, 4, NULL, 2),
@@ -665,6 +678,49 @@ CREATE TABLE `comments` (
   `comment` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `comment_reads`
+--
+
+CREATE TABLE `comment_reads` (
+  `id` bigint NOT NULL,
+  `user_id` bigint NOT NULL,
+  `comment_id` bigint NOT NULL,
+  `read_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `comment_reads`
+--
+
+INSERT INTO `comment_reads` (`id`, `user_id`, `comment_id`, `read_at`) VALUES
+(1, 3, 43, '2025-09-05 07:58:16'),
+(2, 3, 42, '2025-09-05 07:58:16'),
+(3, 3, 41, '2025-09-05 07:58:16'),
+(4, 3, 40, '2025-09-05 07:58:16'),
+(5, 3, 39, '2025-09-05 07:58:16'),
+(6, 3, 38, '2025-09-05 07:58:16'),
+(7, 3, 37, '2025-09-05 07:58:16'),
+(8, 3, 36, '2025-09-05 07:58:16'),
+(9, 3, 35, '2025-09-05 07:58:16'),
+(10, 3, 34, '2025-09-05 07:58:16'),
+(11, 3, 44, '2025-09-05 08:02:22'),
+(12, 3, 33, '2025-09-05 08:09:55'),
+(13, 3, 32, '2025-09-05 08:10:06'),
+(14, 3, 45, '2025-09-05 08:10:18'),
+(15, 5, 45, '2025-09-05 08:19:15'),
+(16, 5, 44, '2025-09-05 08:19:15'),
+(17, 5, 43, '2025-09-05 08:19:15'),
+(18, 5, 42, '2025-09-05 08:19:15'),
+(19, 5, 41, '2025-09-05 08:19:15'),
+(20, 5, 35, '2025-09-05 08:19:15'),
+(21, 5, 34, '2025-09-05 08:19:15'),
+(22, 5, 33, '2025-09-05 08:19:15'),
+(23, 5, 32, '2025-09-05 08:19:15'),
+(24, 5, 30, '2025-09-05 08:19:15');
 
 -- --------------------------------------------------------
 
@@ -1545,7 +1601,7 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (27, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, 4, '2025-06-10', '2025-06-14', 'done', 'approved', 'bidding', 2, 1, 109, 3, 'high', 0, '2025-06-05 06:16:42', '2025-08-05 09:58:25', 1, 1, 1, 100, NULL),
 (28, 3, 'Thiết kế giao diện phụ - task con 3 có ngay bat dau - ngay ket thuc', 'Thiết kế giao diện cho phần chi tiết', 17, 4, '2025-06-25', '2025-07-31', 'done', 'approved', 'bidding', 2, 3, 111, 1, 'normal', 0, '2025-06-05 06:19:14', '2025-07-20 15:21:54', 1, 1, 3, 0, NULL),
 (29, 18, 'sub task 1', 'tesst subtask', 13, 4, '2025-06-24', '2025-07-31', '', 'pending', 'bidding', 5, 5, 104, 1, 'normal', 0, '2025-06-23 18:15:50', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
-(30, NULL, 'test', 'tesst tesst', 22, 1, '2025-06-24', '2025-07-30', 'done', 'approved', 'bidding', 5, 5, 104, 1, 'normal', 0, '2025-06-23 18:52:15', '2025-07-20 15:21:54', 1, 1, 1, 0, NULL),
+(30, NULL, 'test', 'tesst tesst', 22, 1, '2025-06-24', '2025-07-30', 'done', 'approved', 'bidding', 5, 5, 104, 1, 'normal', 0, '2025-06-23 18:52:15', '2025-09-03 19:15:10', 1, 1, 1, 100, NULL),
 (31, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, 4, '2025-08-29', '2025-08-31', 'overdue', 'pending', 'bidding', 2, 3, 111, 3, 'high', 0, '2025-06-24 18:47:18', '2025-08-05 09:07:21', 1, 1, 4, 50, NULL),
 (32, 1, 'tesst subtask', 'xxxxxxx', 22, 4, '2025-06-28', '2025-07-31', 'done', 'approved', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-06-28 08:01:02', '2025-07-20 15:21:54', 1, 1, 3, 0, NULL),
 (33, NULL, 'test task mới', 'test', 3, 4, '2025-06-29', '2025-07-31', 'done', 'approved', 'bidding', 5, 9, 108, 1, 'normal', 0, '2025-06-29 01:28:22', '2025-08-22 19:20:30', 1, 1, 2, 100, NULL),
@@ -1646,7 +1702,9 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (247, 201, '43424242', '42342424', 21, 17, '2025-09-01', '2025-10-31', '', 'pending', 'bidding', 35, 2, 285, 3, 'normal', 0, '2025-09-01 01:02:20', '2025-09-01 01:02:20', 1, 1, 2, 0, NULL),
 (248, NULL, 'việc mới', '453454355', 24, 5, '2025-09-01', '2025-10-31', 'doing', 'pending', 'bidding', 40, 1, 363, 3, 'normal', 0, '2025-09-01 01:39:12', '2025-09-01 01:39:12', 1, 1, 2, 0, NULL),
 (249, NULL, 'việc mới 2', '422343243242', 17, 19, '2025-09-01', '2025-10-31', 'doing', 'pending', 'bidding', 40, 1, 363, 3, 'normal', 0, '2025-09-01 01:39:40', '2025-09-01 01:39:40', 1, 1, 4, 0, NULL),
-(250, 200, 'việc con mới', '23432432424', 19, 17, '2025-09-01', '2025-10-31', '', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-01 01:51:50', '2025-09-01 01:51:50', 1, 1, 3, 0, NULL);
+(250, 200, 'việc con mới', '23432432424', 19, 17, '2025-09-01', '2025-10-31', '', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-01 01:51:50', '2025-09-01 01:51:50', 1, 1, 3, 0, NULL),
+(251, NULL, 'con của tesst mới', '45342424234', 5, 5, '2025-09-04', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-03 20:12:58', '2025-09-03 20:12:58', 1, 1, 2, 0, NULL),
+(252, 199, 'xxxxxxx', 'sdadsadsadasd', 5, 5, '2025-09-04', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-03 20:13:39', '2025-09-03 20:13:39', 1, 1, 3, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -1784,7 +1842,9 @@ INSERT INTO `task_approvals` (`id`, `task_id`, `level`, `status`, `approved_by`,
 (148, 247, 1, 'pending', NULL, NULL, NULL),
 (149, 248, 1, 'pending', NULL, NULL, NULL),
 (150, 249, 1, 'pending', NULL, NULL, NULL),
-(151, 250, 1, 'pending', NULL, NULL, NULL);
+(151, 250, 1, 'pending', NULL, NULL, NULL),
+(152, 251, 1, 'pending', NULL, NULL, NULL),
+(153, 252, 1, 'pending', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1894,7 +1954,22 @@ INSERT INTO `task_comments` (`id`, `task_id`, `user_id`, `comment_id`, `content`
 (28, 3, 1, NULL, 'test comment có kèm file 4', '2025-06-26 19:26:35', '2025-06-26 19:26:35', 'company_image_demo_3.png', 'http://assets.worknest.local/files/1750991195_135fcf3c15b7a40c6907.png', NULL),
 (29, 3, 1, NULL, 'test comment kèm file 5', '2025-06-26 19:27:25', '2025-06-26 19:27:25', '9b29de48e98b3674281f6f5a6be86d7f.png', 'http://assets.worknest.local/files/1750991245_539843ef1666129d9b88.png', NULL),
 (30, 1, 1, NULL, 'tesse', '2025-06-27 07:39:39', '2025-06-27 07:39:39', 'z4162527418501-a6d02d439cc8529-8174-3128-1678410959.jpg', 'http://assets.worknest.local/files/1751035179_959e2a1021859cd45d72.jpg', NULL),
-(31, 47, 1, NULL, 'comment mới', '2025-07-01 04:03:52', '2025-07-01 04:03:52', 'zalo_sharelogo.png', 'http://assets.worknest.local/files/1751367832_a433d54a7fdf00ac5670.png', NULL);
+(31, 47, 1, NULL, 'comment mới', '2025-07-01 04:03:52', '2025-07-01 04:03:52', 'zalo_sharelogo.png', 'http://assets.worknest.local/files/1751367832_a433d54a7fdf00ac5670.png', NULL),
+(32, 237, 3, NULL, 'zzzzz', '2025-09-03 23:49:19', '2025-09-03 23:49:19', NULL, NULL, NULL),
+(33, 237, 3, NULL, 'gdgfdgfgd', '2025-09-03 23:49:23', '2025-09-03 23:49:23', NULL, NULL, NULL),
+(34, 237, 3, NULL, 'dsdadadad', '2025-09-03 23:49:27', '2025-09-03 23:49:27', NULL, NULL, NULL),
+(35, 245, 3, NULL, 'xxxxxx', '2025-09-04 01:10:43', '2025-09-04 01:10:43', NULL, NULL, NULL),
+(36, 199, 3, NULL, 'xxxxxx', '2025-09-05 00:29:39', '2025-09-05 00:29:39', NULL, NULL, NULL),
+(37, 199, 3, NULL, '4342424', '2025-09-05 00:29:45', '2025-09-05 00:29:45', NULL, NULL, NULL),
+(38, 199, 3, NULL, '4354353535', '2025-09-05 00:29:50', '2025-09-05 00:29:50', NULL, NULL, NULL),
+(39, 200, 3, NULL, '42342424', '2025-09-05 00:29:58', '2025-09-05 00:29:58', NULL, NULL, NULL),
+(40, 250, 3, NULL, '43243242432424324324', '2025-09-05 00:30:07', '2025-09-05 00:30:07', NULL, NULL, NULL),
+(41, 251, 3, NULL, 'xxxxxxxxxxxxxxxx', '2025-09-05 00:30:14', '2025-09-05 00:30:14', NULL, NULL, NULL),
+(42, 252, 3, NULL, 'nnnnnmnmnm', '2025-09-05 00:30:21', '2025-09-05 00:30:21', NULL, NULL, NULL),
+(43, 251, 3, NULL, 'vvvvvvvvvvvvvvvv', '2025-09-05 00:32:39', '2025-09-05 00:32:39', NULL, NULL, NULL),
+(44, 229, 3, NULL, '4324242424', '2025-09-05 01:01:53', '2025-09-05 01:01:53', NULL, NULL, NULL),
+(45, 237, 3, NULL, '3434xxxxxxxxxxxxxxxxxxx', '2025-09-05 01:10:11', '2025-09-05 01:10:11', NULL, NULL, NULL),
+(46, 238, 3, NULL, '423434324324', '2025-09-05 01:50:06', '2025-09-05 01:50:06', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2015,9 +2090,9 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `name`, `phone`, `avatar`, `role`, `department_id`, `role_id`) VALUES
 (1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-08-04 14:01:30', 'Nguyễn Văn Ái', '0988888888', 'avatars/1749049795_4087ec00b95ac222533a.png', 'Trưởng phòng', 1, 2),
-(3, 'superadmin@example.com', '$2y$10$kJ6V.Isy8GCV6kRwFekdEuS/PvVzBe4PTeQUqpWvnW3efeyhbg4Hq', '2025-04-20 14:02:38', '2025-07-14 22:52:57', 'Super Admin', '0988888888', NULL, 'super admin', 2, 1),
+(3, 'superadmin@example.com', '$2y$10$duTynUTzT2E8r/XfWDEAv.zruGL1CwtgiFyHoBybvwd8valutSCTW', '2025-04-20 14:02:38', '2025-09-05 01:26:51', 'Super Admin', '0988888888', 'uploads/avatars/1757035611_0019d985edb37c35aaa9.jpg', 'super admin', 2, 1),
 (4, 'nguyenvana@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-05-26 04:33:21', '2025-08-04 16:27:31', 'Nguyễn Văn Tuấn', '0909123456', NULL, 'Nhân viên', 2, 3),
-(5, 'a@worknest.vn', '$2y$10$fPUyT/hhSHhPknmvWgPtxelsaQfNLRiOVZ3Wayj2tbcNo4lApUFEW', '2025-06-04 09:10:50', '2025-08-04 06:31:02', 'Nguyễn Vân Anh', '0911111111', NULL, 'user', 1, 3),
+(5, 'a@worknest.vn', '$2y$10$fPUyT/hhSHhPknmvWgPtxelsaQfNLRiOVZ3Wayj2tbcNo4lApUFEW', '2025-06-04 09:10:50', '2025-09-05 01:27:55', 'Nguyễn Vân Anh', '0911111111', 'uploads/avatars/1757035675_b1a8dfcbbebca0a39cb1.jpg', 'user', 1, 3),
 (6, 'b@worknest.vn', '$2y$10$ZKKb/DZ/dk0eFQW/xfG3Ne8Ozrdt1TcQcR1alq4KP5biJpmUm2Uuy', '2025-06-04 09:11:21', '2025-08-04 06:31:07', 'Trần Thị B', '0911111112', NULL, 'user', 1, 2),
 (7, 'c@worknest.vn', '$2y$10$0M2AJM7k/CXzGKJCeeEh1.g2tFjFCZfeOLDGKqGgm3dUHqqpNtciW', '2025-06-04 09:11:44', '2025-08-04 06:31:16', 'Lê Văn C', '0911111113', NULL, 'user', 2, 3),
 (8, 'd@worknest.vn', '$2y$10$UfmfTcnJd1Hc1wcH0Utaz.w9IFmXwNCzoFUQdahizBIri0BTfsDp2', '2025-06-04 09:12:07', '2025-08-04 06:31:20', 'Phạm Thị D', '0911111114', NULL, 'user', 2, 3),
@@ -2061,6 +2136,15 @@ ALTER TABLE `approval_logs`
   ADD KEY `idx_instance` (`approval_instance_id`);
 
 --
+-- Indexes for table `approval_reads`
+--
+ALTER TABLE `approval_reads`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_user_step` (`user_id`,`step_id`),
+  ADD KEY `idx_user` (`user_id`),
+  ADD KEY `idx_step` (`step_id`);
+
+--
 -- Indexes for table `approval_steps`
 --
 ALTER TABLE `approval_steps`
@@ -2098,6 +2182,15 @@ ALTER TABLE `categories`
 ALTER TABLE `comments`
   ADD PRIMARY KEY (`id`),
   ADD KEY `fk_user` (`user_id`);
+
+--
+-- Indexes for table `comment_reads`
+--
+ALTER TABLE `comment_reads`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_user_comment` (`user_id`,`comment_id`),
+  ADD KEY `idx_comment` (`comment_id`),
+  ADD KEY `idx_user` (`user_id`);
 
 --
 -- Indexes for table `contracts`
@@ -2259,6 +2352,12 @@ ALTER TABLE `approval_logs`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
+-- AUTO_INCREMENT for table `approval_reads`
+--
+ALTER TABLE `approval_reads`
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `approval_steps`
 --
 ALTER TABLE `approval_steps`
@@ -2293,6 +2392,12 @@ ALTER TABLE `categories`
 --
 ALTER TABLE `comments`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `comment_reads`
+--
+ALTER TABLE `comment_reads`
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `contracts`
@@ -2394,13 +2499,13 @@ ALTER TABLE `step_templates`
 -- AUTO_INCREMENT for table `tasks`
 --
 ALTER TABLE `tasks`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=251;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=253;
 
 --
 -- AUTO_INCREMENT for table `task_approvals`
 --
 ALTER TABLE `task_approvals`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=152;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=154;
 
 --
 -- AUTO_INCREMENT for table `task_approval_logs`
@@ -2412,7 +2517,7 @@ ALTER TABLE `task_approval_logs`
 -- AUTO_INCREMENT for table `task_comments`
 --
 ALTER TABLE `task_comments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT for table `task_extensions`
