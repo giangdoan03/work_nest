@@ -254,7 +254,7 @@
                                 </a-tab-pane>
                                 <!-- Tab 2: Lịch sử phê duyệt -->
                                 <a-tab-pane key="approval-history" tab="Lịch sử phê duyệt">
-                                    <div class="task-info-content p-14">
+                                    <div class="task-info-content">
                                         <a-row :gutter="16">
                                             <a-col :span="24">
                                                 <a-typography-title :level="5">Lịch sử phê duyệt</a-typography-title>
@@ -1256,12 +1256,10 @@ onMounted(async () => {
 
 .task-in {
     border-bottom: 1px solid #bebebece;
-    padding: 14px;
     padding-bottom: 0;
 }
 
 .task-in-end {
-    padding: 14px;
     border-bottom: none;
 }
 
@@ -1299,11 +1297,9 @@ onMounted(async () => {
 /* các khối form cũ giữ nguyên */
 .task-in {
     border-bottom: 1px solid #bebebece;
-    padding: 14px;
     padding-bottom: 0;
 }
 .task-in-end {
-    padding: 14px;
     border-bottom: none;
 }
 
@@ -1316,8 +1312,8 @@ onMounted(async () => {
 .task-left-tabs :deep(.ant-tabs-tab) { font-weight: 500; }
 .mt16 { margin-top: 16px; }
 .task-info-content { border-radius:8px; background:#fff; }
-.task-in { border-bottom:1px solid #bebebece; padding:14px; padding-bottom:0; }
-.task-in-end { padding:14px; border-bottom:none; }
+.task-in { border-bottom:1px solid #bebebece; padding-bottom:0; }
+.task-in-end { border-bottom:none; }
 .p-14 {
     padding: 14px;
 }
