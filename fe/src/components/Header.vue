@@ -43,11 +43,74 @@
                     </a-button>
                 </a-tooltip>
 
-                <a-tooltip title="Tin nhắn">
+<!--                <a-tooltip title="Tin nhắn">-->
+<!--                    <a-badge :count="unreadChat" size="small">-->
+<!--                        <MessageOutlined class="ha-icon" @click="openChat"/>-->
+<!--                    </a-badge>-->
+<!--                </a-tooltip>-->
+
+                <a-dropdown
+                    v-model:open="inboxOpen"
+                    placement="bottomRight"
+                    :trigger="['click']"
+                    :getPopupContainer="triggerNode => triggerNode.parentNode"
+                    @openChange="onInboxOpenChange"
+                >
                     <a-badge :count="unreadChat" size="small">
-                        <MessageOutlined class="ha-icon" @click="openChat"/>
+                        <MessageOutlined class="ha-icon" />
                     </a-badge>
-                </a-tooltip>
+
+                    <template #overlay>
+                        <a-card :bodyStyle="{ padding: '8px' }" style="width: 380px; max-height: 420px; overflow: auto;">
+                            <a-spin :spinning="inboxLoading">
+                                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 8px 4px;">
+                                    <span style="font-weight:600;">Tin nhắn gần đây</span>
+                                    <a-button type="link" size="small" @click.stop="refreshInbox">Làm mới</a-button>
+                                </div>
+
+                                <a-empty v-if="!inboxItems.length && !inboxLoading" description="Chưa có tin nhắn" />
+                                <a-list v-else :data-source="inboxItems" item-layout="horizontal">
+                                    <template #renderItem="{ item }">
+                                        <a-list-item
+                                            @click="(e) => openComment(item, e)"
+                                            style="cursor:pointer; padding:8px; border-radius:8px;"
+                                            :class="{ 'bg-[#fff7e6]': item.is_unread == 1 }"
+                                        >
+                                            <a-list-item-meta>
+                                                <template #avatar>
+                                                    <a-avatar :src="item.author_avatar">
+                                                        <template #icon><UserOutlined /></template>
+                                                    </a-avatar>
+                                                </template>
+                                                <template #title>
+                                                    <div style="display:flex;gap:6px;align-items:center;">
+                                                        <span style="font-weight:600;">{{ item.author_name || 'Ẩn danh' }}</span>
+                                                        <a-tag v-if="item.is_unread == 1" color="orange">Mới</a-tag>
+                                                    </div>
+                                                </template>
+                                                <template #description>
+                                                    <div style="color:#555">
+                                                        <div style="white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">
+                                                            {{ item.content }}
+                                                        </div>
+                                                        <div style="font-size:12px; color:#999; margin-top:2px;">
+                                                            {{ item.task_title }} • {{ formatTime(item.created_at) }}
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </a-list-item-meta>
+                                        </a-list-item>
+                                    </template>
+                                </a-list>
+
+                                <div v-if="inboxHasMore" style="padding:8px;">
+                                    <a-button block @click="loadMoreInbox" :loading="inboxLoading">Tải thêm</a-button>
+                                </div>
+                            </a-spin>
+                        </a-card>
+                    </template>
+                </a-dropdown>
+
 
                 <a-tooltip title="Thông báo">
                     <a-badge :count="unreadNotify" size="small">
@@ -132,10 +195,27 @@
 <script setup>
 import {useRoute, useRouter} from 'vue-router'
 import { message } from 'ant-design-vue';
-import { ref } from 'vue'
-import {computed} from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import {storeToRefs} from 'pinia'
-import {useUserStore} from '../stores/user'
+
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import 'dayjs/locale/vi'
+dayjs.extend(relativeTime)
+dayjs.locale('vi')
+
+import { getMyRecentCommentsAPI, getMyUnreadCommentsCountAPI, markCommentsReadAPI } from '@/api/task'
+import { useUserStore } from '@/stores/user'
+
+const userId = computed(() => userStore.user?.id)
+
+const inboxItems = ref([])
+const inboxPage = ref(1)
+const inboxHasMore = ref(false)
+const inboxLoading = ref(false)
+let poller = null
+
+
 import {
     MenuUnfoldOutlined,
     MenuFoldOutlined,
@@ -160,6 +240,24 @@ const props = defineProps({
     collapsed: Boolean,
     user: Object
 })
+
+const inboxOpen = ref(false)
+const onInboxOpenChange = async (open) => {
+    inboxOpen.value = open
+    if (!open) return
+    try {
+        await refreshInbox()
+        const unreadIds = inboxItems.value.filter(i => i.is_unread == 1).map(i => i.id)
+        if (unreadIds.length) {
+            await markCommentsReadAPI(userId.value, unreadIds)
+            inboxItems.value = inboxItems.value.map(i => ({ ...i, is_unread: 0 }))
+            await fetchUnread()
+        }
+    } catch (e) {
+        console.error(e)
+        message.warning('Không tải được hộp thư bình luận')
+    }
+}
 
 
 import {useCommonStore} from '@/stores/common'
@@ -234,6 +332,91 @@ const redirectToProfile = () => {
         }
     })
 }
+
+const formatTime = (ts) => dayjs(ts).fromNow()
+
+const fetchUnread = async () => {
+    if (!userId.value) return
+    try {
+        const { data } = await getMyUnreadCommentsCountAPI(userId.value)
+        unreadChat.value = data.unread || 0
+    } catch (e) { /* ignore */ }
+}
+
+const fetchInbox = async (page = 1) => {
+    if (!userId.value) return
+    inboxLoading.value = true
+    try {
+        const { data } = await getMyRecentCommentsAPI({ user_id: userId.value, page, limit: 10 })
+        const list = data.comments || []
+        inboxItems.value = page === 1 ? list : [...inboxItems.value, ...list]
+        inboxHasMore.value = (data.pagination?.currentPage || 1) < (data.pagination?.totalPages || 1)
+        inboxPage.value = page
+    } finally {
+        inboxLoading.value = false
+    }
+}
+
+const refreshInbox = () => fetchInbox(1)
+const loadMoreInbox = () => fetchInbox(inboxPage.value + 1)
+
+/** Khi dropdown mở: load và đánh dấu đã đọc những item đang hiển thị */
+const onInboxVisible = async (visible) => {
+    if (visible) {
+        await fetchInbox(1)
+        // Đánh dấu đã đọc các comment đang thấy
+        const unreadIds = inboxItems.value.filter(i => i.is_unread == 1).map(i => i.id)
+        if (unreadIds.length) {
+            await markCommentsReadAPI(userId.value, unreadIds)
+            // cập nhật UI ngay
+            inboxItems.value = inboxItems.value.map(i => ({ ...i, is_unread: 0 }))
+            await fetchUnread()
+        }
+    }
+}
+
+const buildTaskDetailPath = (item) => {
+    const type = (item.linked_type || '').toLowerCase()
+    if (type.includes('bidding'))   return `/bidding-tasks/${item.task_id}/info`
+    if (type.includes('contract'))  return `/contract-tasks/${item.task_id}/info`
+    // mặc định: việc nội bộ
+    return `/tasks/${item.task_id}/info`
+}
+
+const openComment = async (item, e) => {
+    e?.stopPropagation()
+    // đóng dropdown ngay để UX mượt
+    inboxOpen.value = false
+
+    // điều hướng sang màn chi tiết task + focus tab bình luận (nếu bạn handle query)
+    const path = buildTaskDetailPath(item)
+    await router.push({path, query: {focus: 'comments', c: item.id}})
+
+    // đánh dấu đã đọc (nếu chưa)
+    if (item.is_unread == 1) {
+        try {
+            await markCommentsReadAPI(userId.value, [item.id])
+            item.is_unread = 0
+            await fetchUnread()
+        } catch (err) {
+            console.error(err)
+        }
+    }
+}
+
+const startPolling = () => {
+    stopPolling()
+    poller = setInterval(fetchUnread, 30000) // 30s
+}
+const stopPolling = () => { if (poller) clearInterval(poller); poller = null }
+
+onMounted(() => {
+    fetchUnread()
+    startPolling()
+})
+
+onBeforeUnmount(() => stopPolling())
+
 </script>
 
 <style scoped>

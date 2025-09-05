@@ -213,6 +213,11 @@ $routes->group('api', function ($routes) {
         $routes->patch('(:num)/steps', 'ApprovalController::updateSteps/$1');
     });
 
+    $routes->get('my/comments', 'CommentController::inbox');                       // danh sách bình luận liên quan tới tôi
+    $routes->get('my/comments/unread-count', 'CommentController::unreadCount');    // đếm chưa đọc
+    $routes->post('comments/mark-read', 'CommentController::markReadBatch');       // đánh dấu nhiều cái đã đọc
+    $routes->post('comments/(:num)/read', 'CommentController::markRead/$1');       // đánh dấu 1 cái
+
 
 
 });

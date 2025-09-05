@@ -1,6 +1,5 @@
 <template>
     <div class="comment">
-        <a-typography-title :level="5" style="color: #7c7c7c;">Thảo luận</a-typography-title>
         <a-input 
             v-model:value="inputValue"
             style="width: 100%;" 

@@ -86,3 +86,18 @@ export const countTaskExtensionsAPI = (taskId) =>
 export const getTaskExtensions = (taskId) =>
     instance.get(`/tasks/${taskId}/extensions`);
 
+
+
+// 🔔 Inbox bình luận của tôi
+export const getMyRecentCommentsAPI = (params = {}) =>
+    instance.get('/my/comments', { params });
+
+export const getMyUnreadCommentsCountAPI = (userId) =>
+    instance.get('/my/comments/unread-count', { params: { user_id: userId } });
+
+export const markCommentsReadAPI = (userId, commentIds = []) =>
+    instance.post('/comments/mark-read', { user_id: userId, comment_ids: commentIds });
+
+export const markCommentReadAPI = (commentId, userId) =>
+    instance.post(`/comments/${commentId}/read`, { user_id: userId });
+

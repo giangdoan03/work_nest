@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\CommentModel;
+use App\Models\CommentReadModel;
 use App\Models\TaskCommentModel;
 use App\Models\TaskFileModel;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -126,4 +127,140 @@ class CommentController extends ResourceController
         $this->model->delete($id);
         return $this->respondDeleted(['message' => 'Comment deleted']);
     }
+
+    public function inbox(): ResponseInterface
+    {
+        $uid = (int) ($this->request->getGet('user_id') ?? 0);
+        if (!$uid) return $this->fail('Missing user_id', 400);
+
+        $page   = max(1, (int) ($this->request->getGet('page') ?: 1));
+        $limit  = min(50, (int) ($this->request->getGet('limit') ?: 10));
+        $offset = ($page - 1) * $limit;
+
+        $db = db_connect();
+
+        try {
+            // ⚠️ Nếu bạn đã có cột proposed_by, thêm `OR t.proposed_by = ?` + bind thêm $uid
+            $sql = "
+            SELECT
+              c.id,
+              c.task_id,
+              c.user_id AS author_id,
+              c.content,
+              c.created_at,
+              t.title AS task_title,
+              t.linked_type,
+              u.name  AS author_name,
+              u.avatar AS author_avatar,
+              CASE WHEN EXISTS (
+                  SELECT 1 FROM comment_reads cr
+                  WHERE cr.comment_id = c.id AND cr.user_id = ?
+              ) THEN 0 ELSE 1 END AS is_unread
+            FROM task_comments c
+            INNER JOIN tasks t ON t.id = c.task_id
+            LEFT JOIN users u   ON u.id = c.user_id
+            WHERE (t.assigned_to = ? OR t.created_by = ?)
+            ORDER BY c.created_at DESC
+            LIMIT ? OFFSET ?";
+
+            $rows = $db->query($sql, [$uid, $uid, $uid, $limit, $offset])->getResultArray();
+
+            $countSql = "
+            SELECT COUNT(*) AS cnt
+            FROM task_comments c
+            INNER JOIN tasks t ON t.id = c.task_id
+            WHERE (t.assigned_to = ? OR t.created_by = ?)";
+            $total = (int) $db->query($countSql, [$uid, $uid])->getRow('cnt');
+
+            return $this->respond([
+                'comments' => $rows,
+                'pagination' => [
+                    'currentPage' => $page,
+                    'totalPages'  => (int) ceil($total / $limit),
+                    'totalItems'  => $total,
+                    'perPage'     => $limit,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', 'Inbox query failed: {msg}', ['msg' => $e->getMessage()]);
+            return $this->failServerError('Failed to load inbox');
+        }
+    }
+
+
+    /**
+     * GET /my/comments/unread-count?user_id=123
+     */
+    public function unreadCount(): ResponseInterface
+    {
+        $uid = (int) ($this->request->getGet('user_id') ?? 0);
+        if (!$uid) return $this->fail('Missing user_id', 400);
+
+        $db = db_connect();
+        try {
+            $sql = "
+          SELECT COUNT(*) AS cnt
+          FROM task_comments c
+          INNER JOIN tasks t ON t.id = c.task_id
+          WHERE (t.assigned_to = ? OR t.created_by = ?)
+            AND NOT EXISTS (
+              SELECT 1 FROM comment_reads cr
+              WHERE cr.comment_id = c.id AND cr.user_id = ?
+            )";
+            $row = $db->query($sql, [$uid, $uid, $uid])->getRowArray();
+            return $this->respond(['unread' => (int) ($row['cnt'] ?? 0)]);
+        } catch (\Throwable $e) {
+            log_message('error', 'UnreadCount failed: {msg}', ['msg' => $e->getMessage()]);
+            return $this->respond(['unread' => 0]); // đừng văng 500 chỉ vì đếm lỗi
+        }
+    }
+
+    /**
+     * POST /comments/mark-read
+     * body: { user_id: 123, comment_ids: [1,2,3] }
+     */
+    public function markReadBatch(): ResponseInterface
+    {
+        $uid = (int) $this->request->getVar('user_id');
+        $ids = (array) ($this->request->getVar('comment_ids') ?? []);
+        if (!$uid || !$ids) return $this->fail('Missing user_id or comment_ids', 400);
+
+        $readModel = new CommentReadModel();
+        $now = date('Y-m-d H:i:s');
+
+        $rows = array_map(fn($cid) => [
+            'user_id'    => (int) $uid,
+            'comment_id' => (int) $cid,
+            'read_at'    => $now
+        ], $ids);
+
+        // insert ignore theo cặp unique (user_id, comment_id)
+        foreach ($rows as $r) {
+            try { $readModel->insert($r, false); } catch (\Throwable $e) { /* ignore duplicate */ }
+        }
+
+        return $this->respond(['ok' => true, 'marked' => count($rows)]);
+    }
+
+    /**
+     * POST /comments/{id}/read  body: { user_id: 123 }
+     */
+    public function markRead($id = null): ResponseInterface
+    {
+        $uid = (int) $this->request->getVar('user_id');
+        if (!$uid || !$id) return $this->fail('Missing user_id or id', 400);
+
+        $readModel = new CommentReadModel();
+        try {
+            $readModel->insert([
+                'user_id' => $uid,
+                'comment_id' => (int) $id,
+                'read_at' => date('Y-m-d H:i:s')
+            ], false);
+        } catch (\Throwable $e) { /* ignore duplicate */ }
+
+        return $this->respond(['ok' => true]);
+    }
+
+
 }
