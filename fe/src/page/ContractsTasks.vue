@@ -1,148 +1,150 @@
 <template>
     <div>
-        <!-- Header + Search + Badge -->
-        <a-flex justify="space-between" align="center" style="margin-bottom:10px">
-            <div style="display:flex;align-items:center;gap:8px;">
-                <a-typography-title :level="4" style="margin:0">Danh sách hợp đồng</a-typography-title>
-                <a-badge :count="totalDisplay" show-zero/>
-            </div>
-            <a-space>
-                <a-input
-                    v-model:value="searchTerm"
-                    allow-clear
-                    style="width:320px"
-                    placeholder="Tìm hợp đồng theo tên/mã…"
-                >
-                    <template #prefix>
-                        <SearchOutlined/>
-                    </template>
-                </a-input>
-                <a-button type="primary" @click="showPopupCreate">Thêm hợp đồng mới</a-button>
-            </a-space>
-        </a-flex>
-
-        <!-- Summary cards -->
-        <div class="summary-cards">
-            <a-card
-                v-for="item in statsContracts"
-                :key="item.key"
-                :style="{ backgroundColor: item.bg, cursor:'pointer' }"
-                @click="openContractDrawer(item.key,item.label)"
-            >
-                <a-space direction="vertical" align="center">
-                    <component :is="item.icon" :style="{fontSize:'32px',color:item.color}"/>
-                    <div>{{ item.label }}</div>
-                    <h2 class="number" :style="{ color: item.color }">{{ item.count }}</h2>
-                </a-space>
-            </a-card>
-        </div>
-
-        <!-- Bulk actions -->
-        <a-flex justify="space-between" align="center" style="margin-top:12px">
-            <div>
+        <a-card bordere>
+            <!-- Header + Search + Badge -->
+            <a-flex justify="space-between" align="center" style="margin-bottom:10px">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <a-typography-title :level="4" style="margin:0">Danh sách hợp đồng</a-typography-title>
+                    <a-badge :count="totalDisplay" show-zero/>
+                </div>
                 <a-space>
-                    <a-button danger v-if="selectedRowKeys.length" @click="handleBulkDelete">
-                        Xóa {{ selectedRowKeys.length }} hợp đồng
-                    </a-button>
-                </a-space>
-            </div>
-        </a-flex>
-
-        <!-- Table -->
-        <a-table
-            :columns="columns"
-            :data-source="tableData"
-            :loading="loading"
-            row-key="id"
-            :pagination="pagination"
-            :row-selection="rowSelection"
-            :scroll="{ x: 'max-content'}"
-            style="margin-top:4px"
-            @change="handleTableChange"
-        >
-            <template #bodyCell="{ column, record, index }">
-                <template v-if="column.dataIndex === 'stt'">
-                    {{ (pagination.current - 1) * pagination.pageSize + index + 1 }}
-                </template>
-
-                <template v-else-if="column.key === 'name'">
-                    <a-tooltip :title="record.name">
-                        <a-typography-text strong style="cursor:pointer" @click="goToContractDetail(record.id)">
-                            {{ truncateText(record.name, 25) }}
-                        </a-typography-text>
-                    </a-tooltip>
-                </template>
-
-                <!-- ✅ NEW: progress -->
-                <template v-else-if="column.dataIndex === 'progress'">
-                    <a-tooltip :title="progressText(record)">
-                        <a-progress
-                            :percent="progressPercent(record)"
-                            :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
-                            :status="progressPercent(record) >= 100 ? 'success' : 'active'"
-                            size="small"
-                            :show-info="progressPercent(record) >= 100"
-                        />
-                    </a-tooltip>
-                </template>
-
-                <!-- Người phụ trách -->
-                <template v-else-if="column.dataIndex === 'assigned_to_name'">
-                    <a-tooltip :title="record.assigned_to_name">
-                        <a-avatar :style="{backgroundColor:getAvatarColor(record.assigned_to_name)}" size="small">
-                            {{ getFirstLetter(record.assigned_to_name) }}
-                        </a-avatar>
-                    </a-tooltip>
-                </template>
-
-                <!-- Trạng thái -->
-                <template v-else-if="column.dataIndex === 'status'">
-                    <a-tag :color="getStatusColor(record.status)">
-                        {{ getStatusLabel(record.status) }}
-                    </a-tag>
-                </template>
-
-                <!-- Ngày tháng -->
-                <template v-else-if="column.dataIndex === 'start_date' || column.dataIndex === 'end_date'">
-                    {{ formatDate(record[column.dataIndex]) }}
-                </template>
-
-                <!-- Hạn -->
-                <template v-else-if="column.dataIndex === 'due'">
-                    <div :class="{ 'overdue-cell': Number(record.days_overdue) > 0 }">
-                        <a-tag v-if="record.days_remaining > 0" color="green">Còn {{ record.days_remaining }} ngày
-                        </a-tag>
-                        <a-tag v-else-if="record.days_remaining === 0 && record.days_overdue === 0" color="gold">Hạn
-                            chót hôm nay
-                        </a-tag>
-                        <a-tag v-else-if="record.days_overdue > 0" color="red">Quá hạn {{ record.days_overdue }} ngày
-                        </a-tag>
-                        <a-tag v-else color="default">Không xác định</a-tag>
-                    </div>
-                </template>
-
-                <!-- Hành động -->
-                <template v-else-if="column.dataIndex === 'action'">
-                    <a-tooltip title="Xem chi tiết">
-                        <EyeOutlined class="icon-action" style="color:#52c41a" @click="goToContractDetail(record.id)"/>
-                    </a-tooltip>
-                    <a-tooltip title="Chỉnh sửa">
-                        <EditOutlined class="icon-action" style="color:#1890ff" @click="showPopupDetail(record)"/>
-                    </a-tooltip>
-                    <a-popconfirm
-                        title="Bạn chắc chắn muốn xóa hợp đồng này?"
-                        ok-text="Xóa"
-                        cancel-text="Hủy"
-                        @confirm="deleteConfirm(record.id)"
-                        placement="topRight"
+                    <a-input
+                        v-model:value="searchTerm"
+                        allow-clear
+                        style="width:320px"
+                        placeholder="Tìm hợp đồng theo tên/mã…"
                     >
-                        <a-tooltip title="Xoá">
-                            <DeleteOutlined class="icon-action" style="color:red;margin:0"/>
+                        <template #prefix>
+                            <SearchOutlined/>
+                        </template>
+                    </a-input>
+                    <a-button type="primary" @click="showPopupCreate">Thêm hợp đồng mới</a-button>
+                </a-space>
+            </a-flex>
+
+            <!-- Summary cards -->
+            <div class="summary-cards">
+                <a-card
+                    v-for="item in statsContracts"
+                    :key="item.key"
+                    :style="{ backgroundColor: item.bg, cursor:'pointer' }"
+                    @click="openContractDrawer(item.key,item.label)"
+                >
+                    <a-space direction="vertical" align="center">
+                        <component :is="item.icon" :style="{fontSize:'32px',color:item.color}"/>
+                        <div>{{ item.label }}</div>
+                        <h2 class="number" :style="{ color: item.color }">{{ item.count }}</h2>
+                    </a-space>
+                </a-card>
+            </div>
+
+            <!-- Bulk actions -->
+            <a-flex justify="space-between" align="center" style="margin-top:12px">
+                <div>
+                    <a-space>
+                        <a-button danger v-if="selectedRowKeys.length" @click="handleBulkDelete">
+                            Xóa {{ selectedRowKeys.length }} hợp đồng
+                        </a-button>
+                    </a-space>
+                </div>
+            </a-flex>
+
+            <!-- Table -->
+            <a-table
+                :columns="columns"
+                :data-source="tableData"
+                :loading="loading"
+                row-key="id"
+                :pagination="pagination"
+                :row-selection="rowSelection"
+                :scroll="{ x: 'max-content'}"
+                style="margin-top:4px"
+                @change="handleTableChange"
+            >
+                <template #bodyCell="{ column, record, index }">
+                    <template v-if="column.dataIndex === 'stt'">
+                        {{ (pagination.current - 1) * pagination.pageSize + index + 1 }}
+                    </template>
+
+                    <template v-else-if="column.key === 'name'">
+                        <a-tooltip :title="record.name">
+                            <a-typography-text strong style="cursor:pointer" @click="goToContractDetail(record.id)">
+                                {{ truncateText(record.name, 25) }}
+                            </a-typography-text>
                         </a-tooltip>
-                    </a-popconfirm>
+                    </template>
+
+                    <!-- ✅ NEW: progress -->
+                    <template v-else-if="column.dataIndex === 'progress'">
+                        <a-tooltip :title="progressText(record)">
+                            <a-progress
+                                :percent="progressPercent(record)"
+                                :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
+                                :status="progressPercent(record) >= 100 ? 'success' : 'active'"
+                                size="small"
+                                :show-info="progressPercent(record) >= 100"
+                            />
+                        </a-tooltip>
+                    </template>
+
+                    <!-- Người phụ trách -->
+                    <template v-else-if="column.dataIndex === 'assigned_to_name'">
+                        <a-tooltip :title="record.assigned_to_name">
+                            <a-avatar :style="{backgroundColor:getAvatarColor(record.assigned_to_name)}" size="small">
+                                {{ getFirstLetter(record.assigned_to_name) }}
+                            </a-avatar>
+                        </a-tooltip>
+                    </template>
+
+                    <!-- Trạng thái -->
+                    <template v-else-if="column.dataIndex === 'status'">
+                        <a-tag :color="getStatusColor(record.status)">
+                            {{ getStatusLabel(record.status) }}
+                        </a-tag>
+                    </template>
+
+                    <!-- Ngày tháng -->
+                    <template v-else-if="column.dataIndex === 'start_date' || column.dataIndex === 'end_date'">
+                        {{ formatDate(record[column.dataIndex]) }}
+                    </template>
+
+                    <!-- Hạn -->
+                    <template v-else-if="column.dataIndex === 'due'">
+                        <div :class="{ 'overdue-cell': Number(record.days_overdue) > 0 }">
+                            <a-tag v-if="record.days_remaining > 0" color="green">Còn {{ record.days_remaining }} ngày
+                            </a-tag>
+                            <a-tag v-else-if="record.days_remaining === 0 && record.days_overdue === 0" color="gold">Hạn
+                                chót hôm nay
+                            </a-tag>
+                            <a-tag v-else-if="record.days_overdue > 0" color="red">Quá hạn {{ record.days_overdue }} ngày
+                            </a-tag>
+                            <a-tag v-else color="default">Không xác định</a-tag>
+                        </div>
+                    </template>
+
+                    <!-- Hành động -->
+                    <template v-else-if="column.dataIndex === 'action'">
+                        <a-tooltip title="Xem chi tiết">
+                            <EyeOutlined class="icon-action" style="color:#52c41a" @click="goToContractDetail(record.id)"/>
+                        </a-tooltip>
+                        <a-tooltip title="Chỉnh sửa">
+                            <EditOutlined class="icon-action" style="color:#1890ff" @click="showPopupDetail(record)"/>
+                        </a-tooltip>
+                        <a-popconfirm
+                            title="Bạn chắc chắn muốn xóa hợp đồng này?"
+                            ok-text="Xóa"
+                            cancel-text="Hủy"
+                            @confirm="deleteConfirm(record.id)"
+                            placement="topRight"
+                        >
+                            <a-tooltip title="Xoá">
+                                <DeleteOutlined class="icon-action" style="color:red;margin:0"/>
+                            </a-tooltip>
+                        </a-popconfirm>
+                    </template>
                 </template>
-            </template>
-        </a-table>
+            </a-table>
+        </a-card>
 
         <!-- Drawer lọc nhanh theo card -->
         <a-drawer
@@ -310,7 +312,7 @@ import dayjs from 'dayjs'
 
 const formRef = ref(null)
 import {message, Modal} from 'ant-design-vue'
-import { getBiddingsAPI, getBiddingAPI } from '@/api/bidding'
+import {getBiddingsAPI, getBiddingAPI} from '@/api/bidding'
 import {
     SearchOutlined,
     CheckCircleOutlined,
@@ -361,11 +363,11 @@ const isAwarded = computed(() => !!formData.value?.is_awarded)
 
 // Options cho select
 const awardedBiddings = ref([])       // gói thầu đã trúng
-const userOptions     = ref([])       // người phụ trách
-const customers       = ref([])       // danh sách KH
+const userOptions = ref([])       // người phụ trách
+const customers = ref([])       // danh sách KH
 
 const customerOptions = computed(() =>
-    customers.value.map(c => ({ label: c.name, value: String(c.id) }))
+    customers.value.map(c => ({label: c.name, value: String(c.id)}))
 )
 
 // Validate helpers
@@ -388,25 +390,25 @@ const validateDates = async () => {
 }
 
 const rules = computed(() => ({
-    name: [{ required:true, validator: validateName, trigger:'change' }],
-    code: [{ required:true, validator: validateCode, trigger:'change' }],
-    status: [{ required:true, message:'Vui lòng chọn trạng thái', trigger:'change' }],
-    start_date: [{ required:true, message:'Vui lòng chọn ngày bắt đầu', trigger:'change' }],
+    name: [{required: true, validator: validateName, trigger: 'change'}],
+    code: [{required: true, validator: validateCode, trigger: 'change'}],
+    status: [{required: true, message: 'Vui lòng chọn trạng thái', trigger: 'change'}],
+    start_date: [{required: true, message: 'Vui lòng chọn ngày bắt đầu', trigger: 'change'}],
     end_date: [
-        { required:true, message:'Vui lòng chọn ngày kết thúc', trigger:'change' },
-        { validator: validateDates, trigger:'change' },
+        {required: true, message: 'Vui lòng chọn ngày kết thúc', trigger: 'change'},
+        {validator: validateDates, trigger: 'change'},
     ],
-    description: [{ required:true, message:'Vui lòng nhập mô tả', trigger:'change' }],
-    bidding_id: [{ required: isAwarded.value, message:'Vui lòng chọn gói thầu đã trúng', trigger:'change' }],
-    customer_id: [{ required: !isAwarded.value, message:'Vui lòng chọn khách hàng', trigger:'change' }],
+    description: [{required: true, message: 'Vui lòng nhập mô tả', trigger: 'change'}],
+    bidding_id: [{required: isAwarded.value, message: 'Vui lòng chọn gói thầu đã trúng', trigger: 'change'}],
+    customer_id: [{required: !isAwarded.value, message: 'Vui lòng chọn khách hàng', trigger: 'change'}],
 }))
 
 // Gói thầu đã trúng (status WON = 2; nếu BE dùng 2 cho Hoàn tất)
 const fetchAwardedBiddings = async () => {
     try {
-        const res = await getBiddingsAPI({ status: 2, per_page: 1000 })
+        const res = await getBiddingsAPI({status: 2, per_page: 1000})
         const list = res?.data?.data ?? res?.data ?? []
-        awardedBiddings.value = list.map(b => ({ label: b.title, value: String(b.id) }))
+        awardedBiddings.value = list.map(b => ({label: b.title, value: String(b.id)}))
     } catch (e) {
         console.error(e)
         message.error('Không thể tải danh sách gói thầu đã trúng')
@@ -417,7 +419,7 @@ const fetchUsers = async () => {
     try {
         const res = await getUsers()
         const raw = Array.isArray(res.data) ? res.data : res.data?.data || []
-        userOptions.value = raw.map(u => ({ label: u.name, value: String(u.id) }))
+        userOptions.value = raw.map(u => ({label: u.name, value: String(u.id)}))
     } catch (e) {
         console.error(e)
     }
@@ -425,7 +427,7 @@ const fetchUsers = async () => {
 
 const fetchCustomers = async () => {
     try {
-        const res = await getCustomers({ page: 1, per_page: 1000 })
+        const res = await getCustomers({page: 1, per_page: 1000})
         customers.value = res?.data?.data ?? res?.data ?? []
     } catch (e) {
         console.error(e)
@@ -587,8 +589,8 @@ const fetchDrawerList = async () => {
         // Lọc theo key
         if (drawerKey.value === 'status_2' || drawerKey.value === 'status_3') {
             const st = drawerKey.value === 'status_2' ? 2 : 3
-            const res = await getContractsAPI({ ...base, status: st })
-            const { data, pager } = res.data || {}
+            const res = await getContractsAPI({...base, status: st})
+            const {data, pager} = res.data || {}
             drawerData.value = normalizeRows(data || [])
             applyDrawerPager(pager)
             return
@@ -596,8 +598,8 @@ const fetchDrawerList = async () => {
 
         if (drawerKey.value === 'important' || drawerKey.value === 'normal') {
             const pr = drawerKey.value === 'important' ? 1 : 0
-            const res = await getContractsAPI({ ...base, priority: pr })
-            const { data, pager } = res.data || {}
+            const res = await getContractsAPI({...base, priority: pr})
+            const {data, pager} = res.data || {}
             drawerData.value = normalizeRows(data || [])
             applyDrawerPager(pager)
             return
@@ -605,7 +607,7 @@ const fetchDrawerList = async () => {
 
         if (drawerKey.value === 'overdue') {
             // lấy nhiều rồi lọc client
-            const res = await getContractsAPI({ page: 1, per_page: 1000, with_progress: 1, _t: Date.now() })
+            const res = await getContractsAPI({page: 1, per_page: 1000, with_progress: 1, _t: Date.now()})
             const all = normalizeRows(res.data?.data || [])
             drawerData.value = all.filter(r => Number(r.days_overdue) > 0)
             drawerPagination.value.total = drawerData.value.length
@@ -787,17 +789,17 @@ const submitForm = async () => {
         await formRef.value?.validate?.()
 
         const payload = {
-            title:        (formData.value.name || '').trim(),
-            code:         formData.value.code || '',
-            status:       Number(formData.value.status),
-            start_date:   formData.value.start_date ? dayjs(formData.value.start_date).format('YYYY-MM-DD') : null,
-            end_date:     formData.value.end_date ? dayjs(formData.value.end_date).format('YYYY-MM-DD') : null,
-            description:  formData.value.description || '',
-            bidding_id:   formData.value.bidding_id || null,
-            assigned_to:  formData.value.assigned_to || null,
-            customer_id:  formData.value.customer_id || null,
-            priority:     Number(formData.value.priority || 0),
-            manager_id:   formData.value.manager_id || null,
+            title: (formData.value.name || '').trim(),
+            code: formData.value.code || '',
+            status: Number(formData.value.status),
+            start_date: formData.value.start_date ? dayjs(formData.value.start_date).format('YYYY-MM-DD') : null,
+            end_date: formData.value.end_date ? dayjs(formData.value.end_date).format('YYYY-MM-DD') : null,
+            description: formData.value.description || '',
+            bidding_id: formData.value.bidding_id || null,
+            assigned_to: formData.value.assigned_to || null,
+            customer_id: formData.value.customer_id || null,
+            priority: Number(formData.value.priority || 0),
+            manager_id: formData.value.manager_id || null,
             collaborators: Array.isArray(formData.value.collaborators) ? formData.value.collaborators : [],
         }
 
