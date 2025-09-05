@@ -42,13 +42,6 @@
                         <HomeOutlined />
                     </a-button>
                 </a-tooltip>
-
-<!--                <a-tooltip title="Tin nhắn">-->
-<!--                    <a-badge :count="unreadChat" size="small">-->
-<!--                        <MessageOutlined class="ha-icon" @click="openChat"/>-->
-<!--                    </a-badge>-->
-<!--                </a-tooltip>-->
-
                 <a-dropdown
                     v-model:open="inboxOpen"
                     placement="bottomRight"
@@ -252,7 +245,7 @@ const onInboxOpenChange = async (open) => {
     if (!open) return
     try {
         await refreshInbox()
-        const unreadIds = inboxItems.value.filter(i => i.is_unread == 1).map(i => i.id)
+        const unreadIds = inboxItems.value.filter(i => i.is_unread === 1).map(i => i.id)
         if (unreadIds.length) {
             await markCommentsReadAPI(userId.value, unreadIds)
             inboxItems.value = inboxItems.value.map(i => ({ ...i, is_unread: 0 }))
