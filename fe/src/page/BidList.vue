@@ -109,16 +109,19 @@
 
                         <!-- Người phụ trách -->
                         <template v-else-if="slot.column?.dataIndex === 'assigned_to_name'">
-                            <a-space :size="8" class="user-cell">
+                            <a-tooltip
+                                :title="slot.record.assigned_to_name || 'N/A'"
+                                placement="topLeft"
+                                :mouseEnterDelay="0.2"
+                            >
                                 <BaseAvatar
                                     :src="slot.record.assigned_to_avatar_url || slot.record.assigned_to_avatar"
-                                :name="slot.record.assigned_to_name"
-                                :size="24"
-                                shape="circle"
-                                :preferApiOrigin="true"
+                                    :name="slot.record.assigned_to_name || 'N/A'"
+                                    :size="24"
+                                    shape="circle"
+                                    :preferApiOrigin="true"
                                 />
-                                <span>{{ slot.record.assigned_to_name || 'N/A' }}</span>
-                            </a-space>
+                            </a-tooltip>
                         </template>
 
                         <!-- Chi phí -->
@@ -530,10 +533,10 @@ const columns = [
     {title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px'},
     {title: 'Tên gói thầu', dataIndex: 'title', key: 'title'},
     {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: '150px', align: 'center'},
-    {title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'left'},
+    {title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'center'},
     {title: 'Chi phí dự toán', dataIndex: 'estimated_cost', key: 'estimated_cost'},
     {title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority'},
-    {title: 'Trạng thái', dataIndex: 'status', key: 'status', align: 'center'},
+    // {title: 'Trạng thái', dataIndex: 'status', key: 'status', align: 'center'},
     {title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date'},
     {title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date'},
     {title: 'Hạn', dataIndex: 'due', key: 'due', align: 'center'},

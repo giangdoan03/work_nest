@@ -226,6 +226,10 @@ $routes->group('api', function ($routes) {
     $routes->post('approvals/mark-read', 'ApprovalInboxController::markRead');
 
 
+    $routes->post('documents/upload-file', 'DocumentController::uploadFile');   // multipart
+    $routes->post('documents/upload-url',  'DocumentController::uploadFromUrl'); // JSON {url:...}
+
+
 
 
 

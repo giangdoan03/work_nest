@@ -46,7 +46,6 @@
                     v-model:open="inboxOpen"
                     placement="bottomRight"
                     :trigger="['click']"
-                    :getPopupContainer="triggerNode => triggerNode.parentNode"
                     @openChange="onInboxOpenChange"
                 >
                     <a-badge :count="unreadChat" size="small">
@@ -114,7 +113,6 @@
                     v-model:open="notifyOpen"
                     placement="bottomRight"
                     :trigger="['click']"
-                    :getPopupContainer="node => node.parentNode"
                     @openChange="onNotifyOpenChange"
                 >
                     <a-badge :count="unreadNotify" size="small">
