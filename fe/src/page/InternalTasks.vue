@@ -1,192 +1,194 @@
 <template>
     <div>
-        <a-row justify="space-between" :gutter="[12,12]">
-            <a-col flex="auto">
-                <a-space wrap>
-                    <!-- Lọc theo loại (chỉ Tất cả / Gói thầu / Hợp đồng) -->
-                    <a-button-group>
-                        <a-button
-                            :type="dataFilter.linked_type === null ? 'primary' : 'default'"
-                            @click="filterByType(null)"
-                        >
-                            Tất cả ({{ totalTasks }})
-                        </a-button>
-                        <a-button
-                            :type="dataFilter.linked_type === 'bidding' ? 'primary' : 'default'"
-                            @click="filterByType('bidding')"
-                        >
-                            Gói thầu
-                        </a-button>
-                        <a-button
-                            :type="dataFilter.linked_type === 'contract' ? 'primary' : 'default'"
-                            @click="filterByType('contract')"
-                        >
-                            Hợp đồng
-                        </a-button>
-                    </a-button-group>
+        <a-card bordered>
+            <a-row justify="space-between" :gutter="[12,12]">
+                <a-col flex="auto">
+                    <a-space wrap>
+                        <!-- Lọc theo loại (chỉ Tất cả / Gói thầu / Hợp đồng) -->
+                        <a-button-group>
+                            <a-button
+                                :type="dataFilter.linked_type === null ? 'primary' : 'default'"
+                                @click="filterByType(null)"
+                            >
+                                Tất cả ({{ totalTasks }})
+                            </a-button>
+                            <a-button
+                                :type="dataFilter.linked_type === 'bidding' ? 'primary' : 'default'"
+                                @click="filterByType('bidding')"
+                            >
+                                Gói thầu
+                            </a-button>
+                            <a-button
+                                :type="dataFilter.linked_type === 'contract' ? 'primary' : 'default'"
+                                @click="filterByType('contract')"
+                            >
+                                Hợp đồng
+                            </a-button>
+                        </a-button-group>
 
-                    <!-- Icon mở drawer filter chi tiết -->
-                    <a-badge :count="activeFilterCount || null" :offset="[0,6]">
-                        <a-button type="default" @click="showFilterDrawer = true">
-                            <template #icon><FilterOutlined /></template>
-                        </a-button>
-                    </a-badge>
-                </a-space>
-            </a-col>
+                        <!-- Icon mở drawer filter chi tiết -->
+                        <a-badge :count="activeFilterCount || null" :offset="[0,6]">
+                            <a-button type="default" @click="showFilterDrawer = true">
+                                <template #icon><FilterOutlined /></template>
+                            </a-button>
+                        </a-badge>
+                    </a-space>
+                </a-col>
 
-            <a-col flex="none" style="text-align: right">
-                <a-popconfirm
-                    :title="`Bạn chắc chắn muốn xoá ${selectedRowKeys.length} nhiệm vụ?`"
-                    ok-text="Xoá"
-                    cancel-text="Hủy"
-                    placement="topRight"
-                    :getPopupContainer="t => t.parentNode"
-                    :okButtonProps="{ danger: true, loading: deletingBulk }"
-                    :cancelButtonProps="{ disabled: deletingBulk }"
-                    :disabled="selectedRowKeys.length === 0"
-                    @confirm="handleBulkDelete"
-                >
-                    <a-button
-                        danger
-                        type="primary"
-                        :loading="deletingBulk"
-                        :disabled="selectedRowKeys.length === 0 || deletingBulk"
+                <a-col flex="none" style="text-align: right">
+                    <a-popconfirm
+                        :title="`Bạn chắc chắn muốn xoá ${selectedRowKeys.length} nhiệm vụ?`"
+                        ok-text="Xoá"
+                        cancel-text="Hủy"
+                        placement="topRight"
+                        :getPopupContainer="t => t.parentNode"
+                        :okButtonProps="{ danger: true, loading: deletingBulk }"
+                        :cancelButtonProps="{ disabled: deletingBulk }"
+                        :disabled="selectedRowKeys.length === 0"
+                        @confirm="handleBulkDelete"
                     >
-                        Xoá {{ selectedRowKeys.length }} nhiệm vụ
-                    </a-button>
-                </a-popconfirm>
-            </a-col>
-        </a-row>
-
-        <a-table
-            :columns="columns"
-            :data-source="tableData"
-            :loading="loading"
-            @change="handleTableChange"
-            :pagination="pagination"
-            :row-selection="rowSelection"
-            style="margin-top: 8px; table-layout: fixed;"
-            row-key="id"
-            :scroll="{ x: 'max-content'}"
-            class="custom_table_list_task tiny-scroll"
-        >
-            <template #bodyCell="{ column, record, text }">
-                <!-- Tiêu đề -->
-                <template v-if="column.dataIndex === 'title'">
-                    <div class="title-cell" @click="showPopupDetail(record)" style="cursor:pointer;">
-                        <a-tooltip>
-                            <template #title>
-                                <div>
-                                    <div v-for="(line, i) in getTitleInfo(record).lines" :key="i">{{ line }}</div>
-                                </div>
-                            </template>
-
-                            <div class="line-1">
-                                <a-typography-text strong class="ellipsis w-200">{{ text }}</a-typography-text>
-                            </div>
-
-                            <div class="line-2" v-if="getTitleInfo(record).subline">
-                                <a-typography-text type="secondary" class="ellipsis w-260">
-                                    {{ getTitleInfo(record).subline }}
-                                </a-typography-text>
-                            </div>
-                        </a-tooltip>
-                    </div>
-                </template>
-
-                <!-- Ưu tiên -->
-                <template v-if="column.dataIndex === 'priority'">
-                    <a-tag v-if="text" :color="checkPriority(text).color">{{ checkPriority(text).title }}</a-tag>
-                </template>
-
-                <!-- Người thực hiện -->
-                <template v-if="column.dataIndex === 'assigned_to'">
-                    <a-tooltip :title="record.assignee?.name || '—'">
-                        <a-avatar
-                            size="small"
-                            :style="{ backgroundColor: getAvatarColor(record.assignee?.name), verticalAlign: 'middle', cursor: 'default' }"
+                        <a-button
+                            danger
+                            type="primary"
+                            :loading="deletingBulk"
+                            :disabled="selectedRowKeys.length === 0 || deletingBulk"
                         >
-                            {{ record.assignee?.name?.charAt(0).toUpperCase() || '?' }}
-                        </a-avatar>
-                    </a-tooltip>
-                </template>
-
-                <!-- Loại Task -->
-                <template v-if="column.dataIndex === 'linked_type'">
-                    <a-tag :color="getLinkedTypeTag(text).color" style="cursor: pointer;">
-                        {{ getLinkedTypeTag(text).label }}
-                    </a-tag>
-                </template>
-
-                <!-- Tiến độ -->
-                <template v-if="column.dataIndex === 'progress'">
-                    <a-progress
-                        :percent="Number(record.progress)"
-                        :stroke-color="{ '0%': '#108ee9', '100%': '#87d068'}"
-                        :status="record.progress >= 100 ? 'success' : 'active'"
-                        size="small"
-                        :show-info="true"
-                    />
-                </template>
-
-                <!-- Bắt đầu / Kết thúc -->
-                <template v-if="column.dataIndex === 'start_date' || column.dataIndex === 'end_date'">
-                    {{ formatDate(text) || '—' }}
-                </template>
-
-                <!-- Deadline -->
-                <template v-if="column.dataIndex === 'deadline'">
-                    <a-tag v-if="record.days_overdue > 0" color="error">
-                        Quá hạn {{ record.days_overdue }} ngày
-                    </a-tag>
-                    <a-tag v-else-if="record.days_remaining > 0" color="green">
-                        Còn {{ record.days_remaining }} ngày
-                    </a-tag>
-                    <a-tag v-else-if="record.days_remaining === 0" :color="'#faad14'">
-                        Hạn chót hôm nay
-                    </a-tag>
-                    <a-tag v-else>—</a-tag>
-                </template>
-
-                <!-- Trạng thái -->
-                <template v-if="column.dataIndex === 'status'">
-                    <a-tag :color="getStatusColor(text)">
-                        {{ getStatusLabel(text) }}
-                    </a-tag>
-                </template>
-
-                <!-- Actions -->
-                <template v-else-if="column.dataIndex === 'action'">
-                    <a-dropdown placement="left" :trigger="['click']" :getPopupContainer="n => n.parentNode">
-                        <a-button>
-                            <template #icon><MoreOutlined /></template>
+                            Xoá {{ selectedRowKeys.length }} nhiệm vụ
                         </a-button>
-                        <template #overlay>
-                            <a-menu>
-                                <a-menu-item @click="showPopupDetail(record)">
-                                    <InfoCircleOutlined class="icon-action" style="color: blue;"/>
-                                    Chi tiết
-                                </a-menu-item>
-                                <a-menu-item>
-                                    <a-popconfirm
-                                        title="Bạn chắc chắn muốn xóa nhiệm vụ này?"
-                                        ok-text="Xóa"
-                                        cancel-text="Hủy"
-                                        @confirm="deleteConfirm(record.id)"
-                                        placement="topRight"
-                                    >
-                                        <div style="width: 100%; text-align: start;">
-                                            <DeleteOutlined class="icon-action" style="color: red;"/>
-                                            Xóa
-                                        </div>
-                                    </a-popconfirm>
-                                </a-menu-item>
-                            </a-menu>
-                        </template>
-                    </a-dropdown>
+                    </a-popconfirm>
+                </a-col>
+            </a-row>
+
+            <a-table
+                :columns="columns"
+                :data-source="tableData"
+                :loading="loading"
+                @change="handleTableChange"
+                :pagination="pagination"
+                :row-selection="rowSelection"
+                style="margin-top: 8px; table-layout: fixed;"
+                row-key="id"
+                :scroll="{ x: 'max-content'}"
+                class="custom_table_list_task tiny-scroll"
+            >
+                <template #bodyCell="{ column, record, text }">
+                    <!-- Tiêu đề -->
+                    <template v-if="column.dataIndex === 'title'">
+                        <div class="title-cell" @click="showPopupDetail(record)" style="cursor:pointer;">
+                            <a-tooltip>
+                                <template #title>
+                                    <div>
+                                        <div v-for="(line, i) in getTitleInfo(record).lines" :key="i">{{ line }}</div>
+                                    </div>
+                                </template>
+
+                                <div class="line-1">
+                                    <a-typography-text strong class="ellipsis w-200">{{ text }}</a-typography-text>
+                                </div>
+
+                                <div class="line-2" v-if="getTitleInfo(record).subline">
+                                    <a-typography-text type="secondary" class="ellipsis w-260">
+                                        {{ getTitleInfo(record).subline }}
+                                    </a-typography-text>
+                                </div>
+                            </a-tooltip>
+                        </div>
+                    </template>
+
+                    <!-- Ưu tiên -->
+                    <template v-if="column.dataIndex === 'priority'">
+                        <a-tag v-if="text" :color="checkPriority(text).color">{{ checkPriority(text).title }}</a-tag>
+                    </template>
+
+                    <!-- Người thực hiện -->
+                    <template v-if="column.dataIndex === 'assigned_to'">
+                        <a-tooltip :title="record.assignee?.name || '—'">
+                            <a-avatar
+                                size="small"
+                                :style="{ backgroundColor: getAvatarColor(record.assignee?.name), verticalAlign: 'middle', cursor: 'default' }"
+                            >
+                                {{ record.assignee?.name?.charAt(0).toUpperCase() || '?' }}
+                            </a-avatar>
+                        </a-tooltip>
+                    </template>
+
+                    <!-- Loại Task -->
+                    <template v-if="column.dataIndex === 'linked_type'">
+                        <a-tag :color="getLinkedTypeTag(text).color" style="cursor: pointer;">
+                            {{ getLinkedTypeTag(text).label }}
+                        </a-tag>
+                    </template>
+
+                    <!-- Tiến độ -->
+                    <template v-if="column.dataIndex === 'progress'">
+                        <a-progress
+                            :percent="Number(record.progress)"
+                            :stroke-color="{ '0%': '#108ee9', '100%': '#87d068'}"
+                            :status="record.progress >= 100 ? 'success' : 'active'"
+                            size="small"
+                            :show-info="true"
+                        />
+                    </template>
+
+                    <!-- Bắt đầu / Kết thúc -->
+                    <template v-if="column.dataIndex === 'start_date' || column.dataIndex === 'end_date'">
+                        {{ formatDate(text) || '—' }}
+                    </template>
+
+                    <!-- Deadline -->
+                    <template v-if="column.dataIndex === 'deadline'">
+                        <a-tag v-if="record.days_overdue > 0" color="error">
+                            Quá hạn {{ record.days_overdue }} ngày
+                        </a-tag>
+                        <a-tag v-else-if="record.days_remaining > 0" color="green">
+                            Còn {{ record.days_remaining }} ngày
+                        </a-tag>
+                        <a-tag v-else-if="record.days_remaining === 0" :color="'#faad14'">
+                            Hạn chót hôm nay
+                        </a-tag>
+                        <a-tag v-else>—</a-tag>
+                    </template>
+
+                    <!-- Trạng thái -->
+                    <template v-if="column.dataIndex === 'status'">
+                        <a-tag :color="getStatusColor(text)">
+                            {{ getStatusLabel(text) }}
+                        </a-tag>
+                    </template>
+
+                    <!-- Actions -->
+                    <template v-else-if="column.dataIndex === 'action'">
+                        <a-dropdown placement="left" :trigger="['click']" :getPopupContainer="n => n.parentNode">
+                            <a-button>
+                                <template #icon><MoreOutlined /></template>
+                            </a-button>
+                            <template #overlay>
+                                <a-menu>
+                                    <a-menu-item @click="showPopupDetail(record)">
+                                        <InfoCircleOutlined class="icon-action" style="color: blue;"/>
+                                        Chi tiết
+                                    </a-menu-item>
+                                    <a-menu-item>
+                                        <a-popconfirm
+                                            title="Bạn chắc chắn muốn xóa nhiệm vụ này?"
+                                            ok-text="Xóa"
+                                            cancel-text="Hủy"
+                                            @confirm="deleteConfirm(record.id)"
+                                            placement="topRight"
+                                        >
+                                            <div style="width: 100%; text-align: start;">
+                                                <DeleteOutlined class="icon-action" style="color: red;"/>
+                                                Xóa
+                                            </div>
+                                        </a-popconfirm>
+                                    </a-menu-item>
+                                </a-menu>
+                            </template>
+                        </a-dropdown>
+                    </template>
                 </template>
-            </template>
-        </a-table>
+            </a-table>
+        </a-card>
 
         <DrawerCreateTask
             v-model:open-drawer="openDrawer"
