@@ -61,8 +61,9 @@
                     </a-badge>
 
                     <template #overlay>
-                        <a-card :bodyStyle="{ padding: '8px' }" style="width: 380px; max-height: 420px; overflow: auto;">
-                            <a-spin :spinning="inboxLoading">
+                        <a-card class="inbox-card" :bodyStyle="{ padding: '8px' }" style="width:380px;">
+                            <div class="inbox-scroll">
+                                <a-spin :spinning="inboxLoading">
                                 <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 8px 4px;">
                                     <span style="font-weight:600;">Tin nhắn gần đây</span>
                                     <a-button type="link" size="small" @click.stop="refreshInbox">Làm mới</a-button>
@@ -74,18 +75,22 @@
                                         <a-list-item
                                             @click="(e) => openComment(item, e)"
                                             style="cursor:pointer; padding:8px; border-radius:8px;"
-                                            :class="{ 'bg-[#fff7e6]': item.is_unread == 1 }"
+                                            :class="{ 'bg-[#fff7e6]': item.is_unread === 1 }"
                                         >
                                             <a-list-item-meta>
                                                 <template #avatar>
-                                                    <a-avatar :src="item.author_avatar">
-                                                        <template #icon><UserOutlined /></template>
-                                                    </a-avatar>
+                                                    <BaseAvatar
+                                                        :src="item.author_avatar"
+                                                        :name="item.author_name"
+                                                        :size="32"
+                                                        shape="circle"
+                                                        :preferApiOrigin="true"
+                                                    />
                                                 </template>
                                                 <template #title>
                                                     <div style="display:flex;gap:6px;align-items:center;">
                                                         <span style="font-weight:600;">{{ item.author_name || 'Ẩn danh' }}</span>
-                                                        <a-tag v-if="item.is_unread == 1" color="orange">Mới</a-tag>
+                                                        <a-tag v-if="item.is_unread === 1" color="orange">Mới</a-tag>
                                                     </div>
                                                 </template>
                                                 <template #description>
@@ -107,10 +112,10 @@
                                     <a-button block @click="loadMoreInbox" :loading="inboxLoading">Tải thêm</a-button>
                                 </div>
                             </a-spin>
+                            </div>
                         </a-card>
                     </template>
                 </a-dropdown>
-
 
                 <a-tooltip title="Thông báo">
                     <a-badge :count="unreadNotify" size="small">
@@ -393,7 +398,7 @@ const openComment = async (item, e) => {
     await router.push({path, query: {focus: 'comments', c: item.id}})
 
     // đánh dấu đã đọc (nếu chưa)
-    if (item.is_unread == 1) {
+    if (item.is_unread === 1) {
         try {
             await markCommentsReadAPI(userId.value, [item.id])
             item.is_unread = 0
@@ -521,5 +526,18 @@ onBeforeUnmount(() => stopPolling())
     background: #fa541c;
     margin-left: auto;
 }
+
+.inbox-card { width: 380px; }
+.inbox-scroll{
+    max-height:420px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    scrollbar-width:thin;
+    scrollbar-color:#d9d9d9 transparent;
+}
+/* WebKit */
+:deep(.inbox-scroll::-webkit-scrollbar){ width:6px; }
+:deep(.inbox-scroll::-webkit-scrollbar-thumb){ background:#d9d9d9; border-radius:8px; }
+:deep(.inbox-scroll::-webkit-scrollbar-thumb:hover){ background:#bfbfbf; }
 
 </style>
