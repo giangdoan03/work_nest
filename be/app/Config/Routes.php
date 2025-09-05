@@ -220,4 +220,13 @@ $routes->group('api', function ($routes) {
 
 
 
+    // app/Config/Routes.php
+    $routes->get('my/approvals', 'ApprovalInboxController::index');            // danh sách
+    $routes->get('my/approvals/unread-count', 'ApprovalInboxController::unreadCount');
+    $routes->post('approvals/mark-read', 'ApprovalInboxController::markRead');
+
+
+
+
+
 });

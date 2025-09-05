@@ -110,11 +110,63 @@
                     </template>
                 </a-dropdown>
 
-                <a-tooltip title="Thông báo">
+                <a-dropdown
+                    v-model:open="notifyOpen"
+                    placement="bottomRight"
+                    :trigger="['click']"
+                    :getPopupContainer="node => node.parentNode"
+                    @openChange="onNotifyOpenChange"
+                >
                     <a-badge :count="unreadNotify" size="small">
-                        <BellOutlined class="ha-icon" @click="openNotify"/>
+                        <BellOutlined class="ha-icon" />
                     </a-badge>
-                </a-tooltip>
+
+                    <template #overlay>
+                        <a-card class="notify-card" :bodyStyle="{padding:'8px'}" style="width:380px;">
+                            <div class="notify-scroll">
+                                <a-spin :spinning="notifyLoading">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 8px 4px;">
+                                        <span style="font-weight:600;">Thông báo phê duyệt</span>
+                                        <a-button type="link" size="small" @click.stop="refreshNotify">Làm mới</a-button>
+                                    </div>
+
+                                    <a-empty v-if="!notifyItems.length && !notifyLoading" description="Không có mục chờ duyệt"/>
+                                    <a-list v-else :data-source="notifyItems" item-layout="horizontal">
+                                        <template #renderItem="{ item }">
+                                            <a-list-item
+                                                :key="item.step_id"
+                                                @click="openApproval(item)"
+                                                style="cursor:pointer; padding:8px; border-radius:8px;"
+                                                :class="{ 'bg-[#fff7e6]': +item.is_unread === 1 }"
+                                            >
+                                                <a-list-item-meta>
+                                                    <template #title>
+                                                        <div style="display:flex;gap:8px;align-items:center;">
+                                                            <span style="font-weight:600;">{{ item.title }}</span>
+                                                            <a-tag>{{ (item.level_now) + '/' + (item.total_steps) }}</a-tag>
+                                                        </div>
+                                                    </template>
+                                                    <template #description>
+                                                        <div style="color:#555">
+                                                            <div>Gửi bởi: {{ item.submitted_by_name || '—' }}</div>
+                                                            <div style="font-size:12px; color:#999;">
+                                                                {{ formatTime(item.submitted_at) }}
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                </a-list-item-meta>
+                                            </a-list-item>
+                                        </template>
+                                    </a-list>
+
+                                    <div v-if="notifyHasMore" style="padding:8px;">
+                                        <a-button block @click="loadMoreNotify" :loading="notifyLoading">Tải thêm</a-button>
+                                    </div>
+                                </a-spin>
+                            </div>
+                        </a-card>
+                    </template>
+                </a-dropdown>
 
                 <!-- Avatar dropdown -->
                 <a-dropdown v-if="user" trigger="click" placement="bottomRight">
@@ -203,15 +255,33 @@ dayjs.extend(relativeTime)
 dayjs.locale('vi')
 
 import { getMyRecentCommentsAPI, getMyUnreadCommentsCountAPI, markCommentsReadAPI } from '@/api/task'
+import {getApprovalInboxAPI, getApprovalUnreadCountAPI, markApprovalReadAPI} from '@/api/approvals'
 import { useUserStore } from '@/stores/user'
 
-const userId = computed(() => userStore.user?.id)
 
+import {useCommonStore} from '@/stores/common'
+const common = useCommonStore()
+const emit = defineEmits(['toggle', 'logout'])
+const userStore = useUserStore()
+const {user} = storeToRefs(userStore)
+const currentRoute = useRoute()
+const router = useRouter()
+
+const userId = computed(() => userStore.user?.id)
+const unreadChat = ref(1)         // badge "1" như ảnh
 const inboxItems = ref([])
 const inboxPage = ref(1)
 const inboxHasMore = ref(false)
 const inboxLoading = ref(false)
 let poller = null
+
+
+const notifyOpen = ref(false)
+const notifyItems = ref([])
+const notifyPage = ref(1)
+const notifyHasMore = ref(false)
+const notifyLoading = ref(false)
+const unreadNotify = ref(0)
 
 
 import {
@@ -258,24 +328,11 @@ const onInboxOpenChange = async (open) => {
 }
 
 
-import {useCommonStore} from '@/stores/common'
-
-const common = useCommonStore()
-
 const onClickCreateTask = () => {
     if (currentRoute.name === 'tasks' /* hoặc 'internal-tasks' */) {
         common.triggerCreateTask('internal')
     }
 }
-
-
-const emit = defineEmits(['toggle', 'logout'])
-
-const userStore = useUserStore()
-const {user} = storeToRefs(userStore)
-
-const currentRoute = useRoute()
-const router = useRouter()
 
 // Header.vue <script setup> — cập nhật breadcrumbs
 const breadcrumbs = computed(() => {
@@ -309,9 +366,6 @@ const breadcrumbs = computed(() => {
 
     return trail
 })
-
-const unreadChat = ref(1)         // badge "1" như ảnh
-const unreadNotify = ref(3)
 
 const goHome = () => router.push('/project-overview')
 const openChat = () => router.push('/tasks')          // đổi route chat thật của bạn
@@ -407,6 +461,55 @@ const startPolling = () => {
     poller = setInterval(fetchUnread, 30000) // 30s
 }
 const stopPolling = () => { if (poller) clearInterval(poller); poller = null }
+
+const fetchNotifyUnread = async () => {
+    try {
+        const { data } = await getApprovalUnreadCountAPI()
+        unreadNotify.value = data.unread || 0
+    } catch {}
+}
+
+const fetchNotify = async (page=1) => {
+    notifyLoading.value = true
+    try {
+        const { data } = await getApprovalInboxAPI({ per_page: 10, page })
+        const list = data.data || []
+        notifyItems.value = page === 1 ? list : [...notifyItems.value, ...list]
+        const pager = data.pager || {}
+        notifyHasMore.value = (pager.current_page || 1) * (pager.per_page || 10) < (pager.total || 0)
+        notifyPage.value = page
+    } finally {
+        notifyLoading.value = false
+    }
+}
+
+const refreshNotify = () => fetchNotify(1)
+const loadMoreNotify = () => fetchNotify(notifyPage.value + 1)
+
+const onNotifyOpenChange = async (open) => {
+    notifyOpen.value = open
+    if (!open) return
+    await refreshNotify()
+    const unreadSteps = notifyItems.value.filter(i => +i.is_unread === 1).map(i => i.step_id)
+    if (unreadSteps.length) {
+        await markApprovalReadAPI(unreadSteps)
+        notifyItems.value = notifyItems.value.map(i => ({...i, is_unread: 0}))
+        await fetchNotifyUnread()
+    }
+}
+
+const openApproval = async (item) => {
+    notifyOpen.value = false
+    // điều hướng tới URL backend trả về
+    await router.push({path: item.url, query: {focus: 'approval', ai: item.instance_id}})
+    // đánh dấu 1 mục nếu còn unread
+    if (+item.is_unread === 1) {
+        await markApprovalReadAPI([item.step_id])
+        item.is_unread = 0
+        await fetchNotifyUnread()
+    }
+}
+
 
 onMounted(() => {
     fetchUnread()
@@ -532,5 +635,17 @@ onBeforeUnmount(() => stopPolling())
 :deep(.inbox-scroll::-webkit-scrollbar){ width:6px; }
 :deep(.inbox-scroll::-webkit-scrollbar-thumb){ background:#d9d9d9; border-radius:8px; }
 :deep(.inbox-scroll::-webkit-scrollbar-thumb:hover){ background:#bfbfbf; }
+
+.notify-card { }
+.notify-scroll{
+    max-height:420px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    scrollbar-width:thin;
+    scrollbar-color:#d9d9d9 transparent;
+}
+:deep(.notify-scroll::-webkit-scrollbar){ width:6px; }
+:deep(.notify-scroll::-webkit-scrollbar-thumb){ background:#d9d9d9; border-radius:8px; }
+:deep(.notify-scroll::-webkit-scrollbar-thumb:hover){ background:#bfbfbf; }
 
 </style>

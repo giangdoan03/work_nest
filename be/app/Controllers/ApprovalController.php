@@ -239,7 +239,9 @@ class ApprovalController extends ResourceController
         ]);
     }
 
-    /** Gửi duyệt (khởi động phiên active mới hoặc reset phiên active hiện tại) */
+    /** Gửi duyệt (khởi động phiên active mới hoặc reset phiên active hiện tại)
+     * @throws \ReflectionException
+     */
     public function send()
     {
         $payload = $this->request->getJSON(true) ?? $this->request->getPost();

@@ -36,6 +36,20 @@ export const updateApprovalSteps = (id, data) =>
 export const listApprovals = (params = {}) =>
     instance.get('/approvals/list', { params })
 
+
+
+export const getApprovalInboxAPI = (params={}) =>
+    instance.get('/my/approvals', { params })
+
+export const getApprovalUnreadCountAPI = () =>
+    instance.get('/my/approvals/unread-count')
+
+export const markApprovalReadAPI = (stepIds=[]) =>
+    instance.post('/approvals/mark-read', { step_ids: stepIds })
+
+
+
+
 export default {
     getApprovals,
     getApprovalInbox,
