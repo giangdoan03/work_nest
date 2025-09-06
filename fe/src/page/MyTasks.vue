@@ -1,189 +1,82 @@
 <template>
-    <a-spin :spinning="loading" size="large" tip="Đang tải dữ liệu...">
-        <div class="dashboard">
-            <a-page-header title="Nhiệm vụ của tôi" style="padding-left: 0; padding-top: 0" />
+    <a-card bordered>
+        <a-spin :spinning="loading" size="large" tip="Đang tải dữ liệu...">
+            <div class="dashboard">
+                <a-page-header title="Nhiệm vụ của tôi" style="padding-left: 0; padding-top: 0" />
 
-            <!-- Summary Cards -->
-            <div class="summary-cards">
-                <a-card
-                    v-for="item in stats"
-                    :key="item.key"
-                    :style="{ backgroundColor: item.bg }"
-                    @click="openDrawer(item.key, item.label)"
-                >
-                    <a-space direction="vertical" align="center">
-                        <component :is="item.icon" :style="{ fontSize: '32px', color: item.color }" />
-                        <div>{{ item.label }}</div>
-                        <h2 class="number" :style="{ color: item.color }">{{ item.count }}</h2>
-                    </a-space>
-                </a-card>
-            </div>
-
-            <a-divider>Tổng quan công việc</a-divider>
-
-            <!-- Charts -->
-            <div class="charts">
-                <div class="chart-box">
-                    <h4 class="title_chart">Tỉ lệ công việc</h4>
-                    <PieChart :data="tasks" />
+                <!-- Summary Cards -->
+                <div class="summary-cards">
+                    <a-card
+                        v-for="item in stats"
+                        :key="item.key"
+                        :style="{ backgroundColor: item.bg }"
+                        @click="openDrawer(item.key, item.label)"
+                    >
+                        <a-space direction="vertical" align="center">
+                            <component :is="item.icon" :style="{ fontSize: '32px', color: item.color }" />
+                            <div>{{ item.label }}</div>
+                            <h2 class="number" :style="{ color: item.color }">{{ item.count }}</h2>
+                        </a-space>
+                    </a-card>
                 </div>
-                <div class="chart-box">
-                    <h4 class="title_chart">Công việc theo tháng</h4>
-                    <BarByMonth :data="tasks" />
+
+                <a-divider>Tổng quan công việc</a-divider>
+
+                <!-- Charts -->
+                <div class="charts">
+                    <div class="chart-box">
+                        <h4 class="title_chart">Tỉ lệ công việc</h4>
+                        <PieChart :data="tasks" />
+                    </div>
+                    <div class="chart-box">
+                        <h4 class="title_chart">Công việc theo tháng</h4>
+                        <BarByMonth :data="tasks" />
+                    </div>
                 </div>
-            </div>
 
-            <a-divider>Danh sách công việc</a-divider>
+                <a-divider>Danh sách công việc</a-divider>
 
-            <!-- Task Table -->
-            <a-table
-                :columns="columnsPersonal"
-                :dataSource="tasks"
-                rowKey="id"
-                bordered
-                size="small"
-            >
-                <template #bodyCell="{ column, record, index}">
-                    <template v-if="column.key === 'stt'">
-                        {{ index + 1 }}
-                    </template>
-                    <template v-if="column.dataIndex === 'title'">
-                        <router-link :to="`/internal-tasks/${record.id}/info`" style="color:#1890ff;">
-                            {{ record.title }}
-                        </router-link>
-                    </template>
-                    <template v-else-if="column.dataIndex === 'status'">
-                        <a-tag :color="getStatusColor(record.status)">
-                            {{ getTaskStatusText(record.status) }}
-                        </a-tag>
-                    </template>
-                    <template v-else-if="column.dataIndex === 'priority'">
-                        <a-tag :color="getPriorityColor(record.priority)">
-                            {{ getPriorityText(record.priority) }}
-                        </a-tag>
-                    </template>
-                    <template v-else-if="column.dataIndex === 'progress'">
-                        <a-progress
-                            @click="openProgressModal(record)" style="cursor: pointer;"
-                            :percent="Number(record.progress)"
-                            :stroke-color="{
-                                  '0%': '#108ee9',
-                                  '100%': '#87d068',
-                                }"
-                            :status="record.progress >= 100 ? 'success' : 'active'"
-                            size="small"
-                            :show-info="true"
-                        />
-                    </template>
-                    <template v-else-if="column.dataIndex === 'assignee'">
-                        <a-tooltip :title="record.assigned_to_name">
-                            <a-avatar
-                                :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }"
-                                size="small"
-                            >
-                                {{ getFirstLetter(record.assigned_to_name) }}
-                            </a-avatar>
-                        </a-tooltip>
-                    </template>
-
-                    <template v-else-if="column.dataIndex === 'start_date'">
-                        {{ formatDate(record.start_date) }}
-                    </template>
-                    <template v-else-if="column.dataIndex === 'end_date'">
-                        {{ formatDate(record.end_date) }}
-                    </template>
-                    <template v-else-if="column.dataIndex === 'deadline'">
-                        <a-tag v-if="record.days_overdue > 0" color="error">
-                            Quá hạn {{ record.days_overdue }} ngày
-                        </a-tag>
-                        <a-tag v-else-if="record.days_remaining > 0" color="green">
-                            Còn {{ record.days_remaining }} ngày
-                        </a-tag>
-                        <a-tag v-else-if="record.days_remaining === 0" :color="'#faad14'">
-                            Hạn chót hôm nay
-                        </a-tag>
-                        <a-tag v-else>
-                            —
-                        </a-tag>
-                    </template>
-                </template>
-            </a-table>
-
-            <div v-if="!tasks.length" class="no-tasks">
-                <p>Không có nhiệm vụ nào.</p>
-            </div>
-        </div>
-
-        <!-- Drawer for Today Tasks -->
-        <a-drawer
-            :title="drawerTitle"
-            placement="right"
-            :width="1000"
-            :open="drawerVisible"
-            @close="drawerVisible = false"
-        >
-            <div v-if="filteredTasks.length">
-                <div style="margin-bottom: 16px; text-align: left;">
-                    <a-pagination
-                        v-model:current="currentPage"
-                        v-model:pageSize="pageSize"
-                        :total="filteredTasks.length"
-                        :show-size-changer="true"
-                        :show-quick-jumper="true"
-                        size="small"
-                    />
-                </div>
+                <!-- Task Table -->
                 <a-table
-                    :columns="drawerColumns"
-                    :dataSource="paginatedTasks"
+                    :columns="columnsPersonal"
+                    :dataSource="tasks"
                     rowKey="id"
-                    size="small"
                     bordered
-                    :scroll="{ x: 900, y: 400 }"
-                    :pagination="false"
-                    :locale="{ emptyText: 'Không có dữ liệu' }"
+                    size="small"
                 >
-                    <template #emptyText>
-                        <div style="height: 250px; padding-top: 90px;">
-                            Không có dữ liệu
-                        </div>
-                    </template>
-                    <template #bodyCell="{ column, record, index }">
-                        <template v-if="column.dataIndex === 'index'">
-                            {{ (currentPage - 1) * pageSize + index + 1 }}
+                    <template #bodyCell="{ column, record, index}">
+                        <template v-if="column.key === 'stt'">
+                            {{ index + 1 }}
                         </template>
-                        <template v-if="column.dataIndex === 'status'">
+                        <template v-if="column.dataIndex === 'title'">
+                            <router-link :to="`/internal-tasks/${record.id}/info`" style="color:#1890ff;">
+                                {{ record.title }}
+                            </router-link>
+                        </template>
+                        <template v-else-if="column.dataIndex === 'status'">
                             <a-tag :color="getStatusColor(record.status)">
                                 {{ getTaskStatusText(record.status) }}
                             </a-tag>
                         </template>
-                        <template v-else-if="column.dataIndex === 'title'">
-                            <a-tooltip :title="record.title">
-                                <div style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
-                                    <router-link :to="`/internal-tasks/${record.id}/info`" style="color: #1890ff;">
-                                        {{ record.title }}
-                                    </router-link>
-                                </div>
-                            </a-tooltip>
-                        </template>
-
                         <template v-else-if="column.dataIndex === 'priority'">
                             <a-tag :color="getPriorityColor(record.priority)">
                                 {{ getPriorityText(record.priority) }}
                             </a-tag>
                         </template>
                         <template v-else-if="column.dataIndex === 'progress'">
-                            <a-progress @click="openProgressModal(record)" style="cursor: pointer;" :percent="Number(record.progress)"
-                                        :stroke-color="{
+                            <a-progress
+                                @click="openProgressModal(record)" style="cursor: pointer;"
+                                :percent="Number(record.progress)"
+                                :stroke-color="{
                                   '0%': '#108ee9',
                                   '100%': '#87d068',
                                 }"
-                                        :status="record.progress >= 100 ? 'success' : 'active'"
-                                        size="small"
-                                        :show-info="true"
+                                :status="record.progress >= 100 ? 'success' : 'active'"
+                                size="small"
+                                :show-info="true"
                             />
                         </template>
-                        <template v-else-if="column.dataIndex === 'assigned_to_name'">
+                        <template v-else-if="column.dataIndex === 'assignee'">
                             <a-tooltip :title="record.assigned_to_name">
                                 <a-avatar
                                     :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }"
@@ -193,19 +86,12 @@
                                 </a-avatar>
                             </a-tooltip>
                         </template>
-                        <template v-else-if="column.dataIndex === 'assignee'">
-                            <a-tooltip placement="top" :title="record.assignee">
-                                <a-avatar
-                                    :style="{ backgroundColor: getAvatarColor(record.assignee) }"
-                                    size="small"
-                                >
-                                    {{ getFirstLetter(record.assigned_to_name) }}
-                                </a-avatar>
-                            </a-tooltip>
-                        </template>
 
                         <template v-else-if="column.dataIndex === 'start_date'">
                             {{ formatDate(record.start_date) }}
+                        </template>
+                        <template v-else-if="column.dataIndex === 'end_date'">
+                            {{ formatDate(record.end_date) }}
                         </template>
                         <template v-else-if="column.dataIndex === 'deadline'">
                             <a-tag v-if="record.days_overdue > 0" color="error">
@@ -223,45 +109,161 @@
                         </template>
                     </template>
                 </a-table>
-            </div>
-            <div v-else class="no-tasks-drawer">
-                <a-empty :description="emptyMessage" />
-            </div>
-        </a-drawer>
 
-        <!-- Progress Change Modal -->
-        <a-modal
-            v-model:open="progressModalVisible"
-            title="Thay đổi tiến trình"
-            okText="Lưu"
-            cancelText="Hủy"
-            @ok="updateProgress"
-            @cancel="progressModalVisible = false"
-            :confirm-loading="progressUpdating"
-        >
-            <div style="text-align: center; padding: 20px;">
-                <h4>{{ selectedTask?.title }}</h4>
-                <div style="margin: 20px 0;">
-                    <a-slider
-                        v-model:value="newProgressValue"
-                        :min="0"
-                        :max="100"
-                        :step="5"
-                        :marks="{ 0: '0%', 25: '25%', 50: '50%', 75: '75%', 100: '100%' }"
-                        style="width: 100%;"
-                    />
-                </div>
-                <div style="margin-top: 20px;">
-                    <a-progress
-                        :percent="newProgressValue"
-                        size="large"
-                        :format="(percent) => `${percent}%`"
-                        :stroke-width="30"
-                    />
+                <div v-if="!tasks.length" class="no-tasks">
+                    <p>Không có nhiệm vụ nào.</p>
                 </div>
             </div>
-        </a-modal>
-    </a-spin>
+
+            <!-- Drawer for Today Tasks -->
+            <a-drawer
+                :title="drawerTitle"
+                placement="right"
+                :width="1000"
+                :open="drawerVisible"
+                @close="drawerVisible = false"
+            >
+                <div v-if="filteredTasks.length">
+                    <div style="margin-bottom: 16px; text-align: left;">
+                        <a-pagination
+                            v-model:current="currentPage"
+                            v-model:pageSize="pageSize"
+                            :total="filteredTasks.length"
+                            :show-size-changer="true"
+                            :show-quick-jumper="true"
+                            size="small"
+                        />
+                    </div>
+                    <a-table
+                        :columns="drawerColumns"
+                        :dataSource="paginatedTasks"
+                        rowKey="id"
+                        size="small"
+                        bordered
+                        :scroll="{ x: 900, y: 400 }"
+                        :pagination="false"
+                        :locale="{ emptyText: 'Không có dữ liệu' }"
+                    >
+                        <template #emptyText>
+                            <div style="height: 250px; padding-top: 90px;">
+                                Không có dữ liệu
+                            </div>
+                        </template>
+                        <template #bodyCell="{ column, record, index }">
+                            <template v-if="column.dataIndex === 'index'">
+                                {{ (currentPage - 1) * pageSize + index + 1 }}
+                            </template>
+                            <template v-if="column.dataIndex === 'status'">
+                                <a-tag :color="getStatusColor(record.status)">
+                                    {{ getTaskStatusText(record.status) }}
+                                </a-tag>
+                            </template>
+                            <template v-else-if="column.dataIndex === 'title'">
+                                <a-tooltip :title="record.title">
+                                    <div style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
+                                        <router-link :to="`/internal-tasks/${record.id}/info`" style="color: #1890ff;">
+                                            {{ record.title }}
+                                        </router-link>
+                                    </div>
+                                </a-tooltip>
+                            </template>
+
+                            <template v-else-if="column.dataIndex === 'priority'">
+                                <a-tag :color="getPriorityColor(record.priority)">
+                                    {{ getPriorityText(record.priority) }}
+                                </a-tag>
+                            </template>
+                            <template v-else-if="column.dataIndex === 'progress'">
+                                <a-progress @click="openProgressModal(record)" style="cursor: pointer;" :percent="Number(record.progress)"
+                                            :stroke-color="{
+                                  '0%': '#108ee9',
+                                  '100%': '#87d068',
+                                }"
+                                            :status="record.progress >= 100 ? 'success' : 'active'"
+                                            size="small"
+                                            :show-info="true"
+                                />
+                            </template>
+                            <template v-else-if="column.dataIndex === 'assigned_to_name'">
+                                <a-tooltip :title="record.assigned_to_name">
+                                    <a-avatar
+                                        :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }"
+                                        size="small"
+                                    >
+                                        {{ getFirstLetter(record.assigned_to_name) }}
+                                    </a-avatar>
+                                </a-tooltip>
+                            </template>
+                            <template v-else-if="column.dataIndex === 'assignee'">
+                                <a-tooltip placement="top" :title="record.assignee">
+                                    <a-avatar
+                                        :style="{ backgroundColor: getAvatarColor(record.assignee) }"
+                                        size="small"
+                                    >
+                                        {{ getFirstLetter(record.assigned_to_name) }}
+                                    </a-avatar>
+                                </a-tooltip>
+                            </template>
+
+                            <template v-else-if="column.dataIndex === 'start_date'">
+                                {{ formatDate(record.start_date) }}
+                            </template>
+                            <template v-else-if="column.dataIndex === 'deadline'">
+                                <a-tag v-if="record.days_overdue > 0" color="error">
+                                    Quá hạn {{ record.days_overdue }} ngày
+                                </a-tag>
+                                <a-tag v-else-if="record.days_remaining > 0" color="green">
+                                    Còn {{ record.days_remaining }} ngày
+                                </a-tag>
+                                <a-tag v-else-if="record.days_remaining === 0" :color="'#faad14'">
+                                    Hạn chót hôm nay
+                                </a-tag>
+                                <a-tag v-else>
+                                    —
+                                </a-tag>
+                            </template>
+                        </template>
+                    </a-table>
+                </div>
+                <div v-else class="no-tasks-drawer">
+                    <a-empty :description="emptyMessage" />
+                </div>
+            </a-drawer>
+
+            <!-- Progress Change Modal -->
+            <a-modal
+                v-model:open="progressModalVisible"
+                title="Thay đổi tiến trình"
+                okText="Lưu"
+                cancelText="Hủy"
+                @ok="updateProgress"
+                @cancel="progressModalVisible = false"
+                :confirm-loading="progressUpdating"
+            >
+                <div style="text-align: center; padding: 20px;">
+                    <h4>{{ selectedTask?.title }}</h4>
+                    <div style="margin: 20px 0;">
+                        <a-slider
+                            v-model:value="newProgressValue"
+                            :min="0"
+                            :max="100"
+                            :step="5"
+                            :marks="{ 0: '0%', 25: '25%', 50: '50%', 75: '75%', 100: '100%' }"
+                            style="width: 100%;"
+                        />
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <a-progress
+                            :percent="newProgressValue"
+                            size="large"
+                            :format="(percent) => `${percent}%`"
+                            :stroke-width="30"
+                        />
+                    </div>
+                </div>
+            </a-modal>
+        </a-spin>
+    </a-card>
 </template>
 <script setup>
 import { ref, onMounted, computed } from 'vue'

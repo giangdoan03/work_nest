@@ -1,59 +1,66 @@
 <template>
     <div>
-        <a-flex justify="space-between">
-            <div>
-                <a-typography-title :level="4">Danh sách người dùng</a-typography-title>
-            </div>
-            <a-button type="primary" @click="showPopupCreate">Thêm người dùng mới</a-button>
-        </a-flex>
+        <a-card bordered>
+            <a-flex justify="space-between">
+                <div>
+                    <a-typography-title :level="4">Danh sách người dùng</a-typography-title>
+                </div>
+                <a-button type="primary" @click="showPopupCreate">Thêm người dùng mới</a-button>
+            </a-flex>
 
-        <a-table :columns="columns" :data-source="tableData" :loading="loading"
-            style="margin-top: 12px;" row-key="module" :scroll="{ y: 'calc( 100vh - 330px )' }">
-            <template #bodyCell="{ column, record, index, text }">
-                <template v-if="column.dataIndex === 'stt'">
-                    {{ index+1 }}
-                </template>
-                <template v-if="column.dataIndex === 'name'">
-                    <a-typography-text strong style="cursor: pointer;" @click="showPopupDetail(record)">{{ text }}</a-typography-text>
-                </template>
-                <template v-if="column.dataIndex === 'department'">
-                    {{ getNameDepartments(record.department_id) }}
-                </template>
-                <template v-if="column.dataIndex === 'role'">
-                    {{ getRoleName(record.role_id) }}
-                </template>
-                <template v-else-if="column.dataIndex === 'action'">
-                    <a-space>
-                        <!-- Xem chi tiết -->
-                        <EyeOutlined
-                            class="icon-action"
-                            style="color: #1890ff;"
-                            @click="goToUserDetail(record.id)"
-                        />
+            <a-table :columns="columns" :data-source="tableData" :loading="loading"
+                     style="margin-top: 12px;" row-key="module" :scroll="{ y: 'calc( 100vh - 330px )' }">
+                <template #bodyCell="{ column, record, index, text }">
+                    <template v-if="column.dataIndex === 'stt'">
+                        {{ index+1 }}
+                    </template>
+                    <template v-if="column.dataIndex === 'avatar'">
+                        <a-tooltip :title="record.name">
+                            <BaseAvatar :src="record.avatar" :name="record.name" :size="28" shape="circle" :preferApiOrigin="true" />
+                        </a-tooltip>
+                    </template>
+                    <template v-if="column.dataIndex === 'name'">
+                        <a-typography-text strong style="cursor: pointer;" @click="showPopupDetail(record)">{{ text }}</a-typography-text>
+                    </template>
+                    <template v-if="column.dataIndex === 'department'">
+                        {{ getNameDepartments(record.department_id) }}
+                    </template>
+                    <template v-if="column.dataIndex === 'role'">
+                        {{ getRoleName(record.role_id) }}
+                    </template>
+                    <template v-else-if="column.dataIndex === 'action'">
+                        <a-space>
+                            <!-- Xem chi tiết -->
+                            <EyeOutlined
+                                class="icon-action"
+                                style="color: #1890ff;"
+                                @click="goToUserDetail(record.id)"
+                            />
 
-                        <!-- Chỉnh sửa -->
-                        <EditOutlined
-                            class="icon-action"
-                            style="color: blue;"
-                            @click="showPopupDetail(record)"
-                        />
+                            <!-- Chỉnh sửa -->
+                            <EditOutlined
+                                class="icon-action"
+                                style="color: blue;"
+                                @click="showPopupDetail(record)"
+                            />
 
-                        <!-- Xóa -->
-                        <a-popconfirm
-                            title="Bạn chắc chắn muốn xóa người dùng này?"
-                            ok-text="Xóa"
-                            cancel-text="Hủy"
-                            @confirm="deleteConfirm(record.id)"
-                            placement="topRight"
-                        >
-                            <DeleteOutlined class="icon-action" style="color: red;" />
-                        </a-popconfirm>
-                    </a-space>
+                            <!-- Xóa -->
+                            <a-popconfirm
+                                title="Bạn chắc chắn muốn xóa người dùng này?"
+                                ok-text="Xóa"
+                                cancel-text="Hủy"
+                                @confirm="deleteConfirm(record.id)"
+                                placement="topRight"
+                            >
+                                <DeleteOutlined class="icon-action" style="color: red;" />
+                            </a-popconfirm>
+                        </a-space>
+
+                    </template>
 
                 </template>
-
-            </template>
-        </a-table>
+            </a-table>
+        </a-card>
         <a-drawer
             :title="selectedUser ? 'Sửa người dùng' : 'Tạo người dùng mới'"
             :width="700"
@@ -142,6 +149,8 @@ import { useRouter } from 'vue-router'
 import {getRoles} from "../api/permission";
 const router = useRouter()
 
+import BaseAvatar from '../components/common/BaseAvatar.vue'
+
 const formRef = ref(null);
 const selectedUser = ref(null)
 const tableData = ref([])
@@ -168,6 +177,7 @@ const roles = ref([
 
 const columns = [
     { title: 'STT', dataIndex: 'stt', key: 'stt', width: '60px' },
+    { title: '', dataIndex: 'avatar', key: 'avatar', width: 56, align: 'center' },
     { title: 'Tên người dùng', dataIndex: 'name', key: 'name' },
     { title: 'Email', dataIndex: 'email', key: 'email' },
     { title: 'Số điện thoại', dataIndex: 'phone', key: 'phone' },

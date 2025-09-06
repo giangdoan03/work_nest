@@ -1,91 +1,92 @@
 <template>
     <div>
-        <a-flex justify="space-between">
-            <div>
-                <a-typography-title :level="4">Danh sách phòng ban</a-typography-title>
-            </div>
-            <a-button type="primary" @click="showPopupCreate">Thêm phòng ban mới</a-button>
-        </a-flex>
+        <a-card bordered>
+            <a-flex justify="space-between">
+                <div>
+                    <a-typography-title :level="4">Danh sách phòng ban</a-typography-title>
+                </div>
+                <a-button type="primary" @click="showPopupCreate">Thêm phòng ban mới</a-button>
+            </a-flex>
 
-        <a-table
+            <a-table
                 :columns="columns"
                 :data-source="tableData"
                 :loading="loading"
                 style="margin-top: 12px;"
                 row-key="id"
                 :scroll="{ y: 'calc( 100vh - 330px )' }"
-        >
-            <template #bodyCell="{ column, record, index, text }">
-                <template v-if="column.dataIndex === 'stt'">
-                    {{ index + 1 }}
-                </template>
-                <template v-else-if="column.dataIndex === 'name'">
-                    <a-typography-text
-                        strong
-                        :style="{cursor: 'pointer',color: activeDepartmentId === record.id ? '#1890ff' : undefined,textDecoration: activeDepartmentId === record.id ? 'underline' : undefined}"
-                        @click="showUsersOnly(record)"
-                    >
-                        {{ text }}
-                    </a-typography-text>
-                </template>
-                <!-- Thời gian tạo -->
-                <template v-else-if="column.dataIndex === 'created_at'">
-                    {{ formatDate(text) }}
-                </template>
-
-                <!-- Cập nhật gần nhất -->
-                <template v-else-if="column.dataIndex === 'updated_at'">
-                    {{ formatDate(text) }}
-                </template>
-
-                <template v-else-if="column.dataIndex === 'action'">
-                    <a-space>
-                        <!-- Nút Xem chi tiết -->
-                        <a-button
-                            type="link"
-                            size="small"
-                            style="padding: 0"
+            >
+                <template #bodyCell="{ column, record, index, text }">
+                    <template v-if="column.dataIndex === 'stt'">
+                        {{ index + 1 }}
+                    </template>
+                    <template v-else-if="column.dataIndex === 'name'">
+                        <a-typography-text
+                            strong
+                            :style="{cursor: 'pointer',color: activeDepartmentId === record.id ? '#1890ff' : undefined,textDecoration: activeDepartmentId === record.id ? 'underline' : undefined}"
                             @click="showUsersOnly(record)"
                         >
-                            <EyeOutlined class="icon-action" style="color: #1890ff;" />
-                            Chi tiết
-                        </a-button>
+                            {{ text }}
+                        </a-typography-text>
+                    </template>
+                    <!-- Thời gian tạo -->
+                    <template v-else-if="column.dataIndex === 'created_at'">
+                        {{ formatDate(text) }}
+                    </template>
 
-                        <!-- Nút Chỉnh sửa -->
-                        <a-button
-                            type="link"
-                            size="small"
-                            style="padding: 0"
-                            @click="showPopupDetail(record)"
-                        >
-                            <EditOutlined class="icon-action" style="color: blue;" />
-                            Chỉnh sửa
-                        </a-button>
+                    <!-- Cập nhật gần nhất -->
+                    <template v-else-if="column.dataIndex === 'updated_at'">
+                        {{ formatDate(text) }}
+                    </template>
 
-                        <!-- Nút Xóa -->
-                        <a-popconfirm
-                            title="Bạn chắc chắn muốn xóa phòng ban này?"
-                            ok-text="Xóa"
-                            cancel-text="Hủy"
-                            @confirm="deleteConfirm(record.id)"
-                            placement="topRight"
-                        >
+                    <template v-else-if="column.dataIndex === 'action'">
+                        <a-space>
+                            <!-- Nút Xem chi tiết -->
                             <a-button
                                 type="link"
                                 size="small"
                                 style="padding: 0"
+                                @click="showUsersOnly(record)"
                             >
-                                <DeleteOutlined class="icon-action" style="color: red;" />
-                                Xóa
+                                <EyeOutlined class="icon-action" style="color: #1890ff;" />
+                                Chi tiết
                             </a-button>
-                        </a-popconfirm>
-                    </a-space>
+
+                            <!-- Nút Chỉnh sửa -->
+                            <a-button
+                                type="link"
+                                size="small"
+                                style="padding: 0"
+                                @click="showPopupDetail(record)"
+                            >
+                                <EditOutlined class="icon-action" style="color: blue;" />
+                                Chỉnh sửa
+                            </a-button>
+
+                            <!-- Nút Xóa -->
+                            <a-popconfirm
+                                title="Bạn chắc chắn muốn xóa phòng ban này?"
+                                ok-text="Xóa"
+                                cancel-text="Hủy"
+                                @confirm="deleteConfirm(record.id)"
+                                placement="topRight"
+                            >
+                                <a-button
+                                    type="link"
+                                    size="small"
+                                    style="padding: 0"
+                                >
+                                    <DeleteOutlined class="icon-action" style="color: red;" />
+                                    Xóa
+                                </a-button>
+                            </a-popconfirm>
+                        </a-space>
+                    </template>
+
+
                 </template>
-
-
-            </template>
-        </a-table>
-
+            </a-table>
+        </a-card>
         <a-drawer
             :title="drawerMode === 'view_users'
     ? `${selectedDepartment?.name ?? ''}`

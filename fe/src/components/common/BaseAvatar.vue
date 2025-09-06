@@ -65,10 +65,14 @@ const handleImgError = () => {
 const initials = computed(() => {
     const n = (props.name || '').trim()
     if (!n) return '?'
-    // lấy chữ cái đầu của từ cuối (thường là họ hoặc tên chính), bạn có thể đổi thành split(' ')[0]
-    const parts = n.split(/\s+/)
-    return (parts[parts.length - 1][0] || '?').toUpperCase()
+    // Nếu muốn giữ dấu: dùng dòng dưới
+    // return n[0].toLocaleUpperCase('vi')
+
+    // Nếu muốn bỏ dấu (Á -> A) cho đồng nhất:
+    const first = n.normalize('NFD').replace(/[\u0300-\u036f]/g, '')[0]
+    return (first || '?').toUpperCase()
 })
+
 
 // Màu “random theo tên” (ổn định): hash tên -> chọn màu trong palette
 const palette = [

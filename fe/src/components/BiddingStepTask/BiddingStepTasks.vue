@@ -1,90 +1,91 @@
 <!-- src/views/BiddingStepTasks.vue -->
 <template>
-    <div class="p-4">
-        <a-page-header
-            :title="`Bước ${step?.step_number || stepId}: ${step?.title || ''}`"
-            sub-title="Danh sách nhiệm vụ"
-            @back="() => router.back()"
-            style="padding:0 0 12px"
-        >
-            <template #extra>
-                <a-button type="primary" @click="openCreateTask">Thêm nhiệm vụ mới</a-button>
-            </template>
-        </a-page-header>
-
-
-        <a-spin :spinning="loading">
-            <a-empty v-if="tasks.length === 0" description="Không có công việc" />
-            <a-table
-                v-else
-                :columns="treeColumns"
-                :dataSource="tasks"
-                rowKey="id"
-                :pagination="false"
-                :scroll="{ x: 'max-content' }"
+    <div>
+        <a-card bordered>
+            <a-page-header
+                :title="`Bước ${step?.step_number || stepId}: ${step?.title || ''}`"
+                sub-title="Danh sách nhiệm vụ"
+                @back="() => router.back()"
+                style="padding:0 0 12px"
             >
-                <template #bodyCell="{ column, record, index }">
-                    <template v-if="column.key === 'index'">{{ index + 1 }}</template>
+                <template #extra>
+                    <a-button type="primary" @click="openCreateTask">Thêm nhiệm vụ mới</a-button>
+                </template>
+            </a-page-header>
 
-                    <template v-else-if="column.key === 'add'">x</template>
+            <a-spin :spinning="loading">
+                <a-empty v-if="tasks.length === 0" description="Không có công việc" />
+                <a-table
+                    v-else
+                    :columns="treeColumns"
+                    :dataSource="tasks"
+                    rowKey="id"
+                    :pagination="false"
+                    :scroll="{ x: 'max-content' }"
+                >
+                    <template #bodyCell="{ column, record, index }">
+                        <template v-if="column.key === 'index'">{{ index + 1 }}</template>
 
-                    <template v-else-if="column.dataIndex === 'title'">
-                        <router-link
-                            :to="{ name: 'bidding-task-info', params: { id: record.id } }"
-                            class="task-title-cell"
-                        >
+                        <template v-else-if="column.key === 'add'">x</template>
+
+                        <template v-else-if="column.dataIndex === 'title'">
+                            <router-link
+                                :to="{ name: 'bidding-task-info', params: { id: record.id } }"
+                                class="task-title-cell"
+                            >
                         <span class="task-title" :class="{ child: record.parent_id }">
                           {{ truncateText(record.title, 25) }}
                         </span>
-                        </router-link>
-                    </template>
-
-                    <template v-else-if="column.dataIndex === 'assigned_to'">
-                        {{ getAssignedUserName(record.assigned_to) }}
-                    </template>
-
-                    <template v-else-if="column.dataIndex === 'progress'">
-                        {{ Number(record.progress ?? 0) }}%
-                    </template>
-
-                    <template v-else-if="column.dataIndex === 'priority'">
-                        <a-tag :color="getPriorityColor(record.priority)">{{ getPriorityText(record.priority) }}</a-tag>
-                    </template>
-
-                    <template v-else-if="column.dataIndex === 'start_date'">{{ fmtDate(record.start_date) }}</template>
-                    <template v-else-if="column.dataIndex === 'end_date'">{{ fmtDate(record.end_date) }}</template>
-
-                    <template v-else-if="column.dataIndex === 'status'">
-                        <a-tag :color="getTaskStatusColor(record.status)">{{ getTaskStatusText(record.status) }}</a-tag>
-                    </template>
-
-                    <template v-else-if="column.dataIndex === 'deadline'">
-                        <template v-if="deadlineInfo(record.end_date).type === 'overdue'">
-                            <a-tag color="error">Quá hạn {{ deadlineInfo(record.end_date).days }} ngày</a-tag>
+                            </router-link>
                         </template>
-                        <template v-else-if="deadlineInfo(record.end_date).type === 'today'">
-                            <a-tag :color="'#faad14'">Hạn chót hôm nay</a-tag>
-                        </template>
-                        <template v-else-if="deadlineInfo(record.end_date).type === 'remaining'">
-                            <a-tag color="green">Còn {{ deadlineInfo(record.end_date).days }} ngày</a-tag>
-                        </template>
-                        <template v-else>—</template>
-                    </template>
 
-                    <template v-else-if="column.dataIndex === 'approval_status'">
-                        <template v-if="record.status === 'done' && record.approval_status === 'approved'">
-                            <a-tag color="green">Hoàn thành & Đã duyệt</a-tag>
+                        <template v-else-if="column.dataIndex === 'assigned_to'">
+                            {{ getAssignedUserName(record.assigned_to) }}
                         </template>
-                        <template v-else-if="record.status === 'done'">
-                            <a-tag :color="getApprovalStatusColor(record.approval_status)">
-                                {{ getApprovalStatusText(record.approval_status) }}
-                            </a-tag>
+
+                        <template v-else-if="column.dataIndex === 'progress'">
+                            {{ Number(record.progress ?? 0) }}%
                         </template>
-                        <template v-else>—</template>
+
+                        <template v-else-if="column.dataIndex === 'priority'">
+                            <a-tag :color="getPriorityColor(record.priority)">{{ getPriorityText(record.priority) }}</a-tag>
+                        </template>
+
+                        <template v-else-if="column.dataIndex === 'start_date'">{{ fmtDate(record.start_date) }}</template>
+                        <template v-else-if="column.dataIndex === 'end_date'">{{ fmtDate(record.end_date) }}</template>
+
+                        <template v-else-if="column.dataIndex === 'status'">
+                            <a-tag :color="getTaskStatusColor(record.status)">{{ getTaskStatusText(record.status) }}</a-tag>
+                        </template>
+
+                        <template v-else-if="column.dataIndex === 'deadline'">
+                            <template v-if="deadlineInfo(record.end_date).type === 'overdue'">
+                                <a-tag color="error">Quá hạn {{ deadlineInfo(record.end_date).days }} ngày</a-tag>
+                            </template>
+                            <template v-else-if="deadlineInfo(record.end_date).type === 'today'">
+                                <a-tag :color="'#faad14'">Hạn chót hôm nay</a-tag>
+                            </template>
+                            <template v-else-if="deadlineInfo(record.end_date).type === 'remaining'">
+                                <a-tag color="green">Còn {{ deadlineInfo(record.end_date).days }} ngày</a-tag>
+                            </template>
+                            <template v-else>—</template>
+                        </template>
+
+                        <template v-else-if="column.dataIndex === 'approval_status'">
+                            <template v-if="record.status === 'done' && record.approval_status === 'approved'">
+                                <a-tag color="green">Hoàn thành & Đã duyệt</a-tag>
+                            </template>
+                            <template v-else-if="record.status === 'done'">
+                                <a-tag :color="getApprovalStatusColor(record.approval_status)">
+                                    {{ getApprovalStatusText(record.approval_status) }}
+                                </a-tag>
+                            </template>
+                            <template v-else>—</template>
+                        </template>
                     </template>
-                </template>
-            </a-table>
-        </a-spin>
+                </a-table>
+            </a-spin>
+        </a-card>
 
         <DrawerCreateTask
             v-model:open-drawer="openDrawer"

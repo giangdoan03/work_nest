@@ -20,12 +20,6 @@
                     </template>
                     <DepartmentTasks v-if="activeTabKey === '3'" :departmentId="3" />
                 </a-tab-pane>
-                <!--            <a-tab-pane key="4">-->
-                <!--                <template #tab>-->
-                <!--                    <ToolOutlined /> P.Dịch Vụ Kỹ Thuật-->
-                <!--                </template>-->
-                <!--                <DepartmentTasks v-if="activeTabKey === '4'" :departmentId="4" />-->
-                <!--            </a-tab-pane>-->
                 <a-tab-pane key="4">
                     <template #tab>
                         <TeamOutlined /> P.Hành Chính Nhân Sự
@@ -36,10 +30,6 @@
                     <template #tab>
                         <AppstoreOutlined /> Tổng quan gói thầu - hợp đồng
                     </template>
-                    <!--                <div class="header-actions">-->
-                    <!--                    <a :href="`${origin}/gantt-chart`" target="_blank" class="gantt-link">📊 Xem biểu đồ Gantt</a>-->
-                    <!--                </div>-->
-
                     <div class="table-scroll tiny-scroll">
                         <table class="custom-table">
                             <thead>
@@ -110,37 +100,32 @@
                                                         </a-tooltip>
                                                         <span v-else class="muted">Chưa có nhiệm vụ</span>
                                                     </td>
-
+                                                    <!-- Người đề nghị -->
                                                     <td style="text-align: center; width: 100px">
                                                         <a-tooltip :title="task.proposed_name || 'Chưa có'">
-                                                            <a-avatar size="small"
-                                                                      :style="{
-                                                                backgroundColor: getAvatarColor(task.proposed_name),
-                                                                verticalAlign: 'middle',
-                                                                cursor: 'default',
-                                                                marginRight: '4px'
-                                                              }"
-                                                            >
-                                                                {{ task.proposed_name?.charAt(0).toUpperCase() || '?' }}
-                                                            </a-avatar>
+                                                            <BaseAvatar
+                                                                :src="task.proposed_avatar_url || task.proposed_avatar || ''"
+                                                                :name="task.proposed_name || ''"
+                                                                :size="24"
+                                                                shape="circle"
+                                                                :preferApiOrigin="true"
+                                                            />
                                                         </a-tooltip>
                                                     </td>
 
+                                                    <!-- Người thực hiện -->
                                                     <td style="text-align: center; width: 100px">
                                                         <a-tooltip :title="task.assignee?.name || 'Chưa có'">
-                                                            <a-avatar
-                                                                size="small"
-                                                                :style="{
-                                                            backgroundColor: getAvatarColor(task.assignee?.name),
-                                                            verticalAlign: 'middle',
-                                                            cursor: 'default',
-                                                            marginRight: '4px'
-                                                          }"
-                                                            >
-                                                                {{ task.assignee?.name?.charAt(0).toUpperCase() || '?' }}
-                                                            </a-avatar>
+                                                            <BaseAvatar
+                                                                :src="task.assignee?.avatar_url || task.assignee?.avatar || ''"
+                                                                :name="task.assignee?.name || ''"
+                                                                :size="24"
+                                                                shape="circle"
+                                                                :preferApiOrigin="true"
+                                                            />
                                                         </a-tooltip>
                                                     </td>
+
 
                                                     <td @click="openDateModal(task)" style="cursor: pointer;">
                                                         <div style="display: flex; flex-direction: column; align-items: center; line-height: 1.4;">
@@ -326,6 +311,7 @@ import {
     AppstoreOutlined
 } from '@ant-design/icons-vue';
 import { useRoute, useRouter } from 'vue-router'
+import BaseAvatar from '../components/common/BaseAvatar.vue'
 const route = useRoute()
 const router = useRouter()
 

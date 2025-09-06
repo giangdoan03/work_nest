@@ -1,132 +1,134 @@
 <template>
     <div>
-        <a-flex justify="space-between" align="center" class="mb-3">
-            <a-typography-title :level="4">Nhiệm vụ cần duyệt</a-typography-title>
+            <a-card bordered>
+                <a-flex justify="space-between" align="center" class="mb-3">
+                    <a-typography-title :level="4">Nhiệm vụ cần duyệt</a-typography-title>
 
-            <a-input-search
-                v-model:value="searchTitle"
-                placeholder="Tìm theo tiêu đề (meta_json.title)"
-                allow-clear
-                style="max-width: 320px"
-                @pressEnter="handleSearch"
-            />
-        </a-flex>
-
-        <!-- ✅ Chỉ còn 2 tab: Cần duyệt / Đã xử lý (bỏ @change để tránh fetch đôi) -->
-        <a-tabs v-model:activeKey="activeTab">
-            <a-tab-pane key="pending" tab="Cần duyệt" />
-            <a-tab-pane key="resolved" tab="Đã xử lý" />
-        </a-tabs>
-
-        <a-table
-            :columns="columns"
-            :data-source="rows"
-            :loading="loading"
-            :pagination="pagination"
-            row-key="id"
-            :locale="{ emptyText: 'Không có bản ghi' }"
-            :scroll="{ x: 1300 }"
-            @change="handleTableChange"
-        >
-            <template #bodyCell="{ column, record }">
-                <!-- Loại -->
-                <template v-if="column.dataIndex === 'target_type'">
-                    <a-tag>{{ mapTypeLabel(record.target_type) }}</a-tag>
-                </template>
-
-                <!-- Tiêu đề + Link (tự nhận diện external/internal) -->
-                <template v-else-if="column.dataIndex === 'title'">
-                    <!-- Ưu tiên route chi tiết step nếu là step -->
-                    <template v-if="isStep(record)">
-                        <router-link
-                            :to="stepDetailRoute(record)"
-                            class="link"
-                        >
-                            {{ record.meta_json?.title || displayFallbackTitle(record) }}
-                        </router-link>
-                    </template>
-
-                    <!-- Nếu không phải step: dùng url sẵn có -->
-                    <template v-else-if="record.meta_json?.url">
-                        <a
-                            v-if="isExternalUrl(record.meta_json.url)"
-                            :href="record.meta_json.url"
-                            class="link"
-                            target="_blank"
-                            rel="noopener"
-                        >
-                            {{ record.meta_json?.title || displayFallbackTitle(record) }}
-                        </a>
-                        <router-link
-                            v-else
-                            :to="record.meta_json.url"
-                            class="link"
-                        >
-                            {{ record.meta_json?.title || displayFallbackTitle(record) }}
-                        </router-link>
-                    </template>
-
-                    <span v-else>{{ record.meta_json?.title || displayFallbackTitle(record) }}</span>
-                </template>
-
-
-                <!-- Cấp hiện tại -->
-                <template v-else-if="column.dataIndex === 'current_level'">
-                    Cấp {{ (record.current_level ?? 0) + 1 }}
-                </template>
-
-                <!-- Tổng cấp -->
-                <template v-else-if="column.dataIndex === 'total_steps'">
-                    {{ record._total_steps ?? '—' }}
-                </template>
-
-                <!-- Tiến độ -->
-                <template v-else-if="column.dataIndex === 'progress'">
-                    <a-progress
-                        :percent="progressPercent(record)"
-                        :status="progressStatus(record)"
-                        size="small"
+                    <a-input-search
+                        v-model:value="searchTitle"
+                        placeholder="Tìm theo tiêu đề (meta_json.title)"
+                        allow-clear
+                        style="max-width: 320px"
+                        @pressEnter="handleSearch"
                     />
-                    <div class="text-xs text-gray-500">
-                        <a-tag :color="progressColor(record)" style="font-size:12px;">
-                            {{ progressText(record) }}
-                        </a-tag>
-                    </div>
-                </template>
+                </a-flex>
 
-                <!-- Trạng thái -->
-                <template v-else-if="column.dataIndex === 'status'">
-                    <a-tag :color="statusColor(record.status)">{{ statusText(record.status) }}</a-tag>
-                </template>
+                <!-- ✅ Chỉ còn 2 tab: Cần duyệt / Đã xử lý (bỏ @change để tránh fetch đôi) -->
+                <a-tabs v-model:activeKey="activeTab">
+                    <a-tab-pane key="pending" tab="Cần duyệt" />
+                    <a-tab-pane key="resolved" tab="Đã xử lý" />
+                </a-tabs>
 
-                <!-- Người gửi -->
-                <template v-else-if="column.dataIndex === 'submitted_by'">
-                    {{ record._submitted_by_name || ('#' + (record.submitted_by ?? '—')) }}
-                </template>
+                <a-table
+                    :columns="columns"
+                    :data-source="rows"
+                    :loading="loading"
+                    :pagination="pagination"
+                    row-key="id"
+                    :locale="{ emptyText: 'Không có bản ghi' }"
+                    :scroll="{ x: 1300 }"
+                    @change="handleTableChange"
+                >
+                    <template #bodyCell="{ column, record }">
+                        <!-- Loại -->
+                        <template v-if="column.dataIndex === 'target_type'">
+                            <a-tag>{{ mapTypeLabel(record.target_type) }}</a-tag>
+                        </template>
 
-                <!-- Thời điểm gửi -->
-                <template v-else-if="column.dataIndex === 'submitted_at'">
-                    {{ formatTime(record.submitted_at) || '—' }}
-                </template>
+                        <!-- Tiêu đề + Link (tự nhận diện external/internal) -->
+                        <template v-else-if="column.dataIndex === 'title'">
+                            <!-- Ưu tiên route chi tiết step nếu là step -->
+                            <template v-if="isStep(record)">
+                                <router-link
+                                    :to="stepDetailRoute(record)"
+                                    class="link"
+                                >
+                                    {{ record.meta_json?.title || displayFallbackTitle(record) }}
+                                </router-link>
+                            </template>
 
-                <!-- Hành động -->
-                <template v-else-if="column.dataIndex === 'action'">
-                    <a-space>
-                        <a-button
-                            v-if="activeTab === 'pending'"
-                            type="primary"
-                            @click="openModal(record, 'approve')"
-                        >Duyệt</a-button>
-                        <a-button
-                            v-if="activeTab === 'pending'"
-                            danger
-                            @click="openModal(record, 'reject')"
-                        >Từ chối</a-button>
-                        <a-button @click="viewTimeline(record)">Chi tiết</a-button>
-                    </a-space>
-                </template>
-            </template>
-        </a-table>
+                            <!-- Nếu không phải step: dùng url sẵn có -->
+                            <template v-else-if="record.meta_json?.url">
+                                <a
+                                    v-if="isExternalUrl(record.meta_json.url)"
+                                    :href="record.meta_json.url"
+                                    class="link"
+                                    target="_blank"
+                                    rel="noopener"
+                                >
+                                    {{ record.meta_json?.title || displayFallbackTitle(record) }}
+                                </a>
+                                <router-link
+                                    v-else
+                                    :to="record.meta_json.url"
+                                    class="link"
+                                >
+                                    {{ record.meta_json?.title || displayFallbackTitle(record) }}
+                                </router-link>
+                            </template>
+
+                            <span v-else>{{ record.meta_json?.title || displayFallbackTitle(record) }}</span>
+                        </template>
+
+
+                        <!-- Cấp hiện tại -->
+                        <template v-else-if="column.dataIndex === 'current_level'">
+                            Cấp {{ (record.current_level ?? 0) + 1 }}
+                        </template>
+
+                        <!-- Tổng cấp -->
+                        <template v-else-if="column.dataIndex === 'total_steps'">
+                            {{ record._total_steps ?? '—' }}
+                        </template>
+
+                        <!-- Tiến độ -->
+                        <template v-else-if="column.dataIndex === 'progress'">
+                            <a-progress
+                                :percent="progressPercent(record)"
+                                :status="progressStatus(record)"
+                                size="small"
+                            />
+                            <div class="text-xs text-gray-500">
+                                <a-tag :color="progressColor(record)" style="font-size:12px;">
+                                    {{ progressText(record) }}
+                                </a-tag>
+                            </div>
+                        </template>
+
+                        <!-- Trạng thái -->
+                        <template v-else-if="column.dataIndex === 'status'">
+                            <a-tag :color="statusColor(record.status)">{{ statusText(record.status) }}</a-tag>
+                        </template>
+
+                        <!-- Người gửi -->
+                        <template v-else-if="column.dataIndex === 'submitted_by'">
+                            {{ record._submitted_by_name || ('#' + (record.submitted_by ?? '—')) }}
+                        </template>
+
+                        <!-- Thời điểm gửi -->
+                        <template v-else-if="column.dataIndex === 'submitted_at'">
+                            {{ formatTime(record.submitted_at) || '—' }}
+                        </template>
+
+                        <!-- Hành động -->
+                        <template v-else-if="column.dataIndex === 'action'">
+                            <a-space>
+                                <a-button
+                                    v-if="activeTab === 'pending'"
+                                    type="primary"
+                                    @click="openModal(record, 'approve')"
+                                >Duyệt</a-button>
+                                <a-button
+                                    v-if="activeTab === 'pending'"
+                                    danger
+                                    @click="openModal(record, 'reject')"
+                                >Từ chối</a-button>
+                                <a-button @click="viewTimeline(record)">Chi tiết</a-button>
+                            </a-space>
+                        </template>
+                    </template>
+                </a-table>
+            </a-card>
 
         <!-- Modal nhập comment -->
         <a-modal

@@ -1,6 +1,6 @@
 <template>
     <div>
-            <a-card bordere>
+            <a-card bordered>
                 <div style="margin-bottom: 10px">
                     <a-flex justify="space-between" align="center">
                         <div style="display:flex;align-items:center;gap:8px;">

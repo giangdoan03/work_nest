@@ -50,36 +50,42 @@ class ProjectOverviewController extends ResourceController
         // 2. Truy vấn danh sách khách hàng (BỎ progress)
         $builder = $db->table('customers c')
             ->select("c.id AS customer_id,
-                c.name AS customer_name,
-                (
-                    SELECT CONCAT('[', GROUP_CONCAT(DISTINCT JSON_OBJECT('id', b.id, 'title', b.title)), ']')
-                    FROM biddings b
-                    WHERE b.customer_id = c.id
-                        AND EXISTS (
-                            SELECT 1 FROM tasks t WHERE t.linked_type = 'bidding' AND t.linked_id = b.id
-                        )
-                ) AS biddings,
-                (
-                    SELECT CONCAT('[', GROUP_CONCAT(DISTINCT JSON_OBJECT('id', ct.id, 'title', ct.title)), ']')
-                    FROM contracts ct
-                    WHERE ct.customer_id = c.id
-                        AND EXISTS (
-                            SELECT 1 FROM tasks t WHERE t.linked_type = 'contract' AND t.linked_id = ct.id
-                        )
-                ) AS contracts,
-                CONCAT('[', GROUP_CONCAT(DISTINCT JSON_OBJECT('id', u.id, 'name', u.name)), ']') AS assignees,
-                COUNT(t.id) AS task_count,
-                ROUND(AVG(CASE 
-                    WHEN t.status = 'done' THEN 100
-                    WHEN t.status = 'doing' THEN 50
-                    WHEN t.status = 'todo' THEN 0
-                    ELSE 0
-                END)) AS progress") // ✅ GIỮ LẠI CỘT TIẾN ĐỘ
+        c.name AS customer_name,
+        (
+            SELECT CONCAT('[', GROUP_CONCAT(DISTINCT JSON_OBJECT('id', b.id, 'title', b.title)), ']')
+            FROM biddings b
+            WHERE b.customer_id = c.id
+                AND EXISTS (
+                    SELECT 1 FROM tasks t WHERE t.linked_type = 'bidding' AND t.linked_id = b.id
+                )
+        ) AS biddings,
+        (
+            SELECT CONCAT('[', GROUP_CONCAT(DISTINCT JSON_OBJECT('id', ct.id, 'title', ct.title)), ']')
+            FROM contracts ct
+            WHERE ct.customer_id = c.id
+                AND EXISTS (
+                    SELECT 1 FROM tasks t WHERE t.linked_type = 'contract' AND t.linked_id = ct.id
+                )
+        ) AS contracts,
 
+        -- 🔹 thêm avatar vào assignees
+        CONCAT('[', GROUP_CONCAT(DISTINCT JSON_OBJECT(
+            'id', u.id,
+            'name', u.name,
+            'avatar', u.avatar
+        )), ']') AS assignees,
+
+        COUNT(t.id) AS task_count,
+        ROUND(AVG(CASE 
+            WHEN t.status = 'done' THEN 100
+            WHEN t.status = 'doing' THEN 50
+            WHEN t.status = 'todo' THEN 0
+            ELSE 0
+        END)) AS progress")
             ->join('biddings b', 'b.customer_id = c.id', 'left')
             ->join('contracts ct', 'ct.customer_id = c.id', 'left')
             ->join('tasks t', "t.linked_type IN ('contract', 'bidding') AND (t.linked_id = ct.id OR t.linked_id = b.id)", 'left')
-            ->join('users u', 'u.id = t.assigned_to', 'left')
+            ->join('users u', 'u.id = t.assigned_to', 'left') // giữ join này
             ->groupBy('c.id')
             ->limit($limit, $offset);
 
@@ -103,29 +109,31 @@ class ProjectOverviewController extends ResourceController
         // 3. Lấy tasks chi tiết, kèm tên người đề nghị & thực hiện
         $taskQuery = $db->table('tasks t')
             ->select("
-                c.id AS customer_id,
-                t.id AS task_id,
-                t.title AS task_title,
-                t.status AS task_status,
-                t.progress AS task_progress,
-                t.overdue_reason,
-                t.start_date,
-                t.end_date,
-                t.linked_type,
-                t.linked_id,
-                t.step_code,
-                t.step_id,
-                t.priority,
-                t.assigned_to,
-                t.proposed_by,
-                u1.name AS assigned_name,
-                u2.name AS proposed_name,
-                CASE 
-                    WHEN t.linked_type = 'bidding' THEN bs.title
-                    WHEN t.linked_type = 'contract' THEN cs.title
-                    ELSE NULL
-                END AS step_title
-            ")
+        c.id AS customer_id,
+        t.id AS task_id,
+        t.title AS task_title,
+        t.status AS task_status,
+        t.progress AS task_progress,
+        t.overdue_reason,
+        t.start_date,
+        t.end_date,
+        t.linked_type,
+        t.linked_id,
+        t.step_code,
+        t.step_id,
+        t.priority,
+        t.assigned_to,
+        t.proposed_by,
+        u1.name AS assigned_name,
+        u2.name AS proposed_name,
+        u1.avatar AS assigned_avatar,
+        u2.avatar AS proposed_avatar,
+        CASE 
+            WHEN t.linked_type = 'bidding' THEN bs.title
+            WHEN t.linked_type = 'contract' THEN cs.title
+            ELSE NULL
+        END AS step_title
+    ", false) // <- khuyên dùng false để CI không tự escape thêm
             ->join('users u1', 'u1.id = t.assigned_to', 'left')
             ->join('users u2', 'u2.id = t.proposed_by', 'left')
             ->join('bidding_steps bs', 't.linked_type = "bidding" AND t.step_id = bs.id', 'left')
@@ -133,14 +141,16 @@ class ProjectOverviewController extends ResourceController
             ->join('biddings b', 't.linked_type = "bidding" AND t.linked_id = b.id', 'left')
             ->join('contracts ct', 't.linked_type = "contract" AND t.linked_id = ct.id', 'left')
             ->join('customers c', '
-                (t.linked_type = "bidding" AND b.customer_id = c.id)
-                OR (t.linked_type = "contract" AND ct.customer_id = c.id)
-            ', 'left')
+        (t.linked_type = "bidding" AND b.customer_id = c.id)
+        OR (t.linked_type = "contract" AND ct.customer_id = c.id)
+    ', 'left')
             ->where('t.status IS NOT NULL')
             ->orderBy('t.linked_type')
             ->orderBy('t.linked_id')
             ->orderBy('t.step_code')
             ->get();
+
+
 
         $rawTasks = $taskQuery->getResultArray();
 
@@ -179,16 +189,19 @@ class ProjectOverviewController extends ResourceController
                 'step_title' => $task['step_title'],
                 'assigned_to' => $task['assigned_to'],
                 'assigned_name' => $task['assigned_name'],
+                'assigned_avatar' => $task['assigned_avatar'],   // ✅
                 'proposed_by' => $task['proposed_by'],
                 'proposed_name' => $task['proposed_name'],
+                'proposed_avatar' => $task['proposed_avatar'],   // ✅
                 'extensions' => $extensionsByTask[$task['task_id']] ?? [],
                 'days_remaining' => $diff['days_remaining'],
                 'days_overdue' => $diff['days_overdue'],
                 'overdue_reason' => $task['overdue_reason'] ?? null,
             ];
+
         }
 
-        // 6. Gắn vào từng khách hàng
+            // 6. Gắn vào từng khách hàng
         foreach ($results as &$item) {
             $cid = $item['customer_id'];
             $item['biddings'] = json_decode($item['biddings'] ?? '[]', true);
