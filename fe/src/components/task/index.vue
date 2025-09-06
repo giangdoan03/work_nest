@@ -1152,8 +1152,5 @@ onMounted(async () => {
 </style>
 
 <style>
-.ant-card-body {
-    padding-top: 5px !important;
-    padding-bottom: 20px !important;
-}
+
 </style>
