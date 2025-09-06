@@ -8,7 +8,15 @@ class TaskFileModel extends Model
 {
     protected $table = 'task_files';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['task_id', 'file_name', 'file_path', 'uploaded_by', 'comment_id', 'title', 'link_url', 'is_link'];
+    protected $allowedFields = [
+        'task_id', 'title', 'file_name', 'file_path',
+        'file_type', 'file_size', 'mime_type', 'file_ext',
+        'wp_media_id', 'source',
+        'uploaded_by', 'comment_id',
+        'link_url', 'is_link',
+        'department_id', 'visibility', 'tags'
+    ];
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
+    protected $updatedField  = 'updated_at';
 }

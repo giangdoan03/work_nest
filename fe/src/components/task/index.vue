@@ -10,7 +10,9 @@
                 <a-button type="primary" v-if="!isEditMode" @click="editTask">Chỉnh sửa</a-button>
                 <a-button type="primary" v-if="isEditMode" @click="saveEditTask">Lưu</a-button>
                 <a-button v-if="isEditMode" @click="cancelEditTask">Hủy</a-button>
-                <a-button><EllipsisOutlined/></a-button>
+                <a-button>
+                    <EllipsisOutlined/>
+                </a-button>
             </div>
         </div>
         <div class="task-info">
@@ -24,13 +26,18 @@
                                 <a-tab-pane key="info" tab="Thông tin">
                                     <div class="task-info-left">
                                         <div class="task-info-content">
-                                            <a-form ref="formRef" :model="formData" :rules="isEditMode ? rules : {}" layout="vertical">
+                                            <a-form ref="formRef" :model="formData" :rules="isEditMode ? rules : {}"
+                                                    layout="vertical">
                                                 <div class="task-in">
                                                     <a-row :gutter="16">
                                                         <a-col :span="12">
                                                             <a-form-item label="Tên công việc" name="title">
-                                                                <a-typography-text v-if="!isEditMode">{{ formData.title }}</a-typography-text>
-                                                                <a-input v-else v-model:value="formData.title" placeholder="Nhập tên nhiệm vụ"/>
+                                                                <a-typography-text v-if="!isEditMode">{{
+                                                                        formData.title
+                                                                    }}
+                                                                </a-typography-text>
+                                                                <a-input v-else v-model:value="formData.title"
+                                                                         placeholder="Nhập tên nhiệm vụ"/>
                                                             </a-form-item>
                                                         </a-col>
                                                         <a-col :span="12">
@@ -39,28 +46,37 @@
                                                                     <strong>{{ getTextLinkedType }}</strong>
                                                                 </a-tag>
                                                                 <a-select v-else v-model:value="formData.linked_type"
-                                                                          :options="linkedTypeOption" @change="handleChangeLinkedType()"
+                                                                          :options="linkedTypeOption"
+                                                                          @change="handleChangeLinkedType()"
                                                                           placeholder="Chọn loại nhiệm vụ"/>
                                                             </a-form-item>
                                                         </a-col>
                                                         <a-col :span="24">
                                                             <a-form-item label="Công việc cha">
                                                                 <template v-if="formData.parent_id">
-                                                                    <a-tooltip :title="formData.parent_title || ('#' + formData.parent_id)">
-                                                                        <a-typography-link @click="goToTask(formData.parent_id)">
-                                                                            {{ formData.parent_title || ('#' + formData.parent_id) }}
+                                                                    <a-tooltip
+                                                                        :title="formData.parent_title || ('#' + formData.parent_id)">
+                                                                        <a-typography-link
+                                                                            @click="goToTask(formData.parent_id)">
+                                                                            {{
+                                                                                formData.parent_title || ('#' + formData.parent_id)
+                                                                            }}
                                                                         </a-typography-link>
                                                                     </a-tooltip>
                                                                 </template>
                                                                 <template v-else>
-                                                                    <a-typography-text type="secondary">—</a-typography-text>
+                                                                    <a-typography-text type="secondary">—
+                                                                    </a-typography-text>
                                                                 </template>
                                                             </a-form-item>
                                                         </a-col>
                                                         <!-- ================== BIDDING ================== -->
                                                         <a-col :span="12" v-if="formData.linked_type === 'bidding'">
                                                             <a-form-item label="Liên kết gói thầu" name="linked_id">
-                                                                <a-typography-text v-if="!isEditMode">{{ linkedName }}</a-typography-text>
+                                                                <a-typography-text v-if="!isEditMode">{{
+                                                                        linkedName
+                                                                    }}
+                                                                </a-typography-text>
                                                                 <a-select
                                                                     v-else
                                                                     v-model:value="formData.linked_id"
@@ -75,7 +91,9 @@
                                                         </a-col>
                                                         <a-col :span="12" v-if="formData.linked_type === 'bidding'">
                                                             <a-form-item label="Công việc cha" name="step_code">
-                                                                <a-typography-text v-if="!isEditMode">{{ getStepByStepNo(formData.step_code) }}</a-typography-text>
+                                                                <a-typography-text v-if="!isEditMode">
+                                                                    {{ getStepByStepNo(formData.step_code) }}
+                                                                </a-typography-text>
                                                                 <a-select
                                                                     v-else
                                                                     v-model:value="formData.step_code"
@@ -90,7 +108,10 @@
                                                         <!-- ================== CONTRACT ================== -->
                                                         <a-col :span="12" v-if="formData.linked_type === 'contract'">
                                                             <a-form-item label="Liên kết hợp đồng" name="linked_id">
-                                                                <a-typography-text v-if="!isEditMode">{{ linkedName }}</a-typography-text>
+                                                                <a-typography-text v-if="!isEditMode">{{
+                                                                        linkedName
+                                                                    }}
+                                                                </a-typography-text>
                                                                 <a-select
                                                                     v-else
                                                                     v-model:value="formData.linked_id"
@@ -102,7 +123,9 @@
                                                         </a-col>
                                                         <a-col :span="12" v-if="formData.linked_type === 'contract'">
                                                             <a-form-item label="Công việc cha" name="step_code">
-                                                                <a-typography-text v-if="!isEditMode">{{ getStepByStepNo(formData.step_code) }}</a-typography-text>
+                                                                <a-typography-text v-if="!isEditMode">
+                                                                    {{ getStepByStepNo(formData.step_code) }}
+                                                                </a-typography-text>
                                                                 <a-select
                                                                     v-else
                                                                     v-model:value="formData.step_code"
@@ -121,7 +144,9 @@
                                                             <a-form-item label="Thời gian" name="time">
                                                                 <template v-if="!isEditMode">
                                                                     <a-typography-text>
-                                                                        {{(formatDate(formData.start_date) || "Trống") + " → " + (formatDate(formData.end_date) || "Trống") }}
+                                                                        {{
+                                                                            (formatDate(formData.start_date) || "Trống") + " → " + (formatDate(formData.end_date) || "Trống")
+                                                                        }}
                                                                     </a-typography-text>
                                                                 </template>
                                                                 <template v-else>
@@ -143,10 +168,12 @@
                                                                 <a-tag v-if="formData.days_overdue > 0" color="error">
                                                                     Quá hạn {{ formData.days_overdue }} ngày
                                                                 </a-tag>
-                                                                <a-tag v-else-if="formData.days_remaining > 0" color="green">
+                                                                <a-tag v-else-if="formData.days_remaining > 0"
+                                                                       color="green">
                                                                     Còn {{ formData.days_remaining }} ngày
                                                                 </a-tag>
-                                                                <a-tag v-else-if="formData.days_remaining === 0" :color="'#faad14'">
+                                                                <a-tag v-else-if="formData.days_remaining === 0"
+                                                                       :color="'#faad14'">
                                                                     Hạn chót hôm nay
                                                                 </a-tag>
                                                                 <a-tag v-else>
@@ -157,31 +184,40 @@
 
                                                         <a-col :span="12">
                                                             <a-form-item label="Độ ưu tiên" name="priority">
-                                                                <a-tag v-if="!isEditMode" :color="checkPriority(formData.priority).color">
+                                                                <a-tag v-if="!isEditMode"
+                                                                       :color="checkPriority(formData.priority).color">
                                                                     {{ checkPriority(formData.priority).label }}
                                                                 </a-tag>
-                                                                <a-select v-else v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên"/>
+                                                                <a-select v-else v-model:value="formData.priority"
+                                                                          :options="priorityOption"
+                                                                          placeholder="Chọn độ ưu tiên"/>
                                                             </a-form-item>
                                                         </a-col>
 
                                                         <a-col :span="12">
                                                             <a-form-item label="Trạng thái" name="status">
                                                                 <template v-if="!isEditMode">
-                                                                    <a-tag v-if="formData.approval_status === 'approved'" color="success">Hoàn
+                                                                    <a-tag
+                                                                        v-if="formData.approval_status === 'approved'"
+                                                                        color="success">Hoàn
                                                                         thành
                                                                     </a-tag>
-                                                                    <a-tag v-else :color="checkStatus(formData.status).color">
+                                                                    <a-tag v-else
+                                                                           :color="checkStatus(formData.status).color">
                                                                         {{ checkStatus(formData.status).label }}
                                                                     </a-tag>
                                                                 </template>
-                                                                <a-select v-else v-model:value="formData.status" :options="statusOption" placeholder="Chọn trạng thái"/>
+                                                                <a-select v-else v-model:value="formData.status"
+                                                                          :options="statusOption"
+                                                                          placeholder="Chọn trạng thái"/>
                                                             </a-form-item>
                                                         </a-col>
 
                                                         <a-col :span="12">
                                                             <a-form-item label="Phê duyệt" name="approval_status">
-                                                                <a-tag :color="formData.approval_status === 'approved' ? 'green' : 'orange'">
-                                                                    {{ formData.approval_status === 'approved' ? 'Đã duyệt' : 'Chưa duyệt' }}
+                                                                <a-tag
+                                                                    :color="formData.approval_status === 'approved' ? 'green' : 'orange'">
+                                                                    {{formData.approval_status === 'approved' ? 'Đã duyệt' : 'Chưa duyệt' }}
                                                                 </a-tag>
                                                             </a-form-item>
                                                         </a-col>
@@ -200,9 +236,12 @@
 
                                                         <a-col :span="12">
                                                             <a-form-item label="Người thực hiện" name="assigned_to">
-                                                                <a-typography-text v-if="!isEditMode">{{getUserById(formData.assigned_to) }}
+                                                                <a-typography-text v-if="!isEditMode">
+                                                                    {{ getUserById(formData.assigned_to) }}
                                                                 </a-typography-text>
-                                                                <a-select v-else v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng"/>
+                                                                <a-select v-else v-model:value="formData.assigned_to"
+                                                                          :options="userOption"
+                                                                          placeholder="Chọn người dùng"/>
                                                             </a-form-item>
                                                         </a-col>
 
@@ -212,7 +251,8 @@
                                                                     {{ getDepartmentById(formData.id_department) }}
                                                                 </a-typography-text>
                                                                 <a-select v-else v-model:value="formData.id_department"
-                                                                          :options="departmentOptions" placeholder="Chọn người dùng"/>
+                                                                          :options="departmentOptions"
+                                                                          placeholder="Chọn người dùng"/>
                                                             </a-form-item>
                                                         </a-col>
 
@@ -243,9 +283,12 @@
                                                             <!-- Mô tả -->
                                                             <a-form-item label="Mô tả" name="description">
                                                                 <a-typography-text v-if="!isEditMode">
-                                                                    {{ formData.description ? formData.description : "Trống" }}
+                                                                    {{
+                                                                        formData.description ? formData.description : "Trống"
+                                                                    }}
                                                                 </a-typography-text>
-                                                                <a-textarea v-else v-model:value="formData.description" :rows="4" placeholder="Nhập mô tả"/>
+                                                                <a-textarea v-else v-model:value="formData.description"
+                                                                            :rows="4" placeholder="Nhập mô tả"/>
                                                             </a-form-item>
                                                         </a-col>
 
@@ -258,7 +301,7 @@
                                     <div>
                                         <div class="task-info-content">
                                             <div class="task-in-end">
-                                                <SubTasks :list-user="listUser" />
+                                                <SubTasks :list-user="listUser"/>
                                             </div>
                                         </div>
                                     </div>
@@ -270,7 +313,9 @@
                                             <a-col :span="24">
                                                 <a-table :columns="logColumns" :data-source="logData" row-key="id">
                                                     <template #bodyCell="{ column, record }">
-                                                        <template v-if="column.dataIndex === 'level'">Cấp {{ record.level }}</template>
+                                                        <template v-if="column.dataIndex === 'level'">Cấp
+                                                            {{ record.level }}
+                                                        </template>
                                                         <template v-else-if="column.dataIndex === 'status'">
                                                             <a-tag :color="getStatusColor(record.status)">
                                                                 {{ getStatusText(record.status) }}
@@ -294,144 +339,7 @@
                                     <div class="task-info-content">
                                         <div class="task-in-end">
                                             <!-- TEMPLATE -->
-                                            <a-card bordered class="doc-section">
-                                                <template #title>
-                                                    Tài liệu đính kèm
-                                                </template>
-
-                                                <template #extra>
-                                                    <a-segmented
-                                                        v-model:value="activeMode"
-                                                        :options="[
-                                                          { label: 'Upload file', value: 'upload' },
-                                                          { label: 'Lưu link', value: 'link' }
-                                                        ]"
-                                                    />
-                                                </template>
-
-                                                <div v-if="activeMode === 'upload'">
-                                                    <a-form layout="vertical">
-                                                        <a-form-item name="file" class="mb-0">
-                                                            <a-upload-dragger
-                                                                :file-list="computedUploadList"
-                                                                :before-upload="handleBeforeUpload"
-                                                                :on-remove="handleRemoveFile"
-                                                                :multiple="true"
-                                                                :disabled="loadingUploadFile"
-                                                                accept="*"
-                                                            >
-                                                                <p class="ant-upload-drag-icon">
-                                                                    <PaperClipOutlined />
-                                                                </p>
-                                                                <p class="ant-upload-text">Kéo thả file vào đây hoặc bấm để chọn</p>
-                                                                <p class="ant-upload-hint">Hỗ trợ nhiều file. Dung lượng/định dạng tuỳ cấu hình server.</p>
-                                                            </a-upload-dragger>
-                                                        </a-form-item>
-
-                                                        <!-- Tiêu đề cho từng file chờ upload -->
-                                                        <a-form-item
-                                                            v-if="pendingFiles?.length"
-                                                            label="Tiêu đề cho file đã chọn"
-                                                            class="mt-3"
-                                                        >
-                                                            <div class="pending-list">
-                                                                <div
-                                                                    v-for="(file, index) in (pendingFiles || []).filter(f => f && typeof f === 'object')"
-                                                                    :key="file.uid ?? file.name ?? index"
-                                                                    class="pending-item"
-                                                                >
-                                                                    <a-input
-                                                                        v-model:value="file.title"
-                                                                        :status="!file?.title ? 'error' : ''"
-                                                                        :placeholder="`Tiêu đề cho: ${file?.name || 'file #' + (index+1)}`"
-                                                                        allow-clear
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        </a-form-item>
-
-                                                        <a-form-item style="margin-top: 20px">
-                                                            <a-space>
-                                                                <a-button
-                                                                    type="primary"
-                                                                    :disabled="!canSubmitUpload"
-                                                                    @click="submitUpload"
-                                                                >
-                                                                    Lưu tài liệu (file)
-                                                                </a-button>
-                                                                <a-typography-text type="secondary">
-                                                                    Yêu cầu: mỗi file cần có tiêu đề.
-                                                                </a-typography-text>
-                                                            </a-space>
-                                                        </a-form-item>
-                                                    </a-form>
-                                                </div>
-
-                                                <div v-else>
-                                                    <a-form layout="vertical">
-                                                        <a-form-item label="Tiêu đề tài liệu (link)">
-                                                            <a-input
-                                                                v-model:value="manualLink.title"
-                                                                placeholder="Ví dụ: HSMT - Gói ABC - 2025"
-                                                                allow-clear
-                                                            />
-                                                        </a-form-item>
-
-                                                        <a-form-item label="URL tài liệu">
-                                                            <a-input
-                                                                v-model:value="manualLink.url"
-                                                                placeholder="https://..."
-                                                                type="url"
-                                                                allow-clear
-                                                            >
-                                                                <template #prefix><LinkOutlined /></template>
-                                                            </a-input>
-                                                        </a-form-item>
-
-                                                        <a-form-item>
-                                                            <a-space>
-                                                                <a-button
-                                                                    type="primary"
-                                                                    :disabled="!canSubmitLink"
-                                                                    @click="submitLink"
-                                                                >
-                                                                    Lưu tài liệu (link)
-                                                                </a-button>
-                                                                <a-typography-text type="secondary">
-                                                                    URL phải hợp lệ và có tiêu đề.
-                                                                </a-typography-text>
-                                                            </a-space>
-                                                        </a-form-item>
-
-                                                        <a-form-item v-if="manualLinks?.length" label="Link đã thêm">
-                                                            <a-list bordered size="small" :data-source="manualLinks" class="link-list">
-                                                                <template #renderItem="{ item, index }">
-                                                                    <a-list-item :key="index">
-                                                                        <div class="link-row">
-                                                                            <div class="link-meta">
-                                                                                <div class="link-title" :title="item.title">
-                                                                                    <strong>{{ item.title }}</strong>
-                                                                                </div>
-                                                                                <a
-                                                                                    class="link-url"
-                                                                                    :href="item.url"
-                                                                                    target="_blank"
-                                                                                    rel="noopener"
-                                                                                    :title="item.url"
-                                                                                >{{ item.url }}</a>
-                                                                            </div>
-                                                                            <a-button type="text" danger @click="manualLinks.splice(index, 1)">
-                                                                                <DeleteOutlined />
-                                                                            </a-button>
-                                                                        </div>
-                                                                    </a-list-item>
-                                                                </template>
-                                                            </a-list>
-                                                        </a-form-item>
-                                                    </a-form>
-                                                </div>
-                                            </a-card>
-
+                                            <AttachmentsCard :task-id="route.params.id" :department-id="formData.id_department" />
                                         </div>
                                     </div>
                                 </a-tab-pane>
@@ -456,28 +364,30 @@
                 </a-col>
             </a-row>
 
-<!--            <a-typography-title :level="5">Lịch sử phê duyệt</a-typography-title>-->
-<!--            <a-table :columns="logColumns" :data-source="logData" row-key="id">-->
-<!--                <template #bodyCell="{ column, record }">-->
-<!--                    <template v-if="column.dataIndex === 'level'">Cấp {{ record.level }}</template>-->
-<!--                    <template v-if="column.dataIndex === 'status'">-->
-<!--                        <a-tag :color="getStatusColor(record.status)">-->
-<!--                            {{ getStatusText(record.status) }}-->
-<!--                        </a-tag>-->
-<!--                    </template>-->
-<!--                    <template v-if="column.dataIndex === 'approved_by_name'">-->
-<!--                        {{ record.approved_by_name || '—' }}-->
-<!--                    </template>-->
-<!--                    <template v-if="column.dataIndex === 'comment'">-->
-<!--                        {{ record.comment || '—' }}-->
-<!--                    </template>-->
-<!--                </template>-->
-<!--            </a-table>-->
+            <!--            <a-typography-title :level="5">Lịch sử phê duyệt</a-typography-title>-->
+            <!--            <a-table :columns="logColumns" :data-source="logData" row-key="id">-->
+            <!--                <template #bodyCell="{ column, record }">-->
+            <!--                    <template v-if="column.dataIndex === 'level'">Cấp {{ record.level }}</template>-->
+            <!--                    <template v-if="column.dataIndex === 'status'">-->
+            <!--                        <a-tag :color="getStatusColor(record.status)">-->
+            <!--                            {{ getStatusText(record.status) }}-->
+            <!--                        </a-tag>-->
+            <!--                    </template>-->
+            <!--                    <template v-if="column.dataIndex === 'approved_by_name'">-->
+            <!--                        {{ record.approved_by_name || '—' }}-->
+            <!--                    </template>-->
+            <!--                    <template v-if="column.dataIndex === 'comment'">-->
+            <!--                        {{ record.comment || '—' }}-->
+            <!--                    </template>-->
+            <!--                </template>-->
+            <!--            </a-table>-->
         </div>
     </div>
 </template>
 <script setup>
-import {EllipsisOutlined, PaperClipOutlined, DeleteOutlined, LinkOutlined} from '@ant-design/icons-vue';
+import {
+    EllipsisOutlined
+} from '@ant-design/icons-vue';
 import {computed, nextTick, onMounted, reactive, ref, watch} from 'vue';
 import {message} from 'ant-design-vue'
 import 'dayjs/locale/vi';
@@ -485,14 +395,12 @@ import dayjs from 'dayjs';
 import viVN from 'ant-design-vue/es/locale/vi_VN';
 import {getUsers} from '@/api/user';
 import {useRoute, useRouter} from 'vue-router';
-import { formatDate  } from '@/utils/formUtils'
+import {formatDate} from '@/utils/formUtils'
 import {
-    deleteTaskFilesAPI,
     getTaskDetail,
     getTaskFilesAPI,
     updateTask,
     uploadTaskFileAPI,
-    uploadTaskLinkAPI
 } from '@/api/task';
 import {getBiddingAPI, getBiddingsAPI, getBiddingStepsAPI, updateBiddingStepAPI} from "@/api/bidding";
 import {getContractAPI, getContractsAPI} from "@/api/contract";
@@ -506,15 +414,13 @@ import {getTaskExtensions} from "@/api/task.js";
 import {useTaskDrawerStore} from '@/stores/taskDrawerStore';
 import {useCommonStore} from '@/stores/common';
 import debounce from "lodash-es/debounce";
+import AttachmentsCard from '@/components/AttachmentsCard.vue'
 
 const commonStore = useCommonStore()
 
 dayjs.locale('vi');
 
-const extensions = ref([]);
 const extensionHistory = ref([]);
-
-
 const route = useRoute();
 const router = useRouter();
 const locale = ref(viVN);
@@ -522,7 +428,6 @@ const isEditMode = ref(false);
 
 const listUser = ref([])
 const loading = ref(false)
-const loadingSubTask = ref(false)
 const loadingUpdate = ref(false)
 const listContract = ref([]);
 const listBidding = ref([]);
@@ -531,20 +436,8 @@ const listDepartment = ref([])
 
 const formDataSave = ref()
 const logData = ref([])
-const taskId = route.params.id;
-const drawerVisible = ref(false);
 
 const leftTab = ref('info') // tab mặc định
-
-const drawerStore = useTaskDrawerStore();
-
-// onMounted(() => {
-//     if (drawerStore.shouldReopen) {
-//         drawerVisible.value = true; // mở lại drawer
-//         drawerStore.reset(); // chỉ mở 1 lần
-//     }
-// });
-
 
 const formData = ref({
     title: "",
@@ -654,101 +547,30 @@ watch(
     async ([id]) => {
         linkedName.value = await getNameLinked(id);
     },
-    { immediate: true }
+    {immediate: true}
 );
 
 
 const searchBidding = debounce(async (value) => {
-    const res = await getBiddingsAPI({ search: value, per_page: 20 })
+    const res = await getBiddingsAPI({search: value, per_page: 20})
     listBidding.value = res.data.data
 }, 400)    // chờ 400ms sau khi dừng gõ mới gọi API
 
-
-const sortedExtensions = computed(() => {
-    return [...extensionHistory.value].sort((a, b) => new Date(a.updated_at) - new Date(b.updated_at));
-});
-
-const extensionErrors = computed(() => {
-    const result = {};
-    let prevNewDate = null;
-
-    sortedExtensions.value.forEach((item) => {
-        const oldDate = new Date(item.old_end_date);
-        const newDate = new Date(item.new_end_date);
-
-        // Điều kiện lỗi: new < old hoặc old ≠ new của lần trước
-        if (newDate < oldDate || (prevNewDate && oldDate.getTime() !== prevNewDate.getTime())) {
-            result[item.id] = '❗Không hợp lệ';
-        }
-
-        prevNewDate = newDate;
-    });
-
-    return result;
-});
 
 const numericProgress = computed({
     get: () => Number(formData.value.progress || 0),
     set: (val) => formData.value.progress = val
 })
 
-// Lấy data từ trường days_overdue và days_remaining
-const getRemainingDays = computed(() => {
-    // Nếu có trường days_overdue (quá hạn)
-    if (formData.value.days_overdue !== undefined && formData.value.days_overdue > 0) {
-        return -formData.value.days_overdue; // Trả về số âm để biểu thị quá hạn
-    }
-
-    // Nếu có trường days_remaining (còn hạn)
-    if (formData.value.days_remaining !== undefined && formData.value.days_remaining >= 0) {
-        return formData.value.days_remaining;
-    }
-
-    // Fallback: tính toán thủ công nếu không có data từ server
-    if (!formData.value.end_date) return null;
-
-    const today = new Date();
-    const endDate = new Date(formData.value.end_date);
-    const diffTime = endDate.getTime() - today.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-});
-
-const getRemainingDaysText = computed(() => {
-    const days = getRemainingDays.value;
-    if (days === null) return 'Chưa có hạn';
-    if (days < 0) return `Quá hạn ${Math.abs(days)} ngày`;
-    if (days === 0) return 'Hết hạn hôm nay';
-    if (days === 1) return 'Còn 1 ngày';
-    return `Còn ${days} ngày`;
-});
-
-const getRemainingDaysColor = computed(() => {
-    const days = getRemainingDays.value;
-    if (days === null) return 'default';
-    if (days < 0) return 'error';
-    if (days <= 1) return 'warning';
-    if (days <= 3) return 'orange';
-    return 'success';
-});
-
-// Trạng thái tiến trình
-const getProgressStatus = (progress) => {
-    if (!progress) return 'normal';
-    if (progress >= 100) return 'success';
-    if (progress >= 80) return 'normal';
-    if (progress >= 50) return 'active';
-    return 'exception';
-};
-
 
 const linkedIdOption = computed(() => {
     if (formData.value.linked_type === 'contract') {
         const arr = Array.isArray(listContract.value) ? listContract.value : []
-        return arr.map(ele => ({ value: String(ele.id), label: ele.title }))
+        return arr.map(ele => ({value: String(ele.id), label: ele.title}))
     }
     if (formData.value.linked_type === 'bidding') {
         const arr = Array.isArray(listBidding.value) ? listBidding.value : []
-        return arr.map(ele => ({ value: String(ele.id), label: ele.title }))
+        return arr.map(ele => ({value: String(ele.id), label: ele.title}))
     }
     return []
 })
@@ -973,31 +795,10 @@ const saveEditTask = async () => {
     }
 };
 
-const calculateExtensionErrors = (extensions) => {
-    const errors = {};
-
-    extensions.forEach(item => {
-        const oldDate = new Date(item.old_end_date);
-        const newDate = new Date(item.new_end_date);
-
-        if (newDate < oldDate) {
-            errors[item.id] = 'Gia hạn không hợp lệ (ngày kết thúc mới < cũ)';
-        }
-
-        // ✅ Thêm điều kiện khác nếu cần, ví dụ:
-        // if (!item.reason || item.reason.trim() === '') {
-        //     errors[item.id] = 'Lý do gia hạn không được để trống';
-        // }
-    });
-
-    return errors;
-};
-
 
 const cancelEditTask = () => {
     isEditMode.value = false;
 }
-
 
 
 const getDetailTaskById = async () => {
@@ -1023,7 +824,7 @@ const getListBidding = async () => {
 
 const getListContract = async () => {
     try {
-        const res = await getContractsAPI({ per_page: 1000, with_progress: 0 })
+        const res = await getContractsAPI({per_page: 1000, with_progress: 0})
         // ✅ chỉ lấy mảng
         listContract.value = Array.isArray(res.data?.data) ? res.data.data : []
     } catch {
@@ -1061,76 +862,6 @@ const fetchTaskFiles = async () => {
 };
 
 
-const handleBeforeUpload = (file) => {
-    // Ant Upload cung cấp sẵn file.uid
-    pendingFiles.value.push({
-        uid: file.uid,
-        raw: file,
-        name: file.name,
-        title: ''
-    })
-    return false // tự xử lý upload
-}
-
-
-const handleRemoveFile = async (file) => {
-    const uid = file?.uid
-
-    // Nếu là pending (chưa upload) → xoá local
-    const isPending = Array.isArray(pendingFiles.value)
-        && pendingFiles.value.some(f => f?.uid === uid)
-
-    if (isPending) {
-        pendingFiles.value = pendingFiles.value.filter(f => f?.uid !== uid)
-        return true
-    }
-
-    // Nếu là file đã upload → gọi API xoá server
-    try {
-        await deleteTaskFilesAPI(file.id)
-        await fetchTaskFiles()
-        message.success('Xóa file thành công')
-    } catch (e) {
-        message.error('Xóa file thất bại')
-    }
-    return true
-}
-
-const getApprovalText = (status) => {
-    switch (status) {
-        case 'pending':
-            return 'Đang chờ duyệt'
-        case 'approved':
-            return 'Đã duyệt'
-        case 'rejected':
-            return 'Đã từ chối'
-        default:
-            return 'Không xác định'
-    }
-};
-const getApprovalColor = (status) => {
-    switch (status) {
-        case 'pending':
-            return 'orange'
-        case 'approved':
-            return 'green'
-        case 'rejected':
-            return 'red'
-        default:
-            return 'default'
-    }
-}
-
-
-const fetchExtensions = async () => {
-    try {
-        const res = await getTaskExtensions(route.params.id);
-        extensions.value = res.data.extensions || [];
-    } catch (error) {
-        console.error('❌ Lỗi fetch extensions:', error);
-        extensions.value = [];
-    }
-};
 
 const fetchExtensionHistory = async () => {
     try {
@@ -1194,46 +925,10 @@ const fetchLogHistory = async () => {
     }
 }
 
-const computedUploadList = computed(() => {
-    const uploaded = Array.isArray(fileList.value)
-        ? fileList.value.filter(Boolean).map(f => ({
-            ...f,
-            uid: f.uid || f.id || f.file_name || f.name,   // đảm bảo có uid
-            name: f.title ? `${f.title} (${f.file_name || f.name})` : (f.file_name || f.name),
-            url: f.is_link ? f.link_url : f.file_path,     // đừng gán luôn link_url
-            status: 'done'
-        }))
-        : []
-
-    const pending = Array.isArray(pendingFiles.value)
-        ? pendingFiles.value
-            .filter(f => f && typeof f === 'object')       // 🔒 lọc undefined/null
-            .map(f => ({
-                uid: f.uid,                                  // dùng uid thật từ Upload
-                name: f.title ? `${f.title} (${f.name})` : f.name,
-                status: 'ready'
-            }))
-        : []
-
-    return [...uploaded, ...pending]
-})
-
 
 const manualLink = reactive({title: '', url: ''});
 const manualLinks = ref([]);
 
-const addManualLink = async () => {
-    if (!manualLink.title || !manualLink.url) return;
-    manualLinks.value.push({...manualLink});
-    const formData = new FormData();
-    formData.append('title', manualLink.title);
-    formData.append('url', manualLink.url);
-    formData.append('user_id', store.currentUser.id);
-    await uploadTaskLinkAPI(route.params.id, formData);
-    await fetchTaskFiles();
-    manualLink.title = '';
-    manualLink.url = '';
-};
 
 const getDepartment = async () => {
     try {
@@ -1245,36 +940,7 @@ const getDepartment = async () => {
     }
 }
 
-const approvalStatusOption = [
-    {value: 'pending', label: 'Chờ duyệt'},
-    {value: 'approved', label: 'Đã duyệt'},
-    {value: 'rejected', label: 'Từ chối'}
-];
 
-function checkApprovalStatus(status) {
-    switch (status) {
-        case 'approved':
-            return {label: 'Đã duyệt', color: 'green'};
-        case 'pending':
-            return {label: 'Chờ duyệt', color: 'orange'};
-        case 'rejected':
-            return {label: 'Từ chối', color: 'red'};
-        default:
-            return {label: 'Không rõ', color: 'gray'};
-    }
-}
-
-// CHẾ ĐỘ: 'upload' | 'link'
-const activeMode = ref('upload') // giá trị mặc định
-
-// Validate đơn giản:
-const canSubmitUpload = computed(() => {
-    const arr = Array.isArray(pendingFiles.value)
-        ? pendingFiles.value.filter(f => f && typeof f === 'object')
-        : []
-    if (!arr.length) return false
-    return arr.every(f => typeof f.title === 'string' && f.title.trim().length > 0)
-})
 
 const canSubmitLink = computed(() => {
     const t = (manualLink.title || '').trim()
@@ -1283,24 +949,10 @@ const canSubmitLink = computed(() => {
     try {
         const url = new URL(u)
         return !!url.protocol && !!url.host
-    } catch { return false }
+    } catch {
+        return false
+    }
 })
-
-function submitUpload() {
-    // TODO: gọi API upload theo pendingFiles (raw + title)
-    // sau khi thành công -> reset
-    // pendingFiles.value = []; computedUploadList.value = []
-}
-
-function submitLink() {
-    const t = (manualLink.title || '').trim()
-    const u = (manualLink.url || '').trim()
-    if (!t || !u) return
-    manualLinks.value.push({ title: t, url: u })
-    manualLink.title = ''
-    manualLink.url = ''
-}
-
 
 const goBack = () => {
     if (window.history.length > 1) {
@@ -1314,7 +966,7 @@ const goToTask = (id) => {
     if (!id) return;
     router.push({
         name: 'internal-tasks-info',
-        params: { id }
+        params: {id}
     });
 };
 
@@ -1409,20 +1061,27 @@ onMounted(async () => {
 :deep(.ant-select-dropdown .ant-select-item) {
     position: relative;
 }
+
 .panel {
     border: 1px solid #bebebece;
     border-radius: 8px;
     background: #fff;
 }
 
-.mt16 { margin-top: 16px; }
-.mb16 { margin-bottom: 16px; }
+.mt16 {
+    margin-top: 16px;
+}
+
+.mb16 {
+    margin-bottom: 16px;
+}
 
 /* các khối form cũ giữ nguyên */
 .task-in {
     border-bottom: 1px solid #bebebece;
     padding-bottom: 0;
 }
+
 .task-in-end {
     border-bottom: none;
 }
@@ -1433,14 +1092,32 @@ onMounted(async () => {
     top: 76px; /* chỉnh theo chiều cao header của bạn */
 }
 
-.task-left-tabs :deep(.ant-tabs-tab) { font-weight: 500; }
-.mt16 { margin-top: 16px; }
-.task-info-content { border-radius:8px; background:#fff; }
-.task-in { border-bottom:1px solid #bebebece; padding-bottom:0; }
-.task-in-end { border-bottom:none; }
+.task-left-tabs :deep(.ant-tabs-tab) {
+    font-weight: 500;
+}
+
+.mt16 {
+    margin-top: 16px;
+}
+
+.task-info-content {
+    border-radius: 8px;
+    background: #fff;
+}
+
+.task-in {
+    border-bottom: 1px solid #bebebece;
+    padding-bottom: 0;
+}
+
+.task-in-end {
+    border-bottom: none;
+}
+
 .p-14 {
     padding: 14px;
 }
+
 .header-wrapper {
     display: flex;
     justify-content: space-between;
@@ -1456,42 +1133,20 @@ onMounted(async () => {
 .doc-section :deep(.ant-upload.ant-upload-drag) {
     border-radius: 12px;
 }
+
 .pending-list {
     display: grid;
     gap: 8px;
 }
+
 .pending-item :deep(.ant-input) {
     height: 36px;
 }
+
 .link-list :deep(.ant-list-item) {
     padding: 8px 12px;
 }
-.link-row {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.link-meta {
-    flex: 1;
-    min-width: 0;
-}
-.link-title {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.link-url {
-    display: inline-block;
-    max-width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.hint {
-    font-size: 12px;
-}
-.mt-3 { margin-top: 12px; }
-.mb-0 { margin-bottom: 0; }
+
+
 
 </style>

@@ -1005,9 +1005,6 @@ watch(() => filteredTasks.value, () => {
     height: 40px;
 }
 
-span.ant-divider-inner-text {
-    color: #ff0000;
-}
 
 .number {
     flex-basis: 70%;

@@ -9,7 +9,7 @@ export const getDocuments = (params) => instance.get('/documents', {params})
 export const deleteDocument = (id) => instance.delete(`/documents/${id}`)
 export const getDocumentsByDepartment = (departmentId) =>
     instance.get('/documents/by-department', {
-        params: { department_id: departmentId }
+        params: {department_id: departmentId}
     });
 
 export const getSharedDocuments = () =>
@@ -26,3 +26,16 @@ export const updateDocument = (id, data) =>
             'Content-Type': 'application/json'
         }
     })
+
+export const uploadDocumentToWP = (formData, onUploadProgress) =>
+    instance.post('/documents/upload-to-wp', formData, {
+        headers: {'Content-Type': 'multipart/form-data'}, onUploadProgress
+    })
+
+export const uploadRemoteToWP = (payload) =>
+    instance.post('/documents/upload-remote-to-wp', payload, {
+        headers: {'Content-Type': 'application/json'}
+    })
+
+export const uploadDocumentLink = (payload) =>
+    instance.post('/documents/upload-link', payload)

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\DocumentSettingModel;
+use App\Models\TaskFileModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use App\Models\DocumentModel;
@@ -13,7 +14,7 @@ use stdClass;
 use Config\Services;
 use CodeIgniter\Files\File;
 use CodeIgniter\HTTP\Files\UploadedFile;
-
+use Throwable;
 
 
 class DocumentController extends ResourceController
@@ -26,12 +27,73 @@ class DocumentController extends ResourceController
 
     protected int $maxUploadKB = 8192; // 8MB
     protected array $allowedMimes = [
+        // ảnh
         'image/jpeg','image/png','image/gif','image/webp',
+        // PDF & Word
         'application/pdf',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+        'application/msword',                                                      // doc
+        // Excel
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',       // xlsx
+        'application/vnd.ms-excel',                                                // xls (nhiều hệ gửi kiểu này)
+        'text/csv',                                                                // csv
+        // PowerPoint
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation', // pptx
+        'application/vnd.ms-powerpoint',                                             // ppt
+        // fallback hay gặp
+        'application/zip',              // đôi khi docx/xlsx bị detect là zip
+        'application/octet-stream',     // 1 số trình duyệt gửi kiểu này; ta vẫn kiểm ext
     ];
-    protected array $allowedExts  = ['jpg','jpeg','png','gif','webp','pdf','docx','doc'];
+    private function mimeToExt(string $mime): ?string {
+        $map = [
+            // ảnh
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png',
+            'image/gif'  => 'gif',
+            'image/webp' => 'webp',
+            // PDF & Word
+            'application/pdf' => 'pdf',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+            'application/msword' => 'doc',
+            // Excel
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
+            'application/vnd.ms-excel' => 'xls',
+            'text/csv' => 'csv',
+            // PowerPoint
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'pptx',
+            'application/vnd.ms-powerpoint' => 'ppt',
+            // đôi khi bị phát hiện là zip
+            'application/zip' => null,
+            // fallback
+            'application/octet-stream' => null,
+        ];
+        return $map[$mime] ?? null;
+    }
+
+// dùng khi cần suy ra MIME từ đuôi file (fallback cho octet-stream)
+    private function extToMime(string $ext): ?string {
+        $map = [
+            'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png',
+            'gif' => 'image/gif', 'webp' => 'image/webp',
+            'pdf' => 'application/pdf',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'doc'  => 'application/msword',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'xls'  => 'application/vnd.ms-excel',
+            'csv'  => 'text/csv',
+            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'ppt'  => 'application/vnd.ms-powerpoint',
+        ];
+        return $map[strtolower($ext)] ?? null;
+    }
+
+
+    protected array $allowedExts  = [
+        'jpg','jpeg','png','gif','webp',
+        'pdf','doc','docx',
+        'xls','xlsx','csv',
+        'ppt','pptx'
+    ];
 
     protected function normalizeVisibility(string $v): string {
         $valid = ['private','public','department','custom'];
@@ -73,17 +135,116 @@ class DocumentController extends ResourceController
             ->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
             ->setHeader('Access-Control-Allow-Credentials', 'true');
     }
-    private function mimeToExt(string $mime): ?string {
-        $map = [
-            'image/jpeg' => 'jpg',
-            'image/png'  => 'png',
-            'image/gif'  => 'gif',
-            'image/webp' => 'webp',
-            'application/pdf' => 'pdf',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
-            'application/msword' => 'doc',
-        ];
-        return $map[$mime] ?? null;
+
+
+    /**
+     * POST /api/documents/upload-link
+     * JSON body:
+     * {
+     *   "title": "HSMT 2025",
+     *   "url": "https://example.com/file.pdf",   // hoặc "file_url"
+     *   "department_id": 1,
+     *   "visibility": "private|public|department|custom",
+     *   "task_id": 123,            // (optional) => nếu gửi sẽ thêm bản ghi task_files
+     *   "comment_id": null,        // (optional)
+     *   "tags": "hsm,2025",        // (optional)
+     *   "shared_users": [],        // (optional, khi visibility=custom)
+     *   "shared_departments": []   // (optional, khi visibility=custom)
+     * }
+     */
+    public function uploadLink(): ResponseInterface
+    {
+        $userId = session()->get('user_id');
+        if (!$userId) return $this->failUnauthorized('Chưa đăng nhập');
+
+        // Nhận JSON hoặc form
+        $data = $this->request->getJSON(true);
+        if (!$data) $data = $this->request->getPost();
+
+        $title = trim($data['title'] ?? '');
+        $url = trim($data['url'] ?? ($data['file_url'] ?? ''));
+        $departmentId = $data['department_id'] ?? (session()->get('department_id') ?? null);
+        $visibility = $this->normalizeVisibility($data['visibility'] ?? 'private');
+        $taskId = $data['task_id'] ?? null;
+        $commentId = $data['comment_id'] ?? null;
+        $tags = $data['tags'] ?? null;
+
+        if ($title === '') {
+            return $this->failValidationErrors(['title' => 'Vui lòng nhập tiêu đề.']);
+        }
+        if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL)) {
+            return $this->failValidationErrors(['url' => 'URL không hợp lệ.']);
+        }
+        if (!$departmentId) {
+            return $this->failValidationErrors(['department_id' => 'Thiếu department_id.']);
+        }
+
+        // Suy đoán ext/mime từ URL (không tải file)
+        $path = parse_url($url, PHP_URL_PATH) ?? '';
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $mime = $this->extToMime($ext);
+
+        $db = $this->model->db;
+        $db->transBegin();
+
+        try {
+            // 1) Lưu vào documents (file_type = 'link')
+            $docId = $this->model->insert([
+                'title' => $title,
+                'file_path' => $url,
+                'file_type' => 'link',
+                'file_size' => 0,
+                'department_id' => $departmentId,
+                'visibility' => $visibility,
+                'uploaded_by' => $userId,
+                'tags' => $tags,
+            ], true);
+            if (!$docId) $docId = $this->model->getInsertID();
+
+            // Phân quyền custom nếu có
+            if ($visibility === 'custom') {
+                $permModel = new DocumentPermissionModel();
+                $this->extracted($data, $docId, $permModel);
+            }
+
+            // 2) Nếu có task_id → lưu vào task_files (is_link=1)
+            $taskFileId = null;
+            if (!empty($taskId)) {
+                $tf = new TaskFileModel();
+                $taskFileId = $tf->insert([
+                    'task_id' => (int)$taskId,
+                    'title' => $title,
+                    'file_name' => basename($path) ?: null,
+                    'file_path' => null,          // không có file thực
+                    'file_type' => 'link',
+                    'file_size' => 0,
+                    'mime_type' => $mime,
+                    'file_ext' => $ext ?: null,
+                    'wp_media_id' => null,
+                    'source' => 'link',
+                    'uploaded_by' => $userId,
+                    'comment_id' => $commentId,
+                    'is_link' => 1,
+                    'link_url' => $url,          // URL gốc
+                    'department_id' => $departmentId, // tùy nhu cầu, có thể bỏ
+                    'visibility' => $visibility,   // tùy nhu cầu, có thể bỏ
+                    'tags' => $tags,
+                ], true);
+            }
+
+            $db->transCommit();
+
+            return $this->respondCreated([
+                'id' => (int)$docId,
+                'url' => $url,
+                'type' => 'link',
+                'visibility' => $visibility,
+                'task_file_id' => $taskFileId ? (int)$taskFileId : null,
+            ]);
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            return $this->failServerError('Lưu CSDL thất bại: ' . $e->getMessage());
+        }
     }
 
     /* ================== 1) Upload FILE -> WordPress -> tạo Document ================== */
@@ -103,7 +264,7 @@ class DocumentController extends ResourceController
         $userId = session()->get('user_id');
         if (!$userId) return $this->failUnauthorized('Chưa đăng nhập');
 
-        // validate file
+        // 1) Validate file
         $rules = [
             'file' => [
                 'label' => 'File',
@@ -125,6 +286,7 @@ class DocumentController extends ResourceController
             return $this->fail('File không hợp lệ.');
         }
 
+        // 2) Cấu hình WP REST
         $endpoint = (string) env('WP_MEDIA_ENDPOINT', '');
         $wpUser   = (string) env('WP_USER', '');
         $wpPass   = (string) env('WP_APP_PASSWORD', '');
@@ -133,9 +295,16 @@ class DocumentController extends ResourceController
         }
 
         $auth   = 'Basic ' . base64_encode($wpUser . ':' . $wpPass);
-        $ctype  = $file->getMimeType() ?: 'application/octet-stream';
+        $ctype = $file->getMimeType() ?: 'application/octet-stream';
+        if ($ctype === 'application/octet-stream' || !$this->mimeToExt($ctype)) {
+            // đoán theo đuôi file khi fileinfo không chuẩn
+            $guess = $this->extToMime($file->getClientExtension() ?: pathinfo($file->getClientName(), PATHINFO_EXTENSION));
+            if ($guess) {
+                $ctype = $guess;
+            }
+        }
         $client = Services::curlrequest([
-            'timeout'     => 40,
+            'timeout'     => 60,
             'http_errors' => false,
             'headers'     => [
                 'Authorization' => $auth,
@@ -143,67 +312,250 @@ class DocumentController extends ResourceController
             ],
         ]);
 
-        // Gửi binary body (chuẩn WP REST /wp/v2/media)
+        // 3) Gửi binary lên WP (/wp/v2/media)
+        $clientName = $file->getClientName();
         $resp = $client->post($endpoint, [
             'headers' => [
                 'Content-Type'        => $ctype,
-                'Content-Disposition' => 'attachment; filename="' . $file->getClientName() . '"',
+                'Content-Disposition' => 'attachment; filename="' . basename($clientName) . '"',
             ],
             'body' => file_get_contents($file->getTempName()),
         ]);
 
         $code = $resp->getStatusCode();
         $body = (string) $resp->getBody();
-
         if ($code !== 201) {
-            // trả nguyên body để debug
+            // Trả nguyên body để debug lỗi WP
             return $this->failServerError($body ?: ('WordPress trả mã ' . $code));
         }
 
-        $json = json_decode($body, true) ?: [];
-        $wpId = $json['id'] ?? null;
-        $wpUrl = $json['source_url'] ?? null;
+        $json  = json_decode($body, true) ?: [];
+        $wpId  = $json['id'] ?? null;
+        // Một số WP không trả source_url cho non-image → fallback sang guid.rendered
+        $wpUrl = $json['source_url'] ?? ($json['guid']['rendered'] ?? null);
+        if (!$wpUrl) {
+            return $this->failServerError('Upload thành công nhưng thiếu URL media từ WordPress.');
+        }
+
+        // 4) Lấy dữ liệu bổ sung từ POST
+        $title        = $this->request->getPost('title') ?: pathinfo($clientName, PATHINFO_FILENAME);
+        $departmentId = $this->request->getPost('department_id') ?: (session()->get('department_id') ?? null);
+        $visibility   = $this->normalizeVisibility($this->request->getPost('visibility') ?? 'private');
+        $taskId       = $this->request->getPost('task_id');     // ⬅️ FE gửi nếu muốn gắn vào task_files
+        $tags         = $this->request->getPost('tags') ?? null;
+        $commentId    = $this->request->getPost('comment_id') ?? null;
+
+        if (!$departmentId) {
+            return $this->failValidationErrors('Thiếu department_id.');
+        }
+
+        $ext = strtolower(pathinfo($clientName, PATHINFO_EXTENSION));
+        $sizeBytes = (int) ($file->getSize() ?? 0);
+
+        // 5) Transaction: lưu documents (bắt buộc) + task_files (nếu có task_id)
+        $db = $this->model->db; // dùng connection của model
+        $db->transBegin();
+
+        try {
+            // 5.1) Insert documents
+            $docInsert = [
+                'title'         => $title,
+                'file_path'     => $wpUrl,          // URL public từ WP
+                'file_type'     => 'wp_media',
+                'file_size'     => $sizeBytes,
+                'department_id' => $departmentId,
+                'visibility'    => $visibility,
+                'uploaded_by'   => $userId,
+                'tags'          => $tags,
+            ];
+            $docId = $this->model->insert($docInsert, true);
+            if (!$docId) {
+                // fallback nếu CI4 cũ
+                $docId = $this->model->getInsertID();
+            }
+
+            // 5.2) Phân quyền custom cho documents
+            if ($visibility === 'custom') {
+                $permModel = new DocumentPermissionModel();
+                $payload = [
+                    'shared_users'       => $this->request->getPost('shared_users') ?? [],
+                    'shared_departments' => $this->request->getPost('shared_departments') ?? [],
+                ];
+                $this->extracted($payload, $docId, $permModel);
+            }
+
+            // 5.3) Nếu có task_id → insert task_files
+            $taskFileId = null;
+            if (!empty($taskId)) {
+                $tf = new TaskFileModel();
+                $taskFileId = $tf->insert([
+                    'task_id'       => (int) $taskId,
+                    'title'         => $title,
+                    'file_name'     => $clientName,
+                    'file_path'     => $wpUrl,          // URL từ WP
+                    'file_type'     => 'wp_media',
+                    'file_size'     => $sizeBytes,
+                    'mime_type'     => $ctype,
+                    'file_ext'      => $ext,
+                    'wp_media_id'   => $wpId,
+                    'source'        => 'wordpress',
+                    'uploaded_by'   => $userId,
+                    'comment_id'    => $commentId,
+                    'is_link'       => 0,
+                    'link_url'      => null,
+                    'department_id' => $departmentId,   // nếu bạn cần quy chiếu phòng ban
+                    'visibility'    => $visibility,     // nếu cần kế thừa quyền
+                    'tags'          => $tags,
+                ], true);
+            }
+
+            $db->transCommit();
+
+            return $this->respondCreated([
+                'id'           => (int) $docId,
+                'wp_id'        => $wpId,
+                'url'          => $wpUrl,
+                'mime'         => $ctype,
+                'size'         => $sizeBytes,
+                'visibility'   => $visibility,
+                'task_file_id' => $taskFileId ? (int) $taskFileId : null,
+            ]);
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            return $this->failServerError('Lưu CSDL thất bại: ' . $e->getMessage());
+        }
+    }
+
+
+    public function uploadRemoteToWordPress(): ResponseInterface
+    {
+        $userId = session()->get('user_id');
+        if (!$userId) return $this->failUnauthorized('Chưa đăng nhập');
+
+        $json = $this->request->getJSON(true) ?: [];
+        $url  = $json['url'] ?? null;
+        if (!$url || !filter_var($url, FILTER_VALIDATE_URL)) {
+            return $this->fail('URL không hợp lệ.');
+        }
+
+        // tải binary về
+        try {
+            $binary = file_get_contents($url);
+        } catch (Throwable $e) {
+            return $this->fail('Không thể tải URL nguồn.');
+        }
+
+        // đoán mime/ext
+        $tmp = tempnam(sys_get_temp_dir(), 'rem_');
+        file_put_contents($tmp, $binary);
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime  = finfo_file($finfo, $tmp) ?: 'application/octet-stream';
+        finfo_close($finfo);
+
+        if (!in_array($mime, $this->allowedMimes)) {
+            @unlink($tmp);
+            return $this->fail('Định dạng không được hỗ trợ.');
+        }
+        $sizeKB = (int)ceil(filesize($tmp) / 1024);
+        if ($sizeKB > $this->maxUploadKB) {
+            @unlink($tmp);
+            return $this->failValidationErrors(['file' => 'Kích thước vượt giới hạn.']);
+        }
+
+        // cấu hình WP
+        $endpoint = (string) env('WP_MEDIA_ENDPOINT', '');
+        $wpUser   = (string) env('WP_USER', '');
+        $wpPass   = (string) env('WP_APP_PASSWORD', '');
+        if ($endpoint === '' || $wpUser === '' || $wpPass === '') {
+            @unlink($tmp);
+            return $this->failServerError('Thiếu cấu hình WP_MEDIA_ENDPOINT / WP_USER / WP_APP_PASSWORD.');
+        }
+
+        $auth   = 'Basic ' . base64_encode($wpUser . ':' . $wpPass);
+        $client = Services::curlrequest([
+            'timeout'     => 60,
+            'http_errors' => false,
+            'headers'     => [
+                'Authorization' => $auth,
+                'Accept'        => 'application/json',
+            ],
+        ]);
+
+        // tên file “đẹp”
+        $suggestName = $json['filename'] ?? basename(parse_url($url, PHP_URL_PATH)) ?: ('remote_' . time());
+        $ctype       = $mime;
+
+        $resp = $client->post($endpoint, [
+            'headers' => [
+                'Content-Type'        => $ctype,
+                'Content-Disposition' => 'attachment; filename="' . $suggestName . '"',
+            ],
+            'body' => file_get_contents($tmp),
+        ]);
+
+        @unlink($tmp);
+
+        $code = $resp->getStatusCode();
+        $body = (string) $resp->getBody();
+        if ($code !== 201) {
+            return $this->failServerError($body ?: ('WordPress trả mã ' . $code));
+        }
+
+        $jsonResp = json_decode($body, true) ?: [];
+        $wpId  = $jsonResp['id'] ?? null;
+        $wpUrl = $jsonResp['source_url'] ?? null;
         if (!$wpUrl) {
             return $this->failServerError('Upload thành công nhưng thiếu source_url.');
         }
 
-        // Tạo Document
-        $title        = $this->request->getPost('title') ?: pathinfo($file->getClientName(), PATHINFO_FILENAME);
-        $departmentId = $this->request->getPost('department_id') ?: (session()->get('department_id') ?? null);
-        $visibility   = $this->normalizeVisibility($this->request->getPost('visibility') ?? 'private');
+        // set meta nhẹ
+        $title   = $json['title'] ?? pathinfo($suggestName, PATHINFO_FILENAME);
+        $alt     = $json['alt_text'] ?? $title;
+        $caption = $json['caption'] ?? '';
+        $client->post(rtrim($endpoint, '/media') . '/media/' . $wpId, [
+            'headers' => [
+                'Authorization' => $auth,
+                'Content-Type'  => 'application/json',
+            ],
+            'body' => json_encode([
+                'title'     => $title,
+                'alt_text'  => $alt,
+                'caption'   => $caption,
+            ], JSON_UNESCAPED_UNICODE),
+        ]);
 
+        // Lưu Document DB
+        $departmentId = $json['department_id'] ?? (session()->get('department_id') ?? null);
+        $visibility   = $this->normalizeVisibility($json['visibility'] ?? 'private');
         if (!$departmentId) {
             return $this->failValidationErrors('Thiếu department_id.');
         }
 
         $docId = $this->model->insert([
             'title'         => $title,
-            'file_path'     => $wpUrl,           // dùng URL trên WordPress
+            'file_path'     => $wpUrl,
             'file_type'     => 'wp_media',
-            'file_size'     => (int) ($file->getSize() ?? 0),
+            'file_size'     => (int) ($json['size'] ?? 0),
             'department_id' => $departmentId,
             'visibility'    => $visibility,
             'uploaded_by'   => $userId,
+            'tags'          => $json['tags'] ?? null,
         ]);
 
         if ($visibility === 'custom') {
             $permModel = new DocumentPermissionModel();
-            $payload = [
-                'shared_users'       => $this->request->getPost('shared_users') ?? [],
-                'shared_departments' => $this->request->getPost('shared_departments') ?? [],
-            ];
-            $this->extracted($payload, $docId, $permModel);
+            $this->extracted($json, $docId, $permModel);
         }
 
         return $this->respondCreated([
-            'id'        => $docId,
-            'wp_id'     => $wpId,
-            'url'       => $wpUrl,
-            'mime'      => $ctype,
-            'size'      => (int) ($file->getSize() ?? 0),
-            'visibility'=> $visibility,
+            'id'         => $docId,
+            'wp_id'      => $wpId,
+            'url'        => $wpUrl,
+            'mime'       => $ctype,
+            'visibility' => $visibility,
         ]);
     }
+
 
     /* = 2) Upload từ URL -> lưu vào assets uploads -> tạo Document (giống UploadController) = */
     /**
@@ -240,7 +592,7 @@ class DocumentController extends ResourceController
         // Tải về
         try {
             $binary = file_get_contents($url); // cần allow_url_fopen
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return $this->fail('Không thể tải URL.');
         }
 
@@ -272,7 +624,7 @@ class DocumentController extends ResourceController
         try {
             $f = new File($tmp);
             $f->move($config['upload_dir'], $newName, true);
-        } catch (\Throwable $e) {
+        } catch (Throwable) {
             @unlink($tmp);
             return $this->failServerError('Lưu file thất bại.');
         }

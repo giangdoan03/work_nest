@@ -229,6 +229,11 @@ $routes->group('api', function ($routes) {
     $routes->post('documents/upload-file', 'DocumentController::uploadFile');   // multipart
     $routes->post('documents/upload-url',  'DocumentController::uploadFromUrl'); // JSON {url:...}
 
+    $routes->post('documents/upload-to-wp',        'DocumentController::uploadToWordPress');
+    $routes->post('documents/upload-remote-to-wp', 'DocumentController::uploadRemoteToWordPress');
+    $routes->post('documents/upload',              'DocumentController::upload'); // lưu link vào DB
+    $routes->post('documents/upload-link', 'DocumentController::uploadLink'); // ⬅️ mới
+
 
 
 
