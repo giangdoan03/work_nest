@@ -4,31 +4,36 @@
             <a-tabs v-model:activeKey="activeTabKey" @change="handleTabChange">
                 <a-tab-pane key="1">
                     <template #tab>
-                        <ShopOutlined /> P.Kinh Doanh
+                        <ShopOutlined/>
+                        P.Kinh Doanh
                     </template>
-                    <DepartmentTasks v-if="activeTabKey === '1'" :departmentId="1" />
+                    <DepartmentTasks v-if="activeTabKey === '1'" :departmentId="1"/>
                 </a-tab-pane>
                 <a-tab-pane key="2">
                     <template #tab>
-                        <DollarOutlined /> P.Tài Chính Kế toán
+                        <DollarOutlined/>
+                        P.Tài Chính Kế toán
                     </template>
-                    <DepartmentTasks v-if="activeTabKey === '2'" :departmentId="2" />
+                    <DepartmentTasks v-if="activeTabKey === '2'" :departmentId="2"/>
                 </a-tab-pane>
                 <a-tab-pane key="3">
                     <template #tab>
-                        <ShoppingOutlined /> P.Thương Mại
+                        <ShoppingOutlined/>
+                        P.Thương Mại
                     </template>
-                    <DepartmentTasks v-if="activeTabKey === '3'" :departmentId="3" />
+                    <DepartmentTasks v-if="activeTabKey === '3'" :departmentId="3"/>
                 </a-tab-pane>
                 <a-tab-pane key="4">
                     <template #tab>
-                        <TeamOutlined /> P.Hành Chính Nhân Sự
+                        <TeamOutlined/>
+                        P.Hành Chính Nhân Sự
                     </template>
-                    <DepartmentTasks v-if="activeTabKey === '4'" :departmentId="4" />
+                    <DepartmentTasks v-if="activeTabKey === '4'" :departmentId="4"/>
                 </a-tab-pane>
                 <a-tab-pane key="5" :departmentId="5">
                     <template #tab>
-                        <AppstoreOutlined /> Tổng quan gói thầu - hợp đồng
+                        <AppstoreOutlined/>
+                        Tổng quan gói thầu - hợp đồng
                     </template>
                     <div class="table-scroll tiny-scroll">
                         <table class="custom-table">
@@ -52,12 +57,16 @@
                             <tbody>
                             <template v-for="customer in data" :key="customer.customer_id">
                                 <template v-for="(group, groupIdx) in getGroupedRows(customer)" :key="groupIdx">
-                                    <template v-for="(item, itemIdx) in group.items.filter(it => it.tasks?.length)" :key="itemIdx">
-                                        <template v-for="(stepTasks, stepTitle, stepIdx) in groupByStep(item.tasks)" :key="stepTitle">
+                                    <template v-for="(item, itemIdx) in group.items.filter(it => it.tasks?.length)"
+                                              :key="itemIdx">
+                                        <template v-for="(stepTasks, stepTitle, stepIdx) in groupByStep(item.tasks)"
+                                                  :key="stepTitle">
                                             <template v-for="(task, taskIdx) in stepTasks" :key="taskIdx">
                                                 <tr class="row-hover">
                                                     <!-- Khách hàng -->
-                                                    <td v-if="groupIdx === 0 && itemIdx === 0 && stepIdx === 0 && taskIdx === 0" :rowspan="getTotalRows(customer)" class="customer-cell vertical-text name_customer">
+                                                    <td v-if="groupIdx === 0 && itemIdx === 0 && stepIdx === 0 && taskIdx === 0"
+                                                        :rowspan="getTotalRows(customer)"
+                                                        class="customer-cell vertical-text name_customer">
                                                         <a-tooltip :title="customer.customer_name">
                                                   <span>
                                                     {{ truncatedName(customer.customer_name) }}
@@ -75,7 +84,8 @@
                                                     <!-- Tên -->
                                                     <td v-if="stepIdx === 0 && taskIdx === 0"
                                                         :rowspan="item.tasks.length"
-                                                        class="title-cell" style="max-width: 150px;border-right: 1px solid #e0e0e0">
+                                                        class="title-cell"
+                                                        style="max-width: 150px;border-right: 1px solid #e0e0e0">
                                                         <a-tooltip :title="item.title">
                                                             <span class="ellipsis-text">{{ item.title }}</span>
                                                         </a-tooltip>
@@ -83,10 +93,15 @@
 
 
                                                     <!-- Bước quy trình -->
-                                                    <td v-if="taskIdx === 0" :rowspan="stepTasks.length" class="step_code" style="max-width: 150px">
+                                                    <td v-if="taskIdx === 0" :rowspan="stepTasks.length"
+                                                        class="step_code" style="max-width: 150px">
                                                         <a-tooltip :title="task.step_title">
-                                                            <router-link :to="getLinkedRoute(task)" class="ellipsis-text" style="color: #096dd9; text-decoration: none">
-                                                                <span v-if="task.step_code">B{{ task.step_code }} - </span>{{ task.step_title }}
+                                                            <router-link :to="getLinkedRoute(task)"
+                                                                         class="ellipsis-text"
+                                                                         style="color: #096dd9; text-decoration: none">
+                                                                <span v-if="task.step_code">B{{
+                                                                        task.step_code
+                                                                    }} - </span>{{ task.step_title }}
                                                             </router-link>
                                                         </a-tooltip>
                                                     </td>
@@ -94,7 +109,8 @@
                                                     <!-- Các ô còn lại -->
                                                     <td class="task-cell" style="border-left: 1px solid #e0e0e0">
                                                         <a-tooltip :title="task.title" v-if="task.title">
-                                                            <router-link :to="`/internal-tasks/${task.id}/info`" class="ellipsis-text" style="color: #1890ff">
+                                                            <router-link :to="`/internal-tasks/${task.id}/info`"
+                                                                         class="ellipsis-text" style="color: #1890ff">
                                                                 {{ task.title }}
                                                             </router-link>
                                                         </a-tooltip>
@@ -128,7 +144,8 @@
 
 
                                                     <td @click="openDateModal(task)" style="cursor: pointer;">
-                                                        <div style="display: flex; flex-direction: column; align-items: center; line-height: 1.4;">
+                                                        <div
+                                                            style="display: flex; flex-direction: column; align-items: center; line-height: 1.4;">
                                                     <span>
                                                       {{ task.start_date ? formatDate(task.start_date) : '—' }}
                                                     </span>
@@ -136,7 +153,8 @@
                                                     </td>
 
                                                     <td @click="openDateModal(task)" style="cursor: pointer;">
-                                                        <div style="display: flex; flex-direction: column; align-items: center; line-height: 1.4;">
+                                                        <div
+                                                            style="display: flex; flex-direction: column; align-items: center; line-height: 1.4;">
                                                         <span style="color: #f5222d;">
                                                       {{ task.end_date ? formatDate(task.end_date) : '—' }}
                                                     </span>
@@ -145,7 +163,8 @@
 
                                                     <td style="cursor: pointer">
                                                         <a-tooltip title="Click để cập nhật tiến độ">
-                                                            <div @click="openProgressModal(task)" style="cursor: pointer; width: 100px; margin: 0 auto">
+                                                            <div @click="openProgressModal(task)"
+                                                                 style="cursor: pointer; width: 100px; margin: 0 auto">
                                                                 <a-progress
                                                                     :percent="Number(task.progress) || 0"
                                                                     size="small"
@@ -161,8 +180,11 @@
                                                         </a-tooltip>
                                                     </td>
                                                     <td style="text-align: center">
-                                                        <a-tag v-if="task.priority" :color="getPriorityColor(task.priority)" bordered>
-                                                            {{ task.priority === 'high' ? 'Cao' : task.priority === 'normal' ? 'Trung bình' : 'Thấp' }}
+                                                        <a-tag v-if="task.priority"
+                                                               :color="getPriorityColor(task.priority)" bordered>
+                                                            {{
+                                                                task.priority === 'high' ? 'Cao' : task.priority === 'normal' ? 'Trung bình' : 'Thấp'
+                                                            }}
                                                         </a-tag>
                                                         <span v-else class="muted">—</span>
                                                     </td>
@@ -174,8 +196,10 @@
                                                     </td>
 
                                                     <td style="text-align: center">
-                                                        <a-tooltip v-if="task.days_overdue > 0" :title="task.overdue_reason || 'Chưa rõ lý do'">
-                                                            <a-tag color="red" style="cursor: pointer;" @click="openOverdueReasonModal(task)">
+                                                        <a-tooltip v-if="task.days_overdue > 0"
+                                                                   :title="task.overdue_reason || 'Chưa rõ lý do'">
+                                                            <a-tag color="red" style="cursor: pointer;"
+                                                                   @click="openOverdueReasonModal(task)">
                                                                 Quá hạn {{ task.days_overdue }} ngày
                                                             </a-tag>
                                                         </a-tooltip>
@@ -183,7 +207,8 @@
                                                             Còn {{ task.days_remaining }} ngày
                                                         </a-tag>
 
-                                                        <a-tag v-else color="#faad14" style="color: black; font-weight: bold;">
+                                                        <a-tag v-else color="#faad14"
+                                                               style="color: black; font-weight: bold;">
                                                             Hạn hôm nay
                                                         </a-tag>
                                                     </td>
@@ -215,86 +240,85 @@
 
         <!-- Progress Change Modal -->
         <a-modal
-                v-model:open="progressModalVisible"
-                title="Cập nhật"
-                okText="Lưu"
-                cancelText="Hủy"
-                @ok="updateProgress"
-                @cancel="progressModalVisible = false"
-                :confirm-loading="progressUpdating"
+            v-model:open="progressModalVisible"
+            title="Cập nhật"
+            okText="Lưu"
+            cancelText="Hủy"
+            @ok="updateProgress"
+            @cancel="progressModalVisible = false"
+            :confirm-loading="progressUpdating"
         >
             <div style="text-align: center; padding: 20px;">
                 <h4>{{ selectedTask?.title }}</h4>
                 <div style="margin: 20px 0;">
                     <a-slider
-                            v-model:value="newProgressValue"
-                            :min="0"
-                            :max="100"
-                            :step="5"
-                            :marks="{ 0: '0%', 25: '25%', 50: '50%', 75: '75%', 100: '100%' }"
-                            style="width: 100%;"
+                        v-model:value="newProgressValue"
+                        :min="0"
+                        :max="100"
+                        :step="5"
+                        :marks="{ 0: '0%', 25: '25%', 50: '50%', 75: '75%', 100: '100%' }"
+                        style="width: 100%;"
                     />
                 </div>
                 <div style="margin-top: 20px;">
                     <a-progress
-                            :percent="newProgressValue"
-                            size="large"
-                            :format="(percent) => `${percent}%`"
-                            :stroke-width="20"
+                        :percent="newProgressValue"
+                        size="large"
+                        :format="(percent) => `${percent}%`"
+                        :stroke-width="20"
                     />
                 </div>
             </div>
         </a-modal>
 
         <a-modal
-                v-model:open="dateModalVisible"
-                title="Cập nhật thời gian"
-                okText="Lưu"
-                cancelText="Hủy"
-                @ok="updateDates"
-                @cancel="dateModalVisible = false"
-                :confirm-loading="updatingDates"
+            v-model:open="dateModalVisible"
+            title="Cập nhật thời gian"
+            okText="Lưu"
+            cancelText="Hủy"
+            @ok="updateDates"
+            @cancel="dateModalVisible = false"
+            :confirm-loading="updatingDates"
         >
             <div style="text-align: center; padding: 20px;">
                 <h4>{{ selectedTask?.title }}</h4>
                 <a-range-picker
-                        v-model:value="dateRange"
-                        style="width: 100%; margin-top: 20px;"
-                        format="DD/MM/YYYY"
-                        :getPopupContainer="triggerNode => triggerNode.parentNode"
+                    v-model:value="dateRange"
+                    style="width: 100%; margin-top: 20px;"
+                    format="DD/MM/YYYY"
+                    :getPopupContainer="triggerNode => triggerNode.parentNode"
                 />
             </div>
         </a-modal>
 
         <a-modal
-                v-model:open="overdueModalVisible"
-                title="Cập nhật lý do quá hạn"
-                okText="Lưu"
-                cancelText="Hủy"
-                :confirm-loading="updatingOverdueReason"
-                @ok="submitOverdueReason"
+            v-model:open="overdueModalVisible"
+            title="Cập nhật lý do quá hạn"
+            okText="Lưu"
+            cancelText="Hủy"
+            :confirm-loading="updatingOverdueReason"
+            @ok="submitOverdueReason"
         >
             <div style="margin-top: 16px;">
                 <a-textarea
-                        v-model:value="overdueReasonInput"
-                        :rows="4"
-                        placeholder="Nhập lý do quá hạn..."
+                    v-model:value="overdueReasonInput"
+                    :rows="4"
+                    placeholder="Nhập lý do quá hạn..."
                 />
             </div>
         </a-modal>
-
 
 
     </div>
 </template>
 
 <script setup>
-import {ref, onMounted, watch, nextTick } from 'vue';
+import {ref, onMounted, watch, nextTick} from 'vue';
 import {getProjectOverviewAPI} from '@/api/project';
 import {message} from 'ant-design-vue';
-import { formatDate } from '@/utils/formUtils';
+import {formatDate} from '@/utils/formUtils';
 import DepartmentTasks from '@/components/DepartmentTasks.vue'
-import { updateTask } from '@/api/task' // API bạn đã viết
+import {updateTask} from '@/api/task' // API bạn đã viết
 import dayjs from 'dayjs'
 import {
     UserOutlined,
@@ -310,8 +334,9 @@ import {
     TeamOutlined,
     AppstoreOutlined
 } from '@ant-design/icons-vue';
-import { useRoute, useRouter } from 'vue-router'
+import {useRoute, useRouter} from 'vue-router'
 import BaseAvatar from '../components/common/BaseAvatar.vue'
+
 const route = useRoute()
 const router = useRouter()
 
@@ -337,7 +362,6 @@ const overdueReasonInput = ref('')
 const updatingOverdueReason = ref(false)
 
 
-
 const isExpiringOrOverdue = (t) =>
     (t.days_overdue && t.days_overdue > 0) ||
     (t.days_remaining && t.days_remaining <= EXPIRING_SOON_DAYS);
@@ -353,7 +377,7 @@ const currentDeptId = ref(1)
 
 // Theo dõi tab thay đổi để cập nhật URL
 watch(activeTabKey, (newVal) => {
-    router.replace({ query: { ...route.query, tab: newVal } })
+    router.replace({query: {...route.query, tab: newVal}})
 })
 
 const truncatedName = (name) => {
@@ -378,7 +402,7 @@ const getGroupedRows = (customer) => {
                         const stepDiff = Number(a.step_code) - Number(b.step_code);
                         if (stepDiff !== 0) return stepDiff;
 
-                        const statusOrder = { 'overdue': 1, 'doing': 2, 'todo': 3, 'done': 4 };
+                        const statusOrder = {'overdue': 1, 'doing': 2, 'todo': 3, 'done': 4};
                         return (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5);
                     })
                     .map(t => ({
@@ -589,7 +613,6 @@ const submitOverdueReason = async () => {
 };
 
 
-
 const isValidTask = (t) => t.priority === 'high' || t.is_priority === true;
 
 const getTotalRows = (customer) => {
@@ -602,10 +625,9 @@ const getTotalRows = (customer) => {
 const getLinkedRoute = (task) => {
     if (!task?.linked_type || !task?.linked_id) return '/project-overview';
     return task.linked_type === 'bidding'
-        ? { name: 'bid-detail', params: { id: task.linked_id } }
-        : { name: 'contract-detail', params: { id: task.linked_id } };
+        ? {name: 'bid-detail', params: {id: task.linked_id}}
+        : {name: 'contract-detail', params: {id: task.linked_id}};
 };
-
 
 
 const fetchOverview = async () => {
@@ -666,13 +688,14 @@ onMounted(fetchOverview);
 <style scoped>
 
 .table-scroll {
-    overflow-x: auto;             /* cho scroll ngang */
+    overflow-x: auto; /* cho scroll ngang */
     -webkit-overflow-scrolling: touch;
 }
 
 .name_customer {
     text-transform: uppercase;
 }
+
 .custom-table {
     width: 100%;
     border-collapse: collapse;
@@ -831,18 +854,21 @@ onMounted(fetchOverview);
     padding: 2px 6px;
     border-radius: 4px;
 }
+
 .task-status.done {
     background-color: #52c41a;
     color: white;
     padding: 2px 6px;
     border-radius: 4px;
 }
+
 .task-status.doing {
     background-color: #faad14;
     color: white;
     padding: 2px 6px;
     border-radius: 4px;
 }
+
 .task-status.todo {
     background-color: #d9d9d9;
     color: black;
@@ -850,10 +876,21 @@ onMounted(fetchOverview);
     border-radius: 4px;
 }
 
-td a, td, td span{
+td a, td, td span {
     font-size: 10px;
 }
-td span{
+
+td span {
     font-size: 10px;
+}
+</style>
+
+<style scoped>
+table tr td span {
+    font-size: 10px !important;
+}
+
+table tr td a {
+    font-size: 10px !important;
 }
 </style>
