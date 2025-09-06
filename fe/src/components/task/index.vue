@@ -32,12 +32,8 @@
                                                     <a-row :gutter="16">
                                                         <a-col :span="12">
                                                             <a-form-item label="Tên công việc" name="title">
-                                                                <a-typography-text v-if="!isEditMode">{{
-                                                                        formData.title
-                                                                    }}
-                                                                </a-typography-text>
-                                                                <a-input v-else v-model:value="formData.title"
-                                                                         placeholder="Nhập tên nhiệm vụ"/>
+                                                                <a-typography-text v-if="!isEditMode">{{formData.title }}</a-typography-text>
+                                                                <a-input v-else v-model:value="formData.title" placeholder="Nhập tên nhiệm vụ"/>
                                                             </a-form-item>
                                                         </a-col>
                                                         <a-col :span="12">
@@ -56,11 +52,8 @@
                                                                 <template v-if="formData.parent_id">
                                                                     <a-tooltip
                                                                         :title="formData.parent_title || ('#' + formData.parent_id)">
-                                                                        <a-typography-link
-                                                                            @click="goToTask(formData.parent_id)">
-                                                                            {{
-                                                                                formData.parent_title || ('#' + formData.parent_id)
-                                                                            }}
+                                                                        <a-typography-link @click="goToTask(formData.parent_id)">
+                                                                            {{formData.parent_title || ('#' + formData.parent_id) }}
                                                                         </a-typography-link>
                                                                     </a-tooltip>
                                                                 </template>
@@ -73,10 +66,7 @@
                                                         <!-- ================== BIDDING ================== -->
                                                         <a-col :span="12" v-if="formData.linked_type === 'bidding'">
                                                             <a-form-item label="Liên kết gói thầu" name="linked_id">
-                                                                <a-typography-text v-if="!isEditMode">{{
-                                                                        linkedName
-                                                                    }}
-                                                                </a-typography-text>
+                                                                <a-typography-text v-if="!isEditMode">{{linkedName }}</a-typography-text>
                                                                 <a-select
                                                                     v-else
                                                                     v-model:value="formData.linked_id"
@@ -108,9 +98,7 @@
                                                         <!-- ================== CONTRACT ================== -->
                                                         <a-col :span="12" v-if="formData.linked_type === 'contract'">
                                                             <a-form-item label="Liên kết hợp đồng" name="linked_id">
-                                                                <a-typography-text v-if="!isEditMode">{{
-                                                                        linkedName
-                                                                    }}
+                                                                <a-typography-text v-if="!isEditMode">{{linkedName}}
                                                                 </a-typography-text>
                                                                 <a-select
                                                                     v-else
@@ -144,9 +132,7 @@
                                                             <a-form-item label="Thời gian" name="time">
                                                                 <template v-if="!isEditMode">
                                                                     <a-typography-text>
-                                                                        {{
-                                                                            (formatDate(formData.start_date) || "Trống") + " → " + (formatDate(formData.end_date) || "Trống")
-                                                                        }}
+                                                                        {{(formatDate(formData.start_date) || "Trống") + " → " + (formatDate(formData.end_date) || "Trống") }}
                                                                     </a-typography-text>
                                                                 </template>
                                                                 <template v-else>
@@ -184,39 +170,30 @@
 
                                                         <a-col :span="12">
                                                             <a-form-item label="Độ ưu tiên" name="priority">
-                                                                <a-tag v-if="!isEditMode"
-                                                                       :color="checkPriority(formData.priority).color">
+                                                                <a-tag v-if="!isEditMode" :color="checkPriority(formData.priority).color">
                                                                     {{ checkPriority(formData.priority).label }}
                                                                 </a-tag>
-                                                                <a-select v-else v-model:value="formData.priority"
-                                                                          :options="priorityOption"
-                                                                          placeholder="Chọn độ ưu tiên"/>
+                                                                <a-select v-else v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên"/>
                                                             </a-form-item>
                                                         </a-col>
 
                                                         <a-col :span="12">
                                                             <a-form-item label="Trạng thái" name="status">
                                                                 <template v-if="!isEditMode">
-                                                                    <a-tag
-                                                                        v-if="formData.approval_status === 'approved'"
-                                                                        color="success">Hoàn
+                                                                    <a-tag v-if="formData.approval_status === 'approved'" color="success">Hoàn
                                                                         thành
                                                                     </a-tag>
-                                                                    <a-tag v-else
-                                                                           :color="checkStatus(formData.status).color">
+                                                                    <a-tag v-else :color="checkStatus(formData.status).color">
                                                                         {{ checkStatus(formData.status).label }}
                                                                     </a-tag>
                                                                 </template>
-                                                                <a-select v-else v-model:value="formData.status"
-                                                                          :options="statusOption"
-                                                                          placeholder="Chọn trạng thái"/>
+                                                                <a-select v-else v-model:value="formData.status" :options="statusOption" placeholder="Chọn trạng thái"/>
                                                             </a-form-item>
                                                         </a-col>
 
                                                         <a-col :span="12">
                                                             <a-form-item label="Phê duyệt" name="approval_status">
-                                                                <a-tag
-                                                                    :color="formData.approval_status === 'approved' ? 'green' : 'orange'">
+                                                                <a-tag :color="formData.approval_status === 'approved' ? 'green' : 'orange'">
                                                                     {{formData.approval_status === 'approved' ? 'Đã duyệt' : 'Chưa duyệt' }}
                                                                 </a-tag>
                                                             </a-form-item>
@@ -239,9 +216,7 @@
                                                                 <a-typography-text v-if="!isEditMode">
                                                                     {{ getUserById(formData.assigned_to) }}
                                                                 </a-typography-text>
-                                                                <a-select v-else v-model:value="formData.assigned_to"
-                                                                          :options="userOption"
-                                                                          placeholder="Chọn người dùng"/>
+                                                                <a-select v-else v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng"/>
                                                             </a-form-item>
                                                         </a-col>
 
@@ -250,9 +225,7 @@
                                                                 <a-typography-text v-if="!isEditMode">
                                                                     {{ getDepartmentById(formData.id_department) }}
                                                                 </a-typography-text>
-                                                                <a-select v-else v-model:value="formData.id_department"
-                                                                          :options="departmentOptions"
-                                                                          placeholder="Chọn người dùng"/>
+                                                                <a-select v-else v-model:value="formData.id_department" :options="departmentOptions" placeholder="Chọn người dùng"/>
                                                             </a-form-item>
                                                         </a-col>
 
@@ -283,16 +256,11 @@
                                                             <!-- Mô tả -->
                                                             <a-form-item label="Mô tả" name="description">
                                                                 <a-typography-text v-if="!isEditMode">
-                                                                    {{
-                                                                        formData.description ? formData.description : "Trống"
-                                                                    }}
+                                                                    {{formData.description ? formData.description : "Trống" }}
                                                                 </a-typography-text>
-                                                                <a-textarea v-else v-model:value="formData.description"
-                                                                            :rows="4" placeholder="Nhập mô tả"/>
+                                                                <a-textarea v-else v-model:value="formData.description" :rows="4" placeholder="Nhập mô tả"/>
                                                             </a-form-item>
                                                         </a-col>
-
-
                                                     </a-row>
                                                 </div>
                                             </a-form>
@@ -923,19 +891,6 @@ const getDepartment = async () => {
 }
 
 
-
-const canSubmitLink = computed(() => {
-    const t = (manualLink.title || '').trim()
-    const u = (manualLink.url || '').trim()
-    if (!t || !u) return false
-    try {
-        const url = new URL(u)
-        return !!url.protocol && !!url.host
-    } catch {
-        return false
-    }
-})
-
 const vAutoMaxheight = {
     mounted(el, binding) {
         const extra = Number(binding?.value ?? 0)
@@ -1193,8 +1148,6 @@ onMounted(async () => {
 
 /* fix flex child trong ant-col gây tràn ngang khi có text dài */
 .comment :deep(.ant-col[flex="1"]) { min-width: 0; }
-
-
 
 </style>
 
