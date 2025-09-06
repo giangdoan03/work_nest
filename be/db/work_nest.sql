@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Sep 05, 2025 at 09:22 AM
+-- Generation Time: Sep 06, 2025 at 08:26 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -69,7 +69,8 @@ INSERT INTO `approval_instances` (`id`, `target_type`, `target_id`, `version`, `
 (18, 'bidding_step', 284, 1, 1, 'pending', 0, 3, '2025-09-01 06:51:06', NULL, NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 1: Nhận nhu cầu khách hàng\"}', '2025-09-01 06:51:06', '2025-09-01 06:51:06'),
 (19, 'bidding_step', 285, 1, 1, 'pending', 0, 3, '2025-09-01 06:51:27', NULL, NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 2: Đánh giá tính khả thi\"}', '2025-09-01 06:51:27', '2025-09-01 06:51:27'),
 (20, 'bidding_step', 286, 1, 1, 'pending', 0, 3, '2025-09-01 07:59:15', NULL, NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 3: Lập kế hoạch triển khai\"}', '2025-09-01 07:59:15', '2025-09-01 07:59:15'),
-(21, 'bidding_step', 290, 1, 1, 'pending', 0, 3, '2025-09-01 08:48:33', NULL, NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 7: Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)\"}', '2025-09-01 08:48:33', '2025-09-01 08:48:33');
+(21, 'bidding_step', 290, 1, 1, 'pending', 0, 3, '2025-09-01 08:48:33', NULL, NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 7: Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)\"}', '2025-09-01 08:48:33', '2025-09-01 08:48:33'),
+(22, 'task', 250, 1, 1, 'pending', 0, 3, '2025-09-06 04:30:48', NULL, NULL, '{\"url\": \"/internal-tasks/250/info\", \"title\": \"việc con mới\", \"assignee_name\": null}', '2025-09-06 11:30:48', '2025-09-06 11:30:48');
 
 -- --------------------------------------------------------
 
@@ -190,7 +191,8 @@ INSERT INTO `approval_steps` (`id`, `approval_instance_id`, `level`, `approver_i
 (19, 18, 1, 17, 'pending', NULL, NULL, NULL, NULL, '2025-09-01 06:51:06', '2025-09-01 06:51:06'),
 (20, 19, 1, 19, 'pending', NULL, NULL, NULL, NULL, '2025-09-01 06:51:27', '2025-09-01 06:51:27'),
 (21, 20, 1, 15, 'pending', NULL, NULL, NULL, NULL, '2025-09-01 07:59:15', '2025-09-01 07:59:15'),
-(22, 21, 1, 23, 'pending', NULL, NULL, NULL, NULL, '2025-09-01 08:48:33', '2025-09-01 08:48:33');
+(22, 21, 1, 23, 'pending', NULL, NULL, NULL, NULL, '2025-09-01 08:48:33', '2025-09-01 08:48:33'),
+(23, 22, 1, 19, 'pending', NULL, NULL, NULL, NULL, '2025-09-06 11:30:48', '2025-09-06 11:30:48');
 
 -- --------------------------------------------------------
 
@@ -498,7 +500,7 @@ INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `start_
 (279, 28, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-29 02:35:13', '2025-09-01 13:40:50', 0, 1, NULL, 12),
 (280, 28, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-29 02:35:13', '2025-09-01 13:40:50', 0, 1, NULL, 14),
 (281, 28, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-29 02:35:13', '2025-09-01 13:40:50', 0, 1, NULL, 15),
-(284, 35, 1, 'Nhận nhu cầu khách hàng', '2025-08-30 00:00:00', '2025-10-31 00:00:00', '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 17, \"commented_at\": null}]', 0, 'pending', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-08-04 17:26:31', '2025-09-01 06:51:06', 1, 1, 17, 200),
+(284, 35, 1, 'Nhận nhu cầu khách hàng', '2025-08-30 00:00:00', '2025-10-31 00:00:00', '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 17, \"commented_at\": null}]', 0, 'pending', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-08-04 17:26:31', '2025-09-06 04:30:48', 1, 1, 17, 250),
 (285, 35, 2, 'Đánh giá tính khả thi', NULL, NULL, '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 19, \"commented_at\": null}]', 0, 'pending', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-08-04 17:26:31', '2025-09-01 06:51:27', 2, 1, 19, 201),
 (286, 35, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 15, \"commented_at\": null}]', 0, 'pending', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-08-04 17:26:31', '2025-09-01 07:59:15', 2, 1, 15, 202),
 (287, 35, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-04 17:26:31', '2025-09-01 13:40:50', 2, 1, NULL, NULL),
@@ -1107,7 +1109,12 @@ INSERT INTO `documents` (`id`, `title`, `file_path`, `department_id`, `uploaded_
 (3, 'test', 'https://vnexpress.net/', 1, 1, 'custom', 'link', 0, '2025-07-13 14:48:56', '2025-07-14 16:42:08', NULL),
 (4, 'test 2', 'https://dantri.com.vn/noi-vu/nhom-can-bo-cong-chuc-duoc-uu-tien-nghi-huu-truoc-tuoi-20250322153127598.htm', 2, 1, 'private', 'link', 0, '2025-07-13 15:01:40', '2025-07-13 15:01:40', NULL),
 (5, 'test 3', 'https://dantri.com.vn/noi-vu/nhom-can-bo-cong-chuc-duoc-uu-tien-nghi-huu-truoc-tuoi-20250322153127598.htm', 3, 1, 'custom', 'link', 0, '2025-07-13 15:01:55', '2025-07-14 14:57:26', NULL),
-(6, 'tài liệu kỹ thuật 4', 'https://vnexpress.net/', 3, 1, 'custom', 'link', 0, '2025-07-13 15:23:25', '2025-07-14 21:53:55', NULL);
+(6, 'tài liệu kỹ thuật 4', 'https://vnexpress.net/', 3, 1, 'custom', 'link', 0, '2025-07-13 15:23:25', '2025-07-14 21:53:55', NULL),
+(7, 'dsadadsad', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/a4.jpg', 3, 3, 'private', 'wp_media', 160905, '2025-09-06 03:35:09', '2025-09-06 03:35:09', NULL),
+(8, '43243424324', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/a4-1.jpg', 3, 3, 'private', 'wp_media', 160905, '2025-09-06 03:59:31', '2025-09-06 03:59:31', NULL),
+(9, 'Thủ tướng yêu cầu chấn chỉnh thị trường vàng', 'https://vnexpress.net/thu-tuong-yeu-cau-chan-chinh-thi-truong-vang-4935819.html', 3, 3, 'private', 'link', 0, '2025-09-06 04:10:40', '2025-09-06 04:10:40', NULL),
+(10, '2432432442', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/Japanese_English_Thai.xlsx', 3, 3, 'private', 'wp_media', 6539, '2025-09-06 04:40:49', '2025-09-06 04:40:49', NULL),
+(11, 'xxxxxxxxxxxx', 'https://antdv.com/components/image', 3, 3, 'private', 'link', 0, '2025-09-06 05:23:20', '2025-09-06 05:23:20', NULL);
 
 -- --------------------------------------------------------
 
@@ -1702,7 +1709,7 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (247, 201, '43424242', '42342424', 21, 17, '2025-09-01', '2025-10-31', '', 'pending', 'bidding', 35, 2, 285, 3, 'normal', 0, '2025-09-01 01:02:20', '2025-09-01 01:02:20', 1, 1, 2, 0, NULL),
 (248, NULL, 'việc mới', '453454355', 24, 5, '2025-09-01', '2025-10-31', 'doing', 'pending', 'bidding', 40, 1, 363, 3, 'normal', 0, '2025-09-01 01:39:12', '2025-09-01 01:39:12', 1, 1, 2, 0, NULL),
 (249, NULL, 'việc mới 2', '422343243242', 17, 19, '2025-09-01', '2025-10-31', 'doing', 'pending', 'bidding', 40, 1, 363, 3, 'normal', 0, '2025-09-01 01:39:40', '2025-09-01 01:39:40', 1, 1, 4, 0, NULL),
-(250, 200, 'việc con mới', '23432432424', 19, 17, '2025-09-01', '2025-10-31', '', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-01 01:51:50', '2025-09-01 01:51:50', 1, 1, 3, 0, NULL),
+(250, 200, 'việc con mới', '23432432424', 19, 17, '2025-09-01', '2025-10-31', '', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-01 01:51:50', '2025-09-01 01:51:50', 1, 1, 3, 55, NULL),
 (251, NULL, 'con của tesst mới', '45342424234', 5, 5, '2025-09-04', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-03 20:12:58', '2025-09-03 20:12:58', 1, 1, 2, 0, NULL),
 (252, 199, 'xxxxxxx', 'sdadsadsadasd', 5, 5, '2025-09-04', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-03 20:13:39', '2025-09-03 20:13:39', 1, 1, 3, 0, NULL);
 
@@ -1963,13 +1970,25 @@ INSERT INTO `task_comments` (`id`, `task_id`, `user_id`, `comment_id`, `content`
 (37, 199, 3, NULL, '4342424', '2025-09-05 00:29:45', '2025-09-05 00:29:45', NULL, NULL, NULL),
 (38, 199, 3, NULL, '4354353535', '2025-09-05 00:29:50', '2025-09-05 00:29:50', NULL, NULL, NULL),
 (39, 200, 3, NULL, '42342424', '2025-09-05 00:29:58', '2025-09-05 00:29:58', NULL, NULL, NULL),
-(40, 250, 3, NULL, '43243242432424324324', '2025-09-05 00:30:07', '2025-09-05 00:30:07', NULL, NULL, NULL),
+(40, 250, 3, NULL, '432432ccccccccxxxxxxxxxxxxxx', '2025-09-05 00:30:07', '2025-09-06 00:23:59', NULL, NULL, NULL),
 (41, 251, 3, NULL, 'xxxxxxxxxxxxxxxx', '2025-09-05 00:30:14', '2025-09-05 00:30:14', NULL, NULL, NULL),
 (42, 252, 3, NULL, 'nnnnnmnmnm', '2025-09-05 00:30:21', '2025-09-05 00:30:21', NULL, NULL, NULL),
 (43, 251, 3, NULL, 'vvvvvvvvvvvvvvvv', '2025-09-05 00:32:39', '2025-09-05 00:32:39', NULL, NULL, NULL),
 (44, 229, 3, NULL, '4324242424', '2025-09-05 01:01:53', '2025-09-05 01:01:53', NULL, NULL, NULL),
 (45, 237, 3, NULL, '3434xxxxxxxxxxxxxxxxxxx', '2025-09-05 01:10:11', '2025-09-05 01:10:11', NULL, NULL, NULL),
-(46, 238, 3, NULL, '423434324324', '2025-09-05 01:50:06', '2025-09-05 01:50:06', NULL, NULL, NULL);
+(46, 238, 3, NULL, '423434324324', '2025-09-05 01:50:06', '2025-09-05 01:50:06', NULL, NULL, NULL),
+(47, 250, 3, NULL, '', '2025-09-05 20:39:01', '2025-09-05 20:39:01', 'a4.jpg', 'http://assets.worknest.local/files/1757129941_1cbce1eb1d1c0db6b231.jpg', NULL),
+(48, 250, 3, NULL, 'ewqeqeqeqe', '2025-09-05 23:21:40', '2025-09-05 23:21:40', '1434178883-haaychris_hemsworth_dfbg.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/1434178883-haaychris_hemsworth_dfbg.jpg', NULL),
+(49, 250, 3, NULL, '423432424', '2025-09-05 23:26:43', '2025-09-05 23:26:43', 'Japanese_English_Thai (1).xlsx', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/Japanese_English_Thai-1.xlsx', NULL),
+(50, 250, 3, NULL, '343242424', '2025-09-05 23:27:23', '2025-09-05 23:27:23', NULL, NULL, NULL),
+(51, 250, 3, NULL, 'sdadad', '2025-09-05 23:34:19', '2025-09-05 23:34:19', NULL, NULL, NULL),
+(52, 250, 3, NULL, 'dsadsad', '2025-09-05 23:34:20', '2025-09-05 23:34:20', NULL, NULL, NULL),
+(53, 250, 3, NULL, 'dsadsad', '2025-09-05 23:34:23', '2025-09-05 23:34:23', NULL, NULL, NULL),
+(55, 250, 3, NULL, 'adsadsad', '2025-09-05 23:34:27', '2025-09-05 23:34:27', NULL, NULL, NULL),
+(56, 250, 3, NULL, 'ádadd ccccccccc', '2025-09-05 23:34:29', '2025-09-06 00:23:33', NULL, NULL, NULL),
+(57, 250, 3, NULL, 'adsadadxxxxx', '2025-09-05 23:34:30', '2025-09-06 00:22:50', NULL, NULL, NULL),
+(58, 250, 1, NULL, 'test văn ái', '2025-09-06 00:28:28', '2025-09-06 00:28:28', 'a4.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/a4-2.jpg', NULL),
+(59, 203, 3, NULL, 'xxxxxxxxxxxxx', '2025-09-06 00:55:47', '2025-09-06 00:55:47', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2025,44 +2044,57 @@ CREATE TABLE `task_files` (
   `comment_id` int DEFAULT NULL,
   `file_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `file_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `file_path` text COLLATE utf8mb4_unicode_ci,
   `uploaded_by` int DEFAULT NULL,
-  `link_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `link_url` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL,
-  `is_link` tinyint(1) DEFAULT '0'
+  `is_link` tinyint(1) DEFAULT '0',
+  `file_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'wp_media',
+  `file_size` bigint UNSIGNED DEFAULT '0',
+  `mime_type` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `file_ext` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `wp_media_id` bigint UNSIGNED DEFAULT NULL,
+  `source` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'wordpress',
+  `department_id` int DEFAULT NULL,
+  `visibility` enum('private','public','department','custom') COLLATE utf8mb4_unicode_ci DEFAULT 'private',
+  `tags` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `task_files`
 --
 
-INSERT INTO `task_files` (`id`, `task_id`, `comment_id`, `file_name`, `title`, `file_path`, `uploaded_by`, `link_url`, `created_at`, `updated_at`, `is_link`) VALUES
-(7, 3, 9, 'youtube.png', 'Tài liệu C - 202', 'http://assets.worknest.local/files/1749058695_5d6e504e75601e256df4.png', 8, 'https://example.com/file-9719', '2025-06-04 10:38:15', '2025-06-04 17:38:15', 0),
-(9, 5, 11, 'youtube.png', 'Tài liệu D - 531', 'http://assets.worknest.local/files/1749127936_5303eae0ad80c4b5bc44.png', 8, 'https://example.com/file-2956', '2025-06-05 05:52:16', '2025-06-05 12:52:16', 0),
-(10, 18, 12, '5143502cd2109cb8dd2a45aec031de58.png', 'Tài liệu C - 621', 'http://assets.worknest.local/files/1750727815_2676b044eb8b2c255b37.png', 1, 'https://example.com/file-5623', '2025-06-23 18:16:55', '2025-06-24 01:16:55', 0),
-(11, 10, 13, '7c2df40f40dcb45f66ac55d4e7b5702c.png', 'Tài liệu D - 028', 'http://assets.worknest.local/files/1750813504_712b18707a60302bb07e.png', 1, 'https://example.com/file-9249', '2025-06-24 18:05:04', '2025-06-25 01:05:04', 0),
-(13, 1, 18, 'cropped-logo.png', 'Tài liệu B - 763', 'http://assets.worknest.local/files/1750989017_2dd3ca4ddbad686cdb81.png', 1, 'https://example.com/file-9376', '2025-06-26 18:50:17', '2025-06-27 01:50:17', 0),
-(14, 1, 19, '0ad3eb5e73f5bca3c12da468cf3eb09f.png', 'Tài liệu E - 976', 'http://assets.worknest.local/files/1750989034_dccaa25a1226746b6ce0.png', 1, 'https://example.com/file-9135', '2025-06-26 18:50:34', '2025-06-27 01:50:34', 0),
-(15, 22, 20, 'c9f4e889c38c6c40a38017072d3d6f74.png', 'Tài liệu B - 680', 'http://assets.worknest.local/files/1750989064_7b53c00c18aca4cda3b9.png', 1, 'https://example.com/file-7548', '2025-06-26 18:51:04', '2025-06-27 01:51:04', 0),
-(17, 3, NULL, '0ad3eb5e73f5bca3c12da468cf3eb09f.png', 'Tài liệu B - 428', 'http://assets.worknest.local/files/1750991281_778382074d78c2bc4798.png', 1, 'https://example.com/file-336', '2025-06-26 19:28:01', '2025-06-27 02:28:01', 0),
-(18, 3, NULL, 'product_image_demo_1.png', 'Tài liệu A - 937', 'http://assets.worknest.local/files/1750991281_51bf78bfe6d75ab6bd58.png', 1, 'https://example.com/file-9037', '2025-06-26 19:28:01', '2025-06-27 02:28:01', 0),
-(19, 12, NULL, 'z4162527460588-39df1cc6aef941b-2286-5883-1678410959.jpg', 'Tài liệu C - 954', 'http://assets.worknest.local/files/1751035690_f23b12ab04567fe01d91.jpg', 1, 'https://example.com/file-4174', '2025-06-27 07:48:10', '2025-06-27 14:48:10', 0),
-(20, 1, NULL, 'namecheap-order-170207799.pdf', 'Tài liệu A - 694', 'http://assets.worknest.local/files/1751122772_e852606a5f515a222404.pdf', 1, 'https://example.com/file-3763', '2025-06-28 07:59:32', '2025-06-28 14:59:32', 0),
-(21, 1, NULL, '20240819HCNS_KHLVTuan34DinhVanVinhT01.xlsx', 'Tài liệu A - 598', 'http://assets.worknest.local/files/1751122772_1b9c09abd8da72396783.xlsx', 1, 'https://example.com/file-6291', '2025-06-28 07:59:32', '2025-06-28 14:59:32', 0),
-(22, 2, NULL, '20240819HCNS_KHLVTuan34DinhVanVinhT01.xlsx', 'Tài liệu C - 120', 'http://assets.worknest.local/files/1751123519_4400d016e6c67c6e418e.xlsx', 1, 'https://example.com/file-168', '2025-06-28 08:11:59', '2025-06-28 15:11:59', 0),
-(23, 47, NULL, 'Bao_gia_phat_trien_he_thong.docx', 'Tài liệu E - 910', 'http://assets.worknest.local/files/1751367803_91d4c2597ef92425dfca.docx', 1, 'https://example.com/file-1965', '2025-07-01 04:03:23', '2025-07-01 11:03:23', 0),
-(24, 29, NULL, 'zalo_sharelogo.png', NULL, 'http://assets.worknest.local/files/1751816153_4ce1ccefa5405f03e6a3.png', 1, 'https://example.com/file-9325', '2025-07-06 08:35:53', '2025-07-06 15:35:53', 0),
-(25, 29, NULL, 'youtube.png', NULL, 'http://assets.worknest.local/files/1751816206_c9bc8dcc5b266ed33ea2.png', 1, 'https://example.com/file-727', '2025-07-06 08:36:46', '2025-07-06 15:36:46', 0),
-(26, 29, NULL, 'youtube.png', NULL, 'http://assets.worknest.local/files/1751816480_d114aa357c1f612414b6.png', 1, 'https://example.com/file-5663', '2025-07-06 08:41:20', '2025-07-06 15:41:20', 0),
-(28, 29, NULL, 'Gói KVM 2.doc', 'tài liệu 2', 'http://assets.worknest.local/files/1751816750_3fb0d51efe9822d1890a.doc', 1, 'https://example.com/file-6136', '2025-07-06 08:45:50', '2025-07-06 15:45:50', 0),
-(29, 29, NULL, '6833c7043c39e-abc-test-ho-so.docx', 'tài liệu 4', 'http://assets.worknest.local/files/1751816894_b62d4539cde2a2db082e.docx', 1, 'https://example.com/file-3689', '2025-07-06 08:48:14', '2025-07-06 15:48:14', 0),
-(30, 29, NULL, '6833c7043c39e-abc-test-ho-so.docx', 'test tài liệu', 'http://assets.worknest.local/files/1751817141_c0e016c55a3bc6e5093f.docx', 1, 'https://example.com/file-39', '2025-07-06 08:52:21', '2025-07-06 15:52:21', 0),
-(32, 3, NULL, 'Gói KVM 2.doc', 'tài liệu máy chủ', 'http://assets.worknest.local/files/1751817835_4f0ef3fb347c6887c109.doc', 1, 'https://example.com/file-9130', '2025-07-06 09:03:55', '2025-07-06 16:03:55', 0),
-(33, 3, NULL, 'Gói KVM 2.doc', 'tài liệu mới 2', 'http://assets.worknest.local/files/1751817885_44fba7f3c29f59f15d83.doc', 1, 'https://example.com/file-5532', '2025-07-06 09:04:46', '2025-07-06 16:04:46', 0),
-(36, 3, NULL, 'link tài liệu 4', NULL, NULL, 1, 'https://vnexpress.net/', '2025-07-06 09:52:21', '2025-07-06 16:52:21', 1),
-(39, 3, NULL, 'https://vnexpress.net/', NULL, NULL, 1, 'https://vnexpress.net/', '2025-07-06 10:05:00', '2025-07-06 17:05:00', 1),
-(41, 1, NULL, 'tài liệu hợp đồng', NULL, NULL, 1, 'https://mintoku.vccdev.vn/univer-jobfair/wp-admin/post.php?post=523&action=edit', '2025-07-08 07:32:22', '2025-07-08 14:32:22', 1);
+INSERT INTO `task_files` (`id`, `task_id`, `comment_id`, `file_name`, `title`, `file_path`, `uploaded_by`, `link_url`, `created_at`, `updated_at`, `is_link`, `file_type`, `file_size`, `mime_type`, `file_ext`, `wp_media_id`, `source`, `department_id`, `visibility`, `tags`) VALUES
+(7, 3, 9, 'youtube.png', 'Tài liệu C - 202', 'http://assets.worknest.local/files/1749058695_5d6e504e75601e256df4.png', 8, 'https://example.com/file-9719', '2025-06-04 10:38:15', '2025-06-04 17:38:15', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(9, 5, 11, 'youtube.png', 'Tài liệu D - 531', 'http://assets.worknest.local/files/1749127936_5303eae0ad80c4b5bc44.png', 8, 'https://example.com/file-2956', '2025-06-05 05:52:16', '2025-06-05 12:52:16', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(10, 18, 12, '5143502cd2109cb8dd2a45aec031de58.png', 'Tài liệu C - 621', 'http://assets.worknest.local/files/1750727815_2676b044eb8b2c255b37.png', 1, 'https://example.com/file-5623', '2025-06-23 18:16:55', '2025-06-24 01:16:55', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(11, 10, 13, '7c2df40f40dcb45f66ac55d4e7b5702c.png', 'Tài liệu D - 028', 'http://assets.worknest.local/files/1750813504_712b18707a60302bb07e.png', 1, 'https://example.com/file-9249', '2025-06-24 18:05:04', '2025-06-25 01:05:04', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(13, 1, 18, 'cropped-logo.png', 'Tài liệu B - 763', 'http://assets.worknest.local/files/1750989017_2dd3ca4ddbad686cdb81.png', 1, 'https://example.com/file-9376', '2025-06-26 18:50:17', '2025-06-27 01:50:17', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(14, 1, 19, '0ad3eb5e73f5bca3c12da468cf3eb09f.png', 'Tài liệu E - 976', 'http://assets.worknest.local/files/1750989034_dccaa25a1226746b6ce0.png', 1, 'https://example.com/file-9135', '2025-06-26 18:50:34', '2025-06-27 01:50:34', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(15, 22, 20, 'c9f4e889c38c6c40a38017072d3d6f74.png', 'Tài liệu B - 680', 'http://assets.worknest.local/files/1750989064_7b53c00c18aca4cda3b9.png', 1, 'https://example.com/file-7548', '2025-06-26 18:51:04', '2025-06-27 01:51:04', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(17, 3, NULL, '0ad3eb5e73f5bca3c12da468cf3eb09f.png', 'Tài liệu B - 428', 'http://assets.worknest.local/files/1750991281_778382074d78c2bc4798.png', 1, 'https://example.com/file-336', '2025-06-26 19:28:01', '2025-06-27 02:28:01', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(18, 3, NULL, 'product_image_demo_1.png', 'Tài liệu A - 937', 'http://assets.worknest.local/files/1750991281_51bf78bfe6d75ab6bd58.png', 1, 'https://example.com/file-9037', '2025-06-26 19:28:01', '2025-06-27 02:28:01', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(19, 12, NULL, 'z4162527460588-39df1cc6aef941b-2286-5883-1678410959.jpg', 'Tài liệu C - 954', 'http://assets.worknest.local/files/1751035690_f23b12ab04567fe01d91.jpg', 1, 'https://example.com/file-4174', '2025-06-27 07:48:10', '2025-06-27 14:48:10', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(20, 1, NULL, 'namecheap-order-170207799.pdf', 'Tài liệu A - 694', 'http://assets.worknest.local/files/1751122772_e852606a5f515a222404.pdf', 1, 'https://example.com/file-3763', '2025-06-28 07:59:32', '2025-06-28 14:59:32', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(21, 1, NULL, '20240819HCNS_KHLVTuan34DinhVanVinhT01.xlsx', 'Tài liệu A - 598', 'http://assets.worknest.local/files/1751122772_1b9c09abd8da72396783.xlsx', 1, 'https://example.com/file-6291', '2025-06-28 07:59:32', '2025-06-28 14:59:32', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(22, 2, NULL, '20240819HCNS_KHLVTuan34DinhVanVinhT01.xlsx', 'Tài liệu C - 120', 'http://assets.worknest.local/files/1751123519_4400d016e6c67c6e418e.xlsx', 1, 'https://example.com/file-168', '2025-06-28 08:11:59', '2025-06-28 15:11:59', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(23, 47, NULL, 'Bao_gia_phat_trien_he_thong.docx', 'Tài liệu E - 910', 'http://assets.worknest.local/files/1751367803_91d4c2597ef92425dfca.docx', 1, 'https://example.com/file-1965', '2025-07-01 04:03:23', '2025-07-01 11:03:23', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(24, 29, NULL, 'zalo_sharelogo.png', NULL, 'http://assets.worknest.local/files/1751816153_4ce1ccefa5405f03e6a3.png', 1, 'https://example.com/file-9325', '2025-07-06 08:35:53', '2025-07-06 15:35:53', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(25, 29, NULL, 'youtube.png', NULL, 'http://assets.worknest.local/files/1751816206_c9bc8dcc5b266ed33ea2.png', 1, 'https://example.com/file-727', '2025-07-06 08:36:46', '2025-07-06 15:36:46', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(26, 29, NULL, 'youtube.png', NULL, 'http://assets.worknest.local/files/1751816480_d114aa357c1f612414b6.png', 1, 'https://example.com/file-5663', '2025-07-06 08:41:20', '2025-07-06 15:41:20', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(28, 29, NULL, 'Gói KVM 2.doc', 'tài liệu 2', 'http://assets.worknest.local/files/1751816750_3fb0d51efe9822d1890a.doc', 1, 'https://example.com/file-6136', '2025-07-06 08:45:50', '2025-07-06 15:45:50', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(29, 29, NULL, '6833c7043c39e-abc-test-ho-so.docx', 'tài liệu 4', 'http://assets.worknest.local/files/1751816894_b62d4539cde2a2db082e.docx', 1, 'https://example.com/file-3689', '2025-07-06 08:48:14', '2025-07-06 15:48:14', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(30, 29, NULL, '6833c7043c39e-abc-test-ho-so.docx', 'test tài liệu', 'http://assets.worknest.local/files/1751817141_c0e016c55a3bc6e5093f.docx', 1, 'https://example.com/file-39', '2025-07-06 08:52:21', '2025-07-06 15:52:21', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(32, 3, NULL, 'Gói KVM 2.doc', 'tài liệu máy chủ', 'http://assets.worknest.local/files/1751817835_4f0ef3fb347c6887c109.doc', 1, 'https://example.com/file-9130', '2025-07-06 09:03:55', '2025-07-06 16:03:55', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(33, 3, NULL, 'Gói KVM 2.doc', 'tài liệu mới 2', 'http://assets.worknest.local/files/1751817885_44fba7f3c29f59f15d83.doc', 1, 'https://example.com/file-5532', '2025-07-06 09:04:46', '2025-07-06 16:04:46', 0, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(36, 3, NULL, 'link tài liệu 4', NULL, NULL, 1, 'https://vnexpress.net/', '2025-07-06 09:52:21', '2025-07-06 16:52:21', 1, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(39, 3, NULL, 'https://vnexpress.net/', NULL, NULL, 1, 'https://vnexpress.net/', '2025-07-06 10:05:00', '2025-07-06 17:05:00', 1, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(41, 1, NULL, 'tài liệu hợp đồng', NULL, NULL, 1, 'https://mintoku.vccdev.vn/univer-jobfair/wp-admin/post.php?post=523&action=edit', '2025-07-08 07:32:22', '2025-07-08 14:32:22', 1, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(43, 250, NULL, 'a4.jpg', '43243424324', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/a4-1.jpg', 3, NULL, '2025-09-05 20:59:31', '2025-09-06 03:59:31', 0, 'wp_media', 160905, 'image/jpeg', 'jpg', 7, 'wordpress', 3, 'private', NULL),
+(44, 250, NULL, 'thu-tuong-yeu-cau-chan-chinh-thi-truong-vang-4935819.html', 'Thủ tướng yêu cầu chấn chỉnh thị trường vàng', NULL, 3, 'https://vnexpress.net/thu-tuong-yeu-cau-chan-chinh-thi-truong-vang-4935819.html', '2025-09-05 21:10:40', '2025-09-06 04:10:40', 1, 'link', 0, NULL, 'html', NULL, 'link', 3, 'private', NULL),
+(45, 250, NULL, 'Japanese_English_Thai.xlsx', '2432432442', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/Japanese_English_Thai.xlsx', 3, NULL, '2025-09-05 21:40:49', '2025-09-06 04:40:49', 0, 'wp_media', 6539, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx', 8, 'wordpress', 3, 'private', NULL),
+(46, 250, NULL, 'image', 'xxxxxxxxxxxx', NULL, 3, 'https://antdv.com/components/image', '2025-09-05 22:23:20', '2025-09-06 05:23:20', 1, 'link', 0, NULL, NULL, NULL, 'link', 3, 'private', NULL);
 
 -- --------------------------------------------------------
 
@@ -2089,7 +2121,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `name`, `phone`, `avatar`, `role`, `department_id`, `role_id`) VALUES
-(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-08-04 14:01:30', 'Nguyễn Văn Ái', '0988888888', 'avatars/1749049795_4087ec00b95ac222533a.png', 'Trưởng phòng', 1, 2),
+(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-09-06 08:08:05', 'Nguyễn Mai Anh', '0988888888', 'uploads/avatars/1757146085_458ff2a7be53bff1a4a8.png', 'Trưởng phòng', 1, 2),
 (3, 'superadmin@example.com', '$2y$10$duTynUTzT2E8r/XfWDEAv.zruGL1CwtgiFyHoBybvwd8valutSCTW', '2025-04-20 14:02:38', '2025-09-05 01:26:51', 'Super Admin', '0988888888', 'uploads/avatars/1757035611_0019d985edb37c35aaa9.jpg', 'super admin', 2, 1),
 (4, 'nguyenvana@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-05-26 04:33:21', '2025-08-04 16:27:31', 'Nguyễn Văn Tuấn', '0909123456', NULL, 'Nhân viên', 2, 3),
 (5, 'a@worknest.vn', '$2y$10$fPUyT/hhSHhPknmvWgPtxelsaQfNLRiOVZ3Wayj2tbcNo4lApUFEW', '2025-06-04 09:10:50', '2025-09-05 01:27:55', 'Nguyễn Vân Anh', '0911111111', 'uploads/avatars/1757035675_b1a8dfcbbebca0a39cb1.jpg', 'user', 1, 3),
@@ -2343,7 +2375,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `approval_instances`
 --
 ALTER TABLE `approval_instances`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `approval_logs`
@@ -2361,7 +2393,7 @@ ALTER TABLE `approval_reads`
 -- AUTO_INCREMENT for table `approval_steps`
 --
 ALTER TABLE `approval_steps`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `biddings`
@@ -2445,7 +2477,7 @@ ALTER TABLE `departments`
 -- AUTO_INCREMENT for table `documents`
 --
 ALTER TABLE `documents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `document_permissions`
@@ -2517,7 +2549,7 @@ ALTER TABLE `task_approval_logs`
 -- AUTO_INCREMENT for table `task_comments`
 --
 ALTER TABLE `task_comments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
 
 --
 -- AUTO_INCREMENT for table `task_extensions`
@@ -2529,7 +2561,7 @@ ALTER TABLE `task_extensions`
 -- AUTO_INCREMENT for table `task_files`
 --
 ALTER TABLE `task_files`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT for table `users`
