@@ -351,11 +351,11 @@
                     </a-card>
                 </a-col>
                 <!-- RIGHT: 1/3 — Subtasks + Thảo luận -->
-                <a-col :span="8" :xs="24" :lg="8" :xl="8">
-                    <a-card title="Thảo luận" bordered>
+                <a-col :span="8" :xs="24" :lg="8" :xl="8" class="right-col">
+                    <a-card title="Thảo luận" bordered class="discussion-card">
                         <div class="task-info-left">
                             <div class="task-info-content">
-                                <div class="task-in-end">
+                                <div class="task-in-end discussion-scroll" v-auto-maxheight="12">
                                     <Comment/>
                                 </div>
                             </div>
@@ -936,6 +936,38 @@ const canSubmitLink = computed(() => {
     }
 })
 
+const vAutoMaxheight = {
+    mounted(el, binding) {
+        const extra = Number(binding?.value ?? 0)
+        const setH = () => {
+            const rect = el.getBoundingClientRect()
+            const vh   = window.innerHeight || document.documentElement.clientHeight
+            const h    = Math.max(120, vh - rect.top - extra)
+            el.style.maxHeight = h + 'px'
+            el.style.overflowY = 'auto'   // ✅ chỉ cuộn dọc
+            el.style.overflowX = 'hidden' // ✅ chặn cuộn ngang
+            el.style.willChange = 'scroll-position'
+        }
+        const onResize = () => setH()
+        const onScroll = () => setH()
+        const ro = new ResizeObserver(setH)
+        ro.observe(document.body)
+        setH()
+        window.addEventListener('resize', onResize)
+        window.addEventListener('scroll', onScroll, { passive: true })
+        el.__autoMH = { ro, onResize, onScroll }
+    },
+    beforeUnmount(el) {
+        const s = el.__autoMH
+        if (!s) return
+        s.ro.disconnect()
+        window.removeEventListener('resize', s.onResize)
+        window.removeEventListener('scroll', s.onScroll)
+        delete el.__autoMH
+    }
+}
+
+
 const goBack = () => {
     if (window.history.length > 1) {
         router.back();
@@ -1002,10 +1034,6 @@ onMounted(async () => {
 
 .task-info {
     margin-top: 16px;
-}
-
-.task-info-left {
-    margin-bottom: 20px;
 }
 
 .task-info-content {
@@ -1129,6 +1157,50 @@ onMounted(async () => {
     padding: 8px 12px;
 }
 
+/* vùng cuộn của Comment */
+.discussion-scroll {
+    overflow-y: auto;     /* ✅ chỉ dọc */
+    overflow-x: hidden;   /* ✅ chặn ngang */
+    scrollbar-gutter: stable;
+    padding-right: 2px;
+    overscroll-behavior: contain; /* mượt hơn trên mobile */
+    scrollbar-width: thin;                       /* Firefox */
+    scrollbar-color: rgba(0,0,0,.35) transparent;/* Firefox */
+}
+/* Chrome/Edge/Safari */
+.discussion-scroll::-webkit-scrollbar { width: 6px; }
+.discussion-scroll::-webkit-scrollbar-track { background: transparent; }
+.discussion-scroll::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,.28);
+    border-radius: 8px;
+}
+.discussion-scroll:hover::-webkit-scrollbar-thumb { background: rgba(0,0,0,.38); }
+
+/* cho text dài/URL tự xuống dòng, tránh tạo thanh ngang */
+.comment .content,
+.comment .cm-att,
+.comment .cm-att__title {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+/* ảnh/preview không vượt quá khung */
+.comment img,
+.comment :deep(.ant-image-img) {
+    max-width: 100%;
+    height: auto;
+}
+
+/* fix flex child trong ant-col gây tràn ngang khi có text dài */
+.comment :deep(.ant-col[flex="1"]) { min-width: 0; }
 
 
+
+</style>
+
+<style>
+.ant-card-body {
+    padding-top: 5px !important;
+    padding-bottom: 20px !important;
+}
 </style>
