@@ -932,6 +932,33 @@
         transform: translateY(-4px);
     }
 
+    /* Tăng size ô & icon trong Menu nhanh */
+    .quick-menu .icon-box {
+        width: 72px;          /* trước 60 */
+        height: 72px;         /* trước 60 */
+        border-radius: 14px;  /* hơi bầu hơn */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* dùng CSS variables để dễ tuỳ biến */
+        --icon-size: 36px;    /* trước 28 */
+        --icon-color: inherit;
+    }
+
+    /* Đảm bảo icon nhận size & màu (vì style scoped) */
+    .quick-menu .icon-box :deep(.anticon) {
+        font-size: var(--icon-size);
+        color: var(--icon-color);
+    }
+
+    /* Hiệu ứng hover nhẹ */
+    .quick-menu .quick-item:hover .icon-box {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        transition: transform .2s, box-shadow .2s;
+    }
+
+
     .icon-box {
         width: 60px;
         height: 60px;
@@ -944,13 +971,13 @@
         color: #fff;
     }
 
-    .icon-box.blue { background: #e6f4ff; color:#1677ff; }
-    .icon-box.green { background: #f6ffed; color:#52c41a; }
-    .icon-box.orange { background: #fff7e6; color:#fa8c16; }
-    .icon-box.purple { background: #f9f0ff; color:#722ed1; }
-    .icon-box.red { background: #fff2f0; color:#f5222d; }
-    .icon-box.sky { background: #e6f7ff; color:#1890ff; }
-    .icon-box.pink { background: #fff0f6; color:#eb2f96; }
+    .icon-box.blue   { background: #e6f4ff; color: #1677ff; }
+    .icon-box.green  { background: #f6ffed; color: #52c41a; }
+    .icon-box.orange { background: #fff7e6; color: #fa8c16; }
+    .icon-box.purple { background: #f9f0ff; color: #722ed1; }
+    .icon-box.red    { background: #fff2f0; color: #f5222d; }
+    .icon-box.sky    { background: #e6f7ff; color: #1890ff; }
+    .icon-box.pink   { background: #fff0f6; color: #eb2f96; }
 
     .quick-item span {
         font-size: 14px;
