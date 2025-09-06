@@ -239,6 +239,17 @@
                                                                 </template>
                                                             </a-form-item>
                                                         </a-col>
+                                                        <a-col :span="12">
+                                                            <!-- Mô tả -->
+                                                            <a-form-item label="Mô tả" name="description">
+                                                                <a-typography-text v-if="!isEditMode">
+                                                                    {{ formData.description ? formData.description : "Trống" }}
+                                                                </a-typography-text>
+                                                                <a-textarea v-else v-model:value="formData.description" :rows="4" placeholder="Nhập mô tả"/>
+                                                            </a-form-item>
+                                                        </a-col>
+
+
                                                     </a-row>
                                                 </div>
                                             </a-form>
@@ -257,7 +268,6 @@
                                     <div class="task-info-content">
                                         <a-row :gutter="16">
                                             <a-col :span="24">
-                                                <a-typography-title :level="5">Lịch sử phê duyệt</a-typography-title>
                                                 <a-table :columns="logColumns" :data-source="logData" row-key="id">
                                                     <template #bodyCell="{ column, record }">
                                                         <template v-if="column.dataIndex === 'level'">Cấp {{ record.level }}</template>
@@ -283,70 +293,145 @@
                                 <a-tab-pane key="attachments" tab="Tài liệu">
                                     <div class="task-info-content">
                                         <div class="task-in-end">
-                                            <a-row :gutter="16">
-                                                <a-col :span="24">
-                                                    <!-- Mô tả -->
-                                                    <a-form-item label="Mô tả" name="description">
-                                                        <a-typography-text v-if="!isEditMode">
-                                                            {{ formData.description ? formData.description : "Trống" }}
-                                                        </a-typography-text>
-                                                        <a-textarea v-else v-model:value="formData.description" :rows="4" placeholder="Nhập mô tả"/>
-                                                    </a-form-item>
+                                            <!-- TEMPLATE -->
+                                            <a-card bordered class="doc-section">
+                                                <template #title>
+                                                    Tài liệu đính kèm
+                                                </template>
 
-                                                    <!-- Upload file -->
-                                                    <a-form-item label="Tài liệu" name="file">
-                                                        <a-upload
-                                                            :file-list="computedUploadList"
-                                                            :show-upload-list="true"
-                                                            :before-upload="handleBeforeUpload"
-                                                            :on-remove="handleRemoveFile"
-                                                            :multiple="true"
-                                                            :disabled="loadingUploadFile"
-                                                            list-type="text"
-                                                        >
-                                                            <a-button size="large" style="margin-top: 12px;">
-                                                                <template #icon><PaperClipOutlined/></template>
-                                                            </a-button>
-                                                        </a-upload>
-                                                    </a-form-item>
+                                                <template #extra>
+                                                    <a-segmented
+                                                        v-model:value="activeMode"
+                                                        :options="[
+                                                          { label: 'Upload file', value: 'upload' },
+                                                          { label: 'Lưu link', value: 'link' }
+                                                        ]"
+                                                    />
+                                                </template>
 
-                                                    <!-- Nhập link thủ công -->
-                                                    <a-form-item label="Link tài liệu">
-                                                        <div style="margin-bottom: 10px;">
-                                                            <a-input v-model:value="manualLink.title" placeholder="Tiêu đề tài liệu" style="margin-bottom: 5px;"/>
-                                                            <a-input v-model:value="manualLink.url" placeholder="URL tài liệu (https://...)" type="url"/>
-                                                            <a-button
-                                                                type="primary" size="small" @click="addManualLink"
-                                                                :disabled="!manualLink.title || !manualLink.url" style="margin-top: 5px;"
+                                                <div v-if="activeMode === 'upload'">
+                                                    <a-form layout="vertical">
+                                                        <a-form-item name="file" class="mb-0">
+                                                            <a-upload-dragger
+                                                                :file-list="computedUploadList"
+                                                                :before-upload="handleBeforeUpload"
+                                                                :on-remove="handleRemoveFile"
+                                                                :multiple="true"
+                                                                :disabled="loadingUploadFile"
+                                                                accept="*"
                                                             >
-                                                                Thêm link
-                                                            </a-button>
-                                                        </div>
-                                                    </a-form-item>
+                                                                <p class="ant-upload-drag-icon">
+                                                                    <PaperClipOutlined />
+                                                                </p>
+                                                                <p class="ant-upload-text">Kéo thả file vào đây hoặc bấm để chọn</p>
+                                                                <p class="ant-upload-hint">Hỗ trợ nhiều file. Dung lượng/định dạng tuỳ cấu hình server.</p>
+                                                            </a-upload-dragger>
+                                                        </a-form-item>
 
-                                                    <!-- Danh sách link -->
-                                                    <a-form-item v-if="manualLinks.length" label="Link đã thêm">
-                                                        <a-list bordered size="small" :data-source="manualLinks">
-                                                            <template #renderItem="{ item, index }">
-                                                                <a-list-item :key="index">
-                                                                    <div style="width: 100%">
-                                                                        <strong>{{ item.title }}</strong><br/>
-                                                                        <a :href="item.url" target="_blank">{{ item.url }}</a>
-                                                                        <a style="color: red; float: right;" @click="manualLinks.splice(index, 1)">Xoá</a>
-                                                                    </div>
-                                                                </a-list-item>
-                                                            </template>
-                                                        </a-list>
-                                                    </a-form-item>
+                                                        <!-- Tiêu đề cho từng file chờ upload -->
+                                                        <a-form-item
+                                                            v-if="pendingFiles?.length"
+                                                            label="Tiêu đề cho file đã chọn"
+                                                            class="mt-3"
+                                                        >
+                                                            <div class="pending-list">
+                                                                <div
+                                                                    v-for="(file, index) in (pendingFiles || []).filter(f => f && typeof f === 'object')"
+                                                                    :key="file.uid ?? file.name ?? index"
+                                                                    class="pending-item"
+                                                                >
+                                                                    <a-input
+                                                                        v-model:value="file.title"
+                                                                        :status="!file?.title ? 'error' : ''"
+                                                                        :placeholder="`Tiêu đề cho: ${file?.name || 'file #' + (index+1)}`"
+                                                                        allow-clear
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </a-form-item>
 
-                                                    <!-- Tiêu đề tài liệu cho file chờ upload -->
-                                                    <a-form-item v-if="pendingFiles.length" label="Tiêu đề tài liệu">
-                                                        <div v-for="(file, index) in pendingFiles" :key="index" style="margin-bottom: 10px;">
-                                                            <a-input v-model:value="file.title" placeholder="Nhập tiêu đề file" :status="!file.title ? 'error' : ''"/>
-                                                        </div>
-                                                    </a-form-item>
-                                                </a-col>
-                                            </a-row>
+                                                        <a-form-item style="margin-top: 20px">
+                                                            <a-space>
+                                                                <a-button
+                                                                    type="primary"
+                                                                    :disabled="!canSubmitUpload"
+                                                                    @click="submitUpload"
+                                                                >
+                                                                    Lưu tài liệu (file)
+                                                                </a-button>
+                                                                <a-typography-text type="secondary">
+                                                                    Yêu cầu: mỗi file cần có tiêu đề.
+                                                                </a-typography-text>
+                                                            </a-space>
+                                                        </a-form-item>
+                                                    </a-form>
+                                                </div>
+
+                                                <div v-else>
+                                                    <a-form layout="vertical">
+                                                        <a-form-item label="Tiêu đề tài liệu (link)">
+                                                            <a-input
+                                                                v-model:value="manualLink.title"
+                                                                placeholder="Ví dụ: HSMT - Gói ABC - 2025"
+                                                                allow-clear
+                                                            />
+                                                        </a-form-item>
+
+                                                        <a-form-item label="URL tài liệu">
+                                                            <a-input
+                                                                v-model:value="manualLink.url"
+                                                                placeholder="https://..."
+                                                                type="url"
+                                                                allow-clear
+                                                            >
+                                                                <template #prefix><LinkOutlined /></template>
+                                                            </a-input>
+                                                        </a-form-item>
+
+                                                        <a-form-item>
+                                                            <a-space>
+                                                                <a-button
+                                                                    type="primary"
+                                                                    :disabled="!canSubmitLink"
+                                                                    @click="submitLink"
+                                                                >
+                                                                    Lưu tài liệu (link)
+                                                                </a-button>
+                                                                <a-typography-text type="secondary">
+                                                                    URL phải hợp lệ và có tiêu đề.
+                                                                </a-typography-text>
+                                                            </a-space>
+                                                        </a-form-item>
+
+                                                        <a-form-item v-if="manualLinks?.length" label="Link đã thêm">
+                                                            <a-list bordered size="small" :data-source="manualLinks" class="link-list">
+                                                                <template #renderItem="{ item, index }">
+                                                                    <a-list-item :key="index">
+                                                                        <div class="link-row">
+                                                                            <div class="link-meta">
+                                                                                <div class="link-title" :title="item.title">
+                                                                                    <strong>{{ item.title }}</strong>
+                                                                                </div>
+                                                                                <a
+                                                                                    class="link-url"
+                                                                                    :href="item.url"
+                                                                                    target="_blank"
+                                                                                    rel="noopener"
+                                                                                    :title="item.url"
+                                                                                >{{ item.url }}</a>
+                                                                            </div>
+                                                                            <a-button type="text" danger @click="manualLinks.splice(index, 1)">
+                                                                                <DeleteOutlined />
+                                                                            </a-button>
+                                                                        </div>
+                                                                    </a-list-item>
+                                                                </template>
+                                                            </a-list>
+                                                        </a-form-item>
+                                                    </a-form>
+                                                </div>
+                                            </a-card>
+
                                         </div>
                                     </div>
                                 </a-tab-pane>
@@ -392,7 +477,7 @@
     </div>
 </template>
 <script setup>
-import {EllipsisOutlined, PaperClipOutlined} from '@ant-design/icons-vue';
+import {EllipsisOutlined, PaperClipOutlined, DeleteOutlined, LinkOutlined} from '@ant-design/icons-vue';
 import {computed, nextTick, onMounted, reactive, ref, watch} from 'vue';
 import {message} from 'ant-design-vue'
 import 'dayjs/locale/vi';
@@ -669,14 +754,10 @@ const linkedIdOption = computed(() => {
 })
 
 const validateTitle = async (_rule, value) => {
-    if (value === '') {
-        return Promise.reject('Vui lòng nhập họ và tên');
-    } else if (value.length > 200) {
-        return Promise.reject('Họ và tên không vượt quá 200 ký tự');
-    } else {
-        return Promise.resolve();
-    }
-};
+    if ((value || '') === '') return Promise.reject('Vui lòng nhập tên nhiệm vụ')
+    if (value.length > 200) return Promise.reject('Tên nhiệm vụ không vượt quá 200 ký tự')
+    return Promise.resolve()
+}
 const validateTime = async (_rule, value) => {
 
     if (formData.value.start_date === '') {
@@ -730,19 +811,14 @@ const handleChangeLinkedType = () => {
     formData.value.linked_id = null;
     formData.value.step_code = null;
 };
-const handleChangeLinkedId = (id) => {
-    commonStore.setLinkedType(formData.value.linked_type)
+const handleChangeLinkedId = () => {
+    const type = formData.value.linked_type
+    const linkedId = formData.value.linked_id
+    commonStore.setLinkedType(type)
+    commonStore.setLinkedIdParent(linkedId)
 
-  const type = formData.value.linked_type
-  const linkedId = formData.value.linked_id
-
-  commonStore.setLinkedType(type)
-  commonStore.setLinkedIdParent(linkedId)
-    if (formData.value.linked_type === 'bidding') {
-        getBiddingStep(id)
-    } else if (formData.value.linked_type === 'contract') {
-        getContractStep()
-    }
+    if (type === 'bidding') getBiddingStep(linkedId)
+    else if (type === 'contract') getContractStep()
 }
 
 const handleChangeStep = (e) => {
@@ -856,10 +932,10 @@ const saveEditTask = async () => {
         formData.value.extend_reason = 'Gia hạn thời gian'; // Bạn có thể dùng modal để hỏi lý do cụ thể nếu muốn
     }
 
-    const hasInvalidTitle = pendingFiles.value.some(f => !f.title?.trim());
+    const hasInvalidTitle = (pendingFiles.value || []).some(f => !f?.title?.trim())
     if (hasInvalidTitle) {
-        message.error('Vui lòng nhập tiêu đề cho tất cả tài liệu đính kèm.');
-        return;
+        message.error('Vui lòng nhập tiêu đề cho tất cả tài liệu đính kèm.')
+        return
     }
 
     try {
@@ -886,8 +962,6 @@ const saveEditTask = async () => {
         await getDetailTaskById();
         await fetchExtensionHistory();
         await nextTick();
-        extensionErrors.value = calculateExtensionErrors(extensionHistory.value);
-
         message.success("Cập nhật thành công");
     } catch (error) {
         formData.value = formDataSave.value;
@@ -988,33 +1062,39 @@ const fetchTaskFiles = async () => {
 
 
 const handleBeforeUpload = (file) => {
+    // Ant Upload cung cấp sẵn file.uid
     pendingFiles.value.push({
-        raw: file,         // file gốc
-        name: file.name,   // tên file
-        title: ''          // sẽ nhập sau, bắt buộc
-    });
-    return false; // Không upload ngay
-};
+        uid: file.uid,
+        raw: file,
+        name: file.name,
+        title: ''
+    })
+    return false // tự xử lý upload
+}
 
 
 const handleRemoveFile = async (file) => {
-    if (file.uid && file.uid.toString().startsWith('pending-')) {
-        // Xóa khỏi pendingFiles
-        const idx = Number(file.uid.replace('pending-', ''));
-        pendingFiles.value.splice(idx, 1);
-        return true;
-    } else {
-        // Xóa file đã upload trên server
-        try {
-            await deleteTaskFilesAPI(file.id);
-            await fetchTaskFiles();
-            message.success('Xóa file thành công');
-        } catch (e) {
-            message.error('Xóa file thất bại');
-        }
-        return true;
+    const uid = file?.uid
+
+    // Nếu là pending (chưa upload) → xoá local
+    const isPending = Array.isArray(pendingFiles.value)
+        && pendingFiles.value.some(f => f?.uid === uid)
+
+    if (isPending) {
+        pendingFiles.value = pendingFiles.value.filter(f => f?.uid !== uid)
+        return true
     }
-};
+
+    // Nếu là file đã upload → gọi API xoá server
+    try {
+        await deleteTaskFilesAPI(file.id)
+        await fetchTaskFiles()
+        message.success('Xóa file thành công')
+    } catch (e) {
+        message.error('Xóa file thất bại')
+    }
+    return true
+}
 
 const getApprovalText = (status) => {
     switch (status) {
@@ -1114,22 +1194,29 @@ const fetchLogHistory = async () => {
     }
 }
 
-
 const computedUploadList = computed(() => {
-    const uploaded = fileList.value.map(f => ({
-        ...f,
-        name: f.title ? `${f.title} (${f.name})` : f.name,
-        url: f.is_link ? f.link_url : f.link_url
-    }));
+    const uploaded = Array.isArray(fileList.value)
+        ? fileList.value.filter(Boolean).map(f => ({
+            ...f,
+            uid: f.uid || f.id || f.file_name || f.name,   // đảm bảo có uid
+            name: f.title ? `${f.title} (${f.file_name || f.name})` : (f.file_name || f.name),
+            url: f.is_link ? f.link_url : f.file_path,     // đừng gán luôn link_url
+            status: 'done'
+        }))
+        : []
 
-    const pending = pendingFiles.value.map((f, idx) => ({
-        uid: 'pending-' + idx,
-        name: f.title ? `${f.title} (${f.name})` : f.name,
-        status: 'ready'
-    }));
+    const pending = Array.isArray(pendingFiles.value)
+        ? pendingFiles.value
+            .filter(f => f && typeof f === 'object')       // 🔒 lọc undefined/null
+            .map(f => ({
+                uid: f.uid,                                  // dùng uid thật từ Upload
+                name: f.title ? `${f.title} (${f.name})` : f.name,
+                status: 'ready'
+            }))
+        : []
 
-    return [...uploaded, ...pending];
-});
+    return [...uploaded, ...pending]
+})
 
 
 const manualLink = reactive({title: '', url: ''});
@@ -1175,6 +1262,43 @@ function checkApprovalStatus(status) {
         default:
             return {label: 'Không rõ', color: 'gray'};
     }
+}
+
+// CHẾ ĐỘ: 'upload' | 'link'
+const activeMode = ref('upload') // giá trị mặc định
+
+// Validate đơn giản:
+const canSubmitUpload = computed(() => {
+    const arr = Array.isArray(pendingFiles.value)
+        ? pendingFiles.value.filter(f => f && typeof f === 'object')
+        : []
+    if (!arr.length) return false
+    return arr.every(f => typeof f.title === 'string' && f.title.trim().length > 0)
+})
+
+const canSubmitLink = computed(() => {
+    const t = (manualLink.title || '').trim()
+    const u = (manualLink.url || '').trim()
+    if (!t || !u) return false
+    try {
+        const url = new URL(u)
+        return !!url.protocol && !!url.host
+    } catch { return false }
+})
+
+function submitUpload() {
+    // TODO: gọi API upload theo pendingFiles (raw + title)
+    // sau khi thành công -> reset
+    // pendingFiles.value = []; computedUploadList.value = []
+}
+
+function submitLink() {
+    const t = (manualLink.title || '').trim()
+    const u = (manualLink.url || '').trim()
+    if (!t || !u) return
+    manualLinks.value.push({ title: t, url: u })
+    manualLink.title = ''
+    manualLink.url = ''
 }
 
 
@@ -1328,5 +1452,46 @@ onMounted(async () => {
     display: flex;
     gap: 8px; /* khoảng cách giữa nút */
 }
+
+.doc-section :deep(.ant-upload.ant-upload-drag) {
+    border-radius: 12px;
+}
+.pending-list {
+    display: grid;
+    gap: 8px;
+}
+.pending-item :deep(.ant-input) {
+    height: 36px;
+}
+.link-list :deep(.ant-list-item) {
+    padding: 8px 12px;
+}
+.link-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.link-meta {
+    flex: 1;
+    min-width: 0;
+}
+.link-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.link-url {
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.hint {
+    font-size: 12px;
+}
+.mt-3 { margin-top: 12px; }
+.mb-0 { margin-bottom: 0; }
 
 </style>
