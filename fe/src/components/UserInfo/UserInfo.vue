@@ -1,218 +1,248 @@
 <template>
-    <div>
-        <a-typography-title :level="4" style="margin-bottom: 24px;">Thông tin cá nhân</a-typography-title>
-        <a-form :model="form" :rules="rules" layout="vertical" @finish="handleSubmit" ref="formRef">
-            <!-- Ảnh đại diện -->
-            <a-form-item key="avatar-empty" label="Ảnh đại diện" name="avatar" v-if="!hasAvatar">
-                <a-upload
-                    list-type="picture-card"
-                    :show-upload-list="false"
-                    :maxCount="1"
-                    :before-upload="beforeAvatarValidate"
-                    :customRequest="uploadAvatarRequest"
-                    accept="image/*"
-                >
-                    <div>
-                        <upload-outlined/>
-                        <div style="margin-top: 8px">Tải ảnh lên</div>
-                    </div>
-                </a-upload>
-            </a-form-item>
-
-            <a-form-item key="avatar-set" label="Ảnh đại diện" name="avatar_isset" v-else>
-                <div class="avatar" @mouseover="isHoverAvatar = true" @mouseleave="isHoverAvatar = false">
-                    <a-avatar :size="110" shape="square" :src="avatarSrc" />
-                    <div class="action-icon" v-if="isHoverAvatar">
-                        <a-button type="link" style="margin-right: 16px;" @click="handleChangeAvatar">
-                            <template #icon>
-                                <EditOutlined style="font-size:22px;color:rgba(0,0,0,.85)"/>
-                            </template>
-                        </a-button>
-                        <a-button type="link" @click="handlePreview">
-                            <template #icon>
-                                <EyeOutlined style="font-size:22px;color:rgba(0,0,0,.85)"/>
-                            </template>
-                        </a-button>
-                    </div>
-                </div>
-            </a-form-item>
-
-            <!-- Họ tên -->
-            <a-form-item label="Họ và tên" name="name">
-                <a-input v-model:value="form.name" placeholder="Nhập họ tên" :disabled="!isEditMode"/>
-            </a-form-item>
-
-            <!-- Email -->
-            <a-form-item label="Email" name="email">
-                <a-input v-model:value="form.email" placeholder="example@mail.com" disabled/>
-            </a-form-item>
-
-            <!-- Số điện thoại -->
-            <a-form-item label="Số điện thoại" name="phone">
-                <a-input v-model:value="form.phone" placeholder="Nhập số điện thoại" :disabled="!isEditMode"/>
-            </a-form-item>
-
-            <!-- Chức danh -->
-            <a-form-item label="Phòng ban" name="department">
-                <a-input :value="getNameDepartments" placeholder="VD: Phòng hành chính nhân sự" disabled/>
-            </a-form-item>
-
-            <!-- Loại tài khoản -->
-            <a-form-item label="Loại tài khoản" name="role">
-                <a-input :value="form.role" placeholder="VD: Nhân viên, Trưởng phòng" disabled/>
-            </a-form-item>
-
-
-            <!-- Nút hành động -->
-            <a-form-item class="margin-bot-0" v-if="isEditMode">
+    <div class="profile-page">
+        <!-- Page header -->
+        <a-page-header
+            class="profile-header"
+            :title="'Thông tin cá nhân'"
+            :ghost="false"
+        >
+            <template #extra>
+                <a-badge v-if="isEditMode" status="processing" text="Đang chỉnh sửa" />
                 <a-space>
-                    <a-button type="primary" html-type="submit">Lưu</a-button>
-                    <a-button @click="goBack">Huỷ</a-button>
+                    <a-button v-if="!isEditMode" type="default" @click="changeEditMode">Thay đổi thông tin</a-button>
+                    <template v-else>
+                        <a-button @click="goBack">Huỷ</a-button>
+                        <a-button type="primary" @click="handleSubmit">Lưu</a-button>
+                    </template>
                 </a-space>
-            </a-form-item>
-            <a-form-item class="margin-bot-0" v-else>
-                <a-space>
-                    <a-button @click="changeEditMode">Thay đổi thông tin</a-button>
-                </a-space>
-            </a-form-item>
-        </a-form>
+            </template>
+        </a-page-header>
+
+        <a-row :gutter="[24,24]">
+            <!-- LEFT: Avatar -->
+            <a-col :xs="24" :md="8" :lg="7">
+                <a-card class="card avatar-card" :bodyStyle="{padding:'20px'}">
+                    <div class="avatar-wrap" @mouseover="isHoverAvatar = true" @mouseleave="isHoverAvatar = false">
+                        <a-avatar :size="120" shape="square" :src="avatarSrc" class="avatar-img">
+                            <template v-if="!hasAvatar">?</template>
+                        </a-avatar>
+
+                        <transition name="fade">
+                            <div class="avatar-overlay" v-if="isHoverAvatar">
+                                <a-space>
+                                    <a-tooltip title="Đổi ảnh">
+                                        <a-button shape="circle" @click="handleChangeAvatar">
+                                            <template #icon><EditOutlined /></template>
+                                        </a-button>
+                                    </a-tooltip>
+                                    <a-tooltip title="Xem ảnh">
+                                        <a-button shape="circle" @click="handlePreview">
+                                            <template #icon><EyeOutlined /></template>
+                                        </a-button>
+                                    </a-tooltip>
+                                </a-space>
+                            </div>
+                        </transition>
+                    </div>
+
+                    <div class="avatar-hint">
+                        <div>Định dạng: JPG/PNG/GIF/WebP • &lt; 4MB</div>
+                        <div>Kích thước đề xuất: 400×400px</div>
+                    </div>
+
+                    <!-- Khi chưa có avatar: nút tải lên nhanh -->
+                    <div v-if="!hasAvatar" class="avatar-upload-quick">
+                        <a-upload
+                            list-type="picture-card"
+                            :show-upload-list="false"
+                            :maxCount="1"
+                            :before-upload="beforeAvatarValidate"
+                            :customRequest="uploadAvatarRequest"
+                            accept="image/*"
+                        >
+                            <div class="upload-quick">
+                                <upload-outlined />
+                                <div style="margin-top:8px">Tải ảnh lên</div>
+                            </div>
+                        </a-upload>
+                    </div>
+                </a-card>
+            </a-col>
+
+            <!-- RIGHT: Info -->
+            <a-col :xs="24" :md="16" :lg="17">
+                <a-card class="card info-card" :bodyStyle="{padding:'20px'}">
+                    <!-- VIEW MODE -->
+                    <a-descriptions
+                        v-if="!isEditMode"
+                        :column="{ xs:1, sm:1, md:2 }"
+                        layout="vertical"
+                        size="middle"
+                        colon
+                    >
+                        <a-descriptions-item label="Họ và tên">
+                            {{ form.name || '—' }}
+                        </a-descriptions-item>
+                        <a-descriptions-item label="Email">
+                            {{ form.email || '—' }}
+                        </a-descriptions-item>
+                        <a-descriptions-item label="Số điện thoại">
+                            {{ form.phone || '—' }}
+                        </a-descriptions-item>
+                        <a-descriptions-item label="Phòng ban">
+                            {{ getNameDepartments || '—' }}
+                        </a-descriptions-item>
+                        <a-descriptions-item label="Loại tài khoản">
+                            {{ form.role || '—' }}
+                        </a-descriptions-item>
+                    </a-descriptions>
+
+                    <!-- EDIT MODE -->
+                    <a-form
+                        v-else
+                        ref="formRef"
+                        layout="vertical"
+                        :model="form"
+                        :rules="rules"
+                        @finish="handleSubmit"
+                    >
+                        <a-row :gutter="[16,0]">
+                            <a-col :xs="24" :md="12">
+                                <a-form-item label="Họ và tên" name="name">
+                                    <a-input v-model:value="form.name" placeholder="Nhập họ tên" />
+                                </a-form-item>
+                            </a-col>
+                            <a-col :xs="24" :md="12">
+                                <a-form-item label="Email" name="email">
+                                    <a-input v-model:value="form.email" disabled />
+                                </a-form-item>
+                            </a-col>
+                            <a-col :xs="24" :md="12">
+                                <a-form-item label="Số điện thoại" name="phone">
+                                    <a-input v-model:value="form.phone" placeholder="Nhập số điện thoại" />
+                                </a-form-item>
+                            </a-col>
+                            <a-col :xs="24" :md="12">
+                                <a-form-item label="Phòng ban" name="department">
+                                    <a-input :value="getNameDepartments" disabled />
+                                </a-form-item>
+                            </a-col>
+                            <a-col :xs="24" :md="12">
+                                <a-form-item label="Loại tài khoản" name="role">
+                                    <a-input :value="form.role" disabled />
+                                </a-form-item>
+                            </a-col>
+                        </a-row>
+                    </a-form>
+                </a-card>
+            </a-col>
+        </a-row>
 
         <!-- Modal xem ảnh -->
-        <a-modal :open="previewVisible" :footer="null" @cancel="cancelPreview">
-            <img alt="example" style="width: 100%; max-width: 600px; max-height: 600px;" :src="avatarSrc"/>
+        <a-modal :open="previewVisible" :footer="null" @cancel="cancelPreview" width="720px">
+            <img alt="avatar" style="width:100%; max-width:680px; max-height:680px; display:block; margin:0 auto;" :src="avatarSrc" />
         </a-modal>
     </div>
 </template>
 
 <script setup>
-import {ref, onMounted, computed, watch} from 'vue'
-import {useRoute, useRouter} from 'vue-router'
-import {uploadFile, updateUser, uploadAvatar} from '@/api/user.js'
-import {message} from 'ant-design-vue'
-import {UploadOutlined, EyeOutlined, EditOutlined} from '@ant-design/icons-vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
+import { UploadOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons-vue'
 import cloneDeep from 'lodash/cloneDeep'
 
-import {useUserStore} from '@/stores/user.js'
-import {getDepartments} from '@/api/department'
+import { useUserStore } from '@/stores/user.js'
+import { uploadFile, updateUser, uploadAvatar } from '@/api/user.js'
+import { getDepartments } from '@/api/department'
 
+/* ====== stores / route ====== */
 const userStore = useUserStore()
 const route = useRoute()
 const router = useRouter()
 
+/* ====== props / emits ====== */
 const props = defineProps({
-    dataUser: {
-        type: Object,
-        default: () => ({})
-    }
+    dataUser: { type: Object, default: () => ({}) }
 })
 const emit = defineEmits(['reload'])
 
+/* ====== state ====== */
 const form = ref({
-    id: null, // 👈 Thêm dòng này
+    id: null,
     name: '',
     email: '',
     phone: '',
     department_id: '',
+    role: '',
     avatar: ''
 })
 const formSaved = ref()
 const formRef = ref()
 
-const avatarFileList = ref([])
-const previewVisible = ref(false)
 const departments = ref([])
-
-const isHoverAvatar = ref(false);
+const previewVisible = ref(false)
+const isHoverAvatar = ref(false)
 const isEditMode = ref(false)
 
-// script setup
+/* ====== avatar helpers ====== */
+const ORIGIN = new URL(import.meta.env.VITE_API_URL).origin
 const hasAvatar = computed(() => !!(form.value.avatar && String(form.value.avatar).trim()))
-
-
-const ORIGIN = new URL(import.meta.env.VITE_API_URL).origin; // http://api.worknest.local
-
 const avatarSrc = computed(() => {
-    const v = String(form.value.avatar || '').trim();
-    if (!v) return '';
-    const base = new URL(ORIGIN);
-    const u = new URL(v, ORIGIN);    // nhận cả relative & absolute
-    u.protocol = base.protocol;      // ép về api.*
-    u.host     = base.host;
-    return u.href;
-});
-
-const validateName = async (_rule, value) => {
-    if (value === '') {
-        return Promise.reject('Vui lòng nhập họ và tên');
-    } else if (value.length > 200) {
-        return Promise.reject('Họ và tên không vượt quá 200 ký tự');
-    } else {
-        return Promise.resolve();
-    }
-};
-const validatePhone = async (_rule, value) => {
-    if (value === '') {
-        return Promise.reject('Vui lòng nhập số điện thoại');
-    } else if (value.length > 20) {
-        return Promise.reject('Số điện thoại không vượt quá 20 ký tự');
-    } else if (!isValidPhoneNumber(value)) {
-        return Promise.reject('Vui lòng nhập đúng số điện thoại');
-    } else {
-        return Promise.resolve();
-    }
-};
-
-function isValidPhoneNumber(phone) {
-    const regex = /^(0|\+84)(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-5]|9[0-9])[0-9]{7}$/;
-    return regex.test(phone);
-}
-
-const rules = computed(() => {
-    if (isEditMode.value) {
-        return {
-            name: [{required: true, validator: validateName, message: 'Họ và tên là bắt buộc', trigger: 'change'}],
-            phone: [{
-                required: true,
-                validator: validatePhone,
-                message: 'Số điện thoại là bắt buộc',
-                trigger: 'change'
-            }],
-        }
-    } else {
-        return {}
-    }
+    const v = String(form.value.avatar || '').trim()
+    if (!v) return ''
+    const base = new URL(ORIGIN)
+    const u = new URL(v, ORIGIN) // support relative/absolute
+    u.protocol = base.protocol
+    u.host = base.host
+    return u.href
 })
 
+/* ====== validation ====== */
+const validateName = async (_r, value) => {
+    if (!value) return Promise.reject('Vui lòng nhập họ và tên')
+    if (value.length > 200) return Promise.reject('Họ và tên không vượt quá 200 ký tự')
+    return Promise.resolve()
+}
+const validatePhone = async (_r, value) => {
+    if (!value) return Promise.reject('Vui lòng nhập số điện thoại')
+    if (value.length > 20) return Promise.reject('Số điện thoại không vượt quá 20 ký tự')
+    if (!/^(0|\+84)(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-5]|9[0-9])[0-9]{7}$/.test(value)) {
+        return Promise.reject('Vui lòng nhập đúng số điện thoại')
+    }
+    return Promise.resolve()
+}
+const rules = computed(() =>
+    isEditMode.value
+        ? {
+            name: [{ required: true, validator: validateName, trigger: 'change' }],
+            phone: [{ required: true, validator: validatePhone, trigger: 'change' }]
+        }
+        : {}
+)
+
+/* ====== computed ====== */
 const getNameDepartments = computed(() => {
-    const department = departments.value.find(item => item.id === form.value.department_id)
-    return department ? department.name : form.value.department_id
+    const d = departments.value.find(x => x.id === form.value.department_id)
+    return d ? d.name : form.value.department_id
 })
 
+/* ====== actions ====== */
 const handleSubmit = async () => {
-    let params = {
-        // avatar: form.value.avatar,
-        name: form.value.name,
-        phone: form.value.phone,
+    const params = { name: form.value.name, phone: form.value.phone }
+    const { data } = await updateUser(form.value.id, params)
+    if (data?.status === 'success') {
+        message.success('Cập nhật thông tin thành công')
+        emit('reload')
+        isEditMode.value = false
+    } else {
+        message.error('Cập nhật thông tin thất bại')
     }
-    await updateUser(form.value.id, params).then(res => {
-        if (res.data.status === "success") {
-            message.destroy();
-            message.success('Cập nhật thông tin thành công')
-            emit('reload');
-            isEditMode.value = false;
-        } else {
-            message.destroy();
-            message.error('Cập nhật thông tin thất bại')
-        }
-    })
 }
 
-const handlePreview = async file => {
-    previewVisible.value = true;
-};
-const cancelPreview = () => {
-    previewVisible.value = false;
-}
+const handlePreview = () => { previewVisible.value = true }
+const cancelPreview = () => { previewVisible.value = false }
+
 const handleChangeAvatar = () => {
     const input = document.createElement('input')
     input.type = 'file'
@@ -221,158 +251,113 @@ const handleChangeAvatar = () => {
         const file = e.target.files?.[0]
         if (!file) return
         if (beforeAvatarValidate(file) !== true) return
-        uploadAvatarRequest({
-            file, onSuccess: () => {
-            }, onError: () => {
-            }, onProgress: () => {
-            }
-        })
+        uploadAvatarRequest({ file, onSuccess: () => {}, onError: () => {}, onProgress: () => {} })
     }
     input.click()
 }
 
-const handleBeforeUpload = async (field, file) => {
-    const hide = message.loading('Đang tải lên...', 0)
-    try {
-        let params = {
-            file: file,
-            user_id: route.params.id
-        }
-        const response = await uploadFile(params)
-        const url = response.data.avatar_url
-        form.value.avatar = url
-        avatarFileList.value = [
-            {
-                uid: Date.now(),
-                name: file.name,
-                status: 'done',
-                url
-            }
-        ]
-        message.success('Upload thành công')
-    } catch (error) {
-        message.error('Upload thất bại')
-    } finally {
-        hide()
-    }
-    return false
-}
-
-const handleRemoveFile = () => {
-    form.value.avatar = ''
-    avatarFileList.value = []
-}
-
-const goBack = () => {
-    resetFormValidate()
-    isEditMode.value = false;
-    form.value = formSaved.value;
-}
-const changeEditMode = () => {
-    isEditMode.value = true;
-    formSaved.value = cloneDeep(form.value)
-}
-const resetFormValidate = () => {
-    formRef.value.resetFields();
-};
-const getListDepartments = async () => {
-    await getDepartments().then(res => {
-        if (res.data) {
-            departments.value = res.data;
-        }
-    });
-}
-
-// Validate trước khi upload (size + loại file). Trả false để chặn auto upload của AntD.
+/* Validate trước khi upload (size + loại file) */
 const beforeAvatarValidate = (file) => {
-    const isImage = /image\/(jpeg|png|gif|webp)/.test(file.type);
-    if (!isImage) {
-        message.error('Chỉ hỗ trợ JPEG/PNG/GIF/WebP');
-        return Upload.LIST_IGNORE; // bỏ file khỏi danh sách
-    }
-    const isLt4M = file.size / 1024 / 1024 < 4;
-    if (!isLt4M) {
-        message.error('Ảnh phải nhỏ hơn 4MB');
-        return Upload.LIST_IGNORE;
-    }
-    return true; // cho phép tiếp tục, nhưng vẫn dùng customRequest
-};
+    const isImage = /image\/(jpeg|png|gif|webp)/.test(file.type)
+    if (!isImage) { message.error('Chỉ hỗ trợ JPEG/PNG/GIF/WebP'); return false }
+    const isLt4M = file.size / 1024 / 1024 < 4
+    if (!isLt4M) { message.error('Ảnh phải nhỏ hơn 4MB'); return false }
+    return true
+}
 
-// Thực hiện upload “custom”
-const uploadAvatarRequest = async ({file, onSuccess, onError, onProgress}) => {
+/* Upload custom */
+const uploadAvatarRequest = async ({ file, onSuccess, onError, onProgress }) => {
     const hide = message.loading('Đang tải lên...', 0)
     try {
         const res = await uploadAvatar(file, form.value.id || route.params.id, (percent) => {
-            onProgress && onProgress({percent})
+            onProgress && onProgress({ percent })
         })
         const rel = res.data?.avatar_path || res.data?.avatar_url
         if (!rel) throw new Error('Không nhận được đường dẫn ảnh')
-        form.value.avatar = rel  // lưu relative path
-
+        form.value.avatar = rel
         message.success('Upload & lưu avatar thành công')
         onSuccess && onSuccess({}, file)
-
     } catch (e) {
         console.error(e)
         message.error('Upload thất bại')
         onError && onError(e)
-    } finally {
-        hide()
-    }
+    } finally { hide() }
 }
 
+/* ====== edit toggle ====== */
+const goBack = () => {
+    resetFormValidate()
+    isEditMode.value = false
+    form.value = formSaved.value
+}
+const changeEditMode = () => {
+    isEditMode.value = true
+    formSaved.value = cloneDeep(form.value)
+}
+const resetFormValidate = () => { formRef.value?.resetFields?.() }
+
+/* ====== data ====== */
+const getListDepartments = async () => {
+    const res = await getDepartments()
+    if (res.data) departments.value = res.data
+}
+
+/* ====== props sync ====== */
 watch(() => props.dataUser, (v) => {
     if (!v) return
     isEditMode.value = false
     const incoming = cloneDeep(v)
-    // Nếu props chưa có avatar nhưng local có rồi → giữ local
-    if (!incoming.avatar && form.value.avatar) {
-        incoming.avatar = form.value.avatar
-    }
+    if (!incoming.avatar && form.value.avatar) incoming.avatar = form.value.avatar
     form.value = incoming
     formSaved.value = cloneDeep(incoming)
 }, { deep: false })
 
-
 onMounted(async () => {
     if (props.dataUser) {
-        isEditMode.value = false;
-        form.value = cloneDeep(props.dataUser);
-        formSaved.value = cloneDeep(props.dataUser);
+        isEditMode.value = false
+        form.value = cloneDeep(props.dataUser)
+        formSaved.value = cloneDeep(props.dataUser)
     }
-    await getListDepartments();
+    await getListDepartments()
 })
-
 </script>
 
 <style scoped>
-:deep(.ant-input-disabled) {
-    cursor: auto;
-}
+/* Layout */
+.profile-page { max-width: 1080px; margin: 0 auto; }
+.profile-header { margin-bottom: 16px; border-radius: 12px; }
 
-.margin-bot-0 {
-    margin-bottom: 0 !important;
+/* Cards */
+.card {
+    border: 1px solid #f0f0f0;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.04);
 }
+.avatar-card { text-align: center; }
+.info-card   { }
 
-.avatar {
-    position: relative;
-    z-index: 1;
-    width: 110px;
-    height: 110px;
+/* Avatar */
+.avatar-wrap { position: relative; display: inline-block; }
+.avatar-img  { border-radius: 12px; box-shadow: 0 6px 16px rgba(0,0,0,.06); }
+.avatar-overlay{
+    position: absolute; inset: 0;
+    display:flex; align-items:center; justify-content:center;
+    background: rgba(255,255,255,.7); border-radius: 12px;
 }
+.avatar-hint{
+    margin-top: 12px; color:#8c8c8c; font-size:12px; line-height:1.4;
+}
+.avatar-upload-quick{ margin-top: 12px; }
+.upload-quick{ text-align:center; color:#8c8c8c; }
 
-.action-icon {
-    position: absolute;
-    top: 0;
-    width: 110px;
-    height: 110px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2;
-}
+/* Smooth fade for overlay */
+.fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 
-.action-icon:hover {
-    background: rgba(255, 255, 255, 0.397);
-}
+/* Typography tweaks inside descriptions */
+:deep(.ant-descriptions-item-label) { color:#8c8c8c; }
+:deep(.ant-descriptions-item-content) { font-weight: 500; }
+
+/* Disable cursor for disabled inputs */
+:deep(.ant-input[disabled]) { cursor: default; }
 </style>
