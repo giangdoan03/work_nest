@@ -15,9 +15,13 @@
                 >
                     <a-row :gutter="[12,12]">
                         <a-col>
-                            <a-avatar :src="getUserById(item.user_id)?.avatar">
-                                <template #icon><UserOutlined /></template>
-                            </a-avatar>
+                            <BaseAvatar
+                                :src="getUserById(item.user_id)?.avatar"
+                                :name="getUserById(item.user_id)?.name || 'Không rõ'"
+                                :size="40"
+                                shape="circle"
+                                :preferApiOrigin="true"
+                            />
                         </a-col>
 
                         <a-col flex="1" style="margin-top: 6px;">
@@ -191,6 +195,7 @@ import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/vi'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import BaseAvatar from "@/components/common/BaseAvatar.vue";
 dayjs.extend(relativeTime)
 dayjs.locale('vi')
 
