@@ -9,6 +9,7 @@ use CodeIgniter\RESTful\ResourceController;
 use App\Models\DocumentModel;
 use App\Models\DocumentPermissionModel;
 use App\Helpers\UploadHelper;
+use ReflectionException;
 use stdClass;
 
 use Config\Services;
@@ -776,7 +777,7 @@ class DocumentController extends ResourceController
 
 
     /**
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function upload(): ResponseInterface
     {
@@ -867,7 +868,7 @@ class DocumentController extends ResourceController
     }
 
     /**
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function update($id = null)
     {
@@ -961,7 +962,7 @@ class DocumentController extends ResourceController
 
 
     /**
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function createPermission(): ResponseInterface
     {
@@ -1050,7 +1051,7 @@ class DocumentController extends ResourceController
     }
 
     /**
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function updateSetting($id): ResponseInterface
     {
@@ -1073,7 +1074,7 @@ class DocumentController extends ResourceController
 
 
     /**
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function saveSetting(): ResponseInterface
     {

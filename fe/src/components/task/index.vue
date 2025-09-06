@@ -363,24 +363,6 @@
                     </a-card>
                 </a-col>
             </a-row>
-
-            <!--            <a-typography-title :level="5">Lịch sử phê duyệt</a-typography-title>-->
-            <!--            <a-table :columns="logColumns" :data-source="logData" row-key="id">-->
-            <!--                <template #bodyCell="{ column, record }">-->
-            <!--                    <template v-if="column.dataIndex === 'level'">Cấp {{ record.level }}</template>-->
-            <!--                    <template v-if="column.dataIndex === 'status'">-->
-            <!--                        <a-tag :color="getStatusColor(record.status)">-->
-            <!--                            {{ getStatusText(record.status) }}-->
-            <!--                        </a-tag>-->
-            <!--                    </template>-->
-            <!--                    <template v-if="column.dataIndex === 'approved_by_name'">-->
-            <!--                        {{ record.approved_by_name || '—' }}-->
-            <!--                    </template>-->
-            <!--                    <template v-if="column.dataIndex === 'comment'">-->
-            <!--                        {{ record.comment || '—' }}-->
-            <!--                    </template>-->
-            <!--                </template>-->
-            <!--            </a-table>-->
         </div>
     </div>
 </template>

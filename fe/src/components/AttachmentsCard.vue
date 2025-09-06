@@ -6,9 +6,9 @@
             <a-segmented
                 v-model:value="activeMode"
                 :options="[
-          { label: 'Upload file', value: 'upload' },
-          { label: 'Lưu link', value: 'link' }
-        ]"
+                  { label: 'Upload file', value: 'upload' },
+                  { label: 'Lưu link', value: 'link' }
+                ]"
             />
         </template>
 

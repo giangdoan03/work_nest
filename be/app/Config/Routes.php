@@ -24,7 +24,6 @@ $routes->group('api', function ($routes) {
     // Danh sách hợp đồng của 1 khách hàng
     $routes->get('contracts/by-customer/(:num)', 'CustomerController::contracts/$1');
 
-
     // Tổng quan dự án (cho trưởng phòng)
     $routes->get('project-overview', 'ProjectOverviewController::index');  // Tổng hợp theo khách hàng/gói thầu/hợp đồng
 
@@ -56,8 +55,6 @@ $routes->group('api', function ($routes) {
     $routes->get('contracts/(:num)/steps/details', 'ContractController::stepDetails/$1');
     $routes->post('contracts/(:num)/steps/resequence', 'ContractStepController::resequence/$1');
     $routes->post('contracts/(:num)/clone-from-template', 'ContractStepController::cloneFromTemplate/$1');
-
-
 
     // Contract Step routes
     $routes->get('contracts/(:num)/steps', 'ContractStepController::index/$1');     // Lấy danh sách bước của 1 hợp đồng
@@ -218,13 +215,10 @@ $routes->group('api', function ($routes) {
     $routes->post('comments/mark-read', 'CommentController::markReadBatch');       // đánh dấu nhiều cái đã đọc
     $routes->post('comments/(:num)/read', 'CommentController::markRead/$1');       // đánh dấu 1 cái
 
-
-
     // app/Config/Routes.php
     $routes->get('my/approvals', 'ApprovalInboxController::index');            // danh sách
     $routes->get('my/approvals/unread-count', 'ApprovalInboxController::unreadCount');
     $routes->post('approvals/mark-read', 'ApprovalInboxController::markRead');
-
 
     $routes->post('documents/upload-file', 'DocumentController::uploadFile');   // multipart
     $routes->post('documents/upload-url',  'DocumentController::uploadFromUrl'); // JSON {url:...}
