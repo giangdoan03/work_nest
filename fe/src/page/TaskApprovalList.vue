@@ -264,7 +264,6 @@ const fetchData = async () => {
                 per_page: pagination.value.pageSize,
                 search: (searchTitle.value || '').trim() || undefined,
                 target_types: 'bidding,contract,bidding_step,contract_step,task',
-                // scope: 'all' // mở nếu muốn luôn xem tất cả pending
             })
             : await listApprovals({
                 page: pagination.value.current,
