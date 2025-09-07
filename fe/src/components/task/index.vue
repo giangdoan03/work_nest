@@ -330,9 +330,6 @@
                                         </div>
                                     </div>
                                 </a-tab-pane>
-
-                                <!-- Tab 4: Nhiệm vụ con -->
-
                             </a-tabs>
                         </div>
                     </a-card>

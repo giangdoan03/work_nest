@@ -64,7 +64,10 @@
                 :data-source="tableData"
                 :loading="loading"
                 @change="handleTableChange"
-                :pagination="pagination"
+                :pagination="{
+                    ...pagination,
+                    position: ['topRight']
+                }"
                 :row-selection="rowSelection"
                 style="margin-top: 8px; table-layout: fixed;"
                 row-key="id"

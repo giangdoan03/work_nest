@@ -121,7 +121,8 @@
                             <a-select
                                 v-model:value="formData.step_code"
                                 :options="stepOption"
-                                :disabled="!formData.linked_id || !!formData.step_code"
+                                :disabled="disableStepSelect"
+                                :loading="loadingStepsOptions"
                                 placeholder="Chọn bước gói thầu"
                             />
                         </a-form-item>
@@ -269,6 +270,95 @@ const setDefaultData = () => {
     }
     dateRange.value = null
 }
+
+
+import { useRoute } from 'vue-router'
+const currentRoute = useRoute()
+
+
+// === Route params: /biddings/:bidId/steps/:stepId/tasks ===
+const routeBidId  = computed(() => currentRoute.params.bidId  || currentRoute.params.bid_id  || null)
+const routeStepId = computed(() => currentRoute.params.stepId || currentRoute.params.step_id || null)
+
+// Khóa select bước khi pref-fill từ URL
+const lockStepSelect = ref(false)
+const disableStepSelect = computed(() => !formData.value.linked_id || lockStepSelect.value)
+
+// Prefill bước từ URL /biddings/:bidId/steps/:stepId/tasks rồi khóa select
+const prefillStepFromRouteIfEmpty = async () => {
+    const bidId  = routeBidId.value
+    const stepId = routeStepId.value
+
+    // chỉ áp dụng với bidding và khi URL đầy đủ
+    if (!bidId || !stepId) return
+
+    // Nếu chưa set loại → set "bidding"
+    if (!formData.value.linked_type) formData.value.linked_type = 'bidding'
+
+    // Nếu chưa có linked_id → set từ route
+    if (!formData.value.linked_id) formData.value.linked_id = String(bidId)
+
+    // Nạp option bước cho gói thầu hiện tại rồi gán step theo stepId
+    await loadStepOptions('bidding', formData.value.linked_id)
+
+    // Tìm option có step_id khớp (options: { value: step_number, label, step_id })
+    const picked = stepOption.value.find(o => String(o.step_id) === String(stepId))
+    if (picked) {
+        formData.value.step_code = picked.value   // step_number
+        formData.value.step_id   = picked.step_id // step_id
+        lockStepSelect.value     = true           // khóa không cho đổi nữa
+    }
+}
+
+watch(
+    () => ({
+        open: props.openDrawer,
+        type: formData.value.linked_type,
+        id: formData.value.linked_id,
+        selId: selectedStep.value?.id,
+        pId: parentTaskId.value
+    }),
+    async ({ open }) => {
+        if (!open) return
+
+        // Ưu tiên step đang chọn trong store
+        if (selectedStep.value) {
+            setFormStepFromStore(selectedStep.value)
+        } else {
+            // Fallback từ commonStore
+            formData.value.linked_type = props.type || commonStore.linkedType || formData.value.linked_type
+            if (!formData.value.linked_id) {
+                formData.value.linked_id = commonStore.biddingIdParent ? String(commonStore.biddingIdParent) : null
+            }
+            // Fallback *từ route* nếu vẫn thiếu và URL có /biddings/:bidId/steps/:stepId/tasks
+            if (!formData.value.linked_type && routeBidId.value) {
+                formData.value.linked_type = 'bidding'
+            }
+            if (!formData.value.linked_id && routeBidId.value) {
+                formData.value.linked_id = String(routeBidId.value)
+            }
+        }
+
+        // parent_id (props > Pinia)
+        formData.value.parent_id = props.taskParent ?? (parentTaskId.value ? Number(parentTaskId.value) : formData.value.parent_id)
+
+        if (formData.value.linked_id) formData.value.linked_id = String(formData.value.linked_id)
+
+        await ensureLinkedIdInOptions()
+        linkedName.value = await getNameLinked(formData.value.linked_id)
+        await loadStepOptions(formData.value.linked_type, formData.value.linked_id)
+
+        // ⬇️ Prefill từ URL nếu chưa có bước
+        await prefillStepFromRouteIfEmpty()
+
+        // Lưu vào store dùng chung
+        commonStore.setLinkedType(formData.value.linked_type)
+        commonStore.setLinkedIdParent(formData.value.linked_id)
+    },
+    { immediate: true }
+)
+
+
 
 const normalizeText = (s = '') =>
     s.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()

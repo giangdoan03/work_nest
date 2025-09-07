@@ -411,46 +411,102 @@ class BiddingController extends ResourceController
     /**
      * Lấy chi tiết 1 gói thầu
      */
-    public function show($id = null)
+    public function show($id = null): ResponseInterface
     {
         $bidding = $this->model->find($id);
-
         if (!$bidding) {
             return $this->failNotFound("Không tìm thấy gói thầu.");
         }
 
-        // Tính days_remaining & days_overdue từ end_date
-        $today = new DateTime('today');
+        // ==== Deadline (Việt Nam) ====
+        $tz    = new DateTimeZone('Asia/Ho_Chi_Minh');
+        $today = new DateTimeImmutable('today', $tz);
         $daysRemaining = null;
-        $daysOverdue = null;
+        $daysOverdue   = null;
 
         if (!empty($bidding['end_date'])) {
             try {
-                $end = new DateTime(date('Y-m-d', strtotime($bidding['end_date'])));
-                if ($today <= $end) {
-                    $daysRemaining = (int)$today->diff($end)->days; // 0 nếu đến hạn hôm nay
-                    $daysOverdue = 0;
-                } else {
-                    $daysOverdue = (int)$end->diff($today)->days;
-                    $daysRemaining = 0;
-                }
-            } catch (Throwable) {
+                // Chuẩn hoá về Y-m-d để so sánh theo ngày
+                $end  = new DateTimeImmutable((new DateTimeImmutable($bidding['end_date'], $tz))->format('Y-m-d'), $tz);
+                $diff = (int)$today->diff($end)->format('%r%a');
+                $daysRemaining = max($diff, 0);
+                $daysOverdue   = $diff < 0 ? -$diff : 0;
+            } catch (\Throwable $e) {
                 $daysRemaining = null;
-                $daysOverdue = null;
+                $daysOverdue   = null;
             }
         }
-
         $bidding['days_remaining'] = $daysRemaining;
-        $bidding['days_overdue'] = $daysOverdue;
+        $bidding['days_overdue']   = $daysOverdue;
 
+        // ==== Progress (+ các field phụ giống list) ====
         $progress = $this->computeProgressForBidding((int)$id);
-        $bidding['progress'] = $progress;
+        $bidding['progress']         = $progress;
+        $bidding['progress_percent'] = (int)($progress['bidding_progress']   ?? 0);
+        $bidding['steps_done']       = (int)($progress['steps_completed']    ?? 0);
+        $bidding['steps_total']      = (int)($progress['steps_total']        ?? 0); // đồng bộ với list
+        $bidding['subtasks_done']    = (int)($progress['subtasks_approved']  ?? 0);
+        $bidding['subtasks_total']   = (int)($progress['subtasks_total']     ?? 0);
 
+        // ==== Collaborators (như list) ====
         $col = $this->collaboratorsForBidding((int)$id);
-        $bidding['collaborators'] = $col['ids'];
+        $bidding['collaborators']        = $col['ids'];
         $bidding['collaborators_detail'] = $col['details'];
-        $bidding['collaborators_count'] = $col['count'];
-        $bidding['collaborators_names'] = $col['names'];
+        $bidding['collaborators_count']  = $col['count'];
+        $bidding['collaborators_names']  = $col['names'];
+
+        // ==== Tên & avatar người thực hiện / người giao việc ====
+        $assigneeId = (int)($bidding['assigned_to'] ?? 0);
+        $managerId  = (int)($bidding['manager_id']  ?? 0);
+
+        if ($assigneeId || $managerId) {
+            $db   = db_connect();
+            $ids  = array_values(array_filter([$assigneeId, $managerId]));
+            $rows = $db->table('users')->select('id, name, avatar')->whereIn('id', $ids)->get()->getResultArray();
+
+            $map = [];
+            foreach ($rows as $r) $map[(int)$r['id']] = $r;
+
+            if ($assigneeId) {
+                $bidding['assigned_to_name']       = $map[$assigneeId]['name']   ?? null;
+                $bidding['assigned_to_avatar_url'] = $this->toFullUrl($map[$assigneeId]['avatar'] ?? null);
+            } else {
+                $bidding['assigned_to_name']       = null;
+                $bidding['assigned_to_avatar_url'] = null;
+            }
+
+            if ($managerId) {
+                $bidding['manager_name']       = $map[$managerId]['name']   ?? null;
+                $bidding['manager_avatar_url'] = $this->toFullUrl($map[$managerId]['avatar'] ?? null);
+            } else {
+                $bidding['manager_name']       = null;
+                $bidding['manager_avatar_url'] = null;
+            }
+        } else {
+            $bidding['assigned_to_name']       = null;
+            $bidding['assigned_to_avatar_url'] = null;
+            $bidding['manager_name']           = null;
+            $bidding['manager_avatar_url']     = null;
+        }
+
+        // ==== Số cấp phê duyệt (chuẩn hoá từ mảng/JSON) ====
+        $approvalStepsRaw = $bidding['approval_steps'] ?? null;
+        $approvalCount = 0;
+        if (is_array($approvalStepsRaw)) {
+            $approvalCount = count($approvalStepsRaw);
+        } elseif (is_string($approvalStepsRaw) && $approvalStepsRaw !== '') {
+            $tmp = json_decode($approvalStepsRaw, true);
+            if (is_array($tmp)) {
+                $approvalCount = count($tmp);
+            } else {
+                // Một số DB có thể lưu chuỗi JSON đã được quote 2 lần
+                $tmp2 = json_decode((string)json_decode($approvalStepsRaw, true), true);
+                if (is_array($tmp2)) {
+                    $approvalCount = count($tmp2);
+                }
+            }
+        }
+        $bidding['approval_steps_count'] = $approvalCount;
 
         return $this->respond($bidding);
     }
@@ -1039,10 +1095,9 @@ class BiddingController extends ResourceController
 
         // chuẩn hoá + bỏ trùng
         $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
-        if (count($ids) < 2) {
+        if (count($ids) < 1) {
             return $this->failValidationErrors(['approver_ids' => 'Cần tối thiểu 1 cấp duyệt.']);
         }
-
         if (($bidding['approval_status'] ?? '') === self::AP_APPROVED) {
             return $this->failValidationErrors(['approval_status' => 'Đã duyệt xong, không thể thay đổi.']);
         }

@@ -3,7 +3,7 @@
         <a-card bordered>
             <a-row justify="space-between" :gutter="[12,12]">
                 <a-col flex="auto">
-                    <a-space wrap>
+                    <a-space>
                         <!-- Nhóm thông tin / bộ đếm -->
                         <a-typography-text type="secondary">
                             Tổng {{ totalTasks }} nhiệm vụ
@@ -48,7 +48,10 @@
                 :data-source="tableData"
                 :loading="loading"
                 @change="handleTableChange"
-                :pagination="pagination"
+                :pagination="{
+                    ...pagination,
+                    position: ['topRight']
+                  }"
                 :row-selection="rowSelection"
                 style="margin-top:8px; table-layout:fixed;"
                 row-key="id"

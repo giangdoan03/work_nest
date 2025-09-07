@@ -26,11 +26,20 @@
                 </a-descriptions-item>
 
                 <!-- Hàng 3 -->
-                <a-descriptions-item label="Người phụ trách">
+                <a-descriptions-item label="Người thực hiện">
                     <a v-if="bidding?.assigned_to" @click="goToUserDetail(bidding.assigned_to)"
                        style="color: #1890ff; cursor: pointer;">
                         {{ getAssignedUserName(bidding?.assigned_to) }}
                     </a>
+                    <span v-else>Không xác định</span>
+                </a-descriptions-item>
+
+                <a-descriptions-item label="Người giao việc">
+                    <template v-if="bidding?.manager_id">
+                        <a @click="goToUserDetail(bidding.manager_id)" style="color:#1890ff; cursor:pointer;">
+                            {{ bidding?.manager_name || `Người #${bidding.manager_id}` }}
+                        </a>
+                    </template>
                     <span v-else>Không xác định</span>
                 </a-descriptions-item>
 
@@ -233,7 +242,7 @@
                                 </a-descriptions-item>
 
                                 <!-- Người phụ trách -->
-                                <a-descriptions-item label="Phụ trách bước">
+                                <a-descriptions-item label="Người thực hiện">
                                     <a-popover
                                         :open="openAssignForId === step.id"
                                         trigger="click"
@@ -562,6 +571,7 @@ const APPROVAL_TEXT = { approved: 'Đã duyệt', pending: 'Chờ duyệt', reje
 const APPROVAL_COLOR = { approved: 'green', pending: 'blue', rejected: 'red', default: 'gray' }
 const TASK_STATUS_TEXT = { todo: 'Chưa bắt đầu', doing: 'Đang làm', done: 'Hoàn thành', overdue: 'Trễ hạn' }
 const TASK_STATUS_COLOR = { todo: 'default', doing: 'blue', done: 'green', overdue: 'red' }
+
 
 
 // ===== Helpers bổ sung cho cột =====

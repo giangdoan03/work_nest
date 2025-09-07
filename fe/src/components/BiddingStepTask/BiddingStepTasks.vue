@@ -55,12 +55,12 @@
                         <!-- Tên công việc -->
                         <template v-else-if="column.key === 'title'">
                             <router-link
-                                :to="{ name: 'bidding-task-info', params: { id: record.id } }"
+                                :to="buildTaskLink(record)"
                                 class="task-title-cell"
                             >
-                                <span class="task-title" :class="{ child: record.parent_id }">
-                                  {{ truncate(record.title, 25) }}
-                                </span>
+  <span class="task-title" :class="{ child: record.parent_id }">
+    {{ truncate(record.title, 25) }}
+  </span>
                             </router-link>
                         </template>
 
@@ -300,6 +300,21 @@ const columns = [
     {title: 'Duyệt', dataIndex: 'approval_status', key: 'approval_status', width: 160, align: 'center'},
     {title: 'Thao tác', key: 'actions', width: 80, align: 'center', fixed: 'right'},
 ]
+
+const buildTaskLink = (row) => {
+    if (bidId && stepId) {
+        return {
+            name: 'bidding-task-info-in-step',
+            params: {
+                bidId: String(bidId),
+                stepId: String(stepId),
+                id: String(row.id),
+            },
+        }
+    }
+    // fallback
+    return { name: 'bidding-task-info', params: { id: String(row.id) } }
+}
 
 
 /* ---------- Expand icon (đẹp hơn) ---------- */
