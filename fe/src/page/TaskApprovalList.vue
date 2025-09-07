@@ -36,26 +36,43 @@
                         </template>
 
                         <!-- Tiêu đề + Link (tự nhận diện external/internal) -->
+                        <!-- Tiêu đề + Link -->
                         <template v-else-if="column.dataIndex === 'title'">
-                            <template v-if="isStep(record)">
-                                <router-link :to="stepDetailRoute(record)" class="link">
-                                    {{ record.title || displayFallbackTitle(record) }}
-                                </router-link>
-                            </template>
-                            <template v-else>
-                                <template v-if="record.url">
-                                    <a v-if="isExternalUrl(record.url)" :href="record.url" class="link" target="_blank" rel="noopener">
-                                        {{ record.title || displayFallbackTitle(record) }}
-                                    </a>
-                                    <router-link v-else :to="record.url" class="link">
+                            <!-- Tab Cần duyệt -->
+                            <template v-if="activeTab === 'pending'">
+                                <template v-if="isStep(record)">
+                                    <router-link :to="stepDetailRoute(record)" class="link">
                                         {{ record.title || displayFallbackTitle(record) }}
                                     </router-link>
                                 </template>
-                                <span v-else>{{ record.title || displayFallbackTitle(record) }}</span>
+                                <template v-else>
+                                    <template v-if="record.url">
+                                        <a v-if="isExternalUrl(record.url)" :href="record.url" class="link" target="_blank" rel="noopener">
+                                            {{ record.title || displayFallbackTitle(record) }}
+                                        </a>
+                                        <router-link v-else :to="record.url" class="link">
+                                            {{ record.title || displayFallbackTitle(record) }}
+                                        </router-link>
+                                    </template>
+                                    <span v-else>{{ record.title || displayFallbackTitle(record) }}</span>
+                                </template>
+                            </template>
+
+                            <!-- Tab Đã xử lý -->
+                            <template v-else-if="activeTab === 'resolved'">
+                                <a-space :size="8">
+                                    <a-typography-link
+                                        v-if="record.url"
+                                        :href="record.url"
+                                        target="_blank"
+                                        rel="noopener"
+                                    >
+                                        {{ record.title || displayFallbackTitle(record) }}
+                                    </a-typography-link>
+                                    <span v-else>{{ record.title || displayFallbackTitle(record) }}</span>
+                                </a-space>
                             </template>
                         </template>
-
-
 
                         <!-- Cấp hiện tại -->
                         <template v-else-if="column.dataIndex === 'current_level'">
@@ -219,16 +236,17 @@ const safeParseJSON = (v) => {
 }
 
 const normalizeApprovalRow = (ai = {}) => {
-    const meta = safeParseJSON(ai.meta_json) || {}
-    const title = ai.title || meta.title || ''
-    const url   = ai.url   || meta.url   || ''
+    const meta = safeParseJSON(ai.meta_json)
 
     return {
         ...ai,
-        // để template đọc chung một nơi
-        title,
-        url,
-        meta_json: { ...meta, title, url },
+        // Ưu tiên dữ liệu trong meta_json (nếu có)
+        title: meta?.title || ai.title || `[${ai.target_type}] #${ai.target_id}`,
+        url: meta?.url || ai.url || makeUrl(ai.target_type, ai.target_id),
+        assignee_name: meta?.assignee_name ?? ai.assignee_name ?? null,
+
+        id: ai.id || ai.approval_id || ai.request_id,
+        meta_json: meta,
         current_level: toInt(ai.current_level),
         _total_steps: ai._total_steps != null ? toInt(ai._total_steps) : undefined,
     }
@@ -290,17 +308,24 @@ const handleSearch = () => {
 
 // ================== ACTIONS ==================
 const openModal = (record, action) => {
-    selectedRecord.value = record
+    selectedRecord.value = {
+        ...record,
+        id: record.instance_id,  // đặt sau cùng để không bị record.id ghi đè
+        step_id: record.step_id, // cũng nên đặt cuối
+    }
     modalAction.value = action === 'reject' ? 'reject' : 'approve'
     comment.value = ''
     modalVisible.value = true
 }
 
+
 const handleModalSubmit = async () => {
-    if (!selectedRecord.value?.id || submitting.value) return
+    const id = selectedRecord.value?.id
+    if (!id || submitting.value) return
+
     submitting.value = true
     try {
-        const id = selectedRecord.value.id
+        console.log('Modal OK clicked', id)
         const payload = comment.value ? { note: comment.value } : {}
 
         if (modalAction.value === 'approve') {
@@ -313,8 +338,8 @@ const handleModalSubmit = async () => {
 
         modalVisible.value = false
 
-        // Optimistic update + cập nhật phân trang mượt
-        rows.value = rows.value.filter(r => r.id !== id)
+        // cập nhật lại rows
+        rows.value = rows.value.filter(r => r.instance_id !== id)
         pagination.value.total = Math.max(0, pagination.value.total - 1)
         if (rows.value.length === 0 && pagination.value.current > 1) {
             pagination.value.current -= 1
