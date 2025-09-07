@@ -26,6 +26,7 @@ class BiddingStepController extends ResourceController
     /**
      * Danh sách bước (tuỳ chọn ?bidding_id=..., ?with_tasks=0/1)
      * - Hành vi mặc định: có tasks.
+     * @throws Exception
      */
     public function index(): ResponseInterface
     {
@@ -185,6 +186,7 @@ class BiddingStepController extends ResourceController
 
     /**
      * Lấy các bước theo gói thầu (giống index nhưng bắt buộc có bidding_id)
+     * @throws Exception
      */
     public function stepsByBidding(int $biddingId): ResponseInterface
     {

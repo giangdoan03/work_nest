@@ -6,6 +6,7 @@ use App\Models\TaskModel;
 use App\Models\TaskExtensionModel;
 use CodeIgniter\RESTful\ResourceController;
 use DateTimeImmutable;
+use Exception;
 
 class MyTaskController extends ResourceController
 {
@@ -13,7 +14,7 @@ class MyTaskController extends ResourceController
     protected $format    = 'json';
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function index()
     {
@@ -73,7 +74,7 @@ class MyTaskController extends ResourceController
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     private function calculateDeadlineDiff(?string $endDate): array
     {

@@ -7,6 +7,7 @@ use App\Models\PermissionModel;
 use App\Models\RolePermissionModel;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\HTTP\ResponseInterface;
+use ReflectionException;
 
 class PermissionController extends ResourceController
 {
@@ -61,7 +62,7 @@ class PermissionController extends ResourceController
 
 
     /**
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function save()
     {

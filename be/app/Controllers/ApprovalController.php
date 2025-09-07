@@ -7,6 +7,7 @@ use App\Models\ApprovalStepModel;
 use App\Models\ApprovalLogModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use ReflectionException;
 
 class ApprovalController extends ResourceController
 {
@@ -21,7 +22,7 @@ class ApprovalController extends ResourceController
         $role  = strtolower((string)($s->get('role') ?? ''));
         $roles = array_map('strtolower', (array)($s->get('roles') ?? []));
 
-        return (bool)($s->get('is_admin') ?? false)
+        return ($s->get('is_admin') ?? false)
             || (int)($s->get('role_id') ?? 0) === 1
             || in_array($role, ['admin', 'super admin'], true)
             || in_array('admin', $roles, true)
@@ -240,7 +241,7 @@ class ApprovalController extends ResourceController
     }
 
     /** Gửi duyệt (khởi động phiên active mới hoặc reset phiên active hiện tại)
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function send()
     {
@@ -325,7 +326,13 @@ class ApprovalController extends ResourceController
         ]);
     }
 
-    /** DUYỆT cấp hiện tại */
+    /** DUYỆT cấp hiện tại
+     * @throws ReflectionException
+     * @throws ReflectionException
+     * @throws ReflectionException
+     * @throws ReflectionException
+     * @throws ReflectionException
+     */
     public function approve($id = null): ResponseInterface
     {
         $id   = (int) $id;
@@ -487,7 +494,11 @@ class ApprovalController extends ResourceController
         ]);
     }
 
-    /** Cập nhật lại danh sách người duyệt cho một instance */
+    /** Cập nhật lại danh sách người duyệt cho một instance
+     * @throws ReflectionException
+     * @throws ReflectionException
+     * @throws ReflectionException
+     */
     public function updateSteps($id = null): ResponseInterface
     {
         $id = (int) $id;

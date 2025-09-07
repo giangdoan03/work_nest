@@ -11,6 +11,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use DateTimeImmutable;
 use DateTimeZone;
+use Exception;
 use ReflectionException;
 use Throwable;
 
@@ -24,7 +25,7 @@ class ContractController extends ResourceController
 
     /**
      * Danh sách hợp đồng: lọc + phân trang + summary (+with_progress)
-     * @throws \Exception
+     * @throws Exception
      */
     public function index()
     {
@@ -460,7 +461,9 @@ class ContractController extends ResourceController
         ];
     }
 
-    /** Chi tiết hợp đồng + tính thêm days + progress + collaborators */
+    /** Chi tiết hợp đồng + tính thêm days + progress + collaborators
+     * @throws Exception
+     */
     public function show($id = null)
     {
         $contract = $this->model->find($id);
@@ -647,7 +650,9 @@ class ContractController extends ResourceController
         return $this->respond($list);
     }
 
-    /** Tạo từ template steps trong settings ('contract_steps') */
+    /** Tạo từ template steps trong settings ('contract_steps')
+     * @throws ReflectionException
+     */
     protected function generateStepsFromTemplate(int $contractId, $customerId = null): void
     {
         $settingModel = new SettingModel();

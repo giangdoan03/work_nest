@@ -9,6 +9,7 @@ use CodeIgniter\RESTful\ResourceController;
 use App\Models\DocumentModel;
 use App\Models\DocumentPermissionModel;
 use App\Helpers\UploadHelper;
+use Exception;
 use ReflectionException;
 use stdClass;
 
@@ -242,7 +243,7 @@ class DocumentController extends ResourceController
                 'visibility' => $visibility,
                 'task_file_id' => $taskFileId ? (int)$taskFileId : null,
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $db->transRollback();
             return $this->failServerError('Lưu CSDL thất bại: ' . $e->getMessage());
         }
@@ -421,7 +422,7 @@ class DocumentController extends ResourceController
                 'visibility'   => $visibility,
                 'task_file_id' => $taskFileId ? (int) $taskFileId : null,
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $db->transRollback();
             return $this->failServerError('Lưu CSDL thất bại: ' . $e->getMessage());
         }
@@ -860,7 +861,7 @@ class DocumentController extends ResourceController
 
         try {
             $permissionModel->insertBatch($validPermissions);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->failServerError('Không thể chia sẻ tài liệu: ' . $e->getMessage());
         }
 
@@ -1168,7 +1169,7 @@ class DocumentController extends ResourceController
                 if (!$success) {
                     log_message('error', '⚠️ insertBatch failed: ' . json_encode($permissionModel->errors()));
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 log_message('error', '❌ Exception in extracted(): ' . $e->getMessage());
             }
         }

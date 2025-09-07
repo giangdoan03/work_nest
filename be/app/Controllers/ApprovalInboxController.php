@@ -2,13 +2,15 @@
 
 namespace App\Controllers;
 
+use CodeIgniter\Database\BaseConnection;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use Throwable;
 
 class ApprovalInboxController extends ResourceController
 {
     protected $format = 'json';
-    protected \CodeIgniter\Database\BaseConnection $db;
+    protected BaseConnection $db;
 
     public function __construct()
     {
@@ -258,7 +260,7 @@ class ApprovalInboxController extends ResourceController
 
         try {
             $this->db->table('approval_reads')->ignore(true)->insertBatch($data);
-        } catch (\Throwable $e) {
+        } catch (Throwable) {
             // ignore duplicates
         }
 

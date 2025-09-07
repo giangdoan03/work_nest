@@ -99,8 +99,8 @@ class BiddingController extends ResourceController
         $pager = $this->model->pager;
 
         // === Deadline fields
-        $tz    = new \DateTimeZone('Asia/Ho_Chi_Minh');
-        $today = new \DateTimeImmutable('today', $tz);
+        $tz    = new DateTimeZone('Asia/Ho_Chi_Minh');
+        $today = new DateTimeImmutable('today', $tz);
         $data  = $this->attachDeadlineInfo($data, $today, $tz);
 
         // === Progress fields (tuỳ chọn)
@@ -434,7 +434,7 @@ class BiddingController extends ResourceController
                     $daysOverdue = (int)$end->diff($today)->days;
                     $daysRemaining = 0;
                 }
-            } catch (Throwable $e) {
+            } catch (Throwable) {
                 $daysRemaining = null;
                 $daysOverdue = null;
             }
@@ -720,7 +720,7 @@ class BiddingController extends ResourceController
         // 1) Ưu tiên theo session
         $roleSession = strtolower((string)($session->get('role') ?? ''));
         $rolesSession = array_map('strtolower', (array)($session->get('roles') ?? []));
-        if ((bool)($session->get('is_admin') ?? false)
+        if (($session->get('is_admin') ?? false)
             || in_array($roleSession, ['admin', 'super admin'], true)
             || in_array('admin', $rolesSession, true)
             || in_array('super admin', $rolesSession, true)

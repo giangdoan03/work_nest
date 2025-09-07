@@ -27,6 +27,7 @@ class CustomerTransactionController extends ResourceController
 
     /**
      * Tạo mới tương tác với khách hàng
+     * @throws \ReflectionException
      */
     public function create()
     {
