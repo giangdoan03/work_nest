@@ -48,8 +48,6 @@ export const markApprovalReadAPI = (stepIds=[]) =>
     instance.post('/approvals/mark-read', { step_ids: stepIds })
 
 
-
-
 export default {
     getApprovals,
     getApprovalInbox,

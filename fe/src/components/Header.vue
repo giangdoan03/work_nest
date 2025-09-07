@@ -24,12 +24,12 @@
                         <template v-else>
                           <span style="display:inline-flex;align-items:center;gap:4px;">
                             {{ route.meta.breadcrumb }}
-                            <a-button
-                                v-if="currentRoute.name === 'tasks'"
-                                size="small"
-                                @click="onClickCreateTask"
-                                style="margin-left:8px"
-                            >
+                                <a-button
+                                    v-if="currentRoute.name === 'tasks'"
+                                    size="small"
+                                    @click="onClickCreateTask"
+                                    style="margin-left:8px"
+                                >
                               <template #icon><PlusOutlined/></template>
                             </a-button>
                           </span>
@@ -241,7 +241,7 @@
                                                             </div>
                                                         </template>
                                                         <template #description>
-                                                            <div style="color:#555">
+                                                            <div style="color:#555;">
                                                                 <div>Gửi bởi: {{ item.submitted_by_name || '—' }}</div>
                                                                 <div style="font-size:12px; color:#999;">{{ formatTime(item.submitted_at) }}</div>
                                                             </div>
@@ -266,7 +266,7 @@
                                                             </div>
                                                         </template>
                                                         <template #description>
-                                                            <div style="color:#555">
+                                                            <div style="color:#555;">
                                                                 <div>Gửi bởi: {{ item.submitted_by_name || '—' }}</div>
                                                                 <div style="font-size:12px; color:#999;">{{ formatTime(item.submitted_at) }}</div>
                                                             </div>
@@ -344,7 +344,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/vi'
 
 import { getMyRecentCommentsAPI, getMyUnreadCommentsCountAPI, markCommentsReadAPI } from '@/api/task'
-import { getApprovalInboxAPI, markApprovalReadAPI } from '@/api/approvals'
+import { getApprovalInboxAPI, getApprovalUnreadCountAPI, markApprovalReadAPI } from '@/api/approvals'
 
 import { useUserStore } from '@/stores/user'
 import { useCommonStore } from '@/stores/common'
@@ -389,7 +389,6 @@ const notifyItems = ref([])
 const notifyPage = ref(1)
 const notifyHasMore = ref(false)
 const notifyLoading = ref(false)
-const unreadNotify = ref(0) // dùng cho tính "còn chưa hiển thị"
 const changePwdOpen = ref(false)
 
 /* ========= Misc ========= */
@@ -407,6 +406,15 @@ const saveClientReadSteps = (setObj) => {
 const clientReadSteps = loadClientReadSteps()
 const rememberReadStep = (stepId) => { clientReadSteps.add(stepId); saveClientReadSteps(clientReadSteps) }
 const rememberReadMany = (ids = []) => { ids.forEach(id => clientReadSteps.add(id)); saveClientReadSteps(clientReadSteps) }
+
+/* ========= Server unread count for approvals ========= */
+const unreadNotifyCount = ref(0) // tổng chưa đọc từ server
+const fetchNotifyUnreadCount = async () => {
+    try {
+        const { data } = await getApprovalUnreadCountAPI()
+        unreadNotifyCount.value = data?.unread || 0
+    } catch {}
+}
 
 /* ========= Computed ========= */
 const breadcrumbs = computed(() => {
@@ -443,8 +451,8 @@ const moreUnread = computed(() => Math.max(0, unreadChat.value - unreadOnPage.va
 const newNotifyItems = computed(() => notifyItems.value.filter(i => +i.is_unread === 1))
 const oldNotifyItems = computed(() => notifyItems.value.filter(i => +i.is_unread !== 1))
 const unreadNotifyOnPage = computed(() => notifyItems.value.filter(i => +i.is_unread === 1).length)
-const unreadNotifyBadge = computed(() => unreadNotifyOnPage.value) // badge = số chưa đọc đang có trong list
-const moreNotifyUnread = computed(() => Math.max(0, (unreadNotify.value || 0) - unreadNotifyOnPage.value))
+const unreadNotifyBadge = computed(() => unreadNotifyCount.value) // badge = tổng server
+const moreNotifyUnread = computed(() => Math.max(0, (unreadNotifyCount.value || 0) - unreadNotifyOnPage.value))
 
 /* ========= Utilities ========= */
 const formatTime = (ts) => dayjs(ts).fromNow()
@@ -538,8 +546,8 @@ const fetchNotify = async (page = 1) => {
         notifyHasMore.value = cur * per < total
         notifyPage.value = page
 
-        // set "server total unread" tạm dựa theo list hiện có (để hiển thị 'còn chưa hiển thị')
-        unreadNotify.value = notifyItems.value.filter(i => +i.is_unread === 1).length
+        // đồng bộ tổng chưa đọc từ server (không dựa list)
+        fetchNotifyUnreadCount()
     } finally { notifyLoading.value = false }
 }
 const refreshNotify = () => fetchNotify(1)
@@ -563,8 +571,8 @@ const markAllNotifyRead = async () => {
         if (allUnreadSteps.length) {
             await markApprovalReadAPI(allUnreadSteps)
             rememberReadMany(allUnreadSteps)
-            unreadNotify.value = 0
             notifyItems.value = notifyItems.value.map(i => ({ ...i, is_unread: 0 }))
+            unreadNotifyCount.value = 0 // đã quét hết → tổng = 0
             message.success('Đã đánh dấu tất cả thông báo là đã đọc')
         } else {
             message.info('Không còn thông báo chưa đọc')
@@ -578,7 +586,7 @@ const openApproval = async (item) => {
         item.is_unread = 0
         const idx = notifyItems.value.findIndex(n => n.step_id === item.step_id)
         if (idx > -1) notifyItems.value.splice(idx, 1, { ...notifyItems.value[idx], is_unread: 0 })
-        unreadNotify.value = Math.max(0, unreadNotify.value - 1)
+        unreadNotifyCount.value = Math.max(0, unreadNotifyCount.value - 1) // giảm tổng (optimistic)
         rememberReadStep(item.step_id)
         markApprovalReadAPI([item.step_id]).catch(console.error)
     }
@@ -595,15 +603,16 @@ const onInboxOpenChange = async (open) => {
 const onNotifyOpenChange = async (open) => {
     notifyOpen.value = open
     if (!open) return
-    await refreshNotify() // badge lấy từ list (đã mask)
+    await Promise.all([ refreshNotify(), fetchNotifyUnreadCount() ])
 }
 
 /* ========= Polling ========= */
 const startPolling = () => {
     stopPolling()
     poller = setInterval(() => {
-        fetchUnread()     // comment badge
-        refreshNotify()   // approval badge bám list
+        fetchUnread()              // badge comment
+        refreshNotify()            // dữ liệu list
+        fetchNotifyUnreadCount()   // tổng server cho badge chuông
     }, 30000)
 }
 const stopPolling = () => { if (poller) clearInterval(poller); poller = null }
@@ -619,7 +628,8 @@ watch(inboxOpen, (open) => {
 
 onMounted(async () => {
     await fetchUnread()
-    await refreshNotify() // đảm bảo hiển thị đúng ngay khi F5
+    await refreshNotify()
+    await fetchNotifyUnreadCount()
     startPolling()
 })
 onBeforeUnmount(() => stopPolling())
