@@ -6,7 +6,7 @@
 
                     <a-input-search
                         v-model:value="searchTitle"
-                        placeholder="Tìm theo tiêu đề (meta_json.title)"
+                        placeholder="Tìm theo tiêu đề"
                         allow-clear
                         style="max-width: 320px"
                         @pressEnter="handleSearch"

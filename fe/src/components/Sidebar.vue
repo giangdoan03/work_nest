@@ -934,14 +934,14 @@
 
     /* Tăng size ô & icon trong Menu nhanh */
     .quick-menu .icon-box {
-        width: 72px;          /* trước 60 */
-        height: 72px;         /* trước 60 */
+        width: 60px;          /* trước 60 */
+        height: 60px;         /* trước 60 */
         border-radius: 14px;  /* hơi bầu hơn */
         display: flex;
         align-items: center;
         justify-content: center;
         /* dùng CSS variables để dễ tuỳ biến */
-        --icon-size: 36px;    /* trước 28 */
+        --icon-size: 25px;    /* trước 28 */
         --icon-color: inherit;
     }
 
