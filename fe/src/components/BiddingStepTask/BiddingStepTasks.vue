@@ -4,7 +4,7 @@
         <a-card bordered>
             <a-page-header
                 :title="`Bước ${step?.step_number || stepId}: ${step?.title || ''}`"
-                sub-title="Danh sách nhiệm vụ"
+                :sub-title="bidding?.title || bidding?.name || '—'"
                 @back="() => router.back()"
                 style="padding:0 0 12px"
             >
@@ -14,73 +14,119 @@
             </a-page-header>
 
             <a-spin :spinning="loading">
-                <a-empty v-if="tasks.length === 0" description="Không có công việc" />
+                <a-empty v-if="tasks.length === 0" description="Không có công việc"/>
                 <a-table
-                    v-else
-                    :columns="treeColumns"
-                    :dataSource="tasks"
+                    :columns="columns"
+                    :dataSource="pagedTasks"
                     rowKey="id"
-                    :pagination="false"
+                    :pagination="pagination"
                     :scroll="{ x: 'max-content' }"
+                    :expandedRowKeys="expandedKeys"
+                    :expandRowByClick="false"
+                    :childrenColumnName="'children'"
+                    :expandable="{ expandIcon: () => null }"
+                    @change="handleTableChange"
                 >
-                    <template #bodyCell="{ column, record, index }">
-                        <template v-if="column.key === 'index'">{{ index + 1 }}</template>
+                    <template #bodyCell="{ column, record }">
+                        <!-- STT (DFS) -->
+                        <template v-if="column.key === 'index'">
+                            <span class="index-badge">{{ record._order }}</span>
+                        </template>
+                        <template v-if="column.key === 'expander'">
+                            <div class="exp-cell" :style="{ paddingLeft: `${record._level * 12}px` }">
+                                <template v-if="record.children?.length">
+                                    <button
+                                        class="exp-btn"
+                                        :aria-expanded="isExpanded(record)"
+                                        :title="isExpanded(record) ? 'Thu gọn' : 'Mở rộng'"
+                                        @click.stop="toggleExpand(record)"
+                                        @keydown.enter.prevent="toggleExpand(record)"
+                                        @keydown.space.prevent="toggleExpand(record)"
+                                    >
+                                        <component :is="isExpanded(record) ? MinusSquareOutlined : PlusSquareOutlined"/>
+                                    </button>
+                                </template>
+                                <template v-else>
+                                    <span class="exp-placeholder" aria-hidden="true"></span>
+                                </template>
+                            </div>
+                        </template>
 
-                        <template v-else-if="column.key === 'add'">x</template>
-
-                        <template v-else-if="column.dataIndex === 'title'">
+                        <!-- Tên công việc -->
+                        <template v-else-if="column.key === 'title'">
                             <router-link
                                 :to="{ name: 'bidding-task-info', params: { id: record.id } }"
                                 class="task-title-cell"
                             >
-                        <span class="task-title" :class="{ child: record.parent_id }">
-                          {{ truncateText(record.title, 25) }}
-                        </span>
+                                <span class="task-title" :class="{ child: record.parent_id }">
+                                  {{ truncate(record.title, 25) }}
+                                </span>
                             </router-link>
                         </template>
 
-                        <template v-else-if="column.dataIndex === 'assigned_to'">
+                        <!-- Người thực hiện -->
+                        <template v-else-if="column.key === 'assigned_to'">
                             {{ getAssignedUserName(record.assigned_to) }}
                         </template>
 
-                        <template v-else-if="column.dataIndex === 'progress'">
+                        <!-- Tiến trình -->
+                        <template v-else-if="column.key === 'progress'">
                             {{ Number(record.progress ?? 0) }}%
                         </template>
 
-                        <template v-else-if="column.dataIndex === 'priority'">
-                            <a-tag :color="getPriorityColor(record.priority)">{{ getPriorityText(record.priority) }}</a-tag>
+                        <!-- Ưu tiên -->
+                        <template v-else-if="column.key === 'priority'">
+                            <a-tag :color="record._meta.priorityColor">{{ record._meta.priorityText }}</a-tag>
                         </template>
 
-                        <template v-else-if="column.dataIndex === 'start_date'">{{ fmtDate(record.start_date) }}</template>
-                        <template v-else-if="column.dataIndex === 'end_date'">{{ fmtDate(record.end_date) }}</template>
+                        <!-- Ngày -->
+                        <template v-else-if="column.key === 'start_date'">{{ fmtDate(record.start_date) }}</template>
+                        <template v-else-if="column.key === 'end_date'">{{ fmtDate(record.end_date) }}</template>
 
-                        <template v-else-if="column.dataIndex === 'status'">
-                            <a-tag :color="getTaskStatusColor(record.status)">{{ getTaskStatusText(record.status) }}</a-tag>
+                        <!-- Trạng thái -->
+                        <template v-else-if="column.key === 'status'">
+                            <a-tag :color="record._meta.statusColor">{{ record._meta.statusText }}</a-tag>
                         </template>
 
-                        <template v-else-if="column.dataIndex === 'deadline'">
-                            <template v-if="deadlineInfo(record.end_date).type === 'overdue'">
-                                <a-tag color="error">Quá hạn {{ deadlineInfo(record.end_date).days }} ngày</a-tag>
+                        <!-- Hạn -->
+                        <template v-else-if="column.key === 'deadline'">
+                            <template v-if="record._meta.deadline.type === 'overdue'">
+                                <a-tag color="error">Quá hạn {{ record._meta.deadline.days }} ngày</a-tag>
                             </template>
-                            <template v-else-if="deadlineInfo(record.end_date).type === 'today'">
+                            <template v-else-if="record._meta.deadline.type === 'today'">
                                 <a-tag :color="'#faad14'">Hạn chót hôm nay</a-tag>
                             </template>
-                            <template v-else-if="deadlineInfo(record.end_date).type === 'remaining'">
-                                <a-tag color="green">Còn {{ deadlineInfo(record.end_date).days }} ngày</a-tag>
+                            <template v-else-if="record._meta.deadline.type === 'remaining'">
+                                <a-tag color="green">Còn {{ record._meta.deadline.days }} ngày</a-tag>
                             </template>
                             <template v-else>—</template>
                         </template>
 
-                        <template v-else-if="column.dataIndex === 'approval_status'">
+                        <!-- Duyệt -->
+                        <template v-else-if="column.key === 'approval_status'">
                             <template v-if="record.status === 'done' && record.approval_status === 'approved'">
                                 <a-tag color="green">Hoàn thành & Đã duyệt</a-tag>
                             </template>
                             <template v-else-if="record.status === 'done'">
-                                <a-tag :color="getApprovalStatusColor(record.approval_status)">
-                                    {{ getApprovalStatusText(record.approval_status) }}
-                                </a-tag>
+                                <a-tag :color="record._meta.approvalColor">{{ record._meta.approvalText }}</a-tag>
                             </template>
                             <template v-else>—</template>
+                        </template>
+
+                        <!-- Thao tác -->
+                        <template v-else-if="column.key === 'actions'">
+                            <a-popconfirm
+                                title="Bạn chắc chắn muốn xoá công việc này?"
+                                ok-text="Xoá"
+                                cancel-text="Huỷ"
+                                ok-type="danger"
+                                :disabled="deletingId === record.id"
+                                @confirm="() => onDeleteTask(record)"
+                            >
+                                <a-button danger type="link" :loading="deletingId === record.id">
+                                    <DeleteOutlined/>
+                                </a-button>
+                            </a-popconfirm>
                         </template>
                     </template>
                 </a-table>
@@ -97,120 +143,209 @@
             :open="subDrawerOpen"
             :parentTask="subDrawerParent"
             :listUser="users"
-            @update:open="v => subDrawerOpen = v"
+            @update:open="v => (subDrawerOpen = v)"
             @created="handleSubtaskCreated"
         />
     </div>
 </template>
 
-
 <script setup>
-import {ref, onMounted, computed} from 'vue'
+import {ref, onMounted, computed, reactive, h} from 'vue'
 import dayjs from 'dayjs'
 import {useRoute, useRouter} from 'vue-router'
 import {message} from 'ant-design-vue'
-import {PlusOutlined} from '@ant-design/icons-vue'
+import {DeleteOutlined, PlusSquareOutlined, MinusSquareOutlined} from '@ant-design/icons-vue'
 
 import {getBiddingAPI, getBiddingStepsAPI} from '@/api/bidding'
-import {getTasksByBiddingStep} from '@/api/task'
+import {getTasksByBiddingStep, deleteTask} from '@/api/task'
 import {getUsers} from '@/api/user'
 import DrawerCreateTask from '@/components/common/DrawerCreateTask.vue'
 import DrawerCreateSubtask from '@/components/common/DrawerCreateSubtask.vue'
 
-// ===== props từ router
 const route = useRoute()
 const router = useRouter()
 const bidId = Number(route.params.bidId)
 const stepId = Number(route.params.stepId)
 
-// ===== state
 const step = ref(null)
 const bidding = ref(null)
-const tasks = ref([])
+const tasks = ref([])   // chỉ chứa các ROOT đã build tree
 const users = ref([])
 const loading = ref(false)
+const deletingId = ref(null)
 
 const openDrawer = ref(false)
 const subDrawerOpen = ref(false)
 const subDrawerParent = ref(null)
 
-// ===== helpers tối giản (tái dùng logic của bạn)
-const fmtDate = v => (v ? dayjs(v).format('DD/MM/YYYY') : '—')
-const getPriorityText = p => ({high:'Cao',normal:'Bình thường',low:'Thấp'}[String(p)] ?? 'Không xác định')
-const getPriorityColor = p => ({high:'red',normal:'orange',low:'blue'}[String(p)] ?? 'default')
-const TASK_STATUS_TEXT = { todo:'Chưa bắt đầu', doing:'Đang làm', done:'Hoàn thành', overdue:'Trễ hạn' }
-const TASK_STATUS_COLOR = { todo:'default', doing:'blue', done:'green', overdue:'red' }
-const getTaskStatusText = s => TASK_STATUS_TEXT[String(s)] || 'Không rõ'
-const getTaskStatusColor = s => TASK_STATUS_COLOR[String(s)] || 'default'
 
-const APPROVAL_TEXT = { approved:'Đã duyệt', pending:'Chờ duyệt', rejected:'Từ chối' }
-const APPROVAL_COLOR = { approved:'green', pending:'blue', rejected:'red', default:'gray' }
-const getApprovalStatusText = s => APPROVAL_TEXT[String(s)] ?? 'Không rõ'
-const getApprovalStatusColor = s => APPROVAL_COLOR[String(s)] ?? 'gray'
+const expandedKeys = ref([])
+
+/** Bật/tắt 1 node */
+const toggleExpand = (row) => {
+    const k = String(row?.id ?? row)
+    const list = expandedKeys.value
+    const i = list.indexOf(k)
+    if (i === -1) list.push(k)
+    else list.splice(i, 1)
+}
+
+/** Row đang mở? */
+const isExpanded = (row) => expandedKeys.value.includes(String(row?.id ?? row))
+/* ---------- Dictionaries ---------- */
+const PRIORITY_TEXT = {high: 'Cao', normal: 'Bình thường', low: 'Thấp'}
+const PRIORITY_COLOR = {high: 'red', normal: 'orange', low: 'blue'}
+const TASK_STATUS_TEXT = {todo: 'Chưa bắt đầu', doing: 'Đang làm', done: 'Hoàn thành', overdue: 'Trễ hạn'}
+const TASK_STATUS_COLOR = {todo: 'default', doing: 'blue', done: 'green', overdue: 'red'}
+const APPROVAL_TEXT = {approved: 'Đã duyệt', pending: 'Chờ duyệt', rejected: 'Từ chối'}
+const APPROVAL_COLOR = {approved: 'green', pending: 'blue', rejected: 'red', default: 'gray'}
+
+/* ---------- Utils ---------- */
+const fmtDate = v => (v ? dayjs(v).format('DD/MM/YYYY') : '—')
+const truncate = (text, len = 30) => (!text ? '' : text.length > len ? `${text.slice(0, len)}...` : text)
 
 const usersById = computed(() => {
-    const m = {}
-    for (const u of users.value) m[String(u.id)] = u
+    const m = new Map()
+    for (const u of users.value) m.set(String(u.id), u)
     return m
 })
-const getAssignedUserName = uid => usersById.value[String(uid)]?.name || (uid ? `Người dùng #${uid}` : 'Không xác định')
+const getAssignedUserName = uid => usersById.value.get(String(uid))?.name || (uid ? `Người dùng #${uid}` : 'Không xác định')
 
-// hạn (tái dùng nhanh)
-const deadlineInfo = (endDate) => {
-    if (!endDate) return { type:'none', days:0 }
-    const diff = dayjs(endDate).startOf('day').diff(dayjs().startOf('day'),'day')
-    if (diff < 0) return { type:'overdue', days: Math.abs(diff) }
-    if (diff === 0) return { type:'today', days: 0 }
-    return { type:'remaining', days: diff }
-}
-const deadlineText  = (b) => {
-    const d = deadlineInfo(b?.end_date ?? b?.endDate ?? null)
-    if (d.type === 'overdue') return `Quá hạn ${d.days} ngày`
-    if (d.type === 'today') return 'Đến hạn hôm nay'
-    if (d.type === 'remaining') return `Còn ${d.days} ngày`
-    return '—'
-}
-const deadlineColor = (b) => {
-    const d = deadlineInfo(b?.end_date ?? b?.endDate ?? null)
-    return d.type === 'overdue' ? 'red' : d.type === 'today' ? 'orange' : d.type === 'remaining' ? 'green' : 'default'
+const buildDeadlineMeta = (endDate) => {
+    if (!endDate) return {type: 'none', days: 0}
+    const diff = dayjs(endDate).startOf('day').diff(dayjs().startOf('day'), 'day')
+    if (diff < 0) return {type: 'overdue', days: Math.abs(diff)}
+    if (diff === 0) return {type: 'today', days: 0}
+    return {type: 'remaining', days: diff}
 }
 
-// step status hiển thị
-const STEP_STATUS_TEXT = { '0':'Chưa bắt đầu','1':'Đang xử lý','2':'Đã hoàn thành','3':'Bỏ qua' }
-const STEP_STATUS_COLOR = { '0':'default','1':'blue','2':'green','3':'orange' }
-const statusText = s => STEP_STATUS_TEXT[String(s)] || 'Không rõ'
-const getStepStatusColor = s => STEP_STATUS_COLOR[String(s)] || 'default'
+const annotateTask = (t) => {
+    const priorityKey = String(t.priority ?? '').toLowerCase()
+    const statusKey = String(t.status ?? '').toLowerCase()
+    const approvalKey = String(t.approval_status ?? '').toLowerCase()
+    return {
+        ...t,
+        _meta: {
+            priorityText: PRIORITY_TEXT[priorityKey] ?? 'Không xác định',
+            priorityColor: PRIORITY_COLOR[priorityKey] ?? 'default',
+            statusText: TASK_STATUS_TEXT[statusKey] ?? 'Không rõ',
+            statusColor: TASK_STATUS_COLOR[statusKey] ?? 'default',
+            approvalText: APPROVAL_TEXT[approvalKey] ?? 'Không rõ',
+            approvalColor: APPROVAL_COLOR[approvalKey] ?? 'gray',
+            deadline: buildDeadlineMeta(t.end_date),
+        },
+    }
+}
 
-// cột bảng (tương thích với template cũ)
-const treeColumns = [
-    { title:'STT', key:'index', width:60, align:'center' },
-    {
-        title:'Tên công việc',
-        dataIndex:'title',
-        key:'title',
-        width:240,
-        ellipsis: { showTitle: false }
-    },
-    { title:'Việc con', key:'add', width:120, align:'center' },
-    { title:'Người thực hiện', dataIndex:'assigned_to', key:'assigned_to', width:160 },
-    { title:'Tiến trình', dataIndex:'progress', key:'progress', width:140, align:'center' },
-    { title:'Ưu tiên', dataIndex:'priority', key:'priority', width:120, align:'center' },
-    { title:'Bắt đầu', dataIndex:'start_date', key:'start_date', width:120, align:'center' },
-    { title:'Kết thúc', dataIndex:'end_date', key:'end_date', width:120, align:'center' },
-    { title:'Trạng thái', dataIndex:'status', key:'status', width:140, align:'center' },
-    { title:'Hạn', dataIndex:'deadline', key:'deadline', width:160, align:'center' },
-    { title:'Duyệt', dataIndex:'approval_status', key:'approval_status', width:160, align:'center' },
+/* ---------- Build tree + DFS order ---------- */
+// trong toTree()
+const toTree = (flat) => {
+    const byId = new Map()
+    flat.forEach(r => {
+        const n = annotateTask(r)
+        n.id = String(n.id)
+        n.parent_id = n.parent_id == null || n.parent_id === '' ? null : String(n.parent_id)
+        n.children = []
+        n._level = 0            // NEW
+        byId.set(n.id, n)
+    })
+
+    const roots = []
+    for (const n of byId.values()) {
+        if (n.parent_id && byId.has(n.parent_id)) byId.get(n.parent_id).children.push(n)
+        else roots.push(n)
+    }
+
+    const sortFn = (a, b) => {
+        const aC = dayjs(a.created_at).valueOf() || 0
+        const bC = dayjs(b.created_at).valueOf() || 0
+        if (aC !== bC) return aC - bC
+        const aS = dayjs(a.start_date).valueOf() || 0
+        const bS = dayjs(b.start_date).valueOf() || 0
+        if (aS !== bS) return aS - bS
+        return String(a.title || '').localeCompare(String(b.title || ''))
+    }
+    const sortAll = (arr) => {
+        arr.sort(sortFn);
+        arr.forEach(ch => sortAll(ch.children))
+    }
+    sortAll(roots)
+
+    let order = 0
+    const dfs = (arr, level = 0) => {
+        for (const n of arr) {
+            n._order = ++order
+            n._level = level
+            if (n.children?.length) dfs(n.children, level + 1)
+        }
+    }
+    dfs(roots)
+
+    return roots
+}
+
+
+/* ---------- Columns ---------- */
+const columns = [
+    {title: 'STT', key: 'index', width: 50, align: 'center', className: 'stt-col'},
+    {title: 'Việc con', key: 'expander', width: 80, align: 'center', className: 'expander-col'},
+    {title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 200, ellipsis: {showTitle: false}},
+    {title: 'Người thực hiện', dataIndex: 'assigned_to', key: 'assigned_to', width: 180},
+    {title: 'Tiến trình', dataIndex: 'progress', key: 'progress', width: 120, align: 'center'},
+    {title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', width: 120, align: 'center'},
+    {title: 'Bắt đầu', dataIndex: 'start_date', key: 'start_date', width: 120, align: 'center'},
+    {title: 'Kết thúc', dataIndex: 'end_date', key: 'end_date', width: 120, align: 'center'},
+    {title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 140, align: 'center'},
+    {title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 160, align: 'center'},
+    {title: 'Duyệt', dataIndex: 'approval_status', key: 'approval_status', width: 160, align: 'center'},
+    {title: 'Thao tác', key: 'actions', width: 80, align: 'center', fixed: 'right'},
 ]
 
-const truncateText = (text, length = 30) => {
-    if (!text) return '';
-    return text.length > length ? text.slice(0, length) + '...' : text;
+
+/* ---------- Expand icon (đẹp hơn) ---------- */
+// đặt icon ở cột "expander" (index 1)
+const expandable = {
+    indentSize: 16,
+    expandIconColumnIndex: 1,
+    expandIcon: ({expanded, onExpand, record}) => {
+        const hasChildren = Array.isArray(record.children) && record.children.length > 0
+        if (!hasChildren) return h('span', {class: 'expander-placeholder'})
+
+        const Icon = expanded ? MinusSquareOutlined : PlusSquareOutlined
+        return h(Icon, {
+            class: 'expander-btn',
+            onClick: e => onExpand(record, e),
+        })
+    },
 }
 
-// fetch
+
+/* ---------- Pagination (paginate theo ROOT) ---------- */
+const pagination = reactive({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+    showSizeChanger: true,
+    pageSizeOptions: ['5', '10', '20', '50', '100'],
+    showTotal: (total, [a, b]) => `${a}-${b} / ${total}`,
+})
+const pagedTasks = computed(() => {
+    const start = (pagination.current - 1) * pagination.pageSize
+    const end = start + pagination.pageSize
+    return tasks.value.slice(start, end)
+})
+const ensurePageInRange = () => {
+    const pages = Math.max(1, Math.ceil((pagination.total || 0) / pagination.pageSize))
+    if (pagination.current > pages) pagination.current = pages
+}
+const handleTableChange = (pag) => {
+    pagination.current  = pag.current || 1
+    pagination.pageSize = pag.pageSize || pagination.pageSize
+}
+/* ---------- Data loaders ---------- */
 const load = async () => {
+    loading.value = true
     try {
-        loading.value = true
         const [bidRes, stepsRes, usersRes] = await Promise.all([
             getBiddingAPI(bidId),
             getBiddingStepsAPI(bidId),
@@ -230,16 +365,16 @@ const load = async () => {
 }
 
 const reloadTasks = async () => {
-    const filter = {}
-    // nếu bạn muốn lọc theo role, tái dùng logic cũ:
-    // const u = useUserStore().currentUser || {}
-    // if (String(u.role_id) === '3') filter.assigned_to = u.id
-    // else if (String(u.role_id) === '2') filter.id_department = u.department_id
-    const res = await getTasksByBiddingStep(stepId, filter)
-    tasks.value = Array.isArray(res?.data) ? res.data : []
+    const res = await getTasksByBiddingStep(stepId, {})
+    const raw = Array.isArray(res?.data) ? res.data : []
+    tasks.value = toTree(raw)                   // roots + children + _order
+    pagination.total = tasks.value.length       // paginate theo số root
+    ensurePageInRange()
 }
 
-// thêm subtask
+/* ---------- Actions ---------- */
+const openCreateTask = () => (openDrawer.value = true)
+
 const openSubtaskDrawer = (parentRow) => {
     subDrawerParent.value = {
         id: parentRow.id,
@@ -252,28 +387,160 @@ const openSubtaskDrawer = (parentRow) => {
     subDrawerOpen.value = true
 }
 
-const handleSubtaskCreated = (newTask) => {
-    const list = tasks.value.slice()
-    const parent = list.find(x => Number(x.id) === Number(newTask.parent_id))
-    if (parent) {
-        parent.children = parent.children || []
-        parent.children.push(newTask)
-    } else {
-        list.push(newTask)
-    }
-    tasks.value = list
+const handleSubtaskCreated = async () => {
+    await reloadTasks() // giữ thứ tự + phân trang chuẩn
 }
 
-const openCreateTask = () => {
-    openDrawer.value = true
+const onDeleteTask = async (record) => {
+    try {
+        deletingId.value = record.id
+        await deleteTask(record.id)
+        message.success('Đã xoá công việc')
+        await reloadTasks()
+    } catch (e) {
+        console.error(e)
+        message.error('Xoá công việc thất bại')
+    } finally {
+        deletingId.value = null
+    }
 }
 
 onMounted(load)
 </script>
 
 <style scoped>
-.task-title { display:inline-block; font-weight:500; font-size:13px; color:#1890ff; }
-.task-title.child { position:relative; padding-left:30px; font-weight:normal; font-size:12px; color:#555; }
-.task-title.child::before { content:''; position:absolute; left:10px; top:50%; width:14px; height:1px; background:#ccc; }
-.task-title.child::after { content:''; position:absolute; left:10px; top:0; bottom:50%; border-left:1px solid #ccc; }
+.task-title {
+    display: inline-block;
+    font-weight: 500;
+    font-size: 13px;
+    color: #1890ff
+}
+
+.task-title.child {
+    position: relative;
+    padding-left: 30px;
+    font-weight: 400;
+    font-size: 12px;
+    color: #555
+}
+
+.task-title.child::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    width: 14px;
+    height: 1px;
+    background: #ccc
+}
+
+.task-title.child::after {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 50%;
+    border-left: 1px solid #ccc
+}
+
+/* Ẩn expand mặc định của Ant */
+:deep(.ant-table-row-expand-icon),
+:deep(.ant-table-row-indent),
+:deep(td.ant-table-row-expand-icon-cell) {
+    display: none !important;
+}
+
+/* Cột expander */
+:deep(td.expander-col) {
+    vertical-align: middle;
+    padding: 6px 8px;
+}
+
+/* Container theo level */
+.exp-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+}
+
+/* Biến style chung */
+:root {
+    --exp-size: 28px;
+    --exp-radius: 999px;
+    --exp-border: #d9d9d9;
+    --exp-icon: #8c8c8c;
+    --exp-hover: #1677ff;
+    --exp-open-border: #95de64;
+    --exp-open-bg: #f6ffed;
+    --exp-open-icon: #389e0d;
+}
+
+/* Nút +/− */
+.exp-btn {
+    width: var(--exp-size);
+    height: var(--exp-size);
+    border: 1px solid var(--exp-border);
+    border-radius: var(--exp-radius);
+    background: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    cursor: pointer;
+    transition: all .18s ease;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, .02);
+    color: var(--exp-icon);
+}
+
+/* icon mượt hơn */
+.exp-btn > svg {
+    transition: transform .18s ease, color .18s ease;
+}
+
+/* hover / focus */
+.exp-btn:hover {
+    border-color: var(--exp-hover);
+    box-shadow: 0 0 0 3px rgba(22, 119, 255, .14);
+    color: var(--exp-hover);
+}
+
+.exp-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(22, 119, 255, .22);
+}
+
+/* active nhỏ lại chút */
+.exp-btn:active {
+    transform: scale(.98);
+}
+
+/* đang mở */
+.exp-btn[aria-expanded="true"] {
+    border-color: var(--exp-open-border);
+    background: var(--exp-open-bg);
+    color: var(--exp-open-icon);
+    box-shadow: 0 0 0 3px rgba(82, 196, 26, .14);
+}
+
+.exp-btn[aria-expanded="true"] > svg {
+    transform: scale(1.03);
+}
+
+/* placeholder để giữ thẳng hàng khi không có con */
+.exp-placeholder {
+    width: var(--exp-size);
+    height: var(--exp-size);
+    border: 1px dashed #ececec;
+    border-radius: var(--exp-radius);
+    opacity: .45;
+}
+
+/* Responsive nhẹ */
+@media (max-width: 1366px) {
+    :root {
+        --exp-size: 26px;
+    }
+}
+
 </style>

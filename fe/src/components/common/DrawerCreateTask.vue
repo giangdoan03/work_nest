@@ -1,12 +1,18 @@
 <template>
     <div class="draw-create-task">
-        <a-drawer title="Tạo nhiệm vụ mới" :width="700" :open="props.openDrawer" :body-style="{ paddingBottom: '80px' }"
-                  :footer-style="{ textAlign: 'right' }" @close="onCloseDrawer">
+        <a-drawer
+            title="Tạo nhiệm vụ mới"
+            :width="700"
+            :open="props.openDrawer"
+            :body-style="{ paddingBottom: '80px' }"
+            :footer-style="{ textAlign: 'right' }"
+            @close="onCloseDrawer"
+        >
             <a-form ref="formRef" :model="formData" :rules="rules" layout="vertical">
                 <a-row :gutter="16">
                     <a-col :span="12">
                         <a-form-item label="Tên nhiệm vụ" name="title">
-                            <a-input v-model:value="formData.title" placeholder="Nhập tên nhiệm vụ"/>
+                            <a-input v-model:value="formData.title" placeholder="Nhập tên nhiệm vụ" />
                         </a-form-item>
                     </a-col>
                     <a-col :span="12">
@@ -17,34 +23,42 @@
                                 placeholder="Chọn người dùng"
                                 show-search
                                 option-filter-prop="label"
-                                :filter-option="(input, option) =>normalizeText(option?.label ?? '').includes(normalizeText(input))"
+                                :filter-option="(input, option) => normalizeText(option?.label ?? '').includes(normalizeText(input))"
                                 :getPopupContainer="trigger => trigger.parentNode"
                             />
                         </a-form-item>
                     </a-col>
                 </a-row>
+
                 <a-row :gutter="16">
                     <a-col :span="12">
                         <a-form-item label="Thời gian" name="time">
                             <a-config-provider :locale="locale">
-                                <a-range-picker v-model:value="dateRange" format="DD-MM-YYYY" @change="changeDateTime"
-                                                style="width: 100%;"
-                                                :getPopupContainer="triggerNode => triggerNode.parentNode"></a-range-picker>
+                                <a-range-picker
+                                    v-model:value="dateRange"
+                                    format="DD-MM-YYYY"
+                                    @change="changeDateTime"
+                                    style="width: 100%;"
+                                    :getPopupContainer="triggerNode => triggerNode.parentNode"
+                                />
                             </a-config-provider>
                         </a-form-item>
                     </a-col>
                     <a-col :span="12">
                         <a-form-item label="Độ ưu tiên" name="priority">
-                            <a-select v-model:value="formData.priority" :options="priorityOption"
-                                      placeholder="Chọn độ ưu tiên"/>
+                            <a-select
+                                v-model:value="formData.priority"
+                                :options="priorityOption"
+                                placeholder="Chọn độ ưu tiên"
+                            />
                         </a-form-item>
                     </a-col>
                 </a-row>
+
                 <a-row :gutter="16">
                     <a-col :span="12">
                         <a-form-item label="Trạng thái" name="status">
-                            <a-select v-model:value="formData.status" :options="statusOption"
-                                      placeholder="Chọn trạng thái"/>
+                            <a-select v-model:value="formData.status" :options="statusOption" placeholder="Chọn trạng thái" />
                         </a-form-item>
                     </a-col>
                     <a-col :span="12">
@@ -61,6 +75,7 @@
                         </a-form-item>
                     </a-col>
                 </a-row>
+
                 <a-row :gutter="16">
                     <a-col :span="12">
                         <a-form-item label="Loại nhiệm vụ" name="linked_type">
@@ -73,18 +88,23 @@
                                 />
                             </template>
                             <template v-else>
-                                <a-input :value="getLinkedTypeLabel(props.type)" disabled/>
+                                <a-input :value="getLinkedTypeLabel(props.type)" disabled />
                             </template>
                         </a-form-item>
                     </a-col>
 
                     <a-col :span="12">
                         <a-form-item label="Phòng ban" name="department_id">
-                            <a-select v-model:value="formData.id_department" :options="departmentOptions"
-                                      @change="handleChangeDepartment" placeholder="Chọn phòng ban"/>
+                            <a-select
+                                v-model:value="formData.id_department"
+                                :options="departmentOptions"
+                                @change="handleChangeDepartment"
+                                placeholder="Chọn phòng ban"
+                            />
                         </a-form-item>
                     </a-col>
-                    <!-- ==================== BIDDING ==================== -->
+
+                    <!-- BIDDING -->
                     <a-col :span="12" v-if="formData.linked_type === 'bidding'">
                         <a-form-item label="Liên kết gói thầu" name="linked_id">
                             <a-select
@@ -107,7 +127,7 @@
                         </a-form-item>
                     </a-col>
 
-                    <!-- ==================== CONTRACT ==================== -->
+                    <!-- CONTRACT -->
                     <a-col :span="12" v-if="formData.linked_type === 'contract'">
                         <a-form-item label="Liên kết hợp đồng" name="linked_id">
                             <a-select
@@ -137,7 +157,6 @@
                             :rules="[{ validator: validateApprovalSteps, trigger: 'change' }]"
                         >
                             <a-radio-group v-model:value="formData.approval_steps">
-                                <!--                                <a-radio :value="0">Không cấp duyệt</a-radio>-->
                                 <a-radio :value="1">1 cấp duyệt</a-radio>
                                 <a-radio :value="2">2 cấp duyệt</a-radio>
                             </a-radio-group>
@@ -146,21 +165,24 @@
 
                     <a-col :span="24">
                         <a-form-item label="Mô tả" name="description">
-                            <a-textarea v-model:value="formData.description" :rows="4" placeholder="Nhập mô tả "/>
+                            <a-textarea v-model:value="formData.description" :rows="4" placeholder="Nhập mô tả " />
                         </a-form-item>
                     </a-col>
                 </a-row>
             </a-form>
+
             <template #extra>
                 <a-space>
                     <a-button @click="onCloseDrawer">Hủy</a-button>
-                    <a-button type="primary" @click="submitForm" html-type="submit" :loading="loadingCreate">Lưu lại
+                    <a-button type="primary" @click="submitForm" html-type="submit" :loading="loadingCreate">
+                        Lưu lại
                     </a-button>
                 </a-space>
             </template>
         </a-drawer>
     </div>
 </template>
+
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useUserStore } from '@/stores/user.js'
@@ -174,16 +196,17 @@ import { getDepartments } from '@/api/department'
 import { useStepStore } from '@/stores/step'
 import { useCommonStore } from '@/stores/common'
 
-const stepStore = useStepStore()
-const commonStore = useCommonStore()
-const emit = defineEmits(['update:openDrawer', 'submitForm'])
-const store = useUserStore()
-const selectedStep = computed(() => stepStore.selectedStep)
-
 import dayjs from 'dayjs'
 dayjs.locale('vi')
 import viVN from 'ant-design-vue/es/locale/vi_VN'
 import { defineProps } from '@vue/runtime-core'
+
+const stepStore = useStepStore()
+const commonStore = useCommonStore()
+const parentTaskId = computed(() => commonStore.parentTaskId) // ✅ NEW
+const emit = defineEmits(['update:openDrawer', 'submitForm'])
+const store = useUserStore()
+const selectedStep = computed(() => stepStore.selectedStep)
 
 const props = defineProps({
     openDrawer: Boolean,
@@ -223,7 +246,7 @@ const formData = ref({
     step_id: null
 })
 
-// ---------- Helpers / Validate ----------
+/* ---------------- Helpers / Validate ---------------- */
 const setDefaultData = () => {
     formData.value = {
         title: '',
@@ -237,7 +260,8 @@ const setDefaultData = () => {
         end_date: '',
         status: null,
         priority: null,
-        parent_id: props.taskParent ? props.taskParent : null,
+        // ✅ NEW: ưu tiên props.taskParent -> Pinia.parentTaskId
+        parent_id: props.taskParent ?? (parentTaskId.value ? Number(parentTaskId.value) : null),
         id_department: null,
         approval_steps: null,
         proposed_by: null,
@@ -313,16 +337,16 @@ const linkedIdOption = computed(() => {
         return listBidding.value.map(ele => ({ value: String(ele.id), label: ele.title }))
     }
     if (formData.value.linked_type === 'contract') {
-        const arr = Array.isArray(listContract.value) ? listContract.value : (Array.isArray(listContract.value?.data) ? listContract.value.data : [])
+        const arr = Array.isArray(listContract.value)
+            ? listContract.value
+            : (Array.isArray(listContract.value?.data) ? listContract.value.data : [])
         return arr.map(ele => ({ value: String(ele.id), label: ele.title || ele.name || `Hợp đồng #${ele.id}` }))
     }
     return []
 })
-const userOption = computed(() =>
-    (props.listUser || []).map(u => ({ value: u.id, label: u.name }))
-)
+const userOption = computed(() => (props.listUser || []).map(u => ({ value: u.id, label: u.name })))
 
-// ---------- API: master lists ----------
+/* ---------------- API: master lists ---------------- */
 const getDepartment = async () => {
     try {
         const response = await getDepartments()
@@ -355,8 +379,8 @@ const getContractTask = async () => {
     }
 }
 
-// ---------- Step options loader (cache + anti-race) ----------
-const stepsCache = new Map() // key: `${type}:${id}` -> options[]
+/* ---------------- Step options loader (cache) ---------------- */
+const stepsCache = new Map()
 const stepsLoadToken = ref(0)
 const loadingStepsOptions = ref(false)
 
@@ -372,25 +396,22 @@ const syncStepCodeWithOptions = () => {
 }
 
 const loadStepOptions = async (type, id) => {
-    // clear nếu không hợp lệ
     if (!['bidding', 'contract'].includes(type) || !id) {
         stepOption.value = []
         syncStepCodeWithOptions()
         return
     }
-
     const key = `${type}:${id}`
     if (stepsCache.has(key)) {
         stepOption.value = stepsCache.get(key)
         syncStepCodeWithOptions()
         return
     }
-
     const token = ++stepsLoadToken.value
     loadingStepsOptions.value = true
     try {
         const res = type === 'bidding' ? await getBiddingStepsAPI(id) : await getContractStepsAPI(id)
-        if (token !== stepsLoadToken.value) return // request đã lỗi thời
+        if (token !== stepsLoadToken.value) return
         const opts = normalizeStepOptions(res.data)
         stepsCache.set(key, opts)
         stepOption.value = opts
@@ -400,7 +421,7 @@ const loadStepOptions = async (type, id) => {
     }
 }
 
-// ---------- Linked name (hiển thị) ----------
+/* ---------------- Linked name (hiển thị) ---------------- */
 const linkedName = ref('Trống')
 const getNameLinked = async id => {
     if (!id) return 'Trống'
@@ -420,7 +441,7 @@ const getNameLinked = async id => {
     return 'Trống'
 }
 
-// ---------- Ensure selected linked exists in options (bidding) ----------
+/* ---------------- Ensure selected linked exists ---------------- */
 const ensureLinkedIdInOptions = async () => {
     if (formData.value.linked_type !== 'bidding' || !formData.value.linked_id) return
     const exists = listBidding.value.some(item => String(item.id) === String(formData.value.linked_id))
@@ -434,16 +455,15 @@ const ensureLinkedIdInOptions = async () => {
     }
 }
 
-// ---------- UI handlers ----------
+/* ---------------- UI Handlers ---------------- */
 const handleChangeLinkedType = () => {
     formData.value.linked_id = null
     formData.value.step_code = null
     formData.value.step_id = null
     stepOption.value = []
 }
-const handleChangeDepartment = () => { /* giữ nguyên để mở rộng */ }
+const handleChangeDepartment = () => {}
 const handleChangeLinkedId = () => {
-    // Không gọi API ở đây; watcher sẽ tự load
     formData.value.step_code = null
     formData.value.step_id = null
 }
@@ -462,10 +482,16 @@ const convertDateFormat = dateStr => {
     return `${year}-${month}-${day}`
 }
 
-// ---------- Create ----------
+/* ---------------- Create ---------------- */
 const createDrawerInternal = async () => {
     if (loadingCreate.value) return
     const payload = { ...formData.value }
+
+    // ✅ NEW: thiết lập parent_id từ props/Pinia nếu chưa có
+    payload.parent_id =
+        props.taskParent ??
+        (parentTaskId.value ? Number(parentTaskId.value) : null) ??
+        (payload.parent_id ? Number(payload.parent_id) : null)
 
     // map step_code -> step_id nếu thiếu
     if (['bidding', 'contract'].includes(payload.linked_type)) {
@@ -504,8 +530,8 @@ const createDrawerInternal = async () => {
     }
 }
 
-// Sau tạo xong, refresh tasks của step tương ứng
-async function refreshStepTasks({ preferNewTaskStep = true } = {}) {
+// refresh danh sách task của step tương ứng
+async function refreshStepTasks ({ preferNewTaskStep = true } = {}) {
     const stepId = (preferNewTaskStep && formData.value.step_id) ? formData.value.step_id : (selectedStep.value?.id || null)
     if (!stepId) return
 
@@ -526,7 +552,7 @@ const submitForm = async () => {
     try {
         await formRef.value?.validate()
         await createDrawerInternal()
-    } catch { /* ignore */ }
+    } catch {}
 }
 const resetFormValidate = () => formRef.value?.resetFields()
 const onCloseDrawer = () => {
@@ -536,7 +562,7 @@ const onCloseDrawer = () => {
 }
 const getLinkedTypeLabel = val => ({ bidding: 'Gói thầu', contract: 'Hợp đồng', internal: 'Nhiệm vụ nội bộ' }[val] || val)
 
-// ---------- Sync từ StepStore vào form ----------
+/* ---------------- Sync từ StepStore vào form ---------------- */
 const setFormStepFromStore = step => {
     const type = props.type || 'bidding'
     formData.value.linked_type = type
@@ -548,38 +574,37 @@ const setFormStepFromStore = step => {
     formData.value.step_id = step?.id || null
 }
 
-// ---------- ONE watcher to rule them all ----------
+/* ---------------- Watch tổng hợp ---------------- */
 watch(
     () => ({
         open: props.openDrawer,
         type: formData.value.linked_type,
         id: formData.value.linked_id,
-        selId: selectedStep.value?.id
+        selId: selectedStep.value?.id,
+        pId: parentTaskId.value // ✅ theo dõi thay đổi parent trong store
     }),
     async ({ open }) => {
         if (!open) return
 
-        // Ưu tiên fill từ step đang chọn khi mở Drawer
+        // Ưu tiên fill từ step đang chọn
         if (selectedStep.value) {
             setFormStepFromStore(selectedStep.value)
         } else {
-            // nếu không có, dùng commonStore làm mặc định
+            // fallback từ commonStore
             formData.value.linked_type = props.type || commonStore.linkedType || formData.value.linked_type
             if (!formData.value.linked_id) {
                 formData.value.linked_id = commonStore.biddingIdParent ? String(commonStore.biddingIdParent) : null
             }
         }
 
+        // ✅ NEW: set parent_id (props > Pinia)
+        formData.value.parent_id = props.taskParent ?? (parentTaskId.value ? Number(parentTaskId.value) : formData.value.parent_id)
+
         // chuẩn hóa type/id
         if (formData.value.linked_id) formData.value.linked_id = String(formData.value.linked_id)
 
-        // đảm bảo option chứa linked hiện tại (bidding)
         await ensureLinkedIdInOptions()
-
-        // tên hiển thị
         linkedName.value = await getNameLinked(formData.value.linked_id)
-
-        // load step options (có cache)
         await loadStepOptions(formData.value.linked_type, formData.value.linked_id)
 
         // lưu vào store dùng chung
@@ -595,13 +620,17 @@ watch(() => formData.value.step_code, (code) => {
     formData.value.step_id = f ? f.step_id : null
 })
 
-// ---------- Mounted ----------
+/* ---------------- Mounted ---------------- */
 onMounted(async () => {
     formData.value.linked_type = props.type || commonStore.linkedType || formData.value.linked_type
+    // ✅ set parent mặc định cả khi mới mount
+    if (!formData.value.parent_id) {
+        formData.value.parent_id = props.taskParent ?? (parentTaskId.value ? Number(parentTaskId.value) : null)
+    }
     await Promise.all([getBiddingTask(), getContractTask(), getDepartment()])
 })
 </script>
 
 <style scoped>
-
+/* tuỳ bạn thêm style nếu cần */
 </style>

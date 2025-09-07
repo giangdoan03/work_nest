@@ -2,7 +2,7 @@
     <div class="task">
         <div class="header-wrapper">
             <a-page-header
-                title="Chi tiết nhiệm vụ"
+                title="Về danh sách"
                 @back="goBack"
                 style="padding: 0;"
             />
@@ -10,9 +10,28 @@
                 <a-button type="primary" v-if="!isEditMode" @click="editTask">Chỉnh sửa</a-button>
                 <a-button type="primary" v-if="isEditMode" @click="saveEditTask">Lưu</a-button>
                 <a-button v-if="isEditMode" @click="cancelEditTask">Hủy</a-button>
-                <a-button>
-                    <EllipsisOutlined/>
-                </a-button>
+                <a-dropdown trigger="click">
+                    <a-button>
+                        <EllipsisOutlined/>
+                    </a-button>
+                    <template #overlay>
+                        <a-menu>
+                            <a-menu-item danger>
+                                <a-popconfirm
+                                    title="Bạn chắc chắn muốn xoá nhiệm vụ này?"
+                                    ok-text="Xoá"
+                                    cancel-text="Huỷ"
+                                    ok-type="danger"
+                                    :disabled="deleting"
+                                    @confirm="handleDeleteCurrentTask"
+                                >
+                                    <template #icon><DeleteOutlined /></template>
+                                    <span :class="{ 'is-loading': deleting }">Xoá nhiệm vụ</span>
+                                </a-popconfirm>
+                            </a-menu-item>
+                        </a-menu>
+                    </template>
+                </a-dropdown>
             </div>
         </div>
         <div class="task-info">
@@ -336,7 +355,7 @@
 </template>
 <script setup>
 import {
-    EllipsisOutlined
+    EllipsisOutlined, DeleteOutlined
 } from '@ant-design/icons-vue';
 import {computed, nextTick, onMounted, reactive, ref, watch} from 'vue';
 import {message} from 'ant-design-vue'
@@ -360,7 +379,7 @@ import Comment from './Comment.vue';
 import SubTasks from './SubTasks.vue'
 import {useUserStore} from '@/stores/user';
 import {getApprovalHistoryByTask} from '@/api/taskApproval'
-import {getTaskExtensions} from "@/api/task.js";
+import {getTaskExtensions, deleteTask } from "@/api/task.js";
 import {useTaskDrawerStore} from '@/stores/taskDrawerStore';
 import {useCommonStore} from '@/stores/common';
 import debounce from "lodash-es/debounce";
@@ -388,6 +407,7 @@ const formDataSave = ref()
 const logData = ref([])
 
 const leftTab = ref('info') // tab mặc định
+const deleting = ref(false)
 
 const formData = ref({
     title: "",
@@ -438,6 +458,22 @@ const getTextLinkedType = computed(() => {
         return "Nhiệm vụ nội bộ"
     }
 })
+
+const handleDeleteCurrentTask = async () => {
+    try {
+        deleting.value = true
+        const id = route.params.id
+        await deleteTask(id)
+        message.success('Đã xoá nhiệm vụ')
+        // điều hướng về danh sách (tuỳ page của bạn)
+        router.back()
+    } catch (e) {
+        console.error(e)
+        message.error('Xoá nhiệm vụ thất bại')
+    } finally {
+        deleting.value = false
+    }
+}
 
 // ✅ parent_id khác null/undefined/''/0 mới coi là "có cha"
 const hasParent = computed(() => {

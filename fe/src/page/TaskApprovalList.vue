@@ -37,38 +37,24 @@
 
                         <!-- Tiêu đề + Link (tự nhận diện external/internal) -->
                         <template v-else-if="column.dataIndex === 'title'">
-                            <!-- Ưu tiên route chi tiết step nếu là step -->
                             <template v-if="isStep(record)">
-                                <router-link
-                                    :to="stepDetailRoute(record)"
-                                    class="link"
-                                >
-                                    {{ record.meta_json?.title || displayFallbackTitle(record) }}
+                                <router-link :to="stepDetailRoute(record)" class="link">
+                                    {{ record.title || displayFallbackTitle(record) }}
                                 </router-link>
                             </template>
-
-                            <!-- Nếu không phải step: dùng url sẵn có -->
-                            <template v-else-if="record.meta_json?.url">
-                                <a
-                                    v-if="isExternalUrl(record.meta_json.url)"
-                                    :href="record.meta_json.url"
-                                    class="link"
-                                    target="_blank"
-                                    rel="noopener"
-                                >
-                                    {{ record.meta_json?.title || displayFallbackTitle(record) }}
-                                </a>
-                                <router-link
-                                    v-else
-                                    :to="record.meta_json.url"
-                                    class="link"
-                                >
-                                    {{ record.meta_json?.title || displayFallbackTitle(record) }}
-                                </router-link>
+                            <template v-else>
+                                <template v-if="record.url">
+                                    <a v-if="isExternalUrl(record.url)" :href="record.url" class="link" target="_blank" rel="noopener">
+                                        {{ record.title || displayFallbackTitle(record) }}
+                                    </a>
+                                    <router-link v-else :to="record.url" class="link">
+                                        {{ record.title || displayFallbackTitle(record) }}
+                                    </router-link>
+                                </template>
+                                <span v-else>{{ record.title || displayFallbackTitle(record) }}</span>
                             </template>
-
-                            <span v-else>{{ record.meta_json?.title || displayFallbackTitle(record) }}</span>
                         </template>
+
 
 
                         <!-- Cấp hiện tại -->
@@ -233,10 +219,16 @@ const safeParseJSON = (v) => {
 }
 
 const normalizeApprovalRow = (ai = {}) => {
-    const meta = safeParseJSON(ai.meta_json)
+    const meta = safeParseJSON(ai.meta_json) || {}
+    const title = ai.title || meta.title || ''
+    const url   = ai.url   || meta.url   || ''
+
     return {
         ...ai,
-        meta_json: meta,
+        // để template đọc chung một nơi
+        title,
+        url,
+        meta_json: { ...meta, title, url },
         current_level: toInt(ai.current_level),
         _total_steps: ai._total_steps != null ? toInt(ai._total_steps) : undefined,
     }
@@ -266,6 +258,7 @@ const fetchData = async () => {
 
         const items = Array.isArray(data?.data) ? data.data : []
         rows.value = items.map(normalizeApprovalRow)
+        console.log('rows.value', rows.value)
         pagination.value.total = toInt(data?.pager?.total, items.length)
     } catch (e) {
         message.error('Không thể tải danh sách phê duyệt')
