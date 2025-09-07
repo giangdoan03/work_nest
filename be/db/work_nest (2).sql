@@ -1,9 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Sep 06, 2025 at 08:26 AM
+-- Generation Time: Sep 07, 2025 at 05:10 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -66,11 +66,18 @@ INSERT INTO `approval_instances` (`id`, `target_type`, `target_id`, `version`, `
 (15, 'bidding', 38, 2, 1, 'pending', 0, 3, '2025-09-01 04:18:42', NULL, NULL, '{\"url\": \"/bid-detail/38\", \"title\": \"gói thầu mới 3\"}', '2025-09-01 04:18:42', '2025-09-01 11:31:40'),
 (16, 'task', 199, 1, 1, 'approved', 0, 3, '2025-09-01 05:28:41', '2025-09-01 05:28:56', NULL, '{\"url\": \"/internal-tasks/199/info\", \"title\": \"tesst mới\", \"assignee_name\": null}', '2025-09-01 12:28:41', '2025-09-01 05:28:56'),
 (17, 'task', 200, 1, 1, 'approved', 0, 3, '2025-09-01 05:29:17', '2025-09-01 05:29:25', NULL, '{\"url\": \"/internal-tasks/200/info\", \"title\": \"test 2\", \"assignee_name\": null}', '2025-09-01 12:29:17', '2025-09-01 05:29:25'),
-(18, 'bidding_step', 284, 1, 1, 'pending', 0, 3, '2025-09-01 06:51:06', NULL, NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 1: Nhận nhu cầu khách hàng\"}', '2025-09-01 06:51:06', '2025-09-01 06:51:06'),
-(19, 'bidding_step', 285, 1, 1, 'pending', 0, 3, '2025-09-01 06:51:27', NULL, NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 2: Đánh giá tính khả thi\"}', '2025-09-01 06:51:27', '2025-09-01 06:51:27'),
-(20, 'bidding_step', 286, 1, 1, 'pending', 0, 3, '2025-09-01 07:59:15', NULL, NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 3: Lập kế hoạch triển khai\"}', '2025-09-01 07:59:15', '2025-09-01 07:59:15'),
-(21, 'bidding_step', 290, 1, 1, 'pending', 0, 3, '2025-09-01 08:48:33', NULL, NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 7: Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)\"}', '2025-09-01 08:48:33', '2025-09-01 08:48:33'),
-(22, 'task', 250, 1, 1, 'pending', 0, 3, '2025-09-06 04:30:48', NULL, NULL, '{\"url\": \"/internal-tasks/250/info\", \"title\": \"việc con mới\", \"assignee_name\": null}', '2025-09-06 11:30:48', '2025-09-06 11:30:48');
+(18, 'bidding_step', 284, 1, 1, 'approved', 0, 3, '2025-09-01 06:51:06', '2025-09-07 09:40:47', NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 1: Nhận nhu cầu khách hàng\"}', '2025-09-01 06:51:06', '2025-09-07 09:40:47'),
+(19, 'bidding_step', 285, 1, 1, 'approved', 0, 3, '2025-09-01 06:51:27', '2025-09-07 09:42:37', NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 2: Đánh giá tính khả thi\"}', '2025-09-01 06:51:27', '2025-09-07 09:42:37'),
+(20, 'bidding_step', 286, 1, 1, 'approved', 0, 3, '2025-09-01 07:59:15', '2025-09-07 09:54:40', NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 3: Lập kế hoạch triển khai\"}', '2025-09-01 07:59:15', '2025-09-07 09:54:40'),
+(21, 'bidding_step', 290, 1, 1, 'approved', 0, 3, '2025-09-01 08:48:33', '2025-09-07 09:37:39', NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 7: Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)\"}', '2025-09-01 08:48:33', '2025-09-07 09:37:39'),
+(22, 'task', 250, 1, 1, 'pending', 0, 3, '2025-09-06 04:30:48', NULL, NULL, '{\"url\": \"/internal-tasks/250/info\", \"title\": \"việc con mới\", \"assignee_name\": null}', '2025-09-06 11:30:48', '2025-09-06 11:30:48'),
+(23, 'task', 245, 1, 1, 'approved', 0, 3, '2025-09-07 02:17:44', '2025-09-07 09:55:15', NULL, '{\"url\": \"/internal-tasks/245/info\", \"title\": \"x22222\", \"assignee_name\": null}', '2025-09-07 09:17:44', '2025-09-07 09:55:15'),
+(26, 'task', 254, 1, 1, 'approved', 0, 3, '2025-09-07 02:52:10', '2025-09-07 09:19:43', NULL, '{\"url\": \"/internal-tasks/254/info\", \"title\": \"43242424\", \"assignee_name\": null}', '2025-09-07 09:52:10', '2025-09-07 09:19:43'),
+(27, 'task', 270, 1, 1, 'approved', 0, 3, '2025-09-07 05:09:55', '2025-09-07 09:19:29', NULL, '{\"url\": \"/internal-tasks/270/info\", \"title\": \"342343424\", \"assignee_name\": null}', '2025-09-07 12:09:55', '2025-09-07 09:19:29'),
+(28, 'task', 267, 1, 1, 'approved', 0, 3, '2025-09-07 09:56:27', '2025-09-07 10:03:25', NULL, '{\"url\": \"/internal-tasks/267/info\", \"title\": \"4234344243\", \"assignee_name\": null}', '2025-09-07 16:56:27', '2025-09-07 10:03:25'),
+(29, 'bidding', 40, 1, 1, 'approved', 0, 3, '2025-09-07 09:56:39', '2025-09-07 10:06:55', NULL, '{\"url\": \"/bid-detail/40\", \"title\": \"thầu mới 1/09\"}', '2025-09-07 09:56:39', '2025-09-07 10:06:55'),
+(30, 'task', 246, 1, 1, 'approved', 0, 3, '2025-09-07 09:57:07', '2025-09-07 10:02:46', NULL, '{\"url\": \"/internal-tasks/246/info\", \"title\": \"task con 2222\", \"assignee_name\": null}', '2025-09-07 16:57:07', '2025-09-07 10:02:46'),
+(31, 'bidding_step', 364, 1, 1, 'pending', 0, 3, '2025-09-07 17:04:21', NULL, NULL, '{\"url\": \"/biddings/40/info\", \"title\": \"Bước 2: Phân tích và lập kế hoạch bóc\"}', '2025-09-07 17:04:21', '2025-09-07 17:04:21');
 
 -- --------------------------------------------------------
 
@@ -130,7 +137,20 @@ INSERT INTO `approval_logs` (`id`, `approval_instance_id`, `actor_id`, `action`,
 (36, 18, 3, 'send', '{\"meta\": {\"url\": \"/biddings/35/info\", \"title\": \"Bước 1: Nhận nhu cầu khách hàng\"}, \"approver_ids\": [17]}', '2025-09-01 06:51:06'),
 (37, 19, 3, 'send', '{\"meta\": {\"url\": \"/biddings/35/info\", \"title\": \"Bước 2: Đánh giá tính khả thi\"}, \"approver_ids\": [19]}', '2025-09-01 06:51:27'),
 (38, 20, 3, 'send', '{\"meta\": {\"url\": \"/biddings/35/info\", \"title\": \"Bước 3: Lập kế hoạch triển khai\"}, \"approver_ids\": [15]}', '2025-09-01 07:59:15'),
-(39, 21, 3, 'send', '{\"meta\": {\"url\": \"/biddings/35/info\", \"title\": \"Bước 7: Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)\"}, \"approver_ids\": [23]}', '2025-09-01 08:48:33');
+(39, 21, 3, 'send', '{\"meta\": {\"url\": \"/biddings/35/info\", \"title\": \"Bước 7: Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)\"}, \"approver_ids\": [23]}', '2025-09-01 08:48:33'),
+(40, 27, 3, 'approve', '{\"note\": \"rewrewrwerwr\"}', '2025-09-07 09:19:29'),
+(41, 26, 3, 'approve', '{\"note\": \"dsadsadadad\"}', '2025-09-07 09:19:43'),
+(42, 21, 3, 'approve', '{\"note\": \"dsadadad\"}', '2025-09-07 09:37:39'),
+(43, 18, 3, 'approve', '{\"note\": \"354234324324\"}', '2025-09-07 09:40:47'),
+(44, 19, 3, 'approve', '{\"note\": \"534543545353\"}', '2025-09-07 09:42:37'),
+(45, 20, 3, 'approve', '{\"note\": \"3542423434324\"}', '2025-09-07 09:54:40'),
+(46, 23, 3, 'approve', '{\"note\": \"423432424\"}', '2025-09-07 09:55:15'),
+(47, 29, 3, 'send', '{\"meta\": {\"url\": \"/bid-detail/40\", \"title\": \"thầu mới 1/09\"}, \"approver_ids\": [22]}', '2025-09-07 09:56:39'),
+(48, 29, 3, '', '{\"approver_ids\": [22]}', '2025-09-07 09:56:39'),
+(49, 30, 3, 'approve', '{\"note\": \"sdffdsfsf\"}', '2025-09-07 10:02:46'),
+(50, 28, 3, 'approve', '{\"note\": \"dsadadadad\"}', '2025-09-07 10:03:25'),
+(51, 29, 3, 'approve', '{\"note\": null}', '2025-09-07 10:06:55'),
+(52, 31, 3, 'send', '{\"meta\": {\"url\": \"/biddings/40/info\", \"title\": \"Bước 2: Phân tích và lập kế hoạch bóc\"}, \"approver_ids\": [5]}', '2025-09-07 17:04:21');
 
 -- --------------------------------------------------------
 
@@ -188,11 +208,18 @@ INSERT INTO `approval_steps` (`id`, `approval_instance_id`, `level`, `approver_i
 (16, 15, 1, 4, 'pending', NULL, NULL, NULL, NULL, '2025-09-01 04:18:42', '2025-09-01 04:18:42'),
 (17, 16, 1, 4, 'approved', '2025-09-01 05:28:56', NULL, 3, 'admin', '2025-09-01 12:28:41', '2025-09-01 05:28:56'),
 (18, 17, 1, 4, 'approved', '2025-09-01 05:29:25', 'ok nhé', 3, 'admin', '2025-09-01 12:29:17', '2025-09-01 05:29:25'),
-(19, 18, 1, 17, 'pending', NULL, NULL, NULL, NULL, '2025-09-01 06:51:06', '2025-09-01 06:51:06'),
-(20, 19, 1, 19, 'pending', NULL, NULL, NULL, NULL, '2025-09-01 06:51:27', '2025-09-01 06:51:27'),
-(21, 20, 1, 15, 'pending', NULL, NULL, NULL, NULL, '2025-09-01 07:59:15', '2025-09-01 07:59:15'),
-(22, 21, 1, 23, 'pending', NULL, NULL, NULL, NULL, '2025-09-01 08:48:33', '2025-09-01 08:48:33'),
-(23, 22, 1, 19, 'pending', NULL, NULL, NULL, NULL, '2025-09-06 11:30:48', '2025-09-06 11:30:48');
+(19, 18, 1, 17, 'approved', '2025-09-07 09:40:47', '354234324324', 3, 'admin', '2025-09-01 06:51:06', '2025-09-07 09:40:47'),
+(20, 19, 1, 19, 'approved', '2025-09-07 09:42:37', '534543545353', 3, 'admin', '2025-09-01 06:51:27', '2025-09-07 09:42:37'),
+(21, 20, 1, 15, 'approved', '2025-09-07 09:54:40', '3542423434324', 3, 'admin', '2025-09-01 07:59:15', '2025-09-07 09:54:40'),
+(22, 21, 1, 23, 'approved', '2025-09-07 09:37:39', 'dsadadad', 3, 'admin', '2025-09-01 08:48:33', '2025-09-07 09:37:39'),
+(23, 22, 1, 19, 'pending', NULL, NULL, NULL, NULL, '2025-09-06 11:30:48', '2025-09-06 11:30:48'),
+(24, 23, 1, 5, 'approved', '2025-09-07 09:55:15', '423432424', 3, 'admin', '2025-09-07 09:17:44', '2025-09-07 09:55:15'),
+(27, 26, 1, 5, 'approved', '2025-09-07 09:19:43', 'dsadsadadad', 3, 'admin', '2025-09-07 09:52:10', '2025-09-07 09:19:43'),
+(28, 27, 1, 5, 'approved', '2025-09-07 09:19:29', 'rewrewrwerwr', 3, 'admin', '2025-09-07 12:09:55', '2025-09-07 09:19:29'),
+(29, 28, 1, 4, 'approved', '2025-09-07 10:03:25', 'dsadadadad', 3, 'admin', '2025-09-07 16:56:27', '2025-09-07 10:03:25'),
+(30, 29, 1, 22, 'approved', '2025-09-07 10:06:55', NULL, 3, 'admin', '2025-09-07 09:56:39', '2025-09-07 10:06:55'),
+(31, 30, 1, 22, 'approved', '2025-09-07 10:02:46', 'sdffdsfsf', 3, 'admin', '2025-09-07 16:57:07', '2025-09-07 10:02:46'),
+(32, 31, 1, 5, 'pending', NULL, NULL, NULL, NULL, '2025-09-07 17:04:21', '2025-09-07 17:04:21');
 
 -- --------------------------------------------------------
 
@@ -239,7 +266,7 @@ INSERT INTO `biddings` (`id`, `title`, `description`, `customer_id`, `estimated_
 (37, 'gói thầu mới 23-08', 'gói thầu mới', 7, 60000000000.00, 16, 5, NULL, '2025-08-23', '2025-11-30', '2025-08-23 02:16:14', '2025-08-31 14:40:10', 4, 0, 'pending', '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 5, \"commented_at\": null}]', 0),
 (38, 'gói thầu mới 3', 'gói thầu mới 3', 6, 30000000000.00, 19, 4, NULL, '2025-08-23', '2025-08-31', '2025-08-23 02:18:51', '2025-09-01 04:18:42', 4, 0, 'pending', '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 4, \"commented_at\": null}]', 0),
 (39, 'test thầu mới', 'test thầu mới', 10, 3000000.00, 5, 5, NULL, '2025-08-28', '2025-08-31', '2025-08-27 20:02:39', '2025-08-30 15:52:54', 4, 0, 'approved', '[{\"note\": {\"note\": null}, \"level\": 1, \"status\": \"approved\", \"acted_by\": 3, \"acted_role\": \"admin\", \"approver_id\": 5, \"commented_at\": \"2025-08-30 15:52:49\"}, {\"note\": {\"note\": null}, \"level\": 2, \"status\": \"approved\", \"acted_by\": 3, \"acted_role\": \"admin\", \"approver_id\": 19, \"commented_at\": \"2025-08-30 15:52:54\"}]', 1),
-(40, 'thầu mới 1/09', 'thầu mới 1/09', 4, 600000000.00, 23, 22, NULL, '2025-09-01', '2025-09-30', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 1, 0, 'pending', NULL, 0);
+(40, 'thầu mới 1/09', 'thầu mới 1/09', 4, 600000000.00, 23, 22, NULL, '2025-09-01', '2025-09-30', '2025-09-01 07:55:31', '2025-09-07 10:06:55', 4, 0, 'approved', '[{\"note\": null, \"level\": 1, \"status\": \"approved\", \"approver_id\": 22, \"commented_at\": \"2025-09-07 10:06:55\"}]', 0);
 
 -- --------------------------------------------------------
 
@@ -500,13 +527,13 @@ INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `start_
 (279, 28, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-29 02:35:13', '2025-09-01 13:40:50', 0, 1, NULL, 12),
 (280, 28, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-06-29 02:35:13', '2025-09-01 13:40:50', 0, 1, NULL, 14),
 (281, 28, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-06-29 02:35:13', '2025-09-01 13:40:50', 0, 1, NULL, 15),
-(284, 35, 1, 'Nhận nhu cầu khách hàng', '2025-08-30 00:00:00', '2025-10-31 00:00:00', '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 17, \"commented_at\": null}]', 0, 'pending', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-08-04 17:26:31', '2025-09-06 04:30:48', 1, 1, 17, 250),
-(285, 35, 2, 'Đánh giá tính khả thi', NULL, NULL, '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 19, \"commented_at\": null}]', 0, 'pending', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-08-04 17:26:31', '2025-09-01 06:51:27', 2, 1, 19, 201),
-(286, 35, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 15, \"commented_at\": null}]', 0, 'pending', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-08-04 17:26:31', '2025-09-01 07:59:15', 2, 1, 15, 202),
+(284, 35, 1, 'Nhận nhu cầu khách hàng', '2025-08-30 00:00:00', '2025-10-31 00:00:00', '[{\"note\": \"354234324324\", \"level\": 1, \"status\": \"approved\", \"approver_id\": 17, \"commented_at\": \"2025-09-07 09:40:47\"}]', 0, 'approved', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-08-04 17:26:31', '2025-09-07 09:40:47', 1, 1, 17, 254),
+(285, 35, 2, 'Đánh giá tính khả thi', NULL, NULL, '[{\"note\": \"534543545353\", \"level\": 1, \"status\": \"approved\", \"approver_id\": 19, \"commented_at\": \"2025-09-07 09:42:37\"}]', 0, 'approved', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-08-04 17:26:31', '2025-09-07 09:42:37', 2, 1, 19, 201),
+(286, 35, 3, 'Lập kế hoạch triển khai', NULL, NULL, '[{\"note\": \"3542423434324\", \"level\": 1, \"status\": \"approved\", \"approver_id\": 15, \"commented_at\": \"2025-09-07 09:54:40\"}]', 0, 'approved', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-08-04 17:26:31', '2025-09-07 09:54:40', 2, 1, 15, 202),
 (287, 35, 4, 'Duyệt kế hoạch', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-04 17:26:31', '2025-09-01 13:40:50', 2, 1, NULL, NULL),
 (288, 35, 5, 'Triển khai hồ sơ dự thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-08-04 17:26:31', '2025-09-01 13:40:50', 0, 1, NULL, NULL),
 (289, 35, 6, 'Chấm thầu', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-08-04 17:26:31', '2025-09-01 13:40:50', 2, 1, NULL, NULL),
-(290, 35, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 23, \"commented_at\": null}]', 0, 'pending', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-08-04 17:26:31', '2025-09-01 08:48:33', 2, 1, 23, 209),
+(290, 35, 7, 'Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)', NULL, NULL, '[{\"note\": \"dsadadad\", \"level\": 1, \"status\": \"approved\", \"approver_id\": 23, \"commented_at\": \"2025-09-07 09:37:39\"}]', 0, 'approved', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-08-04 17:26:31', '2025-09-07 09:37:39', 2, 1, 23, 209),
 (291, 35, 8, 'Triển khai ký hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Thương mại\"]', '2025-08-04 17:26:31', '2025-09-01 13:40:50', 2, 1, NULL, NULL),
 (292, 35, 9, 'Duyệt hợp đồng bán', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-04 17:26:31', '2025-09-01 13:40:50', 0, 1, NULL, 208),
 (293, 7, 1, 'Nhận nhu cầu khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-08-04 17:40:14', '2025-09-01 13:40:50', 1, 6, NULL, 240),
@@ -558,10 +585,10 @@ INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `start_
 (345, 38, 9, 'Xây dựng kịch bản HSMT', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-23 02:18:51', '2025-09-01 13:40:50', 0, 6, NULL, 222),
 (346, 38, 10, 'Duyệt', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-23 02:18:51', '2025-09-01 13:40:50', 0, 6, NULL, 224),
 (349, 39, 1, 'Lấy KH: SXKD, SCL, SCTK hoặc KHK của khách hàng', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 1, 10, NULL, NULL),
-(350, 39, 2, 'Phân tích và lập kế hoạch bóc', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
-(351, 39, 3, 'Làm rõ tính chất kỹ thuật, NSX của hàng hóa, dịch vụ', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
-(352, 39, 4, 'Làm việc với NSX, NCC', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL);
+(350, 39, 2, 'Phân tích và lập kế hoạch bóc', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-08-27 20:02:39', '2025-09-07 05:09:55', 0, 10, NULL, 270),
+(351, 39, 3, 'Làm rõ tính chất kỹ thuật, NSX của hàng hóa, dịch vụ', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL);
 INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `start_date`, `end_date`, `approval_steps`, `current_level`, `approval_status`, `department`, `created_at`, `updated_at`, `status`, `customer_id`, `assigned_to`, `task_id`) VALUES
+(352, 39, 4, 'Làm việc với NSX, NCC', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Kinh doanh\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
 (353, 39, 5, 'Kiểm tra', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Hành chính - Nhân sự\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
 (354, 39, 6, 'Nhận báo giá, kiểm tra và cơ sở đàm phán (nếu có)', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
 (355, 39, 7, 'Đánh giá, báo cáo tính khả thi', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
@@ -571,7 +598,7 @@ INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `start_
 (359, 39, 11, '11', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
 (360, 39, 22, '22', NULL, NULL, NULL, 0, 'draft', '[\"Phòng Tài chính - Kế toán\"]', '2025-08-27 20:02:39', '2025-09-01 13:40:50', 0, 10, NULL, NULL),
 (363, 40, 1, 'Lấy KH: SXKD, SCL, SCTK hoặc KHK của khách hàng', NULL, NULL, NULL, 0, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 1, 4, NULL, NULL),
-(364, 40, 2, 'Phân tích và lập kế hoạch bóc', NULL, NULL, NULL, 0, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
+(364, 40, 2, 'Phân tích và lập kế hoạch bóc', NULL, NULL, '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 5, \"commented_at\": null}]', 0, 'pending', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-09-01 07:55:31', '2025-09-07 17:04:21', 0, 4, 5, 246),
 (365, 40, 3, 'Làm rõ tính chất kỹ thuật, NSX của hàng hóa, dịch vụ', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
 (366, 40, 4, 'Làm việc với NSX, NCC', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
 (367, 40, 5, 'Kiểm tra', NULL, NULL, NULL, 0, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
@@ -722,7 +749,23 @@ INSERT INTO `comment_reads` (`id`, `user_id`, `comment_id`, `read_at`) VALUES
 (21, 5, 34, '2025-09-05 08:19:15'),
 (22, 5, 33, '2025-09-05 08:19:15'),
 (23, 5, 32, '2025-09-05 08:19:15'),
-(24, 5, 30, '2025-09-05 08:19:15');
+(24, 5, 30, '2025-09-05 08:19:15'),
+(25, 3, 59, '2025-09-06 14:23:38'),
+(26, 3, 58, '2025-09-06 14:23:38'),
+(27, 3, 57, '2025-09-06 14:23:38'),
+(28, 3, 56, '2025-09-06 14:23:38'),
+(29, 3, 55, '2025-09-06 14:23:38'),
+(30, 3, 53, '2025-09-06 14:23:38'),
+(31, 3, 52, '2025-09-06 14:23:38'),
+(32, 3, 51, '2025-09-06 14:23:38'),
+(33, 3, 50, '2025-09-06 14:23:38'),
+(34, 3, 49, '2025-09-06 14:23:38'),
+(35, 3, 48, '2025-09-06 14:34:29'),
+(36, 3, 47, '2025-09-06 14:34:47'),
+(37, 3, 46, '2025-09-06 14:35:07'),
+(38, 3, 60, '2025-09-06 14:37:07'),
+(39, 3, 61, '2025-09-06 14:40:14'),
+(40, 3, 62, '2025-09-06 14:51:25');
 
 -- --------------------------------------------------------
 
@@ -1000,7 +1043,7 @@ CREATE TABLE `customers` (
 
 INSERT INTO `customers` (`id`, `name`, `phone`, `email`, `address`, `city`, `customer_group`, `avatar`, `assigned_to`, `last_interaction`, `created_at`, `updated_at`) VALUES
 (1, 'Tập đoàn Điện lực Việt Nam (EVN) ', '02422210000', 'contact@evn.com.vn', '11 Cửa Bắc, Ba Đình', 'Hà Nội', 'khách cũ', '/uploads/evn.jpg', 6, '2025-06-13', '2025-06-11 02:10:10', '2025-06-22 06:46:30'),
-(2, 'Công ty Nhiệt điện Phả Lại', '02203713901', 'info@plaipower.vn', 'Phả Lại, Chí Linh', 'Hải Dương', 'tiềm năng', '/uploads/phalai.jpg', 5, '2025-06-18', '2025-06-11 02:10:22', '2025-06-11 16:18:23'),
+(2, 'Công ty Nhiệt điện Phả Lại', '02203713901', 'info@plaipower.vn', 'Phả Lại, Chí Linh', 'Hải Dương', 'tiềm năng', '/uploads/phalai.jpg', 5, '2025-06-18', '2025-06-11 02:10:22', '2025-09-07 02:12:44'),
 (3, 'Nhà máy nhiệt điện thái bình', '02033855600', 'ubpower@evn.com.vn', 'Uông Bí, Quảng Ninh', 'Đà Nẵng', 'thử nghiệm', '/uploads/uongbi.jpg', 5, '2025-06-19', '2025-06-11 02:10:29', '2025-08-24 14:24:01'),
 (4, 'Công ty Nhiệt điện Cần Thơ', '02923836411', 'cantho@evn.com.vn', 'Ô Môn, Cần Thơ', 'Cần Thơ', 'tiềm năng', '/uploads/cantho.jpg', 23, '2025-06-20', '2025-06-11 02:10:35', '2025-06-20 09:13:13'),
 (5, 'Công ty Nhiệt điện Quảng Ninh', '02033655355', 'qnpower@evn.com.vn', 'Cẩm Phả, Quảng Ninh', 'Quảng Ninh', 'vip', '/uploads/quangninh.jpg', 1, '2025-06-21', '2025-06-11 02:10:41', '2025-06-11 16:44:52'),
@@ -1009,7 +1052,7 @@ INSERT INTO `customers` (`id`, `name`, `phone`, `email`, `address`, `city`, `cus
 (8, 'Công ty Nhiệt điện Nghi Sơn 1', '02373898888', 'nghison1@evn.com.vn', 'Hải Hà, Thanh Hóa', 'Thanh Hóa', 'khách cũ', '/uploads/nghison1.jpg', 4, '2025-06-14', '2025-06-11 02:10:58', '2025-06-11 16:51:18'),
 (9, 'Công ty Nhiệt điện Hải Phòng', '02253717171', 'haiphongpower@evn.com.vn', 'Thủy Nguyên, Hải Phòng', 'Hải Phòng', 'vip', '/uploads/haiphong.jpg', 1, NULL, '2025-06-11 02:11:04', '2025-06-11 09:22:51'),
 (10, 'Công ty Nhiệt điện Mông Dương', '02033933777', 'mongduong@evn.com.vn', 'Cẩm Phả, Quảng Ninh', 'Quảng Ninh', 'khách mới', '/uploads/mongduong.jpg', 5, NULL, '2025-06-11 02:11:09', '2025-06-11 09:22:51'),
-(12, 'test khách 1', '0912345678', 'doangiang665@gmail.com', 'i3 vinsmart ', NULL, NULL, NULL, 12, NULL, '2025-08-21 14:50:45', '2025-08-21 14:50:45');
+(12, 'test khách 1', '0912345678', 'doangiang665@gmail.com', 'i3 vinsmart ', NULL, NULL, NULL, 12, NULL, '2025-08-21 14:50:45', '2025-09-07 02:12:57');
 
 -- --------------------------------------------------------
 
@@ -1073,8 +1116,8 @@ CREATE TABLE `departments` (
 --
 
 INSERT INTO `departments` (`id`, `name`, `description`, `created_at`, `updated_at`) VALUES
-(1, 'Phòng Hành chính - Nhân sự', 'Cập nhật mô tả phòng ban', '2025-05-25 02:55:43', '2025-05-25 02:57:44'),
-(2, 'Phòng Tài chính - Kế toán', 'Quản lý tài chính và kế toán', '2025-06-04 09:01:59', '2025-06-04 09:01:59'),
+(1, 'Phòng Hành chính - Nhân sự', 'Cập nhật mô tả phòng ban', '2025-05-25 02:55:43', '2025-09-06 16:10:42'),
+(2, 'Phòng Tài chính - Kế toán', 'Quản lý tài chính và kế toán', '2025-06-04 09:01:59', '2025-09-06 16:10:32'),
 (3, 'Phòng Kinh doanh', 'Phụ trách phát triển kinh doanh', '2025-06-04 09:02:11', '2025-06-04 09:02:11'),
 (4, 'Phòng Thương mại', 'Quản lý hợp đồng và thương mại', '2025-06-04 09:02:29', '2025-06-04 09:02:29'),
 (5, 'Phòng Dịch vụ - Kỹ thuật', 'Hỗ trợ kỹ thuật và dịch vụ khách hàng', '2025-06-04 09:02:38', '2025-06-04 09:02:38');
@@ -1114,7 +1157,8 @@ INSERT INTO `documents` (`id`, `title`, `file_path`, `department_id`, `uploaded_
 (8, '43243424324', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/a4-1.jpg', 3, 3, 'private', 'wp_media', 160905, '2025-09-06 03:59:31', '2025-09-06 03:59:31', NULL),
 (9, 'Thủ tướng yêu cầu chấn chỉnh thị trường vàng', 'https://vnexpress.net/thu-tuong-yeu-cau-chan-chinh-thi-truong-vang-4935819.html', 3, 3, 'private', 'link', 0, '2025-09-06 04:10:40', '2025-09-06 04:10:40', NULL),
 (10, '2432432442', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/Japanese_English_Thai.xlsx', 3, 3, 'private', 'wp_media', 6539, '2025-09-06 04:40:49', '2025-09-06 04:40:49', NULL),
-(11, 'xxxxxxxxxxxx', 'https://antdv.com/components/image', 3, 3, 'private', 'link', 0, '2025-09-06 05:23:20', '2025-09-06 05:23:20', NULL);
+(11, 'xxxxxxxxxxxx', 'https://antdv.com/components/image', 3, 3, 'private', 'link', 0, '2025-09-06 05:23:20', '2025-09-06 05:23:20', NULL),
+(12, '5345435535', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/TTID_logo.png', 2, 3, 'private', 'wp_media', 23787, '2025-09-07 10:30:30', '2025-09-07 10:30:30', NULL);
 
 -- --------------------------------------------------------
 
@@ -1704,14 +1748,35 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (242, NULL, 'xxxxxxx', '4242342342', 5, 5, '2025-08-24', '2025-09-30', 'request_approval', 'pending', 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:20:07', '2025-08-24 02:20:07', 1, 1, 1, 0, NULL),
 (243, NULL, '4233243242', '23424234234', 5, 5, '2025-08-24', '2025-09-30', 'request_approval', 'pending', 'contract', 65, 1, 344, 3, 'normal', 0, '2025-08-24 02:33:59', '2025-08-24 02:41:22', 1, 1, 2, 100, NULL),
 (244, NULL, 'xxxxxx', '32424234243', 5, 5, '2025-08-24', '2025-09-30', 'done', 'approved', 'contract', 65, 1, 344, 3, 'normal', 0, '2025-08-24 02:38:58', '2025-08-24 02:40:34', 1, 1, 2, 100, NULL),
-(245, NULL, 'x22222', 'dsadsadsadasd', 5, 5, '2025-08-24', '2025-09-30', 'done', 'approved', 'contract', 66, 1, 363, 3, 'normal', 0, '2025-08-24 02:39:55', '2025-08-24 02:42:35', 1, 1, 1, 100, NULL),
-(246, NULL, 'task con 2222', 'dsaddadada', 22, 22, '2025-08-24', '2025-09-30', 'done', 'approved', 'contract', 66, 2, 364, 3, 'normal', 0, '2025-08-24 02:43:18', '2025-08-24 02:43:48', 1, 1, 2, 100, NULL),
+(246, NULL, 'task con 2222', 'dsaddadada', 22, 22, '2025-08-24', '2025-09-30', 'request_approval', 'approved', 'contract', 66, 2, 364, 3, 'normal', 0, '2025-08-24 02:43:18', '2025-09-07 03:02:46', 0, 0, 2, 100, NULL),
 (247, 201, '43424242', '42342424', 21, 17, '2025-09-01', '2025-10-31', '', 'pending', 'bidding', 35, 2, 285, 3, 'normal', 0, '2025-09-01 01:02:20', '2025-09-01 01:02:20', 1, 1, 2, 0, NULL),
 (248, NULL, 'việc mới', '453454355', 24, 5, '2025-09-01', '2025-10-31', 'doing', 'pending', 'bidding', 40, 1, 363, 3, 'normal', 0, '2025-09-01 01:39:12', '2025-09-01 01:39:12', 1, 1, 2, 0, NULL),
 (249, NULL, 'việc mới 2', '422343243242', 17, 19, '2025-09-01', '2025-10-31', 'doing', 'pending', 'bidding', 40, 1, 363, 3, 'normal', 0, '2025-09-01 01:39:40', '2025-09-01 01:39:40', 1, 1, 4, 0, NULL),
 (250, 200, 'việc con mới', '23432432424', 19, 17, '2025-09-01', '2025-10-31', '', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-01 01:51:50', '2025-09-01 01:51:50', 1, 1, 3, 55, NULL),
 (251, NULL, 'con của tesst mới', '45342424234', 5, 5, '2025-09-04', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-03 20:12:58', '2025-09-03 20:12:58', 1, 1, 2, 0, NULL),
-(252, 199, 'xxxxxxx', 'sdadsadsadasd', 5, 5, '2025-09-04', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-03 20:13:39', '2025-09-03 20:13:39', 1, 1, 3, 0, NULL);
+(252, 199, 'xxxxxxx', 'sdadsadsadasd', 5, 5, '2025-09-04', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-03 20:13:39', '2025-09-03 20:13:39', 1, 1, 3, 0, NULL),
+(255, NULL, 'bvnnnvnvn', '423424242424', 19, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:04:30', '2025-09-06 20:04:30', 1, 1, 2, 0, NULL),
+(256, NULL, '54353535', '54353535435', 17, 17, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'low', 0, '2025-09-06 20:07:05', '2025-09-06 20:07:05', 1, 1, 2, 0, NULL),
+(257, NULL, 'xxxxxxxxxxxxxxxxxxxxxxxxx', '4234324242424', 5, 5, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'low', 0, '2025-09-06 20:09:20', '2025-09-06 20:09:20', 1, 1, 2, 0, NULL),
+(258, 256, 'bbbbbbbbbbbbbbbbb', '324324242424', 5, 5, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:18:05', '2025-09-06 20:18:05', 1, 1, 2, 0, NULL),
+(259, 258, 'mmmmmmmmmmmmmmmmmm', '23424242424', 23, 23, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:18:42', '2025-09-06 20:18:42', 1, 1, 2, 0, NULL),
+(260, 259, 'bkkkkkkkkkkkkkk', '23423432424242424', 19, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:25:31', '2025-09-06 20:25:31', 1, 1, 2, 0, NULL),
+(261, NULL, 'ggggggggggggg', '34234342424', 16, 16, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'low', 0, '2025-09-06 20:27:57', '2025-09-06 20:27:57', 1, 1, 2, 0, NULL),
+(262, NULL, 'rrrrrrrrrrrrrr', '3453454535', 14, 4, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'low', 0, '2025-09-06 20:28:39', '2025-09-06 20:28:39', 1, 1, 3, 0, NULL),
+(263, NULL, '5354353535535', 'rewrwrwrwrw', 12, 3, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:29:05', '2025-09-06 20:29:05', 1, 1, 2, 0, NULL),
+(264, NULL, '3424324242424', '4324242424', 12, 4, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'low', 0, '2025-09-06 20:29:30', '2025-09-06 20:29:30', 1, 1, 2, 0, NULL),
+(265, NULL, '42343243242', '432432424', 23, 7, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:29:50', '2025-09-06 20:29:50', 1, 1, 2, 0, NULL),
+(266, 262, '423434442', '4324324242', 22, 22, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 21:12:14', '2025-09-06 21:12:14', 1, 1, 2, 0, NULL),
+(267, 249, '4234344243', '4324324324324', 4, 4, '2025-09-07', '2025-10-31', 'done', 'approved', 'bidding', 40, 2, 364, 3, 'normal', 0, '2025-09-06 21:31:21', '2025-09-07 08:26:53', 0, 0, 2, 100, NULL),
+(268, NULL, '2343242443', '432424244', 5, 4, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 39, 1, 349, 3, 'low', 0, '2025-09-06 21:35:26', '2025-09-06 21:35:26', 1, 1, 2, 0, NULL),
+(269, 268, 'sub task 1', 'rewrerwrew', 1, 5, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 39, 1, 349, 3, 'normal', 0, '2025-09-06 21:35:52', '2025-09-06 21:35:52', 1, 1, 1, 0, NULL),
+(270, 268, '342343424', '432432443', 5, 5, '2025-09-07', '2025-10-31', 'done', 'approved', 'bidding', 39, 2, 350, 3, 'normal', 0, '2025-09-06 22:08:44', '2025-09-07 02:34:54', 0, 0, 2, 100, NULL),
+(271, 268, '345435435', '54354353554', 6, 6, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 39, 2, 350, 3, 'normal', 0, '2025-09-06 22:09:29', '2025-09-06 22:09:29', 1, 1, 4, 0, NULL),
+(272, 210, 'task con', 'sdadasda', 4, 4, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 37, 1, 325, 3, 'normal', 0, '2025-09-07 03:00:44', '2025-09-07 03:00:44', 1, 1, 2, 0, NULL),
+(273, 243, '54434535', '5435353', 22, 23, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 10, 1, 82, 3, 'normal', 0, '2025-09-07 03:29:40', '2025-09-07 03:29:40', 1, 1, 2, 0, NULL),
+(274, 248, 'việc chắt mới', '3423424242', 19, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 40, 1, 363, 3, 'low', 0, '2025-09-07 07:39:40', '2025-09-07 07:39:40', 1, 1, 2, 0, NULL),
+(275, 248, '3424234', '3424224', 5, 5, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 40, 7, 369, 3, 'low', 0, '2025-09-07 09:24:03', '2025-09-07 09:24:03', 1, 1, 2, 0, NULL),
+(276, 275, '4324324324', '4324324324', 5, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 40, 7, 369, 3, 'low', 0, '2025-09-07 09:24:36', '2025-09-07 09:24:36', 1, 1, 2, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -1841,7 +1906,6 @@ INSERT INTO `task_approvals` (`id`, `task_id`, `level`, `status`, `approved_by`,
 (134, 241, 1, 'pending', NULL, NULL, NULL),
 (139, 244, 1, 'approved', 3, '2025-08-24 09:40:34', 'ok nhé'),
 (141, 245, 1, 'approved', 3, '2025-08-24 09:42:35', 'ok duyệt'),
-(143, 246, 1, 'approved', 3, '2025-08-24 09:43:48', 'duyệt nhé'),
 (144, 242, 1, 'pending', NULL, NULL, NULL),
 (145, 240, 1, 'pending', NULL, NULL, NULL),
 (146, 238, 1, 'pending', NULL, NULL, NULL),
@@ -1851,7 +1915,32 @@ INSERT INTO `task_approvals` (`id`, `task_id`, `level`, `status`, `approved_by`,
 (150, 249, 1, 'pending', NULL, NULL, NULL),
 (151, 250, 1, 'pending', NULL, NULL, NULL),
 (152, 251, 1, 'pending', NULL, NULL, NULL),
-(153, 252, 1, 'pending', NULL, NULL, NULL);
+(153, 252, 1, 'pending', NULL, NULL, NULL),
+(154, 253, 1, 'pending', NULL, NULL, NULL),
+(155, 254, 1, 'pending', NULL, NULL, NULL),
+(156, 255, 1, 'pending', NULL, NULL, NULL),
+(157, 256, 1, 'pending', NULL, NULL, NULL),
+(158, 257, 1, 'pending', NULL, NULL, NULL),
+(159, 258, 1, 'pending', NULL, NULL, NULL),
+(160, 259, 1, 'pending', NULL, NULL, NULL),
+(161, 260, 1, 'pending', NULL, NULL, NULL),
+(162, 261, 1, 'pending', NULL, NULL, NULL),
+(163, 262, 1, 'pending', NULL, NULL, NULL),
+(164, 263, 1, 'pending', NULL, NULL, NULL),
+(165, 264, 1, 'pending', NULL, NULL, NULL),
+(166, 265, 1, 'pending', NULL, NULL, NULL),
+(167, 266, 1, 'pending', NULL, NULL, NULL),
+(169, 268, 1, 'pending', NULL, NULL, NULL),
+(170, 269, 1, 'pending', NULL, NULL, NULL),
+(172, 271, 1, 'pending', NULL, NULL, NULL),
+(173, 270, 1, 'pending', NULL, NULL, NULL),
+(174, 267, 1, 'pending', NULL, NULL, NULL),
+(175, 246, 1, 'pending', NULL, NULL, NULL),
+(176, 272, 1, 'pending', NULL, NULL, NULL),
+(177, 273, 1, 'pending', NULL, NULL, NULL),
+(178, 274, 1, 'pending', NULL, NULL, NULL),
+(179, 275, 1, 'pending', NULL, NULL, NULL),
+(180, 276, 1, 'pending', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1988,7 +2077,16 @@ INSERT INTO `task_comments` (`id`, `task_id`, `user_id`, `comment_id`, `content`
 (56, 250, 3, NULL, 'ádadd ccccccccc', '2025-09-05 23:34:29', '2025-09-06 00:23:33', NULL, NULL, NULL),
 (57, 250, 3, NULL, 'adsadadxxxxx', '2025-09-05 23:34:30', '2025-09-06 00:22:50', NULL, NULL, NULL),
 (58, 250, 1, NULL, 'test văn ái', '2025-09-06 00:28:28', '2025-09-06 00:28:28', 'a4.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/a4-2.jpg', NULL),
-(59, 203, 3, NULL, 'xxxxxxxxxxxxx', '2025-09-06 00:55:47', '2025-09-06 00:55:47', NULL, NULL, NULL);
+(59, 203, 3, NULL, 'xxxxxxxxxxxxx', '2025-09-06 00:55:47', '2025-09-06 00:55:47', NULL, NULL, NULL),
+(60, 238, 3, NULL, '423423424fsdffsfsf', '2025-09-06 07:36:52', '2025-09-06 07:36:52', NULL, NULL, NULL),
+(61, 238, 3, NULL, 'vvvvvvvvvvvvvvv', '2025-09-06 07:39:56', '2025-09-06 07:39:56', NULL, NULL, NULL),
+(62, 252, 3, NULL, 'bbbbbbbbbbbbbbbb', '2025-09-06 07:51:19', '2025-09-06 07:51:19', NULL, NULL, NULL),
+(63, 199, 3, NULL, '5445353445', '2025-09-06 19:59:59', '2025-09-06 19:59:59', NULL, NULL, NULL),
+(64, 260, 3, NULL, '3243242424', '2025-09-06 21:11:36', '2025-09-06 21:11:36', NULL, NULL, NULL),
+(65, 270, 3, NULL, 'đasdadsadsad', '2025-09-07 02:35:00', '2025-09-07 02:35:00', NULL, NULL, NULL),
+(66, 273, 3, NULL, '2343242342423', '2025-09-07 03:29:51', '2025-09-07 03:29:51', NULL, NULL, NULL),
+(67, 273, 3, NULL, '', '2025-09-07 03:30:17', '2025-09-07 03:30:17', 'Mau TTID 2.2_Bien ban hop ĐHĐCĐ.doc', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/Mau-TTID-2.2_Bien-ban-hop-DHDCD.doc', NULL),
+(68, 275, 3, NULL, '4324423', '2025-09-07 09:24:43', '2025-09-07 09:24:43', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2044,21 +2142,21 @@ CREATE TABLE `task_files` (
   `comment_id` int DEFAULT NULL,
   `file_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `file_path` text COLLATE utf8mb4_unicode_ci,
+  `file_path` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `uploaded_by` int DEFAULT NULL,
-  `link_url` text COLLATE utf8mb4_unicode_ci,
+  `link_url` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL,
   `is_link` tinyint(1) DEFAULT '0',
-  `file_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'wp_media',
+  `file_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'wp_media',
   `file_size` bigint UNSIGNED DEFAULT '0',
-  `mime_type` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `file_ext` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `mime_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `file_ext` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `wp_media_id` bigint UNSIGNED DEFAULT NULL,
-  `source` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'wordpress',
+  `source` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'wordpress',
   `department_id` int DEFAULT NULL,
-  `visibility` enum('private','public','department','custom') COLLATE utf8mb4_unicode_ci DEFAULT 'private',
-  `tags` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL
+  `visibility` enum('private','public','department','custom') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'private',
+  `tags` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -2094,7 +2192,8 @@ INSERT INTO `task_files` (`id`, `task_id`, `comment_id`, `file_name`, `title`, `
 (43, 250, NULL, 'a4.jpg', '43243424324', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/a4-1.jpg', 3, NULL, '2025-09-05 20:59:31', '2025-09-06 03:59:31', 0, 'wp_media', 160905, 'image/jpeg', 'jpg', 7, 'wordpress', 3, 'private', NULL),
 (44, 250, NULL, 'thu-tuong-yeu-cau-chan-chinh-thi-truong-vang-4935819.html', 'Thủ tướng yêu cầu chấn chỉnh thị trường vàng', NULL, 3, 'https://vnexpress.net/thu-tuong-yeu-cau-chan-chinh-thi-truong-vang-4935819.html', '2025-09-05 21:10:40', '2025-09-06 04:10:40', 1, 'link', 0, NULL, 'html', NULL, 'link', 3, 'private', NULL),
 (45, 250, NULL, 'Japanese_English_Thai.xlsx', '2432432442', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/Japanese_English_Thai.xlsx', 3, NULL, '2025-09-05 21:40:49', '2025-09-06 04:40:49', 0, 'wp_media', 6539, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx', 8, 'wordpress', 3, 'private', NULL),
-(46, 250, NULL, 'image', 'xxxxxxxxxxxx', NULL, 3, 'https://antdv.com/components/image', '2025-09-05 22:23:20', '2025-09-06 05:23:20', 1, 'link', 0, NULL, NULL, NULL, 'link', 3, 'private', NULL);
+(46, 250, NULL, 'image', 'xxxxxxxxxxxx', NULL, 3, 'https://antdv.com/components/image', '2025-09-05 22:23:20', '2025-09-06 05:23:20', 1, 'link', 0, NULL, NULL, NULL, 'link', 3, 'private', NULL),
+(47, 273, NULL, 'TTID_logo.png', '5345435535', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/TTID_logo.png', 3, NULL, '2025-09-07 03:30:31', '2025-09-07 10:30:31', 0, 'wp_media', 23787, 'image/png', 'png', 16, 'wordpress', 2, 'private', NULL);
 
 -- --------------------------------------------------------
 
@@ -2122,7 +2221,7 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `name`, `phone`, `avatar`, `role`, `department_id`, `role_id`) VALUES
 (1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-09-06 08:08:05', 'Nguyễn Mai Anh', '0988888888', 'uploads/avatars/1757146085_458ff2a7be53bff1a4a8.png', 'Trưởng phòng', 1, 2),
-(3, 'superadmin@example.com', '$2y$10$duTynUTzT2E8r/XfWDEAv.zruGL1CwtgiFyHoBybvwd8valutSCTW', '2025-04-20 14:02:38', '2025-09-05 01:26:51', 'Super Admin', '0988888888', 'uploads/avatars/1757035611_0019d985edb37c35aaa9.jpg', 'super admin', 2, 1),
+(3, 'superadmin@example.com', '$2y$10$duTynUTzT2E8r/XfWDEAv.zruGL1CwtgiFyHoBybvwd8valutSCTW', '2025-04-20 14:02:38', '2025-09-06 15:47:15', 'Super Admin', '0988888888', 'uploads/avatars/1757035611_0019d985edb37c35aaa9.jpg', 'super admin', 2, 1),
 (4, 'nguyenvana@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-05-26 04:33:21', '2025-08-04 16:27:31', 'Nguyễn Văn Tuấn', '0909123456', NULL, 'Nhân viên', 2, 3),
 (5, 'a@worknest.vn', '$2y$10$fPUyT/hhSHhPknmvWgPtxelsaQfNLRiOVZ3Wayj2tbcNo4lApUFEW', '2025-06-04 09:10:50', '2025-09-05 01:27:55', 'Nguyễn Vân Anh', '0911111111', 'uploads/avatars/1757035675_b1a8dfcbbebca0a39cb1.jpg', 'user', 1, 3),
 (6, 'b@worknest.vn', '$2y$10$ZKKb/DZ/dk0eFQW/xfG3Ne8Ozrdt1TcQcR1alq4KP5biJpmUm2Uuy', '2025-06-04 09:11:21', '2025-08-04 06:31:07', 'Trần Thị B', '0911111112', NULL, 'user', 1, 2),
@@ -2375,13 +2474,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `approval_instances`
 --
 ALTER TABLE `approval_instances`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `approval_logs`
 --
 ALTER TABLE `approval_logs`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
 -- AUTO_INCREMENT for table `approval_reads`
@@ -2393,7 +2492,7 @@ ALTER TABLE `approval_reads`
 -- AUTO_INCREMENT for table `approval_steps`
 --
 ALTER TABLE `approval_steps`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `biddings`
@@ -2429,7 +2528,7 @@ ALTER TABLE `comments`
 -- AUTO_INCREMENT for table `comment_reads`
 --
 ALTER TABLE `comment_reads`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `contracts`
@@ -2477,7 +2576,7 @@ ALTER TABLE `departments`
 -- AUTO_INCREMENT for table `documents`
 --
 ALTER TABLE `documents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `document_permissions`
@@ -2531,13 +2630,13 @@ ALTER TABLE `step_templates`
 -- AUTO_INCREMENT for table `tasks`
 --
 ALTER TABLE `tasks`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=253;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=277;
 
 --
 -- AUTO_INCREMENT for table `task_approvals`
 --
 ALTER TABLE `task_approvals`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=154;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=181;
 
 --
 -- AUTO_INCREMENT for table `task_approval_logs`
@@ -2549,7 +2648,7 @@ ALTER TABLE `task_approval_logs`
 -- AUTO_INCREMENT for table `task_comments`
 --
 ALTER TABLE `task_comments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
 
 --
 -- AUTO_INCREMENT for table `task_extensions`
@@ -2561,7 +2660,7 @@ ALTER TABLE `task_extensions`
 -- AUTO_INCREMENT for table `task_files`
 --
 ALTER TABLE `task_files`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
 
 --
 -- AUTO_INCREMENT for table `users`
