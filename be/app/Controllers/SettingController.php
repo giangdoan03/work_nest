@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\SettingModel;
+use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use App\Traits\AuthTrait;
 
@@ -41,7 +42,7 @@ class SettingController extends ResourceController
      * Lấy 1 setting theo key (dùng cho mẫu bước/thông tin hệ thống).
      * Ví dụ: GET /settings/key/bidding_steps
      */
-    public function key($key = null)
+    public function key($key = null): ResponseInterface
     {
         $userId = $this->getUserId();
         $setting = $this->model->where('key', $key)->where('user_id', $userId)->first();

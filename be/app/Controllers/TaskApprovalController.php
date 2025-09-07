@@ -8,6 +8,7 @@ use App\Models\TaskApprovalModel;
 use App\Models\TaskModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use ReflectionException;
 
 class TaskApprovalController extends ResourceController
 {
@@ -301,7 +302,7 @@ class TaskApprovalController extends ResourceController
     }
 
     /** Phê duyệt
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function approve($id): ResponseInterface
     {
@@ -388,7 +389,7 @@ class TaskApprovalController extends ResourceController
     }
 
     /** Từ chối
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function reject($id): ResponseInterface
     {
