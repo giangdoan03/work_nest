@@ -209,7 +209,7 @@
                         :data-source="interactionLogs"
                         bordered
                         :locale="{ emptyText: 'Không có tương tác' }"
-                        style="margin-bottom: 12px"
+                        style="margin-bottom: 12px; padding: 15px"
                     >
                         <template #renderItem="{ item }">
                             <a-list-item>
@@ -247,7 +247,7 @@
 
                 <!-- Tab: Hợp đồng -->
                 <a-tab-pane key="contracts" tab="Hợp đồng">
-                    <a-list :data-source="contracts" bordered :locale="{ emptyText: 'Chưa có hợp đồng nào' }">
+                    <a-list :data-source="contracts" bordered :locale="{ emptyText: 'Chưa có hợp đồng nào' }" style="padding: 14px">
                         <template #renderItem="{ item }">
                             <a-list-item>
                                 <a-list-item-meta
