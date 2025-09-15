@@ -58,9 +58,9 @@
                                 :to="buildTaskLink(record)"
                                 class="task-title-cell"
                             >
-  <span class="task-title" :class="{ child: record.parent_id }">
-    {{ truncate(record.title, 25) }}
-  </span>
+                              <span class="task-title" :class="{ child: record.parent_id }">
+                                {{ truncate(record.title, 25) }}
+                              </span>
                             </router-link>
                         </template>
 
@@ -137,6 +137,7 @@
             v-model:open-drawer="openDrawer"
             :list-user="users"
             type="bidding"
+            :create-as-root="true"
             @submitForm="reloadTasks"
         />
         <DrawerCreateSubtask
@@ -175,6 +176,8 @@ const loading = ref(false)
 const deletingId = ref(null)
 
 const openDrawer = ref(false)
+// NEW: cờ đánh dấu tạo task cha
+const createAsRoot = ref(false)
 const subDrawerOpen = ref(false)
 const subDrawerParent = ref(null)
 
@@ -388,7 +391,11 @@ const reloadTasks = async () => {
 }
 
 /* ---------- Actions ---------- */
-const openCreateTask = () => (openDrawer.value = true)
+// mở drawer tạo ROOT task
+const openCreateTask = () => {
+    createAsRoot.value = true            // <- đây là chỗ bạn hỏi
+    openDrawer.value = true
+}
 
 const openSubtaskDrawer = (parentRow) => {
     subDrawerParent.value = {

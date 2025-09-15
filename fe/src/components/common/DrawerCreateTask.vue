@@ -8,6 +8,13 @@
             :footer-style="{ textAlign: 'right' }"
             @close="onCloseDrawer"
         >
+            <a-alert
+                v-if="props.createAsRoot"
+                type="info"
+                message="Đang tạo nhiệm vụ gốc"
+                show-icon
+                style="margin-bottom:12px"
+            />
             <a-form ref="formRef" :model="formData" :rules="rules" layout="vertical">
                 <a-row :gutter="16">
                     <a-col :span="12">
@@ -214,7 +221,8 @@ const props = defineProps({
     taskParent: String,
     listUser: { type: Array, default: () => [] },
     type: { type: String, default: 'internal' },
-    taskMeta: { type: Object, default: () => ({}) }
+    taskMeta: { type: Object, default: () => ({}) },
+    createAsRoot: { type: Boolean, default: false },
 })
 
 const locale = ref(viVN)
@@ -246,6 +254,12 @@ const formData = ref({
     id_department: null,
     step_id: null
 })
+
+const effectiveParentId = computed(() =>
+    props.createAsRoot
+        ? null
+        : (props.taskParent ?? (parentTaskId.value ? Number(parentTaskId.value) : null))
+)
 
 /* ---------------- Helpers / Validate ---------------- */
 const setDefaultData = () => {
@@ -340,7 +354,7 @@ watch(
         }
 
         // parent_id (props > Pinia)
-        formData.value.parent_id = props.taskParent ?? (parentTaskId.value ? Number(parentTaskId.value) : formData.value.parent_id)
+        formData.value.parent_id = effectiveParentId.value
 
         if (formData.value.linked_id) formData.value.linked_id = String(formData.value.linked_id)
 
@@ -578,11 +592,7 @@ const createDrawerInternal = async () => {
     const payload = { ...formData.value }
 
     // ✅ NEW: thiết lập parent_id từ props/Pinia nếu chưa có
-    payload.parent_id =
-        props.taskParent ??
-        (parentTaskId.value ? Number(parentTaskId.value) : null) ??
-        (payload.parent_id ? Number(payload.parent_id) : null)
-
+    payload.parent_id = props.createAsRoot ? null : effectiveParentId.value
     // map step_code -> step_id nếu thiếu
     if (['bidding', 'contract'].includes(payload.linked_type)) {
         if (!payload.step_id && payload.step_code) {
