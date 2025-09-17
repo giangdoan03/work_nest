@@ -562,7 +562,7 @@ const deleteConfirm = async (id) => {
 
 const showPopupDetail = async (record) => {
     if (record.linked_type === 'bidding') {
-        await router.push({ name: 'bidding-task-info', params: { id: record.id } })
+        await router.push({ name: 'workflow-bidding-tasks', params: { id: record.id } })
     } else if (record.linked_type === 'contract') {
         await router.push({ name: 'contract-task-info', params: { id: record.id } })
     }

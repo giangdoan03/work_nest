@@ -64,12 +64,12 @@
 
                 <!-- 4. Việc không quy trình -->
                 <a-tooltip placement="right" title="Việc không quy trình" v-if="collapsed">
-                    <div class="menu-item" :class="{ active: isTaskActive }" @click="navigateTo('/tasks')">
+                    <div class="menu-item" :class="{ active: isTaskActive }" @click="navigateTo('/non-workflow')">
                         <UnorderedListOutlined/>
                         <div class="menu-text-collapsed">Việc không quy trình</div>
                     </div>
                 </a-tooltip>
-                <div v-else class="menu-item" :class="{ active: isTaskActive }" @click="navigateTo('/tasks')">
+                <div v-else class="menu-item" :class="{ active: isTaskActive }" @click="navigateTo('/non-workflow')">
                     <UnorderedListOutlined/>
                     <span class="menu-text">Việc không quy trình</span>
                 </div>
@@ -77,13 +77,13 @@
 
                 <!-- 7. Quản lý dữ liệu công việc (Việc quy trình) -->
                 <a-tooltip placement="right" title="Việc quy trình" v-if="collapsed">
-                    <div class="menu-item" :class="{ active: isInternalTaskActive }" @click="navigateTo('/internal-tasks')">
+                    <div class="menu-item" :class="{ active: isInternalTaskActive }" @click="navigateTo('/workflow')">
                         <ProjectOutlined/>
                         <div class="menu-text-collapsed">Việc quy trình</div>
                     </div>
                 </a-tooltip>
                 <div v-else class="menu-item" :class="{ active: isInternalTaskActive }"
-                     @click="navigateTo('/internal-tasks')">
+                     @click="navigateTo('/workflow')">
                     <ProjectOutlined/>
                     <span class="menu-text">Việc quy trình</span>
                 </div>
@@ -302,7 +302,7 @@
                         <span>Gói thầu</span>
                     </div>
 
-                    <div class="quick-item" @click="navAndClose('/internal-tasks')">
+                    <div class="quick-item" @click="navAndClose('/workflow')">
                         <div class="icon-box purple"><AppstoreOutlined /></div>
                         <span>Việc quy trình</span>
                     </div>
@@ -375,7 +375,6 @@
         FileDoneOutlined,
         ProfileOutlined,
         TeamOutlined,
-        // nếu chưa có các icon bên dưới thì import thêm:
         GlobalOutlined,
         CheckCircleOutlined,
         WalletOutlined,
@@ -408,7 +407,7 @@
         /^\/bidding-tasks\/\d+\/info$/.test(p) ||
         /^\/biddings\/\d+\/steps\/\d+\/tasks\/?$/.test(p)
     )
-    const isInternalTasksLikePath = (p) => p.startsWith('/internal-tasks')
+    const isInternalTasksLikePath = (p) => p.startsWith('/workflow')
 
     // === Active states (đặt ở top-level) ===
     const isOverviewActive   = computed(() => route.path === '/project-overview')
@@ -416,9 +415,9 @@
     const isContractActive   = computed(() =>
         ['/contracts-tasks', `/contracts/${currentRouteId.value}`].includes(currentPath.value)
     )
-    const isTaskActive       = computed(() => currentPath.value.startsWith('/tasks'))
+    const isTaskActive       = computed(() => currentPath.value.startsWith('/non-workflow'))
     const isInternalTaskActive = computed(() =>
-        isSection('internal-tasks') || isInternalTasksLikePath(currentPath.value)
+        isSection('workflow') || isInternalTasksLikePath(currentPath.value)
     )
     const isCustomerActive   = computed(() =>
         ['/customers', `/customers/${currentRouteId.value}`].includes(currentPath.value)

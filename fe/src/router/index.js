@@ -83,8 +83,8 @@ const routes = [
             { path: 'user-management', name: 'user-management', component: UserManagement, meta: { breadcrumb: 'Quản lý người dùng' } },
 
             // Internal Tasks
-            { path: 'internal-tasks', name: 'internal-tasks', component: InternalTasks, meta: { breadcrumb: 'Việc quy trình' } },
-            { path: 'internal-tasks/:id/info', name: 'internal-tasks-info', component: TaskDetail, meta: { breadcrumb: 'Việc quy trình', parent: 'internal-tasks' } },
+            { path: 'workflow', name: 'workflow', component: InternalTasks, meta: { breadcrumb: 'Việc quy trình' } },
+            { path: 'workflow/:id/info', name: 'workflow-info', component: TaskDetail, meta: { breadcrumb: 'Việc quy trình', parent: 'workflow' } },
             // bid-list (gốc)
             {
                 path: '/bid-list',
@@ -110,10 +110,10 @@ const routes = [
                 }),
             },
             {
-                path: '/bidding-tasks/:id/info',
-                name: 'bidding-task-info',
+                path: 'workflow/bidding-tasks/:id/info',
+                name: 'workflow-bidding-tasks',
                 component: TaskDetail,
-                meta: { breadcrumb: 'Chi tiết nhiệm vụ', parent: 'bidding-step-tasks' },
+                meta: { breadcrumb: 'Chi tiết nhiệm vụ', parent: 'workflow' },
                 props: true,
             },
 
@@ -264,16 +264,16 @@ const routes = [
             },
             // Việc không quy trình
             {
-                path: '/tasks',
-                name: 'tasks',
+                path: '/non-workflow',
+                name: 'non-workflow',
                 component: Tasks,
                 meta: { breadcrumb: 'Việc không quy trình' }
             },
             {
-                path: '/tasks/:id/info',
+                path: '/non-workflow/tasks/:id/info',
                 name: 'tasks-detail',
                 component: TaskDetail,
-                meta: { breadcrumb: 'Chi tiết nhiệm vụ', parent: 'tasks' }
+                meta: { breadcrumb: 'Chi tiết nhiệm vụ', parent: 'non-workflow' }
             },
 
             {
@@ -305,8 +305,8 @@ const router = createRouter({
 
 
 const routePermissionMap = {
-    'internal-tasks': 'task',
-    'internal-tasks-info': 'task',
+    'workflow': 'task',
+    'workflow-info': 'task',
     'contracts-tasks': 'contract',
     'contract-task-info': 'task',
     'bidding-task-info': 'task',
