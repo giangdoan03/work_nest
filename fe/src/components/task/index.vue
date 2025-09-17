@@ -67,12 +67,11 @@
                                                             </a-form-item>
                                                         </a-col>
                                                         <a-col :span="24">
-                                                            <a-form-item label="Công việc cha">
+                                                            <a-form-item label="Công việc cha xxx">
                                                                 <template v-if="formData.parent_id">
-                                                                    <a-tooltip
-                                                                        :title="formData.parent_title || ('#' + formData.parent_id)">
-                                                                        <a-typography-link @click="goToTask(formData.parent_id)">
-                                                                            {{formData.parent_title || ('#' + formData.parent_id) }}
+                                                                    <a-tooltip :title="formData.parent_title || ('#' + formData.parent_id)">
+                                                                        <a-typography-link @click="goTaskByParentId(formData.parent_id)">
+                                                                            {{ formData.parent_title || ('#' + formData.parent_id) }}
                                                                         </a-typography-link>
                                                                     </a-tooltip>
                                                                 </template>
@@ -495,6 +494,80 @@ const userOption = computed(() => {
         })
     }
 })
+
+
+// Cache nhẹ để bấm nhiều lần không gọi API lặp
+const __taskMetaCache = new Map();
+
+/**
+ * Lấy meta task theo id (có cache)
+ */
+const resolveTaskMetaById = async (id) => {
+    const key = String(id);
+    if (__taskMetaCache.has(key)) return __taskMetaCache.get(key);
+
+    const res = await getTaskDetail(id);       // ✅ dùng sẵn API bạn đang import
+    const t = res?.data || {};
+
+    // Chuẩn hoá meta tối thiểu cần để build URL
+    const meta = {
+        id: t.id,
+        linked_type: t.linked_type,           // 'bidding' | 'contract' | 'internal' | ...
+        step_id: t.step_id ?? t.step_code ?? null,
+
+        // Nếu backend của bạn dùng linked_id = id của bidding/contract cha:
+        // - bidding: dùng linked_id làm bidding_id
+        // - contract: dùng linked_id làm contract_id
+        bidding_id: t.linked_type === 'bidding' ? (t.linked_id ?? null) : null,
+        contract_id: t.linked_type === 'contract' ? (t.linked_id ?? null) : null,
+    };
+
+    __taskMetaCache.set(key, meta);
+    return meta;
+};
+
+/**
+ * Build URL chi tiết theo 5 pattern dựa trên meta
+ */
+const buildDetailUrlFromMeta = (meta) => {
+    const taskId = meta.id;
+
+    // Ưu tiên route có step (bidding/contract + step)
+    if (meta.bidding_id && meta.step_id) {
+        return `/biddings/${meta.bidding_id}/steps/${meta.step_id}/tasks/${taskId}/info`;
+    }
+    if (meta.contract_id && meta.step_id) {
+        return `/contract/${meta.contract_id}/steps/${meta.step_id}/tasks/${taskId}/info`;
+    }
+
+    // Workflow dạng đơn
+    if (meta.linked_type === 'bidding') {
+        return `/workflow/bidding-tasks/${taskId}/info`;
+    }
+    if (meta.linked_type === 'contract') {
+        return `/workflow/contract-tasks/${taskId}/info`;
+    }
+
+    // Non-workflow (internal)
+    return `/non-workflow/tasks/${taskId}/info`;
+};
+
+/**
+ * 👉 HÀM DÙNG CHUNG TẠI TEMPLATE:
+ * Chỉ cần truyền parentId, hàm tự gọi API và điều hướng.
+ */
+const goTaskByParentId = async (parentId) => {
+    if (!parentId) return;
+    try {
+        const meta = await resolveTaskMetaById(parentId);
+        const url  = buildDetailUrlFromMeta(meta);
+        router.push(url);
+    } catch (e) {
+        console.error('Không mở được task cha:', e);
+        message.error('Không mở được nhiệm vụ cha');
+    }
+};
+
 
 // 1. biến reactive hiển thị tên:
 const linkedName = ref('');
