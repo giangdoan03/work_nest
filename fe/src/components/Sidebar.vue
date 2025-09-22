@@ -407,10 +407,16 @@
         /^\/bidding-tasks\/\d+\/info$/.test(p) ||
         /^\/biddings\/\d+\/steps\/\d+\/tasks\/?$/.test(p)
     )
+
     const isInternalTasksLikePath = (p) => p.startsWith('/workflow')
 
+    const isOverviewLikePath = (p) => (
+        p === '/project-overview' ||
+        /^\/department-task\/\d+\/info$/.test(p)   // match /department-task/27/info
+    )
+
     // === Active states (đặt ở top-level) ===
-    const isOverviewActive   = computed(() => route.path === '/project-overview')
+    const isOverviewActive = computed(() => isOverviewLikePath(route.path))
     const isBiddingActive    = computed(() => isSection('bidding') || isBiddingLikePath(currentPath.value))
     const isContractActive   = computed(() =>
         ['/contracts-tasks', `/contracts/${currentRouteId.value}`].includes(currentPath.value)

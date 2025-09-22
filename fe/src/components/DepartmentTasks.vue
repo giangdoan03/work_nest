@@ -184,7 +184,10 @@
                     <template #bodyCell="{ column, record }">
                         <template v-if="column.dataIndex === 'title'">
                             <a-tooltip :title="record.title" placement="top" :overlayStyle="{ maxWidth: '360px' }" :overlayInnerStyle="{ whiteSpace: 'pre-line' }">
-                                <router-link :to="`/internal-tasks/${record.id}/info`" style="color:#1890ff; display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                <router-link
+                                    :to="`/department-task/${record.id}/info`"
+                                    style="color:#1890ff; display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+                                >
                                     {{ record.title }}
                                 </router-link>
                             </a-tooltip>
@@ -455,8 +458,6 @@ import BarChart from './BarChart.vue'
 import { getTasks, updateTask } from '@/api/task'
 import { getUsers } from '@/api/user'
 
-
-
 const props = defineProps({
     departmentId: [String, Number]
 })
@@ -476,8 +477,8 @@ const progressUpdating = ref(false)
 const selectedTask = ref(null)
 const newProgressValue = ref(0)
 
-const totalTasks = ref(0)              // tổng theo API
-const totalAfterFilter = computed(() => filteredTasks.value.length) // số đang hiển thị
+const totalTasks = ref(0)
+const totalAfterFilter = computed(() => filteredTasks.value.length)
 const totalTasksDueIn1Day = computed(() => tasksDueIn1Day.value.length)
 
 const dueIn1DayText = computed(() => {
@@ -490,7 +491,6 @@ const dueIn1DayText = computed(() => {
 const paginatedTasks = computed(() => {
     const start = (currentPage.value - 1) * pageSize.value
     const end = start + pageSize.value
-    console.log('filteredTasks', filteredTasks)
     return filteredTasks.value.slice(start, end)
 })
 
@@ -501,16 +501,13 @@ const tasksDueIn1Day = computed(() => {
     return tasks.value.filter(task => task.end_date === tomorrowStr)
 })
 
-// const urgentTasks = computed(() => {
-//     return tasks.value.filter(task => task.priority === 'high')
-// })
 
 const urgentPage = reactive({
     current: 1,
     pageSize: 10,
 })
 
-const onUrgentTableChange = (pagination/*, filters, sorter, extra*/) => {
+const onUrgentTableChange = (pagination) => {
     urgentPage.current = pagination.current
     urgentPage.pageSize = pagination.pageSize
 }
@@ -524,9 +521,7 @@ const urgentTasks = computed(() => {
     return [...tasks.value].sort((a, b) => {
         const wa = PRIORITY_WEIGHT[a.priority] ?? 0
         const wb = PRIORITY_WEIGHT[b.priority] ?? 0
-        if (wa !== wb) return wb - wa // desc: high > normal > low
-
-        // tie-breaker (tuỳ chọn): hạn sớm hơn đứng trước
+        if (wa !== wb) return wb - wa
         const da = a.end_date ? new Date(a.end_date) : null
         const db = b.end_date ? new Date(b.end_date) : null
         if (da && db) return da - db
@@ -568,8 +563,7 @@ const columns = [
     },
     {
         title: 'Kết thúc',
-        // nếu backend trả end_date (như ví dụ của bạn) thì dùng end_date
-        dataIndex: 'end_date', // hoặc đổi thành 'deadline' nếu bạn vẫn lưu theo tên đó
+        dataIndex: 'end_date',
         key: 'end_date',
         width: 120,
         align: 'center',
@@ -585,10 +579,7 @@ const drawerColumns = [
         key: 'index',
         width: 60,
         align: 'center',
-        // ant-design-vue v3: nhận object { index }
-        customRender: ({ index }) => index + 1, // nếu KHÔNG phân trang
-        // Nếu có phân trang, thay bằng:
-        // customRender: ({ index }) => (drawerPage.current - 1) * drawerPage.pageSize + index + 1,
+        customRender: ({ index }) => index + 1,
     },
     { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
     { title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee', width: 80, align: 'center' },
@@ -606,8 +597,7 @@ const drawerColumns = [
     },
     {
         title: 'Kết thúc',
-        // nếu backend trả end_date (như ví dụ của bạn) thì dùng end_date
-        dataIndex: 'end_date', // hoặc đổi thành 'deadline' nếu bạn vẫn lưu theo tên đó
+        dataIndex: 'end_date',
         key: 'end_date',
         width: 120,
         align: 'center',
@@ -652,7 +642,7 @@ const loadTasks = async () => {
 
 const getUserName = (userId) => {    
     if (!userId || !users.value.length) return 'N/A'
-    const user = users.value.find(u => u.id == userId)
+    const user = users.value.find(u => u.id === userId)
     return user ? user.name : 'N/A'
 }
 
@@ -823,8 +813,7 @@ const getFirstLetter = (name) => {
 
 const getAvatarColor = (name) => {
     if (!name || name === 'N/A') return '#d9d9d9'
-    
-    // Generate consistent color based on name
+
     const colors = [
         '#f5222d', '#fa8c16', '#fadb14', '#52c41a', 
         '#13c2c2', '#1890ff', '#722ed1', '#eb2f96',
@@ -962,15 +951,6 @@ watch(() => filteredTasks.value, () => {
     border-radius: 8px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
-
-/*
-.tables-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 24px;
-    margin-top: 32px;
-}
-*/
 
 .table-section {
     flex: 1;

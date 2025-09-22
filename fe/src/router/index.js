@@ -292,7 +292,14 @@ const routes = [
                 component: () => import('../components/task/index.vue'),
                 props: true,
                 meta: { breadcrumb: 'Chi tiết nhiệm vụ', parent: 'bidding-step-tasks' }
-            }
+            },
+            {
+                path: 'department-task/:id/info',
+                name: 'department-task-detail',
+                component: TaskDetail,
+                meta: { breadcrumb: 'Chi tiết nhiệm vụ phòng', parent: 'project-overview', section: 'overview' },
+                props: true
+            },
 
         ]
     }
@@ -333,6 +340,7 @@ const routePermissionMap = {
     'project-overview': 'project',
     'tasks': 'task',
     'tasks-detail': 'task',
+    'department-task-detail': 'task',
 }
 
 

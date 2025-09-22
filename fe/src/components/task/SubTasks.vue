@@ -106,15 +106,22 @@ const getUserById = (userId) =>  {
     return data.name;
 }
 const showDetailSubtask = (record) => {
+    // URL hiện tại, ví dụ: /department-task/289/info
+    const currentPath = route.path
+
+    // Thay số id cũ bằng id mới của subtask
+    // Regex: tìm /số/ trước /info hoặc kết thúc
+    const newPath = currentPath.replace(/\/\d+(?=\/info|$)/, `/${record.id}`)
+
     router.push({
-        name: "internal-tasks-info",
-        params: { id: record.id, task_name: record.name},
+        path: newPath,
         query: {
             ...route.query,
-            reload: new Date().getTime()
-        }
+            reload: new Date().getTime(), // để force reload nếu cần
+        },
     })
 }
+
 const handleDeleteSubtask = async(subtask_id) => {
     loadingSubTask.value = true;
     try {
