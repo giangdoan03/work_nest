@@ -2,16 +2,16 @@
     <a-spin :spinning="loading" size="large" tip="Đang tải dữ liệu...">
         <div class="dashboard">
             <div class="summary-cards">
-                <a-card 
-                    v-for="item in stats" 
-                    :key="item.key" 
+                <a-card
+                    v-for="item in stats"
+                    :key="item.key"
                     :style="{ backgroundColor: item.bg, cursor: 'pointer' }"
                     @click="handleCardClick(item)"
                     class="summary-card"
                     :data-color="item.color"
                 >
                     <a-space direction="vertical" align="center">
-                        <component :is="item.icon" :style="{ fontSize: '32px', color: item.color }" />
+                        <component :is="item.icon" :style="{ fontSize: '32px', color: item.color }"/>
                         <div>{{ item.label }}</div>
                         <h2 class="number" :style="{ color: item.color }">{{ item.count }}</h2>
                     </a-space>
@@ -23,24 +23,24 @@
             <div class="charts">
                 <div class="chart-box">
                     <h4 style="text-align: center; color: #aaaaaa">Tỷ lệ hoàn thành theo tháng</h4>
-                    <PieChart :data="tasks" />
+                    <PieChart :data="tasks"/>
                 </div>
                 <div class="chart-box">
                     <h4 style="text-align: center; color: #aaaaaa">Công việc theo người thực hiện</h4>
-                    <BarChart :data="tasks" />
+                    <BarChart :data="tasks"/>
                 </div>
             </div>
 
             <div class="table-section" style="margin-top: 20px; margin-bottom: 20px">
                 <a-divider>{{ dueIn1DayText }}</a-divider>
                 <a-table
-                    :columns="columns"
+                    :columns="columnsDueSoon"
                     :dataSource="tasksDueIn1Day"
                     rowKey="id"
                     bordered
                     size="small"
                     :pagination="false"
-                    :scroll="{ x: 1200}"
+                    :scroll="{ x: 1600 }"
                     :locale="{ emptyText: 'Không có dữ liệu' }"
                     class="tiny-scroll"
                 >
@@ -114,14 +114,12 @@
                                         <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }" size="large" style="margin-bottom: 8px;">
                                             {{ getFirstLetter(record.assigned_to_name) }}
                                         </a-avatar>
-                                        <div style="font-weight: bold; color: white;">{{ record.assigned_to_name }}</div>
+                                        <div style="font-weight: bold; color: white;">{{record.assigned_to_name}}
+                                        </div>
                                     </div>
                                 </template>
                                 <div style="display: flex; justify-content: center; align-items: center;">
-                                    <a-avatar
-                                        :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }"
-                                        size="small"
-                                    >
+                                    <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }" size="small">
                                         {{ getFirstLetter(record.name) }}
                                     </a-avatar>
                                 </div>
@@ -144,9 +142,72 @@
                                 —
                             </a-tag>
                         </template>
+
+                        <!-- + Thêm các nhánh mới giống bảng dưới -->
+                        <template v-else-if="column.dataIndex === 'parent'">
+                            <a-tooltip :title="record.parent_title || (record.parent_id ? ('#' + record.parent_id) : '—')">
+                                <span v-if="record.parent_id">{{ record.parent_title || ('#' + record.parent_id) }}</span>
+                                <span v-else>—</span>
+                            </a-tooltip>
+                        </template>
+
+                        <template v-else-if="column.dataIndex === 'linked'">
+                            <div style="display:flex; gap:8px; align-items:center;">
+                                <a-tag v-if="record.linked_type" :color="record.linked_type === 'bidding' ? 'blue' : (record.linked_type === 'contract' ? 'cyan' : 'geekblue')">
+                                    {{ record.linked_type === 'bidding' ? 'Gói thầu' : record.linked_type === 'contract' ? 'Hợp đồng' : 'Nội bộ' }}
+                                </a-tag>
+                                <a-tooltip :title="record.linked_title || '—'">
+                                    <span class="ellipsis-text" style="max-width:150px;">{{ record.linked_title || '—' }}</span>
+                                </a-tooltip>
+                            </div>
+                        </template>
+
+                        <template v-else-if="column.dataIndex === 'step'">
+                            <a-tooltip :title="record.step_name || '—'">
+        <span v-if="record.step_code || record.step_name">
+          <strong v-if="record.step_code">B{{ record.step_code }}</strong>
+          <span v-if="record.step_code && record.step_name"> - </span>
+          <span>{{ record.step_name || '—' }}</span>
+        </span>
+                                <span v-else>—</span>
+                            </a-tooltip>
+                        </template>
+
+                        <template v-else-if="column.dataIndex === 'approval'">
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+                                <a-tag :color="record.approval_status === 'approved' ? 'green' : record.approval_status === 'pending' ? 'orange' : 'default'">
+                                    {{ record.approval_status === 'approved' ? 'Đã duyệt' : record.approval_status === 'pending' ? 'Chờ duyệt' : (record.approval_status || '—') }}
+                                </a-tag>
+                                <small v-if="record.approval_steps">Cấp {{ record.current_level || 0 }}/{{ record.approval_steps }}</small>
+                            </div>
+                        </template>
+
+                        <template v-else-if="column.dataIndex === 'proposed_by'">
+                            <a-tooltip :title="getUserName(record.proposed_by) || '—'">
+                                <a-avatar :style="{ backgroundColor: getAvatarColor(getUserName(record.proposed_by)) }" size="small">
+                                    {{ getFirstLetter(getUserName(record.proposed_by)) }}
+                                </a-avatar>
+                            </a-tooltip>
+                        </template>
+
+                        <template v-else-if="column.dataIndex === 'created_by'">
+                            <a-tooltip :title="getUserName(record.created_by) || '—'">
+                                <a-avatar :style="{ backgroundColor: getAvatarColor(getUserName(record.created_by)) }" size="small">
+                                    {{ getFirstLetter(getUserName(record.created_by)) }}
+                                </a-avatar>
+                            </a-tooltip>
+                        </template>
+
+                        <template v-else-if="column.dataIndex === 'comments_count'">
+                            <span>{{ Number(record.comments_count || 0) }}</span>
+                        </template>
+
+                        <template v-else-if="column.dataIndex === 'is_subtask'">
+                            <a-tag v-if="record.is_subtask" color="purple">Subtask</a-tag>
+                            <span v-else>—</span>
+                        </template>
                     </template>
                 </a-table>
-
             </div>
             <div class="table-section">
 
@@ -183,7 +244,8 @@
 
                     <template #bodyCell="{ column, record }">
                         <template v-if="column.dataIndex === 'title'">
-                            <a-tooltip :title="record.title" placement="top" :overlayStyle="{ maxWidth: '360px' }" :overlayInnerStyle="{ whiteSpace: 'pre-line' }">
+                            <a-tooltip :title="record.title" placement="top" :overlayStyle="{ maxWidth: '360px' }"
+                                       :overlayInnerStyle="{ whiteSpace: 'pre-line' }">
                                 <router-link
                                     :to="`/department-task/${record.id}/info`"
                                     style="color:#1890ff; display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
@@ -221,14 +283,16 @@
                             <a-tooltip placement="top" :overlayStyle="{ maxWidth: '300px' }">
                                 <template #title>
                                     <div style="text-align: center; padding: 8px;">
-                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }" size="large" style="margin-bottom: 8px;">
+                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
+                                                  size="large" style="margin-bottom: 8px;">
                                             {{ getFirstLetter(record.assignee?.name) }}
                                         </a-avatar>
                                         <div style="font-weight: bold; color: white;">{{ record.assignee?.name }}</div>
                                     </div>
                                 </template>
                                 <div style="display: flex; justify-content: center; align-items: center;">
-                                    <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }" size="small">
+                                    <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
+                                              size="small">
                                         {{ getFirstLetter(record.assignee?.name) }}
                                     </a-avatar>
                                 </div>
@@ -238,14 +302,19 @@
                             <a-tooltip placement="top" :overlayStyle="{ maxWidth: '300px' }">
                                 <template #title>
                                     <div style="text-align: center; padding: 8px;">
-                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }" size="large" style="margin-bottom: 8px;">
+                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }"
+                                                  size="large" style="margin-bottom: 8px;">
                                             {{ getFirstLetter(record.assigned_to_name) }}
                                         </a-avatar>
-                                        <div style="font-weight: bold; color: white;">{{ record.assigned_to_name }}</div>
+                                        <div style="font-weight: bold; color: white;">{{
+                                                record.assigned_to_name
+                                            }}
+                                        </div>
                                     </div>
                                 </template>
                                 <div style="display: flex; justify-content: center; align-items: center;">
-                                    <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }" size="small">
+                                    <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }"
+                                              size="small">
                                         {{ getFirstLetter(record.name) }}
                                     </a-avatar>
                                 </div>
@@ -270,6 +339,111 @@
                             <a-tag v-else>
                                 —
                             </a-tag>
+                        </template>
+                        <!-- 🆕 Cột Công việc cha -->
+                        <template v-else-if="column.dataIndex === 'parent'">
+                            <a-tooltip
+                                :title="record.parent_title || (record.parent_id ? ('#' + record.parent_id) : '—')">
+      <span v-if="record.parent_id">
+        <!-- Chỉ text; nếu muốn link tới chi tiết cha, có thể router-link -->
+        {{ record.parent_title || ('#' + record.parent_id) }}
+      </span>
+                                <span v-else>—</span>
+                            </a-tooltip>
+                        </template>
+
+                        <!-- 🆕 Cột Liên kết (loại + tên) -->
+                        <template v-else-if="column.dataIndex === 'linked'">
+                            <div style="display:flex; gap:8px; align-items:center; max-width: 100%;">
+                                <a-tag v-if="record.linked_type"
+                                       :color="record.linked_type === 'bidding' ? 'blue' : (record.linked_type === 'contract' ? 'cyan' : 'geekblue')">
+                                    {{
+                                        record.linked_type === 'bidding' ? 'Gói thầu'
+                                            : record.linked_type === 'contract' ? 'Hợp đồng'
+                                                : 'Nội bộ'
+                                    }}
+                                </a-tag>
+                                <a-tooltip :title="record.linked_title || '—'" placement="topLeft">
+        <span class="ellipsis-text" style="max-width: 150px;">
+          {{ record.linked_title || '—' }}
+        </span>
+                                </a-tooltip>
+                            </div>
+                        </template>
+
+                        <!-- 🆕 Cột Bước -->
+                        <template v-else-if="column.dataIndex === 'step'">
+                            <a-tooltip :title="record.step_name || '—'">
+      <span v-if="record.step_code || record.step_name">
+        <strong v-if="record.step_code">B{{ record.step_code }}</strong>
+        <span v-if="record.step_code && record.step_name"> - </span>
+        <span>{{ record.step_name || '—' }}</span>
+      </span>
+                                <span v-else>—</span>
+                            </a-tooltip>
+                        </template>
+
+                        <!-- 🆕 Cột Phê duyệt -->
+                        <template v-else-if="column.dataIndex === 'approval'">
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+                                <a-tag :color="record.approval_status === 'approved' ? 'green'
+                      : record.approval_status === 'pending' ? 'orange'
+                      : 'default'">
+                                    {{
+                                        record.approval_status === 'approved' ? 'Đã duyệt'
+                                            : record.approval_status === 'pending' ? 'Chờ duyệt'
+                                                : (record.approval_status || '—')
+                                    }}
+                                </a-tag>
+                                <small v-if="record.approval_steps">
+                                    Cấp {{ record.current_level || 0 }}/{{ record.approval_steps }}
+                                </small>
+                            </div>
+                        </template>
+
+                        <!-- 🆕 Người đề nghị / Người tạo -->
+                        <template v-else-if="column.dataIndex === 'proposed_by'">
+                            <a-tooltip :title="getUserName(record.proposed_by) || '—'">
+                                <a-avatar :style="{ backgroundColor: getAvatarColor(getUserName(record.proposed_by)) }"
+                                          size="small">
+                                    {{ getFirstLetter(getUserName(record.proposed_by)) }}
+                                </a-avatar>
+                            </a-tooltip>
+                        </template>
+                        <template v-else-if="column.dataIndex === 'created_by'">
+                            <a-tooltip :title="getUserName(record.created_by) || '—'">
+                                <a-avatar :style="{ backgroundColor: getAvatarColor(getUserName(record.created_by)) }"
+                                          size="small">
+                                    {{ getFirstLetter(getUserName(record.created_by)) }}
+                                </a-avatar>
+                            </a-tooltip>
+                        </template>
+
+                        <!-- 🆕 Hạn: thêm tooltip lý do quá hạn -->
+                        <template v-else-if="column.dataIndex === 'deadline'">
+                            <a-tooltip v-if="record.days_overdue > 0" :title="record.overdue_reason || 'Chưa có lý do'">
+                                <a-tag color="error" style="cursor:pointer;">
+                                    Quá hạn {{ record.days_overdue }} ngày
+                                </a-tag>
+                            </a-tooltip>
+                            <a-tag v-else-if="record.days_remaining > 0" color="green">
+                                Còn {{ record.days_remaining }} ngày
+                            </a-tag>
+                            <a-tag v-else-if="record.days_remaining === 0" :color="'#faad14'">
+                                Hạn chót hôm nay
+                            </a-tag>
+                            <a-tag v-else>—</a-tag>
+                        </template>
+
+                        <!-- 🆕 Bình luận -->
+                        <template v-else-if="column.dataIndex === 'comments_count'">
+                            <span>{{ Number(record.comments_count || 0) }}</span>
+                        </template>
+
+                        <!-- 🆕 Loại (Subtask?) -->
+                        <template v-else-if="column.dataIndex === 'is_subtask'">
+                            <a-tag v-if="record.is_subtask" color="purple">Subtask</a-tag>
+                            <span v-else>—</span>
                         </template>
                     </template>
                 </a-table>
@@ -300,10 +474,10 @@
                         size="small"
                     />
                 </div>
-                <a-table 
-                    :columns="drawerColumns" 
-                    :dataSource="paginatedTasks" 
-                    rowKey="id" 
+                <a-table
+                    :columns="drawerColumns"
+                    :dataSource="paginatedTasks"
+                    rowKey="id"
                     size="small"
                     bordered
                     :scroll="{ x: 'max-content'}"
@@ -322,10 +496,12 @@
                             </a-tag>
                         </template>
                         <template v-else-if="column.dataIndex === 'title'">
-                            <a-tooltip :title="record.title" placement="top" :overlayStyle="{ maxWidth: '360px' }" :overlayInnerStyle="{ whiteSpace: 'pre-line' }">
-                            <router-link :to="`/internal-tasks/${record.id}/info`" style="color:#1890ff; display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                                {{ record.title }}
-                            </router-link>
+                            <a-tooltip :title="record.title" placement="top" :overlayStyle="{ maxWidth: '360px' }"
+                                       :overlayInnerStyle="{ whiteSpace: 'pre-line' }">
+                                <router-link :to="`/internal-tasks/${record.id}/info`"
+                                             style="color:#1890ff; display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                    {{ record.title }}
+                                </router-link>
                             </a-tooltip>
                         </template>
 
@@ -351,36 +527,46 @@
                             <a-tooltip placement="top" :overlayStyle="{ maxWidth: '300px' }">
                                 <template #title>
                                     <div style="text-align: center; padding: 8px;">
-                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }" size="large" style="margin-bottom: 8px;">
+                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
+                                                  size="large" style="margin-bottom: 8px;">
                                             {{ getFirstLetter(record.assignee?.name) }}
                                         </a-avatar>
                                         <div style="font-weight: bold; color: white;">{{ record.assignee?.name }}</div>
                                     </div>
                                 </template>
                                 <div style="display: flex; justify-content: center; align-items: center;">
-                                    <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }" size="small">
+                                    <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
+                                              size="small">
                                         {{ getFirstLetter(record.assignee?.name) }}
                                     </a-avatar>
                                 </div>
                             </a-tooltip>
                         </template>
-                                <template v-else-if="column.dataIndex === 'create_by'">
-                                <a-tooltip placement="top" :overlayStyle="{ maxWidth: '400px', wordWrap: 'break-word', whiteSpace: 'normal' }">
-                                    <template #title>
-                                        <div style="text-align: center; padding: 12px; min-width: 200px;">
-                                            <a-avatar :style="{ backgroundColor: getAvatarColor(getUserById(record.create_by)) }" size="large" style="margin-bottom: 12px;">
-                                                {{ getFirstLetter(getUserById(record.create_by)) }}
-                                            </a-avatar>
-                                            <div style="font-weight: bold; color: white; word-wrap: break-word; white-space: normal; line-height: 1.4;">{{ getUserById(record.create_by) }}</div>
-                                        </div>
-                                    </template>
-                                    <div style="display: flex; justify-content: center; align-items: center;">
-                                        <a-avatar :style="{ backgroundColor: getAvatarColor(getUserById(record.create_by)) }" size="small">
+                        <template v-else-if="column.dataIndex === 'create_by'">
+                            <a-tooltip placement="top"
+                                       :overlayStyle="{ maxWidth: '400px', wordWrap: 'break-word', whiteSpace: 'normal' }">
+                                <template #title>
+                                    <div style="text-align: center; padding: 12px; min-width: 200px;">
+                                        <a-avatar
+                                            :style="{ backgroundColor: getAvatarColor(getUserById(record.create_by)) }"
+                                            size="large" style="margin-bottom: 12px;">
                                             {{ getFirstLetter(getUserById(record.create_by)) }}
                                         </a-avatar>
+                                        <div
+                                            style="font-weight: bold; color: white; word-wrap: break-word; white-space: normal; line-height: 1.4;">
+                                            {{ getUserById(record.create_by) }}
+                                        </div>
                                     </div>
-                                </a-tooltip>
-                            </template>
+                                </template>
+                                <div style="display: flex; justify-content: center; align-items: center;">
+                                    <a-avatar
+                                        :style="{ backgroundColor: getAvatarColor(getUserById(record.create_by)) }"
+                                        size="small">
+                                        {{ getFirstLetter(getUserById(record.create_by)) }}
+                                    </a-avatar>
+                                </div>
+                            </a-tooltip>
+                        </template>
                         <template v-else-if="column.dataIndex === 'start_date'">
                             {{ formatDate(record.start_date) }}
                         </template>
@@ -402,7 +588,7 @@
                 </a-table>
             </div>
             <div v-else class="no-tasks-drawer">
-                <a-empty :description="emptyMessage" />
+                <a-empty :description="emptyMessage"/>
             </div>
         </a-drawer>
 
@@ -429,8 +615,8 @@
                     />
                 </div>
                 <div style="margin-top: 20px;">
-                    <a-progress 
-                        :percent="newProgressValue" 
+                    <a-progress
+                        :percent="newProgressValue"
                         size="large"
                         :format="(percent) => `${percent}%`"
                         :stroke-width="30"
@@ -442,7 +628,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed, reactive } from 'vue'
+import {ref, onMounted, watch, computed, reactive} from 'vue'
 import {
     ClockCircleOutlined,
     FlagOutlined,
@@ -452,11 +638,11 @@ import {
     FieldTimeOutlined,   // ⟵ tuần
     CalendarOutlined     // ⟵ tháng
 } from '@ant-design/icons-vue'
-import { formatDate } from '@/utils/formUtils';
+import {formatDate} from '@/utils/formUtils';
 import PieChart from './PieChart.vue'
 import BarChart from './BarChart.vue'
-import { getTasks, updateTask } from '@/api/task'
-import { getUsers } from '@/api/user'
+import {getTasks, updateTask} from '@/api/task'
+import {getUsers} from '@/api/user'
 
 const props = defineProps({
     departmentId: [String, Number]
@@ -514,7 +700,7 @@ const onUrgentTableChange = (pagination) => {
 
 
 // weight cho ưu tiên
-const PRIORITY_WEIGHT = { high: 3, normal: 2, low: 1 }
+const PRIORITY_WEIGHT = {high: 3, normal: 2, low: 1}
 
 // Tất cả task, sắp xếp theo ưu tiên giảm dần
 const urgentTasks = computed(() => {
@@ -538,42 +724,9 @@ watch(() => urgentTasks.value.length, (len) => {
 })
 
 
-const columns = [
-    {
-        title: 'STT',
-        key: 'index',
-        width: 60,
-        align: 'center',
-        customRender: ({ index }) =>
-            (urgentPage.current - 1) * urgentPage.pageSize + index + 1,
-    },
-    { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
-    { title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee' },
-    { title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: 120, align: 'center' },
-    { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
-    { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority' },
-    {
-        title: 'Bắt đầu',
-        dataIndex: 'start_date',
-        key: 'start_date',
-        width: 120,
-        align: 'center',
-        customRender: ({ text }) => formatDate(text),
-        sorter: (a, b) => new Date(a.start_date) - new Date(b.start_date),
-    },
-    {
-        title: 'Kết thúc',
-        dataIndex: 'end_date',
-        key: 'end_date',
-        width: 120,
-        align: 'center',
-        customRender: ({ text }) => formatDate(text),
-        sorter: (a, b) => new Date(a.end_date) - new Date(b.end_date),
-    },
-    { title: 'Hạn', dataIndex: 'deadline', key: 'deadline' }
-]
 
-const drawerColumns = [
+// columnsBase: các cột bạn đã có
+const columnsBase = [
     {
         title: 'STT',
         key: 'index',
@@ -581,10 +734,115 @@ const drawerColumns = [
         align: 'center',
         customRender: ({ index }) => index + 1,
     },
-    { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
-    { title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee', width: 80, align: 'center' },
-    { title: 'Tiến trình', dataIndex: 'progress', key: 'progress', width: 120, align: 'center' },
-    { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', width: 100, align: 'center' },
+    { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 220, ellipsis: true },
+    { title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee', width: 120, align: 'center' },
+    { title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: 120, align: 'center' },
+    { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 120, align: 'center' },
+    { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', width: 110, align: 'center' },
+    { title: 'Bắt đầu', dataIndex: 'start_date', key: 'start_date', width: 120, align: 'center',
+        customRender: ({ text }) => formatDate(text) },
+    { title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 140, align: 'center' },
+];
+
+// columnsExtra: phần mở rộng đã thêm hôm trước
+const columnsExtra = [
+    { title: 'Công việc cha', dataIndex: 'parent', key: 'parent', width: 200, ellipsis: true },
+    { title: 'Liên kết', dataIndex: 'linked', key: 'linked', width: 220, ellipsis: true },
+    { title: 'Bước', dataIndex: 'step', key: 'step', width: 160, align: 'center', ellipsis: true },
+    { title: 'Phê duyệt', dataIndex: 'approval', key: 'approval', width: 180, align: 'center' },
+    { title: 'Đề nghị', dataIndex: 'proposed_by', key: 'proposed_by', width: 110, align: 'center' },
+    { title: 'Tạo bởi', dataIndex: 'created_by', key: 'created_by', width: 110, align: 'center' },
+    { title: 'Bình luận', dataIndex: 'comments_count', key: 'comments_count', width: 110, align: 'center' },
+    { title: 'Loại', dataIndex: 'is_subtask', key: 'is_subtask', width: 90, align: 'center' },
+    { title: 'Tạo lúc', dataIndex: 'created_at', key: 'created_at', width: 160, align: 'center',
+        customRender: ({ text }) => formatDate(text) },
+    { title: 'Cập nhật', dataIndex: 'updated_at', key: 'updated_at', width: 160, align: 'center',
+        customRender: ({ text }) => formatDate(text) },
+];
+
+// Dùng cho bảng “hết hạn 1 ngày tới”
+const columnsDueSoon = [...columnsBase, ...columnsExtra];
+
+
+
+const columns = [
+    {
+        title: 'STT',
+        key: 'index',
+        width: 60,
+        align: 'center',
+        customRender: ({index}) =>
+            (urgentPage.current - 1) * urgentPage.pageSize + index + 1,
+    },
+    {title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 220, ellipsis: true},
+
+    // 🆕 Cột công việc cha
+    {title: 'Công việc cha', dataIndex: 'parent', key: 'parent', width: 200, ellipsis: true},
+
+    // 🆕 Liên kết (loại + tên)
+    {title: 'Liên kết', dataIndex: 'linked', key: 'linked', width: 220, ellipsis: true},
+
+    // 🆕 Bước quy trình
+    {title: 'Bước', dataIndex: 'step', key: 'step', width: 160, ellipsis: true, align: 'center'},
+
+    // 🆕 Phê duyệt
+    {title: 'Phê duyệt', dataIndex: 'approval', key: 'approval', width: 180, align: 'center'},
+
+    // Cột sẵn có
+    {title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee', width: 120, align: 'center'},
+    {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: 120, align: 'center'},
+    {title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 120, align: 'center'},
+    {title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', width: 110, align: 'center'},
+
+    // 🆕 Người đề nghị / Người tạo
+    {title: 'Đề nghị', dataIndex: 'proposed_by', key: 'proposed_by', width: 110, align: 'center'},
+    {title: 'Tạo bởi', dataIndex: 'created_by', key: 'created_by', width: 110, align: 'center'},
+
+    // 🆕 Thời gian
+    {
+        title: 'Bắt đầu', dataIndex: 'start_date', key: 'start_date', width: 120, align: 'center',
+        customRender: ({text}) => formatDate(text),
+        sorter: (a, b) => new Date(a.start_date) - new Date(b.start_date)
+    },
+    {
+        title: 'Kết thúc', dataIndex: 'end_date', key: 'end_date', width: 120, align: 'center',
+        customRender: ({text}) => formatDate(text),
+        sorter: (a, b) => new Date(a.end_date) - new Date(b.end_date)
+    },
+
+    // 🆕 Hạn (kèm tooltip lý do quá hạn)
+    {title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 140, align: 'center'},
+
+    // 🆕 Bình luận
+    {title: 'Bình luận', dataIndex: 'comments_count', key: 'comments_count', width: 110, align: 'center'},
+
+    // 🆕 Dấu hiệu Subtask
+    {title: 'Loại', dataIndex: 'is_subtask', key: 'is_subtask', width: 90, align: 'center'},
+
+    // 🆕 Tạo/Cập nhật
+    {
+        title: 'Tạo lúc', dataIndex: 'created_at', key: 'created_at', width: 160, align: 'center',
+        customRender: ({text}) => formatDate(text)
+    },
+    {
+        title: 'Cập nhật', dataIndex: 'updated_at', key: 'updated_at', width: 160, align: 'center',
+        customRender: ({text}) => formatDate(text)
+    },
+]
+
+
+const drawerColumns = [
+    {
+        title: 'STT',
+        key: 'index',
+        width: 60,
+        align: 'center',
+        customRender: ({index}) => index + 1,
+    },
+    {title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 200, ellipsis: true},
+    {title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee', width: 80, align: 'center'},
+    {title: 'Tiến trình', dataIndex: 'progress', key: 'progress', width: 120, align: 'center'},
+    {title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', width: 100, align: 'center'},
 
     {
         title: 'Bắt đầu',
@@ -592,7 +850,7 @@ const drawerColumns = [
         key: 'start_date',
         width: 120,
         align: 'center',
-        customRender: ({ text }) => formatDate(text),
+        customRender: ({text}) => formatDate(text),
         sorter: (a, b) => new Date(a.start_date) - new Date(b.start_date),
     },
     {
@@ -601,11 +859,11 @@ const drawerColumns = [
         key: 'end_date',
         width: 120,
         align: 'center',
-        customRender: ({ text }) => formatDate(text),
+        customRender: ({text}) => formatDate(text),
         sorter: (a, b) => new Date(a.end_date) - new Date(b.end_date),
     },
-    { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 120, align: 'center' },
-    { title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 120, align: 'center' }
+    {title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 120, align: 'center'},
+    {title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 120, align: 'center'}
 ]
 
 const loadTasks = async () => {
@@ -614,7 +872,7 @@ const loadTasks = async () => {
     try {
         // Load tasks and users in parallel for faster performance
         const [tasksRes, usersRes] = await Promise.all([
-            getTasks({ id_department: props.departmentId, per_page: 100 }),
+            getTasks({id_department: props.departmentId, per_page: 100}),
             getUsers()
         ])
 
@@ -640,7 +898,7 @@ const loadTasks = async () => {
     }
 }
 
-const getUserName = (userId) => {    
+const getUserName = (userId) => {
     if (!userId || !users.value.length) return 'N/A'
     const user = users.value.find(u => u.id === userId)
     return user ? user.name : 'N/A'
@@ -666,9 +924,9 @@ const updateStats = (data) => {
 
     // tháng hiện tại
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
-    const monthEnd   = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-    monthStart.setHours(0,0,0,0)
-    monthEnd.setHours(23,59,59,999)
+    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    monthStart.setHours(0, 0, 0, 0)
+    monthEnd.setHours(23, 59, 59, 999)
 
     const isInRange = (d, start, end) => d && d >= start && d <= end
 
@@ -746,55 +1004,73 @@ const getThisWeekRange = () => {
     const today = new Date()
     const monday = new Date(today)
     monday.setDate(today.getDate() - ((today.getDay() + 6) % 7))
-    monday.setHours(0,0,0,0)
+    monday.setHours(0, 0, 0, 0)
     const sunday = new Date(monday)
     sunday.setDate(monday.getDate() + 6)
-    sunday.setHours(23,59,59,999)
-    return { start: monday, end: sunday }
+    sunday.setHours(23, 59, 59, 999)
+    return {start: monday, end: sunday}
 }
 
 const getThisMonthRange = () => {
     const today = new Date()
     const start = new Date(today.getFullYear(), today.getMonth(), 1)
-    const end   = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-    start.setHours(0,0,0,0)
-    end.setHours(23,59,59,999)
-    return { start, end }
+    const end = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    start.setHours(0, 0, 0, 0)
+    end.setHours(23, 59, 59, 999)
+    return {start, end}
 }
 
 
 const getTaskStatusText = (status) => {
     switch (status) {
-        case 'todo': return 'Chưa làm'
-        case 'doing': return 'Đang triển khai'
-        case 'done': return 'Đã hoàn thành'
-        case 'overdue': return 'Quá hạn'
-        default: return 'Không xác định'
+        case 'todo':
+            return 'Chưa làm'
+        case 'doing':
+            return 'Đang triển khai'
+        case 'done':
+            return 'Đã hoàn thành'
+        case 'overdue':
+            return 'Quá hạn'
+        default:
+            return 'Không xác định'
     }
 }
 const getStatusColor = (status) => {
     switch (status) {
-        case 'todo': return 'default'
-        case 'doing': return 'processing'
-        case 'done': return 'success'
-        case 'overdue': return 'error'
-        default: return 'default'
+        case 'todo':
+            return 'default'
+        case 'doing':
+            return 'processing'
+        case 'done':
+            return 'success'
+        case 'overdue':
+            return 'error'
+        default:
+            return 'default'
     }
 }
 const getPriorityText = (priority) => {
     switch (priority) {
-        case 'high': return 'Cao'
-        case 'normal': return 'Bình thường'
-        case 'low': return 'Thấp'
-        default: return 'Không xác định'
+        case 'high':
+            return 'Cao'
+        case 'normal':
+            return 'Bình thường'
+        case 'low':
+            return 'Thấp'
+        default:
+            return 'Không xác định'
     }
 }
 const getPriorityColor = (priority) => {
     switch (priority) {
-        case 'high': return 'red'
-        case 'normal': return 'orange'
-        case 'low': return 'blue'
-        default: return 'default'
+        case 'high':
+            return 'red'
+        case 'normal':
+            return 'orange'
+        case 'low':
+            return 'blue'
+        default:
+            return 'default'
     }
 }
 
@@ -815,12 +1091,12 @@ const getAvatarColor = (name) => {
     if (!name || name === 'N/A') return '#d9d9d9'
 
     const colors = [
-        '#f5222d', '#fa8c16', '#fadb14', '#52c41a', 
+        '#f5222d', '#fa8c16', '#fadb14', '#52c41a',
         '#13c2c2', '#1890ff', '#722ed1', '#eb2f96',
         '#fa541c', '#faad14', '#a0d911', '#52c41a',
         '#13c2c2', '#1890ff', '#722ed1', '#eb2f96'
     ]
-    
+
     // Simple hash function to get consistent color for same name
     let hash = 0
     for (let i = 0; i < name.length; i++) {
@@ -840,7 +1116,7 @@ const filterStrategies = {
         }
     },
     week: () => {
-        const { start, end } = getThisWeekRange()
+        const {start, end} = getThisWeekRange()
         return {
             title: 'Công việc trong tuần này',
             message: 'Không có nhiệm vụ nào trong tuần này.',
@@ -848,7 +1124,7 @@ const filterStrategies = {
         }
     },
     month: () => {
-        const { start, end } = getThisMonthRange()
+        const {start, end} = getThisMonthRange()
         return {
             title: 'Công việc trong tháng này',
             message: 'Không có nhiệm vụ nào trong tháng này.',
@@ -876,7 +1152,7 @@ const filterStrategies = {
 const handleCardClick = (item) => {
     const strategy = filterStrategies[item.key]
     if (strategy) {
-        const { title, message, data } = strategy()
+        const {title, message, data} = strategy()
         filteredTasks.value = data
         drawerTitle.value = title
         emptyMessage.value = message
@@ -897,20 +1173,20 @@ const updateProgress = async () => {
     if (!selectedTask.value) return;
     progressUpdating.value = true;
     try {
-        await updateTask(selectedTask.value.id, { progress: newProgressValue.value });
-        
+        await updateTask(selectedTask.value.id, {progress: newProgressValue.value});
+
         // Cập nhật trực tiếp trong bảng thay vì reload
         const taskToUpdate = tasks.value.find(t => t.id === selectedTask.value.id);
         if (taskToUpdate) {
             taskToUpdate.progress = newProgressValue.value;
         }
-        
+
         // Cập nhật trong filteredTasks nếu có
         const filteredTaskToUpdate = filteredTasks.value.find(t => t.id === selectedTask.value.id);
         if (filteredTaskToUpdate) {
             filteredTaskToUpdate.progress = newProgressValue.value;
         }
-        
+
         // Close modal and reset values
         progressModalVisible.value = false;
         selectedTask.value = null;
@@ -943,6 +1219,7 @@ watch(() => filteredTasks.value, () => {
     gap: 24px;
     margin-top: 32px;
 }
+
 .chart-box {
     flex: 1;
     min-width: 400px;
@@ -1006,11 +1283,11 @@ watch(() => filteredTasks.value, () => {
         flex: none;
         height: 350px;
     }
-    
+
     .table-section .ant-table-wrapper {
         min-height: 250px;
     }
-    
+
     .table-section .ant-table-tbody {
         min-height: 210px;
     }
@@ -1023,6 +1300,7 @@ watch(() => filteredTasks.value, () => {
     gap: 16px;
     margin-bottom: 24px;
 }
+
 .summary-cards .ant-card {
     flex: 1;
     min-width: 200px;

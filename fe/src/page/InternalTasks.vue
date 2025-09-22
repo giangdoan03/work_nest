@@ -738,25 +738,25 @@ onMounted(() => {
 }
 
 .custom_table_list_task table tr td {
-    font-size: 13px !important;
+    font-size: 14px !important;
 }
 
 table tr td a {
-    font-size: 13px !important;
+    font-size: 14px !important;
 }
 
 table tr td span {
-    font-size: 13px !important;
+    font-size: 14px !important;
 }
 
 table .ant-progress-small {
-    font-size: 13px !important;
+    font-size: 14px !important;
 }
 
 table .ant-table-thead > tr > th {
     color: #83868c !important;
     font-weight: 400 !important;
-    font-size: 12px !important;
+    font-size: 14px !important;
 }
 </style>
 

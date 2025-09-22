@@ -99,9 +99,7 @@
                                                             <router-link :to="getLinkedRoute(task)"
                                                                          class="ellipsis-text"
                                                                          style="color: #096dd9; text-decoration: none">
-                                                                <span v-if="task.step_code">B{{
-                                                                        task.step_code
-                                                                    }} - </span>{{ task.step_title }}
+                                                                <span v-if="task.step_code">B{{task.step_code }} - </span>{{ task.step_title }}
                                                             </router-link>
                                                         </a-tooltip>
                                                     </td>
@@ -109,8 +107,7 @@
                                                     <!-- Các ô còn lại -->
                                                     <td class="task-cell" style="border-left: 1px solid #e0e0e0">
                                                         <a-tooltip :title="task.title" v-if="task.title">
-                                                            <router-link :to="`/internal-tasks/${task.id}/info`"
-                                                                         class="ellipsis-text" style="color: #1890ff">
+                                                            <router-link :to="taskDetailRoute(task)" class="ellipsis-text" style="color:#1890ff">
                                                                 {{ task.title }}
                                                             </router-link>
                                                         </a-tooltip>
@@ -680,6 +677,30 @@ const getStatusColor = (status) => {
     }
 };
 
+// Link tới trang chi tiết nhiệm vụ — vẫn render TaskDetail
+const taskDetailRoute = (task) => {
+    // Nếu sau này bạn truyền được step_id & bid/contract id, có thể ưu tiên nested route:
+    // if (task.linked_type === 'bidding' && task.linked_id && task.step_id) {
+    //   return { name: 'bidding-task-info-in-step', params: { bidId: task.linked_id, stepId: task.step_id, id: task.id } }
+    // }
+
+    // Hiện tại dùng các route phẳng sẵn có:
+    switch (task?.linked_type) {
+        case 'bidding':
+            // /workflow/bidding-tasks/:id/info
+            return { name: 'workflow-bidding-tasks', params: { id: task.id } }
+        case 'contract':
+            // /contract-tasks/:id/info
+            return { name: 'contract-task-info', params: { id: task.id } }
+        default:
+            // Route bạn mới thêm cho nhiệm vụ phòng: /department-task/:id/info
+            return { name: 'department-task-detail', params: { id: task.id } }
+        // Nếu bạn muốn non-workflow thay vì department-task:
+        // return { name: 'tasks-detail', params: { id: task.id } }
+    }
+}
+
+
 
 onMounted(fetchOverview);
 </script>
@@ -709,7 +730,7 @@ onMounted(fetchOverview);
     font-weight: 600;
     color: #333;
     padding: 8px 10px;
-    font-size: 10px;
+    font-size: 14px;
 }
 
 .custom-table td {
@@ -767,7 +788,7 @@ onMounted(fetchOverview);
     padding: 2px 8px;
     border-radius: 10px;
     font-weight: 500;
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .progress-badge {
@@ -877,20 +898,20 @@ onMounted(fetchOverview);
 }
 
 td a, td, td span {
-    font-size: 10px;
+    font-size: 14px;
 }
 
 td span {
-    font-size: 10px;
+    font-size: 14px;
 }
 </style>
 
 <style scoped>
 table tr td span {
-    font-size: 10px !important;
+    font-size: 14px !important;
 }
 
 table tr td a {
-    font-size: 10px !important;
+    font-size: 14px !important;
 }
 </style>

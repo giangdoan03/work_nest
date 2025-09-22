@@ -172,7 +172,7 @@ const reloadPage = () => {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .forgot-password {
