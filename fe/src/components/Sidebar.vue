@@ -62,19 +62,6 @@
                     <span class="menu-text">Hợp đồng</span>
                 </div>
 
-                <!-- 4. Việc không quy trình -->
-                <a-tooltip placement="right" title="Việc không quy trình" v-if="collapsed">
-                    <div class="menu-item" :class="{ active: isTaskActive }" @click="navigateTo('/non-workflow')">
-                        <UnorderedListOutlined/>
-                        <div class="menu-text-collapsed">Việc không quy trình</div>
-                    </div>
-                </a-tooltip>
-                <div v-else class="menu-item" :class="{ active: isTaskActive }" @click="navigateTo('/non-workflow')">
-                    <UnorderedListOutlined/>
-                    <span class="menu-text">Việc không quy trình</span>
-                </div>
-
-
                 <!-- 7. Quản lý dữ liệu công việc (Việc quy trình) -->
                 <a-tooltip placement="right" title="Việc quy trình" v-if="collapsed">
                     <div class="menu-item" :class="{ active: isInternalTaskActive }" @click="navigateTo('/workflow')">
@@ -86,6 +73,19 @@
                      @click="navigateTo('/workflow')">
                     <ProjectOutlined/>
                     <span class="menu-text">Việc quy trình</span>
+                </div>
+
+
+                <!-- 4. Việc không quy trình -->
+                <a-tooltip placement="right" title="Việc không quy trình" v-if="collapsed">
+                    <div class="menu-item" :class="{ active: isTaskActive }" @click="navigateTo('/non-workflow')">
+                        <UnorderedListOutlined/>
+                        <div class="menu-text-collapsed">Việc không quy trình</div>
+                    </div>
+                </a-tooltip>
+                <div v-else class="menu-item" :class="{ active: isTaskActive }" @click="navigateTo('/non-workflow')">
+                    <UnorderedListOutlined/>
+                    <span class="menu-text">Việc không quy trình</span>
                 </div>
 
                 <!-- 5. Công việc cá nhân -->
