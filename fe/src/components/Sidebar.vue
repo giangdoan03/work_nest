@@ -283,73 +283,32 @@
                 v-model:open="topDrawerOpen"
                 title="Menu nhanh"
                 placement="left"
-                width="400"
+                width="420"
             >
-                <div class="quick-menu">
-                    <!-- Ví dụ các mục bạn đã có -->
-                    <div class="quick-item" @click="navAndClose('/project-overview')">
-                        <div class="icon-box blue"><GlobalOutlined /></div>
-                        <span>Tổng quan</span>
-                    </div>
+                <div class="quick-menu grouped">
+                    <section v-for="group in quickGroups" :key="group.key" class="quick-group">
+                        <div class="quick-group-header">
+                            <h4 class="quick-group-title">{{ group.title }}</h4>
+                            <span class="quick-group-count">{{ group.items.length }}</span>
+                        </div>
 
-                    <div class="quick-item" @click="navAndClose('/tasks')">
-                        <div class="icon-box green"><CheckCircleOutlined /></div>
-                        <span>Công việc</span>
-                    </div>
-
-                    <div class="quick-item" @click="navAndClose('/bid-list')">
-                        <div class="icon-box orange"><WalletOutlined /></div>
-                        <span>Gói thầu</span>
-                    </div>
-
-                    <div class="quick-item" @click="navAndClose('/workflow')">
-                        <div class="icon-box purple"><AppstoreOutlined /></div>
-                        <span>Việc quy trình</span>
-                    </div>
-
-                    <div class="quick-item" @click="navAndClose('/documents/my')">
-                        <div class="icon-box red"><BookOutlined /></div>
-                        <span>Tài liệu</span>
-                    </div>
-
-                    <!-- ====== CÁC MỤC BẠN MUỐN ĐƯA THÊM VÀO ====== -->
-                    <div class="quick-item" @click="navAndClose('/customers')">
-                        <div class="icon-box sky"><TeamOutlined /></div>
-                        <span>Khách hàng</span>
-                    </div>
-
-                    <div class="quick-item" @click="navAndClose('/departments')">
-                        <div class="icon-box blue"><ApartmentOutlined /></div>
-                        <span>Phòng ban</span>
-                    </div>
-
-                    <div class="quick-item" @click="navAndClose('/user-management')">
-                        <div class="icon-box green"><TeamOutlined /></div>
-                        <span>Quản lý người dùng</span>
-                    </div>
-
-                    <!-- Có thể tách nhóm "Cấu hình" thành 2 ô riêng -->
-                    <div class="quick-item" @click="navAndClose('/settings/bidding')">
-                        <div class="icon-box orange"><FileDoneOutlined /></div>
-                        <span>Cấu hình đấu thầu</span>
-                    </div>
-
-                    <div class="quick-item" @click="navAndClose('/settings/contract')">
-                        <div class="icon-box purple"><ProfileOutlined /></div>
-                        <span>Cấu hình hợp đồng</span>
-                    </div>
-                    <!-- =========================================== -->
-
-                    <!-- Ví dụ vài mục khác (nếu cần) -->
-                    <div class="quick-item" @click="navAndClose('/calendar')">
-                        <div class="icon-box pink"><CalendarOutlined /></div>
-                        <span>Lịch biểu</span>
-                    </div>
-
-                    <div class="quick-item" @click="navAndClose('/reports')">
-                        <div class="icon-box orange"><FileTextOutlined /></div>
-                        <span>Văn bản</span>
-                    </div>
+                        <div class="quick-grid">
+                            <div
+                                v-for="item in group.items"
+                                :key="item.path"
+                                class="quick-item"
+                                @click="navAndClose(item.path)"
+                                role="button"
+                                tabindex="0"
+                                @keyup.enter="navAndClose(item.path)"
+                            >
+                                <div class="icon-box" :class="item.color">
+                                    <component :is="item.icon" />
+                                </div>
+                                <span>{{ item.label }}</span>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </a-drawer>
 
@@ -476,6 +435,41 @@
         topDrawerOpen.value = false
         router.push(path)
     }
+    const quickGroups = [
+        {
+            key: 'work',
+            title: 'Công việc',
+            items: [
+                { path: '/project-overview', icon: GlobalOutlined,      color: 'blue',   label: 'Tổng quan' },
+                { path: '/tasks',            icon: CheckCircleOutlined, color: 'green',  label: 'Công việc' },
+                { path: '/bid-list',         icon: WalletOutlined,      color: 'orange', label: 'Gói thầu' },
+                { path: '/workflow',         icon: AppstoreOutlined,    color: 'purple', label: 'Việc quy trình' },
+                { path: '/documents/my',     icon: BookOutlined,        color: 'red',    label: 'Tài liệu' },
+            ],
+        },
+        {
+            key: 'settings',
+            title: 'Cài đặt',
+            items: [
+                { path: '/departments',      icon: ApartmentOutlined,   color: 'blue',   label: 'Phòng ban' },
+                { path: '/user-management',  icon: TeamOutlined,        color: 'green',  label: 'Quản lý người dùng' },
+                { path: '/settings/bidding', icon: FileDoneOutlined,    color: 'orange', label: 'Cấu hình đấu thầu' },
+                { path: '/settings/contract',icon: ProfileOutlined,     color: 'purple', label: 'Cấu hình hợp đồng' },
+            ],
+        },
+        {
+            key: 'extensions',
+            title: 'Mở rộng',
+            items: [
+                { path: '/customers',        icon: TeamOutlined,        color: 'sky',    label: 'Khách hàng' },
+                { path: '/calendar',         icon: CalendarOutlined,    color: 'pink',   label: 'Lịch biểu' },
+                { path: '/reports',          icon: FileTextOutlined,    color: 'orange', label: 'Văn bản' },
+            ],
+        },
+    ]
+
+
+
     </script>
 
 
@@ -993,5 +987,78 @@
     .menu-top-icon .menu-text {
         font-size: 12px;
     }
+
+
+    /* Nhóm & tiêu đề */
+    .quick-menu.grouped {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 12px 16px 20px;
+    }
+
+    .quick-group {
+        background: #fff;
+        border: 1px solid #f0f0f0;
+        border-radius: 12px;
+        padding: 12px 12px 16px;
+    }
+
+    .quick-group-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 4px 6px 10px;
+        border-bottom: 1px dashed #e8e8e8;
+        margin-bottom: 12px;
+    }
+
+    .quick-group-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1f1f1f;
+        margin: 0;
+    }
+
+    .quick-group-count {
+        font-size: 12px;
+        color: #595959;
+        background: #f5f5f5;
+        border-radius: 999px;
+        padding: 2px 8px;
+    }
+
+    /* Lưới item trong từng nhóm */
+    .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px 18px;
+    }
+
+    /* Tái sử dụng .quick-item và .icon-box sẵn có */
+    .quick-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        transition: transform 0.2s, color 0.2s;
+    }
+
+    .quick-item:hover {
+        transform: translateY(-4px);
+    }
+
+    .quick-item span {
+        font-size: 13px;
+        color: #333;
+        text-align: center;
+    }
+
+    /* Nếu muốn responsive ba cột -> hai cột khi hẹp */
+    @media (max-width: 420px) {
+        .quick-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
 
     </style>
