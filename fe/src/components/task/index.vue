@@ -53,9 +53,7 @@
                                                     <a-row :gutter="16">
                                                         <a-col :span="12">
                                                             <a-form-item label="Tên công việc" name="title">
-                                                                <a-typography-text v-if="!isEditMode">{{
-                                                                        formData.title
-                                                                    }}
+                                                                <a-typography-text v-if="!isEditMode">{{formData.title }}
                                                                 </a-typography-text>
                                                                 <a-input v-else v-model:value="formData.title"
                                                                          placeholder="Nhập tên nhiệm vụ"/>
@@ -79,9 +77,7 @@
                                                                         :title="formData.parent_title || ('#' + formData.parent_id)">
                                                                         <a-typography-link
                                                                             @click="goTaskByParentId(formData.parent_id)">
-                                                                            {{
-                                                                                formData.parent_title || ('#' + formData.parent_id)
-                                                                            }}
+                                                                            {{formData.parent_title || ('#' + formData.parent_id) }}
                                                                         </a-typography-link>
                                                                     </a-tooltip>
                                                                 </template>
@@ -93,10 +89,8 @@
                                                         </a-col>
                                                         <!-- ================== BIDDING ================== -->
                                                         <a-col :span="12" v-if="formData.linked_type === 'bidding'">
-                                                            <a-form-item label="Liên kết gói thầu" name="linked_id">
-                                                                <a-typography-text v-if="!isEditMode">{{
-                                                                        linkedName
-                                                                    }}
+                                                            <a-form-item label="Gói thầu" name="linked_id">
+                                                                <a-typography-text v-if="!isEditMode">{{linkedName}}
                                                                 </a-typography-text>
                                                                 <a-select
                                                                     v-else
@@ -163,9 +157,7 @@
                                                             <a-form-item label="Thời gian" name="time">
                                                                 <template v-if="!isEditMode">
                                                                     <a-typography-text>
-                                                                        {{
-                                                                            (formatDate(formData.start_date) || "Trống") + " → " + (formatDate(formData.end_date) || "Trống")
-                                                                        }}
+                                                                        {{(formatDate(formData.start_date) || "Trống") + " → " + (formatDate(formData.end_date) || "Trống") }}
                                                                     </a-typography-text>
                                                                 </template>
                                                                 <template v-else>
@@ -207,9 +199,7 @@
                                                                        :color="checkPriority(formData.priority).color">
                                                                     {{ checkPriority(formData.priority).label }}
                                                                 </a-tag>
-                                                                <a-select v-else v-model:value="formData.priority"
-                                                                          :options="priorityOption"
-                                                                          placeholder="Chọn độ ưu tiên"/>
+                                                                <a-select v-else v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên"/>
                                                             </a-form-item>
                                                         </a-col>
 
@@ -236,9 +226,7 @@
                                                             <a-form-item label="Phê duyệt" name="approval_status">
                                                                 <a-tag
                                                                     :color="formData.approval_status === 'approved' ? 'green' : 'orange'">
-                                                                    {{
-                                                                        formData.approval_status === 'approved' ? 'Đã duyệt' : 'Chưa duyệt'
-                                                                    }}
+                                                                    {{formData.approval_status === 'approved' ? 'Đã duyệt' : 'Chưa duyệt' }}
                                                                 </a-tag>
                                                             </a-form-item>
                                                         </a-col>
