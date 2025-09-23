@@ -73,7 +73,7 @@
                                                             </a-form-item>
                                                         </a-col>
                                                         <a-col :span="24">
-                                                            <a-form-item label="Công việc cha xxx">
+                                                            <a-form-item label="Công việc cha">
                                                                 <template v-if="formData.parent_id">
                                                                     <a-tooltip
                                                                         :title="formData.parent_title || ('#' + formData.parent_id)">
