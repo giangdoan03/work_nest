@@ -36,7 +36,8 @@ import Sidebar from './Sidebar.vue'
 import Header from './Header.vue'
 import Content from './Content.vue'
 
-const collapsed = ref(false)
+// const collapsed = ref(false)
+const collapsed = ref(true)
 const selectedKeys = ref(['1'])
 const userStore = useUserStore()
 const { user } = storeToRefs(userStore)
@@ -54,7 +55,8 @@ onMounted(() => {
 
 // Toggle menu
 const toggleCollapsed = () => {
-    collapsed.value = !collapsed.value
+    // collapsed.value = !collapsed.value
+    collapsed.value = true
     // Save to localStorage
     localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed.value))
 }

@@ -904,6 +904,28 @@ td a, td, td span {
 td span {
     font-size: 14px;
 }
+
+/* Dán trong <style scoped> của component */
+.custom-overview :deep(.ant-tabs-top > .ant-tabs-nav) {
+    position: sticky;
+    top: var(--app-header-h, 0px); /* chỉnh offset nếu có header cố định */
+    z-index: 15;
+    background: #fff;
+    /* Optional làm đẹp dải tab khi dính trên cùng */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    /* Nếu muốn tab full-width theo padding của Card body: */
+    margin: 0 -24px;
+    padding: 8px 24px;
+    margin-bottom: 15px;
+    border-top: 1px solid #f0f0f0;
+}
+
+
+
+/* Nếu dùng Ant Layout có header 64px thì đặt biến này ở global CSS */
+:root { --app-header-h: 64px; }
+
+/* Nếu không có header cố định thì chỉ cần top: 0; là đủ */
 </style>
 
 <style scoped>
@@ -913,5 +935,13 @@ table tr td span {
 
 table tr td a {
     font-size: 14px !important;
+}
+</style>
+<style>
+.custom-overview .ant-card-body {
+    padding-top: 0 !important;
+}
+.custom-overview .summary-card .ant-card-body {
+    padding-top: 15px !important;
 }
 </style>

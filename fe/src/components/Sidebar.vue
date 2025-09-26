@@ -281,12 +281,25 @@
 
             <a-drawer
                 v-model:open="topDrawerOpen"
-                title="Menu nhanh"
                 placement="left"
                 width="420"
+                :closable="false"
             >
+                <!-- custom title -->
+                <template #title>
+                    <img
+                        :src="'/TTID_logo.png'"
+                        alt="Menu logo"
+                        style="height: 44px; object-fit: contain;"
+                    />
+                </template>
+
                 <div class="quick-menu grouped">
-                    <section v-for="group in quickGroups" :key="group.key" class="quick-group">
+                    <section
+                        v-for="group in quickGroups"
+                        :key="group.key"
+                        class="quick-group"
+                    >
                         <div class="quick-group-header">
                             <h4 class="quick-group-title">{{ group.title }}</h4>
                             <span class="quick-group-count">{{ group.items.length }}</span>
@@ -1050,7 +1063,7 @@
     }
 
     .quick-item span {
-        font-size: 13px;
+        font-size: 14px;
         color: #333;
         text-align: center;
     }

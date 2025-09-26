@@ -4,12 +4,12 @@
             style="background:#fff; padding:0; display:flex; justify-content:space-between; align-items:center;"
         >
             <!-- Toggle -->
-            <div style="margin-left:16px;">
-                <a-button type="text" @click="$emit('toggle')" style="border:none; box-shadow:none;">
-                    <MenuFoldOutlined v-if="!collapsed"/>
-                    <MenuUnfoldOutlined v-else/>
-                </a-button>
-            </div>
+<!--            <div style="margin-left:16px;">-->
+<!--                <a-button type="text" @click="$emit('toggle')" style="border:none; box-shadow:none;">-->
+<!--                    <MenuFoldOutlined v-if="!collapsed"/>-->
+<!--                    <MenuUnfoldOutlined v-else/>-->
+<!--                </a-button>-->
+<!--            </div>-->
 
             <!-- Breadcrumb -->
             <div style="flex:1; margin-left:16px;">

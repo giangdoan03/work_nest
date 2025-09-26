@@ -55,7 +55,7 @@ const routes = [
                 path: '/project-overview',
                 name: 'project-overview',
                 component: ProjectOverview,
-                meta: { breadcrumb: 'Tổng quan dự án' }
+                meta: { breadcrumb: 'Tổng quan' }
             },
             { path: 'dashboard', name: 'dashboard', component: Dashboard, meta: { breadcrumb: 'Trang chủ' } },
 
