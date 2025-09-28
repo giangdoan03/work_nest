@@ -1,16 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '../stores/user'
-import { checkSession } from '../api/auth'
 
 // Components
 import LoginForm from '../components/LoginForm.vue'
 import Dashboard from '../components/Dashboard.vue'
 import Layout from '../components/Layout.vue'
-
 import UserInfo from '../components/UserInfo/index.vue'
-
 import UserPermissionManager from '../components/UserPermissionManager.vue'
-
 import DepartmentList from '../page/DepartmentList.vue'
 import UserManagement from '../page/UserManagement.vue'
 import InternalTasks from '../page/InternalTasks.vue'
@@ -26,15 +22,13 @@ import ContractsStepTemplateList from '../page/ContractsStepTemplateList.vue'
 import BidList from '../page/BidList.vue'
 import BidDetail from '../page/BidDetail.vue'
 import CustomerDetail from '../page/CustomerDetail.vue'
-import ContractDetail from '../page/ContractDetail.vue' // 👈 đảm bảo file này tồn tại
-import UserDetail from '../page/UserDetail.vue' // 👈 đảm bảo file này tồn tại
-import MyTasks from '../page/MyTasks.vue' // 👈 đảm bảo file này tồn tại
-import ProjectOverview from '../page/ProjectOverview.vue' // 👈 đảm bảo file này tồn tại
+import ContractDetail from '../page/ContractDetail.vue'
+import UserDetail from '../page/UserDetail.vue'
+import MyTasks from '../page/MyTasks.vue'
+import ProjectOverview from '../page/ProjectOverview.vue'
 import GanttChart from '../page/GanttChart.vue'
-import Tasks from '../page/Tasks.vue'                // 👈 THÊM DÒNG NÀY
-import {getPermissionMatrix} from "@/api/permission.js";
-import Forbidden403 from "@/page/Forbidden403.vue";
-import BiddingStepTasks from "@/components/BiddingStepTask/BiddingStepTasks.vue"; // 👈 đảm bảo file này tồn tại
+import Tasks from '../page/Tasks.vue'
+import Forbidden403 from "@/page/Forbidden403.vue"
 
 const routes = [
     {
@@ -45,12 +39,15 @@ const routes = [
         path: '/',
         component: Layout,
         children: [
+            // Errors
             {
                 path: '/403',
                 name: 'forbidden',
                 component: Forbidden403,
                 meta: { breadcrumb: 'Không có quyền truy cập' }
             },
+
+            // Dashboard
             {
                 path: '/project-overview',
                 name: 'project-overview',
@@ -59,90 +56,19 @@ const routes = [
             },
             { path: 'dashboard', name: 'dashboard', component: Dashboard, meta: { breadcrumb: 'Trang chủ' } },
 
-            // user
+            // User
             { path: 'user/:id/info', name: 'persons-info', component: UserInfo, meta: { breadcrumb: 'Thông tin cá nhân' } },
-
-            {
-                path: '/users/:id',
-                name: 'UserDetail',
-                component: UserDetail,
-                meta: { breadcrumb: 'Thông tin cá nhân' },
-            },
-
-            {
-                path: '/users/:id',
-                name: 'user-detail',
-                component: UserDetail,
-                meta: { breadcrumb: 'Thông tin cá nhân' }
-            },
+            { path: '/users/:id', name: 'user-detail', component: UserDetail, meta: { breadcrumb: 'Thông tin cá nhân' } },
 
             // Permissions
             { path: 'permissions', name: 'permissions', component: UserPermissionManager, meta: { breadcrumb: 'Phân quyền' } },
-
-            // User Management
             { path: 'user-management', name: 'user-management', component: UserManagement, meta: { breadcrumb: 'Quản lý người dùng' } },
 
-            // Internal Tasks
+            // Internal Tasks (Việc quy trình)
             { path: 'workflow', name: 'workflow', component: InternalTasks, meta: { breadcrumb: 'Việc quy trình' } },
-            { path: 'workflow/:id/info', name: 'workflow-info', component: TaskDetail, meta: { breadcrumb: 'Việc quy trình', parent: 'workflow' } },
-            // bid-list (gốc)
-            {
-                path: '/bid-list',
-                name: 'bid-list',
-                component: BidList,
-                meta: { breadcrumb: 'Gói thầu' }
-            },
-            {
-                path: '/biddings/:id/info',
-                name: 'biddings-info',
-                component: BidDetail,
-                meta: { breadcrumb: 'Chi tiết gói thầu', parent: 'bid-list' },
-                props: true,
-            },
-            {
-                path: '/biddings/:bidId/steps/:stepId/tasks',
-                name: 'bidding-step-tasks',               // 👈 DÙNG tên này xuyên suốt
-                component: () => import('../components/BiddingStepTask/BiddingStepTasks.vue'),
-                meta: { breadcrumb: 'Công việc', parent: 'biddings-info' },
-                props: route => ({
-                    bidId: Number(route.params.bidId),
-                    stepId: Number(route.params.stepId),
-                }),
-            },
-            {
-                path: 'workflow/bidding-tasks/:id/info',
-                name: 'workflow-bidding-tasks',
-                component: TaskDetail,
-                meta: { breadcrumb: 'Chi tiết nhiệm vụ', parent: 'workflow' },
-                props: true,
-            },
+            { path: 'workflow/:id/info', name: 'workflow-info', component: TaskDetail, meta: { breadcrumb: 'Chi tiết công việc', parent: 'workflow' } },
 
-
-
-            // Contracts Tasks
-            { path: 'contracts-tasks', name: 'contracts-tasks', component: ContractsTasks, meta: { breadcrumb: 'Hợp đồng' } },
-
-            {
-                path: 'contract-tasks/:id/info',
-                name: 'contract-task-info',
-                component: TaskDetail,
-                meta: { breadcrumb: 'Chi tiết nhiệm vụ hợp đồng' }
-            },
-
-            {
-                path: 'bidding-tasks/:id/info',
-                name: 'bidding-task-info',
-                component: TaskDetail,
-                meta: { breadcrumb: 'Chi tiết nhiệm vụ đấu thầu' }
-            },
-
-            {
-                path: 'contracts/:id',
-                name: 'contract-detail',
-                component: ContractDetail,
-                meta: { breadcrumb: 'Chi tiết hợp đồng'},
-            },
-
+            // Biddings
             {
                 path: '/bid-list',
                 name: 'bid-list',
@@ -153,134 +79,14 @@ const routes = [
                 path: '/bid-detail/:id',
                 name: 'bid-detail',
                 component: BidDetail,
+                props: true, // ✅ để tự động nhận param id
                 meta: { breadcrumb: 'Chi tiết gói thầu', parent: 'bid-list' }
             },
-
-            // Permissions
-            { path: 'departments', name: 'departments', component: DepartmentList, meta: { breadcrumb: 'Phòng ban' } },
-
-            {
-                path: '/customers',
-                name: 'customers',
-                component: () => import('../components/CustomerList.vue'),
-                meta: { breadcrumb: 'Khách hàng', parent: 'dashboard' }
-            },
-
-            {
-                path: '/customers/:id',
-                name: 'customer-detail',
-                component: CustomerDetail,
-                meta: { breadcrumb: 'Chi tiết khách hàng', parent: 'customer-list' }
-            },
-
-            {
-                path: '/settings',
-                name: 'settings',
-                component: () => import('../components/SettingList.vue'),
-                meta: { breadcrumb: 'Cài đặt', parent: 'dashboard' },
-            },
-
-            {
-                path: '/documents',
-                name: 'documents',
-                component: DocumentList,
-                meta: { breadcrumb: 'Tài liệu', parent: 'dashboard' },
-            },
-            {
-                path: '/documents/my',
-                name: 'documents-my',
-                component: DocumentList,
-                meta: { breadcrumb: 'Tài liệu của tôi', parent: 'documents' },
-            },
-            {
-                path: '/documents/shared',
-                name: 'documents-shared',
-                component: DocumentSharedList,
-                meta: { breadcrumb: 'Được chia sẻ với tôi', parent: 'documents' },
-            },
-            {
-                path: '/documents/department',
-                name: 'documents-department',
-                component: DepartmentDocumentList,
-                meta: { breadcrumb: 'Theo phòng ban', parent: 'documents' },
-            },
-            {
-                path: '/documents/permission',
-                name: 'documents-permission',
-                component: DocumentPermissionList,
-                meta: { breadcrumb: 'Phân quyền tài liệu', parent: 'documents' },
-            },
-            {
-                path: '/documents/settings',
-                name: 'documents-settings',
-                component: DocumentSettingForm,
-                meta: { breadcrumb: 'Cấu hình tài liệu', parent: 'documents' },
-            },
-            {
-                path: '/settings/bidding',
-                name: 'cau-hinh-dau-thau',
-                component: BiddingStepTemplateList,
-                meta: { breadcrumb: 'Cấu hình đấu thầu', parent: 'cau-hinh' },
-            },
-            {
-                path: '/settings/contract',
-                name: 'cau-hinh-hop-dong',
-                component: ContractsStepTemplateList,
-                meta: {
-                    breadcrumb: 'Cấu hình hợp đồng',
-                    parent: 'cau-hinh'
-                }
-            },
-            {
-                path: '/my-tasks',
-                name: 'my-tasks',
-                component: MyTasks,
-                meta: { breadcrumb: 'Nhiệm vụ của tôi' }
-            },
-            {
-                path: '/task-approvals',
-                name: 'task-approvals',
-                component: () => import('../page/TaskApprovalList.vue'),
-                meta: { breadcrumb: 'Duyệt nhiệm vụ' }
-            },
-            {
-                path: '/gantt-chart',
-                name: 'GanttChart',
-                component: GanttChart,
-                meta: { breadcrumb: 'Biểu đồ thống kê' }
-            },
-
-            {
-                path: '/bidding-steps/:id/info',
-                name: 'BiddingStepDetail',
-                component: () => import('../components/StepDetail.vue'),
-                props: route => ({ id: Number(route.params.id), type: 'bidding' })
-            },
-            {
-                path: '/contract-steps/:id/info',
-                name: 'ContractStepDetail',
-                component: () => import('../components/StepDetail.vue'),
-                props: route => ({ id: Number(route.params.id), type: 'contract' })
-            },
-            // Việc không quy trình
-            {
-                path: '/non-workflow',
-                name: 'non-workflow',
-                component: Tasks,
-                meta: { breadcrumb: 'Việc không quy trình' }
-            },
-            {
-                path: '/non-workflow/tasks/:id/info',
-                name: 'tasks-detail',
-                component: TaskDetail,
-                meta: { breadcrumb: 'Chi tiết công việc', parent: 'non-workflow' }
-            },
-
             {
                 path: '/biddings/:bidId/steps/:stepId/tasks',
-                name: 'BiddingStepTasks',
+                name: 'bidding-step-tasks',
                 component: () => import('../components/BiddingStepTask/BiddingStepTasks.vue'),
-                // tiện lấy sẵn kiểu number trong props
+                meta: { breadcrumb: 'Công việc', parent: 'biddings-info' },
                 props: route => ({
                     bidId: Number(route.params.bidId),
                     stepId: Number(route.params.stepId),
@@ -293,14 +99,73 @@ const routes = [
                 props: true,
                 meta: { breadcrumb: 'Chi tiết công việc', parent: 'bidding-step-tasks' }
             },
+
+            // Contracts
+            { path: 'contracts-tasks', name: 'contracts-tasks', component: ContractsTasks, meta: { breadcrumb: 'Hợp đồng' } },
+            { path: 'contract-tasks/:id/info', name: 'contract-task-info', component: TaskDetail, meta: { breadcrumb: 'Chi tiết nhiệm vụ hợp đồng' } },
+            { path: 'contracts/:id', name: 'contract-detail', component: ContractDetail, meta: { breadcrumb: 'Chi tiết hợp đồng'} },
+
+            // Documents
+            { path: '/documents', name: 'documents', component: DocumentList, meta: { breadcrumb: 'Tài liệu', parent: 'dashboard' } },
+            { path: '/documents/my', name: 'documents-my', component: DocumentList, meta: { breadcrumb: 'Tài liệu của tôi', parent: 'documents' } },
+            { path: '/documents/shared', name: 'documents-shared', component: DocumentSharedList, meta: { breadcrumb: 'Được chia sẻ với tôi', parent: 'documents' } },
+            { path: '/documents/department', name: 'documents-department', component: DepartmentDocumentList, meta: { breadcrumb: 'Theo phòng ban', parent: 'documents' } },
+            { path: '/documents/permission', name: 'documents-permission', component: DocumentPermissionList, meta: { breadcrumb: 'Phân quyền tài liệu', parent: 'documents' } },
+            { path: '/documents/settings', name: 'documents-settings', component: DocumentSettingForm, meta: { breadcrumb: 'Cấu hình tài liệu', parent: 'documents' } },
+
+            // Settings
+            { path: '/settings/bidding', name: 'cau-hinh-dau-thau', component: BiddingStepTemplateList, meta: { breadcrumb: 'Cấu hình đấu thầu', parent: 'cau-hinh' } },
+            { path: '/settings/contract', name: 'cau-hinh-hop-dong', component: ContractsStepTemplateList, meta: { breadcrumb: 'Cấu hình hợp đồng', parent: 'cau-hinh' } },
+
+            // Customers
+            { path: '/customers', name: 'customers', component: () => import('../components/CustomerList.vue'), meta: { breadcrumb: 'Khách hàng', parent: 'dashboard' } },
+            { path: '/customers/:id', name: 'customer-detail', component: CustomerDetail, meta: { breadcrumb: 'Chi tiết khách hàng', parent: 'customers' } },
+
+            // My Tasks
+            { path: '/my-tasks', name: 'my-tasks', component: MyTasks, meta: { breadcrumb: 'Nhiệm vụ của tôi' } },
+            { path: '/task-approvals', name: 'task-approvals', component: () => import('../page/TaskApprovalList.vue'), meta: { breadcrumb: 'Duyệt nhiệm vụ' } },
+
+            // Charts
+            { path: '/gantt-chart', name: 'GanttChart', component: GanttChart, meta: { breadcrumb: 'Biểu đồ thống kê' } },
+
+            // Steps
+            { path: '/bidding-steps/:id/info', name: 'BiddingStepDetail', component: () => import('../components/StepDetail.vue'), props: r => ({ id: Number(r.params.id), type: 'bidding' }) },
+            { path: '/contract-steps/:id/info', name: 'ContractStepDetail', component: () => import('../components/StepDetail.vue'), props: r => ({ id: Number(r.params.id), type: 'contract' }) },
+
+            // Việc không quy trình
+            { path: '/non-workflow', name: 'non-workflow', component: Tasks, meta: { breadcrumb: 'Việc không quy trình' } },
             {
-                path: 'department-task/:id/info',
-                name: 'department-task-detail',
-                component: TaskDetail,
-                meta: { breadcrumb: 'Chi tiết nhiệm vụ phòng', parent: 'project-overview', section: 'overview' },
-                props: true
+                path: '/non-workflow/tasks/:id/info',
+                name: 'tasks-detail',
+                component: () => import('../components/task/index.vue'),
+                meta: { breadcrumb: 'Chi tiết công việc', parent: 'non-workflow' }
             },
 
+            {
+                path: '/workflow/bidding-tasks/:id/info',
+                name: 'workflow-bidding-tasks',
+                component: () => import('../components/task/index.vue'),
+                meta: { breadcrumb: 'Chi tiết nhiệm vụ', parent: 'workflow' },
+                props: true,
+            },
+            {
+                path: '/biddings/:id/info',
+                name: 'biddings-info',
+                component: () => import('../page/BidDetail.vue'),
+                meta: { breadcrumb: 'Chi tiết gói thầu', parent: 'bid-list' },
+                props: true,
+            },
+
+            {
+                path: '/bidding-tasks/:id/info',
+                name: 'bidding-task-info',
+                component: () => import('../components/task/index.vue'),
+                props: true,
+                meta: { breadcrumb: 'Chi tiết công việc', parent: 'bid-list' }
+            },
+
+            // Department Tasks
+            { path: 'department-task/:id/info', name: 'department-task-detail', component: TaskDetail, meta: { breadcrumb: 'Chi tiết nhiệm vụ phòng', parent: 'project-overview', section: 'overview' }, props: true },
         ]
     }
 ]
@@ -309,7 +174,6 @@ const router = createRouter({
     history: createWebHistory(),
     routes
 })
-
 
 const routePermissionMap = {
     'workflow': 'task',
@@ -340,22 +204,19 @@ const routePermissionMap = {
     'project-overview': 'project',
     'tasks': 'task',
     'tasks-detail': 'task',
+    'non-workflow': 'task',              // ✅ thêm
     'department-task-detail': 'task',
 }
 
-
 router.beforeEach(async (to, from, next) => {
     const userStore = useUserStore()
-
     const isLoggedIn = !!userStore.user
 
     if (isLoggedIn) {
-        // ✅ Nếu chưa có permissions, mới gọi fetch
         if (!userStore.permissions || Object.keys(userStore.permissions).length === 0) {
             await userStore.fetchPermissions()
         }
 
-        // ✅ Check quyền xem route
         const module = routePermissionMap[to.name]
         if (module && !userStore.hasPermission(module, 'view')) {
             return next('/403')
@@ -367,7 +228,5 @@ router.beforeEach(async (to, from, next) => {
 
     next()
 })
-
-
 
 export default router
