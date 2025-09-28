@@ -460,7 +460,7 @@
             title: 'Công việc',
             items: [
                 { path: '/project-overview', icon: GlobalOutlined,      color: 'blue',   label: 'Tổng quan' },
-                { path: '/tasks',            icon: CheckCircleOutlined, color: 'green',  label: 'Công việc' },
+                // { path: '/tasks',            icon: CheckCircleOutlined, color: 'green',  label: 'Công việc' },
                 { path: '/bid-list',         icon: WalletOutlined,      color: 'orange', label: 'Gói thầu' },
                 { path: '/contracts-tasks',  icon: FileDoneOutlined,    color: 'purple', label: 'Hợp đồng' },
                 { path: '/workflow',         icon: AppstoreOutlined,    color: 'purple', label: 'Việc quy trình' },
