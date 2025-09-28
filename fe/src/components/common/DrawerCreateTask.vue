@@ -98,13 +98,13 @@
 
                 <a-row :gutter="16">
                     <a-col :span="12">
-                        <a-form-item label="Loại nhiệm vụ" name="linked_type">
+                        <a-form-item label="Loại công việc" name="linked_type">
                             <template v-if="!props.type">
                                 <a-select
                                     v-model:value="formData.linked_type"
                                     :options="linkedTypeOption"
                                     @change="handleChangeLinkedType"
-                                    placeholder="Chọn loại nhiệm vụ"
+                                    placeholder="Chọn loại công việc"
                                 />
                             </template>
                             <template v-else>
@@ -403,7 +403,7 @@ const validateTime = async () => {
 const validatePriority = async () => (!formData.value.priority ? Promise.reject('Vui lòng chọn độ ưu tiên') : Promise.resolve())
 const validateAsigned = async () => (!formData.value.assigned_to ? Promise.reject('Vui lòng chọn người phụ trách') : Promise.resolve())
 const validateProposed = async () => (!formData.value.proposed_by ? Promise.reject('Vui lòng chọn người đề nghị') : Promise.resolve())
-const validateLinkedType = async () => (!formData.value.linked_type ? Promise.reject('Vui lòng chọn loại nhiệm vụ') : Promise.resolve())
+const validateLinkedType = async () => (!formData.value.linked_type ? Promise.reject('Vui lòng chọn công việc') : Promise.resolve())
 const validateDepartment = async () => (!formData.value.id_department ? Promise.reject('Vui lòng chọn phòng ban') : Promise.resolve())
 const validateDescription = async (_r, v) => (v === '' ? Promise.reject('Vui lòng nhập mô tả nhiệm vụ') : Promise.resolve())
 const validateApprovalSteps = async (_r, v) => {

@@ -273,7 +273,7 @@ const routes = [
                 path: '/non-workflow/tasks/:id/info',
                 name: 'tasks-detail',
                 component: TaskDetail,
-                meta: { breadcrumb: 'Chi tiết nhiệm vụ', parent: 'non-workflow' }
+                meta: { breadcrumb: 'Chi tiết công việc', parent: 'non-workflow' }
             },
 
             {

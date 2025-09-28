@@ -60,14 +60,14 @@
                                                             </a-form-item>
                                                         </a-col>
                                                         <a-col :span="12">
-                                                            <a-form-item label="Loại nhiệm vụ" name="linked_type">
+                                                            <a-form-item label="Loại công việc" name="linked_type">
                                                                 <a-tag v-if="!isEditMode">
                                                                     <strong>{{ getTextLinkedType }}</strong>
                                                                 </a-tag>
                                                                 <a-select v-else v-model:value="formData.linked_type"
                                                                           :options="linkedTypeOption"
                                                                           @change="handleChangeLinkedType()"
-                                                                          placeholder="Chọn loại nhiệm vụ"/>
+                                                                          placeholder="Chọn loại công việc"/>
                                                             </a-form-item>
                                                         </a-col>
 
@@ -148,6 +148,21 @@
                                                             </a-form-item>
                                                         </a-col>
 
+
+                                                        <a-col :span="12">
+                                                            <a-form-item label="Người giao việc" name="assigned_by">
+                                                                <a-typography-text v-if="!isEditMode">
+                                                                    {{ getUserById(formData.assigned_by) }}
+                                                                </a-typography-text>
+                                                                <a-select
+                                                                    v-else
+                                                                    v-model:value="formData.assigned_by"
+                                                                    :options="userOption"
+                                                                    placeholder="Chọn người dùng"
+                                                                />
+                                                            </a-form-item>
+                                                        </a-col>
+
                                                         <a-col :span="12">
                                                             <a-form-item label="Người phối hợp" name="collaborated_by">
                                                                 <a-typography-text v-if="!isEditMode">
@@ -220,7 +235,7 @@
                                                         </a-col>
 
                                                         <a-col :span="12">
-                                                            <a-form-item label="Độ ưu tiên" name="priority">
+                                                            <a-form-item label="Ưu tiên" name="priority">
                                                                 <a-tag v-if="!isEditMode"
                                                                        :color="checkPriority(formData.priority).color">
                                                                     {{ checkPriority(formData.priority).label }}
@@ -706,7 +721,7 @@ const validateAsigned = async (_rule, value) => {
 };
 const validateLinkedType = async (_rule, value) => {
     if (!formData.value.linked_type) {
-        return Promise.reject('Vui lòng chọn loại nhiệm vụ');
+        return Promise.reject('Vui lòng chọn loại công việc');
     } else {
         return Promise.resolve();
     }

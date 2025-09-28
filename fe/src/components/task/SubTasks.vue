@@ -2,7 +2,7 @@
     <div class="sub-task">
         <a-row justify="space-between">
             <a-col>
-                <a-typography-title :level="5" style="color: #7c7c7c;">Nhiệm vụ con</a-typography-title>
+                <a-typography-title :level="5" style="color: #7c7c7c;">Công việc con</a-typography-title>
             </a-col>
             <a-col>
                 <PlusOutlined style="font-size: 16px;cursor: pointer;" @click="showPopupCreate"/>
