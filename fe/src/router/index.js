@@ -95,7 +95,7 @@ const routes = [
             {
                 path: '/biddings/:bidId/steps/:stepId/tasks/:id/info',
                 name: 'bidding-task-info-in-step',
-                component: () => import('../components/task/index.vue'),
+                component: TaskDetail,
                 props: true,
                 meta: { breadcrumb: 'Chi tiết công việc', parent: 'bidding-step-tasks' }
             },
