@@ -49,7 +49,7 @@
                             {{ index + 1 }}
                         </template>
                         <template v-if="column.dataIndex === 'title'">
-                            <router-link :to="`/internal-tasks/${record.id}/info`" style="color:#1890ff;">
+                            <router-link :to="`/non-workflow/${record.id}/info`" style="color:#1890ff;">
                                 {{ record.title }}
                             </router-link>
                         </template>
@@ -161,7 +161,7 @@
                             <template v-else-if="column.dataIndex === 'title'">
                                 <a-tooltip :title="record.title">
                                     <div style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
-                                        <router-link :to="`/internal-tasks/${record.id}/info`" style="color: #1890ff;">
+                                        <router-link :to="`/non-workflow/${record.id}/info`" style="color: #1890ff;">
                                             {{ record.title }}
                                         </router-link>
                                     </div>

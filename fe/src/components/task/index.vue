@@ -1105,14 +1105,14 @@ const goBack = () => {
     if (window.history.length > 1) {
         router.back();
     } else {
-        router.push('/internal-tasks');
+        router.push('/non-workflow');
     }
 }
 
 const goToTask = (id) => {
     if (!id) return;
     router.push({
-        name: 'internal-tasks-info',
+        name: 'non-workflow-info',
         params: {id}
     });
 };

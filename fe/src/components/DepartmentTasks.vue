@@ -498,7 +498,7 @@
                         <template v-else-if="column.dataIndex === 'title'">
                             <a-tooltip :title="record.title" placement="top" :overlayStyle="{ maxWidth: '360px' }"
                                        :overlayInnerStyle="{ whiteSpace: 'pre-line' }">
-                                <router-link :to="`/internal-tasks/${record.id}/info`"
+                                <router-link :to="`/non-workflow/${record.id}/info`"
                                              style="color:#1890ff; display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
                                     {{ record.title }}
                                 </router-link>

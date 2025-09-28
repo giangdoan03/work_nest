@@ -685,7 +685,7 @@ class BiddingController extends ResourceController
         return match ($type) {
             'bidding'        => "/biddings/{$id}/info",
             'contract'       => "/contracts/{$id}",
-            'task'           => "/internal-tasks/{$id}/info",
+            'task'           => "/non-workflow/{$id}/info",
             'bidding_step'   => "/biddings/{$id}/info#steps",
             'contract_step'  => "/contracts/{$id}#steps",
             default          => "/",

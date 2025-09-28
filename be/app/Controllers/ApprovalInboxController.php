@@ -23,12 +23,12 @@ class ApprovalInboxController extends ResourceController
     private function makeUrl(string $type, string|int $id, ?int $stepId = null): string
     {
         return match ($type) {
-            'task'          => "/tasks/$id/info",
-            'bidding'       => "/biddings/$id/info",
-            'bidding_step'  => "/biddings/$id/steps/$stepId/tasks",
-            'contract'      => "/contracts/$id/info",
+            'task' => "/tasks/$id/info",
+            'bidding' => "/biddings/$id/info",
+            'bidding_step' => "/biddings/$id/steps/$stepId/tasks",
+            'contract' => "/contracts/$id/info",
             'contract_step' => "/contracts/$id/steps/$stepId/tasks",
-            default         => "/$type/$id",
+            default => "/$type/$id",
         };
     }
 
@@ -45,7 +45,7 @@ class ApprovalInboxController extends ResourceController
             $totalBuilder->where('s.approver_id', $userId);
         }
 
-        $total = (int) $totalBuilder->countAllResults();
+        $total = (int)$totalBuilder->countAllResults();
 
         // ===== ITEMS =====
         $sql = "
@@ -109,7 +109,7 @@ class ApprovalInboxController extends ResourceController
             $totalBuilder->where('s.approver_id', $userId);
         }
 
-        $total = (int) $totalBuilder->countAllResults();
+        $total = (int)$totalBuilder->countAllResults();
 
         // ===== ITEMS =====
         $sql = "
@@ -162,31 +162,30 @@ class ApprovalInboxController extends ResourceController
     }
 
 
-
     public function index(): ResponseInterface
     {
-        $s       = session();
-        $userId  = (int) ($s->get('user_id') ?? 0);
-        $roleId  = (int) ($s->get('role_id') ?? 0);
-        $role    = strtolower((string) ($s->get('role') ?? ''));
-        $isAdmin = (bool) ($s->get('is_admin') ?? false) || $roleId === 1 || in_array($role, ['admin', 'super admin'], true);
+        $s = session();
+        $userId = (int)($s->get('user_id') ?? 0);
+        $roleId = (int)($s->get('role_id') ?? 0);
+        $role = strtolower((string)($s->get('role') ?? ''));
+        $isAdmin = (bool)($s->get('is_admin') ?? false) || $roleId === 1 || in_array($role, ['admin', 'super admin'], true);
 
         if ($userId <= 0) {
             return $this->failUnauthorized('Chưa đăng nhập.');
         }
 
-        $per    = min(100, max(1, (int) $this->request->getGet('per_page') ?: 20));
-        $page   = max(1, (int) $this->request->getGet('page') ?: 1);
+        $per = min(100, max(1, (int)$this->request->getGet('per_page') ?: 20));
+        $page = max(1, (int)$this->request->getGet('page') ?: 1);
         $offset = ($page - 1) * $per;
 
         $allowed = ['bidding', 'contract', 'bidding_step', 'contract_step', 'task'];
-        $targetCsv = trim((string) $this->request->getGet('target_types'));
+        $targetCsv = trim((string)$this->request->getGet('target_types'));
         $targetTypes = $targetCsv !== ''
             ? array_values(array_intersect(array_map('trim', explode(',', $targetCsv)), $allowed))
             : $allowed;
 
-        $status = (string) $this->request->getGet('status');       // "approved,rejected"
-        $acted  = (int) $this->request->getGet('acted_by_me');     // 1 nếu tab đã xử lý
+        $status = (string)$this->request->getGet('status');       // "approved,rejected"
+        $acted = (int)$this->request->getGet('acted_by_me');     // 1 nếu tab đã xử lý
 
         if ($status === 'approved,rejected' && $acted === 1) {
             // Đã xử lý
@@ -197,10 +196,10 @@ class ApprovalInboxController extends ResourceController
         }
 
         return $this->respond([
-            'data'  => $rows,
+            'data' => $rows,
             'pager' => [
-                'total'        => $total,
-                'per_page'     => $per,
+                'total' => $total,
+                'per_page' => $per,
                 'current_page' => $page,
             ],
         ]);
@@ -212,7 +211,7 @@ class ApprovalInboxController extends ResourceController
      */
     public function unreadCount(): ResponseInterface
     {
-        $uid = (int) (session()->get('user_id') ?? 0);
+        $uid = (int)(session()->get('user_id') ?? 0);
         if ($uid <= 0) {
             return $this->failUnauthorized('Chưa đăng nhập.');
         }
@@ -230,7 +229,7 @@ class ApprovalInboxController extends ResourceController
               )
         ", [$uid, $uid])->getRowArray();
 
-        return $this->respond(['unread' => (int) ($row['cnt'] ?? 0)]);
+        return $this->respond(['unread' => (int)($row['cnt'] ?? 0)]);
     }
 
     /**
@@ -239,13 +238,13 @@ class ApprovalInboxController extends ResourceController
      */
     public function markRead(): ResponseInterface
     {
-        $uid = (int) (session()->get('user_id') ?? 0);
+        $uid = (int)(session()->get('user_id') ?? 0);
         if ($uid <= 0) {
             return $this->failUnauthorized('Chưa đăng nhập.');
         }
 
         $payload = $this->request->getJSON(true) ?? $this->request->getPost();
-        $stepIds = array_values(array_unique(array_filter(array_map('intval', (array) ($payload['step_ids'] ?? [])))));
+        $stepIds = array_values(array_unique(array_filter(array_map('intval', (array)($payload['step_ids'] ?? [])))));
 
         if (!$stepIds) {
             return $this->failValidationErrors('Thiếu step_ids');

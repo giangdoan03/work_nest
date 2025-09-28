@@ -187,7 +187,7 @@ const tryParse = (v) => {
     try { return JSON.parse(v) } catch { return null }
 }
 
-const taskLinkById = (id) => ({ path: `/internal-tasks/${String(id)}/info` })
+const taskLinkById = (id) => ({ path: `/non-workflow/${String(id)}/info` })
 
 /** Department text (array hoặc string) */
 const departmentText = computed(() => {
@@ -230,7 +230,7 @@ const progressText = computed(() => {
 })
 
 /** Task detail link */
-const taskLink = (t) => ({ path: `/internal-tasks/${String(t.id)}/info` })
+const taskLink = (t) => ({ path: `/non-workflow/${String(t.id)}/info` })
 
 function computeDays(dateStr){
     if (!dateStr) return null

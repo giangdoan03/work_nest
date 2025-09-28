@@ -1,52 +1,54 @@
 <template>
     <div class="header">
-        <a-layout-header
-            style="background:#fff; padding:0; display:flex; justify-content:space-between; align-items:center;"
-        >
-            <!-- Toggle -->
-<!--            <div style="margin-left:16px;">-->
-<!--                <a-button type="text" @click="$emit('toggle')" style="border:none; box-shadow:none;">-->
-<!--                    <MenuFoldOutlined v-if="!collapsed"/>-->
-<!--                    <MenuUnfoldOutlined v-else/>-->
-<!--                </a-button>-->
-<!--            </div>-->
-
+        <a-layout-header class="hdr">
             <!-- Breadcrumb -->
-            <div style="flex:1; margin-left:16px;">
-                <a-breadcrumb :key="$route.fullPath" style="margin-left:16px;">
-                    <a-breadcrumb-item v-for="(route, index) in breadcrumbs" :key="index">
+            <div class="hdr__crumb">
+                <a-breadcrumb :key="$route.fullPath" class="crumb">
+                    <a-breadcrumb-item
+                        v-for="(route, index) in breadcrumbs"
+                        :key="index"
+                    >
                         <router-link
                             v-if="route.name !== currentRoute.name"
                             :to="route.to || { name: route.name }"
+                            class="crumb__link"
                         >
                             {{ route.meta.breadcrumb }}
                         </router-link>
+
                         <template v-else>
-                          <span style="display:inline-flex;align-items:center;gap:4px;">
+                          <span class="crumb__current">
                             {{ route.meta.breadcrumb }}
-                                <a-button
-                                    v-if="currentRoute.name === 'tasks'"
-                                    size="small"
-                                    @click="onClickCreateTask"
-                                    style="margin-left:8px"
-                                >
+                            <a-button
+                                v-if="showCrumbCreateBtn"
+                                size="small"
+                                class="crumb__add"
+                                @click="onClickCreateTask"
+                            >
                               <template #icon><PlusOutlined/></template>
                             </a-button>
                           </span>
                         </template>
                     </a-breadcrumb-item>
                 </a-breadcrumb>
+
             </div>
 
             <!-- Right actions -->
-            <div class="right-actions">
+            <div class="hdr__actions">
+                <!-- Home -->
                 <a-tooltip title="Trang chủ">
-                    <a-button class="home-chip" shape="circle" @click="goHome">
+                    <a-button
+                        class="home-chip"
+                        shape="circle"
+                        @click="goHome"
+                        aria-label="Về trang tổng quan"
+                    >
                         <HomeOutlined/>
                     </a-button>
                 </a-tooltip>
 
-                <!-- Inbox -->
+                <!-- Inbox (bình luận) -->
                 <a-dropdown
                     v-model:open="inboxOpen"
                     placement="bottomRight"
@@ -55,23 +57,22 @@
                     :destroyPopupOnHide="true"
                 >
                     <a-badge :count="unreadChat" size="small">
-                        <MessageOutlined class="ha-icon"/>
+                        <MessageOutlined class="ha-icon" aria-label="Hộp thư bình luận"/>
                     </a-badge>
 
                     <template #overlay>
                         <a-card class="inbox-card" :bodyStyle="{ padding:'8px' }" style="width:380px;">
-                            <div class="inbox-scroll">
+                            <div class="scroll">
                                 <a-spin :spinning="inboxLoading">
                                     <!-- Header -->
-                                    <div style="display:flex;justify-content:space-between;padding:8px 8px 4px;">
-                                        <span style="font-weight:600;">Tin nhắn gần đây</span>
-                                        <div>
-                                            <div>
-                                                <a-button type="link" size="small" @click.stop="refreshInbox">Làm mới</a-button>
-                                            </div>
-                                            <div>
-                                                <a-button type="link" size="small" @click.stop="markAllInboxRead">Đánh dấu đã đọc tất cả</a-button>
-                                            </div>
+                                    <div class="panel-head">
+                                        <span class="panel-title">Tin nhắn gần đây</span>
+                                        <div class="panel-tools">
+                                            <a-button type="link" size="small" @click.stop="refreshInbox">Làm mới
+                                            </a-button>
+                                            <a-button type="link" size="small" @click.stop="markAllInboxRead">Đánh dấu
+                                                đã đọc tất cả
+                                            </a-button>
                                         </div>
                                     </div>
 
@@ -81,7 +82,7 @@
                                         type="info"
                                         :message="`Còn ${moreUnread} tin chưa hiển thị — Tải thêm để xem/đánh dấu`"
                                         banner
-                                        style="margin:4px 8px 8px;"
+                                        class="panel-alert"
                                     />
 
                                     <!-- Empty -->
@@ -92,15 +93,18 @@
 
                                     <!-- Groups -->
                                     <template v-else>
-                                        <div v-if="newInboxItems.length" style="padding:4px 8px; font-weight:600;">
+                                        <div v-if="newInboxItems.length" class="group-title">
                                             Mới ({{ newInboxItems.length }})
                                         </div>
-                                        <a-list v-if="newInboxItems.length" :data-source="newInboxItems" item-layout="horizontal">
+                                        <a-list
+                                            v-if="newInboxItems.length"
+                                            :data-source="newInboxItems"
+                                            item-layout="horizontal"
+                                        >
                                             <template #renderItem="{ item }">
                                                 <a-list-item
                                                     @click="(e) => openComment(item, e)"
-                                                    style="cursor:pointer; padding:8px; border-radius:8px;"
-                                                    class="bg-[#fff7e6]"
+                                                    class="list-item list-item--new"
                                                 >
                                                     <a-list-item-meta>
                                                         <template #avatar>
@@ -113,18 +117,19 @@
                                                             />
                                                         </template>
                                                         <template #title>
-                                                            <div style="display:flex;gap:6px;align-items:center;">
-                                                                <span style="font-weight:600;">{{ item.author_name || 'Ẩn danh' }}</span>
+                                                            <div class="item-title">
+                                                                <span class="fw-600">{{
+                                                                        item.author_name || 'Ẩn danh'
+                                                                    }}</span>
                                                                 <a-tag color="orange">Mới</a-tag>
                                                             </div>
                                                         </template>
                                                         <template #description>
-                                                            <div style="color:#555">
-                                                                <div style="white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">
-                                                                    {{ item.content }}
-                                                                </div>
-                                                                <div style="font-size:12px; color:#999; margin-top:2px;">
-                                                                    {{ item.task_title }} • {{ formatTime(item.created_at) }}
+                                                            <div class="item-desc">
+                                                                <div class="ellipsis-1">{{ item.content }}</div>
+                                                                <div class="meta-sub">
+                                                                    {{ item.task_title }} •
+                                                                    {{ formatTime(item.created_at) }}
                                                                 </div>
                                                             </div>
                                                         </template>
@@ -133,14 +138,18 @@
                                             </template>
                                         </a-list>
 
-                                        <div v-if="oldInboxItems.length" style="padding:6px 8px 0; font-weight:600; color:#999;">
+                                        <div v-if="oldInboxItems.length" class="group-title group-title--muted">
                                             Trước đó
                                         </div>
-                                        <a-list v-if="oldInboxItems.length" :data-source="oldInboxItems" item-layout="horizontal">
+                                        <a-list
+                                            v-if="oldInboxItems.length"
+                                            :data-source="oldInboxItems"
+                                            item-layout="horizontal"
+                                        >
                                             <template #renderItem="{ item }">
                                                 <a-list-item
                                                     @click="(e) => openComment(item, e)"
-                                                    style="cursor:pointer; padding:8px; border-radius:8px;"
+                                                    class="list-item"
                                                 >
                                                     <a-list-item-meta>
                                                         <template #avatar>
@@ -153,17 +162,18 @@
                                                             />
                                                         </template>
                                                         <template #title>
-                                                            <div style="display:flex;gap:6px;align-items:center;">
-                                                                <span style="font-weight:600;">{{ item.author_name || 'Ẩn danh' }}</span>
+                                                            <div class="item-title">
+                                                                <span class="fw-600">{{
+                                                                        item.author_name || 'Ẩn danh'
+                                                                    }}</span>
                                                             </div>
                                                         </template>
                                                         <template #description>
-                                                            <div style="color:#555">
-                                                                <div style="white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">
-                                                                    {{ item.content }}
-                                                                </div>
-                                                                <div style="font-size:12px; color:#999; margin-top:2px;">
-                                                                    {{ item.task_title }} • {{ formatTime(item.created_at) }}
+                                                            <div class="item-desc">
+                                                                <div class="ellipsis-1">{{ item.content }}</div>
+                                                                <div class="meta-sub">
+                                                                    {{ item.task_title }} •
+                                                                    {{ formatTime(item.created_at) }}
                                                                 </div>
                                                             </div>
                                                         </template>
@@ -173,8 +183,9 @@
                                         </a-list>
                                     </template>
 
-                                    <div v-if="inboxHasMore" style="padding:8px;">
-                                        <a-button block @click="loadMoreInbox" :loading="inboxLoading">Tải thêm</a-button>
+                                    <div v-if="inboxHasMore" class="panel-more">
+                                        <a-button block @click="loadMoreInbox" :loading="inboxLoading">Tải thêm
+                                        </a-button>
                                     </div>
                                 </a-spin>
                             </div>
@@ -182,7 +193,7 @@
                     </template>
                 </a-dropdown>
 
-                <!-- Notifications -->
+                <!-- Notifications (phê duyệt) -->
                 <a-dropdown
                     v-model:open="notifyOpen"
                     placement="bottomRight"
@@ -190,60 +201,66 @@
                     @openChange="onNotifyOpenChange"
                 >
                     <a-badge :count="unreadNotifyBadge" size="small">
-                        <BellOutlined class="ha-icon"/>
+                        <BellOutlined class="ha-icon" aria-label="Thông báo phê duyệt"/>
                     </a-badge>
 
                     <template #overlay>
                         <a-card class="notify-card" :bodyStyle="{padding:'8px'}" style="width:380px;">
-                            <div class="notify-scroll">
+                            <div class="scroll">
                                 <a-spin :spinning="notifyLoading">
-                                    <!-- Header -->
-                                    <div style="display:flex;justify-content:space-between;">
-                                        <span style="font-weight:600;">Thông báo phê duyệt</span>
-                                        <div>
-                                            <div>
-                                                <a-button type="link" size="small" @click.stop="refreshNotify">Làm mới</a-button>
-                                            </div>
-                                            <div>
-                                                <a-button type="link" size="small" @click.stop="markAllNotifyRead">Đánh dấu đã đọc tất cả</a-button>
-                                            </div>
+                                    <div class="panel-head">
+                                        <span class="panel-title">Thông báo phê duyệt</span>
+                                        <div class="panel-tools">
+                                            <a-button type="link" size="small" @click.stop="refreshNotify">Làm mới
+                                            </a-button>
+                                            <a-button type="link" size="small" @click.stop="markAllNotifyRead">Đánh dấu
+                                                đã đọc tất cả
+                                            </a-button>
                                         </div>
                                     </div>
 
-                                    <!-- Alert -->
                                     <a-alert
                                         v-if="moreNotifyUnread > 0"
                                         type="info"
                                         :message="`Còn ${moreNotifyUnread} mục chưa hiển thị — Tải thêm để xem/đánh dấu`"
                                         banner
-                                        style="margin:4px 8px 8px;"
+                                        class="panel-alert"
                                     />
 
-                                    <!-- Empty -->
-                                    <a-empty v-if="!notifyItems.length && !notifyLoading" description="Không có mục chờ duyệt"/>
+                                    <a-empty
+                                        v-if="!notifyItems.length && !notifyLoading"
+                                        description="Không có mục chờ duyệt"
+                                    />
 
-                                    <!-- Groups -->
                                     <template v-else>
-                                        <div v-if="newNotifyItems.length" style="font-weight:600;">Mới ({{ newNotifyItems.length }})</div>
-                                        <a-list v-if="newNotifyItems.length" :data-source="newNotifyItems" item-layout="horizontal">
+                                        <div v-if="newNotifyItems.length" class="group-title">
+                                            Mới ({{ newNotifyItems.length }})
+                                        </div>
+                                        <a-list
+                                            v-if="newNotifyItems.length"
+                                            :data-source="newNotifyItems"
+                                            item-layout="horizontal"
+                                        >
                                             <template #renderItem="{ item }">
                                                 <a-list-item
                                                     :key="item.step_id"
                                                     @click="openApproval(item)"
-                                                    style="cursor:pointer; padding:8px; border-radius:8px;"
-                                                    class="bg-[#fff7e6]"
+                                                    class="list-item list-item--new"
                                                 >
                                                     <a-list-item-meta>
                                                         <template #title>
-                                                            <div style="display:flex;gap:6px;align-items:center;">
-                                                                <span style="font-weight:600;">{{ item.title }}</span>
+                                                            <div class="item-title">
+                                                                <span class="fw-600">{{ item.title }}</span>
                                                                 <a-tag color="orange">Mới</a-tag>
                                                             </div>
                                                         </template>
                                                         <template #description>
-                                                            <div style="color:#555;">
+                                                            <div class="item-desc">
                                                                 <div>Gửi bởi: {{ item.submitted_by_name || '—' }}</div>
-                                                                <div style="font-size:12px; color:#999;">{{ formatTime(item.submitted_at) }}</div>
+                                                                <div class="meta-sub">{{
+                                                                        formatTime(item.submitted_at)
+                                                                    }}
+                                                                </div>
                                                             </div>
                                                         </template>
                                                     </a-list-item-meta>
@@ -251,24 +268,33 @@
                                             </template>
                                         </a-list>
 
-                                        <div v-if="oldNotifyItems.length" style="padding:6px 8px 0; font-weight:600; color:#999;">Trước đó</div>
-                                        <a-list v-if="oldNotifyItems.length" :data-source="oldNotifyItems" item-layout="horizontal">
+                                        <div v-if="oldNotifyItems.length" class="group-title group-title--muted">
+                                            Trước đó
+                                        </div>
+                                        <a-list
+                                            v-if="oldNotifyItems.length"
+                                            :data-source="oldNotifyItems"
+                                            item-layout="horizontal"
+                                        >
                                             <template #renderItem="{ item }">
                                                 <a-list-item
                                                     :key="item.step_id"
                                                     @click="openApproval(item)"
-                                                    style="cursor:pointer; padding:8px; border-radius:8px;"
+                                                    class="list-item"
                                                 >
                                                     <a-list-item-meta>
                                                         <template #title>
-                                                            <div style="display:flex;gap:6px;align-items:center;">
-                                                                <span style="font-weight:600;">{{ item.title }}</span>
+                                                            <div class="item-title">
+                                                                <span class="fw-600">{{ item.title }}</span>
                                                             </div>
                                                         </template>
                                                         <template #description>
-                                                            <div style="color:#555;">
+                                                            <div class="item-desc">
                                                                 <div>Gửi bởi: {{ item.submitted_by_name || '—' }}</div>
-                                                                <div style="font-size:12px; color:#999;">{{ formatTime(item.submitted_at) }}</div>
+                                                                <div class="meta-sub">{{
+                                                                        formatTime(item.submitted_at)
+                                                                    }}
+                                                                </div>
                                                             </div>
                                                         </template>
                                                     </a-list-item-meta>
@@ -277,8 +303,9 @@
                                         </a-list>
                                     </template>
 
-                                    <div v-if="notifyHasMore" style="padding:8px;">
-                                        <a-button block @click="loadMoreNotify" :loading="notifyLoading">Tải thêm</a-button>
+                                    <div v-if="notifyHasMore" class="panel-more">
+                                        <a-button block @click="loadMoreNotify" :loading="notifyLoading">Tải thêm
+                                        </a-button>
                                     </div>
                                 </a-spin>
                             </div>
@@ -288,35 +315,68 @@
 
                 <!-- Avatar dropdown -->
                 <a-dropdown v-if="user" trigger="click" placement="bottomRight">
-                    <div @click.prevent class="user-chip">
-                        <BaseAvatar :src="user.avatar" :name="user.name" :size="36" shape="circle" :preferApiOrigin="true"/>
+                    <div @click.prevent class="user-chip" aria-label="Tài khoản">
+                        <BaseAvatar
+                            :src="user.avatar"
+                            :name="user.name"
+                            :size="36"
+                            shape="circle"
+                            :preferApiOrigin="true"
+                        />
                     </div>
 
                     <template #overlay>
                         <div class="user-dropdown">
                             <div class="user-header">
-                                <BaseAvatar size="large" :src="user.avatar" :name="user.name" :preferApiOrigin="true"/>
+                                <BaseAvatar
+                                    size="large"
+                                    :src="user.avatar"
+                                    :name="user.name"
+                                    :preferApiOrigin="true"
+                                />
                                 <div class="user-info">
                                     <div class="name">{{ user.name }}</div>
                                     <div class="position">
-                                        <IdcardOutlined style="margin-right:6px;color:#1890ff"/>
+                                        <IdcardOutlined class="i-blue"/>
                                         {{ user.position || 'Chức danh' }}
                                     </div>
                                     <div class="department">
-                                        <TeamOutlined style="margin-right:6px;color:#52c41a"/>
+                                        <TeamOutlined class="i-green"/>
                                         {{ user.department || 'Phòng ban' }}
                                     </div>
                                 </div>
                             </div>
 
                             <div class="user-menu">
-                                <div class="user-item" @click="redirectToProfile"><UserOutlined/> Tài khoản</div>
-                                <div class="user-item"><SettingOutlined/> Cài đặt hệ thống</div>
-                                <div class="user-item"><QuestionCircleOutlined/> Hướng dẫn sử dụng</div>
-                                <div class="user-item"><BgColorsOutlined/> Màu giao diện <div class="color-dot"></div></div>
-                                <div class="user-item"><GlobalOutlined/> Ngôn ngữ <span style="margin-left:auto">VN</span></div>
-                                <div class="user-item" @click="changePwdOpen = true"><KeyOutlined/> Đổi mật khẩu</div>
-                                <div class="user-item danger" @click="handleLogout"><LogoutOutlined/> Đăng xuất</div>
+                                <div class="user-item" @click="redirectToProfile">
+                                    <UserOutlined/>
+                                    Tài khoản
+                                </div>
+                                <div class="user-item">
+                                    <SettingOutlined/>
+                                    Cài đặt hệ thống
+                                </div>
+                                <div class="user-item">
+                                    <QuestionCircleOutlined/>
+                                    Hướng dẫn sử dụng
+                                </div>
+                                <div class="user-item">
+                                    <BgColorsOutlined/>
+                                    Màu giao diện
+                                    <div class="color-dot"></div>
+                                </div>
+                                <div class="user-item">
+                                    <GlobalOutlined/>
+                                    Ngôn ngữ <span class="ml-auto">VN</span>
+                                </div>
+                                <div class="user-item" @click="changePwdOpen = true">
+                                    <KeyOutlined/>
+                                    Đổi mật khẩu
+                                </div>
+                                <div class="user-item danger" @click="handleLogout">
+                                    <LogoutOutlined/>
+                                    Đăng xuất
+                                </div>
                             </div>
                         </div>
                     </template>
@@ -335,24 +395,24 @@
 
 <script setup>
 /* ========= Imports ========= */
-import { useRoute, useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
-import { storeToRefs } from 'pinia'
+import {useRoute, useRouter} from 'vue-router'
+import {message} from 'ant-design-vue'
+import {ref, computed, onMounted, onBeforeUnmount, watch} from 'vue'
+import {storeToRefs} from 'pinia'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/vi'
 
-import { getMyRecentCommentsAPI, getMyUnreadCommentsCountAPI, markCommentsReadAPI } from '@/api/task'
-import { getApprovalInboxAPI, getApprovalUnreadCountAPI, markApprovalReadAPI } from '@/api/approvals'
+import {getMyRecentCommentsAPI, getMyUnreadCommentsCountAPI, markCommentsReadAPI} from '@/api/task'
+import {getApprovalInboxAPI, getApprovalUnreadCountAPI, markApprovalReadAPI} from '@/api/approvals'
 
-import { useUserStore } from '@/stores/user'
-import { useCommonStore } from '@/stores/common'
+import {useUserStore} from '@/stores/user'
+import {useCommonStore} from '@/stores/common'
 
 import {
-    MenuUnfoldOutlined, MenuFoldOutlined, LogoutOutlined, UserOutlined, PlusOutlined,
-    HomeOutlined, MessageOutlined, BellOutlined, SettingOutlined, QuestionCircleOutlined,
-    BgColorsOutlined, GlobalOutlined, KeyOutlined, IdcardOutlined, TeamOutlined
+    LogoutOutlined, UserOutlined, PlusOutlined, HomeOutlined, MessageOutlined,
+    BellOutlined, SettingOutlined, QuestionCircleOutlined, BgColorsOutlined,
+    GlobalOutlined, KeyOutlined, IdcardOutlined, TeamOutlined
 } from '@ant-design/icons-vue'
 
 import ChangePasswordModal from '../components/common/ChangePasswordModal.vue'
@@ -365,23 +425,25 @@ dayjs.locale('vi')
 /* ========= Stores / Router ========= */
 const common = useCommonStore()
 const userStore = useUserStore()
-const { user } = storeToRefs(userStore)
+const {user} = storeToRefs(userStore)
 const currentRoute = useRoute()
 const router = useRouter()
 
-/* ========= Props / Emits ========= */
-const emit = defineEmits(['toggle', 'logout'])
-const props = defineProps({ collapsed: Boolean, user: Object })
+const isNonWorkflow = computed(() => currentRoute.path.startsWith('/non-workflow'))
+const showCrumbCreateBtn = computed(() => currentRoute.path === '/non-workflow')
+
+/* ========= Emits / Props ========= */
+defineEmits(['toggle', 'logout'])
+defineProps({collapsed: Boolean})
 
 /* ========= State (Inbox) ========= */
 const userId = computed(() => userStore.user?.id)
-const unreadChat = ref(1)
+const unreadChat = ref(0)
 const inboxItems = ref([])
 const inboxPage = ref(1)
 const inboxHasMore = ref(false)
 const inboxLoading = ref(false)
 const inboxOpen = ref(false)
-const inboxLastOpenAt = ref(Number(localStorage.getItem('inbox_last_open_at') || 0))
 
 /* ========= State (Notify) ========= */
 const notifyOpen = ref(false)
@@ -391,29 +453,39 @@ const notifyHasMore = ref(false)
 const notifyLoading = ref(false)
 const changePwdOpen = ref(false)
 
-/* ========= Misc ========= */
-let poller = null
+/* ========= Local mask (Notify) ========= */
 const LS_NOTIFY_READ_KEY = 'notify_read_steps_v1'
-
-/* ========= Local read mask (Notify) ========= */
 const loadClientReadSteps = () => {
-    try { return new Set(JSON.parse(localStorage.getItem(LS_NOTIFY_READ_KEY) || '[]')) }
-    catch { return new Set() }
+    try {
+        return new Set(JSON.parse(localStorage.getItem(LS_NOTIFY_READ_KEY) || '[]'))
+    } catch {
+        return new Set()
+    }
 }
 const saveClientReadSteps = (setObj) => {
-    try { localStorage.setItem(LS_NOTIFY_READ_KEY, JSON.stringify(Array.from(setObj))) } catch {}
+    try {
+        localStorage.setItem(LS_NOTIFY_READ_KEY, JSON.stringify(Array.from(setObj)))
+    } catch {
+    }
 }
 const clientReadSteps = loadClientReadSteps()
-const rememberReadStep = (stepId) => { clientReadSteps.add(stepId); saveClientReadSteps(clientReadSteps) }
-const rememberReadMany = (ids = []) => { ids.forEach(id => clientReadSteps.add(id)); saveClientReadSteps(clientReadSteps) }
+const rememberReadStep = (id) => {
+    clientReadSteps.add(id);
+    saveClientReadSteps(clientReadSteps)
+}
+const rememberReadMany = (ids = []) => {
+    ids.forEach(id => clientReadSteps.add(id));
+    saveClientReadSteps(clientReadSteps)
+}
 
 /* ========= Server unread count for approvals ========= */
-const unreadNotifyCount = ref(0) // tổng chưa đọc từ server
+const unreadNotifyCount = ref(0)
 const fetchNotifyUnreadCount = async () => {
     try {
-        const { data } = await getApprovalUnreadCountAPI()
+        const {data} = await getApprovalUnreadCountAPI()
         unreadNotifyCount.value = data?.unread || 0
-    } catch {}
+    } catch {
+    }
 }
 
 /* ========= Computed ========= */
@@ -422,18 +494,22 @@ const breadcrumbs = computed(() => {
     const p = currentRoute.params
     const buildParams = {
         'bid-list': () => ({}),
-        'biddings-info': () => ({ id: p.id || p.bidId }),
-        'bidding-step-tasks': () => ({ bidId: p.bidId, stepId: p.stepId }),
-        'bidding-task-info': () => ({ id: p.id }),
-        'internal-tasks': () => ({}),
-        'internal-tasks-info': () => ({ id: p.id }),
+        'biddings-info': () => ({id: p.id || p.bidId}),
+        'bidding-step-tasks': () => ({bidId: p.bidId, stepId: p.stepId}),
+        'bidding-task-info': () => ({id: p.id}),
+        'non-workflow': () => ({}),
+        'non-workflow-info': () => ({id: p.id}),
         'tasks': () => ({}),
     }
     const trail = []
     let cur = all.find(r => r.name === currentRoute.name)
     while (cur) {
         if (cur.meta?.breadcrumb) {
-            trail.unshift({ name: cur.name, meta: cur.meta, to: { name: cur.name, params: (buildParams[cur.name]?.() || {}) } })
+            trail.unshift({
+                name: cur.name,
+                meta: cur.meta,
+                to: {name: cur.name, params: (buildParams[cur.name]?.() || {})}
+            })
         }
         const parentName = cur.meta?.parent
         cur = parentName ? all.find(r => r.name === parentName) : null
@@ -444,14 +520,14 @@ const breadcrumbs = computed(() => {
 /* Inbox groups */
 const newInboxItems = computed(() => inboxItems.value.filter(i => +i.is_unread === 1))
 const oldInboxItems = computed(() => inboxItems.value.filter(i => +i.is_unread !== 1))
-const unreadOnPage = computed(() => inboxItems.value.filter(i => +i.is_unread === 1).length)
+const unreadOnPage = computed(() => newInboxItems.value.length)
 const moreUnread = computed(() => Math.max(0, unreadChat.value - unreadOnPage.value))
 
 /* Notify groups + badge */
 const newNotifyItems = computed(() => notifyItems.value.filter(i => +i.is_unread === 1))
 const oldNotifyItems = computed(() => notifyItems.value.filter(i => +i.is_unread !== 1))
-const unreadNotifyOnPage = computed(() => notifyItems.value.filter(i => +i.is_unread === 1).length)
-const unreadNotifyBadge = computed(() => unreadNotifyCount.value) // badge = tổng server
+const unreadNotifyOnPage = computed(() => newNotifyItems.value.length)
+const unreadNotifyBadge = computed(() => unreadNotifyCount.value)
 const moreNotifyUnread = computed(() => Math.max(0, (unreadNotifyCount.value || 0) - unreadNotifyOnPage.value))
 
 /* ========= Utilities ========= */
@@ -460,43 +536,63 @@ const buildTaskDetailPath = (item) => {
     const type = (item.linked_type || '').toLowerCase()
     if (type.includes('bidding')) return `/bidding-tasks/${item.task_id}/info`
     if (type.includes('contract')) return `/contract-tasks/${item.task_id}/info`
+    if (type.includes('non-workflow')) return `/non-workflow/tasks/${item.task_id}/info`
     return `/tasks/${item.task_id}/info`
 }
 
 /* ========= Navigation / User ========= */
 const goHome = () => router.push('/project-overview')
-const onClickCreateTask = () => { if (currentRoute.name === 'tasks') common.triggerCreateTask('internal') }
-const handleLogout = () => { userStore.clearUser(); router.push('/') }
-const redirectToProfile = () => { router.push({ name: 'persons-info', params: { id: user.value.id } }) }
+const onClickCreateTask = () => {
+    if (isNonWorkflow.value) {
+        // tạo việc không quy trình
+        common.triggerCreateTask('non-workflow')
+    } else if (currentRoute.name === 'tasks') {
+        // trang danh sách công việc nội bộ
+        common.triggerCreateTask('internal')
+    }
+}
+const handleLogout = () => {
+    userStore.clearUser();
+    router.push('/')
+}
+const redirectToProfile = () => {
+    router.push({name: 'persons-info', params: {id: user.value.id}})
+}
 
 /* ========= Inbox: API & Actions ========= */
 const fetchUnread = async () => {
     if (!userId.value) return
     try {
-        const { data } = await getMyUnreadCommentsCountAPI(userId.value)
+        const {data} = await getMyUnreadCommentsCountAPI(userId.value)
         unreadChat.value = data?.unread || 0
-    } catch {}
+    } catch {
+    }
 }
 const fetchInbox = async (page = 1) => {
     if (!userId.value) return
     inboxLoading.value = true
     try {
-        const { data } = await getMyRecentCommentsAPI({ user_id: userId.value, page, limit: 10 })
+        const {data} = await getMyRecentCommentsAPI({user_id: userId.value, page, limit: 10})
         const list = data?.comments || []
-        inboxItems.value = page === 1 ? list : [...inboxItems.value, ...list]
-        inboxHasMore.value = (data?.pagination?.currentPage || 1) < (data?.pagination?.totalPages || 1)
+        inboxItems.value = page === 1 ? list : inboxItems.value.concat(list)
+        const cur = data?.pagination?.currentPage || page
+        const total = data?.pagination?.totalPages || cur
+        inboxHasMore.value = cur < total
         inboxPage.value = page
-    } finally { inboxLoading.value = false }
+    } finally {
+        inboxLoading.value = false
+    }
 }
 const refreshInbox = () => fetchInbox(1)
 const loadMoreInbox = () => fetchInbox(inboxPage.value + 1)
+
 const markAllInboxRead = async () => {
     if (!userId.value) return
     try {
         const allUnreadIds = []
         let page = 1, hasMore = true
         while (hasMore) {
-            const { data } = await getMyRecentCommentsAPI({ user_id: userId.value, page, limit: 50 })
+            const {data} = await getMyRecentCommentsAPI({user_id: userId.value, page, limit: 50})
             const list = data?.comments || []
             allUnreadIds.push(...list.filter(i => +i.is_unread === 1).map(i => i.id))
             const cur = data?.pagination?.currentPage || page
@@ -507,23 +603,29 @@ const markAllInboxRead = async () => {
         if (allUnreadIds.length) {
             await markCommentsReadAPI(userId.value, allUnreadIds)
             unreadChat.value = 0
-            inboxItems.value = inboxItems.value.map(i => ({ ...i, is_unread: 0 }))
+            inboxItems.value = inboxItems.value.map(i => ({...i, is_unread: 0}))
+            message.success('Đã đánh dấu tất cả tin nhắn là đã đọc')
+        } else {
+            message.info('Không còn tin nhắn chưa đọc')
         }
     } catch (e) {
-        console.error(e); message.error('Không thể đánh dấu tất cả đã đọc')
+        console.error(e)
+        message.error('Không thể đánh dấu tất cả đã đọc')
     }
 }
 const openComment = async (item, e) => {
-    e?.stopPropagation()
+    e?.stopPropagation?.()
     inboxOpen.value = false
     const path = buildTaskDetailPath(item)
-    await router.push({ path, query: { focus: 'comments', c: item.id } })
+    await router.push({path, query: {focus: 'comments', c: item.id}})
     if (+item.is_unread === 1) {
         try {
             await markCommentsReadAPI(userId.value, [item.id])
             item.is_unread = 0
             unreadChat.value = Math.max(0, unreadChat.value - 1)
-        } catch (err) { console.error(err) }
+        } catch (err) {
+            console.error(err)
+        }
     }
 }
 
@@ -531,14 +633,11 @@ const openComment = async (item, e) => {
 const fetchNotify = async (page = 1) => {
     notifyLoading.value = true
     try {
-        const { data } = await getApprovalInboxAPI({ per_page: 10, page })
+        const {data} = await getApprovalInboxAPI({per_page: 10, page})
         let list = data?.data || []
+        list = list.map(it => clientReadSteps.has(it.step_id) ? ({...it, is_unread: 0}) : it)
 
-        // mask đã đọc theo client
-        list = list.map(it => clientReadSteps.has(it.step_id) ? { ...it, is_unread: 0 } : it)
-
-        notifyItems.value = page === 1 ? list : [...notifyItems.value, ...list]
-
+        notifyItems.value = page === 1 ? list : notifyItems.value.concat(list)
         const pager = data?.pager || {}
         const cur = pager.current_page || page
         const per = pager.per_page || 10
@@ -546,9 +645,10 @@ const fetchNotify = async (page = 1) => {
         notifyHasMore.value = cur * per < total
         notifyPage.value = page
 
-        // đồng bộ tổng chưa đọc từ server (không dựa list)
         await fetchNotifyUnreadCount()
-    } finally { notifyLoading.value = false }
+    } finally {
+        notifyLoading.value = false
+    }
 }
 const refreshNotify = () => fetchNotify(1)
 const loadMoreNotify = () => fetchNotify(notifyPage.value + 1)
@@ -558,7 +658,7 @@ const markAllNotifyRead = async () => {
         const allUnreadSteps = []
         let page = 1, hasMore = true
         while (hasMore) {
-            const { data } = await getApprovalInboxAPI({ per_page: 50, page })
+            const {data} = await getApprovalInboxAPI({per_page: 50, page})
             const list = data?.data || []
             allUnreadSteps.push(...list.filter(i => +i.is_unread === 1).map(i => i.step_id))
             const pager = data?.pager || {}
@@ -571,27 +671,29 @@ const markAllNotifyRead = async () => {
         if (allUnreadSteps.length) {
             await markApprovalReadAPI(allUnreadSteps)
             rememberReadMany(allUnreadSteps)
-            notifyItems.value = notifyItems.value.map(i => ({ ...i, is_unread: 0 }))
-            unreadNotifyCount.value = 0 // đã quét hết → tổng = 0
+            notifyItems.value = notifyItems.value.map(i => ({...i, is_unread: 0}))
+            unreadNotifyCount.value = 0
             message.success('Đã đánh dấu tất cả thông báo là đã đọc')
         } else {
             message.info('Không còn thông báo chưa đọc')
         }
     } catch (e) {
-        console.error(e); message.error('Không thể đánh dấu tất cả thông báo đã đọc')
+        console.error(e)
+        message.error('Không thể đánh dấu tất cả thông báo đã đọc')
     }
 }
+
 const openApproval = async (item) => {
     if (+item.is_unread === 1) {
         item.is_unread = 0
         const idx = notifyItems.value.findIndex(n => n.step_id === item.step_id)
-        if (idx > -1) notifyItems.value.splice(idx, 1, { ...notifyItems.value[idx], is_unread: 0 })
-        unreadNotifyCount.value = Math.max(0, unreadNotifyCount.value - 1) // giảm tổng (optimistic)
+        if (idx > -1) notifyItems.value.splice(idx, 1, {...notifyItems.value[idx], is_unread: 0})
+        unreadNotifyCount.value = Math.max(0, unreadNotifyCount.value - 1)
         rememberReadStep(item.step_id)
         markApprovalReadAPI([item.step_id]).catch(console.error)
     }
     notifyOpen.value = false
-    await router.push({ path: item.url, query: { focus: 'approval', ai: item.instance_id } })
+    await router.push({path: item.url, query: {focus: 'approval', ai: item.instance_id}})
 }
 
 /* ========= Dropdown handlers ========= */
@@ -603,84 +705,305 @@ const onInboxOpenChange = async (open) => {
 const onNotifyOpenChange = async (open) => {
     notifyOpen.value = open
     if (!open) return
-    await Promise.all([ refreshNotify(), fetchNotifyUnreadCount() ])
+    await Promise.all([refreshNotify(), fetchNotifyUnreadCount()])
 }
 
 /* ========= Polling ========= */
+let poller = null
 const startPolling = () => {
     stopPolling()
     poller = setInterval(() => {
-        fetchUnread()              // badge comment
-        refreshNotify()            // dữ liệu list
-        fetchNotifyUnreadCount()   // tổng server cho badge chuông
+        // gọi nhẹ, tách badge và danh sách để hạn chế tải
+        fetchUnread()
+        fetchNotifyUnreadCount()
     }, 30000)
 }
-const stopPolling = () => { if (poller) clearInterval(poller); poller = null }
+const stopPolling = () => {
+    if (poller) clearInterval(poller);
+    poller = null
+}
 
-/* ========= Watches / Lifecycle ========= */
-watch(inboxOpen, (open) => {
-    if (!open) {
-        const now = Date.now()
-        inboxLastOpenAt.value = now
-        localStorage.setItem('inbox_last_open_at', String(now))
-    }
-})
-
+/* ========= Lifecycle ========= */
 onMounted(async () => {
-    await fetchUnread()
-    await refreshNotify()
-    await fetchNotifyUnreadCount()
+    await Promise.all([
+        fetchUnread(),
+        refreshNotify(),
+        fetchNotifyUnreadCount()
+    ])
     startPolling()
 })
 onBeforeUnmount(() => stopPolling())
 </script>
 
 <style scoped>
-.header { width:100%; }
-
-.trigger { font-size:18px; line-height:64px; padding:0 24px; cursor:pointer; transition:color .3s; }
-.trigger:hover { color:#1890ff; }
-
-.right-actions{ margin-right:16px; display:flex; align-items:center; gap:16px; }
-
-.ha-icon{ font-size:20px; color:#8c8c8c; cursor:pointer; transition:color .2s, transform .2s; }
-.ha-icon:hover{ color:#fa8c16; transform:translateY(-1px); }
-
-.home-chip{
-    width:36px; height:36px; padding:0; border:none; background:#fff7e6;
-    display:flex; align-items:center; justify-content:center; box-shadow:none;
+.header {
+    width: 100%;
 }
-.home-chip :deep(.anticon){ color:#fa8c16; font-size:18px; }
-.home-chip:hover{ background:#ffe7ba; }
 
-.user-chip{ display:flex; align-items:center; cursor:pointer; }
-
-.user-dropdown{
-    width:320px; background:#fff; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,.12); overflow:hidden;
+.hdr {
+    background: #fff;
+    padding: 0 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
 }
-.user-header{ display:flex; align-items:center; padding:16px; border-bottom:1px solid #f0f0f0; }
-.user-info{ margin-left:12px; flex:1; }
-.user-info .name{ font-weight:600; font-size:16px; color:#fa541c; }
-.user-info .position, .user-info .department{ font-size:13px; color:#888; }
 
-.user-menu{ display:flex; flex-direction:column; }
-.user-item{ display:flex; align-items:center; gap:8px; padding:12px 16px; cursor:pointer; transition:background .2s; font-size:14px; }
-.user-item:hover{ background:#f5f5f5; }
-.user-item.danger{ color:#ff4d4f; }
-.color-dot{ width:16px; height:16px; border-radius:50%; background:#fa541c; margin-left:auto; }
-
-.inbox-card{ width:380px; }
-.inbox-scroll{
-    max-height:420px; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:#d9d9d9 transparent;
+/* Breadcrumb */
+.hdr__crumb {
+    flex: 1;
+    padding-left: 16px;
 }
-:deep(.inbox-scroll::-webkit-scrollbar){ width:6px; }
-:deep(.inbox-scroll::-webkit-scrollbar-thumb){ background:#d9d9d9; border-radius:8px; }
-:deep(.inbox-scroll::-webkit-scrollbar-thumb:hover){ background:#bfbfbf; }
 
-.notify-scroll{
-    max-height:420px; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:#d9d9d9 transparent;
+.crumb {
+    margin-left: 16px;
 }
-:deep(.notify-scroll::-webkit-scrollbar){ width:6px; }
-:deep(.notify-scroll::-webkit-scrollbar-thumb){ background:#d9d9d9; border-radius:8px; }
-:deep(.notify-scroll::-webkit-scrollbar-thumb:hover){ background:#bfbfbf; }
+
+.crumb__link {
+    color: #4a5568; /* slate gray */
+}
+.crumb__link:hover {
+    color: #1a202c; /* đậm hơn khi hover */
+}
+
+.crumb__current {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.crumb__add {
+    margin-left: 4px;
+}
+
+/* Right actions */
+.hdr__actions {
+    margin-right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.ha-icon {
+    font-size: 20px;
+    color: #8c8c8c;
+    cursor: pointer;
+    transition: color .2s, transform .2s;
+}
+
+.ha-icon:hover {
+    color: #fa8c16;
+    transform: translateY(-1px);
+}
+
+/* Home chip */
+.home-chip {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    background: #fff7e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
+}
+
+.home-chip :deep(.anticon) {
+    color: #fa8c16;
+    font-size: 18px;
+}
+
+.home-chip:hover {
+    background: #ffe7ba;
+}
+
+/* User */
+.user-chip {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.user-dropdown {
+    width: 320px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .12);
+    overflow: hidden;
+}
+
+.user-header {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.user-info {
+    margin-left: 12px;
+    flex: 1;
+}
+
+.user-info .name {
+    font-weight: 600;
+    font-size: 16px;
+    color: #fa541c;
+}
+
+.user-info .position, .user-info .department {
+    font-size: 13px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.i-blue {
+    color: #1890ff;
+}
+
+.i-green {
+    color: #52c41a;
+}
+
+.user-menu {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background .2s;
+    font-size: 14px;
+}
+
+.user-item:hover {
+    background: #f5f5f5;
+}
+
+.user-item.danger {
+    color: #ff4d4f;
+}
+
+.color-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fa541c;
+    margin-left: auto;
+}
+
+.ml-auto {
+    margin-left: auto;
+}
+
+/* Cards common */
+.scroll {
+    max-height: 420px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #d9d9d9 transparent;
+}
+
+:deep(.scroll::-webkit-scrollbar) {
+    width: 6px;
+}
+
+:deep(.scroll::-webkit-scrollbar-thumb) {
+    background: #d9d9d9;
+    border-radius: 8px;
+}
+
+:deep(.scroll::-webkit-scrollbar-thumb:hover) {
+    background: #bfbfbf;
+}
+
+.panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 8px 4px;
+}
+
+.panel-title {
+    font-weight: 600;
+}
+
+.panel-tools {
+    display: flex;
+    gap: 4px;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.panel-alert {
+    margin: 4px 8px 8px;
+}
+
+.panel-more {
+    padding: 8px;
+}
+
+/* Groups & Items */
+.group-title {
+    padding: 4px 8px;
+    font-weight: 600;
+}
+
+.group-title--muted {
+    color: #999;
+}
+
+.list-item {
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background .15s ease;
+}
+
+.list-item:hover {
+    background: #fafafa;
+}
+
+.list-item--new {
+    background: #fff7e6;
+}
+
+.list-item--new:hover {
+    background: #ffe7ba;
+}
+
+.item-title {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.item-desc {
+    color: #555;
+}
+
+.meta-sub {
+    font-size: 12px;
+    color: #999;
+    margin-top: 2px;
+}
+
+/* Utils */
+.fw-600 {
+    font-weight: 600;
+}
+
+.ellipsis-1 {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
 </style>

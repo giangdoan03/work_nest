@@ -375,7 +375,7 @@
 
                             <!-- Tên công việc -->
                             <template v-else-if="column.dataIndex === 'title'">
-                                <router-link :to="`/internal-tasks/${record.id}/info`">
+                                <router-link :to="`/non-workflow/${record.id}/info`">
                                     <span
                                         class="task-title"
                                         :class="{ child: record.parent_id }"

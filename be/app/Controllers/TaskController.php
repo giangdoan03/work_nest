@@ -791,7 +791,7 @@ class TaskController extends ResourceController
             'submitted_at' => date('Y-m-d H:i:s'),
             'meta_json' => json_encode([
                 'title' => $task['title'],
-                'url' => '/internal-tasks/' . $task['id'] . '/info',
+                'url' => '/non-workflow/' . $task['id'] . '/info',
                 'assignee_name' => $task['assignee']['name'] ?? null,
             ], JSON_UNESCAPED_UNICODE),
         ];
