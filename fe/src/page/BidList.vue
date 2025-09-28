@@ -132,7 +132,7 @@
                         <!-- Độ ưu tiên -->
                         <template v-else-if="slot.column?.dataIndex === 'priority'">
                             <a-tag :color="Number(slot.record.priority) === 1 ? 'red' : 'blue'">
-                                {{ Number(slot.record.priority) === 1 ? 'Quan trọng' : 'Bình thường' }}
+                                {{ Number(slot.record.priority) === 1 ? 'Cao' : 'Bình thường' }}
                             </a-tag>
                         </template>
 
@@ -535,7 +535,7 @@ const columns = [
     {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: '150px', align: 'center'},
     {title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'center'},
     {title: 'Chi phí dự toán', dataIndex: 'estimated_cost', key: 'estimated_cost'},
-    {title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority'},
+    {title: 'Ưu tiên', dataIndex: 'priority', key: 'priority'},
     // {title: 'Trạng thái', dataIndex: 'status', key: 'status', align: 'center'},
     {title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date'},
     {title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date'},
@@ -649,7 +649,7 @@ const STATUS_MAP = {
 
 const PRIORITY_MAP = {
     [PRIORITY.NORMAL]: {text: 'Bình thường', color: 'blue'},
-    [PRIORITY.IMPORTANT]: {text: 'Quan trọng', color: 'red'},
+    [PRIORITY.IMPORTANT]: {text: 'Cao', color: 'red'},
 };
 
 // Chỉ 2 card có thể gọi API theo status trực tiếp
@@ -895,13 +895,6 @@ const timeProgressText = (r) => {
     const p = visualProgressPercent(r)
     return `Tiến độ theo thời gian: ${p}% (${phase}) ${start.format('DD/MM')} → ${end.format('DD/MM')}`
 }
-
-
-
-
-
-
-
 
 const getFirstLetter = (name) => {
     if (!name || name === 'N/A') return '?'
@@ -1244,9 +1237,6 @@ const rejectCurrentLevel = async (row) => {
         message.error(e?.response?.data?.message || 'Từ chối thất bại.')
     }
 }
-
-
-
 
 
 const goToDetail = (id) => {

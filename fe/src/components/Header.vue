@@ -547,7 +547,7 @@ const fetchNotify = async (page = 1) => {
         notifyPage.value = page
 
         // đồng bộ tổng chưa đọc từ server (không dựa list)
-        fetchNotifyUnreadCount()
+        await fetchNotifyUnreadCount()
     } finally { notifyLoading.value = false }
 }
 const refreshNotify = () => fetchNotify(1)

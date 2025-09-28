@@ -103,7 +103,7 @@ const routes = [
                 path: '/biddings/:bidId/steps/:stepId/tasks',
                 name: 'bidding-step-tasks',               // 👈 DÙNG tên này xuyên suốt
                 component: () => import('../components/BiddingStepTask/BiddingStepTasks.vue'),
-                meta: { breadcrumb: 'Nhiệm vụ', parent: 'biddings-info' },
+                meta: { breadcrumb: 'Công việc', parent: 'biddings-info' },
                 props: route => ({
                     bidId: Number(route.params.bidId),
                     stepId: Number(route.params.stepId),
@@ -291,7 +291,7 @@ const routes = [
                 name: 'bidding-task-info-in-step',
                 component: () => import('../components/task/index.vue'),
                 props: true,
-                meta: { breadcrumb: 'Chi tiết nhiệm vụ', parent: 'bidding-step-tasks' }
+                meta: { breadcrumb: 'Chi tiết công việc', parent: 'bidding-step-tasks' }
             },
             {
                 path: 'department-task/:id/info',

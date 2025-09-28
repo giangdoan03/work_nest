@@ -18,7 +18,7 @@
                 </a-descriptions-item>
 
                 <!-- Hàng 2 -->
-                <a-descriptions-item label="Chi phí">{{ formatCurrency(bidding?.estimated_cost) }}</a-descriptions-item>
+                <a-descriptions-item label="Giá trị">{{ formatCurrency(bidding?.estimated_cost) }}</a-descriptions-item>
                 <a-descriptions-item label="Khách hàng">
                     <a @click="goToCustomerDetail(bidding?.customer_id)" style="color: #1890ff; cursor: pointer;">
                         {{ getCustomerName(bidding?.customer_id) }}
@@ -26,7 +26,7 @@
                 </a-descriptions-item>
 
                 <!-- Hàng 3 -->
-                <a-descriptions-item label="Người thực hiện">
+                <a-descriptions-item label="Người phụ trách">
                     <a v-if="bidding?.assigned_to" @click="goToUserDetail(bidding.assigned_to)"
                        style="color: #1890ff; cursor: pointer;">
                         {{ getAssignedUserName(bidding?.assigned_to) }}
@@ -79,7 +79,7 @@
                     </a-tag>
                 </a-descriptions-item>
                 <!-- 👇 Người phối hợp (gom của TẤT CẢ bước) -->
-                <a-descriptions-item label="Người phối hợp">
+                <a-descriptions-item label="Người thực hiện">
                     <template v-if="(bidding?.collaborators_detail?.length || 0) > 0">
                         <a-space size="small" align="center" wrap>
                             <a-avatar-group :maxCount="5" size="small">
@@ -242,7 +242,7 @@
                                 </a-descriptions-item>
 
                                 <!-- Người phụ trách -->
-                                <a-descriptions-item label="Người thực hiện">
+                                <a-descriptions-item label="Người phụ trách">
                                     <a-popover
                                         :open="openAssignForId === step.id"
                                         trigger="click"
@@ -288,7 +288,7 @@
                                 </a-descriptions-item>
 
                                 <!-- Người phối hợp -->
-                                <a-descriptions-item label="Người phối hợp thực hiện">
+                                <a-descriptions-item label="Người thực hiện">
                                     <template v-if="step.assignees_detail?.length">
                                         <a-avatar-group size="small" :maxCount="5">
                                             <a-tooltip

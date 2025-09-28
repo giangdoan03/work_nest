@@ -6,15 +6,50 @@
             <a-segmented
                 v-model:value="activeMode"
                 :options="[
-                  { label: 'Upload file', value: 'upload' },
-                  { label: 'Lưu link', value: 'link' }
-                ]"
+          { label: 'Lưu link', value: 'link' },
+          { label: 'Upload file', value: 'upload' }
+        ]"
             />
         </template>
 
-        <!-- ================= Upload file ================= -->
-        <div v-if="activeMode === 'upload'">
-            <a-form layout="vertical">
+        <!-- ================= Lưu link (ưu tiên & đặt trước) ================= -->
+        <div v-if="activeMode === 'link'">
+            <a-form layout="vertical" @submit.prevent>
+                <a-form-item label="Tiêu đề tài liệu (link)">
+                    <a-input
+                        v-model:value="manualLink.title"
+                        placeholder="Ví dụ: HSMT - Gói ABC - 2025"
+                        allow-clear
+                        @pressEnter="trySubmitLink"
+                    />
+                </a-form-item>
+
+                <a-form-item label="URL tài liệu">
+                    <a-input
+                        v-model:value="manualLink.url"
+                        placeholder="https://..."
+                        type="url"
+                        allow-clear
+                        @pressEnter="trySubmitLink"
+                    >
+                        <template #prefix><LinkOutlined/></template>
+                    </a-input>
+                </a-form-item>
+
+                <a-form-item>
+                    <a-space>
+                        <a-button type="primary" :disabled="!canSubmitLink" @click="submitLink">
+                            Lưu tài liệu (link)
+                        </a-button>
+                        <a-typography-text type="secondary">URL phải hợp lệ và có tiêu đề.</a-typography-text>
+                    </a-space>
+                </a-form-item>
+            </a-form>
+        </div>
+
+        <!-- ================= Upload file (đặt sau) ================= -->
+        <div v-else>
+            <a-form layout="vertical" @submit.prevent>
                 <a-form-item name="file" class="mb-0">
                     <a-upload-dragger
                         :before-upload="handleBeforeUpload"
@@ -34,14 +69,15 @@
                     <div class="pending-list">
                         <div
                             v-for="(file, index) in pendingFiles"
-                            :key="file.uid ?? file.name ?? index"
+                            :key="file.uid || file.name || index"
                             class="pending-item"
                         >
                             <a-input
                                 v-model:value="file.title"
-                                :status="!file?.title ? 'error' : ''"
-                                :placeholder="`Tiêu đề cho: ${file?.name || 'file #' + (index+1)}`"
+                                :status="!file.title ? 'error' : ''"
+                                :placeholder="`Tiêu đề cho: ${file.name || 'file #' + (index+1)}`"
                                 allow-clear
+                                @pressEnter="trySubmitUpload"
                             />
                         </div>
                     </div>
@@ -58,28 +94,6 @@
                             Lưu tài liệu (file)
                         </a-button>
                         <a-typography-text type="secondary">Yêu cầu: mỗi file cần có tiêu đề.</a-typography-text>
-                    </a-space>
-                </a-form-item>
-            </a-form>
-        </div>
-
-        <!-- ================= Lưu link ================= -->
-        <div v-else>
-            <a-form layout="vertical">
-                <a-form-item label="Tiêu đề tài liệu (link)">
-                    <a-input v-model:value="manualLink.title" placeholder="Ví dụ: HSMT - Gói ABC - 2025" allow-clear />
-                </a-form-item>
-
-                <a-form-item label="URL tài liệu">
-                    <a-input v-model:value="manualLink.url" placeholder="https://..." type="url" allow-clear>
-                        <template #prefix><LinkOutlined/></template>
-                    </a-input>
-                </a-form-item>
-
-                <a-form-item>
-                    <a-space>
-                        <a-button type="primary" :disabled="!canSubmitLink" @click="submitLink">Lưu tài liệu (link)</a-button>
-                        <a-typography-text type="secondary">URL phải hợp lệ và có tiêu đề.</a-typography-text>
                     </a-space>
                 </a-form-item>
             </a-form>
@@ -105,7 +119,7 @@
                         <!-- LINK: favicon + icon -->
                         <template v-else-if="item.kind === 'link'">
                             <div class="att-link-thumb">
-                                <img :src="favicon(item.url)" class="att-favicon" @error="$event.target.style.opacity=0" />
+                                <img :src="favicon(item.url)" class="att-favicon" @error="hideBrokenFavicon" />
                                 <LinkOutlined class="att-link-icon" />
                             </div>
                         </template>
@@ -162,29 +176,29 @@ import { useUserStore } from '@/stores/user'
 import { getTaskFilesAPI, deleteTaskFilesAPI } from '@/api/task'
 import { uploadDocumentToWP, uploadDocumentLink } from '@/api/document'
 
-// ====== PROPS ======
+/* ====== PROPS ====== */
 const props = defineProps({
     taskId: { type: [String, Number], required: true },
     departmentId: { type: [String, Number], default: null }
 })
 
-// ====== STATE ======
+/* ====== STATE ====== */
 const store = useUserStore()
-const activeMode = ref('upload')
+const activeMode = ref('link')            // ƯU TIÊN LINK
 const loadingUploadFile = ref(false)
-const fileList = ref([])      // từ server (đã lưu)
-const pendingFiles = ref([])  // file chờ upload (local)
+const fileList = ref([])                  // từ server (đã lưu)
+const pendingFiles = ref([])              // file chờ upload (local)
 const manualLink = reactive({ title: '', url: '' })
 const thumbH = 96
 
-// ====== HELPERS ======
-function toBool(v) { return v === true || v === 1 || v === '1' }   // ép bool an toàn
-
+/* ====== HELPERS ====== */
 const IMAGE_EXTS = new Set(['jpg','jpeg','png','gif','webp','bmp','svg'])
 const PDF_EXTS   = new Set(['pdf'])
 const WORD_EXTS  = new Set(['doc','docx'])
 const EXCEL_EXTS = new Set(['xls','xlsx','csv'])
 const PPT_EXTS   = new Set(['ppt','pptx'])
+
+function toBool(v) { return v === true || v === 1 || v === '1' }
 
 function extOf(name = '') {
     const n = String(name).split('?')[0]
@@ -195,10 +209,8 @@ function extOf(name = '') {
 function detectKind({ is_link, name, file_type, mime_type, url }) {
     const linkLike = toBool(is_link) || String(file_type || '').toLowerCase() === 'link'
     if (linkLike) return 'link'
-
     const ft = String(mime_type || file_type || '').toLowerCase()
     const e  = extOf(name || url || '')
-
     if (ft.startsWith('image/') || IMAGE_EXTS.has(e)) return 'image'
     if (PDF_EXTS.has(e))   return 'pdf'
     if (WORD_EXTS.has(e))  return 'word'
@@ -228,10 +240,17 @@ function prettyUrl(u) {
 }
 
 function favicon(u) {
-    try { return `https://www.google.com/s2/favicons?domain=${new URL(u).hostname}&sz=64` } catch { return '' }
+    try {
+        const host = new URL(u).hostname
+        return `https://www.google.com/s2/favicons?domain=${host}&sz=64`
+    } catch { return '' }
 }
 
-// Chuẩn hoá data hiển thị
+function hideBrokenFavicon(e) {
+    if (e?.target) e.target.style.opacity = 0
+}
+
+/* Chuẩn hoá data hiển thị */
 const attachmentCards = computed(() => {
     const serverItems = (fileList.value || []).map(f => {
         const isLink = toBool(f.is_link) || String(f.file_type).toLowerCase() === 'link'
@@ -276,33 +295,34 @@ const attachmentCards = computed(() => {
         }
     })
 
+    // Pending trước để người dùng thấy ngay các file vừa chọn
     return [...pendingItems, ...serverItems]
 })
 
-// ====== VALIDATION ======
+/* ====== VALIDATION ====== */
 const canSubmitUpload = computed(() => {
     const arr = (pendingFiles.value || []).filter(Boolean)
-    if (!arr.length) return false
-    return arr.every(f => typeof f.title === 'string' && f.title.trim())
+    return arr.length && arr.every(f => (f.title || '').trim())
 })
 const canSubmitLink = computed(() => {
     const t = (manualLink.title || '').trim()
     const u = (manualLink.url || '').trim()
     if (!t || !u) return false
-    try { const url = new URL(u); return !!url.protocol && !!url.host } catch { return false }
+    try { const parsed = new URL(u); return !!parsed.protocol && !!parsed.host } catch { return false }
 })
 
-// ====== ACTIONS ======
+/* ====== ACTIONS ====== */
 function handleBeforeUpload(file) {
     pendingFiles.value.push({ uid: file.uid, raw: file, name: file.name, title: '' })
-    return false // chặn upload mặc định
+    return false // chặn upload mặc định của AntD
 }
 
 async function fetchTaskFiles() {
     if (!props.taskId) return
     try {
         const res = await getTaskFilesAPI(props.taskId)
-        fileList.value = (res.data || []).map(f => ({
+        const data = Array.isArray(res?.data) ? res.data : []
+        fileList.value = data.map(f => ({
             ...f,
             uid: f.id || f.file_name,
             name: f.file_name,
@@ -322,13 +342,14 @@ async function submitUpload() {
 
     loadingUploadFile.value = true
     try {
+        const deptId = props.departmentId ?? (store?.currentUser?.department_id ?? '')
         for (const f of arr) {
             const fd = new FormData()
             fd.append('file', f.raw, f.name)
             fd.append('title', f.title.trim())
-            fd.append('department_id', String(props.departmentId ?? store.currentUser.department_id ?? ''))
+            fd.append('department_id', String(deptId))
             fd.append('visibility', 'private')
-            fd.append('task_id', String(props.taskId))   // để BE gắn vào task_files
+            fd.append('task_id', String(props.taskId)) // để BE gắn vào task_files
             await uploadDocumentToWP(fd)
         }
         pendingFiles.value = []
@@ -342,13 +363,17 @@ async function submitUpload() {
     }
 }
 
+function trySubmitUpload() {
+    if (canSubmitUpload.value && !loadingUploadFile.value) submitUpload()
+}
+
 async function submitLink() {
     if (!canSubmitLink.value) return
     try {
         await uploadDocumentLink({
             title: manualLink.title.trim(),
-            file_url: manualLink.url.trim(),               // BE nhận 'file_url'
-            department_id: props.departmentId ?? store.currentUser.department_id,
+            file_url: manualLink.url.trim(), // BE nhận 'file_url'
+            department_id: props.departmentId ?? store?.currentUser?.department_id,
             visibility: 'private',
             task_id: props.taskId
         })
@@ -362,29 +387,34 @@ async function submitLink() {
     }
 }
 
-function openAttachment(it) { window.open(it.url, '_blank') }
-function downloadAttachment(it) { window.open(it.url, '_blank') }
+function trySubmitLink() {
+    if (canSubmitLink.value) submitLink()
+}
+
+function openAttachment(it) { window.open(it.url, '_blank', 'noopener') }
+function downloadAttachment(it) { window.open(it.url, '_blank', 'noopener') }
 
 async function removeAttachment(it) {
+    // Xoá local (pending)
     if (it._source === 'pending') {
         const i = pendingFiles.value.findIndex(p => p === it.full)
         if (i >= 0) pendingFiles.value.splice(i, 1)
         return
     }
+    // Xoá server
     try {
         await deleteTaskFilesAPI(it.full.id)
         await fetchTaskFiles()
-        message.success('Đã xoá file')
+        message.success('Đã xoá file.')
     } catch (e) {
-        message.error('Xoá thất bại')
+        console.error(e)
+        message.error('Xoá thất bại.')
     }
 }
 
-// ====== LIFECYCLE ======
+/* ====== LIFECYCLE ====== */
 onMounted(fetchTaskFiles)
 watch(() => props.taskId, fetchTaskFiles)
-
-// expose helpers used in template
 </script>
 
 <style scoped>
@@ -422,6 +452,7 @@ watch(() => props.taskId, fetchTaskFiles)
 .att-badge { position:absolute; top:6px; left:6px; border-radius:999px; font-size:10px; padding:0 6px; }
 .att-ext { position:absolute; top:6px; right:6px; font-size:10px; padding:0 6px; background:#f0f1f5; border-radius:999px; text-transform:uppercase; color:#555; }
 </style>
+
 <style>
 .ant-list-item {
     padding-left: 0 !important;

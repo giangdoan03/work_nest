@@ -70,8 +70,24 @@
                                                                           placeholder="Chọn loại nhiệm vụ"/>
                                                             </a-form-item>
                                                         </a-col>
-                                                        <a-col :span="24">
-                                                            <a-form-item label="Công việc cha">
+
+                                                        <a-col :span="12" v-if="formData.linked_type === 'bidding'">
+                                                            <a-form-item label="Công việc con" name="step_code">
+                                                                <a-typography-text v-if="!isEditMode">
+                                                                    {{ getStepByStepNo(formData.step_code) }}
+                                                                </a-typography-text>
+                                                                <a-select
+                                                                    v-else
+                                                                    v-model:value="formData.step_code"
+                                                                    :options="stepOption"
+                                                                    @change="handleChangeStep"
+                                                                    :disabled="!formData.linked_id"
+                                                                    placeholder="Chọn tiến trình"
+                                                                />
+                                                            </a-form-item>
+                                                        </a-col>
+                                                        <a-col :span="12">
+                                                            <a-form-item label="Công việc cháu">
                                                                 <template v-if="formData.parent_id">
                                                                     <a-tooltip
                                                                         :title="formData.parent_title || ('#' + formData.parent_id)">
@@ -87,6 +103,7 @@
                                                                 </template>
                                                             </a-form-item>
                                                         </a-col>
+
                                                         <!-- ================== BIDDING ================== -->
                                                         <a-col :span="12" v-if="formData.linked_type === 'bidding'">
                                                             <a-form-item label="Gói thầu" name="linked_id">
@@ -101,21 +118,6 @@
                                                                     :options="linkedIdOption"
                                                                     @search="searchBidding"
                                                                     @change="handleChangeLinkedId(formData.linked_id)"
-                                                                />
-                                                            </a-form-item>
-                                                        </a-col>
-                                                        <a-col :span="12" v-if="formData.linked_type === 'bidding'">
-                                                            <a-form-item label="Công việc cha" name="step_code">
-                                                                <a-typography-text v-if="!isEditMode">
-                                                                    {{ getStepByStepNo(formData.step_code) }}
-                                                                </a-typography-text>
-                                                                <a-select
-                                                                    v-else
-                                                                    v-model:value="formData.step_code"
-                                                                    :options="stepOption"
-                                                                    @change="handleChangeStep"
-                                                                    :disabled="!formData.linked_id"
-                                                                    placeholder="Chọn tiến trình"
                                                                 />
                                                             </a-form-item>
                                                         </a-col>
@@ -134,6 +136,30 @@
                                                                 />
                                                             </a-form-item>
                                                         </a-col>
+
+                                                        <a-col :span="12">
+                                                            <a-form-item label="Người thực hiện" name="assigned_to">
+                                                                <a-typography-text v-if="!isEditMode">
+                                                                    {{ getUserById(formData.assigned_to) }}
+                                                                </a-typography-text>
+                                                                <a-select v-else v-model:value="formData.assigned_to"
+                                                                          :options="userOption"
+                                                                          placeholder="Chọn người dùng"/>
+                                                            </a-form-item>
+                                                        </a-col>
+
+                                                        <a-col :span="12">
+                                                            <a-form-item label="Người phối hợp" name="collaborated_by">
+                                                                <a-typography-text v-if="!isEditMode">
+                                                                    {{ getUserById(formData.collaborated_by) }}
+                                                                </a-typography-text>
+                                                                <a-select v-else v-model:value="formData.collaborated_by"
+                                                                          :options="userOption"
+                                                                          placeholder="Chọn người dùng"/>
+                                                            </a-form-item>
+                                                        </a-col>
+
+
                                                         <a-col :span="12" v-if="formData.linked_type === 'contract'">
                                                             <a-form-item label="Công việc cha" name="step_code">
                                                                 <a-typography-text v-if="!isEditMode">
@@ -231,28 +257,6 @@
                                                             </a-form-item>
                                                         </a-col>
 
-                                                        <a-col :span="6" v-if="formData.status === 'request_approval'">
-                                                            <a-form-item label="Cấp hiện tại">
-                                                                <span>{{ formData.current_level || '—' }}</span>
-                                                            </a-form-item>
-                                                        </a-col>
-
-                                                        <a-col :span="6" v-if="formData.status === 'request_approval'">
-                                                            <a-form-item label="Tổng cấp duyệt">
-                                                                <span>{{ formData.approval_steps || '—' }}</span>
-                                                            </a-form-item>
-                                                        </a-col>
-
-                                                        <a-col :span="12">
-                                                            <a-form-item label="Người thực hiện" name="assigned_to">
-                                                                <a-typography-text v-if="!isEditMode">
-                                                                    {{ getUserById(formData.assigned_to) }}
-                                                                </a-typography-text>
-                                                                <a-select v-else v-model:value="formData.assigned_to"
-                                                                          :options="userOption"
-                                                                          placeholder="Chọn người dùng"/>
-                                                            </a-form-item>
-                                                        </a-col>
 
                                                         <a-col :span="12">
                                                             <a-form-item label="Phòng ban" name="id_department">
@@ -262,6 +266,16 @@
                                                                 <a-select v-else v-model:value="formData.id_department"
                                                                           :options="departmentOptions"
                                                                           placeholder="Chọn người dùng"/>
+                                                            </a-form-item>
+                                                        </a-col>
+                                                        <a-col :span="12">
+                                                            <!-- Mô tả -->
+                                                            <a-form-item label="Mô tả" name="description">
+                                                                <a-typography-text v-if="!isEditMode">
+                                                                    {{formData.description ? formData.description : "Trống" }}
+                                                                </a-typography-text>
+                                                                <a-textarea v-else v-model:value="formData.description"
+                                                                            :rows="4" placeholder="Nhập mô tả"/>
                                                             </a-form-item>
                                                         </a-col>
 
@@ -288,16 +302,15 @@
                                                                 </template>
                                                             </a-form-item>
                                                         </a-col>
-                                                        <a-col :span="12">
-                                                            <!-- Mô tả -->
-                                                            <a-form-item label="Mô tả" name="description">
-                                                                <a-typography-text v-if="!isEditMode">
-                                                                    {{
-                                                                        formData.description ? formData.description : "Trống"
-                                                                    }}
-                                                                </a-typography-text>
-                                                                <a-textarea v-else v-model:value="formData.description"
-                                                                            :rows="4" placeholder="Nhập mô tả"/>
+                                                        <a-col :span="12" v-if="formData.status === 'request_approval'">
+                                                            <a-form-item label="Cấp duyệt hiện tại">
+                                                                <span>{{ formData.current_level || '—' }}</span>
+                                                            </a-form-item>
+                                                        </a-col>
+
+                                                        <a-col :span="12" v-if="formData.status === 'request_approval'">
+                                                            <a-form-item label="Tổng cấp duyệt">
+                                                                <span>{{ formData.approval_steps || '—' }}</span>
                                                             </a-form-item>
                                                         </a-col>
                                                     </a-row>
@@ -442,6 +455,7 @@ const formData = ref({
     parent_id: null,
     id_department: null,
     progress: 0,
+    collaborated_by: null
 });
 const priorityOption = ref([
     {value: "low", label: "Thấp", color: "success"},

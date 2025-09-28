@@ -63,15 +63,28 @@
                 </a-row>
 
                 <a-row :gutter="16">
-                    <a-col :span="12">
+                    <a-col :span="8">
                         <a-form-item label="Trạng thái" name="status">
                             <a-select v-model:value="formData.status" :options="statusOption" placeholder="Chọn trạng thái" />
                         </a-form-item>
                     </a-col>
-                    <a-col :span="12">
+                    <a-col :span="8">
                         <a-form-item label="Người thực hiện" name="assigned_to">
                             <a-select
                                 v-model:value="formData.assigned_to"
+                                :options="userOption"
+                                placeholder="Chọn người dùng"
+                                show-search
+                                option-filter-prop="label"
+                                :filter-option="(input, option) => normalizeText(option?.label ?? '').includes(normalizeText(input))"
+                                :getPopupContainer="trigger => trigger.parentNode"
+                            />
+                        </a-form-item>
+                    </a-col>
+                    <a-col :span="8">
+                        <a-form-item label="Người phối hợp" name="collaborated_by">
+                            <a-select
+                                v-model:value="formData.collaborated_by"
                                 :options="userOption"
                                 placeholder="Chọn người dùng"
                                 show-search
@@ -252,7 +265,8 @@ const formData = ref({
     parent_id: null,
     approval_steps: 1,
     id_department: null,
-    step_id: null
+    step_id: null,
+    collaborated_by: null
 })
 
 const effectiveParentId = computed(() =>

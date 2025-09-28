@@ -212,7 +212,7 @@
             <div class="table-section">
 
                 <a-divider>
-                    Danh sách nhiệm vụ phòng
+                    Danh sách công việc
                     <template v-if="totalTasks">
                         ({{ totalTasks }})
                     </template>
@@ -795,8 +795,8 @@ const columns = [
     {title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', width: 110, align: 'center'},
 
     // 🆕 Người đề nghị / Người tạo
-    {title: 'Đề nghị', dataIndex: 'proposed_by', key: 'proposed_by', width: 110, align: 'center'},
-    {title: 'Tạo bởi', dataIndex: 'created_by', key: 'created_by', width: 110, align: 'center'},
+    {title: 'Người giao việc', dataIndex: 'proposed_by', key: 'proposed_by', width: 110, align: 'center'},
+    {title: 'Người phụ trách', dataIndex: 'created_by', key: 'created_by', width: 110, align: 'center'},
 
     // 🆕 Thời gian
     {

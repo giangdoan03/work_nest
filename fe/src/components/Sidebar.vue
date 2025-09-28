@@ -282,48 +282,54 @@
             <a-drawer
                 v-model:open="topDrawerOpen"
                 placement="left"
-                width="420"
+                width="460"
                 :closable="false"
+                :bodyStyle="{ padding: 0, background: 'var(--qm-bg)' }"
             >
-                <!-- custom title -->
+                <!-- Header đẹp hơn -->
                 <template #title>
-                    <img
-                        :src="'/TTID_logo.png'"
-                        alt="Menu logo"
-                        style="height: 44px; object-fit: contain;"
-                    />
+                    <div class="qm-header">
+                        <div class="qm-brand">
+                            <img :src="'/TTID_logo.png'" alt="Menu logo" class="qm-logo" />
+                            <div class="qm-brand-text">
+                                <div class="title">Office Portal</div>
+                                <div class="sub">Truy cập nhanh mô-đun</div>
+                            </div>
+                        </div>
+                    </div>
                 </template>
 
-                <div class="quick-menu grouped">
+                <!-- Nội dung -->
+                <div class="qm-content">
                     <section
                         v-for="group in quickGroups"
                         :key="group.key"
-                        class="quick-group"
+                        class="qm-section"
                     >
-                        <div class="quick-group-header">
-                            <h4 class="quick-group-title">{{ group.title }}</h4>
-                            <span class="quick-group-count">{{ group.items.length }}</span>
+                        <div class="qm-section-head">
+                            <h4 class="qm-section-title">{{ group.title }}</h4>
+                            <span class="qm-divider" aria-hidden="true"></span>
                         </div>
 
-                        <div class="quick-grid">
-                            <div
+                        <div class="qm-grid">
+                            <button
                                 v-for="item in group.items"
                                 :key="item.path"
-                                class="quick-item"
+                                class="qm-card"
+                                type="button"
                                 @click="navAndClose(item.path)"
-                                role="button"
-                                tabindex="0"
-                                @keyup.enter="navAndClose(item.path)"
                             >
-                                <div class="icon-box" :class="item.color">
-                                    <component :is="item.icon" />
-                                </div>
-                                <span>{{ item.label }}</span>
-                            </div>
+          <span class="qm-icon-box" :class="item.color">
+            <component :is="item.icon" />
+            <i class="shine" aria-hidden="true"></i>
+          </span>
+                                <span class="qm-card-title">{{ item.label }}</span>
+                            </button>
                         </div>
                     </section>
                 </div>
             </a-drawer>
+
 
 
         </div>
@@ -456,7 +462,9 @@
                 { path: '/project-overview', icon: GlobalOutlined,      color: 'blue',   label: 'Tổng quan' },
                 { path: '/tasks',            icon: CheckCircleOutlined, color: 'green',  label: 'Công việc' },
                 { path: '/bid-list',         icon: WalletOutlined,      color: 'orange', label: 'Gói thầu' },
+                { path: '/contracts-tasks',  icon: FileDoneOutlined,    color: 'purple', label: 'Hợp đồng' },
                 { path: '/workflow',         icon: AppstoreOutlined,    color: 'purple', label: 'Việc quy trình' },
+                { path: '/non-workflow',     icon: UnorderedListOutlined, color: 'sky',  label: 'Việc không quy trình' },
                 { path: '/documents/my',     icon: BookOutlined,        color: 'red',    label: 'Tài liệu' },
             ],
         },
@@ -925,24 +933,6 @@
         justify-content: center;
     }
 
-    .quick-menu {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 24px;
-        padding: 16px;
-    }
-
-    .quick-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        cursor: pointer;
-        transition: transform 0.2s, color 0.2s;
-    }
-
-    .quick-item:hover {
-        transform: translateY(-4px);
-    }
 
     /* Tăng size ô & icon trong Menu nhanh */
     .quick-menu .icon-box {
@@ -971,28 +961,9 @@
     }
 
 
-    .icon-box {
-        width: 60px;
-        height: 60px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        margin-bottom: 8px;
-        color: #fff;
-    }
-
-    .icon-box.blue   { background: #e6f4ff; color: #1677ff; }
-    .icon-box.green  { background: #f6ffed; color: #52c41a; }
-    .icon-box.orange { background: #fff7e6; color: #fa8c16; }
-    .icon-box.purple { background: #f9f0ff; color: #722ed1; }
-    .icon-box.red    { background: #fff2f0; color: #f5222d; }
-    .icon-box.sky    { background: #e6f7ff; color: #1890ff; }
-    .icon-box.pink   { background: #fff0f6; color: #eb2f96; }
 
     .quick-item span {
-        font-size: 14px;
+        font-size: 15px;
         color: #333;
         text-align: center;
     }
@@ -1002,76 +973,184 @@
     }
 
 
-    /* Nhóm & tiêu đề */
-    .quick-menu.grouped {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        padding: 12px 16px 20px;
-    }
-
-    .quick-group {
-        background: #fff;
-        border: 1px solid #f0f0f0;
-        border-radius: 12px;
-        padding: 12px 12px 16px;
-    }
-
-    .quick-group-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 4px 6px 10px;
-        border-bottom: 1px dashed #e8e8e8;
-        margin-bottom: 12px;
-    }
-
-    .quick-group-title {
-        font-size: 14px;
-        font-weight: 600;
-        color: #1f1f1f;
-        margin: 0;
-    }
-
-    .quick-group-count {
-        font-size: 12px;
-        color: #595959;
-        background: #f5f5f5;
-        border-radius: 999px;
-        padding: 2px 8px;
-    }
-
-    /* Lưới item trong từng nhóm */
-    .quick-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 18px 18px;
-    }
-
-    /* Tái sử dụng .quick-item và .icon-box sẵn có */
-    .quick-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        cursor: pointer;
-        transition: transform 0.2s, color 0.2s;
-    }
-
-    .quick-item:hover {
-        transform: translateY(-4px);
-    }
-
     .quick-item span {
-        font-size: 14px;
+        font-size: 15px;
         color: #333;
         text-align: center;
     }
 
-    /* Nếu muốn responsive ba cột -> hai cột khi hẹp */
-    @media (max-width: 420px) {
-        .quick-grid { grid-template-columns: repeat(2, 1fr); }
+
+
+    /* ================= Quick Menu – Pro look ================= */
+    :root {
+        --qm-bg: #f7f8fa;
+        --qm-card-bg: #fff;
+        --qm-border: rgba(15, 23, 42, .06);
+        --qm-shadow: 0 6px 18px rgba(15,23,42,.06);
+        --qm-shadow-lg: 0 10px 28px rgba(15,23,42,.08);
+        --qm-radius: 16px;
     }
+
+    :deep(.ant-drawer-header) {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--qm-border) !important;
+        background: #fff;
+    }
+
+    .qm-header {
+        display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .qm-brand { display: flex; align-items: center; gap: 12px; }
+    .qm-logo  { height: 40px; width: auto; display: block; }
+
+    .qm-brand-text .title {
+        font-weight: 700; letter-spacing: .2px; font-size: 16px; line-height: 1.1;
+        color: #111827;
+    }
+    .qm-brand-text .sub {
+        font-size: 12px; color: #6b7280; margin-top: 2px;
+    }
+
+    /* Content wrapper */
+    .qm-content {
+        padding: 14px 16px 20px;
+        background: var(--qm-bg);
+    }
+
+    /* Section */
+    .qm-section { background: var(--qm-card-bg); border: 1px solid var(--qm-border);
+        border-radius: var(--qm-radius); padding: 14px 14px 16px; margin-bottom: 14px;
+        box-shadow: var(--qm-shadow);
+    }
+
+    .qm-section-head {
+        display:flex; align-items:center; gap: 12px; margin-bottom: 12px;
+    }
+    .qm-section-title {
+        margin: 0; font-size: 12px; font-weight: 800; letter-spacing:.08em;
+        color:#64748b; text-transform: uppercase;
+    }
+    .qm-divider {
+        height:1px; background: var(--qm-border); flex:1; border-radius: 999px;
+    }
+
+    /* Grid */
+    .qm-grid {
+        display:grid; gap: 16px;
+        grid-template-columns: repeat(4, minmax(0,1fr));
+    }
+    @media (max-width: 520px) { .qm-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 420px) { .qm-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    /* Card */
+    .qm-card {
+        appearance: none; border: 1px solid var(--qm-border); background: #fff;
+        border-radius: 14px; padding: 14px 10px 12px; width: 100%;
+        display:flex; flex-direction:column; align-items:center; gap: 10px;
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        cursor: pointer; text-align: center; box-shadow: 0 0 0 rgba(0,0,0,0);
+    }
+    .qm-card:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(24,144,255,.18); }
+    .qm-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(24,144,255,.25);
+        box-shadow: var(--qm-shadow-lg);
+    }
+
+    /* Icon box (reuse màu pastel bạn đã có) */
+    .qm-icon-box {
+        --icon-size: 26px;
+        width: 58px; height: 58px; border-radius: 14px;
+        display:grid; place-items:center; position:relative;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.7), 0 8px 20px rgba(0,0,0,.04);
+        overflow: hidden;
+    }
+    .qm-icon-box :deep(.anticon) { font-size: var(--icon-size); color: var(--fg, #111); }
+
+    /* Pastel palettes (khớp class color hiện có) */
+    /* xanh dương */
+    .qm-icon-box.blue{
+        --fg:#155eef; /* đậm hơn #1677ff */
+        background: linear-gradient(180deg,#dcebff,#cfe2ff);
+        border: 1px solid rgba(21,94,239,.28);
+    }
+
+    /* xanh lá */
+    .qm-icon-box.green{
+        --fg:#16a34a;
+        background: linear-gradient(180deg,#def7ea,#d6f3e3);
+        border: 1px solid rgba(22,163,74,.28);
+    }
+
+    /* cam */
+    .qm-icon-box.orange{
+        --fg:#d97706;
+        background: linear-gradient(180deg,#ffe9cc,#ffe0b8);
+        border: 1px solid rgba(217,119,6,.28);
+    }
+
+    /* tím */
+    .qm-icon-box.purple{
+        --fg:#7c3aed;
+        background: linear-gradient(180deg,#efe6ff,#e6dbff);
+        border: 1px solid rgba(124,58,237,.28);
+    }
+
+    /* đỏ */
+    .qm-icon-box.red{
+        --fg:#dc2626;
+        background: linear-gradient(180deg,#ffe0e0,#ffd6d6);
+        border: 1px solid rgba(220,38,38,.28);
+    }
+
+    /* sky/azure */
+    .qm-icon-box.sky{
+        --fg:#1273ff;
+        background: linear-gradient(180deg,#dff1ff,#d4ecff);
+        border: 1px solid rgba(18,115,255,.28);
+    }
+
+    /* hồng */
+    .qm-icon-box.pink{
+        --fg:#db2777;
+        background: linear-gradient(180deg,#ffe1f0,#ffd6ea);
+        border: 1px solid rgba(219,39,119,.28);
+    }
+
+    /* giữ màu icon theo --fg */
+    .qm-icon-box.purple :deep(.anticon),
+    .qm-icon-box.blue   :deep(.anticon),
+    .qm-icon-box.green  :deep(.anticon),
+    .qm-icon-box.orange :deep(.anticon),
+    .qm-icon-box.red    :deep(.anticon),
+    .qm-icon-box.sky    :deep(.anticon),
+    .qm-icon-box.pink   :deep(.anticon) {
+        color: var(--fg);
+    }
+
+    /* nhấn mạnh thêm khi hover */
+    .qm-card:hover .qm-icon-box {
+        filter: saturate(1.12) contrast(1.06);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.75), 0 10px 24px rgba(0,0,0,.06);
+    }
+
+    /* Light shine */
+    .qm-icon-box .shine {
+        position:absolute; inset:0; pointer-events:none;
+        background: radial-gradient(120px 60px at -20% -20%, rgba(255,255,255,.65), transparent 60%),
+        radial-gradient(140px 80px at 120% 120%, rgba(255,255,255,.35), transparent 55%);
+        mix-blend-mode: screen;
+    }
+
+    /* Card title */
+    .qm-card-title {
+        font-size: 13.5px; line-height: 1.2; color:#111827;
+        text-wrap: balance;
+    }
+
+
+
 
 
     </style>
