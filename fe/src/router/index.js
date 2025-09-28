@@ -137,21 +137,21 @@ const routes = [
             {
                 path: '/non-workflow/tasks/:id/info',
                 name: 'tasks-detail',
-                component: () => import('../components/task/index.vue'),
+                component: TaskDetail,
                 meta: { breadcrumb: 'Chi tiết công việc', parent: 'non-workflow' }
             },
 
             {
                 path: '/workflow/bidding-tasks/:id/info',
                 name: 'workflow-bidding-tasks',
-                component: () => import('../components/task/index.vue'),
+                component: TaskDetail,
                 meta: { breadcrumb: 'Chi tiết nhiệm vụ', parent: 'workflow' },
                 props: true,
             },
             {
                 path: '/biddings/:id/info',
                 name: 'biddings-info',
-                component: () => import('../page/BidDetail.vue'),
+                component: BidDetail,
                 meta: { breadcrumb: 'Chi tiết gói thầu', parent: 'bid-list' },
                 props: true,
             },
@@ -159,7 +159,7 @@ const routes = [
             {
                 path: '/bidding-tasks/:id/info',
                 name: 'bidding-task-info',
-                component: () => import('../components/task/index.vue'),
+                component: TaskDetail,
                 props: true,
                 meta: { breadcrumb: 'Chi tiết công việc', parent: 'bid-list' }
             },
