@@ -47,9 +47,9 @@ import { logout } from '../api/auth'
 
 // Load collapsed state from localStorage on mount
 onMounted(() => {
-    const savedCollapsed = localStorage.getItem('sidebarCollapsed')
-    if (savedCollapsed !== null) {
-        collapsed.value = JSON.parse(savedCollapsed)
+    // Nếu tồn tại key thì xóa luôn
+    if (localStorage.getItem('sidebarCollapsed') !== null) {
+        localStorage.removeItem('sidebarCollapsed')
     }
 })
 
