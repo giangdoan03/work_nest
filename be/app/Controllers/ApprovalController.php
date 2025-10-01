@@ -705,4 +705,39 @@ class ApprovalController extends ResourceController
             ],
         ]);
     }
+
+    public function activeByTarget(): ResponseInterface
+    {
+        $type = (string) ($this->request->getGet('target_type') ?? '');
+        $tid  = (int) ($this->request->getGet('target_id') ?? 0);
+
+        if ($type === '' || $tid <= 0) {
+            return $this->failValidationErrors('Thiếu target_type hoặc target_id.');
+        }
+
+        $db = db_connect();
+
+        // phiên active (is_active=1)
+        $instance = $db->table('approval_instances')
+            ->where('target_type', $type)
+            ->where('target_id', $tid)
+            ->where('is_active', 1)
+            ->get()->getRowArray();
+
+        $steps = [];
+        if ($instance) {
+            $steps = $db->table('approval_steps')
+                ->where('approval_instance_id', (int) $instance['id'])
+                ->orderBy('level', 'ASC')
+                ->get()->getResultArray();
+        }
+
+        return $this->respond([
+            'instance' => $instance ?: null,
+            'steps'    => $steps,
+        ]);
+    }
+
+
+
 }

@@ -228,8 +228,15 @@ $routes->group('api', function ($routes) {
     $routes->post('documents/upload',              'DocumentController::upload'); // lưu link vào DB
     $routes->post('documents/upload-link', 'DocumentController::uploadLink'); // ⬅️ mới
 
+    // ✅ Route gửi duyệt task
+    $routes->post('tasks/(:num)/approvals/send', 'TaskController::sendApproval/$1');
 
+    $routes->get('approval/active-by-target', 'ApprovalController::activeByTarget');
+    // Lấy phiên duyệt active theo target (FE đang gọi cái này)
+    $routes->get('active-by-target', 'ApprovalController::activeByTarget');
 
-
+    // Duyệt / Từ chối trực tiếp theo task_id
+    $routes->post('tasks/(:num)/approve', 'TaskApprovalController::approveByTask/$1');
+    $routes->post('tasks/(:num)/reject',  'TaskApprovalController::rejectByTask/$1');
 
 });

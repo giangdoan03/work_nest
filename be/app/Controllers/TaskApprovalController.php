@@ -517,4 +517,50 @@ class TaskApprovalController extends ResourceController
 
         return $this->respond($result);
     }
+
+    public function approveByTask($taskId): ResponseInterface
+    {
+        $session = session();
+        if (!$session->get('logged_in')) return $this->failUnauthorized('Bạn chưa đăng nhập');
+
+        $taskId = (int) $taskId;
+        $model  = new TaskApprovalModel();
+
+        // Tìm bản ghi approval PENDING đúng cấp hiện tại của task
+        $db   = db_connect();
+        $row  = $db->table('task_approvals ta')
+            ->select('ta.id AS approval_id, ta.level, t.current_level')
+            ->join('tasks t', 't.id = ta.task_id', 'inner')
+            ->where('ta.task_id', $taskId)
+            ->where('ta.status', 'pending')
+            ->where('ta.level = t.current_level')   // đảm bảo đúng cấp đang chờ
+            ->get()->getRowArray();
+
+        if (!$row) return $this->failNotFound('Không tìm thấy cấp duyệt đang chờ cho task này');
+
+        // Chuyển qua hàm approve($approval_id)
+        return $this->approve((int)$row['approval_id']);
+    }
+
+    public function rejectByTask($taskId): ResponseInterface
+    {
+        $session = session();
+        if (!$session->get('logged_in')) return $this->failUnauthorized('Bạn chưa đăng nhập');
+
+        $taskId = (int) $taskId;
+        $db     = db_connect();
+
+        $row  = $db->table('task_approvals ta')
+            ->select('ta.id AS approval_id, ta.level, t.current_level')
+            ->join('tasks t', 't.id = ta.task_id', 'inner')
+            ->where('ta.task_id', $taskId)
+            ->where('ta.status', 'pending')
+            ->where('ta.level = t.current_level')
+            ->get()->getRowArray();
+
+        if (!$row) return $this->failNotFound('Không tìm thấy cấp duyệt đang chờ cho task này');
+
+        return $this->reject((int)$row['approval_id']);
+    }
+
 }

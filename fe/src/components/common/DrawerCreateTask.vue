@@ -172,17 +172,16 @@
                     </a-col>
 
                     <a-col :span="24">
-                        <a-form-item
-                            label="Cấp duyệt"
-                            name="approval_steps"
-                            :rules="[{ validator: validateApprovalSteps, trigger: 'change' }]"
-                        >
-                            <a-radio-group v-model:value="formData.approval_steps">
-                                <a-radio :value="1">1 cấp duyệt</a-radio>
-                                <a-radio :value="2">2 cấp duyệt</a-radio>
-                            </a-radio-group>
+                        <a-form-item label="Có cần duyệt không?" name="needs_approval">
+                            <a-checkbox
+                                :checked="formData.needs_approval === 1"
+                                @change="e => formData.needs_approval = e.target.checked ? 1 : 0"
+                            >
+                                Cần duyệt
+                            </a-checkbox>
                         </a-form-item>
                     </a-col>
+
 
                     <a-col :span="24">
                         <a-form-item label="Mô tả" name="description">
@@ -263,11 +262,12 @@ const formData = ref({
     status: null,
     priority: null,
     parent_id: null,
-    approval_steps: 1,
     id_department: null,
     step_id: null,
-    collaborated_by: null
+    collaborated_by: null,
+    needs_approval: 0
 })
+
 
 const effectiveParentId = computed(() =>
     props.createAsRoot
@@ -411,6 +411,13 @@ const validateApprovalSteps = async (_r, v) => {
     if (![1, 2].includes(v)) return Promise.reject('Giá trị cấp duyệt không hợp lệ')
     return Promise.resolve()
 }
+const validateNeedsApproval = async (rule, value) => {
+    if (![0,1].includes(Number(value))) {
+        return Promise.reject('Giá trị needs_approval không hợp lệ')
+    }
+    return Promise.resolve()
+}
+
 const validateStep = async () => {
     if (['bidding', 'contract'].includes(formData.value.linked_type)) {
         if (!formData.value.step_code && !formData.value.step_id) {
@@ -429,9 +436,11 @@ const rules = computed(() => ({
     linked_type: [{ required: true, validator: validateLinkedType, trigger: 'change' }],
     description: [{ required: true, validator: validateDescription, trigger: 'change' }],
     department_id: [{ required: true, validator: validateDepartment, trigger: 'change' }],
-    approval_steps: [{ required: true, message: 'Vui lòng chọn cấp duyệt' }],
-    step_code: [{ validator: validateStep, trigger: 'change' }]
+    step_code: [{ validator: validateStep, trigger: 'change' }],
+    needs_approval: [{ required: true, validator: validateNeedsApproval, trigger: 'change' }]
 }))
+
+
 
 const priorityOption = ref([
     { value: 'low', label: 'Thấp' },
@@ -624,9 +633,12 @@ const createDrawerInternal = async () => {
     }
 
     // ép kiểu số
-    ;['created_by', 'assigned_to', 'proposed_by', 'parent_id', 'id_department', 'approval_steps', 'step_id'].forEach(k => {
-        payload[k] = payload[k] !== undefined && payload[k] !== null && payload[k] !== '' ? Number(payload[k]) : null
-    })
+    ['created_by','assigned_to','proposed_by','parent_id','id_department','step_id','needs_approval']
+        .forEach(k => {
+            payload[k] = payload[k] !== undefined && payload[k] !== null && payload[k] !== ''
+                ? Number(payload[k])
+                : null
+        })
     payload.created_by = store.currentUser?.id || null
 
     loadingCreate.value = true

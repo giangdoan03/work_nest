@@ -101,3 +101,17 @@ export const markCommentsReadAPI = (userId, commentIds = []) =>
 export const markCommentReadAPI = (commentId, userId) =>
     instance.post(`/comments/${commentId}/read`, { user_id: userId });
 
+export const sendTaskForApprovalAPI = (taskId, approverIds) =>
+    instance.post(`/tasks/${taskId}/approvals/send`, { approver_ids: approverIds })
+
+/**
+ * Cập nhật danh sách người duyệt & reset về cấp 1 khi đang pending
+ * @param {number|string} taskId
+ * @param {number[]} approverIds
+ */
+export const updateTaskApprovalStepsAPI = (taskId, approverIds) =>
+    instance.put(`/tasks/${taskId}/approvals/steps`, { approver_ids: approverIds })
+
+
+
+

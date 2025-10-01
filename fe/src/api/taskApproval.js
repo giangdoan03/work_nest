@@ -56,3 +56,15 @@ export const canActApprovalAPI = (id) =>
  */
 export const getApproversByLevelAPI = (taskId, level) =>
     instance.get(`/tasks/${taskId}/approvers`, { params: { level } })
+
+/**
+ * Duyệt task (đơn giản, theo taskId)
+ */
+export const approveTaskSimpleAPI = (taskId, data = {}) =>
+    instance.post(`/tasks/${taskId}/approve`, data)
+
+/**
+ * Từ chối task (đơn giản, theo taskId)
+ */
+export const rejectTaskSimpleAPI = (taskId, data = {}) =>
+    instance.post(`/tasks/${taskId}/reject`, data)

@@ -416,6 +416,15 @@ class TaskController extends ResourceController
             }
         }
 
+        if (!empty($data['approver_ids']) && is_array($data['approver_ids'])) {
+            $data['approver_ids'] = json_encode($data['approver_ids'], JSON_UNESCAPED_UNICODE);
+            $data['needs_approval'] = 1;
+        } else {
+            $data['approver_ids'] = null;
+            $data['needs_approval'] = 0;
+        }
+
+
         $db = db_connect();
         $db->transStart();
 
@@ -523,6 +532,16 @@ class TaskController extends ResourceController
 
             $data['progress'] = $progress;
         }
+
+        if (isset($data['approver_ids']) && is_array($data['approver_ids'])) {
+            $data['approver_ids'] = json_encode($data['approver_ids'], JSON_UNESCAPED_UNICODE);
+            $data['needs_approval'] = 1;
+        }
+
+        if (isset($data['needs_approval'])) {
+            $data['needs_approval'] = (int)$data['needs_approval'];
+        }
+
 
 
         // ✅ Ghi lại lượt gia hạn nếu thay đổi end_date
@@ -815,5 +834,45 @@ class TaskController extends ResourceController
         $db->transComplete();
     }
 
+    public function sendApproval($id = null): ResponseInterface
+    {
+        if (!$id) {
+            return $this->failValidationErrors('Thiếu task_id');
+        }
+
+        $task = $this->model->find($id);
+        if (!$task) {
+            return $this->failNotFound('Task không tồn tại');
+        }
+
+        $data = $this->request->getJSON(true) ?? [];
+        $approverIds = $data['approver_ids'] ?? [];
+
+        if (!is_array($approverIds) || empty($approverIds)) {
+            return $this->failValidationErrors(['approver_ids' => 'Cần ít nhất 1 người duyệt']);
+        }
+
+        // Lưu danh sách người duyệt vào task
+        $this->model->update($id, [
+            'approver_ids'  => json_encode($approverIds, JSON_UNESCAPED_UNICODE),
+            'needs_approval'=> 1,
+            'approval_status' => 'pending',
+            'current_level' => 1,
+        ]);
+
+        // Tạo phiên duyệt (nếu bạn dùng bảng approval_instances/approval_steps)
+        $this->createApprovalInstanceForTask($task, $approverIds);
+
+        return $this->respond([
+            'message' => 'Task đã được gửi duyệt',
+            'task_id' => $id,
+            'approver_ids' => $approverIds
+        ]);
+    }
+
+
+
 
 }
+
+

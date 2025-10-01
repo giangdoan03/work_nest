@@ -317,17 +317,36 @@
                                                                 </template>
                                                             </a-form-item>
                                                         </a-col>
-                                                        <a-col :span="12" v-if="formData.status === 'request_approval'">
-                                                            <a-form-item label="Cấp duyệt hiện tại">
-                                                                <span>{{ formData.current_level || '—' }}</span>
+                                                        <!-- Phê duyệt -->
+                                                        <a-col :span="24">
+                                                            <a-form-item label="Phê duyệt">
+                                                                <!-- CẦN DUYỆT -->
+                                                                <template v-if="Number(formData.needs_approval) === 1">
+                                                                    <div class="approver-list">
+                                                                        <template v-if="approverRows.length">
+                                                                            <div
+                                                                                v-for="row in approverRows"
+                                                                                :key="row.id"
+                                                                                :class="['approver-item', row.status]"
+                                                                            >
+                                                                                <span class="name" style="margin-right: 10px">{{ row.name }}</span>
+                                                                                <a-tag v-if="row.status==='approved'" color="green">Đã duyệt</a-tag>
+                                                                                <a-tag v-else-if="row.status==='rejected'" color="red">Từ chối</a-tag>
+                                                                                <a-tag v-else color="orange">Đang chờ</a-tag>
+                                                                            </div>
+                                                                        </template>
+                                                                        <span v-else class="text-muted">Chưa chọn người duyệt</span>
+                                                                    </div>
+                                                                </template>
+
+                                                                <!-- KHÔNG CẦN DUYỆT -->
+                                                                <template v-else>
+                                                                    <a-tag>Không cần phê duyệt</a-tag>
+                                                                </template>
                                                             </a-form-item>
                                                         </a-col>
 
-                                                        <a-col :span="12" v-if="formData.status === 'request_approval'">
-                                                            <a-form-item label="Tổng cấp duyệt">
-                                                                <span>{{ formData.approval_steps || '—' }}</span>
-                                                            </a-form-item>
-                                                        </a-col>
+
                                                     </a-row>
                                                 </div>
                                             </a-form>
@@ -470,7 +489,9 @@ const formData = ref({
     parent_id: null,
     id_department: null,
     progress: 0,
-    collaborated_by: null
+    approver_ids: [],
+    needs_approval: 0
+
 });
 const priorityOption = ref([
     {value: "low", label: "Thấp", color: "success"},
@@ -618,6 +639,60 @@ const goTaskByParentId = async (parentId) => {
         message.error('Không mở được nhiệm vụ cha');
     }
 };
+
+// ép JSON string -> array
+const approverIds = computed(() => {
+    const raw = formData.value.approver_ids ?? [];
+    if (Array.isArray(raw)) return raw.map(v => String(v)).filter(Boolean);
+    try {
+        const parsed = JSON.parse(raw || '[]');
+        return Array.isArray(parsed) ? parsed.map(v => String(v)).filter(Boolean) : [];
+    } catch {
+        return [];
+    }
+});
+
+const approvedMap = computed(() => {
+    const m = new Map();
+    (Array.isArray(logData.value) ? logData.value : []).forEach(l => {
+        const uid = l.approved_by ?? l.user_id ?? null;
+        if (!uid) return;
+        // ưu tiên bản ghi cuối cùng 1 user
+        m.set(String(uid), l.status); // 'approved' | 'rejected' | 'pending'
+    });
+    return m;
+});
+
+const approverRows = computed(() =>
+    approverIds.value.map(idStr => ({
+        id: idStr,
+        name: getUserName(idStr),
+        status: approvedMap.value.get(idStr) || 'pending',
+    }))
+);
+
+// kiểm tra user này đã duyệt chưa (dựa vào logData hoặc approval_status)
+const isApproved = (uid) => {
+    return logData.value.some(
+        (log) => log.approved_by === uid && log.status === 'approved'
+    )
+}
+
+
+// Map id -> name; ép về String để tránh lệch kiểu giữa number/string
+const userNameById = computed(() => {
+    const m = new Map();
+    (listUser.value || []).forEach(u => {
+        const key = String(u.id);
+        const name = u.name || u.full_name || u.email || `#${u.id}`;
+        m.set(key, name);
+    });
+    return m;
+});
+
+// Helper an toàn kiểu
+const getUserName = (id) => userNameById.value.get(String(id)) || `#${id}`;
+
 
 
 // 1. biến reactive hiển thị tên:
@@ -1337,6 +1412,32 @@ onMounted(async () => {
 /* fix flex child trong ant-col gây tràn ngang khi có text dài */
 .comment :deep(.ant-col[flex="1"]) {
     min-width: 0;
+}
+
+.approver-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.approver-item {
+    color: #999; /* mặc định mờ */
+}
+.approver-item.approved {
+    font-weight: 600;
+    color: #000; /* đậm hơn khi đã duyệt */
+}
+
+.approver-item {
+    color: #999;
+    margin-bottom: 4px;
+}
+.approver-item.approved .name {
+    font-weight: 600;
+    color: #000;
+}
+.approver-item.rejected .name {
+    font-weight: 600;
+    color: #c00;
 }
 
 </style>

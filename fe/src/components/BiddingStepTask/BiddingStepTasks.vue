@@ -14,11 +14,11 @@
             </a-page-header>
 
             <a-spin :spinning="loading">
-                <a-empty v-if="tasks.length === 0" description="Không có công việc"/>
+                <a-empty v-if="tasks.length === 0" description="Không có công việc" />
                 <a-table
                     :columns="columns"
-                    :dataSource="pagedTasks"
-                    rowKey="id"
+                    :data-source="pagedTasks"
+                    row-key="id"
                     :pagination="pagination"
                     :scroll="{ x: 'max-content' }"
                     :expandedRowKeys="expandedKeys"
@@ -32,7 +32,9 @@
                         <template v-if="column.key === 'index'">
                             <span class="index-badge">{{ record._order }}</span>
                         </template>
-                        <template v-if="column.key === 'expander'">
+
+                        <!-- Expander -->
+                        <template v-else-if="column.key === 'expander'">
                             <div class="exp-cell" :style="{ paddingLeft: `${record._level * 12}px` }">
                                 <template v-if="record.children?.length">
                                     <button
@@ -43,7 +45,7 @@
                                         @keydown.enter.prevent="toggleExpand(record)"
                                         @keydown.space.prevent="toggleExpand(record)"
                                     >
-                                        <component :is="isExpanded(record) ? MinusSquareOutlined : PlusSquareOutlined"/>
+                                        <component :is="isExpanded(record) ? MinusSquareOutlined : PlusSquareOutlined" />
                                     </button>
                                 </template>
                                 <template v-else>
@@ -54,13 +56,10 @@
 
                         <!-- Tên công việc -->
                         <template v-else-if="column.key === 'title'">
-                            <router-link
-                                :to="buildTaskLink(record)"
-                                class="task-title-cell"
-                            >
-                              <span class="task-title" :class="{ child: record.parent_id }">
-                                {{ truncate(record.title, 25) }}
-                              </span>
+                            <router-link :to="buildTaskLink(record)" class="task-title-cell">
+                <span class="task-title" :class="{ child: record.parent_id }">
+                  {{ truncate(record.title, 25) }}
+                </span>
                             </router-link>
                         </template>
 
@@ -104,13 +103,24 @@
 
                         <!-- Duyệt -->
                         <template v-else-if="column.key === 'approval_status'">
-                            <template v-if="record.status === 'done' && record.approval_status === 'approved'">
-                                <a-tag color="green">Hoàn thành & Đã duyệt</a-tag>
-                            </template>
-                            <template v-else-if="record.status === 'done'">
-                                <a-tag :color="record._meta.approvalColor">{{ record._meta.approvalText }}</a-tag>
-                            </template>
-                            <template v-else>—</template>
+                            <div class="approval-cell" @click.self="openSendApproval(record)" style="cursor:pointer">
+                                <a-space :size="8" align="center">
+                                    <template v-if="record.status === 'done' && record.approval_status === 'approved'">
+                                        <a-tag color="green">Hoàn thành & Đã duyệt</a-tag>
+                                    </template>
+                                    <template v-else>
+                                        <a-tag :color="record._meta.approvalColor" @click.stop="openSendApproval(record)">
+                                            {{ record._meta.approvalText }}
+                                        </a-tag>
+
+                                        <!-- Chỉ hiện nút khi đang pending & tôi là người duyệt -->
+                                        <template v-if="String(record.approval_status || '').toLowerCase() === 'pending' && isMyApprover(record)">
+                                            <a-button size="small" type="primary" @click.stop="approveTask(record)">Duyệt</a-button>
+                                            <a-button size="small" danger @click.stop="rejectTask(record)">Từ chối</a-button>
+                                        </template>
+                                    </template>
+                                </a-space>
+                            </div>
                         </template>
 
                         <!-- Thao tác -->
@@ -124,7 +134,7 @@
                                 @confirm="() => onDeleteTask(record)"
                             >
                                 <a-button danger type="link" :loading="deletingId === record.id">
-                                    <DeleteOutlined/>
+                                    <DeleteOutlined />
                                 </a-button>
                             </a-popconfirm>
                         </template>
@@ -133,13 +143,17 @@
             </a-spin>
         </a-card>
 
+        <!-- Drawer tạo task ROOT -->
         <DrawerCreateTask
             v-model:open-drawer="openDrawer"
             :list-user="users"
             type="bidding"
-            :create-as-root="true"
+            :create-as-root="createAsRoot"
+            @update:open-drawer="v => { openDrawer = v; if (!v) createAsRoot = false }"
             @submitForm="reloadTasks"
         />
+
+        <!-- Drawer tạo subtask -->
         <DrawerCreateSubtask
             :open="subDrawerOpen"
             :parentTask="subDrawerParent"
@@ -147,21 +161,47 @@
             @update:open="v => (subDrawerOpen = v)"
             @created="handleSubtaskCreated"
         />
+
+        <!-- Modal chọn người duyệt -->
+        <a-modal
+            v-model:open="sendApprovalVisible"
+            title="Chọn người duyệt"
+            :confirm-loading="loadingCreate"
+            @ok="confirmSendApproval"
+        >
+            <a-form layout="vertical">
+                <a-form-item label="Người duyệt">
+                    <a-select
+                        v-model:value="approverIdsSelected"
+                        mode="multiple"
+                        :options="userOptions"
+                        placeholder="Chọn ít nhất 1 người duyệt"
+                        :max-tag-count="3"
+                    />
+                </a-form-item>
+                <a-alert type="info" show-icon>
+                    Sau khi lưu, nhiệm vụ sẽ chuyển sang trạng thái <b>chờ duyệt</b>.
+                </a-alert>
+            </a-form>
+        </a-modal>
     </div>
 </template>
 
 <script setup>
-import {ref, onMounted, computed, reactive, h} from 'vue'
+import { ref, onMounted, computed, reactive } from 'vue'
 import dayjs from 'dayjs'
-import {useRoute, useRouter} from 'vue-router'
-import {message} from 'ant-design-vue'
-import {DeleteOutlined, PlusSquareOutlined, MinusSquareOutlined} from '@ant-design/icons-vue'
+import { useRoute, useRouter } from 'vue-router'
+import { message, Modal } from 'ant-design-vue'
+import { DeleteOutlined, PlusSquareOutlined, MinusSquareOutlined } from '@ant-design/icons-vue'
 
-import {getBiddingAPI, getBiddingStepsAPI} from '@/api/bidding'
-import {getTasksByBiddingStep, deleteTask} from '@/api/task'
-import {getUsers} from '@/api/user'
+import { getBiddingAPI, getBiddingStepsAPI } from '@/api/bidding'
+import { getTasksByBiddingStep, deleteTask, updateTask } from '@/api/task'
+import { getUsers } from '@/api/user'
+import { approveTaskSimpleAPI, rejectTaskSimpleAPI } from '@/api/taskApproval.js'
+import { useUserStore } from '@/stores/user' // cần có store user hiện tại
 import DrawerCreateTask from '@/components/common/DrawerCreateTask.vue'
 import DrawerCreateSubtask from '@/components/common/DrawerCreateSubtask.vue'
+
 
 const route = useRoute()
 const router = useRouter()
@@ -170,21 +210,37 @@ const stepId = Number(route.params.stepId)
 
 const step = ref(null)
 const bidding = ref(null)
-const tasks = ref([])   // chỉ chứa các ROOT đã build tree
+const tasks = ref([])
 const users = ref([])
 const loading = ref(false)
 const deletingId = ref(null)
 
 const openDrawer = ref(false)
-// NEW: cờ đánh dấu tạo task cha
 const createAsRoot = ref(false)
 const subDrawerOpen = ref(false)
 const subDrawerParent = ref(null)
 
-
 const expandedKeys = ref([])
 
-/** Bật/tắt 1 node */
+/* ====== APPROVAL (task) ====== */
+const APPROVAL_STATUS = Object.freeze({
+    PENDING: 'pending',
+    APPROVED: 'approved',
+    REJECTED: 'rejected'
+})
+const sendApprovalVisible = ref(false)
+const loadingCreate = ref(false)
+const sendApprovalTarget = ref(null)
+const approverIdsSelected = ref([])
+
+const store = useUserStore()
+const meId = computed(() => Number(store?.currentUser?.id || 0))
+
+const userOptions = computed(() =>
+    users.value.map(u => ({ label: u.name, value: Number(u.id) }))
+)
+
+/* ---------- Toggle expand ---------- */
 const toggleExpand = (row) => {
     const k = String(row?.id ?? row)
     const list = expandedKeys.value
@@ -192,19 +248,18 @@ const toggleExpand = (row) => {
     if (i === -1) list.push(k)
     else list.splice(i, 1)
 }
-
-/** Row đang mở? */
 const isExpanded = (row) => expandedKeys.value.includes(String(row?.id ?? row))
+
 /* ---------- Dictionaries ---------- */
-const PRIORITY_TEXT = {high: 'Cao', normal: 'Bình thường', low: 'Thấp'}
-const PRIORITY_COLOR = {high: 'red', normal: 'orange', low: 'blue'}
-const TASK_STATUS_TEXT = {todo: 'Chưa bắt đầu', doing: 'Đang làm', done: 'Hoàn thành', overdue: 'Trễ hạn'}
-const TASK_STATUS_COLOR = {todo: 'default', doing: 'blue', done: 'green', overdue: 'red'}
-const APPROVAL_TEXT = {approved: 'Đã duyệt', pending: 'Chờ duyệt', rejected: 'Từ chối'}
-const APPROVAL_COLOR = {approved: 'green', pending: 'blue', rejected: 'red', default: 'gray'}
+const PRIORITY_TEXT = { high: 'Cao', normal: 'Bình thường', low: 'Thấp' }
+const PRIORITY_COLOR = { high: 'red', normal: 'orange', low: 'blue' }
+const TASK_STATUS_TEXT = { todo: 'Chưa bắt đầu', doing: 'Đang làm', done: 'Hoàn thành', overdue: 'Trễ hạn' }
+const TASK_STATUS_COLOR = { todo: 'default', doing: 'blue', done: 'green', overdue: 'red' }
+const APPROVAL_TEXT = { approved: 'Đã duyệt', pending: 'Chờ duyệt', rejected: 'Từ chối' }
+const APPROVAL_COLOR = { approved: 'green', pending: 'blue', rejected: 'red', default: 'gray' }
 
 /* ---------- Utils ---------- */
-const fmtDate = v => (v ? dayjs(v).format('DD/MM/YYYY') : '—')
+const fmtDate = (v) => (v ? (dayjs(v).isValid() ? dayjs(v).format('DD/MM/YYYY') : '—') : '—')
 const truncate = (text, len = 30) => (!text ? '' : text.length > len ? `${text.slice(0, len)}...` : text)
 
 const usersById = computed(() => {
@@ -212,22 +267,35 @@ const usersById = computed(() => {
     for (const u of users.value) m.set(String(u.id), u)
     return m
 })
-const getAssignedUserName = uid => usersById.value.get(String(uid))?.name || (uid ? `Người dùng #${uid}` : 'Không xác định')
+const getAssignedUserName = (uid) =>
+    usersById.value.get(String(uid))?.name || (uid ? `Người dùng #${uid}` : 'Không xác định')
 
 const buildDeadlineMeta = (endDate) => {
-    if (!endDate) return {type: 'none', days: 0}
-    const diff = dayjs(endDate).startOf('day').diff(dayjs().startOf('day'), 'day')
-    if (diff < 0) return {type: 'overdue', days: Math.abs(diff)}
-    if (diff === 0) return {type: 'today', days: 0}
-    return {type: 'remaining', days: diff}
+    if (!endDate) return { type: 'none', days: 0 }
+    const dEnd = dayjs(endDate)
+    if (!dEnd.isValid()) return { type: 'none', days: 0 }
+    const diff = dEnd.startOf('day').diff(dayjs().startOf('day'), 'day')
+    if (diff < 0) return { type: 'overdue', days: Math.abs(diff) }
+    if (diff === 0) return { type: 'today', days: 0 }
+    return { type: 'remaining', days: diff }
 }
 
 const annotateTask = (t) => {
     const priorityKey = String(t.priority ?? '').toLowerCase()
     const statusKey = String(t.status ?? '').toLowerCase()
     const approvalKey = String(t.approval_status ?? '').toLowerCase()
+
+    let approverIds = []
+    try {
+        approverIds = Array.isArray(t.approver_ids) ? t.approver_ids : JSON.parse(t.approver_ids || '[]')
+    } catch { approverIds = [] }
+
+    const approverNames = approverIds.map(id => usersById.value.get(String(id))?.name || `#${id}`)
+
     return {
         ...t,
+        approver_ids: approverIds,
+        approver_names: approverNames,
         _meta: {
             priorityText: PRIORITY_TEXT[priorityKey] ?? 'Không xác định',
             priorityColor: PRIORITY_COLOR[priorityKey] ?? 'default',
@@ -240,16 +308,23 @@ const annotateTask = (t) => {
     }
 }
 
+/* Tôi có phải người duyệt của task này không? */
+const isMyApprover = (row) => {
+    try {
+        const ids = Array.isArray(row.approver_ids) ? row.approver_ids : JSON.parse(row.approver_ids || '[]')
+        return ids.map(Number).includes(meId.value)
+    } catch { return false }
+}
+
 /* ---------- Build tree + DFS order ---------- */
-// trong toTree()
 const toTree = (flat) => {
     const byId = new Map()
-    flat.forEach(r => {
+    flat.forEach((r) => {
         const n = annotateTask(r)
         n.id = String(n.id)
         n.parent_id = n.parent_id == null || n.parent_id === '' ? null : String(n.parent_id)
         n.children = []
-        n._level = 0            // NEW
+        n._level = 0
         byId.set(n.id, n)
     })
 
@@ -269,8 +344,8 @@ const toTree = (flat) => {
         return String(a.title || '').localeCompare(String(b.title || ''))
     }
     const sortAll = (arr) => {
-        arr.sort(sortFn);
-        arr.forEach(ch => sortAll(ch.children))
+        arr.sort(sortFn)
+        arr.forEach((ch) => sortAll(ch.children))
     }
     sortAll(roots)
 
@@ -287,58 +362,30 @@ const toTree = (flat) => {
     return roots
 }
 
-
 /* ---------- Columns ---------- */
 const columns = [
-    {title: 'STT', key: 'index', width: 50, align: 'center', className: 'stt-col'},
-    {title: 'Việc con', key: 'expander', width: 80, align: 'center', className: 'expander-col'},
-    {title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 200, ellipsis: {showTitle: false}},
-    {title: 'Người thực hiện', dataIndex: 'assigned_to', key: 'assigned_to', width: 180},
-    {title: 'Tiến trình', dataIndex: 'progress', key: 'progress', width: 120, align: 'center'},
-    {title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', width: 120, align: 'center'},
-    {title: 'Bắt đầu', dataIndex: 'start_date', key: 'start_date', width: 120, align: 'center'},
-    {title: 'Kết thúc', dataIndex: 'end_date', key: 'end_date', width: 120, align: 'center'},
-    {title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 140, align: 'center'},
-    {title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 160, align: 'center'},
-    {title: 'Duyệt', dataIndex: 'approval_status', key: 'approval_status', width: 160, align: 'center'},
-    {title: 'Thao tác', key: 'actions', width: 80, align: 'center', fixed: 'right'},
+    { title: 'STT', key: 'index', width: 50, align: 'center', className: 'stt-col' },
+    { title: 'Việc con', key: 'expander', width: 100, align: 'center', className: 'expander-col' },
+    { title: 'Tên công việc', dataIndex: 'title', key: 'title', align: 'left' },
+    { title: 'Người thực hiện', dataIndex: 'assigned_to', key: 'assigned_to', width: 180 },
+    { title: 'Tiến trình', dataIndex: 'progress', key: 'progress', width: 120, align: 'center' },
+    { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', width: 120, align: 'center' },
+    { title: 'Bắt đầu', dataIndex: 'start_date', key: 'start_date', width: 120, align: 'center' },
+    { title: 'Kết thúc', dataIndex: 'end_date', key: 'end_date', width: 120, align: 'center' },
+    { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 140, align: 'center' },
+    { title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 160, align: 'center' },
+    { title: 'Duyệt', dataIndex: 'approval_status', key: 'approval_status', width: 220, align: 'center' },
+    { title: 'Thao tác', key: 'actions', width: 80, align: 'center', fixed: 'right' },
 ]
 
 const buildTaskLink = (row) => {
     if (bidId && stepId) {
-        return {
-            name: 'bidding-task-info-in-step',
-            params: {
-                bidId: String(bidId),
-                stepId: String(stepId),
-                id: String(row.id),
-            },
-        }
+        return { name: 'bidding-task-info-in-step', params: { bidId: String(bidId), stepId: String(stepId), id: String(row.id) } }
     }
-    // fallback
     return { name: 'bidding-task-info', params: { id: String(row.id) } }
 }
 
-
-/* ---------- Expand icon (đẹp hơn) ---------- */
-// đặt icon ở cột "expander" (index 1)
-const expandable = {
-    indentSize: 16,
-    expandIconColumnIndex: 1,
-    expandIcon: ({expanded, onExpand, record}) => {
-        const hasChildren = Array.isArray(record.children) && record.children.length > 0
-        if (!hasChildren) return h('span', {class: 'expander-placeholder'})
-
-        const Icon = expanded ? MinusSquareOutlined : PlusSquareOutlined
-        return h(Icon, {
-            class: 'expander-btn',
-            onClick: e => onExpand(record, e),
-        })
-    },
-}
-
-
-/* ---------- Pagination (paginate theo ROOT) ---------- */
+/* ---------- Pagination ---------- */
 const pagination = reactive({
     current: 1,
     pageSize: 10,
@@ -357,9 +404,10 @@ const ensurePageInRange = () => {
     if (pagination.current > pages) pagination.current = pages
 }
 const handleTableChange = (pag) => {
-    pagination.current  = pag.current || 1
+    pagination.current = pag.current || 1
     pagination.pageSize = pag.pageSize || pagination.pageSize
 }
+
 /* ---------- Data loaders ---------- */
 const load = async () => {
     loading.value = true
@@ -372,7 +420,7 @@ const load = async () => {
         bidding.value = bidRes?.data ?? null
         users.value = Array.isArray(usersRes?.data) ? usersRes.data : []
         const list = Array.isArray(stepsRes?.data) ? stepsRes.data : []
-        step.value = list.find(s => String(s.id) === String(stepId)) || null
+        step.value = list.find((s) => String(s.id) === String(stepId)) || null
         await reloadTasks()
     } catch (e) {
         console.error(e)
@@ -385,18 +433,16 @@ const load = async () => {
 const reloadTasks = async () => {
     const res = await getTasksByBiddingStep(stepId, {})
     const raw = Array.isArray(res?.data) ? res.data : []
-    tasks.value = toTree(raw)                   // roots + children + _order
-    pagination.total = tasks.value.length       // paginate theo số root
+    tasks.value = toTree(raw)
+    pagination.total = tasks.value.length
     ensurePageInRange()
 }
 
-/* ---------- Actions ---------- */
-// mở drawer tạo ROOT task
+/* ---------- Create / Subtask ---------- */
 const openCreateTask = () => {
-    createAsRoot.value = true            // <- đây là chỗ bạn hỏi
+    createAsRoot.value = true
     openDrawer.value = true
 }
-
 const openSubtaskDrawer = (parentRow) => {
     subDrawerParent.value = {
         id: parentRow.id,
@@ -408,11 +454,11 @@ const openSubtaskDrawer = (parentRow) => {
     }
     subDrawerOpen.value = true
 }
-
 const handleSubtaskCreated = async () => {
-    await reloadTasks() // giữ thứ tự + phân trang chuẩn
+    await reloadTasks()
 }
 
+/* ---------- Delete ---------- */
 const onDeleteTask = async (record) => {
     try {
         deletingId.value = record.id
@@ -427,142 +473,125 @@ const onDeleteTask = async (record) => {
     }
 }
 
+/* ========== APPROVAL: chọn người duyệt & GỬI DUYỆT (đơn giản) ========== */
+const openSendApproval = (task) => {
+    sendApprovalVisible.value = true
+    sendApprovalTarget.value = task
+    try {
+        const ids = Array.isArray(task.approver_ids) ? task.approver_ids : JSON.parse(task.approver_ids || '[]')
+        approverIdsSelected.value = ids.map(id => Number(id))
+    } catch { approverIdsSelected.value = [] }
+}
+
+const confirmAsync = (opts) =>
+    new Promise(resolve => {
+        Modal.confirm({
+            centered: true,
+            okText: 'Đồng ý',
+            cancelText: 'Huỷ',
+            ...opts,
+            onOk: () => resolve(true),
+            onCancel: () => resolve(false),
+        })
+    })
+
+const confirmSendApproval = async () => {
+    if (!Array.isArray(approverIdsSelected.value) || approverIdsSelected.value.length === 0) {
+        message.warning('Cần chọn tối thiểu 1 người duyệt.')
+        return
+    }
+    const uniqueIds = [...new Set(approverIdsSelected.value.map(n => Number(n)).filter(Number.isInteger))]
+    if (!uniqueIds.length) {
+        message.warning('Danh sách người duyệt không hợp lệ.')
+        return
+    }
+
+    const target = sendApprovalTarget.value
+    if (!target?.id) {
+        message.error('Thiếu thông tin công việc.')
+        return
+    }
+
+    try {
+        loadingCreate.value = true
+        await updateTask(target.id, {
+            approver_ids: uniqueIds,
+            approval_status: 'pending',
+        })
+        message.success('Đã gửi phê duyệt.')
+        sendApprovalVisible.value = false
+        approverIdsSelected.value = []
+        sendApprovalTarget.value = null
+        await reloadTasks()
+    } catch (e) {
+        const msg = e?.response?.data?.message || 'Thao tác thất bại.'
+        message.error(msg)
+    } finally {
+        loadingCreate.value = false
+    }
+}
+
+/* ========== APPROVAL: Duyệt/Từ chối (đơn giản) ========== */
+const approveTask = async (row) => {
+    if (!isMyApprover(row)) {
+        message.warning('Bạn không nằm trong danh sách người duyệt.')
+        return
+    }
+    const ok = await confirmAsync({
+        title: 'Phê duyệt?',
+        content: 'Xác nhận phê duyệt nhiệm vụ này?',
+        okText: 'Phê duyệt'
+    })
+    if (!ok) return
+    try {
+        await approveTaskSimpleAPI(row.id, {}) // có thể gửi { comment } nếu muốn
+        message.success('Đã phê duyệt.')
+        await reloadTasks()
+    } catch (e) {
+        message.error(e?.response?.data?.message || 'Phê duyệt thất bại.')
+    }
+}
+
+const rejectTask = async (row) => {
+    if (!isMyApprover(row)) {
+        message.warning('Bạn không nằm trong danh sách người duyệt.')
+        return
+    }
+    const ok = await confirmAsync({
+        title: 'Từ chối phê duyệt?',
+        content: 'Bạn chắc chắn từ chối?',
+        okButtonProps: { danger: true },
+        okText: 'Từ chối'
+    })
+    if (!ok) return
+    try {
+        await rejectTaskSimpleAPI(row.id, {}) // có thể gửi { comment } nếu muốn
+        message.success('Đã từ chối.')
+        await reloadTasks()
+    } catch (e) {
+        message.error(e?.response?.data?.message || 'Từ chối thất bại.')
+    }
+}
+
 onMounted(load)
 </script>
 
 <style scoped>
-.task-title {
-    display: inline-block;
-    font-weight: 500;
-    font-size: 14px;
-    color: #1890ff
-}
-
-.task-title.child {
-    position: relative;
-    padding-left: 30px;
-    font-weight: 400;
-    font-size: 12px;
-    color: #555
-}
-
-.task-title.child::before {
-    content: '';
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    width: 14px;
-    height: 1px;
-    background: #ccc
-}
-
-.task-title.child::after {
-    content: '';
-    position: absolute;
-    left: 10px;
-    top: 0;
-    bottom: 50%;
-    border-left: 1px solid #ccc
-}
-
-/* Ẩn expand mặc định của Ant */
-:deep(.ant-table-row-expand-icon),
-:deep(.ant-table-row-indent),
-:deep(td.ant-table-row-expand-icon-cell) {
-    display: none !important;
-}
-
-/* Cột expander */
-:deep(td.expander-col) {
-    vertical-align: middle;
-    padding: 6px 8px;
-}
-
-/* Container theo level */
-.exp-cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 32px;
-}
-
-/* Biến style chung */
-:root {
-    --exp-size: 28px;
-    --exp-radius: 999px;
-    --exp-border: #d9d9d9;
-    --exp-icon: #8c8c8c;
-    --exp-hover: #1677ff;
-    --exp-open-border: #95de64;
-    --exp-open-bg: #f6ffed;
-    --exp-open-icon: #389e0d;
-}
-
-/* Nút +/− */
-.exp-btn {
-    width: var(--exp-size);
-    height: var(--exp-size);
-    border: 1px solid var(--exp-border);
-    border-radius: var(--exp-radius);
-    background: #fff;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    cursor: pointer;
-    transition: all .18s ease;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, .02);
-    color: var(--exp-icon);
-}
-
-/* icon mượt hơn */
-.exp-btn > svg {
-    transition: transform .18s ease, color .18s ease;
-}
-
-/* hover / focus */
-.exp-btn:hover {
-    border-color: var(--exp-hover);
-    box-shadow: 0 0 0 3px rgba(22, 119, 255, .14);
-    color: var(--exp-hover);
-}
-
-.exp-btn:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(22, 119, 255, .22);
-}
-
-/* active nhỏ lại chút */
-.exp-btn:active {
-    transform: scale(.98);
-}
-
-/* đang mở */
-.exp-btn[aria-expanded="true"] {
-    border-color: var(--exp-open-border);
-    background: var(--exp-open-bg);
-    color: var(--exp-open-icon);
-    box-shadow: 0 0 0 3px rgba(82, 196, 26, .14);
-}
-
-.exp-btn[aria-expanded="true"] > svg {
-    transform: scale(1.03);
-}
-
-/* placeholder để giữ thẳng hàng khi không có con */
-.exp-placeholder {
-    width: var(--exp-size);
-    height: var(--exp-size);
-    border: 1px dashed #ececec;
-    border-radius: var(--exp-radius);
-    opacity: .45;
-}
-
-/* Responsive nhẹ */
-@media (max-width: 1366px) {
-    :root {
-        --exp-size: 26px;
-    }
-}
-
+.task-title{display:inline-block;font-weight:500;font-size:14px;color:#1890ff}
+.task-title.child{position:relative;padding-left:30px;font-weight:400;font-size:12px;color:#555}
+.task-title.child::before{content:'';position:absolute;left:10px;top:50%;width:14px;height:1px;background:#ccc}
+.task-title.child::after{content:'';position:absolute;left:10px;top:0;bottom:50%;border-left:1px solid #ccc}
+:deep(.ant-table-row-expand-icon),:deep(.ant-table-row-indent),:deep(td.ant-table-row-expand-icon-cell){display:none!important}
+:deep(td.expander-col){vertical-align:middle;padding:6px 8px}
+.exp-cell{display:flex;align-items:center;justify-content:center;min-height:32px}
+:root{--exp-size:28px;--exp-radius:999px;--exp-border:#d9d9d9;--exp-icon:#8c8c8c;--exp-hover:#1677ff;--exp-open-border:#95de64;--exp-open-bg:#f6ffed;--exp-open-icon:#389e0d}
+.exp-btn{width:var(--exp-size);height:var(--exp-size);border:1px solid var(--exp-border);border-radius:var(--exp-radius);background:#fff;display:inline-flex;align-items:center;justify-content:center;line-height:1;cursor:pointer;transition:all .18s ease;box-shadow:0 1px 0 rgba(0,0,0,.02);color:var(--exp-icon)}
+.exp-btn>svg{transition:transform .18s ease,color .18s ease}
+.exp-btn:hover{border-color:var(--exp-hover);box-shadow:0 0 0 3px rgba(22,119,255,.14);color:var(--exp-hover)}
+.exp-btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(22,119,255,.22)}
+.exp-btn:active{transform:scale(.98)}
+.exp-btn[aria-expanded="true"]{border-color:var(--exp-open-border);background:var(--exp-open-bg);color:var(--exp-open-icon);box-shadow:0 0 0 3px rgba(82,196,26,.14)}
+.exp-btn[aria-expanded="true"]>svg{transform:scale(1.03)}
+.exp-placeholder{width:var(--exp-size);height:var(--exp-size);border:1px dashed #ececec;border-radius:var(--exp-radius);opacity:.45}
+.approval-cell{min-height:32px}
 </style>
