@@ -518,6 +518,9 @@ class TaskApprovalController extends ResourceController
         return $this->respond($result);
     }
 
+    /**
+     * @throws ReflectionException
+     */
     public function approveByTask($taskId): ResponseInterface
     {
         $session = session();
@@ -542,6 +545,9 @@ class TaskApprovalController extends ResourceController
         return $this->approve((int)$row['approval_id']);
     }
 
+    /**
+     * @throws ReflectionException
+     */
     public function rejectByTask($taskId): ResponseInterface
     {
         $session = session();

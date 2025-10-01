@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Sep 07, 2025 at 05:10 PM
+-- Generation Time: Oct 01, 2025 at 04:16 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -49,8 +49,8 @@ CREATE TABLE `approval_instances` (
 --
 
 INSERT INTO `approval_instances` (`id`, `target_type`, `target_id`, `version`, `is_active`, `status`, `current_level`, `submitted_by`, `submitted_at`, `finalized_at`, `notes`, `meta_json`, `created_at`, `updated_at`) VALUES
-(1, 'task', 26, 1, 1, 'approved', 0, 3, '2025-08-31 17:16:27', '2025-08-31 10:42:14', NULL, '{\"url\": \"/internal-tasks/26/info\", \"title\": \"Thiết kế giao diện phu-task con 3\"}', '2025-08-31 17:16:27', '2025-08-31 10:42:14'),
-(2, 'task', 240, 1, 1, 'approved', 0, 3, '2025-08-31 10:20:41', '2025-08-31 10:52:01', NULL, '{\"url\": \"/internal-tasks/240/info\", \"title\": \"34535345\", \"assignee_name\": null}', '2025-08-31 17:20:41', '2025-08-31 10:52:01'),
+(1, 'task', 26, 1, 1, 'approved', 0, 3, '2025-08-31 17:16:27', '2025-08-31 10:42:14', NULL, '{\"url\": \"/non-workflow/tasks/26/info\", \"title\": \"Thiết kế giao diện phu-task con 3\"}', '2025-08-31 17:16:27', '2025-09-28 22:27:14'),
+(2, 'task', 240, 1, 1, 'approved', 0, 3, '2025-08-31 10:20:41', '2025-08-31 10:52:01', NULL, '{\"url\": \"/non-workflow/tasks/240/info\", \"title\": \"34535345\", \"assignee_name\": null}', '2025-08-31 17:20:41', '2025-09-28 22:27:14'),
 (3, 'bidding', 4, 1, 1, 'approved', 1, 3, '2025-08-31 10:39:36', '2025-08-31 14:05:26', NULL, '{\"url\": \"/bid-detail/4\", \"title\": \"Cung cấp hệ thống điều khiển trung tâm cho Nhiệt điện Hải Phòng\"}', '2025-08-31 10:39:36', '2025-09-01 11:11:55'),
 (4, 'bidding', 38, 1, 0, 'approved', 0, 3, '2025-08-31 14:11:36', '2025-08-31 14:12:08', NULL, '{\"url\": \"/bid-detail/38/\", \"title\": \"gói thầu mới 3\"}', '2025-08-31 14:11:36', '2025-09-01 04:18:42'),
 (5, 'bidding', 37, 1, 1, 'approved', 0, 3, '2025-08-31 14:11:42', '2025-08-31 14:11:56', NULL, '{\"url\": \"/bid-detail/37/\", \"title\": \"gói thầu mới 23-08\"}', '2025-08-31 14:11:42', '2025-09-01 11:12:11'),
@@ -59,25 +59,39 @@ INSERT INTO `approval_instances` (`id`, `target_type`, `target_id`, `version`, `
 (8, 'bidding', 6, 1, 1, 'approved', 0, 3, '2025-08-31 14:23:47', '2025-08-31 14:24:09', NULL, '{\"url\": \"/bid-detail/6/\", \"title\": \"Gói thầu bảo trì định kỳ năm 2025 – Nhiệt điện Mông Dương\"}', '2025-08-31 14:23:47', '2025-09-01 11:12:30'),
 (9, 'bidding', 2, 1, 1, 'approved', 0, 3, '2025-08-31 14:55:02', '2025-08-31 14:55:09', NULL, '{\"url\": \"/bid-detail/2/\", \"title\": \"Gói thầu cung cấp turbine cho Nhiệt điện Quảng Ninh\"}', '2025-08-31 14:55:02', '2025-09-01 11:12:36'),
 (10, 'bidding', 11, 1, 1, 'approved', 0, 3, '2025-08-31 14:58:23', '2025-08-31 14:58:32', NULL, '{\"url\": \"/bid-detail/11/\", \"title\": \"Gói thầu thuê ngoài dịch vụ an ninh – Nhiệt điện Thái Bình 2\"}', '2025-08-31 14:58:23', '2025-09-01 11:12:44'),
-(11, 'task', 238, 1, 1, 'pending', 0, 3, '2025-08-31 14:59:25', NULL, NULL, '{\"url\": \"/internal-tasks/238/info\", \"title\": \"xxxxxx\", \"assignee_name\": null}', '2025-08-31 21:59:25', '2025-08-31 21:59:25'),
-(12, 'task', 243, 1, 1, 'pending', 0, 3, '2025-08-31 15:25:06', NULL, NULL, '{\"url\": \"/internal-tasks/243/info\", \"title\": \"4233243242\", \"assignee_name\": null}', '2025-08-31 22:25:06', '2025-08-31 22:25:06'),
+(11, 'task', 238, 1, 1, 'pending', 0, 3, '2025-08-31 14:59:25', NULL, NULL, '{\"url\": \"/non-workflow/tasks/238/info\", \"title\": \"xxxxxx\", \"assignee_name\": null}', '2025-08-31 21:59:25', '2025-09-28 22:27:14'),
+(12, 'task', 243, 1, 1, 'pending', 0, 3, '2025-08-31 15:25:06', NULL, NULL, '{\"url\": \"/non-workflow/tasks/243/info\", \"title\": \"4233243242\", \"assignee_name\": null}', '2025-08-31 22:25:06', '2025-09-28 22:27:14'),
 (13, 'bidding', 10, 1, 0, 'pending', 0, 3, '2025-09-01 01:34:21', NULL, NULL, '{\"url\": \"/bid-detail/10/\", \"title\": \"Cung cấp hệ thống xử lý nước thải công nghiệp – Nhiệt điện Phú Mỹ\"}', '2025-09-01 01:34:21', '2025-09-01 11:12:51'),
 (14, 'bidding', 10, 2, 1, 'approved', 0, 3, '2025-09-01 01:53:06', '2025-09-01 04:17:22', NULL, '{\"url\": \"/bid-detail/10/\", \"title\": \"Cung cấp hệ thống xử lý nước thải công nghiệp – Nhiệt điện Phú Mỹ\"}', '2025-09-01 01:53:06', '2025-09-01 04:17:22'),
 (15, 'bidding', 38, 2, 1, 'pending', 0, 3, '2025-09-01 04:18:42', NULL, NULL, '{\"url\": \"/bid-detail/38\", \"title\": \"gói thầu mới 3\"}', '2025-09-01 04:18:42', '2025-09-01 11:31:40'),
-(16, 'task', 199, 1, 1, 'approved', 0, 3, '2025-09-01 05:28:41', '2025-09-01 05:28:56', NULL, '{\"url\": \"/internal-tasks/199/info\", \"title\": \"tesst mới\", \"assignee_name\": null}', '2025-09-01 12:28:41', '2025-09-01 05:28:56'),
-(17, 'task', 200, 1, 1, 'approved', 0, 3, '2025-09-01 05:29:17', '2025-09-01 05:29:25', NULL, '{\"url\": \"/internal-tasks/200/info\", \"title\": \"test 2\", \"assignee_name\": null}', '2025-09-01 12:29:17', '2025-09-01 05:29:25'),
+(16, 'task', 199, 1, 1, 'approved', 0, 3, '2025-09-01 05:28:41', '2025-09-01 05:28:56', NULL, '{\"url\": \"/non-workflow/tasks/199/info\", \"title\": \"tesst mới\", \"assignee_name\": null}', '2025-09-01 12:28:41', '2025-09-28 22:27:14'),
+(17, 'task', 200, 1, 1, 'approved', 0, 3, '2025-09-01 05:29:17', '2025-09-01 05:29:25', NULL, '{\"url\": \"/non-workflow/tasks/200/info\", \"title\": \"test 2\", \"assignee_name\": null}', '2025-09-01 12:29:17', '2025-09-28 22:27:14'),
 (18, 'bidding_step', 284, 1, 1, 'approved', 0, 3, '2025-09-01 06:51:06', '2025-09-07 09:40:47', NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 1: Nhận nhu cầu khách hàng\"}', '2025-09-01 06:51:06', '2025-09-07 09:40:47'),
 (19, 'bidding_step', 285, 1, 1, 'approved', 0, 3, '2025-09-01 06:51:27', '2025-09-07 09:42:37', NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 2: Đánh giá tính khả thi\"}', '2025-09-01 06:51:27', '2025-09-07 09:42:37'),
 (20, 'bidding_step', 286, 1, 1, 'approved', 0, 3, '2025-09-01 07:59:15', '2025-09-07 09:54:40', NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 3: Lập kế hoạch triển khai\"}', '2025-09-01 07:59:15', '2025-09-07 09:54:40'),
 (21, 'bidding_step', 290, 1, 1, 'approved', 0, 3, '2025-09-01 08:48:33', '2025-09-07 09:37:39', NULL, '{\"url\": \"/biddings/35/info\", \"title\": \"Bước 7: Nhập dữ liệu vào phần mềm QLĐTKD (nếu không trúng thầu thì kết thúc)\"}', '2025-09-01 08:48:33', '2025-09-07 09:37:39'),
-(22, 'task', 250, 1, 1, 'pending', 0, 3, '2025-09-06 04:30:48', NULL, NULL, '{\"url\": \"/internal-tasks/250/info\", \"title\": \"việc con mới\", \"assignee_name\": null}', '2025-09-06 11:30:48', '2025-09-06 11:30:48'),
-(23, 'task', 245, 1, 1, 'approved', 0, 3, '2025-09-07 02:17:44', '2025-09-07 09:55:15', NULL, '{\"url\": \"/internal-tasks/245/info\", \"title\": \"x22222\", \"assignee_name\": null}', '2025-09-07 09:17:44', '2025-09-07 09:55:15'),
-(26, 'task', 254, 1, 1, 'approved', 0, 3, '2025-09-07 02:52:10', '2025-09-07 09:19:43', NULL, '{\"url\": \"/internal-tasks/254/info\", \"title\": \"43242424\", \"assignee_name\": null}', '2025-09-07 09:52:10', '2025-09-07 09:19:43'),
-(27, 'task', 270, 1, 1, 'approved', 0, 3, '2025-09-07 05:09:55', '2025-09-07 09:19:29', NULL, '{\"url\": \"/internal-tasks/270/info\", \"title\": \"342343424\", \"assignee_name\": null}', '2025-09-07 12:09:55', '2025-09-07 09:19:29'),
-(28, 'task', 267, 1, 1, 'approved', 0, 3, '2025-09-07 09:56:27', '2025-09-07 10:03:25', NULL, '{\"url\": \"/internal-tasks/267/info\", \"title\": \"4234344243\", \"assignee_name\": null}', '2025-09-07 16:56:27', '2025-09-07 10:03:25'),
+(22, 'task', 250, 1, 1, 'pending', 0, 3, '2025-09-06 04:30:48', NULL, NULL, '{\"url\": \"/non-workflow/tasks/250/info\", \"title\": \"việc con mới\", \"assignee_name\": null}', '2025-09-06 11:30:48', '2025-09-28 22:27:14'),
+(23, 'task', 245, 1, 1, 'approved', 0, 3, '2025-09-07 02:17:44', '2025-09-07 09:55:15', NULL, '{\"url\": \"/non-workflow/tasks/245/info\", \"title\": \"x22222\", \"assignee_name\": null}', '2025-09-07 09:17:44', '2025-09-28 22:27:14'),
+(26, 'task', 254, 1, 1, 'approved', 0, 3, '2025-09-07 02:52:10', '2025-09-07 09:19:43', NULL, '{\"url\": \"/non-workflow/tasks/254/info\", \"title\": \"43242424\", \"assignee_name\": null}', '2025-09-07 09:52:10', '2025-09-28 22:27:14'),
+(27, 'task', 270, 1, 1, 'approved', 0, 3, '2025-09-07 05:09:55', '2025-09-07 09:19:29', NULL, '{\"url\": \"/non-workflow/tasks/270/info\", \"title\": \"342343424\", \"assignee_name\": null}', '2025-09-07 12:09:55', '2025-09-28 22:27:14'),
+(28, 'task', 267, 1, 1, 'approved', 0, 3, '2025-09-07 09:56:27', '2025-09-07 10:03:25', NULL, '{\"url\": \"/non-workflow/tasks/267/info\", \"title\": \"4234344243\", \"assignee_name\": null}', '2025-09-07 16:56:27', '2025-09-28 22:27:14'),
 (29, 'bidding', 40, 1, 1, 'approved', 0, 3, '2025-09-07 09:56:39', '2025-09-07 10:06:55', NULL, '{\"url\": \"/bid-detail/40\", \"title\": \"thầu mới 1/09\"}', '2025-09-07 09:56:39', '2025-09-07 10:06:55'),
-(30, 'task', 246, 1, 1, 'approved', 0, 3, '2025-09-07 09:57:07', '2025-09-07 10:02:46', NULL, '{\"url\": \"/internal-tasks/246/info\", \"title\": \"task con 2222\", \"assignee_name\": null}', '2025-09-07 16:57:07', '2025-09-07 10:02:46'),
-(31, 'bidding_step', 364, 1, 1, 'pending', 0, 3, '2025-09-07 17:04:21', NULL, NULL, '{\"url\": \"/biddings/40/info\", \"title\": \"Bước 2: Phân tích và lập kế hoạch bóc\"}', '2025-09-07 17:04:21', '2025-09-07 17:04:21');
+(30, 'task', 246, 1, 1, 'approved', 0, 3, '2025-09-07 09:57:07', '2025-09-07 10:02:46', NULL, '{\"url\": \"/non-workflow/tasks/246/info\", \"title\": \"task con 2222\", \"assignee_name\": null}', '2025-09-07 16:57:07', '2025-09-28 22:27:14'),
+(31, 'bidding_step', 364, 1, 1, 'pending', 0, 3, '2025-09-07 17:04:21', NULL, NULL, '{\"url\": \"/biddings/40/info\", \"title\": \"Bước 2: Phân tích và lập kế hoạch bóc\"}', '2025-09-07 17:04:21', '2025-09-07 17:04:21'),
+(32, 'task', 227, 1, 1, 'pending', 0, 3, '2025-09-15 06:14:24', NULL, NULL, '{\"url\": \"/non-workflow/tasks/227/info\", \"title\": \"test 3534535435\", \"assignee_name\": null}', '2025-09-15 13:14:24', '2025-09-28 22:27:14'),
+(34, 'task', 287, 1, 1, 'pending', 0, 3, '2025-09-15 06:15:40', NULL, NULL, '{\"url\": \"/non-workflow/tasks/287/info\", \"title\": \"Nhiệm vụ con 1_DVV\", \"assignee_name\": null}', '2025-09-15 13:15:40', '2025-09-28 22:27:14'),
+(35, 'task', 288, 1, 1, 'pending', 0, 3, '2025-09-15 06:15:58', NULL, NULL, '{\"url\": \"/non-workflow/tasks/288/info\", \"title\": \"Nhiệm vụ cháu 1_DVV\", \"assignee_name\": null}', '2025-09-15 13:15:58', '2025-09-28 22:27:14'),
+(36, 'task', 237, 1, 1, 'pending', 0, 3, '2025-09-15 06:16:52', NULL, NULL, '{\"url\": \"/non-workflow/tasks/237/info\", \"title\": \"324234234234\", \"assignee_name\": null}', '2025-09-15 13:16:52', '2025-09-28 22:27:14'),
+(38, 'task', 279, 1, 1, 'pending', 0, 3, '2025-09-15 14:14:10', NULL, NULL, '{\"url\": \"/non-workflow/tasks/279/info\", \"title\": \"1.1. Lấy kế hoạch SXKD lần 1\", \"assignee_name\": null}', '2025-09-15 21:14:10', '2025-09-28 22:27:14'),
+(40, 'task', 289, 1, 1, 'pending', 0, 3, '2025-09-17 07:17:19', NULL, NULL, '{\"url\": \"/non-workflow/tasks/289/info\", \"title\": \"c1\", \"assignee_name\": null}', '2025-09-17 14:17:19', '2025-09-28 22:27:14'),
+(41, 'task', 290, 1, 1, 'pending', 0, 3, '2025-09-17 07:35:46', NULL, NULL, '{\"url\": \"/non-workflow/tasks/290/info\", \"title\": \"c222\", \"assignee_name\": null}', '2025-09-17 14:35:46', '2025-09-28 22:27:14'),
+(43, 'task', 277, 1, 1, 'pending', 0, 3, '2025-09-28 03:43:12', NULL, NULL, '{\"url\": \"/non-workflow/tasks/277/info\", \"title\": \"1. Lấy kế hoạch SXKD\", \"assignee_name\": null}', '2025-09-28 10:43:12', '2025-09-28 22:27:14'),
+(44, 'task', 281, 1, 1, 'pending', 0, 3, '2025-09-28 03:43:31', NULL, NULL, '{\"url\": \"/non-workflow/tasks/281/info\", \"title\": \"1.3. Lấy kế hoạch SXKD lần 3\", \"assignee_name\": null}', '2025-09-28 10:43:31', '2025-09-28 22:27:14'),
+(45, 'task', 298, 1, 1, 'approved', 0, 3, '2025-09-28 03:45:11', '2025-10-01 15:39:04', NULL, '{\"url\": \"/non-workflow/tasks/298/info\", \"title\": \"2.1. Lấy kế hoạch SCL 1\", \"assignee_name\": null}', '2025-09-28 10:45:11', '2025-10-01 15:39:04'),
+(48, 'task', 302, 1, 1, 'approved', 0, 3, '2025-09-28 03:52:04', '2025-10-01 14:43:29', NULL, '{\"url\": \"/non-workflow/tasks/302/info\", \"title\": \"nhiệm vụ mới 28/09/2025\", \"assignee_name\": null}', '2025-09-28 10:52:04', '2025-10-01 14:43:29'),
+(50, 'task', 293, 1, 1, 'approved', 0, 3, '2025-09-28 04:38:12', '2025-10-01 14:32:16', NULL, '{\"url\": \"/non-workflow/tasks/293/info\", \"title\": \"Nhiệm vụ cháu 2_DVV\", \"assignee_name\": null}', '2025-09-28 11:38:12', '2025-10-01 14:32:16'),
+(59, 'task', 278, 1, 1, 'pending', 0, 3, '2025-10-01 16:11:29', NULL, NULL, '{\"url\": \"/non-workflow/278/info\", \"title\": \"2. Lấy kế hoạch SCL\", \"assignee_name\": null}', '2025-10-01 23:11:29', '2025-10-01 23:11:29'),
+(61, 'task', 299, 1, 1, 'pending', 0, 3, '2025-10-01 16:14:16', NULL, NULL, '{\"url\": \"/non-workflow/299/info\", \"title\": \"2.1.1. Lấy kế hoạch SCL 2.1\", \"assignee_name\": null}', '2025-10-01 23:14:16', '2025-10-01 23:14:16');
 
 -- --------------------------------------------------------
 
@@ -150,7 +164,10 @@ INSERT INTO `approval_logs` (`id`, `approval_instance_id`, `actor_id`, `action`,
 (49, 30, 3, 'approve', '{\"note\": \"sdffdsfsf\"}', '2025-09-07 10:02:46'),
 (50, 28, 3, 'approve', '{\"note\": \"dsadadadad\"}', '2025-09-07 10:03:25'),
 (51, 29, 3, 'approve', '{\"note\": null}', '2025-09-07 10:06:55'),
-(52, 31, 3, 'send', '{\"meta\": {\"url\": \"/biddings/40/info\", \"title\": \"Bước 2: Phân tích và lập kế hoạch bóc\"}, \"approver_ids\": [5]}', '2025-09-07 17:04:21');
+(52, 31, 3, 'send', '{\"meta\": {\"url\": \"/biddings/40/info\", \"title\": \"Bước 2: Phân tích và lập kế hoạch bóc\"}, \"approver_ids\": [5]}', '2025-09-07 17:04:21'),
+(53, 50, 3, 'approve', '{\"note\": null}', '2025-10-01 14:32:16'),
+(54, 48, 3, 'approve', '{\"note\": null}', '2025-10-01 14:43:29'),
+(55, 45, 3, 'approve', '{\"note\": null}', '2025-10-01 15:39:04');
 
 -- --------------------------------------------------------
 
@@ -219,7 +236,21 @@ INSERT INTO `approval_steps` (`id`, `approval_instance_id`, `level`, `approver_i
 (29, 28, 1, 4, 'approved', '2025-09-07 10:03:25', 'dsadadadad', 3, 'admin', '2025-09-07 16:56:27', '2025-09-07 10:03:25'),
 (30, 29, 1, 22, 'approved', '2025-09-07 10:06:55', NULL, 3, 'admin', '2025-09-07 09:56:39', '2025-09-07 10:06:55'),
 (31, 30, 1, 22, 'approved', '2025-09-07 10:02:46', 'sdffdsfsf', 3, 'admin', '2025-09-07 16:57:07', '2025-09-07 10:02:46'),
-(32, 31, 1, 5, 'pending', NULL, NULL, NULL, NULL, '2025-09-07 17:04:21', '2025-09-07 17:04:21');
+(32, 31, 1, 5, 'pending', NULL, NULL, NULL, NULL, '2025-09-07 17:04:21', '2025-09-07 17:04:21'),
+(33, 32, 1, 18, 'pending', NULL, NULL, NULL, NULL, '2025-09-15 13:14:24', '2025-09-15 13:14:24'),
+(35, 34, 1, 3, 'pending', NULL, NULL, NULL, NULL, '2025-09-15 13:15:40', '2025-09-15 13:15:40'),
+(36, 35, 1, 3, 'pending', NULL, NULL, NULL, NULL, '2025-09-15 13:15:58', '2025-09-15 13:15:58'),
+(37, 36, 1, 5, 'pending', NULL, NULL, NULL, NULL, '2025-09-15 13:16:52', '2025-09-15 13:16:52'),
+(39, 38, 1, 5, 'pending', NULL, NULL, NULL, NULL, '2025-09-15 21:14:10', '2025-09-15 21:14:10'),
+(41, 40, 1, 3, 'pending', NULL, NULL, NULL, NULL, '2025-09-17 14:17:19', '2025-09-17 14:17:19'),
+(42, 41, 1, 1, 'pending', NULL, NULL, NULL, NULL, '2025-09-17 14:35:46', '2025-09-17 14:35:46'),
+(44, 43, 1, 5, 'pending', NULL, NULL, NULL, NULL, '2025-09-28 10:43:12', '2025-09-28 10:43:12'),
+(45, 44, 1, 5, 'pending', NULL, NULL, NULL, NULL, '2025-09-28 10:43:31', '2025-09-28 10:43:31'),
+(46, 45, 1, 9, 'approved', '2025-10-01 15:39:04', NULL, 3, 'admin', '2025-09-28 10:45:11', '2025-10-01 15:39:04'),
+(49, 48, 1, 5, 'approved', '2025-10-01 14:43:29', NULL, 3, 'admin', '2025-09-28 10:52:04', '2025-10-01 14:43:29'),
+(51, 50, 1, 15, 'approved', '2025-10-01 14:32:16', NULL, 3, 'admin', '2025-09-28 11:38:12', '2025-10-01 14:32:16'),
+(63, 59, 1, 5, 'pending', NULL, NULL, NULL, NULL, '2025-10-01 23:11:29', '2025-10-01 23:11:29'),
+(65, 61, 1, 5, 'pending', NULL, NULL, NULL, NULL, '2025-10-01 23:14:16', '2025-10-01 23:14:16');
 
 -- --------------------------------------------------------
 
@@ -252,21 +283,7 @@ CREATE TABLE `biddings` (
 --
 
 INSERT INTO `biddings` (`id`, `title`, `description`, `customer_id`, `estimated_cost`, `assigned_to`, `manager_id`, `collaborators`, `start_date`, `end_date`, `created_at`, `updated_at`, `status`, `priority`, `approval_status`, `approval_steps`, `current_level`) VALUES
-(2, 'Gói thầu cung cấp turbine cho Nhiệt điện Quảng Ninh', 'Turbine hơi công suất 300MW cho tổ máy số 3', 1, 4500000000.00, 4, 23, NULL, '2025-06-15', '2025-10-31', '2025-06-11 04:16:44', '2025-08-31 14:55:35', 1, 0, 'approved', '[{\"note\": \"eweqewqe\", \"level\": 1, \"status\": \"approved\", \"approver_id\": 23, \"commented_at\": \"2025-08-31 14:55:09\"}]', 0),
-(3, 'Gói thầu xây dựng nhà điều hành Nhiệt điện Duyên Hải', 'Thi công hoàn thiện trụ sở ban quản lý nhà máy', 2, 1200000000.00, 23, NULL, NULL, '2025-06-20', '2025-08-10', '2025-06-11 04:16:50', '2025-08-21 21:12:34', 3, 0, 'pending', NULL, 0),
-(4, 'Cung cấp hệ thống điều khiển trung tâm cho Nhiệt điện Hải Phòng', 'SCADA & HMI cho toàn nhà máy', 3, 2500000000.00, 22, 17, NULL, '2025-06-10', '2025-07-15', '2025-06-11 04:16:56', '2025-08-31 15:38:59', 4, 1, 'pending', '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 5, \"commented_at\": null}, {\"note\": null, \"level\": 2, \"status\": \"pending\", \"approver_id\": 3, \"commented_at\": null}]', 0),
-(5, 'Cung cấp ống khói chịu nhiệt cao', 'Ống khói chịu nhiệt độ trên 1000°C cho Nhiệt điện Vĩnh Tân', 4, 1750000000.00, 24, NULL, NULL, '2025-06-25', '2025-07-30', '2025-06-11 04:17:01', '2025-08-21 21:12:34', 2, 0, 'pending', NULL, 0),
-(6, 'Gói thầu bảo trì định kỳ năm 2025 – Nhiệt điện Mông Dương', 'Bảo trì tổ máy số 2 theo tiêu chuẩn EVN', 5, 980000000.00, 18, 24, NULL, '2025-06-20', '2025-07-05', '2025-06-11 04:17:10', '2025-08-31 15:38:04', 1, 0, 'approved', '[{\"note\": \"4354353535\", \"level\": 1, \"status\": \"approved\", \"approver_id\": 24, \"commented_at\": \"2025-08-31 14:24:09\"}]', 0),
-(7, 'Cung cấp vật tư phòng cháy chữa cháy – Nhiệt điện Ô Môn', 'Thiết bị PCCC tiêu chuẩn châu Âu', 6, 800000000.00, 18, 22, NULL, '2025-06-22', '2025-07-10', '2025-06-11 04:17:15', '2025-08-31 14:23:14', 1, 0, 'approved', '[{\"note\": null, \"level\": 1, \"status\": \"approved\", \"approver_id\": 23, \"commented_at\": \"2025-08-31 14:23:14\"}]', 0),
-(8, 'Cải tạo hệ thống cấp than – Nhiệt điện Na Dương', 'Băng tải và phễu tiếp nhận than đá', 7, 1350000000.00, 6, 4, NULL, '2025-06-24', '2025-08-05', '2025-06-11 04:17:20', '2025-08-31 16:19:45', 4, 1, 'pending', '\"[{\\\"level\\\":1,\\\"approver_id\\\":18,\\\"status\\\":\\\"pending\\\",\\\"commented_at\\\":null,\\\"note\\\":null},{\\\"level\\\":2,\\\"approver_id\\\":5,\\\"status\\\":\\\"pending\\\",\\\"commented_at\\\":null,\\\"note\\\":null}]\"', 0),
-(9, 'Lắp đặt hệ thống điện chiếu sáng – Nhiệt điện Sông Hậu', 'Chiếu sáng toàn khu vực sân và hành lang', 8, 460000000.00, 17, 5, NULL, '2025-06-28', '2025-07-25', '2025-06-11 04:17:26', '2025-08-31 14:57:40', 1, 0, 'approved', '[{\"note\": \"53455353535\", \"level\": 1, \"status\": \"approved\", \"approver_id\": 5, \"commented_at\": \"2025-08-31 14:21:23\"}]', 0),
-(10, 'Cung cấp hệ thống xử lý nước thải công nghiệp – Nhiệt điện Phú Mỹ', 'Thiết bị xử lý hóa lý và sinh học', 9, 2600000000.00, 15, 15, NULL, '2025-07-01', '2025-08-15', '2025-06-11 04:17:31', '2025-09-01 04:17:22', 4, 0, 'approved', '[{\"note\": \"duyệt gói thầu này nhé\", \"level\": 1, \"status\": \"approved\", \"approver_id\": 15, \"commented_at\": \"2025-09-01 04:17:22\"}]', 0),
-(11, 'Gói thầu thuê ngoài dịch vụ an ninh – Nhiệt điện Thái Bình 2', 'Thuê bảo vệ 24/7 trong 12 tháng', 10, 500000000.00, 8, 6, NULL, '2025-06-15', '2025-07-15', '2025-06-11 04:17:36', '2025-08-31 14:58:49', 1, 0, 'approved', '[{\"note\": \"rưerwerrw\", \"level\": 1, \"status\": \"approved\", \"approver_id\": 6, \"commented_at\": \"2025-08-31 14:58:32\"}]', 0),
-(35, 'test gói thầu mới tên dài', 'test gói thầu mới', 1, 200000000.00, 5, 8, '[8,6,5,7]', '2025-08-05', '2025-08-31', '2025-08-04 17:26:30', '2025-09-01 04:18:19', 1, 0, 'approved', '[{\"note\": {\"note\": null}, \"level\": 1, \"status\": \"approved\", \"acted_by\": 3, \"acted_role\": \"admin\", \"approver_id\": 8, \"commented_at\": \"2025-08-30 16:07:12\"}]', 0),
-(37, 'gói thầu mới 23-08', 'gói thầu mới', 7, 60000000000.00, 16, 5, NULL, '2025-08-23', '2025-11-30', '2025-08-23 02:16:14', '2025-08-31 14:40:10', 4, 0, 'pending', '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 5, \"commented_at\": null}]', 0),
-(38, 'gói thầu mới 3', 'gói thầu mới 3', 6, 30000000000.00, 19, 4, NULL, '2025-08-23', '2025-08-31', '2025-08-23 02:18:51', '2025-09-01 04:18:42', 4, 0, 'pending', '[{\"note\": null, \"level\": 1, \"status\": \"pending\", \"approver_id\": 4, \"commented_at\": null}]', 0),
-(39, 'test thầu mới', 'test thầu mới', 10, 3000000.00, 5, 5, NULL, '2025-08-28', '2025-08-31', '2025-08-27 20:02:39', '2025-08-30 15:52:54', 4, 0, 'approved', '[{\"note\": {\"note\": null}, \"level\": 1, \"status\": \"approved\", \"acted_by\": 3, \"acted_role\": \"admin\", \"approver_id\": 5, \"commented_at\": \"2025-08-30 15:52:49\"}, {\"note\": {\"note\": null}, \"level\": 2, \"status\": \"approved\", \"acted_by\": 3, \"acted_role\": \"admin\", \"approver_id\": 19, \"commented_at\": \"2025-08-30 15:52:54\"}]', 1),
-(40, 'thầu mới 1/09', 'thầu mới 1/09', 4, 600000000.00, 23, 22, NULL, '2025-09-01', '2025-09-30', '2025-09-01 07:55:31', '2025-09-07 10:06:55', 4, 0, 'approved', '[{\"note\": null, \"level\": 1, \"status\": \"approved\", \"approver_id\": 22, \"commented_at\": \"2025-09-07 10:06:55\"}]', 0);
+(41, 'Cung cấp vật tư dự phòng TB1', 'Cung cấp vật tư dự phòng TB1', 10, 555.00, 5, 4, NULL, '2025-09-01', '2025-09-30', '2025-09-15 04:10:10', '2025-09-15 04:10:10', 1, 1, 'pending', NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -608,7 +625,19 @@ INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `start_
 (371, 40, 9, 'Xây dựng kịch bản HSMT', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
 (372, 40, 10, 'Duyệt', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
 (373, 40, 11, '11', NULL, NULL, NULL, 0, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
-(374, 40, 22, '22', NULL, NULL, NULL, 0, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL);
+(374, 40, 22, '22', NULL, NULL, NULL, 0, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-09-01 07:55:31', '2025-09-01 07:55:31', 0, 4, NULL, NULL),
+(377, 41, 1, 'Lấy KH: SXKD, SCL, SCTK hoặc KHK của khách hàng', '2025-09-01 00:00:00', '2025-09-04 00:00:00', NULL, 0, NULL, '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-09-15 04:10:10', '2025-09-28 04:45:46', 1, 10, 5, 302),
+(378, 41, 2, 'Phân tích và lập kế hoạch bóc', '2025-09-05 00:00:00', '2025-09-06 00:00:00', NULL, 0, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-09-15 04:10:10', '2025-09-17 07:40:13', 1, 10, 5, 290),
+(379, 41, 3, 'Làm rõ tính chất kỹ thuật, NSX của hàng hóa, dịch vụ', '2025-09-06 00:00:00', '2025-09-07 00:00:00', NULL, 0, NULL, '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-09-15 04:10:10', '2025-09-15 04:33:22', 1, 10, 6, NULL),
+(380, 41, 4, 'Làm việc với NSX, NCC', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-09-15 04:10:10', '2025-09-15 04:10:10', 0, 10, NULL, NULL),
+(381, 41, 5, 'Kiểm tra', NULL, NULL, NULL, 0, NULL, '[\"Phòng Hành chính - Nhân sự\"]', '2025-09-15 04:10:10', '2025-09-15 04:10:10', 0, 10, NULL, NULL),
+(382, 41, 6, 'Nhận báo giá, kiểm tra và cơ sở đàm phán (nếu có)', NULL, NULL, NULL, 0, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-09-15 04:10:10', '2025-09-15 04:10:10', 0, 10, NULL, NULL),
+(383, 41, 7, 'Đánh giá, báo cáo tính khả thi', NULL, NULL, NULL, 0, NULL, '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-09-15 04:10:10', '2025-09-15 04:10:10', 0, 10, NULL, NULL),
+(384, 41, 8, 'Duyệt', NULL, NULL, NULL, 0, NULL, '[\"Phòng Thương mại\"]', '2025-09-15 04:10:10', '2025-09-15 04:10:10', 0, 10, NULL, NULL),
+(385, 41, 9, 'Xây dựng kịch bản HSMT', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-09-15 04:10:10', '2025-09-15 04:10:10', 0, 10, NULL, NULL),
+(386, 41, 10, 'Duyệt', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-09-15 04:10:10', '2025-09-15 04:10:10', 0, 10, NULL, NULL),
+(387, 41, 11, '11', NULL, NULL, NULL, 0, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-09-15 04:10:10', '2025-09-15 04:10:10', 0, 10, NULL, NULL),
+(388, 41, 22, '22', NULL, NULL, NULL, 0, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-09-15 04:10:10', '2025-09-15 04:10:10', 0, 10, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -631,13 +660,13 @@ CREATE TABLE `bidding_step_templates` (
 --
 
 INSERT INTO `bidding_step_templates` (`id`, `step_number`, `step_code`, `title`, `department`, `created_at`, `updated_at`) VALUES
-(1, 1, 'bidding_step_01', 'Lấy KH: SXKD, SCL, SCTK hoặc KHK của khách hàng', '[\"Phòng Hành chính - Nhân sự\",\"Phòng Tài chính - Kế toán\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
-(2, 2, 'bidding_step_02', 'Phân tích và lập kế hoạch bóc', '[\"Phòng Dịch vụ - Kỹ thuật\",\"Phòng Thương mại\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
-(3, 3, 'bidding_step_03', 'Làm rõ tính chất kỹ thuật, NSX của hàng hóa, dịch vụ', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
+(1, 1, 'bidding_step_01', 'Lấy KH: SXKD, SCL, SCTK hoặc KHK của khách hàng', '[\"Phòng Kinh doanh\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
+(2, 2, 'bidding_step_02', 'Phân tích và lập kế hoạch bóc', '[\"Phòng Kinh doanh\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
+(3, 3, 'bidding_step_03', 'Làm rõ tính chất kỹ thuật, NSX của hàng hóa, dịch vụ', '[\"Phòng Kinh doanh\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
 (4, 4, 'bidding_step_04', 'Làm việc với NSX, NCC', '[\"Phòng Kinh doanh\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
-(5, 5, 'bidding_step_05', 'Kiểm tra', '[\"Phòng Hành chính - Nhân sự\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
-(6, 6, 'bidding_step_06', 'Nhận báo giá, kiểm tra và cơ sở đàm phán (nếu có)', '[\"Phòng Tài chính - Kế toán\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
-(7, 7, 'bidding_step_07', 'Đánh giá, báo cáo tính khả thi', '[\"Phòng Dịch vụ - Kỹ thuật\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
+(5, 5, 'bidding_step_05', 'Kiểm tra', '[\"Phòng Kinh doanh\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
+(6, 6, 'bidding_step_06', 'Nhận báo giá, kiểm tra và cơ sở đàm phán (nếu có)', '[\"Phòng Kinh doanh\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
+(7, 7, 'bidding_step_07', 'Đánh giá, báo cáo tính khả thi', '[\"Phòng Kinh doanh\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
 (8, 8, 'bidding_step_08', 'Duyệt', '[\"Phòng Thương mại\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
 (9, 9, 'bidding_step_09', 'Xây dựng kịch bản HSMT', '[\"Phòng Kinh doanh\"]', '2025-06-16 16:06:14', '2025-06-29 15:59:25'),
 (10, 10, 'bidding_step_10', 'Duyệt', '[\"Phòng Kinh doanh\"]', '2025-08-14 23:07:38', '2025-08-14 23:07:38'),
@@ -765,7 +794,14 @@ INSERT INTO `comment_reads` (`id`, `user_id`, `comment_id`, `read_at`) VALUES
 (37, 3, 46, '2025-09-06 14:35:07'),
 (38, 3, 60, '2025-09-06 14:37:07'),
 (39, 3, 61, '2025-09-06 14:40:14'),
-(40, 3, 62, '2025-09-06 14:51:25');
+(40, 3, 62, '2025-09-06 14:51:25'),
+(41, 3, 64, '2025-09-07 17:14:21'),
+(42, 3, 73, '2025-09-28 15:04:25'),
+(43, 3, 72, '2025-09-28 15:04:34'),
+(44, 3, 70, '2025-09-28 16:15:46'),
+(45, 3, 69, '2025-09-28 16:16:38'),
+(46, 3, 71, '2025-09-28 16:19:47'),
+(47, 3, 67, '2025-09-28 16:20:21');
 
 -- --------------------------------------------------------
 
@@ -1042,17 +1078,18 @@ CREATE TABLE `customers` (
 --
 
 INSERT INTO `customers` (`id`, `name`, `phone`, `email`, `address`, `city`, `customer_group`, `avatar`, `assigned_to`, `last_interaction`, `created_at`, `updated_at`) VALUES
-(1, 'Tập đoàn Điện lực Việt Nam (EVN) ', '02422210000', 'contact@evn.com.vn', '11 Cửa Bắc, Ba Đình', 'Hà Nội', 'khách cũ', '/uploads/evn.jpg', 6, '2025-06-13', '2025-06-11 02:10:10', '2025-06-22 06:46:30'),
-(2, 'Công ty Nhiệt điện Phả Lại', '02203713901', 'info@plaipower.vn', 'Phả Lại, Chí Linh', 'Hải Dương', 'tiềm năng', '/uploads/phalai.jpg', 5, '2025-06-18', '2025-06-11 02:10:22', '2025-09-07 02:12:44'),
-(3, 'Nhà máy nhiệt điện thái bình', '02033855600', 'ubpower@evn.com.vn', 'Uông Bí, Quảng Ninh', 'Đà Nẵng', 'thử nghiệm', '/uploads/uongbi.jpg', 5, '2025-06-19', '2025-06-11 02:10:29', '2025-08-24 14:24:01'),
-(4, 'Công ty Nhiệt điện Cần Thơ', '02923836411', 'cantho@evn.com.vn', 'Ô Môn, Cần Thơ', 'Cần Thơ', 'tiềm năng', '/uploads/cantho.jpg', 23, '2025-06-20', '2025-06-11 02:10:35', '2025-06-20 09:13:13'),
-(5, 'Công ty Nhiệt điện Quảng Ninh', '02033655355', 'qnpower@evn.com.vn', 'Cẩm Phả, Quảng Ninh', 'Quảng Ninh', 'vip', '/uploads/quangninh.jpg', 1, '2025-06-21', '2025-06-11 02:10:41', '2025-06-11 16:44:52'),
-(6, 'Nhà máy nhiệt điện Duyên Hải', '02943923999', 'duyenhai@evn.com.vn', 'Duyên Hải, Trà Vinh', 'Trà Vinh', 'khách mới', '/uploads/duyenhai.jpg', 1, '2025-06-12', '2025-06-11 02:10:47', '2025-06-11 16:45:59'),
-(7, 'Công ty Nhiệt điện Vĩnh Tân', '02523695252', 'vinhtan@evn.com.vn', 'Tuy Phong, Bình Thuận', 'Bình Thuận', 'tiềm năng', '/uploads/vinhtan.jpg', 20, '2025-06-30', '2025-06-11 02:10:53', '2025-06-20 09:13:29'),
-(8, 'Công ty Nhiệt điện Nghi Sơn 1', '02373898888', 'nghison1@evn.com.vn', 'Hải Hà, Thanh Hóa', 'Thanh Hóa', 'khách cũ', '/uploads/nghison1.jpg', 4, '2025-06-14', '2025-06-11 02:10:58', '2025-06-11 16:51:18'),
-(9, 'Công ty Nhiệt điện Hải Phòng', '02253717171', 'haiphongpower@evn.com.vn', 'Thủy Nguyên, Hải Phòng', 'Hải Phòng', 'vip', '/uploads/haiphong.jpg', 1, NULL, '2025-06-11 02:11:04', '2025-06-11 09:22:51'),
-(10, 'Công ty Nhiệt điện Mông Dương', '02033933777', 'mongduong@evn.com.vn', 'Cẩm Phả, Quảng Ninh', 'Quảng Ninh', 'khách mới', '/uploads/mongduong.jpg', 5, NULL, '2025-06-11 02:11:09', '2025-06-11 09:22:51'),
-(12, 'test khách 1', '0912345678', 'doangiang665@gmail.com', 'i3 vinsmart ', NULL, NULL, NULL, 12, NULL, '2025-08-21 14:50:45', '2025-09-07 02:12:57');
+(1, 'Công ty CP Nhiệt điện Phả Lại', '02422210000', 'contact@evn.com.vn', '11 Cửa Bắc, Ba Đình', 'Hà Nội', 'khách cũ', '/uploads/evn.jpg', 6, '2025-06-13', '2025-06-11 02:10:10', '2025-09-15 03:50:58'),
+(2, 'Công ty CP Nhiệt điện Hải Phòng', '02203713901', 'info@plaipower.vn', 'Phả Lại, Chí Linh', 'Hải Dương', 'tiềm năng', '/uploads/phalai.jpg', 5, '2025-06-18', '2025-06-11 02:10:22', '2025-09-15 03:50:16'),
+(3, 'Nhà máy nhiệt điện Duyên Hải 3 MR', '02033855600', 'ubpower@evn.com.vn', 'Uông Bí, Quảng Ninh', 'Đà Nẵng', 'thử nghiệm', '/uploads/uongbi.jpg', 5, '2025-06-19', '2025-06-11 02:10:29', '2025-09-15 03:48:49'),
+(4, 'Nhà máy Nhiệt điện Duyên Hải 3', '02923836411', 'cantho@evn.com.vn', 'Ô Môn, Cần Thơ', 'Cần Thơ', 'tiềm năng', '/uploads/cantho.jpg', 23, '2025-06-20', '2025-06-11 02:10:35', '2025-09-15 03:48:13'),
+(5, 'Nhà máy Nhiệt điện Duyên Hải 1', '02033655355', 'qnpower@evn.com.vn', 'Cẩm Phả, Quảng Ninh', 'Quảng Ninh', 'vip', '/uploads/quangninh.jpg', 1, '2025-06-21', '2025-06-11 02:10:41', '2025-09-15 03:47:58'),
+(6, 'Công ty Nhiệt điện Nghi Sơn', '02943923999', 'duyenhai@evn.com.vn', 'Duyên Hải, Trà Vinh', 'Trà Vinh', 'khách mới', '/uploads/duyenhai.jpg', 1, '2025-06-12', '2025-06-11 02:10:47', '2025-09-15 03:46:27'),
+(7, 'Công ty CP Nhiệt điện Quảng Ninh', '02523695252', 'vinhtan@evn.com.vn', 'Tuy Phong, Bình Thuận', 'Bình Thuận', 'tiềm năng', '/uploads/vinhtan.jpg', 20, '2025-06-30', '2025-06-11 02:10:53', '2025-09-15 03:45:51'),
+(8, 'Tổng công ty Phát điện 1', '02373898888', 'nghison1@evn.com.vn', 'Hải Hà, Thanh Hóa', 'Thanh Hóa', 'khách cũ', '/uploads/nghison1.jpg', 4, '2025-06-14', '2025-06-11 02:10:58', '2025-09-15 03:45:07'),
+(9, 'Trung tâm Dịch vụ sửa chữa EVN', '02253717171', 'haiphongpower@evn.com.vn', 'Thủy Nguyên, Hải Phòng', 'Hải Phòng', 'vip', '/uploads/haiphong.jpg', 1, NULL, '2025-06-11 02:11:04', '2025-09-15 03:44:37'),
+(10, 'Công ty Nhiệt điện Thái Bình', '02033933777', 'mongduong@evn.com.vn', 'Cẩm Phả, Quảng Ninh', 'Quảng Ninh', 'khách mới', '/uploads/mongduong.jpg', 5, NULL, '2025-06-11 02:11:09', '2025-09-15 03:43:14'),
+(12, 'Nhà máy Nhiệt điện Vĩnh Tân 4', '0912345678', 'doangiang665@gmail.com', 'i3 vinsmart ', NULL, NULL, NULL, 12, NULL, '2025-08-21 14:50:45', '2025-09-15 03:42:44'),
+(13, 'Công Ty CP Nhiệt điện Phả Lại', '0989268613', 'info@ttid.com.vn', '', NULL, NULL, NULL, 7, NULL, '2025-09-15 03:52:47', '2025-09-15 03:52:47');
 
 -- --------------------------------------------------------
 
@@ -1158,7 +1195,12 @@ INSERT INTO `documents` (`id`, `title`, `file_path`, `department_id`, `uploaded_
 (9, 'Thủ tướng yêu cầu chấn chỉnh thị trường vàng', 'https://vnexpress.net/thu-tuong-yeu-cau-chan-chinh-thi-truong-vang-4935819.html', 3, 3, 'private', 'link', 0, '2025-09-06 04:10:40', '2025-09-06 04:10:40', NULL),
 (10, '2432432442', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/Japanese_English_Thai.xlsx', 3, 3, 'private', 'wp_media', 6539, '2025-09-06 04:40:49', '2025-09-06 04:40:49', NULL),
 (11, 'xxxxxxxxxxxx', 'https://antdv.com/components/image', 3, 3, 'private', 'link', 0, '2025-09-06 05:23:20', '2025-09-06 05:23:20', NULL),
-(12, '5345435535', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/TTID_logo.png', 2, 3, 'private', 'wp_media', 23787, '2025-09-07 10:30:30', '2025-09-07 10:30:30', NULL);
+(12, '5345435535', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/TTID_logo.png', 2, 3, 'private', 'wp_media', 23787, '2025-09-07 10:30:30', '2025-09-07 10:30:30', NULL),
+(13, '342424234', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/TTID_logo-1.png', 2, 3, 'private', 'wp_media', 23787, '2025-09-07 17:19:25', '2025-09-07 17:19:25', NULL),
+(14, '342343224234', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/TTID_logo-2.png', 2, 3, 'private', 'wp_media', 23787, '2025-09-07 17:20:00', '2025-09-07 17:20:00', NULL),
+(15, '4233242424', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/Mau-TTID-2.2_Bien-ban-hop-DHDCD-1.doc', 4, 3, 'private', 'wp_media', 357376, '2025-09-07 17:20:28', '2025-09-07 17:20:28', NULL),
+(16, 'tài liệu batman', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/photo_2025-09-28_09-47-48.jpg', 3, 3, 'private', 'wp_media', 221130, '2025-09-28 02:48:27', '2025-09-28 02:48:27', NULL),
+(17, 'tài liệu vnexpress', 'https://vnexpress.net/', 3, 3, 'private', 'link', 0, '2025-09-28 02:49:01', '2025-09-28 02:49:01', NULL);
 
 -- --------------------------------------------------------
 
@@ -1618,6 +1660,8 @@ CREATE TABLE `tasks` (
   `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `assigned_to` int NOT NULL,
+  `collaborated_by` int DEFAULT NULL,
+  `assigned_by` int DEFAULT NULL,
   `proposed_by` int DEFAULT NULL,
   `start_date` date DEFAULT NULL,
   `end_date` date DEFAULT NULL,
@@ -1633,6 +1677,8 @@ CREATE TABLE `tasks` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `approval_steps` int DEFAULT '1',
+  `approver_ids` json DEFAULT NULL COMMENT 'Danh sách id người duyệt (mảng JSON)',
+  `needs_approval` tinyint(1) NOT NULL DEFAULT '0' COMMENT '0 = không cần duyệt, 1 = cần duyệt',
   `current_level` int DEFAULT '1',
   `id_department` int DEFAULT NULL,
   `progress` tinyint UNSIGNED DEFAULT '0',
@@ -1643,140 +1689,154 @@ CREATE TABLE `tasks` (
 -- Dumping data for table `tasks`
 --
 
-INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `proposed_by`, `start_date`, `end_date`, `status`, `approval_status`, `linked_type`, `linked_id`, `step_code`, `step_id`, `created_by`, `priority`, `comments_count`, `created_at`, `updated_at`, `approval_steps`, `current_level`, `id_department`, `progress`, `overdue_reason`) VALUES
-(1, NULL, 'Thiết kế hồ sơ thầu', 'Chuẩn bị file bản vẽ và hồ sơ năng lực', 5, 4, '2025-07-01', '2025-08-25', 'done', 'approved', 'bidding', 2, 4, 112, 1, 'normal', 0, '2025-06-04 01:23:15', '2025-08-05 07:14:49', 1, 1, 4, 50, NULL),
-(2, NULL, 'Thiết kế hồ sơ thầu', 'Mô tả công việc thiết kế hồ sơ thầu', 3, 2, '2025-06-25', '2025-07-31', 'done', 'approved', 'bidding', 6, 5, 237, 2, 'high', 1, '2025-06-04 01:37:15', '2025-08-22 19:19:43', 1, 1, 5, 100, NULL),
-(3, NULL, 'Nghiên cứu yêu cầu khách hàng', 'Mô tả công việc nghiên cứu yêu cầu khách hàng', 9, 4, '2025-06-29', '2025-07-31', 'todo', 'rejected', 'contract', 30, 16, 265, 1, 'high', 3, '2025-06-04 01:37:24', '2025-08-05 09:04:44', 1, 1, 5, 75, NULL),
-(10, NULL, 'Mua sắm vật tư', 'Mô tả công việc mua sắm vật tư', 10, 2, '2025-06-25', '2025-07-31', 'todo', 'rejected', 'bidding', 2, 3, 111, 2, 'high', 5, '2025-06-04 01:38:26', '2025-08-14 07:20:14', 1, 1, 5, 75, 'tesst'),
-(26, 3, 'Thiết kế giao diện phụ - task con 3', 'Thiết kế giao diện cho phần chi tiết', 9, 2, '2025-06-15', '2025-06-16', 'todo', 'pending', 'bidding', 2, 3, 111, 1, 'high', 0, '2025-06-05 05:38:39', '2025-08-14 07:20:46', 1, 1, 3, 75, 'Tổng Bí thư: Trung ương khóa mới dự kiến có 200 ủy viên ddd\n- test\n- test 2'),
-(27, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, 4, '2025-06-10', '2025-06-14', 'done', 'approved', 'bidding', 2, 1, 109, 3, 'high', 0, '2025-06-05 06:16:42', '2025-08-05 09:58:25', 1, 1, 1, 100, NULL),
-(28, 3, 'Thiết kế giao diện phụ - task con 3 có ngay bat dau - ngay ket thuc', 'Thiết kế giao diện cho phần chi tiết', 17, 4, '2025-06-25', '2025-07-31', 'done', 'approved', 'bidding', 2, 3, 111, 1, 'normal', 0, '2025-06-05 06:19:14', '2025-07-20 15:21:54', 1, 1, 3, 0, NULL),
-(29, 18, 'sub task 1', 'tesst subtask', 13, 4, '2025-06-24', '2025-07-31', '', 'pending', 'bidding', 5, 5, 104, 1, 'normal', 0, '2025-06-23 18:15:50', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
-(30, NULL, 'test', 'tesst tesst', 22, 1, '2025-06-24', '2025-07-30', 'done', 'approved', 'bidding', 5, 5, 104, 1, 'normal', 0, '2025-06-23 18:52:15', '2025-09-03 19:15:10', 1, 1, 1, 100, NULL),
-(31, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, 4, '2025-08-29', '2025-08-31', 'overdue', 'pending', 'bidding', 2, 3, 111, 3, 'high', 0, '2025-06-24 18:47:18', '2025-08-05 09:07:21', 1, 1, 4, 50, NULL),
-(32, 1, 'tesst subtask', 'xxxxxxx', 22, 4, '2025-06-28', '2025-07-31', 'done', 'approved', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-06-28 08:01:02', '2025-07-20 15:21:54', 1, 1, 3, 0, NULL),
-(33, NULL, 'test task mới', 'test', 3, 4, '2025-06-29', '2025-07-31', 'done', 'approved', 'bidding', 5, 9, 108, 1, 'normal', 0, '2025-06-29 01:28:22', '2025-08-22 19:20:30', 1, 1, 2, 100, NULL),
-(34, NULL, 'test nhiêm vụ mới', 'test test', 7, 4, '2025-06-29', '2025-07-31', 'doing', 'pending', 'bidding', 2, 2, 110, 1, 'normal', 0, '2025-06-29 01:36:07', '2025-07-20 15:21:54', 1, 1, 1, 0, NULL),
-(35, NULL, 'test mới 3', 'test nhé', 7, 2, '2025-06-29', '2025-08-07', 'doing', 'pending', 'bidding', 8, 7, 79, 1, 'high', 0, '2025-06-29 01:51:48', '2025-07-20 15:21:54', 1, 1, 3, 0, NULL),
-(36, NULL, 'mới', 'đasadd', 9, 1, '2025-06-30', '2025-07-31', 'doing', 'pending', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-06-29 11:25:28', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
-(37, NULL, 'test nhiệm vụ hợp đồng 1', 'test nhiệm vụ hợp đồng 1', 23, 1, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 10, 259, 1, 'normal', 0, '2025-06-30 09:33:07', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
-(38, NULL, 'test nhiệm vụ hợp đồng 2', 'test nhiệm vụ hợp đồng 2', 19, 4, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 11, 260, 1, 'high', 0, '2025-06-30 09:37:45', '2025-08-03 20:30:08', 1, 1, 4, 50, NULL),
-(39, NULL, 'duyệt hợp đồng mua', 'duyệt hợp đồng mua', 21, 4, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 12, 261, 1, 'high', 0, '2025-06-30 09:48:27', '2025-07-20 15:21:54', 1, 1, 2, 0, NULL),
-(40, NULL, 'nhiệm vụ cho gói thầu 1', 'test chấm thầu', 4, 1, '2025-07-10', '2025-08-05', 'doing', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-06-30 09:54:52', '2025-08-05 09:04:31', 1, 1, 2, 50, NULL),
-(41, NULL, 'nhiệm vụ hợp đồng 2', 'nghiệm thu', 23, 1, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 16, 265, 1, 'normal', 0, '2025-06-30 09:58:15', '2025-07-20 15:21:54', 1, 1, 4, 0, NULL),
-(42, NULL, 'test nhiệm vụ hợp đồng 4', 'kiểm tra hàng hóa', 5, 4, '2025-08-13', '2025-08-21', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'high', 0, '2025-06-30 10:05:48', '2025-07-20 15:21:54', 1, 1, 4, 0, NULL),
-(43, NULL, 'test nhiệm vụ hợp đồng 5', 'kiểm tra hàng hóa', 1, 2, '2025-07-01', '2025-08-31', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'normal', 0, '2025-06-30 10:10:57', '2025-07-20 15:21:54', 1, 1, 1, 0, NULL),
-(44, NULL, 'test nhiệm vụ hợp đồng 6', 'nghiệm thu', 24, 2, '2025-07-01', '2025-08-31', 'doing', 'pending', 'contract', 33, 16, 316, 1, 'normal', 0, '2025-06-30 10:12:22', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
-(45, NULL, 'test nhiệm vụ gói thầu 7', 'chấm thầu', 24, 2, '2025-07-31', '2025-08-29', 'doing', 'pending', 'bidding', 3, 6, 123, 1, 'high', 0, '2025-06-30 10:13:58', '2025-08-05 09:04:52', 1, 1, 3, 50, NULL),
-(46, NULL, 'test hợp đồng 8', 'test hợp đồng 8', 1, 4, '2025-07-24', '2025-08-28', 'doing', 'pending', 'contract', 30, 10, 259, 1, 'high', 0, '2025-06-30 10:23:23', '2025-08-11 06:41:09', 1, 1, 1, 50, NULL),
-(47, NULL, 'nhiệm vụ mới', 'mô tả mẫu', 15, 4, '2025-07-01', '2025-08-28', 'doing', 'pending', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-07-01 04:00:46', '2025-07-20 15:21:54', 1, 1, 5, 0, NULL),
-(48, NULL, 'nhiệm vụ cho hợp đồng mới', 'mô tả mẫu', 20, 4, '2025-07-01', '2025-08-30', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'normal', 0, '2025-07-01 04:07:24', '2025-07-20 15:21:54', 1, 1, 4, 0, NULL),
-(59, NULL, 'duyệt 5', '234322424', 9, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 4, NULL, 1, 'normal', 0, '2025-07-31 22:19:12', '2025-07-31 22:19:12', 0, 1, 3, 0, NULL),
-(60, NULL, 'duyệt 6', '3432424', 5, 4, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 4, NULL, 1, 'normal', 0, '2025-07-31 22:22:38', '2025-07-31 22:22:38', 0, 1, 3, 0, NULL),
-(61, NULL, 'duyệt 4', '4234234324', 4, 5, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 4, NULL, 1, 'normal', 0, '2025-07-31 22:59:44', '2025-07-31 22:59:44', 0, 1, 3, 0, NULL),
-(62, NULL, 'tesst 6', '432424', 4, 4, '2025-08-01', '2025-09-30', '', 'pending', 'bidding', 2, 4, 112, 1, 'high', 0, '2025-07-31 23:22:55', '2025-08-05 09:04:11', 0, 1, 3, 25, NULL),
-(63, NULL, 'tesst 7', '423424', 9, 5, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 4, 112, 1, 'normal', 0, '2025-07-31 23:24:39', '2025-07-31 23:24:39', 0, 1, 3, 0, NULL),
-(64, NULL, 'hồ sơ dự thầu 1', '3545345435435', 6, 4, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 5, 113, 1, 'normal', 0, '2025-07-31 23:26:27', '2025-07-31 23:26:27', 0, 1, 3, 0, NULL),
-(65, NULL, 'hồ sơ dự thầu 2', '433535345', 8, 7, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 5, 113, 1, 'normal', 0, '2025-07-31 23:28:19', '2025-07-31 23:28:19', 0, 1, 3, 0, NULL),
-(66, NULL, 'nhiệm vụ lập 1', '43543535435', 9, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 3, NULL, 1, 'normal', 0, '2025-07-31 23:39:43', '2025-07-31 23:39:43', 0, 1, 3, 0, NULL),
-(67, NULL, 'nhiệm vụ triển khai 1', '3423432434', 8, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 5, 113, 1, 'normal', 0, '2025-07-31 23:41:24', '2025-07-31 23:41:24', 0, 1, 3, 0, NULL),
-(68, NULL, 'triển khai 6', '434324324', 8, 5, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 5, 113, 1, 'normal', 0, '2025-07-31 23:43:47', '2025-07-31 23:43:47', 0, 1, 3, 0, NULL),
-(69, NULL, 'chấm 1', '4432424', 8, 6, '2025-08-01', '2025-09-24', 'doing', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-07-31 23:49:57', '2025-07-31 23:49:57', 0, 1, 3, 0, NULL),
-(70, NULL, 'chấm thầu 3', 'ưqeqeqeqe', 5, 6, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-07-31 23:54:03', '2025-07-31 23:54:03', 0, 1, 3, 0, NULL),
-(71, NULL, 'chấm thầu 4', '4324242424', 8, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-07-31 23:55:42', '2025-07-31 23:55:42', 0, 1, 3, 0, NULL),
-(72, NULL, 'chấm 5', '242432424324', 23, 22, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-07-31 23:57:15', '2025-07-31 23:57:15', 0, 1, 3, 0, NULL),
-(73, NULL, 'chấm 7', '443242424', 21, 24, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-08-01 00:02:36', '2025-08-01 00:02:36', 0, 1, 3, 0, NULL),
-(74, NULL, 'hợp đồng bán 1', '4234424234', 18, 6, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 8, 116, 1, 'normal', 0, '2025-08-01 00:05:35', '2025-08-01 00:05:35', 0, 1, 3, 0, NULL),
-(75, NULL, 'hợp đồng 2', '423432424242', 7, 19, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 8, 116, 1, 'normal', 0, '2025-08-01 00:06:51', '2025-08-01 00:06:51', 0, 1, 3, 0, NULL),
-(76, NULL, 'hợp đồng 3', '435435353535', 20, 13, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 8, 116, 1, 'normal', 0, '2025-08-01 00:10:44', '2025-08-01 00:10:44', 0, 1, 3, 0, NULL),
-(77, NULL, 'nhập dữ liệu 1', '4324342424324', 18, 19, '2025-08-01', '2025-09-30', '', 'pending', 'bidding', 2, 7, 115, 1, 'normal', 0, '2025-08-01 00:11:29', '2025-08-01 00:11:29', 0, 1, 3, 0, NULL),
-(78, NULL, 'nhập dữ liệu 2', '65465465464646', 10, 15, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 7, 115, 1, 'normal', 0, '2025-08-01 00:12:13', '2025-08-01 00:12:13', 0, 1, 3, 0, NULL),
-(79, NULL, 'nhập dữ liệu 3', '453535353', 12, 17, '2025-08-01', '2025-08-31', '', 'pending', 'bidding', 2, 7, 115, 1, 'normal', 0, '2025-08-01 00:12:46', '2025-08-01 00:12:46', 0, 1, 4, 0, NULL),
-(80, NULL, 'nhập dữ liệu 4', '42432424', 1, 19, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 7, 115, 1, 'normal', 0, '2025-08-01 00:13:22', '2025-08-05 09:06:48', 0, 1, 3, 75, NULL),
-(81, NULL, 'duyệt 1', '4234242424', 18, 5, '2025-08-01', '2025-09-30', '', 'pending', 'bidding', 2, 9, NULL, 1, 'low', 0, '2025-08-01 00:15:01', '2025-08-01 00:15:01', 0, 1, 3, 0, NULL),
-(82, NULL, 'duyệt 2', '34242434', 19, 7, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 9, 117, 1, 'normal', 0, '2025-08-01 00:15:51', '2025-08-01 00:15:51', 0, 1, 3, 0, NULL),
-(83, NULL, 'duyệt 1', '543535', 21, 5, '2025-08-01', '2025-09-30', 'request_approval', 'pending', 'bidding', 10, 1, 82, 1, 'normal', 0, '2025-08-01 00:16:45', '2025-08-01 00:16:45', 0, 1, 3, 0, NULL),
-(84, NULL, 'nhận 1', '42432424', 24, 6, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 10, 1, 82, 1, 'normal', 0, '2025-08-01 00:17:30', '2025-08-01 00:17:30', 0, 1, 3, 0, NULL),
-(85, NULL, 'thanh toán 1', '432432424', 22, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'contract', 30, 14, 263, 1, 'normal', 0, '2025-08-01 01:58:36', '2025-08-01 01:58:36', 0, 1, 3, 0, NULL),
-(86, NULL, 'thanh toán 2', '453453535', 21, 19, '2025-08-01', '2025-09-30', 'request_approval', 'pending', 'contract', 30, 14, 263, 1, 'low', 0, '2025-08-01 01:59:17', '2025-08-01 01:59:17', 0, 1, 3, 0, NULL),
-(87, NULL, 'nhập kho hàng 1', '24234243', 24, 19, '2025-08-01', '2025-09-30', 'todo', 'pending', 'contract', 30, 18, 267, 1, 'normal', 0, '2025-08-01 01:59:52', '2025-08-01 01:59:52', 0, 1, 3, 0, NULL),
-(88, NULL, 'nhập kho hàng 2', '4324424', 23, 20, '2025-08-01', '2025-09-30', '', 'pending', 'contract', 30, 18, 267, 1, 'high', 0, '2025-08-01 02:00:26', '2025-08-05 09:04:55', 0, 1, 4, 25, NULL),
-(89, NULL, 'đánh giá 1', 'ưqeqeqeqe', 12, 5, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 2, 110, 1, 'normal', 0, '2025-08-01 02:03:52', '2025-08-01 02:03:52', 0, 1, 5, 0, NULL),
-(190, NULL, 'nhiệm vụ nội bộ 18/08', '324234243', 14, 17, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:29:09', '2025-08-18 07:29:09', 0, 1, 2, 0, NULL),
-(191, 190, 'task con 1', '45435435', 23, 22, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:29:41', '2025-08-18 07:29:41', 0, 1, 2, 0, NULL),
-(192, 190, 'task con 2', '42343242', 23, 20, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:30:05', '2025-08-18 07:30:05', 0, 1, 2, 0, NULL),
-(193, 190, 'task con 3', '4232342', 24, 23, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:30:28', '2025-08-18 07:30:28', 0, 1, 2, 0, NULL),
-(194, 190, 'task con 4', '423423432', 16, 19, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:30:55', '2025-08-18 07:30:55', 0, 1, 1, 0, NULL),
-(195, 190, 'task con 5', '3432432424', 13, 22, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:31:34', '2025-08-18 07:31:34', 0, 1, 2, 0, NULL),
-(196, NULL, 'test nhiệm vụ gói thầu', '423432424', 19, 5, '2025-08-18', '2025-09-30', 'todo', 'pending', 'bidding', 2, 1, 302, 3, 'normal', 0, '2025-08-18 08:17:01', '2025-08-18 08:17:01', 0, 1, 2, 0, NULL),
-(197, NULL, 'việc 1', '42332424', 5, 4, '2025-08-18', '2025-09-30', '', 'pending', 'bidding', 36, 1, 313, 3, 'normal', 0, '2025-08-18 08:19:37', '2025-08-18 08:19:37', 0, 1, 4, 0, NULL),
-(198, NULL, 'việc 2', '4324324324', 12, 4, '2025-08-18', '2025-09-30', 'doing', 'pending', 'bidding', 36, 1, 313, 3, 'normal', 0, '2025-08-18 08:20:04', '2025-08-18 08:20:04', 0, 1, 1, 0, NULL),
-(199, NULL, 'tesst mới', 'ok', 4, 4, '2025-08-21', '2025-09-30', 'request_approval', 'approved', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-08-21 08:33:49', '2025-08-31 22:28:56', 0, 0, 3, 100, NULL),
-(200, NULL, 'test 2', '32424423', 4, 17, '2025-08-21', '2025-09-30', 'request_approval', 'approved', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-08-21 08:45:12', '2025-08-31 22:29:25', 0, 0, 3, 100, NULL),
-(201, NULL, 'test mới 22-08 pm', '422342424', 4, 4, '2025-08-22', '2025-09-30', 'done', 'approved', 'bidding', 35, 2, 285, 3, 'normal', 0, '2025-08-22 07:51:20', '2025-08-22 07:52:11', 1, 1, 2, 100, NULL),
-(202, NULL, 'test 3', '342432424', 5, 5, '2025-08-22', '2025-09-25', 'done', 'approved', 'bidding', 35, 3, 286, 3, 'high', 0, '2025-08-22 08:05:13', '2025-08-22 08:05:37', 1, 1, 2, 100, NULL),
-(203, NULL, 'test mới 3', '42342424', 5, 5, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 11, 1, 91, 3, 'normal', 0, '2025-08-22 10:13:27', '2025-08-22 10:14:07', 1, 1, 2, 100, NULL),
-(204, NULL, 'test mới', '34234324', 5, 19, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 35, 4, 287, 3, 'normal', 0, '2025-08-22 10:51:58', '2025-08-23 08:31:05', 1, 1, 3, 100, NULL),
-(205, NULL, 'mới nữa', '32424234324', 21, 21, '2025-08-23', '2025-09-30', 'todo', 'rejected', 'bidding', 35, 6, 289, 3, 'normal', 0, '2025-08-22 10:53:12', '2025-08-23 08:35:50', 1, 1, 3, 0, NULL),
-(206, NULL, 'mới 222', '3453534534', 17, 17, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 35, 8, 291, 3, 'normal', 0, '2025-08-22 10:53:50', '2025-08-23 08:50:26', 1, 1, 3, 100, NULL),
-(207, NULL, 'tesst 5', '3424324', 18, 18, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 35, 7, 290, 3, 'normal', 0, '2025-08-22 18:56:00', '2025-08-27 07:15:14', 1, 1, 2, 100, NULL),
-(208, NULL, 'tesst 6', '3423432', 13, 13, '2025-08-23', '2025-09-30', 'request_approval', 'pending', 'bidding', 35, 9, 292, 3, 'normal', 0, '2025-08-22 18:57:27', '2025-08-22 18:57:27', 1, 1, 2, 0, NULL),
-(209, NULL, 'gói thầu mới tên dài gói thầu mới tên dài  gói thầu mới tên dài  gói thầu mới tên dài  gói thầu mới tên dài  gói thầu mới tên dài  gói thầu mới tên dài  gói thầu mới tên dài ', '3243243224', 16, 16, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 35, 7, 290, 3, 'normal', 0, '2025-08-22 19:00:57', '2025-08-23 08:51:17', 1, 1, 2, 100, NULL),
-(210, NULL, 'test nhiệm vụ mới', '3424324324', 17, 17, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 37, 1, 325, 3, 'normal', 0, '2025-08-22 19:17:35', '2025-08-22 19:23:23', 1, 1, 2, 100, NULL),
-(211, NULL, 'nhiệm vụ mới gói thầu', '23423423424', 18, 22, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 37, 1, 325, 3, 'normal', 0, '2025-08-22 19:21:39', '2025-08-22 19:22:05', 1, 1, 2, 100, NULL),
-(212, NULL, 'thêm việc 3', '34422424', 24, 24, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 37, 1, 325, 3, 'normal', 0, '2025-08-22 19:51:39', '2025-08-22 19:52:06', 1, 1, 1, 100, NULL),
-(214, NULL, 'việc 4', '324234324', 13, 13, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 38, 1, 337, 3, 'normal', 0, '2025-08-22 19:55:10', '2025-08-22 19:55:34', 1, 1, 2, 100, NULL),
-(215, NULL, 'việc 5', '432424234', 22, 22, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 38, 2, 338, 3, 'normal', 0, '2025-08-22 19:56:24', '2025-08-22 19:56:39', 1, 1, 4, 100, NULL),
-(216, NULL, 'việc xxx', '234234324', 22, 4, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 38, 3, 339, 3, 'normal', 0, '2025-08-22 19:58:33', '2025-08-22 19:58:52', 1, 1, 2, 100, NULL),
-(217, NULL, 'việc xxx2423', '42342424', 23, 23, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 38, 4, 340, 3, 'normal', 0, '2025-08-22 19:59:57', '2025-08-22 20:00:17', 1, 1, 1, 100, NULL),
-(226, NULL, 'test việc mới nhé', 'ư3434534535', 19, 19, '2025-08-23', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 02:59:02', '2025-08-23 02:59:02', 1, 1, 2, 75, NULL),
-(227, NULL, 'test 3534535435', '3243243244', 18, 17, '2025-08-23', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 03:01:02', '2025-08-23 03:01:02', 1, 1, 4, 0, NULL),
-(228, NULL, 'nhiệm vụ 2 cấp duyệt', 'nhiệm vụ 2 cấp duyệt', 5, 5, '2025-08-23', '2025-09-30', 'done', 'approved', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 08:43:04', '2025-08-23 08:44:13', 2, 2, 1, 100, NULL),
-(229, NULL, 'nhiệm vụ con 24/08', '3424234234', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:17:16', '2025-08-23 19:17:16', 1, 1, 2, 0, NULL),
-(230, NULL, 'nhiệm vụ con', '342342342', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:19:10', '2025-08-23 19:19:10', 1, 1, 2, 0, NULL),
-(231, 228, 'nhiệm vụ con 2', '23424234234', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:19:46', '2025-08-23 19:19:46', 1, 1, 2, 0, NULL),
-(232, NULL, 'nhiệm vụ con test', '242343432424', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:23:48', '2025-08-23 19:23:48', 1, 1, 2, 0, NULL),
-(233, NULL, 'xxxxx', 'ẻwrwrwrwr', 4, 4, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:36:09', '2025-08-23 19:36:09', 1, 1, 1, 0, NULL),
-(234, NULL, '4342424234', '42342424', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:38:53', '2025-08-23 19:38:53', 1, 1, 2, 0, NULL),
-(235, 226, 'xxxx', '342424243', 6, 6, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:42:09', '2025-08-23 19:42:09', 1, 1, 2, 0, NULL),
-(236, NULL, 'xxxxx', 'rưerwerewrewr', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'low', 0, '2025-08-23 19:53:52', '2025-08-23 19:53:52', 1, 1, 1, 0, NULL),
-(237, 227, '324234234234', '234242424', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'low', 0, '2025-08-23 20:07:19', '2025-08-23 20:07:19', 1, 1, 2, 0, NULL),
-(238, 227, 'xxxxxx', 'đasadsad', 24, 22, '2025-08-24', '2025-09-30', 'request_approval', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 20:07:54', '2025-08-23 20:07:54', 1, 1, 1, 0, NULL),
-(239, NULL, 'xxxxx', '543454353535', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:09:11', '2025-08-24 02:09:11', 1, 1, 2, 0, NULL),
-(240, NULL, '34535345', '5435353535', 5, 5, '2025-08-24', '2025-09-30', 'request_approval', 'pending', 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:10:23', '2025-08-24 02:10:23', 1, 1, 1, 0, NULL),
-(241, NULL, '3542342342', '4324324324', 5, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:14:06', '2025-08-24 02:14:06', 1, 1, 1, 0, NULL),
-(242, NULL, 'xxxxxxx', '4242342342', 5, 5, '2025-08-24', '2025-09-30', 'request_approval', 'pending', 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:20:07', '2025-08-24 02:20:07', 1, 1, 1, 0, NULL),
-(243, NULL, '4233243242', '23424234234', 5, 5, '2025-08-24', '2025-09-30', 'request_approval', 'pending', 'contract', 65, 1, 344, 3, 'normal', 0, '2025-08-24 02:33:59', '2025-08-24 02:41:22', 1, 1, 2, 100, NULL),
-(244, NULL, 'xxxxxx', '32424234243', 5, 5, '2025-08-24', '2025-09-30', 'done', 'approved', 'contract', 65, 1, 344, 3, 'normal', 0, '2025-08-24 02:38:58', '2025-08-24 02:40:34', 1, 1, 2, 100, NULL),
-(246, NULL, 'task con 2222', 'dsaddadada', 22, 22, '2025-08-24', '2025-09-30', 'request_approval', 'approved', 'contract', 66, 2, 364, 3, 'normal', 0, '2025-08-24 02:43:18', '2025-09-07 03:02:46', 0, 0, 2, 100, NULL),
-(247, 201, '43424242', '42342424', 21, 17, '2025-09-01', '2025-10-31', '', 'pending', 'bidding', 35, 2, 285, 3, 'normal', 0, '2025-09-01 01:02:20', '2025-09-01 01:02:20', 1, 1, 2, 0, NULL),
-(248, NULL, 'việc mới', '453454355', 24, 5, '2025-09-01', '2025-10-31', 'doing', 'pending', 'bidding', 40, 1, 363, 3, 'normal', 0, '2025-09-01 01:39:12', '2025-09-01 01:39:12', 1, 1, 2, 0, NULL),
-(249, NULL, 'việc mới 2', '422343243242', 17, 19, '2025-09-01', '2025-10-31', 'doing', 'pending', 'bidding', 40, 1, 363, 3, 'normal', 0, '2025-09-01 01:39:40', '2025-09-01 01:39:40', 1, 1, 4, 0, NULL),
-(250, 200, 'việc con mới', '23432432424', 19, 17, '2025-09-01', '2025-10-31', '', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-01 01:51:50', '2025-09-01 01:51:50', 1, 1, 3, 55, NULL),
-(251, NULL, 'con của tesst mới', '45342424234', 5, 5, '2025-09-04', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-03 20:12:58', '2025-09-03 20:12:58', 1, 1, 2, 0, NULL),
-(252, 199, 'xxxxxxx', 'sdadsadsadasd', 5, 5, '2025-09-04', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-03 20:13:39', '2025-09-03 20:13:39', 1, 1, 3, 0, NULL),
-(255, NULL, 'bvnnnvnvn', '423424242424', 19, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:04:30', '2025-09-06 20:04:30', 1, 1, 2, 0, NULL),
-(256, NULL, '54353535', '54353535435', 17, 17, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'low', 0, '2025-09-06 20:07:05', '2025-09-06 20:07:05', 1, 1, 2, 0, NULL),
-(257, NULL, 'xxxxxxxxxxxxxxxxxxxxxxxxx', '4234324242424', 5, 5, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'low', 0, '2025-09-06 20:09:20', '2025-09-06 20:09:20', 1, 1, 2, 0, NULL),
-(258, 256, 'bbbbbbbbbbbbbbbbb', '324324242424', 5, 5, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:18:05', '2025-09-06 20:18:05', 1, 1, 2, 0, NULL),
-(259, 258, 'mmmmmmmmmmmmmmmmmm', '23424242424', 23, 23, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:18:42', '2025-09-06 20:18:42', 1, 1, 2, 0, NULL),
-(260, 259, 'bkkkkkkkkkkkkkk', '23423432424242424', 19, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:25:31', '2025-09-06 20:25:31', 1, 1, 2, 0, NULL),
-(261, NULL, 'ggggggggggggg', '34234342424', 16, 16, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'low', 0, '2025-09-06 20:27:57', '2025-09-06 20:27:57', 1, 1, 2, 0, NULL),
-(262, NULL, 'rrrrrrrrrrrrrr', '3453454535', 14, 4, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'low', 0, '2025-09-06 20:28:39', '2025-09-06 20:28:39', 1, 1, 3, 0, NULL),
-(263, NULL, '5354353535535', 'rewrwrwrwrw', 12, 3, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:29:05', '2025-09-06 20:29:05', 1, 1, 2, 0, NULL),
-(264, NULL, '3424324242424', '4324242424', 12, 4, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'low', 0, '2025-09-06 20:29:30', '2025-09-06 20:29:30', 1, 1, 2, 0, NULL),
-(265, NULL, '42343243242', '432432424', 23, 7, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:29:50', '2025-09-06 20:29:50', 1, 1, 2, 0, NULL),
-(266, 262, '423434442', '4324324242', 22, 22, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 21:12:14', '2025-09-06 21:12:14', 1, 1, 2, 0, NULL),
-(267, 249, '4234344243', '4324324324324', 4, 4, '2025-09-07', '2025-10-31', 'done', 'approved', 'bidding', 40, 2, 364, 3, 'normal', 0, '2025-09-06 21:31:21', '2025-09-07 08:26:53', 0, 0, 2, 100, NULL),
-(268, NULL, '2343242443', '432424244', 5, 4, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 39, 1, 349, 3, 'low', 0, '2025-09-06 21:35:26', '2025-09-06 21:35:26', 1, 1, 2, 0, NULL),
-(269, 268, 'sub task 1', 'rewrerwrew', 1, 5, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 39, 1, 349, 3, 'normal', 0, '2025-09-06 21:35:52', '2025-09-06 21:35:52', 1, 1, 1, 0, NULL),
-(270, 268, '342343424', '432432443', 5, 5, '2025-09-07', '2025-10-31', 'done', 'approved', 'bidding', 39, 2, 350, 3, 'normal', 0, '2025-09-06 22:08:44', '2025-09-07 02:34:54', 0, 0, 2, 100, NULL),
-(271, 268, '345435435', '54354353554', 6, 6, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 39, 2, 350, 3, 'normal', 0, '2025-09-06 22:09:29', '2025-09-06 22:09:29', 1, 1, 4, 0, NULL),
-(272, 210, 'task con', 'sdadasda', 4, 4, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 37, 1, 325, 3, 'normal', 0, '2025-09-07 03:00:44', '2025-09-07 03:00:44', 1, 1, 2, 0, NULL),
-(273, 243, '54434535', '5435353', 22, 23, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 10, 1, 82, 3, 'normal', 0, '2025-09-07 03:29:40', '2025-09-07 03:29:40', 1, 1, 2, 0, NULL),
-(274, 248, 'việc chắt mới', '3423424242', 19, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 40, 1, 363, 3, 'low', 0, '2025-09-07 07:39:40', '2025-09-07 07:39:40', 1, 1, 2, 0, NULL),
-(275, 248, '3424234', '3424224', 5, 5, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 40, 7, 369, 3, 'low', 0, '2025-09-07 09:24:03', '2025-09-07 09:24:03', 1, 1, 2, 0, NULL),
-(276, 275, '4324324324', '4324324324', 5, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 40, 7, 369, 3, 'low', 0, '2025-09-07 09:24:36', '2025-09-07 09:24:36', 1, 1, 2, 0, NULL);
+INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `collaborated_by`, `assigned_by`, `proposed_by`, `start_date`, `end_date`, `status`, `approval_status`, `linked_type`, `linked_id`, `step_code`, `step_id`, `created_by`, `priority`, `comments_count`, `created_at`, `updated_at`, `approval_steps`, `approver_ids`, `needs_approval`, `current_level`, `id_department`, `progress`, `overdue_reason`) VALUES
+(1, NULL, 'Thiết kế hồ sơ thầu', 'Chuẩn bị file bản vẽ và hồ sơ năng lực', 5, NULL, NULL, 4, '2025-07-01', '2025-08-25', 'done', 'approved', 'bidding', 2, 4, 112, 1, 'normal', 0, '2025-06-04 01:23:15', '2025-09-22 09:49:04', 1, NULL, 0, 1, 4, 100, NULL),
+(2, NULL, 'Thiết kế hồ sơ thầu', 'Mô tả công việc thiết kế hồ sơ thầu', 3, NULL, NULL, 2, '2025-06-25', '2025-07-31', 'done', 'approved', 'bidding', 6, 5, 237, 2, 'high', 1, '2025-06-04 01:37:15', '2025-08-22 19:19:43', 1, NULL, 0, 1, 5, 100, NULL),
+(3, NULL, 'Nghiên cứu yêu cầu khách hàng', 'Mô tả công việc nghiên cứu yêu cầu khách hàng', 9, NULL, NULL, 4, '2025-06-29', '2025-07-31', 'todo', 'rejected', 'contract', 30, 16, 265, 1, 'high', 3, '2025-06-04 01:37:24', '2025-08-05 09:04:44', 1, NULL, 0, 1, 5, 75, NULL),
+(10, NULL, 'Mua sắm vật tư', 'Mô tả công việc mua sắm vật tư', 10, NULL, NULL, 2, '2025-06-25', '2025-07-31', 'todo', 'rejected', 'bidding', 2, 3, 111, 2, 'high', 5, '2025-06-04 01:38:26', '2025-08-14 07:20:14', 1, NULL, 0, 1, 5, 75, 'tesst'),
+(26, 3, 'Thiết kế giao diện phụ - task con 3', 'Thiết kế giao diện cho phần chi tiết', 9, NULL, NULL, 2, '2025-06-15', '2025-06-16', 'todo', 'pending', 'bidding', 2, 3, 111, 1, 'high', 0, '2025-06-05 05:38:39', '2025-08-14 07:20:46', 1, NULL, 0, 1, 3, 75, 'Tổng Bí thư: Trung ương khóa mới dự kiến có 200 ủy viên ddd\n- test\n- test 2'),
+(27, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, NULL, NULL, 4, '2025-06-10', '2025-06-14', 'done', 'approved', 'bidding', 2, 1, 109, 3, 'high', 0, '2025-06-05 06:16:42', '2025-08-05 09:58:25', 1, NULL, 0, 1, 1, 100, NULL),
+(28, 3, 'Thiết kế giao diện phụ - task con 3 có ngay bat dau - ngay ket thuc', 'Thiết kế giao diện cho phần chi tiết', 17, NULL, NULL, 4, '2025-06-25', '2025-07-31', 'done', 'approved', 'bidding', 2, 3, 111, 1, 'normal', 0, '2025-06-05 06:19:14', '2025-07-20 15:21:54', 1, NULL, 0, 1, 3, 0, NULL),
+(29, 18, 'sub task 1', 'tesst subtask', 13, NULL, NULL, 4, '2025-06-24', '2025-07-31', '', 'pending', 'bidding', 5, 5, 104, 1, 'normal', 0, '2025-06-23 18:15:50', '2025-07-20 15:21:54', 1, NULL, 0, 1, 5, 0, NULL),
+(30, NULL, 'test', 'tesst tesst', 22, NULL, NULL, 1, '2025-06-24', '2025-07-30', 'done', 'approved', 'bidding', 5, 5, 104, 1, 'normal', 0, '2025-06-23 18:52:15', '2025-09-03 19:15:10', 1, NULL, 0, 1, 1, 100, NULL),
+(31, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, NULL, NULL, 4, '2025-08-29', '2025-08-31', 'overdue', 'pending', 'bidding', 2, 3, 111, 3, 'high', 0, '2025-06-24 18:47:18', '2025-08-05 09:07:21', 1, NULL, 0, 1, 4, 50, NULL),
+(32, 1, 'tesst subtask', 'xxxxxxx', 22, NULL, NULL, 4, '2025-06-28', '2025-07-31', 'done', 'approved', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-06-28 08:01:02', '2025-07-20 15:21:54', 1, NULL, 0, 1, 3, 0, NULL),
+(33, NULL, 'test task mới', 'test', 3, NULL, NULL, 4, '2025-06-29', '2025-07-31', 'done', 'approved', 'bidding', 5, 9, 108, 1, 'normal', 0, '2025-06-29 01:28:22', '2025-08-22 19:20:30', 1, NULL, 0, 1, 2, 100, NULL),
+(34, NULL, 'test nhiêm vụ mới', 'test test', 7, NULL, NULL, 4, '2025-06-29', '2025-07-31', 'doing', 'pending', 'bidding', 2, 2, 110, 1, 'normal', 0, '2025-06-29 01:36:07', '2025-07-20 15:21:54', 1, NULL, 0, 1, 1, 0, NULL),
+(35, NULL, 'test mới 3', 'test nhé', 7, NULL, NULL, 2, '2025-06-29', '2025-08-07', 'doing', 'pending', 'bidding', 8, 7, 79, 1, 'high', 0, '2025-06-29 01:51:48', '2025-07-20 15:21:54', 1, NULL, 0, 1, 3, 0, NULL),
+(36, NULL, 'mới', 'đasadd', 9, NULL, NULL, 1, '2025-06-30', '2025-07-31', 'doing', 'pending', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-06-29 11:25:28', '2025-07-20 15:21:54', 1, NULL, 0, 1, 5, 0, NULL),
+(37, NULL, 'test nhiệm vụ hợp đồng 1', 'test nhiệm vụ hợp đồng 1', 23, NULL, NULL, 1, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 10, 259, 1, 'normal', 0, '2025-06-30 09:33:07', '2025-07-20 15:21:54', 1, NULL, 0, 1, 5, 0, NULL),
+(38, NULL, 'test nhiệm vụ hợp đồng 2', 'test nhiệm vụ hợp đồng 2', 19, NULL, NULL, 4, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 11, 260, 1, 'high', 0, '2025-06-30 09:37:45', '2025-08-03 20:30:08', 1, NULL, 0, 1, 4, 50, NULL),
+(39, NULL, 'duyệt hợp đồng mua', 'duyệt hợp đồng mua', 21, NULL, NULL, 4, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 12, 261, 1, 'high', 0, '2025-06-30 09:48:27', '2025-07-20 15:21:54', 1, NULL, 0, 1, 2, 0, NULL),
+(40, NULL, 'nhiệm vụ cho gói thầu 1', 'test chấm thầu', 4, NULL, NULL, 1, '2025-07-10', '2025-08-05', 'doing', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-06-30 09:54:52', '2025-08-05 09:04:31', 1, NULL, 0, 1, 2, 50, NULL),
+(41, NULL, 'nhiệm vụ hợp đồng 2', 'nghiệm thu', 23, NULL, NULL, 1, '2025-06-30', '2025-07-31', 'doing', 'pending', 'contract', 30, 16, 265, 1, 'normal', 0, '2025-06-30 09:58:15', '2025-07-20 15:21:54', 1, NULL, 0, 1, 4, 0, NULL),
+(42, NULL, 'test nhiệm vụ hợp đồng 4', 'kiểm tra hàng hóa', 5, NULL, NULL, 4, '2025-08-13', '2025-08-21', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'high', 0, '2025-06-30 10:05:48', '2025-07-20 15:21:54', 1, NULL, 0, 1, 4, 0, NULL),
+(43, NULL, 'test nhiệm vụ hợp đồng 5', 'kiểm tra hàng hóa', 1, NULL, NULL, 2, '2025-07-01', '2025-08-31', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'normal', 0, '2025-06-30 10:10:57', '2025-07-20 15:21:54', 1, NULL, 0, 1, 1, 0, NULL),
+(44, NULL, 'test nhiệm vụ hợp đồng 6', 'nghiệm thu', 24, NULL, NULL, 2, '2025-07-01', '2025-08-31', 'doing', 'pending', 'contract', 33, 16, 316, 1, 'normal', 0, '2025-06-30 10:12:22', '2025-07-20 15:21:54', 1, NULL, 0, 1, 5, 0, NULL),
+(45, NULL, 'test nhiệm vụ gói thầu 7', 'chấm thầu', 24, NULL, NULL, 2, '2025-07-31', '2025-08-29', 'doing', 'pending', 'bidding', 3, 6, 123, 1, 'high', 0, '2025-06-30 10:13:58', '2025-08-05 09:04:52', 1, NULL, 0, 1, 3, 50, NULL),
+(46, NULL, 'test hợp đồng 8', 'test hợp đồng 8', 1, NULL, NULL, 4, '2025-07-24', '2025-08-28', 'doing', 'pending', 'contract', 30, 10, 259, 1, 'high', 0, '2025-06-30 10:23:23', '2025-08-11 06:41:09', 1, NULL, 0, 1, 1, 50, NULL),
+(47, NULL, 'nhiệm vụ mới', 'mô tả mẫu', 15, NULL, NULL, 4, '2025-07-01', '2025-08-28', 'doing', 'pending', 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-07-01 04:00:46', '2025-07-20 15:21:54', 1, NULL, 0, 1, 5, 0, NULL),
+(48, NULL, 'nhiệm vụ cho hợp đồng mới', 'mô tả mẫu', 20, NULL, NULL, 4, '2025-07-01', '2025-08-30', 'doing', 'pending', 'contract', 30, 15, 264, 1, 'normal', 0, '2025-07-01 04:07:24', '2025-07-20 15:21:54', 1, NULL, 0, 1, 4, 0, NULL),
+(59, NULL, 'duyệt 5', '234322424', 9, NULL, NULL, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 4, NULL, 1, 'normal', 0, '2025-07-31 22:19:12', '2025-07-31 22:19:12', 0, NULL, 0, 1, 3, 0, NULL),
+(60, NULL, 'duyệt 6', '3432424', 5, NULL, NULL, 4, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 4, NULL, 1, 'normal', 0, '2025-07-31 22:22:38', '2025-07-31 22:22:38', 0, NULL, 0, 1, 3, 0, NULL),
+(61, NULL, 'duyệt 4', '4234234324', 4, NULL, NULL, 5, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 4, NULL, 1, 'normal', 0, '2025-07-31 22:59:44', '2025-07-31 22:59:44', 0, NULL, 0, 1, 3, 0, NULL),
+(62, NULL, 'tesst 6', '432424', 4, NULL, NULL, 4, '2025-08-01', '2025-09-30', '', 'pending', 'bidding', 2, 4, 112, 1, 'high', 0, '2025-07-31 23:22:55', '2025-08-05 09:04:11', 0, NULL, 0, 1, 3, 25, NULL),
+(63, NULL, 'tesst 7', '423424', 9, NULL, NULL, 5, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 4, 112, 1, 'normal', 0, '2025-07-31 23:24:39', '2025-07-31 23:24:39', 0, NULL, 0, 1, 3, 0, NULL),
+(64, NULL, 'hồ sơ dự thầu 1', '3545345435435', 6, NULL, NULL, 4, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 5, 113, 1, 'normal', 0, '2025-07-31 23:26:27', '2025-07-31 23:26:27', 0, NULL, 0, 1, 3, 0, NULL),
+(65, NULL, 'hồ sơ dự thầu 2', '433535345', 8, NULL, NULL, 7, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 5, 113, 1, 'normal', 0, '2025-07-31 23:28:19', '2025-07-31 23:28:19', 0, NULL, 0, 1, 3, 0, NULL),
+(66, NULL, 'nhiệm vụ lập 1', '43543535435', 9, NULL, NULL, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 3, NULL, 1, 'normal', 0, '2025-07-31 23:39:43', '2025-07-31 23:39:43', 0, NULL, 0, 1, 3, 0, NULL),
+(67, NULL, 'nhiệm vụ triển khai 1', '3423432434', 8, NULL, NULL, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 5, 113, 1, 'normal', 0, '2025-07-31 23:41:24', '2025-07-31 23:41:24', 0, NULL, 0, 1, 3, 0, NULL),
+(68, NULL, 'triển khai 6', '434324324', 8, NULL, NULL, 5, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 5, 113, 1, 'normal', 0, '2025-07-31 23:43:47', '2025-07-31 23:43:47', 0, NULL, 0, 1, 3, 0, NULL),
+(69, NULL, 'chấm 1', '4432424', 8, NULL, NULL, 6, '2025-08-01', '2025-09-24', 'doing', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-07-31 23:49:57', '2025-07-31 23:49:57', 0, NULL, 0, 1, 3, 0, NULL),
+(70, NULL, 'chấm thầu 3', 'ưqeqeqeqe', 5, NULL, NULL, 6, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-07-31 23:54:03', '2025-07-31 23:54:03', 0, NULL, 0, 1, 3, 0, NULL),
+(71, NULL, 'chấm thầu 4', '4324242424', 8, NULL, NULL, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-07-31 23:55:42', '2025-07-31 23:55:42', 0, NULL, 0, 1, 3, 0, NULL),
+(72, NULL, 'chấm 5', '242432424324', 23, NULL, NULL, 22, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-07-31 23:57:15', '2025-07-31 23:57:15', 0, NULL, 0, 1, 3, 0, NULL),
+(73, NULL, 'chấm 7', '443242424', 21, NULL, NULL, 24, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 6, 114, 1, 'normal', 0, '2025-08-01 00:02:36', '2025-08-01 00:02:36', 0, NULL, 0, 1, 3, 0, NULL),
+(74, NULL, 'hợp đồng bán 1', '4234424234', 18, NULL, NULL, 6, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 8, 116, 1, 'normal', 0, '2025-08-01 00:05:35', '2025-08-01 00:05:35', 0, NULL, 0, 1, 3, 0, NULL),
+(75, NULL, 'hợp đồng 2', '423432424242', 7, NULL, NULL, 19, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 8, 116, 1, 'normal', 0, '2025-08-01 00:06:51', '2025-08-01 00:06:51', 0, NULL, 0, 1, 3, 0, NULL),
+(76, NULL, 'hợp đồng 3', '435435353535', 20, NULL, NULL, 13, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 8, 116, 1, 'normal', 0, '2025-08-01 00:10:44', '2025-08-01 00:10:44', 0, NULL, 0, 1, 3, 0, NULL),
+(77, NULL, 'nhập dữ liệu 1', '4324342424324', 18, NULL, NULL, 19, '2025-08-01', '2025-09-30', '', 'pending', 'bidding', 2, 7, 115, 1, 'normal', 0, '2025-08-01 00:11:29', '2025-08-01 00:11:29', 0, NULL, 0, 1, 3, 0, NULL),
+(78, NULL, 'nhập dữ liệu 2', '65465465464646', 10, NULL, NULL, 15, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 7, 115, 1, 'normal', 0, '2025-08-01 00:12:13', '2025-08-01 00:12:13', 0, NULL, 0, 1, 3, 0, NULL),
+(79, NULL, 'nhập dữ liệu 3', '453535353', 12, NULL, NULL, 17, '2025-08-01', '2025-08-31', '', 'pending', 'bidding', 2, 7, 115, 1, 'normal', 0, '2025-08-01 00:12:46', '2025-08-01 00:12:46', 0, NULL, 0, 1, 4, 0, NULL),
+(80, NULL, 'nhập dữ liệu 4', '42432424', 1, NULL, NULL, 19, '2025-08-01', '2025-09-30', 'todo', 'pending', 'bidding', 2, 7, 115, 1, 'normal', 0, '2025-08-01 00:13:22', '2025-08-05 09:06:48', 0, NULL, 0, 1, 3, 75, NULL),
+(81, NULL, 'duyệt 1', '4234242424', 18, NULL, NULL, 5, '2025-08-01', '2025-09-30', '', 'pending', 'bidding', 2, 9, NULL, 1, 'low', 0, '2025-08-01 00:15:01', '2025-08-01 00:15:01', 0, NULL, 0, 1, 3, 0, NULL),
+(82, NULL, 'duyệt 2', '34242434', 19, NULL, NULL, 7, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 9, 117, 1, 'normal', 0, '2025-08-01 00:15:51', '2025-08-01 00:15:51', 0, NULL, 0, 1, 3, 0, NULL),
+(83, NULL, 'duyệt 1', '543535', 21, NULL, NULL, 5, '2025-08-01', '2025-09-30', 'request_approval', 'pending', 'bidding', 10, 1, 82, 1, 'normal', 0, '2025-08-01 00:16:45', '2025-08-01 00:16:45', 0, NULL, 0, 1, 3, 0, NULL),
+(84, NULL, 'nhận 1', '42432424', 24, NULL, NULL, 6, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 10, 1, 82, 1, 'normal', 0, '2025-08-01 00:17:30', '2025-08-01 00:17:30', 0, NULL, 0, 1, 3, 0, NULL),
+(85, NULL, 'thanh toán 1', '432432424', 22, NULL, NULL, 5, '2025-08-01', '2025-09-30', 'todo', 'pending', 'contract', 30, 14, 263, 1, 'normal', 0, '2025-08-01 01:58:36', '2025-08-01 01:58:36', 0, NULL, 0, 1, 3, 0, NULL),
+(86, NULL, 'thanh toán 2', '453453535', 21, NULL, NULL, 19, '2025-08-01', '2025-09-30', 'request_approval', 'pending', 'contract', 30, 14, 263, 1, 'low', 0, '2025-08-01 01:59:17', '2025-08-01 01:59:17', 0, NULL, 0, 1, 3, 0, NULL),
+(87, NULL, 'nhập kho hàng 1', '24234243', 24, NULL, NULL, 19, '2025-08-01', '2025-09-30', 'todo', 'pending', 'contract', 30, 18, 267, 1, 'normal', 0, '2025-08-01 01:59:52', '2025-08-01 01:59:52', 0, NULL, 0, 1, 3, 0, NULL),
+(88, NULL, 'nhập kho hàng 2', '4324424', 23, NULL, NULL, 20, '2025-08-01', '2025-09-30', '', 'pending', 'contract', 30, 18, 267, 1, 'high', 0, '2025-08-01 02:00:26', '2025-08-05 09:04:55', 0, NULL, 0, 1, 4, 25, NULL),
+(89, NULL, 'đánh giá 1', 'ưqeqeqeqe', 12, NULL, NULL, 5, '2025-08-01', '2025-09-30', 'doing', 'pending', 'bidding', 2, 2, 110, 1, 'normal', 0, '2025-08-01 02:03:52', '2025-08-01 02:03:52', 0, NULL, 0, 1, 5, 0, NULL),
+(190, NULL, 'nhiệm vụ nội bộ 18/08', '324234243', 14, NULL, NULL, 17, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:29:09', '2025-08-18 07:29:09', 0, NULL, 0, 1, 2, 0, NULL),
+(191, 190, 'task con 1', '45435435', 23, NULL, NULL, 22, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:29:41', '2025-08-18 07:29:41', 0, NULL, 0, 1, 2, 0, NULL),
+(192, 190, 'task con 2', '42343242', 23, NULL, NULL, 20, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:30:05', '2025-08-18 07:30:05', 0, NULL, 0, 1, 2, 0, NULL),
+(193, 190, 'task con 3', '4232342', 24, NULL, NULL, 23, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:30:28', '2025-08-18 07:30:28', 0, NULL, 0, 1, 2, 0, NULL),
+(194, 190, 'task con 4', '423423432', 16, NULL, NULL, 19, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:30:55', '2025-08-18 07:30:55', 0, NULL, 0, 1, 1, 0, NULL),
+(195, 190, 'task con 5', '3432432424', 13, NULL, NULL, 22, '2025-08-18', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-18 07:31:34', '2025-08-18 07:31:34', 0, NULL, 0, 1, 2, 0, NULL),
+(196, NULL, 'test nhiệm vụ gói thầu', '423432424', 19, NULL, NULL, 5, '2025-08-18', '2025-09-30', 'todo', 'pending', 'bidding', 2, 1, 302, 3, 'normal', 0, '2025-08-18 08:17:01', '2025-08-18 08:17:01', 0, NULL, 0, 1, 2, 0, NULL),
+(197, NULL, 'việc 1', '42332424', 5, NULL, NULL, 4, '2025-08-18', '2025-09-30', '', 'pending', 'bidding', 36, 1, 313, 3, 'normal', 0, '2025-08-18 08:19:37', '2025-08-18 08:19:37', 0, NULL, 0, 1, 4, 0, NULL),
+(198, NULL, 'việc 2', '4324324324', 12, NULL, NULL, 4, '2025-08-18', '2025-09-30', 'doing', 'pending', 'bidding', 36, 1, 313, 3, 'normal', 0, '2025-08-18 08:20:04', '2025-08-18 08:20:04', 0, NULL, 0, 1, 1, 0, NULL),
+(199, NULL, 'tesst mới', 'ok', 4, NULL, NULL, 4, '2025-08-21', '2025-09-30', 'request_approval', 'approved', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-08-21 08:33:49', '2025-08-31 22:28:56', 0, NULL, 0, 0, 3, 100, NULL),
+(200, NULL, 'test 2', '32424423', 4, NULL, NULL, 17, '2025-08-21', '2025-09-30', 'request_approval', 'approved', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-08-21 08:45:12', '2025-08-31 22:29:25', 0, NULL, 0, 0, 3, 100, NULL),
+(201, NULL, 'test mới 22-08 pm', '422342424', 4, NULL, NULL, 4, '2025-08-22', '2025-09-30', 'done', 'approved', 'bidding', 35, 2, 285, 3, 'normal', 0, '2025-08-22 07:51:20', '2025-08-22 07:52:11', 1, NULL, 0, 1, 2, 100, NULL),
+(202, NULL, 'test 3', '342432424', 5, NULL, NULL, 5, '2025-08-22', '2025-09-25', 'done', 'approved', 'bidding', 35, 3, 286, 3, 'high', 0, '2025-08-22 08:05:13', '2025-08-22 08:05:37', 1, NULL, 0, 1, 2, 100, NULL),
+(203, NULL, 'test mới 3', '42342424', 5, NULL, NULL, 5, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 11, 1, 91, 3, 'normal', 0, '2025-08-22 10:13:27', '2025-08-22 10:14:07', 1, NULL, 0, 1, 2, 100, NULL),
+(204, NULL, 'test mới', '34234324', 5, NULL, NULL, 19, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 35, 4, 287, 3, 'normal', 0, '2025-08-22 10:51:58', '2025-08-23 08:31:05', 1, NULL, 0, 1, 3, 100, NULL),
+(205, NULL, 'mới nữa', '32424234324', 21, NULL, NULL, 21, '2025-08-23', '2025-09-30', 'todo', 'rejected', 'bidding', 35, 6, 289, 3, 'normal', 0, '2025-08-22 10:53:12', '2025-08-23 08:35:50', 1, NULL, 0, 1, 3, 0, NULL),
+(206, NULL, 'mới 222', '3453534534', 17, NULL, NULL, 17, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 35, 8, 291, 3, 'normal', 0, '2025-08-22 10:53:50', '2025-08-23 08:50:26', 1, NULL, 0, 1, 3, 100, NULL),
+(207, NULL, 'tesst 5', '3424324', 18, NULL, NULL, 18, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 35, 7, 290, 3, 'normal', 0, '2025-08-22 18:56:00', '2025-08-27 07:15:14', 1, NULL, 0, 1, 2, 100, NULL),
+(208, NULL, 'tesst 6', '3423432', 13, NULL, NULL, 13, '2025-08-23', '2025-09-30', 'request_approval', 'pending', 'bidding', 35, 9, 292, 3, 'normal', 0, '2025-08-22 18:57:27', '2025-08-22 18:57:27', 1, NULL, 0, 1, 2, 0, NULL),
+(209, NULL, 'gói thầu mới tên dài gói thầu mới tên dài  gói thầu mới tên dài  gói thầu mới tên dài  gói thầu mới tên dài  gói thầu mới tên dài  gói thầu mới tên dài  gói thầu mới tên dài ', '3243243224', 16, NULL, NULL, 16, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 35, 7, 290, 3, 'normal', 0, '2025-08-22 19:00:57', '2025-08-23 08:51:17', 1, NULL, 0, 1, 2, 100, NULL),
+(210, NULL, 'test nhiệm vụ mới', '3424324324', 17, NULL, NULL, 17, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 37, 1, 325, 3, 'normal', 0, '2025-08-22 19:17:35', '2025-08-22 19:23:23', 1, NULL, 0, 1, 2, 100, NULL),
+(211, NULL, 'nhiệm vụ mới gói thầu', '23423423424', 18, NULL, NULL, 22, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 37, 1, 325, 3, 'normal', 0, '2025-08-22 19:21:39', '2025-08-22 19:22:05', 1, NULL, 0, 1, 2, 100, NULL),
+(212, NULL, 'thêm việc 3', '34422424', 24, NULL, NULL, 24, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 37, 1, 325, 3, 'normal', 0, '2025-08-22 19:51:39', '2025-08-22 19:52:06', 1, NULL, 0, 1, 1, 100, NULL),
+(214, NULL, 'việc 4', '324234324', 13, NULL, NULL, 13, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 38, 1, 337, 3, 'normal', 0, '2025-08-22 19:55:10', '2025-08-22 19:55:34', 1, NULL, 0, 1, 2, 100, NULL),
+(215, NULL, 'việc 5', '432424234', 22, NULL, NULL, 22, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 38, 2, 338, 3, 'normal', 0, '2025-08-22 19:56:24', '2025-08-22 19:56:39', 1, NULL, 0, 1, 4, 100, NULL),
+(216, NULL, 'việc xxx', '234234324', 22, NULL, NULL, 4, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 38, 3, 339, 3, 'normal', 0, '2025-08-22 19:58:33', '2025-08-22 19:58:52', 1, NULL, 0, 1, 2, 100, NULL),
+(217, NULL, 'việc xxx2423', '42342424', 23, NULL, NULL, 23, '2025-08-23', '2025-09-30', 'done', 'approved', 'bidding', 38, 4, 340, 3, 'normal', 0, '2025-08-22 19:59:57', '2025-08-22 20:00:17', 1, NULL, 0, 1, 1, 100, NULL),
+(226, NULL, 'test việc mới nhé', 'ư3434534535', 19, NULL, NULL, 19, '2025-08-23', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 02:59:02', '2025-08-23 02:59:02', 1, NULL, 0, 1, 2, 75, NULL),
+(227, NULL, 'Công việc Cha_DVV', 'Công việc Cha_DVV', 3, NULL, NULL, 17, '2025-08-23', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 03:01:02', '2025-08-23 03:01:02', 1, NULL, 0, 1, 1, 0, NULL),
+(228, NULL, 'nhiệm vụ 2 cấp duyệt', 'nhiệm vụ 2 cấp duyệt', 5, NULL, NULL, 5, '2025-08-23', '2025-09-30', 'done', 'approved', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 08:43:04', '2025-08-23 08:44:13', 2, NULL, 0, 2, 1, 100, NULL),
+(229, NULL, 'nhiệm vụ con 24/08', '3424234234', 5, NULL, NULL, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:17:16', '2025-08-23 19:17:16', 1, NULL, 0, 1, 2, 0, NULL),
+(230, NULL, 'nhiệm vụ con', '342342342', 5, NULL, NULL, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:19:10', '2025-08-23 19:19:10', 1, NULL, 0, 1, 2, 0, NULL),
+(231, 228, 'nhiệm vụ con 2', '23424234234', 5, NULL, NULL, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 19:19:46', '2025-08-23 19:19:46', 1, NULL, 0, 1, 2, 0, NULL),
+(237, 227, 'Công việc con 2_DVV', '234242424', 5, NULL, NULL, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'internal', NULL, NULL, NULL, 3, 'low', 0, '2025-08-23 20:07:19', '2025-08-23 20:07:19', 1, NULL, 0, 1, 2, 0, NULL),
+(238, 227, 'Công việc con 1_DVV', 'đasadsad', 3, NULL, NULL, 22, '2025-08-24', '2025-09-30', 'request_approval', 'pending', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-08-23 20:07:54', '2025-08-23 20:07:54', 1, NULL, 0, 1, 1, 0, NULL),
+(239, NULL, 'xxxxx', '543454353535', 5, NULL, NULL, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:09:11', '2025-08-24 02:09:11', 1, NULL, 0, 1, 2, 0, NULL),
+(240, NULL, '34535345', '5435353535', 5, NULL, NULL, 5, '2025-08-24', '2025-09-30', 'request_approval', 'pending', 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:10:23', '2025-08-24 02:10:23', 1, NULL, 0, 1, 1, 0, NULL),
+(241, NULL, '3542342342', '4324324324', 5, NULL, NULL, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:14:06', '2025-08-24 02:14:06', 1, NULL, 0, 1, 1, 0, NULL),
+(242, NULL, 'xxxxxxx', '4242342342', 5, NULL, NULL, 5, '2025-08-24', '2025-09-30', 'request_approval', 'pending', 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:20:07', '2025-08-24 02:20:07', 1, NULL, 0, 1, 1, 0, NULL),
+(243, NULL, '4233243242', '23424234234', 5, NULL, NULL, 5, '2025-08-24', '2025-09-30', 'request_approval', 'pending', 'contract', 65, 1, 344, 3, 'normal', 0, '2025-08-24 02:33:59', '2025-08-24 02:41:22', 1, NULL, 0, 1, 2, 100, NULL),
+(244, NULL, 'xxxxxx', '32424234243', 5, NULL, NULL, 5, '2025-08-24', '2025-09-30', 'done', 'approved', 'contract', 65, 1, 344, 3, 'normal', 0, '2025-08-24 02:38:58', '2025-08-24 02:40:34', 1, NULL, 0, 1, 2, 100, NULL),
+(246, NULL, 'task con 2222', 'dsaddadada', 22, NULL, NULL, 22, '2025-08-24', '2025-09-30', 'request_approval', 'approved', 'contract', 66, 2, 364, 3, 'normal', 0, '2025-08-24 02:43:18', '2025-09-07 03:02:46', 0, NULL, 0, 0, 2, 100, NULL),
+(247, 201, '43424242', '42342424', 21, NULL, NULL, 17, '2025-09-01', '2025-10-31', '', 'pending', 'bidding', 35, 2, 285, 3, 'normal', 0, '2025-09-01 01:02:20', '2025-09-01 01:02:20', 1, NULL, 0, 1, 2, 0, NULL),
+(248, NULL, 'việc mới', '453454355', 24, NULL, NULL, 5, '2025-09-01', '2025-10-31', 'doing', 'pending', 'bidding', 40, 1, 363, 3, 'normal', 0, '2025-09-01 01:39:12', '2025-09-01 01:39:12', 1, NULL, 0, 1, 2, 0, NULL),
+(249, NULL, 'việc mới 2', '422343243242', 17, NULL, NULL, 19, '2025-09-01', '2025-10-31', 'doing', 'pending', 'bidding', 40, 1, 363, 3, 'normal', 0, '2025-09-01 01:39:40', '2025-09-01 01:39:40', 1, NULL, 0, 1, 4, 0, NULL),
+(250, 200, 'việc con mới', '23432432424', 19, NULL, NULL, 17, '2025-09-01', '2025-10-31', '', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-01 01:51:50', '2025-09-01 01:51:50', 1, NULL, 0, 1, 3, 55, NULL),
+(251, NULL, 'con của tesst mới', '45342424234', 5, NULL, NULL, 5, '2025-09-04', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-03 20:12:58', '2025-09-03 20:12:58', 1, NULL, 0, 1, 2, 0, NULL),
+(252, 199, 'xxxxxxx', 'sdadsadsadasd', 5, NULL, NULL, 5, '2025-09-04', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-03 20:13:39', '2025-09-03 20:13:39', 1, NULL, 0, 1, 3, 0, NULL),
+(255, NULL, 'bvnnnvnvn', '423424242424', 19, NULL, NULL, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:04:30', '2025-09-06 20:04:30', 1, NULL, 0, 1, 2, 0, NULL),
+(256, NULL, '54353535', '54353535435', 17, NULL, NULL, 17, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'low', 0, '2025-09-06 20:07:05', '2025-09-06 20:07:05', 1, NULL, 0, 1, 2, 0, NULL),
+(257, NULL, 'xxxxxxxxxxxxxxxxxxxxxxxxx', '4234324242424', 5, NULL, NULL, 5, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'low', 0, '2025-09-06 20:09:20', '2025-09-06 20:09:20', 1, NULL, 0, 1, 2, 0, NULL),
+(258, 256, 'bbbbbbbbbbbbbbbbb', '324324242424', 5, NULL, NULL, 5, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:18:05', '2025-09-06 20:18:05', 1, NULL, 0, 1, 2, 0, NULL),
+(259, 258, 'mmmmmmmmmmmmmmmmmm', '23424242424', 23, NULL, NULL, 23, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:18:42', '2025-09-06 20:18:42', 1, NULL, 0, 1, 2, 0, NULL),
+(260, 259, 'bkkkkkkkkkkkkkk', '23423432424242424', 19, NULL, NULL, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:25:31', '2025-09-06 20:25:31', 1, NULL, 0, 1, 2, 0, NULL),
+(261, NULL, 'ggggggggggggg', '34234342424', 16, NULL, NULL, 16, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'low', 0, '2025-09-06 20:27:57', '2025-09-06 20:27:57', 1, NULL, 0, 1, 2, 0, NULL),
+(262, NULL, 'rrrrrrrrrrrrrr', '3453454535', 14, NULL, NULL, 4, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'low', 0, '2025-09-06 20:28:39', '2025-09-06 20:28:39', 1, NULL, 0, 1, 3, 0, NULL),
+(263, NULL, '5354353535535', 'rewrwrwrwrw', 12, NULL, NULL, 3, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:29:05', '2025-09-06 20:29:05', 1, NULL, 0, 1, 2, 0, NULL),
+(264, NULL, '3424324242424', '4324242424', 12, NULL, NULL, 4, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'low', 0, '2025-09-06 20:29:30', '2025-09-06 20:29:30', 1, NULL, 0, 1, 2, 0, NULL),
+(265, NULL, '42343243242', '432432424', 23, NULL, NULL, 7, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 20:29:50', '2025-09-06 20:29:50', 1, NULL, 0, 1, 2, 0, NULL),
+(266, 262, '423434442', '4324324242', 22, NULL, NULL, 22, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 35, 1, 284, 3, 'normal', 0, '2025-09-06 21:12:14', '2025-09-06 21:12:14', 1, NULL, 0, 1, 2, 0, NULL),
+(267, 249, '4234344243', '4324324324324', 4, NULL, NULL, 4, '2025-09-07', '2025-10-31', 'done', 'approved', 'bidding', 40, 2, 364, 3, 'normal', 0, '2025-09-06 21:31:21', '2025-09-07 08:26:53', 0, NULL, 0, 0, 2, 100, NULL),
+(268, NULL, '2343242443', '432424244', 5, NULL, NULL, 4, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 39, 1, 349, 3, 'low', 0, '2025-09-06 21:35:26', '2025-09-06 21:35:26', 1, NULL, 0, 1, 2, 0, NULL),
+(269, 268, 'sub task 1', 'rewrerwrew', 1, NULL, NULL, 5, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 39, 1, 349, 3, 'normal', 0, '2025-09-06 21:35:52', '2025-09-06 21:35:52', 1, NULL, 0, 1, 1, 0, NULL),
+(270, 268, '342343424', '432432443', 5, NULL, NULL, 5, '2025-09-07', '2025-10-31', 'done', 'approved', 'bidding', 39, 2, 350, 3, 'normal', 0, '2025-09-06 22:08:44', '2025-09-07 02:34:54', 0, NULL, 0, 0, 2, 100, NULL),
+(271, 268, '345435435', '54354353554', 6, NULL, NULL, 6, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 39, 2, 350, 3, 'normal', 0, '2025-09-06 22:09:29', '2025-09-06 22:09:29', 1, NULL, 0, 1, 4, 0, NULL),
+(272, 210, 'task con', 'sdadasda', 4, NULL, NULL, 4, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 37, 1, 325, 3, 'normal', 0, '2025-09-07 03:00:44', '2025-09-07 03:00:44', 1, NULL, 0, 1, 2, 0, NULL),
+(273, 243, '54434535', '5435353', 22, NULL, NULL, 23, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 10, 1, 82, 3, 'normal', 0, '2025-09-07 03:29:40', '2025-09-07 03:29:40', 1, NULL, 0, 1, 2, 0, NULL),
+(274, 248, 'việc chắt mới', '3423424242', 19, NULL, NULL, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 40, 1, 363, 3, 'low', 0, '2025-09-07 07:39:40', '2025-09-07 07:39:40', 1, NULL, 0, 1, 2, 0, NULL),
+(275, 248, '3424234', '3424224', 5, NULL, NULL, 5, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 40, 7, 369, 3, 'low', 0, '2025-09-07 09:24:03', '2025-09-07 09:24:03', 1, NULL, 0, 1, 2, 0, NULL),
+(276, 275, '4324324324', '4324324324', 5, NULL, NULL, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', 'bidding', 40, 7, 369, 3, 'low', 0, '2025-09-07 09:24:36', '2025-09-07 09:24:36', 1, NULL, 0, 1, 2, 0, NULL),
+(277, NULL, '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', 5, 3, 8, 4, '2025-09-01', '2025-09-01', 'done', 'approved', 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:12:22', '2025-10-01 09:11:07', 1, '[3, 5]', 1, 1, 3, 100, NULL),
+(278, NULL, '2. Lấy kế hoạch SCL', '2. Lấy kế hoạch SCL', 5, NULL, NULL, 4, '2025-09-02', '2025-09-02', 'request_approval', 'pending', 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:13:44', '2025-10-01 09:11:29', 1, '[4, 5, 6]', 1, 1, 3, 0, NULL),
+(279, 277, '1.1. Lấy kế hoạch SXKD lần 1', '1.1. Lấy kế hoạch SXKD lần 1', 5, NULL, NULL, 4, '2025-09-02', '2025-09-03', 'request_approval', 'pending', 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:15:48', '2025-10-01 09:12:57', 1, '[1]', 1, 1, 3, 75, NULL),
+(280, 277, '1.2. Lấy kế hoạch SXKD lần 2', '1.2. Lấy kế hoạch SXKD lần 2', 5, NULL, NULL, 4, '2025-09-04', '2025-09-04', '', 'pending', 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:20:54', '2025-09-14 21:20:54', 1, NULL, 0, 1, 3, 0, NULL),
+(281, 277, '1.3. Lấy kế hoạch SXKD lần 3', '1.3. Lấy kế hoạch SXKD lần 3', 5, 9, NULL, 4, '2025-09-04', '2025-09-04', 'request_approval', 'pending', 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:23:02', '2025-09-14 21:23:02', 1, NULL, 0, 1, 3, 0, NULL),
+(287, 238, 'Nhiệm vụ  cháu 1_DVV', 'Nhiệm vụ con 1', 3, NULL, NULL, 4, '2025-09-10', '2025-09-11', 'request_approval', 'pending', 'internal', 41, NULL, NULL, 3, 'high', 0, '2025-09-14 23:10:59', '2025-09-14 23:10:59', 1, NULL, 0, 1, 1, 0, NULL),
+(288, 287, 'Nhiệm vụ Chắt 1_DVV', 'Nhiệm vụ cháu 1_DVV', 3, NULL, NULL, 4, '2025-09-10', '2025-09-10', 'request_approval', 'pending', 'internal', 41, NULL, NULL, 3, 'high', 0, '2025-09-14 23:12:29', '2025-09-14 23:12:29', 1, NULL, 0, 1, 1, 0, NULL),
+(289, NULL, '1. Phân tích danh mục hàng hoá', '3432424', 3, NULL, NULL, 3, '2025-09-15', '2025-09-16', 'doing', 'pending', 'bidding', 41, 2, 378, 3, 'normal', 0, '2025-09-15 02:23:06', '2025-09-15 02:23:06', 1, NULL, 0, 1, 1, 0, NULL),
+(290, 289, '1.1. Phân tích danh mục hàng hoá 1', '1.1. Phân tích danh mục hàng hoá 1', 6, NULL, NULL, 5, '2025-09-15', '2025-09-16', 'request_approval', 'pending', 'bidding', 41, 2, 378, 3, 'high', 0, '2025-09-15 02:23:30', '2025-09-15 02:23:30', 1, NULL, 0, 1, 1, 0, NULL),
+(292, 287, 'Nhiệm vụ chắt 2_DVV', 'Nhiệm vụ chắt 2_DVV', 3, NULL, NULL, 4, '2025-09-11', '2025-09-11', 'request_approval', 'pending', 'internal', NULL, NULL, NULL, 3, 'high', 0, '2025-09-16 23:46:56', '2025-09-16 23:46:56', 1, NULL, 0, 1, 1, 0, NULL),
+(293, 238, 'Nhiệm vụ cháu 2_DVV', 'Nhiệm vụ cháu 2_DVV', 15, NULL, NULL, 4, '2025-09-12', '2025-09-13', 'request_approval', 'approved', 'internal', NULL, NULL, NULL, 3, 'normal', 0, '2025-09-16 23:48:41', '2025-10-01 07:32:16', 0, NULL, 0, 0, 1, 0, NULL),
+(294, NULL, '2. Lập kế hoạch bóc tách Danh mục hàng hoá', '2. Lập kế hoạch bóc tách Danh mục hàng hoá', 6, NULL, NULL, 4, '2025-09-15', '2025-09-15', '', 'pending', 'bidding', 41, 2, 378, 3, 'high', 0, '2025-09-17 00:15:23', '2025-09-17 00:15:23', 1, NULL, 0, 1, 3, 0, NULL),
+(295, 290, '1.1.1. Phân tích danh mục hàng hoá 1.1', '1.1.1. Phân tích danh mục hàng hoá 1.1', 7, NULL, NULL, 4, '2025-09-15', '2025-09-16', '', 'pending', 'bidding', 41, 2, 378, 3, 'high', 0, '2025-09-17 00:37:42', '2025-09-17 00:37:42', 1, NULL, 0, 1, 3, 0, NULL),
+(296, 289, '1.2. Phân tích danh mục hàng hoá 2', '1.2. Phân tích danh mục hàng hoá 2', 6, NULL, NULL, 4, '2025-09-15', '2025-09-17', 'request_approval', 'pending', 'bidding', 41, 2, 378, 3, 'high', 0, '2025-09-17 00:41:55', '2025-09-17 00:41:55', 1, NULL, 0, 1, 3, 0, NULL),
+(298, 278, '2.1. Lấy kế hoạch SCL 1', '2.1. Lấy kế hoạch SCL 1', 3, 6, NULL, 4, '2025-09-03', '2025-09-03', 'done', 'approved', 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-17 00:50:05', '2025-10-01 09:13:41', 0, NULL, 0, 0, 3, 100, NULL),
+(299, 298, '2.1.1. Lấy kế hoạch SCL 2.1', '2.1.1. Lấy kế hoạch SCL 2.1', 5, NULL, NULL, 4, '2025-09-03', '2025-09-03', 'done', 'approved', 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-17 00:52:09', '2025-10-01 09:14:30', 1, '[3, 4]', 1, 1, 3, 100, NULL),
+(300, 281, '1.3.1. Lấy kế hoạch mục 1.3', '1.3.1. Lấy kế hoạch mục 1.3', 5, NULL, NULL, 4, '2025-09-05', '2025-09-05', '', 'pending', 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-17 00:57:04', '2025-09-17 00:57:04', 1, NULL, 0, 1, 3, 0, NULL),
+(301, 281, '1.3.2. Lấy kế hoạch mục 1.3', '1.3.2. Lấy kế hoạch mục 1.3', 5, NULL, NULL, 4, '2025-09-06', '2025-09-06', '', 'pending', 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-17 00:58:10', '2025-09-17 00:58:10', 1, NULL, 0, 1, 3, 0, NULL),
+(302, NULL, 'nhiệm vụ mới 28/09/2025', 'test nhiệm vụ 28/09/2025', 5, 8, 14, 3, '2025-09-28', '2025-10-31', 'doing', 'approved', 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-27 20:51:52', '2025-10-01 07:43:29', 0, '[9]', 1, 0, 3, 75, NULL);
 
 -- --------------------------------------------------------
 
@@ -1908,7 +1968,6 @@ INSERT INTO `task_approvals` (`id`, `task_id`, `level`, `status`, `approved_by`,
 (141, 245, 1, 'approved', 3, '2025-08-24 09:42:35', 'ok duyệt'),
 (144, 242, 1, 'pending', NULL, NULL, NULL),
 (145, 240, 1, 'pending', NULL, NULL, NULL),
-(146, 238, 1, 'pending', NULL, NULL, NULL),
 (147, 243, 1, 'pending', NULL, NULL, NULL),
 (148, 247, 1, 'pending', NULL, NULL, NULL),
 (149, 248, 1, 'pending', NULL, NULL, NULL),
@@ -1940,7 +1999,34 @@ INSERT INTO `task_approvals` (`id`, `task_id`, `level`, `status`, `approved_by`,
 (177, 273, 1, 'pending', NULL, NULL, NULL),
 (178, 274, 1, 'pending', NULL, NULL, NULL),
 (179, 275, 1, 'pending', NULL, NULL, NULL),
-(180, 276, 1, 'pending', NULL, NULL, NULL);
+(180, 276, 1, 'pending', NULL, NULL, NULL),
+(182, 278, 1, 'pending', NULL, NULL, NULL),
+(184, 280, 1, 'pending', NULL, NULL, NULL),
+(186, 282, 1, 'pending', NULL, NULL, NULL),
+(187, 283, 1, 'pending', NULL, NULL, NULL),
+(188, 284, 1, 'pending', NULL, NULL, NULL),
+(189, 285, 1, 'pending', NULL, NULL, NULL),
+(190, 286, 1, 'pending', NULL, NULL, NULL),
+(194, 287, 1, 'pending', NULL, NULL, NULL),
+(195, 288, 1, 'pending', NULL, NULL, NULL),
+(196, 238, 1, 'pending', NULL, NULL, NULL),
+(197, 289, 1, 'pending', NULL, NULL, NULL),
+(199, 291, 1, 'pending', NULL, NULL, NULL),
+(201, 292, 1, 'pending', NULL, NULL, NULL),
+(203, 294, 1, 'pending', NULL, NULL, NULL),
+(205, 295, 1, 'pending', NULL, NULL, NULL),
+(206, 290, 1, 'pending', NULL, NULL, NULL),
+(207, 296, 1, 'pending', NULL, NULL, NULL),
+(208, 297, 1, 'pending', NULL, NULL, NULL),
+(209, 298, 1, 'pending', NULL, NULL, NULL),
+(210, 299, 1, 'approved', 3, '2025-10-01 16:14:30', NULL),
+(211, 300, 1, 'pending', NULL, NULL, NULL),
+(212, 301, 1, 'pending', NULL, NULL, NULL),
+(214, 281, 1, 'pending', NULL, NULL, NULL),
+(215, 279, 1, 'pending', NULL, NULL, NULL),
+(216, 302, 1, 'pending', NULL, NULL, NULL),
+(217, 293, 1, 'pending', NULL, NULL, NULL),
+(219, 277, 1, 'approved', 3, '2025-10-01 16:11:07', NULL);
 
 -- --------------------------------------------------------
 
@@ -2005,7 +2091,9 @@ INSERT INTO `task_approval_logs` (`id`, `task_id`, `level`, `status`, `approved_
 (39, 243, 1, 'approved', 3, '2025-08-24 09:41:22', 'ok duyệt', '2025-08-24 09:41:22'),
 (40, 245, 1, 'approved', 3, '2025-08-24 09:42:35', 'ok duyệt', '2025-08-24 09:42:35'),
 (41, 246, 1, 'approved', 3, '2025-08-24 09:43:48', 'duyệt nhé', '2025-08-24 09:43:48'),
-(42, 207, 1, 'approved', 3, '2025-08-27 14:15:14', 'ok nhes', '2025-08-27 14:15:14');
+(42, 207, 1, 'approved', 3, '2025-08-27 14:15:14', 'ok nhes', '2025-08-27 14:15:14'),
+(43, 277, 1, 'approved', 3, '2025-10-01 16:11:07', NULL, '2025-10-01 16:11:07'),
+(44, 299, 1, 'approved', 3, '2025-10-01 16:14:30', NULL, '2025-10-01 16:14:30');
 
 -- --------------------------------------------------------
 
@@ -2086,7 +2174,12 @@ INSERT INTO `task_comments` (`id`, `task_id`, `user_id`, `comment_id`, `content`
 (65, 270, 3, NULL, 'đasdadsadsad', '2025-09-07 02:35:00', '2025-09-07 02:35:00', NULL, NULL, NULL),
 (66, 273, 3, NULL, '2343242342423', '2025-09-07 03:29:51', '2025-09-07 03:29:51', NULL, NULL, NULL),
 (67, 273, 3, NULL, '', '2025-09-07 03:30:17', '2025-09-07 03:30:17', 'Mau TTID 2.2_Bien ban hop ĐHĐCĐ.doc', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/Mau-TTID-2.2_Bien-ban-hop-DHDCD.doc', NULL),
-(68, 275, 3, NULL, '4324423', '2025-09-07 09:24:43', '2025-09-07 09:24:43', NULL, NULL, NULL);
+(68, 275, 3, NULL, '4324423', '2025-09-07 09:24:43', '2025-09-07 09:24:43', NULL, NULL, NULL),
+(69, 274, 3, NULL, '34534535', '2025-09-07 10:13:30', '2025-09-07 10:13:30', NULL, NULL, NULL),
+(70, 214, 3, NULL, '53454535435', '2025-09-07 10:14:11', '2025-09-07 10:14:11', NULL, NULL, NULL),
+(71, 274, 3, NULL, 'xvxccxcxcxcx', '2025-09-07 10:18:44', '2025-09-07 10:18:44', 'xxxxx.png', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/xxxxx.webp', NULL),
+(72, 248, 3, NULL, '4354535', '2025-09-07 10:20:07', '2025-09-07 10:20:07', 'xxxxx.png', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/xxxxx-1.webp', NULL),
+(73, 249, 3, NULL, 'ưerwrwr', '2025-09-07 10:20:43', '2025-09-07 10:20:43', 'customers_20250906_232804.csv', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/customers_20250906_232804.csv', NULL);
 
 -- --------------------------------------------------------
 
@@ -2128,7 +2221,9 @@ INSERT INTO `task_extensions` (`id`, `task_id`, `extended_by`, `old_end_date`, `
 (16, 51, 1, '2025-07-29 00:00:00', '2025-07-19 00:00:00', 'Gia hạn thời gian', '2025-07-20 05:46:44', '2025-07-20 05:46:44'),
 (17, 38, 1, '2025-07-29 00:00:00', '2025-07-31 00:00:00', NULL, '2025-07-31 01:35:47', '2025-07-31 01:35:47'),
 (18, 51, 1, '2025-07-19 00:00:00', '2025-08-28 00:00:00', NULL, '2025-07-31 01:36:25', '2025-07-31 01:36:25'),
-(19, 26, 1, '2025-06-15 00:00:00', '2025-06-16 00:00:00', NULL, '2025-07-31 01:38:24', '2025-07-31 01:38:24');
+(19, 26, 1, '2025-06-15 00:00:00', '2025-06-16 00:00:00', NULL, '2025-07-31 01:38:24', '2025-07-31 01:38:24'),
+(20, 289, 3, '2025-10-31 00:00:00', '2025-09-16 00:00:00', 'Gia hạn thời gian', '2025-09-17 00:17:19', '2025-09-17 00:17:19'),
+(21, 290, 3, '2025-10-31 00:00:00', '2025-09-16 00:00:00', 'Gia hạn thời gian', '2025-09-17 00:35:47', '2025-09-17 00:35:47');
 
 -- --------------------------------------------------------
 
@@ -2193,7 +2288,12 @@ INSERT INTO `task_files` (`id`, `task_id`, `comment_id`, `file_name`, `title`, `
 (44, 250, NULL, 'thu-tuong-yeu-cau-chan-chinh-thi-truong-vang-4935819.html', 'Thủ tướng yêu cầu chấn chỉnh thị trường vàng', NULL, 3, 'https://vnexpress.net/thu-tuong-yeu-cau-chan-chinh-thi-truong-vang-4935819.html', '2025-09-05 21:10:40', '2025-09-06 04:10:40', 1, 'link', 0, NULL, 'html', NULL, 'link', 3, 'private', NULL),
 (45, 250, NULL, 'Japanese_English_Thai.xlsx', '2432432442', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/Japanese_English_Thai.xlsx', 3, NULL, '2025-09-05 21:40:49', '2025-09-06 04:40:49', 0, 'wp_media', 6539, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx', 8, 'wordpress', 3, 'private', NULL),
 (46, 250, NULL, 'image', 'xxxxxxxxxxxx', NULL, 3, 'https://antdv.com/components/image', '2025-09-05 22:23:20', '2025-09-06 05:23:20', 1, 'link', 0, NULL, NULL, NULL, 'link', 3, 'private', NULL),
-(47, 273, NULL, 'TTID_logo.png', '5345435535', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/TTID_logo.png', 3, NULL, '2025-09-07 03:30:31', '2025-09-07 10:30:31', 0, 'wp_media', 23787, 'image/png', 'png', 16, 'wordpress', 2, 'private', NULL);
+(47, 273, NULL, 'TTID_logo.png', '5345435535', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/TTID_logo.png', 3, NULL, '2025-09-07 03:30:31', '2025-09-07 10:30:31', 0, 'wp_media', 23787, 'image/png', 'png', 16, 'wordpress', 2, 'private', NULL),
+(48, 274, NULL, 'TTID_logo.png', '342424234', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/TTID_logo-1.png', 3, NULL, '2025-09-07 10:19:25', '2025-09-07 17:19:25', 0, 'wp_media', 23787, 'image/png', 'png', 18, 'wordpress', 2, 'private', NULL),
+(49, 248, NULL, 'TTID_logo.png', '342343224234', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/TTID_logo-2.png', 3, NULL, '2025-09-07 10:20:00', '2025-09-07 17:20:00', 0, 'wp_media', 23787, 'image/png', 'png', 19, 'wordpress', 2, 'private', NULL),
+(50, 249, NULL, 'Mau TTID 2.2_Bien ban hop ĐHĐCĐ.doc', '4233242424', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/Mau-TTID-2.2_Bien-ban-hop-DHDCD-1.doc', 3, NULL, '2025-09-07 10:20:29', '2025-09-07 17:20:29', 0, 'wp_media', 357376, 'application/msword', 'doc', 21, 'wordpress', 4, 'private', NULL),
+(51, 277, NULL, 'photo_2025-09-28_09-47-48.jpg', 'tài liệu batman', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/photo_2025-09-28_09-47-48.jpg', 3, NULL, '2025-09-27 19:48:27', '2025-09-28 02:48:27', 0, 'wp_media', 221130, 'image/jpeg', 'jpg', 24, 'wordpress', 3, 'private', NULL),
+(52, 277, NULL, NULL, 'tài liệu vnexpress', NULL, 3, 'https://vnexpress.net/', '2025-09-27 19:49:01', '2025-09-28 02:49:01', 1, 'link', 0, NULL, NULL, NULL, 'link', 3, 'private', NULL);
 
 -- --------------------------------------------------------
 
@@ -2220,30 +2320,20 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `name`, `phone`, `avatar`, `role`, `department_id`, `role_id`) VALUES
-(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-09-06 08:08:05', 'Nguyễn Mai Anh', '0988888888', 'uploads/avatars/1757146085_458ff2a7be53bff1a4a8.png', 'Trưởng phòng', 1, 2),
-(3, 'superadmin@example.com', '$2y$10$duTynUTzT2E8r/XfWDEAv.zruGL1CwtgiFyHoBybvwd8valutSCTW', '2025-04-20 14:02:38', '2025-09-06 15:47:15', 'Super Admin', '0988888888', 'uploads/avatars/1757035611_0019d985edb37c35aaa9.jpg', 'super admin', 2, 1),
-(4, 'nguyenvana@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-05-26 04:33:21', '2025-08-04 16:27:31', 'Nguyễn Văn Tuấn', '0909123456', NULL, 'Nhân viên', 2, 3),
-(5, 'a@worknest.vn', '$2y$10$fPUyT/hhSHhPknmvWgPtxelsaQfNLRiOVZ3Wayj2tbcNo4lApUFEW', '2025-06-04 09:10:50', '2025-09-05 01:27:55', 'Nguyễn Vân Anh', '0911111111', 'uploads/avatars/1757035675_b1a8dfcbbebca0a39cb1.jpg', 'user', 1, 3),
-(6, 'b@worknest.vn', '$2y$10$ZKKb/DZ/dk0eFQW/xfG3Ne8Ozrdt1TcQcR1alq4KP5biJpmUm2Uuy', '2025-06-04 09:11:21', '2025-08-04 06:31:07', 'Trần Thị B', '0911111112', NULL, 'user', 1, 2),
-(7, 'c@worknest.vn', '$2y$10$0M2AJM7k/CXzGKJCeeEh1.g2tFjFCZfeOLDGKqGgm3dUHqqpNtciW', '2025-06-04 09:11:44', '2025-08-04 06:31:16', 'Lê Văn C', '0911111113', NULL, 'user', 2, 3),
-(8, 'd@worknest.vn', '$2y$10$UfmfTcnJd1Hc1wcH0Utaz.w9IFmXwNCzoFUQdahizBIri0BTfsDp2', '2025-06-04 09:12:07', '2025-08-04 06:31:20', 'Phạm Thị D', '0911111114', NULL, 'user', 2, 3),
-(9, 't@worknest.vn', '$2y$10$hGqQg.IGey/1/3a6Dt/3rOQKKdPgz2U787lWDghxeDqCmCk30v7SW', '2025-06-04 09:12:52', '2025-08-04 06:31:24', 'Bùi Minh T', '0911111115', NULL, 'user', 3, 3),
-(10, 'l@worknest.vn', '$2y$10$In9Y8TToyh9hICfylJG.Iesgd1mvrE4L./GTSwgcuXX8zXe.tGqM2', '2025-06-04 09:13:10', '2025-08-04 06:31:29', 'Nguyễn Thị L', '0911111116', NULL, 'user', 3, 3),
-(11, 'h@worknest.vn', '$2y$10$HVsxejThJCOYfidLz.xreOCpRGZp8QI001kHhekDGq9tVFW0TWv0K', '2025-06-04 09:13:37', '2025-08-04 06:31:33', 'Vũ Văn H', '0911111117', NULL, 'user', 4, 3),
-(12, 'hq@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:31:41', 'Đào Quang H', '0911111118', NULL, 'user', 4, 3),
-(13, 'bich@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:31:45', 'Trần Thị Bích', '0911111119', NULL, 'user', 5, 3),
-(14, 'tuan@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:31:49', 'Mai Văn Tuấn', '0911111120', NULL, 'user', 5, 3),
-(15, 'phuc@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:31:53', 'Lê Hồng Phúc', '0911111121', NULL, 'user', 1, 3),
-(16, 'hiep@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:31:57', 'Nguyễn Văn Hiệp', '0911111122', NULL, 'user', 1, 3),
-(17, 'huong@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:32:00', 'Trần Thanh Hương', '0911111123', NULL, 'user', 2, 3),
-(18, 'thang@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:32:04', 'Đinh Hữu Thắng', '0911111124', NULL, 'user', 2, 3),
-(19, 'trang@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:32:08', 'Phạm Thu Trang', '0911111125', NULL, 'user', 3, 3),
-(20, 'hai@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:32:12', 'Ngô Minh Hải', '0911111126', NULL, 'user', 3, 3),
-(21, 'mai@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:32:16', 'Vũ Thị Mai', '0911111127', NULL, 'user', 4, 3),
-(22, 'huy@worknest.vn', '$2y$10$8qPYhSpBnDSx5t9admiFmO92DYr/yXNseT4b/qd6sBxxnv2n8r9Iq', '2025-06-04 16:15:57', '2025-08-04 06:32:23', 'Nguyễn Khắc Huy', '0911111128', NULL, 'user', 4, 3),
-(23, 'loan@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:32:26', 'Bùi Thị Loan', '0911111129', NULL, 'user', 5, 3),
-(24, 'tri@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-08-04 06:32:30', 'Lê Minh Trí', '0911111130', NULL, 'user', 5, 3),
-(25, 'testuser@gmail.com', '$2y$10$HOa3vdg9C.Xhs92CPRvMPOdSWMgctBsukYFiRwsJY6OhYnE6XDLK2', '2025-06-08 09:27:07', '2025-08-04 06:48:02', 'user1', '0912345688', NULL, 'user', 5, 3);
+(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-09-15 03:55:27', 'Nguyễn Cảnh Hợp', '0988888888', 'uploads/avatars/1757146085_458ff2a7be53bff1a4a8.png', 'Trưởng phòng', 3, 2),
+(3, 'superadmin@example.com', '$2y$10$duTynUTzT2E8r/XfWDEAv.zruGL1CwtgiFyHoBybvwd8valutSCTW', '2025-04-20 14:02:38', '2025-09-15 04:04:13', 'Đinh Văn Vịnh', '0988888888', 'uploads/avatars/1757035611_0019d985edb37c35aaa9.jpg', 'super admin', 2, 1),
+(4, 'nguyenvana@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-05-26 04:33:21', '2025-09-15 03:56:06', 'Tạ Quý Thọ', '0909123456', NULL, 'Nhân viên', 3, 2),
+(5, 'a@worknest.vn', '$2y$10$fPUyT/hhSHhPknmvWgPtxelsaQfNLRiOVZ3Wayj2tbcNo4lApUFEW', '2025-06-04 09:10:50', '2025-09-15 03:56:31', 'Nguyễn Văn Chiểu', '0911111111', 'uploads/avatars/1757035675_b1a8dfcbbebca0a39cb1.jpg', 'user', 3, 3),
+(6, 'b@worknest.vn', '$2y$10$ZKKb/DZ/dk0eFQW/xfG3Ne8Ozrdt1TcQcR1alq4KP5biJpmUm2Uuy', '2025-06-04 09:11:21', '2025-09-15 04:03:35', 'Phạm Xuân Tuân', '0911111112', NULL, 'user', 3, 3),
+(7, 'c@worknest.vn', '$2y$10$0M2AJM7k/CXzGKJCeeEh1.g2tFjFCZfeOLDGKqGgm3dUHqqpNtciW', '2025-06-04 09:11:44', '2025-09-15 04:03:25', 'Nhạc Quang Huy', '0911111113', NULL, 'user', 3, 3),
+(8, 'd@worknest.vn', '$2y$10$UfmfTcnJd1Hc1wcH0Utaz.w9IFmXwNCzoFUQdahizBIri0BTfsDp2', '2025-06-04 09:12:07', '2025-09-15 04:03:08', 'Hoàng Văn Dũng', '0911111114', NULL, 'user', 3, 3),
+(9, 't@worknest.vn', '$2y$10$hGqQg.IGey/1/3a6Dt/3rOQKKdPgz2U787lWDghxeDqCmCk30v7SW', '2025-06-04 09:12:52', '2025-09-15 03:59:12', 'Nguyễn Danh Vương Bình', '0911111115', NULL, 'user', 3, 3),
+(10, 'l@worknest.vn', '$2y$10$In9Y8TToyh9hICfylJG.Iesgd1mvrE4L./GTSwgcuXX8zXe.tGqM2', '2025-06-04 09:13:10', '2025-09-15 04:02:50', 'Vũ Thị Thuỷ', '0911111116', NULL, 'user', 2, 3),
+(11, 'h@worknest.vn', '$2y$10$HVsxejThJCOYfidLz.xreOCpRGZp8QI001kHhekDGq9tVFW0TWv0K', '2025-06-04 09:13:37', '2025-09-15 04:02:39', 'Đinh Thị Tú', '0911111117', NULL, 'user', 2, 3),
+(12, 'hq@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-09-15 04:00:21', 'Nguyễn Thị Ngọc Anh', '0911111118', NULL, 'user', 4, 3),
+(13, 'bich@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-09-15 04:01:50', 'Hoàng Thị Lan Anh', '0911111119', NULL, 'user', 4, 3),
+(14, 'tuan@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-09-15 04:01:40', 'Nguyễn Thị Hạnh', '0911111120', NULL, 'user', 4, 3),
+(15, 'phuc@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-09-15 04:02:14', 'Trần Thị Hiền', '0911111121', NULL, 'user', 1, 3);
 
 --
 -- Indexes for dumped tables
@@ -2474,13 +2564,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `approval_instances`
 --
 ALTER TABLE `approval_instances`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=62;
 
 --
 -- AUTO_INCREMENT for table `approval_logs`
 --
 ALTER TABLE `approval_logs`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
 
 --
 -- AUTO_INCREMENT for table `approval_reads`
@@ -2492,19 +2582,19 @@ ALTER TABLE `approval_reads`
 -- AUTO_INCREMENT for table `approval_steps`
 --
 ALTER TABLE `approval_steps`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
 
 --
 -- AUTO_INCREMENT for table `biddings`
 --
 ALTER TABLE `biddings`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `bidding_steps`
 --
 ALTER TABLE `bidding_steps`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=375;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=389;
 
 --
 -- AUTO_INCREMENT for table `bidding_step_templates`
@@ -2528,7 +2618,7 @@ ALTER TABLE `comments`
 -- AUTO_INCREMENT for table `comment_reads`
 --
 ALTER TABLE `comment_reads`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
 
 --
 -- AUTO_INCREMENT for table `contracts`
@@ -2558,7 +2648,7 @@ ALTER TABLE `contract_step_templates`
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `customer_transactions`
@@ -2576,7 +2666,7 @@ ALTER TABLE `departments`
 -- AUTO_INCREMENT for table `documents`
 --
 ALTER TABLE `documents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `document_permissions`
@@ -2630,37 +2720,37 @@ ALTER TABLE `step_templates`
 -- AUTO_INCREMENT for table `tasks`
 --
 ALTER TABLE `tasks`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=277;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=303;
 
 --
 -- AUTO_INCREMENT for table `task_approvals`
 --
 ALTER TABLE `task_approvals`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=181;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=220;
 
 --
 -- AUTO_INCREMENT for table `task_approval_logs`
 --
 ALTER TABLE `task_approval_logs`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
 
 --
 -- AUTO_INCREMENT for table `task_comments`
 --
 ALTER TABLE `task_comments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
 
 --
 -- AUTO_INCREMENT for table `task_extensions`
 --
 ALTER TABLE `task_extensions`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `task_files`
 --
 ALTER TABLE `task_files`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
 -- AUTO_INCREMENT for table `users`
