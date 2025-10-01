@@ -295,7 +295,7 @@
 
                 <a-row :gutter="16">
                     <a-col :span="12">
-                        <a-form-item label="Độ ưu tiên" name="priority">
+                        <a-form-item label="Ưu tiên" name="priority">
                             <a-select
                                 v-model:value="formData.priority"
                                 :options="[
@@ -522,7 +522,7 @@ const drawerBidColumns = [
     {title: 'Tên gói thầu', dataIndex: 'title', key: 'title'},
     {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', align: 'center'},
     {title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'left'},
-    {title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority'},
+    {title: 'Ưu tiên', dataIndex: 'priority', key: 'priority'},
     {title: 'Trạng thái', dataIndex: 'status', key: 'status'},
     {title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date'},
     {title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date'},

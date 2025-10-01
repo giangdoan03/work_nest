@@ -28,6 +28,7 @@ import MyTasks from '../page/MyTasks.vue'
 import ProjectOverview from '../page/ProjectOverview.vue'
 import GanttChart from '../page/GanttChart.vue'
 import Tasks from '../page/Tasks.vue'
+import BiddingStepTasks from '../components/BiddingStepTask/BiddingStepTasks.vue'
 import Forbidden403 from "@/page/Forbidden403.vue"
 
 const routes = [
@@ -85,7 +86,7 @@ const routes = [
             {
                 path: '/biddings/:bidId/steps/:stepId/tasks',
                 name: 'bidding-step-tasks',
-                component: () => import('../components/BiddingStepTask/BiddingStepTasks.vue'),
+                component: BiddingStepTasks,
                 meta: { breadcrumb: 'Công việc', parent: 'biddings-info' },
                 props: route => ({
                     bidId: Number(route.params.bidId),

@@ -1,25 +1,32 @@
     <template>
         <div class="sidebar" :class="{ collapsed }">
             <!-- Logo -->
-            <div class="logo-container">
-                <router-link to="/" class="logo">
-                    <img
-                        :src="collapsed ? '/logoMark.png' : '/TTID_logo.png'"
-                        class="logo-img"
-                        :alt="collapsed ? 'TTID' : 'TTID'"
-                    />
-                </router-link>
-            </div>
+<!--            <div class="logo-container">-->
+<!--                <router-link to="/" class="logo">-->
+<!--                    <img-->
+<!--                        :src="collapsed ? '/logoMark.png' : '/TTID_logo.png'"-->
+<!--                        class="logo-img"-->
+<!--                        :alt="collapsed ? 'TTID' : 'TTID'"-->
+<!--                    />-->
+<!--                </router-link>-->
+<!--            </div>-->
 
-            <!-- Icon AppstoreOutlined trên cùng -->
+            <!-- Icon/Logo trên cùng -->
             <div
                 class="menu-top-icon"
                 :class="{ active: isOverviewActive }"
                 @click="openTopDrawer"
+                @keydown.enter.prevent="openTopDrawer"
+                @keydown.space.prevent="openTopDrawer"
                 role="button"
                 tabindex="0"
+                aria-label="Mở menu nhanh"
             >
-                <AppstoreOutlined />
+                <img
+                    :src="'/logoMark.png'"
+                    class="menu-top-logo"
+                    alt="TTID"
+                />
                 <span v-if="!collapsed" class="menu-text">Menu</span>
             </div>
 
@@ -290,7 +297,7 @@
                 <template #title>
                     <div class="qm-header">
                         <div class="qm-brand">
-                            <img :src="'/TTID_logo.png'" alt="Menu logo" class="qm-logo" />
+                            <img :src="'/logoMark.png'" alt="Menu logo" class="qm-logo" />
                             <div class="qm-brand-text">
                                 <div class="title">Office Portal</div>
                                 <div class="sub">Truy cập nhanh mô-đun</div>
@@ -1149,7 +1156,24 @@
         text-wrap: balance;
     }
 
+    /* Logo trong menu-top-icon */
+    .menu-top-logo {
+        display: block;
+        height: 22px;  /* chiều cao mặc định khi expanded */
+        width: auto;
+        transition: transform .2s ease, opacity .2s ease;
+    }
 
+    /* Khi sidebar collapsed, tăng size nhẹ cho icon mark cho cân */
+    .sidebar.collapsed .menu-top-logo {
+        height: 26px;  /* mark thường nhỏ hơn chữ, tăng chút cho cân */
+    }
+
+    /* Hover effect đồng bộ */
+    .menu-top-icon:hover .menu-top-logo {
+        transform: translateY(-1px);
+        opacity: 0.95;
+    }
 
 
 

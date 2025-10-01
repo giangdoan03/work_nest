@@ -45,7 +45,7 @@
                         </a-form-item>
                     </a-col>
                     <a-col :span="12">
-                        <a-form-item label="Độ ưu tiên" name="priority">
+                        <a-form-item label="Ưu tiên" name="priority">
                             <a-select v-model:value="formData.priority" :options="priorityOptions" placeholder="Chọn" />
                         </a-form-item>
                     </a-col>

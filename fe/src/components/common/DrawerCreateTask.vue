@@ -11,7 +11,7 @@
             <a-alert
                 v-if="props.createAsRoot"
                 type="info"
-                message="Đang tạo nhiệm vụ gốc"
+                message="Đang tạo công việc cấp cháu"
                 show-icon
                 style="margin-bottom:12px"
             />
@@ -52,7 +52,7 @@
                         </a-form-item>
                     </a-col>
                     <a-col :span="12">
-                        <a-form-item label="Độ ưu tiên" name="priority">
+                        <a-form-item label="Ưu tiên" name="priority">
                             <a-select
                                 v-model:value="formData.priority"
                                 :options="priorityOption"

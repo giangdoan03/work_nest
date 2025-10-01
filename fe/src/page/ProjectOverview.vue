@@ -49,7 +49,7 @@
                                 <th style="min-width: 80px">Bắt đầu</th>
                                 <th style="min-width: 80px">Kết thúc</th>
                                 <th style="min-width: 80px">Tiến độ</th>
-                                <th style="min-width: 70px;">Độ ưu tiên</th>
+                                <th style="min-width: 70px;">Ưu tiên</th>
                                 <th style="min-width: 100px">Trạng thái</th>
                                 <th style="min-width: 100px">Hạn</th>
                             </tr>

@@ -29,57 +29,66 @@
 <script setup>
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '../stores/user'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 
 import Sidebar from './Sidebar.vue'
 import Header from './Header.vue'
 import Content from './Content.vue'
-
-// const collapsed = ref(false)
-const collapsed = ref(true)
-const selectedKeys = ref(['1'])
-const userStore = useUserStore()
-const { user } = storeToRefs(userStore)
-
-const router = useRouter()
 import { logout } from '../api/auth'
 
-// Load collapsed state from localStorage on mount
+const collapsed = ref(true)              // Mặc định thu nhỏ lần đầu
+const selectedKeys = ref(['1'])
+
+const userStore = useUserStore()
+const { user } = storeToRefs(userStore)
+const router = useRouter()
+
 onMounted(() => {
-    // Nếu tồn tại key thì xóa luôn
-    if (localStorage.getItem('sidebarCollapsed') !== null) {
-        localStorage.removeItem('sidebarCollapsed')
+    // Chỉ override khi đã có giá trị lưu
+    const saved = localStorage.getItem('sidebarCollapsed')
+    if (saved !== null) {
+        try {
+            collapsed.value = JSON.parse(saved)
+        } catch {
+            // Nếu hỏng dữ liệu -> reset về mặc định thu nhỏ
+            collapsed.value = true
+            localStorage.removeItem('sidebarCollapsed')
+        }
     }
+
+    // (Tùy chọn) Sync trạng thái giữa nhiều tab
+    window.addEventListener('storage', onStorage)
 })
 
-// Toggle menu
+onBeforeUnmount(() => {
+    window.removeEventListener('storage', onStorage)
+})
+
+function onStorage(e) {
+    if (e.key === 'sidebarCollapsed' && e.newValue !== null) {
+        try {
+            collapsed.value = JSON.parse(e.newValue)
+        } catch {}
+    }
+}
+
 const toggleCollapsed = () => {
-    // collapsed.value = !collapsed.value
-    collapsed.value = true
-    // Save to localStorage
+    collapsed.value = !collapsed.value
     localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed.value))
 }
 
-// Check session user khi load layout
-// onMounted(async () => {
-//     await fetchUser()
-// })
-
-// Hàm fetch user từ API
-
-
-// Xử lý logout
 const handleLogout = async () => {
     try {
-        await logout();
-        user.value = null;
-        await router.push('/');
+        await logout()
+        user.value = null
+        await router.push('/')
     } catch (error) {
         console.error('Logout error:', error)
     }
 }
 </script>
+
 
 <style>
     .bg_card_gray {

@@ -1,6 +1,13 @@
 <template>
     <div class="header">
         <a-layout-header class="hdr">
+            <!-- Toggle -->
+            <div style="margin-left:16px;">
+                <a-button type="text" @click="$emit('toggle')" style="border:none; box-shadow:none;">
+                    <MenuFoldOutlined v-if="!collapsed"/>
+                    <MenuUnfoldOutlined v-else/>
+                </a-button>
+            </div>
             <!-- Breadcrumb -->
             <div class="hdr__crumb">
                 <a-breadcrumb :key="$route.fullPath" class="crumb">
@@ -118,9 +125,7 @@
                                                         </template>
                                                         <template #title>
                                                             <div class="item-title">
-                                                                <span class="fw-600">{{
-                                                                        item.author_name || 'Ẩn danh'
-                                                                    }}</span>
+                                                                <span class="fw-600">{{item.author_name || 'Ẩn danh'}}</span>
                                                                 <a-tag color="orange">Mới</a-tag>
                                                             </div>
                                                         </template>
@@ -163,9 +168,7 @@
                                                         </template>
                                                         <template #title>
                                                             <div class="item-title">
-                                                                <span class="fw-600">{{
-                                                                        item.author_name || 'Ẩn danh'
-                                                                    }}</span>
+                                                                <span class="fw-600">{{item.author_name || 'Ẩn danh' }}</span>
                                                             </div>
                                                         </template>
                                                         <template #description>
@@ -257,9 +260,7 @@
                                                         <template #description>
                                                             <div class="item-desc">
                                                                 <div>Gửi bởi: {{ item.submitted_by_name || '—' }}</div>
-                                                                <div class="meta-sub">{{
-                                                                        formatTime(item.submitted_at)
-                                                                    }}
+                                                                <div class="meta-sub">{{formatTime(item.submitted_at) }}
                                                                 </div>
                                                             </div>
                                                         </template>
@@ -291,9 +292,7 @@
                                                         <template #description>
                                                             <div class="item-desc">
                                                                 <div>Gửi bởi: {{ item.submitted_by_name || '—' }}</div>
-                                                                <div class="meta-sub">{{
-                                                                        formatTime(item.submitted_at)
-                                                                    }}
+                                                                <div class="meta-sub">{{formatTime(item.submitted_at) }}
                                                                 </div>
                                                             </div>
                                                         </template>
@@ -412,7 +411,7 @@ import {useCommonStore} from '@/stores/common'
 import {
     LogoutOutlined, UserOutlined, PlusOutlined, HomeOutlined, MessageOutlined,
     BellOutlined, SettingOutlined, QuestionCircleOutlined, BgColorsOutlined,
-    GlobalOutlined, KeyOutlined, IdcardOutlined, TeamOutlined
+    GlobalOutlined, KeyOutlined, IdcardOutlined, TeamOutlined, MenuFoldOutlined, MenuUnfoldOutlined
 } from '@ant-design/icons-vue'
 
 import ChangePasswordModal from '../components/common/ChangePasswordModal.vue'

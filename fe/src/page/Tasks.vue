@@ -186,7 +186,7 @@
         >
             <a-row :gutter="[14,14]" style="margin-top: 10px;">
                 <!-- Độ ưu tiên -->
-                <a-form-item label="Độ ưu tiên">
+                <a-form-item label="Ưu tiên">
                     <a-button-group style="width:100%; display:flex; gap:1px;">
                         <a-button
                             :type="dataFilter.priority === null ? 'primary' : 'default'"
@@ -404,7 +404,7 @@ const columns = [
         }
     },
     { title: 'Tên nhiệm vụ', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
-    { title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority' },
+    { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority' },
     { title: 'Người thực hiện', dataIndex: 'assigned_to', key: 'assigned_to', width: 120, align: 'center' },
     { title: 'Bắt đầu', dataIndex: 'start_date', key: 'start_date', align: 'center' },
     { title: 'Kết thúc', dataIndex: 'end_date', key: 'end_date', align: 'center' },
