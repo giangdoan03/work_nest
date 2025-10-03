@@ -102,6 +102,14 @@ $routes->group('api', function ($routes) {
     $routes->delete('task-files/(:num)', 'TaskFileController::delete/$1');
     $routes->get('bidding-steps/(:num)/task', 'BiddingStepController::getTaskByBiddingStep/$1');
 
+    // --- Task files: actions trên từng tài liệu ---
+    $routes->post('task-files/(:num)/update-meta',  'TaskFileController::updateMeta/$1');
+    $routes->post('task-files/(:num)/replace-file', 'TaskFileController::replaceFile/$1');
+    $routes->post('task-files/(:num)/approve',      'TaskFileController::approve/$1');
+    $routes->post('task-files/(:num)/reject',       'TaskFileController::reject/$1');
+    $routes->get('task-files/(:num)/download',      'TaskFileController::download/$1');
+    $routes->delete('task-files/(:num)',            'TaskFileController::delete/$1');
+
     $routes->get('bidding-steps/(:num)/tasks', 'TaskController::byBiddingStep/$1');
     $routes->get('contract-steps/(:num)/tasks', 'TaskController::byContractStep/$1');
 

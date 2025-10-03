@@ -146,6 +146,14 @@
                             <a-tooltip v-if="!item.is_link" title="Tải xuống">
                                 <a-button size="small" shape="circle" @click="downloadAttachment(item)"><DownloadOutlined/></a-button>
                             </a-tooltip>
+
+                            <!-- Nút gửi duyệt -->
+                            <a-tooltip v-if="!item.pending" title="Gửi duyệt tài liệu">
+                                <a-button size="small" shape="circle" type="primary" @click="openSendApproval(item)">
+                                    <SendOutlined />
+                                </a-button>
+                            </a-tooltip>
+
                             <a-tooltip title="Xoá">
                                 <a-button size="small" shape="circle" danger @click="removeAttachment(item)"><DeleteOutlined/></a-button>
                             </a-tooltip>
@@ -160,21 +168,52 @@
         </a-list>
 
         <a-empty v-else description="Chưa có tài liệu" />
+
+        <!-- ======= Modal: Gửi duyệt ======= -->
+        <a-modal
+            v-model:open="showSend"
+            title="Gửi duyệt tài liệu"
+            :confirm-loading="sending"
+            @ok="submitSendApproval"
+            @cancel="clearSendApproval"
+        >
+            <a-form layout="vertical">
+                <a-form-item label="Người duyệt" :validate-status="!sendForm.approver_ids.length ? 'error' : ''" :help="!sendForm.approver_ids.length ? 'Chọn ít nhất 1 người duyệt' : ''">
+                    <a-select
+                        v-model:value="sendForm.approver_ids"
+                        mode="multiple"
+                        show-search
+                        :options="approverOptions"
+                        placeholder="Chọn người duyệt"
+                        :filter-option="filterUser"
+                    />
+                </a-form-item>
+                <a-form-item label="Ghi chú (tuỳ chọn)">
+                    <a-textarea v-model:value="sendForm.note" :rows="3" placeholder="Thông tin bổ sung cho người duyệt"/>
+                </a-form-item>
+            </a-form>
+        </a-modal>
     </a-card>
 </template>
 
 <script setup>
 import {
     PaperClipOutlined, LinkOutlined, EyeOutlined, DownloadOutlined, DeleteOutlined,
-    FilePdfOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined, FileTextOutlined
+    FilePdfOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined, FileTextOutlined,
+    SendOutlined
 } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { useUserStore } from '@/stores/user'
 
-// APIs
-import { getTaskFilesAPI, deleteTaskFilesAPI } from '@/api/task'
+// APIs document
 import { uploadDocumentToWP, uploadDocumentLink } from '@/api/document'
+// Giữ nguyên fetch file theo task & delete như bạn đang dùng
+import { getTaskFilesAPI, deleteTaskFilesAPI } from '@/api/task'
+
+// API gửi duyệt + danh sách user
+import { sendApproval } from '@/api/approvals'
+import { getUsers } from '@/api/user'
 
 /* ====== PROPS ====== */
 const props = defineProps({
@@ -184,12 +223,22 @@ const props = defineProps({
 
 /* ====== STATE ====== */
 const store = useUserStore()
-const activeMode = ref('link')            // ƯU TIÊN LINK
+const activeMode = ref('link')
 const loadingUploadFile = ref(false)
-const fileList = ref([])                  // từ server (đã lưu)
-const pendingFiles = ref([])              // file chờ upload (local)
+const fileList = ref([])
+const pendingFiles = ref([])
 const manualLink = reactive({ title: '', url: '' })
 const thumbH = 96
+
+// Gửi duyệt
+const showSend = ref(false)
+const sending = ref(false)
+const sendingItem = ref(null)
+const sendForm = reactive({
+    approver_ids: [],
+    note: ''
+})
+const approverOptions = ref([])
 
 /* ====== HELPERS ====== */
 const IMAGE_EXTS = new Set(['jpg','jpeg','png','gif','webp','bmp','svg'])
@@ -245,7 +294,6 @@ function favicon(u) {
         return `https://www.google.com/s2/favicons?domain=${host}&sz=64`
     } catch { return '' }
 }
-
 function hideBrokenFavicon(e) {
     if (e?.target) e.target.style.opacity = 0
 }
@@ -295,7 +343,6 @@ const attachmentCards = computed(() => {
         }
     })
 
-    // Pending trước để người dùng thấy ngay các file vừa chọn
     return [...pendingItems, ...serverItems]
 })
 
@@ -362,7 +409,6 @@ async function submitUpload() {
         loadingUploadFile.value = false
     }
 }
-
 function trySubmitUpload() {
     if (canSubmitUpload.value && !loadingUploadFile.value) submitUpload()
 }
@@ -386,7 +432,6 @@ async function submitLink() {
         message.error('Lưu link thất bại.')
     }
 }
-
 function trySubmitLink() {
     if (canSubmitLink.value) submitLink()
 }
@@ -395,13 +440,11 @@ function openAttachment(it) { window.open(it.url, '_blank', 'noopener') }
 function downloadAttachment(it) { window.open(it.url, '_blank', 'noopener') }
 
 async function removeAttachment(it) {
-    // Xoá local (pending)
     if (it._source === 'pending') {
         const i = pendingFiles.value.findIndex(p => p === it.full)
         if (i >= 0) pendingFiles.value.splice(i, 1)
         return
     }
-    // Xoá server
     try {
         await deleteTaskFilesAPI(it.full.id)
         await fetchTaskFiles()
@@ -409,6 +452,54 @@ async function removeAttachment(it) {
     } catch (e) {
         console.error(e)
         message.error('Xoá thất bại.')
+    }
+}
+
+/* ====== GỬI DUYỆT ====== */
+function filterUser(input, option) {
+    return option?.label?.toLowerCase?.().includes?.(input.toLowerCase())
+}
+async function loadApprovers() {
+    try {
+        const res = await getUsers()
+        const arr = Array.isArray(res?.data) ? res.data : []
+        approverOptions.value = arr.map(u => ({ value: String(u.id), label: u.name || u.email || `#${u.id}` }))
+    } catch (e) {
+        approverOptions.value = []
+    }
+}
+function openSendApproval(item) {
+    sendingItem.value = item
+    showSend.value = true
+    sendForm.approver_ids = []
+    sendForm.note = ''
+    loadApprovers()
+}
+function clearSendApproval() {
+    showSend.value = false
+    sendingItem.value = null
+    sendForm.approver_ids = []
+    sendForm.note = ''
+}
+async function submitSendApproval() {
+    if (!sendForm.approver_ids.length) {
+        return message.error('Vui lòng chọn ít nhất 1 người duyệt.')
+    }
+    try {
+        sending.value = true
+        await sendApproval({
+            target_type: 'document',
+            target_id: sendingItem.value.id,
+            approver_ids: sendForm.approver_ids.map(id => Number(id)),
+            note: sendForm.note || ''
+        })
+        message.success('Đã gửi duyệt tài liệu.')
+        clearSendApproval()
+    } catch (e) {
+        console.error(e)
+        message.error('Gửi duyệt thất bại.')
+    } finally {
+        sending.value = false
     }
 }
 

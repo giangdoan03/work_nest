@@ -38,6 +38,7 @@ class ApprovalController extends ResourceController
             'bidding_step'   => 'bidding_steps',
             'contract_step'  => 'contract_steps',
             'task'           => 'tasks',
+            'document'           => 'document',
             default          => null,
         };
     }
@@ -243,7 +244,7 @@ class ApprovalController extends ResourceController
     /** Gửi duyệt (khởi động phiên active mới hoặc reset phiên active hiện tại)
      * @throws ReflectionException
      */
-    public function send()
+    public function send(): ResponseInterface
     {
         $payload = $this->request->getJSON(true) ?? $this->request->getPost();
         $type = (string) ($payload['target_type'] ?? '');
@@ -636,6 +637,7 @@ class ApprovalController extends ResourceController
             case 'contract_step':
             case 'bidding_step':
             case 'task':
+            case 'document':
             case 'contract':
                 return true;
             default:

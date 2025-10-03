@@ -215,6 +215,7 @@ class DocumentController extends ResourceController
                 $tf = new TaskFileModel();
                 $taskFileId = $tf->insert([
                     'task_id' => (int)$taskId,
+                    'document_id'   => (int)$docId,
                     'title' => $title,
                     'file_name' => basename($path) ?: null,
                     'file_path' => null,          // không có file thực

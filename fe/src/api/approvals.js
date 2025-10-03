@@ -18,8 +18,13 @@ export const getApproval = (id) =>
     instance.get(`/approvals/${id}`)
 
 // 🔹 Gửi duyệt (tạo mới phiên)
-export const sendApproval = (data) =>
-    instance.post('/approvals/send', data)
+export const sendApproval = ({ target_type, target_id, approver_ids = [], note = '' }) =>
+    instance.post('/approvals/send', {
+        target_type,
+        target_id: Number(target_id),
+        approver_ids: approver_ids.map(n => Number(n)),
+        note
+    })
 // data = { target_type: 'bidding', target_id: 123, approver_ids: [5,8] }
 
 // 🔹 Phê duyệt / từ chối
