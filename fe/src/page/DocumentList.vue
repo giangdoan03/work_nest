@@ -1,61 +1,84 @@
 <template>
     <div>
+        <!-- Filters -->
         <a-space style="margin-bottom: 16px" direction="vertical" size="middle">
             <a-space>
                 <a-select
-                        v-model:value="filters.department_id"
-                        style="width: 200px"
-                        placeholder="Phòng ban"
-                        :options="departments"
-                        allowClear
+                    v-model:value="filters.department_id"
+                    style="width: 220px"
+                    placeholder="Phòng ban"
+                    :options="departments"
+                    allowClear
                 />
                 <a-range-picker
-                        v-model:value="filters.dateRange"
-                        :placeholder="['Từ ngày', 'Đến ngày']"
-                        :getPopupContainer="triggerNode => triggerNode.parentNode"
+                    v-model:value="filters.dateRange"
+                    :placeholder="['Từ ngày', 'Đến ngày']"
+                    :getPopupContainer="triggerNode => triggerNode.parentNode"
                 />
                 <a-input
-                        v-model:value="filters.title"
-                        placeholder="Tìm theo tiêu đề"
-                        style="width: 200px"
-                        @pressEnter="fetchDocuments"
+                    v-model:value="filters.title"
+                    placeholder="Tìm theo tiêu đề"
+                    style="width: 240px"
+                    @pressEnter="fetchDocuments"
                 />
                 <a-button type="primary" @click="fetchDocuments">Tìm kiếm</a-button>
             </a-space>
         </a-space>
 
+        <!-- Table -->
         <a-table
-                :columns="columns"
-                :data-source="documents"
-                :pagination="pagination"
-                :loading="loading"
-                row-key="id"
-                @change="handleTableChange"
+            :columns="columns"
+            :data-source="documents"
+            :pagination="pagination"
+            :loading="loading"
+            row-key="id"
+            @change="handleTableChange"
         >
             <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'action'">
                     <a-space>
-                        <a-button type="link" @click="viewDoc(record)">
-                            <EyeOutlined />
-                        </a-button>
-<!--                        <a-button type="link" @click="downloadDocument(record)">-->
-<!--                            <DownloadOutlined />-->
-<!--                        </a-button>-->
-                        <a-button type="link" @click="editDocument(record.id)">
-                            <EditOutlined />
-                        </a-button>
-                        <a-popconfirm title="Xác nhận xoá?" @confirm="deleteDoc(record.id)">
-                            <a-button type="link" danger>
-                                <DeleteOutlined />
+                        <!-- Đi tới trang chi tiết -->
+                        <a-tooltip title="Xem chi tiết">
+                            <a-button type="link" @click="goDetail(record)">
+                                <EyeOutlined />
                             </a-button>
+                        </a-tooltip>
+
+                        <!-- Mở link gốc -->
+                        <a-tooltip title="Mở link gốc">
+                            <a-button type="link" @click="openOriginal(record)" :disabled="!record.file_path">
+                                <ExportOutlined />
+                            </a-button>
+                        </a-tooltip>
+
+                        <!-- Sao chép link -->
+                        <a-tooltip title="Sao chép link">
+                            <a-button type="link" @click="copyLink(record)" :disabled="!record.file_path">
+                                <CopyOutlined />
+                            </a-button>
+                        </a-tooltip>
+
+                        <!-- Sửa -->
+                        <a-tooltip title="Sửa">
+                            <a-button type="link" @click="editDocument(record.id)">
+                                <EditOutlined />
+                            </a-button>
+                        </a-tooltip>
+
+                        <!-- Xoá -->
+                        <a-popconfirm title="Xác nhận xoá?" @confirm="deleteDoc(record.id)">
+                            <a-tooltip title="Xoá">
+                                <a-button type="link" danger>
+                                    <DeleteOutlined />
+                                </a-button>
+                            </a-tooltip>
                         </a-popconfirm>
                     </a-space>
                 </template>
             </template>
-
-
         </a-table>
 
+        <!-- Edit modal -->
         <a-modal
             v-model:open="editModalVisible"
             title="Chỉnh sửa tài liệu"
@@ -92,156 +115,195 @@
                 </a-form-item>
             </a-form>
         </a-modal>
-
     </div>
 </template>
 
 <script setup>
-    import { ref, onMounted } from 'vue'
-    import { message } from 'ant-design-vue'
-    import { getDocuments, deleteDocument } from '../api/document'
-    import {
-        EyeOutlined,
-        DownloadOutlined,
-        EditOutlined,
-        DeleteOutlined,
-    } from '@ant-design/icons-vue'
+import { ref, onMounted, h } from 'vue'
+import { useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
+import { getDocuments, deleteDocument, updateDocument } from '../api/document'
+import {
+    EyeOutlined,
+    EditOutlined,
+    DeleteOutlined,
+    ExportOutlined,
+    CopyOutlined,
+} from '@ant-design/icons-vue'
 
-    const documents = ref([])
-    const loading = ref(false)
-    const pagination = ref({ current: 1, pageSize: 10, total: 0 })
-    const filters = ref({
-        department_id: null,
-        dateRange: [],
-        title: ''
-    })
-    const departments = ref([
-        { label: 'Nhân sự', value: 1 },
-        { label: 'Kinh doanh', value: 2 }
-    ])
+const router = useRouter()
 
-    const columns = [
-        { title: '#', dataIndex: 'id', key: 'id' },
-        { title: 'Tiêu đề', dataIndex: 'title', key: 'title' },
-        { title: 'Phòng ban', dataIndex: 'department_name', key: 'department_name' },
-        { title: 'Người upload', dataIndex: 'uploader_name', key: 'uploader_name' },
-        { title: 'Ngày upload', dataIndex: 'created_at', key: 'created_at' },
-        { title: 'Quyền truy cập', dataIndex: 'visibility', key: 'visibility' },
-        { title: 'Tác vụ', key: 'action' },
-    ]
+// ===== State =====
+const documents = ref([])
+const loading = ref(false)
+const pagination = ref({ current: 1, pageSize: 10, total: 0 })
+const filters = ref({
+    department_id: null,
+    dateRange: [],
+    title: ''
+})
+const departments = ref([
+    { label: 'Nhân sự', value: 1 },
+    { label: 'Kinh doanh', value: 2 }
+])
 
-    const fetchDocuments = async () => {
-        loading.value = true
-        try {
-            const params = {
-                page: pagination.value.current,
-                per_page: pagination.value.pageSize,
-                department_id: filters.value.department_id,
-                title: filters.value.title,
-            }
+// ===== Helpers =====
+const baseURL = import.meta.env.VITE_API_URL
+const safeUrl = (p = '') => {
+    if (!p) return ''
+    const path = String(p).trim()
+    return /^https?:\/\//i.test(path) ? path : `${baseURL}/${path}`
+}
+const normalizeUrl = (u = '') => {
+    const s = u.trim()
+    if (!s) return ''
+    return /^https?:\/\//i.test(s) ? s : `https://${s}`
+}
 
-            if (filters.value.dateRange.length === 2) {
-                params.created_from = filters.value.dateRange[0].format('YYYY-MM-DD')
-                params.created_to = filters.value.dateRange[1].format('YYYY-MM-DD')
-            }
+// tag màu cho visibility
+const visColor = v => ({
+    private: 'red', department: 'blue', custom: 'gold', public: 'green'
+}[String(v || '').toLowerCase()] || 'default')
 
-            const res = await getDocuments(params)
-            documents.value = res.data.data || res.data
-            pagination.value.total = res.data.pager?.total || res.data.length || 0
-        } catch (e) {
-            message.error('Lỗi tải danh sách tài liệu')
-        } finally {
-            loading.value = false
+// ===== Columns =====
+const columns = [
+    { title: '#', dataIndex: 'id', key: 'id', width: 70 },
+    { title: 'Tiêu đề', dataIndex: 'title', key: 'title' },
+    { title: 'Phòng ban', dataIndex: 'department_name', key: 'department_name' },
+    { title: 'Người upload', dataIndex: 'uploader_name', key: 'uploader_name' },
+    { title: 'Ngày upload', dataIndex: 'created_at', key: 'created_at' },
+    {
+        title: 'Quyền truy cập', dataIndex: 'visibility', key: 'visibility',
+        customRender: ({ text }) => h('a-tag', { color: visColor(text) }, () => text || 'private')
+    },
+    { title: 'Tác vụ', key: 'action', width: 220 },
+]
+
+// ===== API =====
+const fetchDocuments = async () => {
+    loading.value = true
+    try {
+        const params = {
+            page: pagination.value.current,
+            per_page: pagination.value.pageSize,
+            department_id: filters.value.department_id,
+            title: filters.value.title,
         }
+        if (Array.isArray(filters.value.dateRange) && filters.value.dateRange.length === 2) {
+            const [from, to] = filters.value.dateRange
+            params.created_from = from?.format?.('YYYY-MM-DD')
+            params.created_to   = to?.format?.('YYYY-MM-DD')
+        }
+        const res = await getDocuments(params)
+        documents.value = res?.data?.data || res?.data || []
+        pagination.value.total = res?.data?.pager?.total ?? (Array.isArray(res?.data) ? res.data.length : 0)
+    } catch (e) {
+        console.error(e)
+        message.error('Lỗi tải danh sách tài liệu')
+    } finally {
+        loading.value = false
     }
+}
 
-    const handleTableChange = (p) => {
-        pagination.value.current = p.current
-        pagination.value.pageSize = p.pageSize
-        fetchDocuments()
-    }
+const handleTableChange = (p) => {
+    pagination.value.current = p.current
+    pagination.value.pageSize = p.pageSize
+    fetchDocuments()
+}
 
-
-    const deleteDoc = async (id) => {
-        try {
-            await deleteDocument(id)
-            message.success('Đã xoá tài liệu')
+const deleteDoc = async (id) => {
+    try {
+        await deleteDocument(id)
+        message.success('Đã xoá tài liệu')
+        await fetchDocuments()
+        // nếu trang hiện tại rỗng -> lùi 1 trang
+        if (!documents.value.length && pagination.value.current > 1) {
+            pagination.value.current--
             await fetchDocuments()
-        } catch (e) {
-            message.error('Xoá thất bại')
         }
+    } catch (e) {
+        console.error(e)
+        message.error('Xoá thất bại')
     }
+}
 
-    const viewDocument = (id) => {
-        router.push(`/documents/${id}`) // hoặc route phù hợp
-    }
-    const downloadDocument = (record) => {
-        window.open(import.meta.env.VITE_API_URL + '/' + record.file_path, '_blank')
-    }
+// ===== Điều hướng tới trang chi tiết =====
+const goDetail = (doc) => {
+    if (!doc?.id) return
+    router.push({ name: 'document.detail', params: { id: doc.id } })
+}
 
-    const baseURL = import.meta.env.VITE_API_URL
-
-    const viewDoc = (doc) => {
-        const url = doc.file_path.startsWith('http')
-            ? doc.file_path
-            : `${baseURL}/${doc.file_path}`
-        window.open(url, '_blank')
-    }
-
-
-    import { updateDocument } from '../api/document' // giả sử bạn có API này
-
-    const editModalVisible = ref(false)
-    const editLoading = ref(false)
-
-    const editForm = ref({
-        id: null,
-        title: '',
-        department_id: null,
-        file_path: '',
-        visibility: 'private'
-    })
-
-    const editDocument = (id) => {
-        const doc = documents.value.find(d => d.id === id)
-        if (!doc) return
-
-        editForm.value = {
-            id: doc.id,
-            title: doc.title,
-            department_id: doc.department_id,
-            file_path: doc.file_path,
-            visibility: doc.visibility
+// ===== Mở link gốc / Sao chép link =====
+const openOriginal = (doc) => {
+    const url = safeUrl(doc?.file_path || '')
+    if (!url) return
+    window.open(url, '_blank', 'noopener')
+}
+const copyLink = async (doc) => {
+    const url = safeUrl(doc?.file_path || '')
+    if (!url) return
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(url)
+        } else {
+            const input = document.createElement('input')
+            input.value = url
+            document.body.appendChild(input)
+            input.select()
+            document.execCommand('copy')
+            document.body.removeChild(input)
         }
-
-        editModalVisible.value = true
+        message.success('Đã sao chép link vào clipboard!')
+    } catch {
+        message.error('Không sao chép được link.')
     }
+}
 
-    const submitEdit = async () => {
-        editLoading.value = true
-        try {
-            const { id, ...data } = editForm.value
-            await updateDocument(id, data)
-            message.success('Cập nhật thành công')
-            await fetchDocuments()
-            editModalVisible.value = false
-        } catch (e) {
-            message.error('Cập nhật thất bại')
-        } finally {
-            editLoading.value = false
-        }
+// ===== Edit modal =====
+const editModalVisible = ref(false)
+const editLoading = ref(false)
+const editForm = ref({
+    id: null,
+    title: '',
+    department_id: null,
+    file_path: '',
+    visibility: 'private'
+})
+
+const editDocument = (id) => {
+    const doc = documents.value.find(d => d.id === id)
+    if (!doc) return
+    editForm.value = {
+        id: doc.id,
+        title: doc.title,
+        department_id: doc.department_id,
+        file_path: doc.file_path,
+        visibility: doc.visibility || 'private'
     }
+    editModalVisible.value = true
+}
 
-    const resetEditForm = () => {
-        editForm.value = {
-            id: null,
-            title: '',
-            department_id: null,
-            file_path: '',
-            visibility: 'private'
-        }
+const submitEdit = async () => {
+    editLoading.value = true
+    try {
+        const { id, ...data } = editForm.value
+        data.file_path = normalizeUrl(data.file_path) // chuẩn hoá link
+        await updateDocument(id, data)
+        message.success('Cập nhật thành công')
+        await fetchDocuments()
         editModalVisible.value = false
+    } catch (e) {
+        console.error(e)
+        message.error('Cập nhật thất bại')
+    } finally {
+        editLoading.value = false
     }
+}
 
-    onMounted(fetchDocuments)
+const resetEditForm = () => {
+    editForm.value = { id: null, title: '', department_id: null, file_path: '', visibility: 'private' }
+    editModalVisible.value = false
+}
+
+onMounted(fetchDocuments)
 </script>

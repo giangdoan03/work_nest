@@ -28,6 +28,7 @@ class ApprovalInboxController extends ResourceController
             'bidding_step' => "/biddings/$id/steps/$stepId/tasks",
             'contract' => "/contracts/$id/info",
             'contract_step' => "/contracts/$id/steps/$stepId/tasks",
+            'document'      => "/documents/$id",
             default => "/$type/$id",
         };
     }
@@ -49,36 +50,41 @@ class ApprovalInboxController extends ResourceController
 
         // ===== ITEMS =====
         $sql = "
-    SELECT
-        ai.id AS instance_id,
-        ai.target_type,
-        ai.target_id,
-        ai.submitted_at,
-        ai.submitted_by,
-        COALESCE(JSON_UNQUOTE(JSON_EXTRACT(ai.meta_json, '$.title')), CONCAT(UPPER(ai.target_type), ' #', ai.target_id)) AS title,
-        COALESCE(JSON_UNQUOTE(JSON_EXTRACT(ai.meta_json, '$.url')),
-          CASE ai.target_type
-              WHEN 'task'          THEN CONCAT('/tasks/', ai.target_id, '/info')
-              WHEN 'bidding'       THEN CONCAT('/biddings/', ai.target_id, '/info')
-              WHEN 'bidding_step'  THEN CONCAT('/biddings/', ai.target_id, '/steps/', s.id, '/tasks')
-              WHEN 'contract'      THEN CONCAT('/contracts/', ai.target_id, '/info')
-              WHEN 'contract_step' THEN CONCAT('/contracts/', ai.target_id, '/steps/', s.id, '/tasks')
-              ELSE CONCAT('/', ai.target_type, '/', ai.target_id)
-          END
-        ) AS url,
-        s.id AS step_id,
-        s.level AS level_now,
-        (SELECT COUNT(*) FROM approval_steps s2 WHERE s2.approval_instance_id = ai.id) AS total_steps,
-        u.name AS submitted_by_name
-    FROM approval_instances ai
-    JOIN approval_steps s
-      ON s.approval_instance_id = ai.id
-     AND s.level = ai.current_level + 1
-    LEFT JOIN users u ON u.id = ai.submitted_by
-    WHERE ai.status = 'pending'
-      AND s.status = 'pending'
-      AND ai.target_type IN ?
-    ";
+SELECT
+    ai.id AS instance_id,
+    ai.target_type,
+    ai.target_id,
+    ai.submitted_at,
+    ai.submitted_by,
+    COALESCE(
+        JSON_UNQUOTE(JSON_EXTRACT(ai.meta_json, '$.title')),
+        CONCAT(UPPER(ai.target_type), ' #', ai.target_id)
+    ) AS title,
+    COALESCE(
+        JSON_UNQUOTE(JSON_EXTRACT(ai.meta_json, '$.url')),
+        CASE ai.target_type
+            WHEN 'task'          THEN CONCAT('/tasks/', ai.target_id, '/info')
+            WHEN 'bidding'       THEN CONCAT('/biddings/', ai.target_id, '/info')
+            WHEN 'bidding_step'  THEN CONCAT('/biddings/', ai.target_id, '/steps/', s.id, '/tasks')
+            WHEN 'contract'      THEN CONCAT('/contracts/', ai.target_id, '/info')
+            WHEN 'contract_step' THEN CONCAT('/contracts/', ai.target_id, '/steps/', s.id, '/tasks')
+            WHEN 'document'      THEN CONCAT('/documents/', ai.target_id)
+            ELSE CONCAT('/', ai.target_type, '/', ai.target_id)
+        END
+    ) AS url,
+    s.id AS step_id,
+    s.level AS level_now,
+    (SELECT COUNT(*) FROM approval_steps s2 WHERE s2.approval_instance_id = ai.id) AS total_steps,
+    u.name AS submitted_by_name
+FROM approval_instances ai
+JOIN approval_steps s
+  ON s.approval_instance_id = ai.id
+ AND s.level = ai.current_level + 1
+LEFT JOIN users u ON u.id = ai.submitted_by
+WHERE ai.status = 'pending'
+  AND s.status = 'pending'
+  AND ai.target_type IN ?
+";
 
         $params = [$targetTypes];
 
@@ -113,37 +119,43 @@ class ApprovalInboxController extends ResourceController
 
         // ===== ITEMS =====
         $sql = "
-    SELECT
-        ai.id AS instance_id,
-        ai.target_type,
-        ai.target_id,
-        ai.submitted_at,
-        ai.submitted_by,
-        COALESCE(JSON_UNQUOTE(JSON_EXTRACT(ai.meta_json, '$.title')), CONCAT(UPPER(ai.target_type), ' #', ai.target_id)) AS title,
-        COALESCE(JSON_UNQUOTE(JSON_EXTRACT(ai.meta_json, '$.url')),
-          CASE ai.target_type
-              WHEN 'task'          THEN CONCAT('/tasks/', ai.target_id, '/info')
-              WHEN 'bidding'       THEN CONCAT('/biddings/', ai.target_id, '/info')
-              WHEN 'bidding_step'  THEN CONCAT('/biddings/', ai.target_id, '/steps/', s.id, '/tasks')
-              WHEN 'contract'      THEN CONCAT('/contracts/', ai.target_id, '/info')
-              WHEN 'contract_step' THEN CONCAT('/contracts/', ai.target_id, '/steps/', s.id, '/tasks')
-              ELSE CONCAT('/', ai.target_type, '/', ai.target_id)
-          END
-        ) AS url,
-        s.id AS step_id,
-        s.level AS level_now,
-        (SELECT COUNT(*) FROM approval_steps s2 WHERE s2.approval_instance_id = ai.id) AS total_steps,
-        u.name AS submitted_by_name,
-        s.status AS step_status,
-        s.updated_at AS acted_at
-    FROM approval_instances ai
-    JOIN approval_steps s
-      ON s.approval_instance_id = ai.id
-    LEFT JOIN users u ON u.id = ai.submitted_by
-    WHERE ai.target_type IN ?
-      AND ai.status IN ('approved','rejected')
-      AND s.status IN ('approved','rejected')
-    ";
+SELECT
+    ai.id AS instance_id,
+    ai.target_type,
+    ai.target_id,
+    ai.submitted_at,
+    ai.submitted_by,
+    COALESCE(
+        JSON_UNQUOTE(JSON_EXTRACT(ai.meta_json, '$.title')),
+        CONCAT(UPPER(ai.target_type), ' #', ai.target_id)
+    ) AS title,
+    COALESCE(
+        JSON_UNQUOTE(JSON_EXTRACT(ai.meta_json, '$.url')),
+        CASE ai.target_type
+            WHEN 'task'          THEN CONCAT('/tasks/', ai.target_id, '/info')
+            WHEN 'bidding'       THEN CONCAT('/biddings/', ai.target_id, '/info')
+            WHEN 'bidding_step'  THEN CONCAT('/biddings/', ai.target_id, '/steps/', s.id, '/tasks')
+            WHEN 'contract'      THEN CONCAT('/contracts/', ai.target_id, '/info')
+            WHEN 'contract_step' THEN CONCAT('/contracts/', ai.target_id, '/steps/', s.id, '/tasks')
+            WHEN 'document'      THEN CONCAT('/documents/', ai.target_id)
+            ELSE CONCAT('/', ai.target_type, '/', ai.target_id)
+        END
+    ) AS url,
+    s.id AS step_id,
+    s.level AS level_now,
+    (SELECT COUNT(*) FROM approval_steps s2 WHERE s2.approval_instance_id = ai.id) AS total_steps,
+    u.name AS submitted_by_name,
+    s.status AS step_status,
+    s.updated_at AS acted_at
+FROM approval_instances ai
+JOIN approval_steps s
+  ON s.approval_instance_id = ai.id
+LEFT JOIN users u ON u.id = ai.submitted_by
+WHERE ai.target_type IN ?
+  AND ai.status IN ('approved','rejected')
+  AND s.status IN ('approved','rejected')
+";
+
 
         $params = [$targetTypes];
 
@@ -178,7 +190,7 @@ class ApprovalInboxController extends ResourceController
         $page = max(1, (int)$this->request->getGet('page') ?: 1);
         $offset = ($page - 1) * $per;
 
-        $allowed = ['bidding', 'contract', 'bidding_step', 'contract_step', 'task'];
+        $allowed = ['bidding', 'contract', 'bidding_step', 'contract_step', 'task', 'document'];
         $targetCsv = trim((string)$this->request->getGet('target_types'));
         $targetTypes = $targetCsv !== ''
             ? array_values(array_intersect(array_map('trim', explode(',', $targetCsv)), $allowed))
@@ -212,22 +224,28 @@ class ApprovalInboxController extends ResourceController
     public function unreadCount(): ResponseInterface
     {
         $uid = (int)(session()->get('user_id') ?? 0);
-        if ($uid <= 0) {
-            return $this->failUnauthorized('Chưa đăng nhập.');
-        }
+        if ($uid <= 0) return $this->failUnauthorized('Chưa đăng nhập.');
+
+        // cùng allowed như index()
+        $allowed = ['bidding','contract','bidding_step','contract_step','task','document'];
+        $targetCsv = trim((string)$this->request->getGet('target_types'));
+        $targetTypes = $targetCsv !== ''
+            ? array_values(array_intersect(array_map('trim', explode(',', $targetCsv)), $allowed))
+            : $allowed;
 
         $row = $this->db->query("
-            SELECT COUNT(*) AS cnt
-            FROM approval_instances ai
-            JOIN approval_steps s
-              ON s.approval_instance_id = ai.id AND s.level = ai.current_level + 1
-            WHERE ai.status='pending'
-              AND s.status='pending'
-              AND s.approver_id=?
-              AND NOT EXISTS (
-                  SELECT 1 FROM approval_reads r WHERE r.step_id = s.id AND r.user_id = ?
-              )
-        ", [$uid, $uid])->getRowArray();
+        SELECT COUNT(*) AS cnt
+        FROM approval_instances ai
+        JOIN approval_steps s
+          ON s.approval_instance_id = ai.id AND s.level = ai.current_level + 1
+        WHERE ai.status='pending'
+          AND s.status='pending'
+          AND s.approver_id=?
+          AND ai.target_type IN ?
+          AND NOT EXISTS (
+              SELECT 1 FROM approval_reads r WHERE r.step_id = s.id AND r.user_id = ?
+          )
+    ", [$uid, $targetTypes, $uid])->getRowArray();
 
         return $this->respond(['unread' => (int)($row['cnt'] ?? 0)]);
     }

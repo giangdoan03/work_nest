@@ -14,7 +14,6 @@
                     v-model:value="filterTitle"
                     placeholder="Lọc theo tiêu đề"
                     style="min-width: 200px"
-                    @input="fetchDocuments"
                 />
                 <a-button ref="uploadBtn" type="primary" @click="showUploadModal">
                     Upload tài liệu
@@ -22,10 +21,10 @@
             </a-space>
         </a-space>
 
-        <!-- Modal thêm tài liệu -->
+        <!-- Modal thêm / sửa tài liệu -->
         <a-modal
             v-model:open="uploadVisible"
-            title="Thêm tài liệu"
+            :title="isEditMode ? 'Sửa tài liệu' : 'Thêm tài liệu'"
             @ok="submitUpload"
             @cancel="closeModal"
             :destroyOnClose="true"
@@ -76,7 +75,7 @@
             </a-form>
         </a-modal>
 
-        <!-- Modal xem chi tiết tài liệu -->
+        <!-- Modal xem nhanh chi tiết -->
         <a-modal
             v-model:open="detailVisible"
             title="Chi tiết tài liệu"
@@ -90,16 +89,14 @@
                 <a-descriptions-item label="Ngày upload">{{ selectedDoc.created_at }}</a-descriptions-item>
                 <a-descriptions-item label="Chế độ chia sẻ">{{ selectedDoc.visibility }}</a-descriptions-item>
                 <a-descriptions-item label="Link tài liệu">
-                    <a :href="selectedDoc.file_path.startsWith('http') ? selectedDoc.file_path : `${baseURL}/${selectedDoc.file_path}`" target="_blank">
-                        Mở link
-                    </a>
+                    <a :href="safeUrl(selectedDoc.file_path)" target="_blank">Mở link</a>
                 </a-descriptions-item>
             </a-descriptions>
         </a-modal>
 
         <a-table
             :columns="columns"
-            :data-source="documents"
+            :data-source="filteredDocs"
             row-key="id"
             :loading="loading"
             :pagination="{ pageSize: 10 }"
@@ -107,24 +104,35 @@
             <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'action'">
                     <a-space>
-                        <a-tooltip title="Mở tài liệu">
-                            <a-button type="link" @click="viewDoc(record)" :disabled="!record.file_path">
+                        <!-- Đi tới trang chi tiết -->
+                        <a-tooltip title="Xem chi tiết">
+                            <a-button type="link" @click="goDetail(record)">
                                 <EyeOutlined />
                             </a-button>
                         </a-tooltip>
 
-                        <a-tooltip title="Chi tiết">
+                        <!-- Xem nhanh trong modal -->
+                        <a-tooltip title="Xem nhanh">
                             <a-button type="link" @click="openDetailModal(record)">
                                 <InfoCircleOutlined />
                             </a-button>
                         </a-tooltip>
 
+                        <!-- Mở link gốc -->
+                        <a-tooltip title="Mở link gốc">
+                            <a-button type="link" @click="openOriginal(record)" :disabled="!record.file_path">
+                                <ExportOutlined />
+                            </a-button>
+                        </a-tooltip>
+
+                        <!-- Sao chép link -->
                         <a-tooltip title="Sao chép link">
                             <a-button type="link" @click="copyLink(record)" :disabled="!record.file_path">
                                 <CopyOutlined />
                             </a-button>
                         </a-tooltip>
 
+                        <!-- Sửa -->
                         <a-tooltip title="Sửa">
                             <a-button type="link" @click="editDoc(record)">
                                 <EditOutlined />
@@ -132,20 +140,28 @@
                         </a-tooltip>
                     </a-space>
                 </template>
-
             </template>
         </a-table>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
-import { getDocumentsByDepartment } from '../api/document'
+import { ref, onMounted, nextTick, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { getDocumentsByDepartment, uploadDocument, updateDocument } from '@/api/document'
 import { message } from 'ant-design-vue'
-import { EyeOutlined, CopyOutlined, InfoCircleOutlined, EditOutlined } from '@ant-design/icons-vue'
-import { uploadDocument, updateDocument } from '@/api/document'
+import {
+    EyeOutlined,
+    CopyOutlined,
+    InfoCircleOutlined,
+    EditOutlined,
+    ExportOutlined
+} from '@ant-design/icons-vue'
 
+const router = useRouter()
 const baseURL = import.meta.env.VITE_API_URL
+
+/* ===== State ===== */
 const documents = ref([])
 const selectedDept = ref(null)
 const loading = ref(false)
@@ -153,31 +169,10 @@ const filterTitle = ref('')
 const detailVisible = ref(false)
 const selectedDoc = ref(null)
 
-const departmentOptions = ref([
-    { label: 'Phòng Hành chính - Nhân sự', value: 1 },
-    { label: 'Phòng Tài chính - Kế toán', value: 2 },
-    { label: 'Phòng Thương mại', value: 3 },
-    { label: 'Phòng Dịch vụ - Kỹ thuật', value: 4 },
-])
-
-const userOptions = ref([
-    { label: 'Nguyễn Văn A', value: 5 },
-    { label: 'Trần Thị B', value: 8 },
-    { label: 'Phạm Văn C', value: 12 },
-])
-
-const columns = [
-    { title: '#', dataIndex: 'id', key: 'id', width: 50 },
-    { title: 'Tiêu đề', dataIndex: 'title', key: 'title' },
-    { title: 'Phòng ban', dataIndex: 'department_name', key: 'department_name' },
-    { title: 'Người upload', dataIndex: 'uploader_name', key: 'uploader_name' },
-    { title: 'Ngày upload', dataIndex: 'created_at', key: 'created_at' },
-    { title: 'Quyền truy cập', dataIndex: 'visibility', key: 'visibility' },
-    { title: 'Tác vụ', key: 'action', width: 100 },
-]
-
 const uploadVisible = ref(false)
 const uploadBtn = ref(null)
+const isEditMode = ref(false)
+const editingDocId = ref(null)
 
 const uploadForm = ref({
     title: '',
@@ -188,6 +183,90 @@ const uploadForm = ref({
     shared_departments: [],
 })
 
+/* ===== Options (mock) ===== */
+const departmentOptions = ref([
+    { label: 'Phòng Hành chính - Nhân sự', value: 1 },
+    { label: 'Phòng Tài chính - Kế toán', value: 2 },
+    { label: 'Phòng Thương mại', value: 3 },
+    { label: 'Phòng Dịch vụ - Kỹ thuật', value: 4 },
+])
+const userOptions = ref([
+    { label: 'Nguyễn Văn A', value: 5 },
+    { label: 'Trần Thị B', value: 8 },
+    { label: 'Phạm Văn C', value: 12 },
+])
+
+/* ===== Table ===== */
+const columns = [
+    { title: '#', dataIndex: 'id', key: 'id', width: 50 },
+    { title: 'Tiêu đề', dataIndex: 'title', key: 'title' },
+    { title: 'Phòng ban', dataIndex: 'department_name', key: 'department_name' },
+    { title: 'Người upload', dataIndex: 'uploader_name', key: 'uploader_name' },
+    { title: 'Ngày upload', dataIndex: 'created_at', key: 'created_at' },
+    { title: 'Quyền truy cập', dataIndex: 'visibility', key: 'visibility' },
+    { title: 'Tác vụ', key: 'action', width: 160 },
+]
+
+/* ===== Helpers ===== */
+const safeUrl = (p) => {
+    const path = String(p || '')
+    if (!path) return ''
+    return /^https?:\/\//i.test(path) ? path : `${baseURL}/${path}`
+}
+
+/* Lọc client-side theo tiêu đề */
+const filteredDocs = computed(() => {
+    const q = (filterTitle.value || '').trim().toLowerCase()
+    if (!q) return documents.value
+    return (documents.value || []).filter(d => (d.title || '').toLowerCase().includes(q))
+})
+
+/* ===== Fetch ===== */
+const fetchDocuments = async () => {
+    loading.value = true
+    try {
+        const res = await getDocumentsByDepartment(selectedDept.value)
+        documents.value = res?.data?.data || []
+    } catch (err) {
+        console.error(err)
+        message.error('Lỗi khi tải tài liệu theo phòng ban')
+    } finally {
+        loading.value = false
+    }
+}
+
+/* ===== Actions: điều hướng / mở link / copy ===== */
+const goDetail = (doc) => {
+    router.push({ name: 'document.detail', params: { id: doc.id } })
+}
+
+const openOriginal = (doc) => {
+    const url = safeUrl(doc.file_path)
+    if (!url) return
+    window.open(url, '_blank', 'noopener')
+}
+
+const copyLink = async (doc) => {
+    const url = safeUrl(doc.file_path)
+    if (!url) return
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(url)
+        } else {
+            const input = document.createElement('input')
+            input.value = url
+            document.body.appendChild(input)
+            input.select()
+            document.execCommand('copy')
+            document.body.removeChild(input)
+        }
+        message.success('Đã sao chép link vào clipboard!')
+    } catch {
+        message.error('Không sao chép được link.')
+    }
+}
+
+/* ===== Modal + CRUD ===== */
 const showUploadModal = () => {
     uploadVisible.value = true
 }
@@ -206,23 +285,14 @@ const editDoc = (doc) => {
         shared_users: doc.shared_users || [],
         shared_departments: doc.shared_departments || []
     }
-
     isEditMode.value = true
     editingDocId.value = doc.id
     uploadVisible.value = true
 }
 
-const isEditMode = ref(false)
-const editingDocId = ref(null)
-
 const submitUpload = async () => {
     const {
-        title,
-        department_id,
-        fileUrl,
-        visibility,
-        shared_users,
-        shared_departments
+        title, department_id, fileUrl, visibility, shared_users, shared_departments
     } = uploadForm.value
 
     if (!title || !department_id || !fileUrl) {
@@ -238,19 +308,17 @@ const submitUpload = async () => {
                 visibility,
                 shared_users,
                 shared_departments
-            });
+            })
         } else {
-            // upload vẫn dùng FormData
-            const formData = new FormData();
-            formData.append('title', title);
-            formData.append('department_id', department_id);
-            formData.append('file_url', fileUrl);
-            formData.append('visibility', visibility);
-            shared_users.forEach(uid => formData.append('shared_users[]', uid));
-            shared_departments.forEach(did => formData.append('shared_departments[]', did));
-            await uploadDocument(formData);
+            const formData = new FormData()
+            formData.append('title', title)
+            formData.append('department_id', department_id)
+            formData.append('file_url', fileUrl)
+            formData.append('visibility', visibility)
+            shared_users.forEach(uid => formData.append('shared_users[]', uid))
+            shared_departments.forEach(did => formData.append('shared_departments[]', did))
+            await uploadDocument(formData)
         }
-
 
         uploadVisible.value = false
         uploadForm.value = {
@@ -271,50 +339,14 @@ const submitUpload = async () => {
     }
 }
 
-
-
 const closeModal = () => {
     uploadVisible.value = false
 }
 
 const onModalClosed = () => {
-    nextTick(() => {
-        uploadBtn.value?.focus()
-    })
+    nextTick(() => uploadBtn.value?.focus())
 }
 
-const fetchDocuments = async () => {
-    loading.value = true
-    try {
-        const res = await getDocumentsByDepartment(selectedDept.value)
-        const allDocs = res.data.data
-        documents.value = allDocs.filter(doc =>
-            doc.title?.toLowerCase().includes(filterTitle.value.toLowerCase())
-        )
-    } catch (err) {
-        message.error('Lỗi khi tải tài liệu theo phòng ban')
-    } finally {
-        loading.value = false
-    }
-}
-
-const viewDoc = (doc) => {
-    const url = doc.file_path.startsWith('http') ? doc.file_path : `${baseURL}/${doc.file_path}`
-    window.open(url, '_blank')
-}
-
-const copyLink = (doc) => {
-    const url = doc.file_path.startsWith('http') ? doc.file_path : `${baseURL}/${doc.file_path}`
-    const input = document.createElement('input')
-    input.value = url
-    document.body.appendChild(input)
-    input.select()
-    document.execCommand('copy')
-    document.body.removeChild(input)
-    message.success('Đã sao chép link vào clipboard!')
-}
-
-onMounted(() => {
-    fetchDocuments()
-})
+/* ===== Lifecycle ===== */
+onMounted(fetchDocuments)
 </script>

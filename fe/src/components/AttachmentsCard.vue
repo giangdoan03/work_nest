@@ -148,11 +148,18 @@
                             </a-tooltip>
 
                             <!-- Nút gửi duyệt -->
-                            <a-tooltip v-if="!item.pending" title="Gửi duyệt tài liệu">
-                                <a-button size="small" shape="circle" type="primary" @click="openSendApproval(item)">
-                                    <SendOutlined />
+                            <a-tooltip v-if="!item.pending" :title="sendBtnTooltip(item)">
+                                <a-button
+                                    size="small"
+                                    shape="circle"
+                                    type="primary"
+                                    :disabled="!canSendApproval(item)"
+                                @click="openSendApproval(item)"
+                                >
+                                <SendOutlined />
                                 </a-button>
                             </a-tooltip>
+
 
                             <a-tooltip title="Xoá">
                                 <a-button size="small" shape="circle" danger @click="removeAttachment(item)"><DeleteOutlined/></a-button>
@@ -205,6 +212,7 @@ import {
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { useUserStore } from '@/stores/user'
+import { parseApiError } from '@/utils/apiError'
 
 // APIs document
 import { uploadDocumentToWP, uploadDocumentLink } from '@/api/document'
@@ -212,7 +220,9 @@ import { uploadDocumentToWP, uploadDocumentLink } from '@/api/document'
 import { getTaskFilesAPI, deleteTaskFilesAPI } from '@/api/task'
 
 // API gửi duyệt + danh sách user
-import { sendApproval } from '@/api/approvals'
+import { sendApproval, getActiveApproval } from '@/api/approvals'
+const approvalMap = reactive({})
+const approvalLoading = ref(true)
 import { getUsers } from '@/api/user'
 
 /* ====== PROPS ====== */
@@ -298,6 +308,33 @@ function hideBrokenFavicon(e) {
     if (e?.target) e.target.style.opacity = 0
 }
 
+// Trả về trạng thái hiển thị cho 1 item
+function approvalStateOf(item) {
+    const st = approvalMap[item.id] || {}
+    return {
+        status: st.status || null,
+        pending: st.status === 'pending',
+        approved: st.status === 'approved',
+        rejected: st.status === 'rejected'
+    }
+}
+
+function canSendApproval(item) {
+    if (approvalLoading.value) return false
+    const st = approvalStateOf(item)
+    return !st.pending && !st.approved
+}
+
+
+function sendBtnTooltip(item) {
+    if (approvalLoading.value) return 'Đang kiểm tra trạng thái...'
+    const st = approvalStateOf(item)
+    if (st.pending) return 'Đang chờ duyệt'
+    if (st.approved) return 'Đã duyệt'
+    return 'Gửi duyệt tài liệu'
+}
+
+
 /* Chuẩn hoá data hiển thị */
 const attachmentCards = computed(() => {
     const serverItems = (fileList.value || []).map(f => {
@@ -376,11 +413,42 @@ async function fetchTaskFiles() {
             url: f.is_link ? (f.link_url || f.file_path) : f.file_path,
             status: 'done'
         }))
+
+        // ✅ nạp trạng thái duyệt cho từng item (song song, giới hạn đồng thời)
+        await refreshApprovalStates()
     } catch (e) {
         console.error('fetchTaskFiles error', e)
         fileList.value = []
     }
 }
+
+// Giới hạn 5 request đồng thời để đỡ “nhoi”
+async function refreshApprovalStates() {
+    const items = (fileList.value || []).filter(it => !it.pending)
+
+    approvalLoading.value = true     // <— bật loading trước khi gọi
+    try {
+        const chunk = 5
+        for (let i = 0; i < items.length; i += chunk) {
+            await Promise.all(
+                items.slice(i, i + chunk).map(async it => {
+                    try {
+                        const a = await getActiveApproval('document', it.id)
+                        const status = a?.status ?? a?.instance?.status ?? null
+                        const instanceId = a?.instanceId ?? a?.instance?.id ?? null
+                        approvalMap[it.id] = { status, instanceId }
+                    } catch {
+                        approvalMap[it.id] = { status: null, instanceId: null }
+                    }
+                })
+            )
+        }
+    } finally {
+        approvalLoading.value = false  // <— tắt loading khi xong
+    }
+}
+
+
 
 async function submitUpload() {
     const arr = (pendingFiles.value || []).filter(Boolean)
@@ -481,27 +549,52 @@ function clearSendApproval() {
     sendForm.approver_ids = []
     sendForm.note = ''
 }
+
 async function submitSendApproval() {
     if (!sendForm.approver_ids.length) {
         return message.error('Vui lòng chọn ít nhất 1 người duyệt.')
     }
+
+    sending.value = true
     try {
-        sending.value = true
-        await sendApproval({
+        const { ok, status, data } = await sendApproval({
             target_type: 'document',
             target_id: sendingItem.value.id,
-            approver_ids: sendForm.approver_ids.map(id => Number(id)),
-            note: sendForm.note || ''
+            approver_ids: sendForm.approver_ids,
+            note: sendForm.note || '',
+            meta: {
+                title: sendingItem.value.title || sendingItem.value.name || '',
+                url: String(sendingItem.value.url || '')
+            }
         })
-        message.success('Đã gửi duyệt tài liệu.')
-        clearSendApproval()
-    } catch (e) {
-        console.error(e)
-        message.error('Gửi duyệt thất bại.')
+
+        if (ok) {
+            approvalMap[sendingItem.value.id] = { status: 'pending', instanceId: data?.approval_instance_id || null }
+            message.success('Đã gửi duyệt tài liệu.')
+            clearSendApproval()
+            return
+        }
+        if (status === 409) {
+            approvalMap[sendingItem.value.id] = { status: 'pending', instanceId: null }
+            message.warning(data?.message || 'Đối tượng đang chờ duyệt.')
+            clearSendApproval()
+            return
+        }
+
+        if (status === 422) {
+            message.error(data?.message || 'Dữ liệu chưa hợp lệ.')
+            return
+        }
+
+        message.error(data?.message || 'Không thể gửi duyệt. Vui lòng thử lại.')
+    } catch (err) {
+        const msg = err?.response?.data?.message || err.message || 'Lỗi máy chủ.'
+        message.error(msg)
     } finally {
         sending.value = false
     }
 }
+
 
 /* ====== LIFECYCLE ====== */
 onMounted(fetchTaskFiles)

@@ -39,3 +39,14 @@ export const uploadRemoteToWP = (payload) =>
 
 export const uploadDocumentLink = (payload) =>
     instance.post('/documents/upload-link', payload)
+
+export const getDocumentById = async (id) => {
+    try {
+        const res = await instance.get(`/documents/${id}`)
+        return res.data?.data || res.data
+    } catch (err) {
+        console.error('getDocumentById error:', err)
+        throw err.response?.data || err
+    }
+}
+

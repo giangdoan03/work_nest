@@ -1222,4 +1222,37 @@ class DocumentController extends ResourceController
     }
 
 
+    /**
+     * GET /api/documents/{id}
+     * Lấy chi tiết tài liệu theo ID
+     */
+    public function show($id = null): ResponseInterface
+    {
+        if (!$id || !is_numeric($id)) {
+            return $this->failValidationErrors('ID không hợp lệ');
+        }
+
+        $doc = $this->model
+            ->select('documents.*, users.name AS uploaded_by_name, departments.name AS department_name')
+            ->join('users', 'users.id = documents.uploaded_by', 'left')
+            ->join('departments', 'departments.id = documents.department_id', 'left')
+            ->find($id);
+
+        if (!$doc) {
+            return $this->failNotFound('Không tìm thấy tài liệu.');
+        }
+
+        // Nếu visibility = custom, lấy quyền chia sẻ
+        if ($doc['visibility'] === 'custom') {
+            $permModel = new DocumentPermissionModel();
+            $perms = $permModel->where('document_id', $id)->findAll();
+            $doc['shared_users'] = array_column(array_filter($perms, fn($p) => $p['shared_with_type'] === 'user'), 'shared_with_id');
+            $doc['shared_departments'] = array_column(array_filter($perms, fn($p) => $p['shared_with_type'] === 'department'), 'shared_with_id');
+        }
+
+        return $this->respond(['data' => $doc]);
+    }
+
+
+
 }

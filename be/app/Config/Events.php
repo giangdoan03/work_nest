@@ -53,3 +53,20 @@ Events::on('pre_system', static function (): void {
         }
     }
 });
+
+
+Events::on('post_controller_constructor', function () {
+    $router = service('router');
+
+    $controller = $router->controllerName();
+    $method     = $router->methodName();
+    $route      = implode(' ', $router->getMatchedRoute() ?? []);
+
+    log_message('info', sprintf(
+        '[ROUTE] %s -> %s::%s (%s)',
+        $_SERVER['REQUEST_METHOD'] ?? 'CLI',
+        $controller,
+        $method,
+        $route
+    ));
+});

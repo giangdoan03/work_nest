@@ -29,6 +29,7 @@ import ProjectOverview from '../page/ProjectOverview.vue'
 import GanttChart from '../page/GanttChart.vue'
 import Tasks from '../page/Tasks.vue'
 import BiddingStepTasks from '../components/BiddingStepTask/BiddingStepTasks.vue'
+import DocumentInfoPage from '../page/documents/DocumentInfoPage.vue'
 import Forbidden403 from "@/page/Forbidden403.vue"
 
 const routes = [
@@ -167,6 +168,19 @@ const routes = [
 
             // Department Tasks
             { path: 'department-task/:id/info', name: 'department-task-detail', component: TaskDetail, meta: { breadcrumb: 'Chi tiết nhiệm vụ phòng', parent: 'project-overview', section: 'overview' }, props: true },
+            {
+                path: '/documents/:id',
+                name: 'documents-info',
+                component: DocumentInfoPage,
+                meta: { breadcrumb: 'Tài liệu' }
+            },
+            {
+                path: '/documents/:id',
+                name: 'document.detail',
+                component: DocumentInfoPage,
+                props: true,
+            }
+
         ]
     }
 ]

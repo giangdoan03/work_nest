@@ -682,18 +682,30 @@ const markAllNotifyRead = async () => {
     }
 }
 
+const isExternal = (u) => /^https?:\/\//i.test(u);
+
 const openApproval = async (item) => {
     if (+item.is_unread === 1) {
-        item.is_unread = 0
-        const idx = notifyItems.value.findIndex(n => n.step_id === item.step_id)
-        if (idx > -1) notifyItems.value.splice(idx, 1, {...notifyItems.value[idx], is_unread: 0})
-        unreadNotifyCount.value = Math.max(0, unreadNotifyCount.value - 1)
-        rememberReadStep(item.step_id)
-        markApprovalReadAPI([item.step_id]).catch(console.error)
+        item.is_unread = 0;
+        const idx = notifyItems.value.findIndex(n => n.step_id === item.step_id);
+        if (idx > -1) notifyItems.value.splice(idx, 1, { ...notifyItems.value[idx], is_unread: 0 });
+        unreadNotifyCount.value = Math.max(0, unreadNotifyCount.value - 1);
+        rememberReadStep(item.step_id);
+        markApprovalReadAPI([item.step_id]).catch(console.error);
     }
-    notifyOpen.value = false
-    await router.push({path: item.url, query: {focus: 'approval', ai: item.instance_id}})
-}
+
+    notifyOpen.value = false;
+
+    // ✅ nếu là URL ngoài -> mở tab mới
+    if (isExternal(item.url)) {
+        window.open(item.url, '_blank', 'noopener,noreferrer');
+        return;
+    }
+
+    // URL nội bộ -> router
+    await router.push({ path: item.url, query: { focus: 'approval', ai: item.instance_id } });
+};
+
 
 /* ========= Dropdown handlers ========= */
 const onInboxOpenChange = async (open) => {

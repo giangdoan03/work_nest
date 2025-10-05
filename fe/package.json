@@ -13,9 +13,11 @@
     "axios": "^1.8.4",
     "chart.js": "^4.5.0",
     "dayjs": "^1.11.13",
+    "docx-preview": "^0.3.7",
     "echarts": "^5.6.0",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
+    "pdfjs-dist": "^5.4.149",
     "pinia": "^3.0.1",
     "pinia-plugin-persistedstate": "^4.4.1",
     "qr-code-styling": "^1.9.2",
@@ -23,10 +25,13 @@
     "vue": "^3.5.13",
     "vue-chartjs": "^5.3.2",
     "vue-echarts": "^7.0.3",
-    "vue-router": "^4.5.0"
+    "vue-router": "^4.5.0",
+    "x-data-spreadsheet": "^1.1.9",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.3",
+    "less": "^4.4.1",
     "unplugin-auto-import": "^19.1.2",
     "unplugin-vue-components": "^28.4.1",
     "vite": "^6.2.4",

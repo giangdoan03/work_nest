@@ -246,5 +246,7 @@ $routes->group('api', function ($routes) {
     // Duyệt / Từ chối trực tiếp theo task_id
     $routes->post('tasks/(:num)/approve', 'TaskApprovalController::approveByTask/$1');
     $routes->post('tasks/(:num)/reject',  'TaskApprovalController::rejectByTask/$1');
+    $routes->get('documents/(:num)', 'DocumentController::show/$1');
+    $routes->get('approvals/active-by-target', 'ApprovalController::activeByTarget');
 
 });
