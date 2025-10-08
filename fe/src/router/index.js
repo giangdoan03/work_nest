@@ -179,7 +179,6 @@ const routes = [
                 component: TaskDetail,
                 meta: { breadcrumb: 'Chi tiết nhiệm vụ', parent: 'workflow' }, // 👈 quan trọng
             },
-// (tuỳ chọn) redirect các link cũ về route mới
             {
                 path: '/contract-tasks/:id/info',
                 redirect: to => ({ name: 'workflow-task-info', params: { id: to.params.id } }),
@@ -333,7 +332,11 @@ const routes = [
                 name: 'document.detail',
                 component: DocumentInfoPage,
                 props: true,
-            }
+            },
+            {
+                path: '/non-workflow/:id/info',
+                redirect: to => ({ name: 'tasks-detail', params: { id: Number(to.params.id) } }),
+            },
 
         ]
     }

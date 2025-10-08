@@ -39,6 +39,7 @@
                         <!-- Tiêu đề + Link -->
                         <template v-else-if="column.dataIndex === 'title'">
                             <!-- Tab Cần duyệt -->
+                            <!-- Tab Cần duyệt -->
                             <template v-if="activeTab === 'pending'">
                                 <template v-if="isStep(record)">
                                     <router-link :to="stepDetailRoute(record)" class="link">
@@ -46,32 +47,33 @@
                                     </router-link>
                                 </template>
                                 <template v-else>
-                                    <template v-if="record.url">
-                                        <a v-if="isExternalUrl(record.url)" :href="record.url" class="link" target="_blank" rel="noopener">
+                                    <template v-if="isExternalUrl(record.url)">
+                                        <a :href="record.url" class="link" target="_blank" rel="noopener">
                                             {{ record.title || displayFallbackTitle(record) }}
                                         </a>
-                                        <router-link v-else :to="record.url" class="link">
+                                    </template>
+                                    <template v-else>
+                                        <router-link :to="record.url" class="link">
                                             {{ record.title || displayFallbackTitle(record) }}
                                         </router-link>
                                     </template>
-                                    <span v-else>{{ record.title || displayFallbackTitle(record) }}</span>
                                 </template>
                             </template>
 
                             <!-- Tab Đã xử lý -->
                             <template v-else-if="activeTab === 'resolved'">
-                                <a-space :size="8">
-                                    <a-typography-link
-                                        v-if="record.url"
-                                        :href="record.url"
-                                        target="_blank"
-                                        rel="noopener"
-                                    >
+                                <template v-if="isExternalUrl(record.url)">
+                                    <a-typography-link :href="record.url" target="_blank" rel="noopener">
                                         {{ record.title || displayFallbackTitle(record) }}
                                     </a-typography-link>
-                                    <span v-else>{{ record.title || displayFallbackTitle(record) }}</span>
-                                </a-space>
+                                </template>
+                                <template v-else>
+                                    <router-link :to="record.url" class="link">
+                                        {{ record.title || displayFallbackTitle(record) }}
+                                    </router-link>
+                                </template>
                             </template>
+
                         </template>
 
                         <!-- Cấp hiện tại -->
@@ -235,22 +237,48 @@ const safeParseJSON = (v) => {
     try { return JSON.parse(v) } catch { return null }
 }
 
+// Thêm (hoặc sửa) helper để tạo URL nội bộ thống nhất
+const makeUrl = (type, id) => {
+    const _id = Number(id)
+    switch (type) {
+        case 'task':
+            return { name: 'tasks-detail', params: { id: _id } } // 👈 đúng route hiện có
+        case 'bidding':
+            return { name: 'biddings-info', params: { id: _id } }
+        case 'contract':
+            return { name: 'contract-detail', params: { id: _id } }
+        case 'bidding_step':
+            return { name: 'BiddingStepDetail', params: { id: _id } }
+        case 'contract_step':
+            return { name: 'ContractStepDetail', params: { id: _id } }
+        default:
+            return '/'
+    }
+}
+
+
 const normalizeApprovalRow = (ai = {}) => {
     const meta = safeParseJSON(ai.meta_json)
+    const targetType = meta?.target_type || ai.target_type
+    const targetId   = meta?.target_id   || ai.target_id
 
     return {
         ...ai,
-        // Ưu tiên dữ liệu trong meta_json (nếu có)
         title: meta?.title || ai.title || `[${ai.target_type}] #${ai.target_id}`,
-        url: meta?.url || ai.url || makeUrl(ai.target_type, ai.target_id),
-        assignee_name: meta?.assignee_name ?? ai.assignee_name ?? null,
+        // Nếu meta/url là string http(s) => external, nếu không thì build object route nội bộ
+        url:
+            isExternalUrl(meta?.url) ? meta.url
+                : isExternalUrl(ai.url)  ? ai.url
+                    : makeUrl(targetType, targetId),
 
+        assignee_name: meta?.assignee_name ?? ai.assignee_name ?? null,
         id: ai.id || ai.approval_id || ai.request_id,
         meta_json: meta,
         current_level: toInt(ai.current_level),
         _total_steps: ai._total_steps != null ? toInt(ai._total_steps) : undefined,
     }
 }
+
 
 const isExternalUrl = (u) => /^https?:\/\//i.test(u)
 
@@ -275,7 +303,6 @@ const fetchData = async () => {
 
         const items = Array.isArray(data?.data) ? data.data : []
         rows.value = items.map(normalizeApprovalRow)
-        console.log('rows.value', rows.value)
         pagination.value.total = toInt(data?.pager?.total, items.length)
     } catch (e) {
         message.error('Không thể tải danh sách phê duyệt')
