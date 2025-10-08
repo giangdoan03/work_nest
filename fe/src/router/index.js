@@ -337,7 +337,12 @@ const routes = [
                 path: '/non-workflow/:id/info',
                 redirect: to => ({ name: 'tasks-detail', params: { id: Number(to.params.id) } }),
             },
-
+            {
+                path: '/departments',
+                name: 'departments',
+                component: DepartmentList,
+                meta: { breadcrumb: 'Phòng ban' }
+            },
         ]
     }
 ]
