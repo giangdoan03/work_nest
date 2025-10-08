@@ -8,6 +8,7 @@
                     <MenuUnfoldOutlined v-else/>
                 </a-button>
             </div>
+
             <!-- Breadcrumb -->
             <div class="hdr__crumb">
                 <a-breadcrumb :key="$route.fullPath" class="crumb">
@@ -16,29 +17,28 @@
                         :key="index"
                     >
                         <router-link
-                            v-if="route.name !== currentRoute.name"
-                            :to="route.to || { name: route.name }"
+                            v-if="route.name !== currentRoute.name && route.to"
+                            :to="route.to"
                             class="crumb__link"
                         >
                             {{ route.meta.breadcrumb }}
                         </router-link>
 
                         <template v-else>
-                          <span class="crumb__current">
-                            {{ route.meta.breadcrumb }}
-                            <a-button
-                                v-if="showCrumbCreateBtn"
-                                size="small"
-                                class="crumb__add"
-                                @click="onClickCreateTask"
-                            >
-                              <template #icon><PlusOutlined/></template>
-                            </a-button>
-                          </span>
+              <span class="crumb__current">
+                {{ route.meta.breadcrumb }}
+                <a-button
+                    v-if="showCrumbCreateBtn"
+                    size="small"
+                    class="crumb__add"
+                    @click="onClickCreateTask"
+                >
+                  <template #icon><PlusOutlined/></template>
+                </a-button>
+              </span>
                         </template>
                     </a-breadcrumb-item>
                 </a-breadcrumb>
-
             </div>
 
             <!-- Right actions -->
@@ -75,11 +75,8 @@
                                     <div class="panel-head">
                                         <span class="panel-title">Tin nhắn gần đây</span>
                                         <div class="panel-tools">
-                                            <a-button type="link" size="small" @click.stop="refreshInbox">Làm mới
-                                            </a-button>
-                                            <a-button type="link" size="small" @click.stop="markAllInboxRead">Đánh dấu
-                                                đã đọc tất cả
-                                            </a-button>
+                                            <a-button type="link" size="small" @click.stop="refreshInbox">Làm mới</a-button>
+                                            <a-button type="link" size="small" @click.stop="markAllInboxRead">Đánh dấu đã đọc tất cả</a-button>
                                         </div>
                                     </div>
 
@@ -133,8 +130,7 @@
                                                             <div class="item-desc">
                                                                 <div class="ellipsis-1">{{ item.content }}</div>
                                                                 <div class="meta-sub">
-                                                                    {{ item.task_title }} •
-                                                                    {{ formatTime(item.created_at) }}
+                                                                    {{ item.task_title }} • {{ formatTime(item.created_at) }}
                                                                 </div>
                                                             </div>
                                                         </template>
@@ -175,8 +171,7 @@
                                                             <div class="item-desc">
                                                                 <div class="ellipsis-1">{{ item.content }}</div>
                                                                 <div class="meta-sub">
-                                                                    {{ item.task_title }} •
-                                                                    {{ formatTime(item.created_at) }}
+                                                                    {{ item.task_title }} • {{ formatTime(item.created_at) }}
                                                                 </div>
                                                             </div>
                                                         </template>
@@ -187,8 +182,7 @@
                                     </template>
 
                                     <div v-if="inboxHasMore" class="panel-more">
-                                        <a-button block @click="loadMoreInbox" :loading="inboxLoading">Tải thêm
-                                        </a-button>
+                                        <a-button block @click="loadMoreInbox" :loading="inboxLoading">Tải thêm</a-button>
                                     </div>
                                 </a-spin>
                             </div>
@@ -214,11 +208,8 @@
                                     <div class="panel-head">
                                         <span class="panel-title">Thông báo phê duyệt</span>
                                         <div class="panel-tools">
-                                            <a-button type="link" size="small" @click.stop="refreshNotify">Làm mới
-                                            </a-button>
-                                            <a-button type="link" size="small" @click.stop="markAllNotifyRead">Đánh dấu
-                                                đã đọc tất cả
-                                            </a-button>
+                                            <a-button type="link" size="small" @click.stop="refreshNotify">Làm mới</a-button>
+                                            <a-button type="link" size="small" @click.stop="markAllNotifyRead">Đánh dấu đã đọc tất cả</a-button>
                                         </div>
                                     </div>
 
@@ -260,8 +251,7 @@
                                                         <template #description>
                                                             <div class="item-desc">
                                                                 <div>Gửi bởi: {{ item.submitted_by_name || '—' }}</div>
-                                                                <div class="meta-sub">{{formatTime(item.submitted_at) }}
-                                                                </div>
+                                                                <div class="meta-sub">{{ formatTime(item.submitted_at) }}</div>
                                                             </div>
                                                         </template>
                                                     </a-list-item-meta>
@@ -292,8 +282,7 @@
                                                         <template #description>
                                                             <div class="item-desc">
                                                                 <div>Gửi bởi: {{ item.submitted_by_name || '—' }}</div>
-                                                                <div class="meta-sub">{{formatTime(item.submitted_at) }}
-                                                                </div>
+                                                                <div class="meta-sub">{{ formatTime(item.submitted_at) }}</div>
                                                             </div>
                                                         </template>
                                                     </a-list-item-meta>
@@ -303,8 +292,7 @@
                                     </template>
 
                                     <div v-if="notifyHasMore" class="panel-more">
-                                        <a-button block @click="loadMoreNotify" :loading="notifyLoading">Tải thêm
-                                        </a-button>
+                                        <a-button block @click="loadMoreNotify" :loading="notifyLoading">Tải thêm</a-button>
                                     </div>
                                 </a-spin>
                             </div>
@@ -394,19 +382,19 @@
 
 <script setup>
 /* ========= Imports ========= */
-import {useRoute, useRouter} from 'vue-router'
-import {message} from 'ant-design-vue'
-import {ref, computed, onMounted, onBeforeUnmount, watch} from 'vue'
-import {storeToRefs} from 'pinia'
+import { useRoute, useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { storeToRefs } from 'pinia'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/vi'
 
-import {getMyRecentCommentsAPI, getMyUnreadCommentsCountAPI, markCommentsReadAPI} from '@/api/task'
-import {getApprovalInboxAPI, getApprovalUnreadCountAPI, markApprovalReadAPI} from '@/api/approvals'
+import { getMyRecentCommentsAPI, getMyUnreadCommentsCountAPI, markCommentsReadAPI } from '@/api/task'
+import { getApprovalInboxAPI, getApprovalUnreadCountAPI, markApprovalReadAPI } from '@/api/approvals'
 
-import {useUserStore} from '@/stores/user'
-import {useCommonStore} from '@/stores/common'
+import { useUserStore } from '@/stores/user'
+import { useCommonStore } from '@/stores/common'
 
 import {
     LogoutOutlined, UserOutlined, PlusOutlined, HomeOutlined, MessageOutlined,
@@ -424,7 +412,7 @@ dayjs.locale('vi')
 /* ========= Stores / Router ========= */
 const common = useCommonStore()
 const userStore = useUserStore()
-const {user} = storeToRefs(userStore)
+const { user } = storeToRefs(userStore)
 const currentRoute = useRoute()
 const router = useRouter()
 
@@ -433,7 +421,7 @@ const showCrumbCreateBtn = computed(() => currentRoute.path === '/non-workflow')
 
 /* ========= Emits / Props ========= */
 defineEmits(['toggle', 'logout'])
-defineProps({collapsed: Boolean})
+defineProps({ collapsed: Boolean })
 
 /* ========= State (Inbox) ========= */
 const userId = computed(() => userStore.user?.id)
@@ -455,59 +443,121 @@ const changePwdOpen = ref(false)
 /* ========= Local mask (Notify) ========= */
 const LS_NOTIFY_READ_KEY = 'notify_read_steps_v1'
 const loadClientReadSteps = () => {
-    try {
-        return new Set(JSON.parse(localStorage.getItem(LS_NOTIFY_READ_KEY) || '[]'))
-    } catch {
-        return new Set()
-    }
+    try { return new Set(JSON.parse(localStorage.getItem(LS_NOTIFY_READ_KEY) || '[]')) }
+    catch { return new Set() }
 }
 const saveClientReadSteps = (setObj) => {
-    try {
-        localStorage.setItem(LS_NOTIFY_READ_KEY, JSON.stringify(Array.from(setObj)))
-    } catch {
-    }
+    try { localStorage.setItem(LS_NOTIFY_READ_KEY, JSON.stringify(Array.from(setObj))) } catch {}
 }
 const clientReadSteps = loadClientReadSteps()
-const rememberReadStep = (id) => {
-    clientReadSteps.add(id);
-    saveClientReadSteps(clientReadSteps)
-}
-const rememberReadMany = (ids = []) => {
-    ids.forEach(id => clientReadSteps.add(id));
-    saveClientReadSteps(clientReadSteps)
-}
+const rememberReadStep = (id) => { clientReadSteps.add(id); saveClientReadSteps(clientReadSteps) }
+const rememberReadMany = (ids = []) => { ids.forEach(id => clientReadSteps.add(id)); saveClientReadSteps(clientReadSteps) }
 
 /* ========= Server unread count for approvals ========= */
 const unreadNotifyCount = ref(0)
 const fetchNotifyUnreadCount = async () => {
     try {
-        const {data} = await getApprovalUnreadCountAPI()
+        const { data } = await getApprovalUnreadCountAPI()
         unreadNotifyCount.value = data?.unread || 0
-    } catch {
-    }
+    } catch {}
 }
 
-/* ========= Computed ========= */
+/* ========= Computed: Breadcrumbs ========= */
 const breadcrumbs = computed(() => {
     const all = router.getRoutes()
     const p = currentRoute.params
+
+    const cleanParams = (obj) =>
+        Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined && v !== null))
+
     const buildParams = {
+        // Dashboard & chung
+        'project-overview': () => ({}),
+        'dashboard': () => ({}),
+
+        // Users
+        'persons-info': () => ({ id: p.id }),
+        'user-detail':  () => ({ id: p.id }),
+
+        // Internal Tasks (workflow)
+        'workflow': () => ({}),
+        'workflow-task-info': () => ({ id: p.id }),   // ✅ thêm dòng này
+        'workflow-info': () => ({ id: p.id }),
+
+        // Bidding
         'bid-list': () => ({}),
-        'biddings-info': () => ({id: p.id || p.bidId}),
-        'bidding-step-tasks': () => ({bidId: p.bidId, stepId: p.stepId}),
-        'bidding-task-info': () => ({id: p.id}),
+        'bid-detail': () => ({ id: p.id }),
+        'biddings-info': () => ({ id: p.id }),
+        'bidding-step-tasks': () => ({ bidId: p.bidId, stepId: p.stepId }),
+        'bidding-task-info-in-step': () => ({ bidId: p.bidId, stepId: p.stepId, id: p.id }),
+        'bidding-task-info': () => ({ id: p.id }),
+
+        // Contract
+        'contracts-tasks': () => ({}),
+        'contract-detail': () => ({ id: p.id ?? p.contractId }), // fallback từ contractId
+        'contract-step-tasks': () => ({ contractId: p.contractId, stepId: p.stepId }),
+        'contract-task-info-in-step': () => ({ contractId: p.contractId, stepId: p.stepId, id: p.id }),
+        'contract-task-info': () => ({ id: p.id }),
+
+        // Documents
+        'documents': () => ({}),
+        'documents-my': () => ({}),
+        'documents-shared': () => ({}),
+        'documents-department': () => ({}),
+        'documents-permission': () => ({}),
+        'documents-settings': () => ({}),
+        'documents-info': () => ({ id: p.id }),
+        'document.detail': () => ({ id: p.id }),
+
+        // Settings
+        'cau-hinh-dau-thau': () => ({}),
+        'cau-hinh-hop-dong': () => ({}),
+
+        // Customers
+        'customers': () => ({}),
+        'customer-detail': () => ({ id: p.id }),
+
+        // My Tasks
+        'my-tasks': () => ({}),
+        'task-approvals': () => ({}),
+
+        // Charts
+        'GanttChart': () => ({}),
+
+        // Steps detail
+        'BiddingStepDetail': () => ({ id: p.id }),
+        'ContractStepDetail': () => ({ id: p.id }),
+
+        // Non-workflow
         'non-workflow': () => ({}),
-        'non-workflow-info': () => ({id: p.id}),
-        'tasks': () => ({}),
+        'tasks-detail': () => ({ id: p.id }),
+
+        // Department task
+        'department-task-detail': () => ({ id: p.id }),
+
     }
+
+    // Lấy danh sách param bắt buộc từ path (vd: '/contracts/:id' -> ['id'])
+    const requiredParamsOf = (route) => {
+        if (!route?.path) return []
+        const matches = route.path.match(/:([A-Za-z0-9_]+)/g) || []
+        return matches.map(s => s.slice(1))
+    }
+
     const trail = []
     let cur = all.find(r => r.name === currentRoute.name)
+
     while (cur) {
         if (cur.meta?.breadcrumb) {
+            const target = cur
+            const params = cleanParams(buildParams[target.name]?.() || {})
+            const required = requiredParamsOf(target)
+            const hasAll = required.every(k => params[k] !== undefined && params[k] !== null)
+
             trail.unshift({
-                name: cur.name,
-                meta: cur.meta,
-                to: {name: cur.name, params: (buildParams[cur.name]?.() || {})}
+                name: target.name,
+                meta: target.meta,
+                to: hasAll ? { name: target.name, params } : null
             })
         }
         const parentName = cur.meta?.parent
@@ -543,10 +593,8 @@ const buildTaskDetailPath = (item) => {
 const goHome = () => router.push('/project-overview')
 const onClickCreateTask = () => {
     if (isNonWorkflow.value) {
-        // tạo việc không quy trình
         common.triggerCreateTask('non-workflow')
     } else if (currentRoute.name === 'tasks') {
-        // trang danh sách công việc nội bộ
         common.triggerCreateTask('internal')
     }
 }
@@ -555,23 +603,22 @@ const handleLogout = () => {
     router.push('/')
 }
 const redirectToProfile = () => {
-    router.push({name: 'persons-info', params: {id: user.value.id}})
+    router.push({ name: 'persons-info', params: { id: user.value.id } })
 }
 
 /* ========= Inbox: API & Actions ========= */
 const fetchUnread = async () => {
     if (!userId.value) return
     try {
-        const {data} = await getMyUnreadCommentsCountAPI(userId.value)
+        const { data } = await getMyUnreadCommentsCountAPI(userId.value)
         unreadChat.value = data?.unread || 0
-    } catch {
-    }
+    } catch {}
 }
 const fetchInbox = async (page = 1) => {
     if (!userId.value) return
     inboxLoading.value = true
     try {
-        const {data} = await getMyRecentCommentsAPI({user_id: userId.value, page, limit: 10})
+        const { data } = await getMyRecentCommentsAPI({ user_id: userId.value, page, limit: 10 })
         const list = data?.comments || []
         inboxItems.value = page === 1 ? list : inboxItems.value.concat(list)
         const cur = data?.pagination?.currentPage || page
@@ -591,7 +638,7 @@ const markAllInboxRead = async () => {
         const allUnreadIds = []
         let page = 1, hasMore = true
         while (hasMore) {
-            const {data} = await getMyRecentCommentsAPI({user_id: userId.value, page, limit: 50})
+            const { data } = await getMyRecentCommentsAPI({ user_id: userId.value, page, limit: 50 })
             const list = data?.comments || []
             allUnreadIds.push(...list.filter(i => +i.is_unread === 1).map(i => i.id))
             const cur = data?.pagination?.currentPage || page
@@ -602,7 +649,7 @@ const markAllInboxRead = async () => {
         if (allUnreadIds.length) {
             await markCommentsReadAPI(userId.value, allUnreadIds)
             unreadChat.value = 0
-            inboxItems.value = inboxItems.value.map(i => ({...i, is_unread: 0}))
+            inboxItems.value = inboxItems.value.map(i => ({ ...i, is_unread: 0 }))
             message.success('Đã đánh dấu tất cả tin nhắn là đã đọc')
         } else {
             message.info('Không còn tin nhắn chưa đọc')
@@ -616,7 +663,7 @@ const openComment = async (item, e) => {
     e?.stopPropagation?.()
     inboxOpen.value = false
     const path = buildTaskDetailPath(item)
-    await router.push({path, query: {focus: 'comments', c: item.id}})
+    await router.push({ path, query: { focus: 'comments', c: item.id } })
     if (+item.is_unread === 1) {
         try {
             await markCommentsReadAPI(userId.value, [item.id])
@@ -632,9 +679,9 @@ const openComment = async (item, e) => {
 const fetchNotify = async (page = 1) => {
     notifyLoading.value = true
     try {
-        const {data} = await getApprovalInboxAPI({per_page: 10, page})
+        const { data } = await getApprovalInboxAPI({ per_page: 10, page })
         let list = data?.data || []
-        list = list.map(it => clientReadSteps.has(it.step_id) ? ({...it, is_unread: 0}) : it)
+        list = list.map(it => clientReadSteps.has(it.step_id) ? ({ ...it, is_unread: 0 }) : it)
 
         notifyItems.value = page === 1 ? list : notifyItems.value.concat(list)
         const pager = data?.pager || {}
@@ -657,7 +704,7 @@ const markAllNotifyRead = async () => {
         const allUnreadSteps = []
         let page = 1, hasMore = true
         while (hasMore) {
-            const {data} = await getApprovalInboxAPI({per_page: 50, page})
+            const { data } = await getApprovalInboxAPI({ per_page: 50, page })
             const list = data?.data || []
             allUnreadSteps.push(...list.filter(i => +i.is_unread === 1).map(i => i.step_id))
             const pager = data?.pager || {}
@@ -670,7 +717,7 @@ const markAllNotifyRead = async () => {
         if (allUnreadSteps.length) {
             await markApprovalReadAPI(allUnreadSteps)
             rememberReadMany(allUnreadSteps)
-            notifyItems.value = notifyItems.value.map(i => ({...i, is_unread: 0}))
+            notifyItems.value = notifyItems.value.map(i => ({ ...i, is_unread: 0 }))
             unreadNotifyCount.value = 0
             message.success('Đã đánh dấu tất cả thông báo là đã đọc')
         } else {
@@ -682,30 +729,29 @@ const markAllNotifyRead = async () => {
     }
 }
 
-const isExternal = (u) => /^https?:\/\//i.test(u);
+const isExternal = (u) => /^https?:\/\//i.test(u)
 
 const openApproval = async (item) => {
     if (+item.is_unread === 1) {
-        item.is_unread = 0;
-        const idx = notifyItems.value.findIndex(n => n.step_id === item.step_id);
-        if (idx > -1) notifyItems.value.splice(idx, 1, { ...notifyItems.value[idx], is_unread: 0 });
-        unreadNotifyCount.value = Math.max(0, unreadNotifyCount.value - 1);
-        rememberReadStep(item.step_id);
-        markApprovalReadAPI([item.step_id]).catch(console.error);
+        item.is_unread = 0
+        const idx = notifyItems.value.findIndex(n => n.step_id === item.step_id)
+        if (idx > -1) notifyItems.value.splice(idx, 1, { ...notifyItems.value[idx], is_unread: 0 })
+        unreadNotifyCount.value = Math.max(0, unreadNotifyCount.value - 1)
+        rememberReadStep(item.step_id)
+        markApprovalReadAPI([item.step_id]).catch(console.error)
     }
 
-    notifyOpen.value = false;
+    notifyOpen.value = false
 
-    // ✅ nếu là URL ngoài -> mở tab mới
+    // URL ngoài -> mở tab mới
     if (isExternal(item.url)) {
-        window.open(item.url, '_blank', 'noopener,noreferrer');
-        return;
+        window.open(item.url, '_blank', 'noopener,noreferrer')
+        return
     }
 
     // URL nội bộ -> router
-    await router.push({ path: item.url, query: { focus: 'approval', ai: item.instance_id } });
-};
-
+    await router.push({ path: item.url, query: { focus: 'approval', ai: item.instance_id } })
+}
 
 /* ========= Dropdown handlers ========= */
 const onInboxOpenChange = async (open) => {
@@ -736,11 +782,7 @@ const stopPolling = () => {
 
 /* ========= Lifecycle ========= */
 onMounted(async () => {
-    await Promise.all([
-        fetchUnread(),
-        refreshNotify(),
-        fetchNotifyUnreadCount()
-    ])
+    await Promise.all([ fetchUnread(), refreshNotify(), fetchNotifyUnreadCount() ])
     startPolling()
 })
 onBeforeUnmount(() => stopPolling())
@@ -761,260 +803,66 @@ onBeforeUnmount(() => stopPolling())
 }
 
 /* Breadcrumb */
-.hdr__crumb {
-    flex: 1;
-    padding-left: 16px;
-}
-
-.crumb {
-    margin-left: 16px;
-}
-
-.crumb__link {
-    color: #4a5568; /* slate gray */
-}
-.crumb__link:hover {
-    color: #1a202c; /* đậm hơn khi hover */
-}
-
-.crumb__current {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.crumb__add {
-    margin-left: 4px;
-}
+.hdr__crumb { flex: 1; padding-left: 16px; }
+.crumb { margin-left: 16px; }
+.crumb__link { color: #4a5568; }
+.crumb__link:hover { color: #1a202c; }
+.crumb__current { display: inline-flex; align-items: center; gap: 6px; }
+.crumb__add { margin-left: 4px; }
 
 /* Right actions */
-.hdr__actions {
-    margin-right: 16px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.ha-icon {
-    font-size: 20px;
-    color: #8c8c8c;
-    cursor: pointer;
-    transition: color .2s, transform .2s;
-}
-
-.ha-icon:hover {
-    color: #fa8c16;
-    transform: translateY(-1px);
-}
+.hdr__actions { margin-right: 16px; display: flex; align-items: center; gap: 16px; }
+.ha-icon { font-size: 20px; color: #8c8c8c; cursor: pointer; transition: color .2s, transform .2s; }
+.ha-icon:hover { color: #fa8c16; transform: translateY(-1px); }
 
 /* Home chip */
 .home-chip {
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    border: none;
-    background: #fff7e6;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: none;
+    width: 36px; height: 36px; padding: 0; border: none; background: #fff7e6;
+    display: flex; align-items: center; justify-content: center; box-shadow: none;
 }
-
-.home-chip :deep(.anticon) {
-    color: #fa8c16;
-    font-size: 18px;
-}
-
-.home-chip:hover {
-    background: #ffe7ba;
-}
+.home-chip :deep(.anticon) { color: #fa8c16; font-size: 18px; }
+.home-chip:hover { background: #ffe7ba; }
 
 /* User */
-.user-chip {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-}
-
-.user-dropdown {
-    width: 320px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, .12);
-    overflow: hidden;
-}
-
-.user-header {
-    display: flex;
-    align-items: center;
-    padding: 16px;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.user-info {
-    margin-left: 12px;
-    flex: 1;
-}
-
-.user-info .name {
-    font-weight: 600;
-    font-size: 16px;
-    color: #fa541c;
-}
-
-.user-info .position, .user-info .department {
-    font-size: 13px;
-    color: #888;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.i-blue {
-    color: #1890ff;
-}
-
-.i-green {
-    color: #52c41a;
-}
-
-.user-menu {
-    display: flex;
-    flex-direction: column;
-}
-
-.user-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
-    cursor: pointer;
-    transition: background .2s;
-    font-size: 14px;
-}
-
-.user-item:hover {
-    background: #f5f5f5;
-}
-
-.user-item.danger {
-    color: #ff4d4f;
-}
-
-.color-dot {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #fa541c;
-    margin-left: auto;
-}
-
-.ml-auto {
-    margin-left: auto;
-}
+.user-chip { display: flex; align-items: center; cursor: pointer; }
+.user-dropdown { width: 320px; background: #fff; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.12); overflow: hidden; }
+.user-header { display: flex; align-items: center; padding: 16px; border-bottom: 1px solid #f0f0f0; }
+.user-info { margin-left: 12px; flex: 1; }
+.user-info .name { font-weight: 600; font-size: 16px; color: #fa541c; }
+.user-info .position, .user-info .department { font-size: 13px; color: #888; display: flex; align-items: center; gap: 6px; }
+.i-blue { color: #1890ff; }
+.i-green { color: #52c41a; }
+.user-menu { display: flex; flex-direction: column; }
+.user-item { display: flex; align-items: center; gap: 8px; padding: 12px 16px; cursor: pointer; transition: background .2s; font-size: 14px; }
+.user-item:hover { background: #f5f5f5; }
+.user-item.danger { color: #ff4d4f; }
+.color-dot { width: 16px; height: 16px; border-radius: 50%; background: #fa541c; margin-left: auto; }
+.ml-auto { margin-left: auto; }
 
 /* Cards common */
-.scroll {
-    max-height: 420px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: thin;
-    scrollbar-color: #d9d9d9 transparent;
-}
+.scroll { max-height: 420px; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: #d9d9d9 transparent; }
+:deep(.scroll::-webkit-scrollbar) { width: 6px; }
+:deep(.scroll::-webkit-scrollbar-thumb) { background: #d9d9d9; border-radius: 8px; }
+:deep(.scroll::-webkit-scrollbar-thumb:hover) { background: #bfbfbf; }
 
-:deep(.scroll::-webkit-scrollbar) {
-    width: 6px;
-}
-
-:deep(.scroll::-webkit-scrollbar-thumb) {
-    background: #d9d9d9;
-    border-radius: 8px;
-}
-
-:deep(.scroll::-webkit-scrollbar-thumb:hover) {
-    background: #bfbfbf;
-}
-
-.panel-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 8px 8px 4px;
-}
-
-.panel-title {
-    font-weight: 600;
-}
-
-.panel-tools {
-    display: flex;
-    gap: 4px;
-    flex-direction: column;
-    align-items: flex-end;
-}
-
-.panel-alert {
-    margin: 4px 8px 8px;
-}
-
-.panel-more {
-    padding: 8px;
-}
+.panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 8px 8px 4px; }
+.panel-title { font-weight: 600; }
+.panel-tools { display: flex; gap: 4px; flex-direction: column; align-items: flex-end; }
+.panel-alert { margin: 4px 8px 8px; }
+.panel-more { padding: 8px; }
 
 /* Groups & Items */
-.group-title {
-    padding: 4px 8px;
-    font-weight: 600;
-}
-
-.group-title--muted {
-    color: #999;
-}
-
-.list-item {
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    transition: background .15s ease;
-}
-
-.list-item:hover {
-    background: #fafafa;
-}
-
-.list-item--new {
-    background: #fff7e6;
-}
-
-.list-item--new:hover {
-    background: #ffe7ba;
-}
-
-.item-title {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-}
-
-.item-desc {
-    color: #555;
-}
-
-.meta-sub {
-    font-size: 12px;
-    color: #999;
-    margin-top: 2px;
-}
+.group-title { padding: 4px 8px; font-weight: 600; }
+.group-title--muted { color: #999; }
+.list-item { cursor: pointer; padding: 8px; border-radius: 8px; transition: background .15s ease; }
+.list-item:hover { background: #fafafa; }
+.list-item--new { background: #fff7e6; }
+.list-item--new:hover { background: #ffe7ba; }
+.item-title { display: flex; gap: 6px; align-items: center; }
+.item-desc { color: #555; }
+.meta-sub { font-size: 12px; color: #999; margin-top: 2px; }
 
 /* Utils */
-.fw-600 {
-    font-weight: 600;
-}
-
-.ellipsis-1 {
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-}
+.fw-600 { font-weight: 600; }
+.ellipsis-1 { white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
 </style>

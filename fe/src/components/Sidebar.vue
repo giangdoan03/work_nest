@@ -393,6 +393,26 @@
         /^\/biddings\/\d+\/steps\/\d+\/tasks\/?$/.test(p)
     )
 
+    // ✅ Giống isBiddingLikePath nhưng cho Contract
+    const isContractLikePath = (p) => (
+        p === '/contracts-tasks' ||                                   // danh sách nhiệm vụ theo hợp đồng
+        /^\/contracts\/\d+\/?$/.test(p) ||                            // chi tiết hợp đồng: /contracts/66
+        /^\/contract\/\d+\/steps\/\d+\/tasks\/?$/.test(p) ||          // danh sách task trong step: /contract/66/steps/363/tasks
+        /^\/contract\/\d+\/steps\/\d+\/tasks\/\d+\/info\/?$/.test(p)  // trang info task: /contract/66/steps/363/tasks/249/info
+    )
+
+    // ✅ Non-workflow (việc không quy trình)
+    const isNonWorkflowLikePath = (p) => (
+        /^\/non-workflow\/?$/.test(p) ||                                  // /non-workflow
+        /^\/non-workflow\/tasks\/\d+(?:\/info)?\/?$/.test(p)               // /non-workflow/tasks/293/info (hoặc /tasks/293)
+    )
+
+    // ✅ Workflow (việc có quy trình) — gom cả /workflow và mọi nhánh con
+    const isWorkflowLikePath = (p) => (
+        /^\/workflow(?:\/.*)?$/.test(p)                                    // /workflow, /workflow/...
+    )
+
+
     const isInternalTasksLikePath = (p) => p.startsWith('/workflow')
 
     const isOverviewLikePath = (p) => (
@@ -403,12 +423,16 @@
     // === Active states (đặt ở top-level) ===
     const isOverviewActive = computed(() => isOverviewLikePath(route.path))
     const isBiddingActive    = computed(() => isSection('bidding') || isBiddingLikePath(currentPath.value))
-    const isContractActive   = computed(() =>
-        ['/contracts-tasks', `/contracts/${currentRouteId.value}`].includes(currentPath.value)
+    // 🔁 Thay thế tính toán active cho menu "Hợp đồng"
+    const isContractActive = computed(() =>
+        isSection('contract') || isContractLikePath(currentPath.value)
     )
-    const isTaskActive       = computed(() => currentPath.value.startsWith('/non-workflow'))
+    const isTaskActive = computed(() =>
+        isSection('non-workflow') || isNonWorkflowLikePath(currentPath.value)
+    )
+
     const isInternalTaskActive = computed(() =>
-        isSection('workflow') || isInternalTasksLikePath(currentPath.value)
+        isSection('workflow') || isWorkflowLikePath(currentPath.value)
     )
     const isCustomerActive   = computed(() =>
         ['/customers', `/customers/${currentRouteId.value}`].includes(currentPath.value)

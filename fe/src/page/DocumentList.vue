@@ -1,120 +1,122 @@
 <template>
     <div>
-        <!-- Filters -->
-        <a-space style="margin-bottom: 16px" direction="vertical" size="middle">
-            <a-space>
-                <a-select
-                    v-model:value="filters.department_id"
-                    style="width: 220px"
-                    placeholder="Phòng ban"
-                    :options="departments"
-                    allowClear
-                />
-                <a-range-picker
-                    v-model:value="filters.dateRange"
-                    :placeholder="['Từ ngày', 'Đến ngày']"
-                    :getPopupContainer="triggerNode => triggerNode.parentNode"
-                />
-                <a-input
-                    v-model:value="filters.title"
-                    placeholder="Tìm theo tiêu đề"
-                    style="width: 240px"
-                    @pressEnter="fetchDocuments"
-                />
-                <a-button type="primary" @click="fetchDocuments">Tìm kiếm</a-button>
+        <a-card>
+            <!-- Filters -->
+            <a-space style="margin-bottom: 16px" direction="vertical" size="middle">
+                <a-space>
+                    <a-select
+                        v-model:value="filters.department_id"
+                        style="width: 220px"
+                        placeholder="Phòng ban"
+                        :options="departments"
+                        allowClear
+                    />
+                    <a-range-picker
+                        v-model:value="filters.dateRange"
+                        :placeholder="['Từ ngày', 'Đến ngày']"
+                        :getPopupContainer="triggerNode => triggerNode.parentNode"
+                    />
+                    <a-input
+                        v-model:value="filters.title"
+                        placeholder="Tìm theo tiêu đề"
+                        style="width: 240px"
+                        @pressEnter="fetchDocuments"
+                    />
+                    <a-button type="primary" @click="fetchDocuments">Tìm kiếm</a-button>
+                </a-space>
             </a-space>
-        </a-space>
 
-        <!-- Table -->
-        <a-table
-            :columns="columns"
-            :data-source="documents"
-            :pagination="pagination"
-            :loading="loading"
-            row-key="id"
-            @change="handleTableChange"
-        >
-            <template #bodyCell="{ column, record }">
-                <template v-if="column.key === 'action'">
-                    <a-space>
-                        <!-- Đi tới trang chi tiết -->
-                        <a-tooltip title="Xem chi tiết">
-                            <a-button type="link" @click="goDetail(record)">
-                                <EyeOutlined />
-                            </a-button>
-                        </a-tooltip>
-
-                        <!-- Mở link gốc -->
-                        <a-tooltip title="Mở link gốc">
-                            <a-button type="link" @click="openOriginal(record)" :disabled="!record.file_path">
-                                <ExportOutlined />
-                            </a-button>
-                        </a-tooltip>
-
-                        <!-- Sao chép link -->
-                        <a-tooltip title="Sao chép link">
-                            <a-button type="link" @click="copyLink(record)" :disabled="!record.file_path">
-                                <CopyOutlined />
-                            </a-button>
-                        </a-tooltip>
-
-                        <!-- Sửa -->
-                        <a-tooltip title="Sửa">
-                            <a-button type="link" @click="editDocument(record.id)">
-                                <EditOutlined />
-                            </a-button>
-                        </a-tooltip>
-
-                        <!-- Xoá -->
-                        <a-popconfirm title="Xác nhận xoá?" @confirm="deleteDoc(record.id)">
-                            <a-tooltip title="Xoá">
-                                <a-button type="link" danger>
-                                    <DeleteOutlined />
+            <!-- Table -->
+            <a-table
+                :columns="columns"
+                :data-source="documents"
+                :pagination="pagination"
+                :loading="loading"
+                row-key="id"
+                @change="handleTableChange"
+            >
+                <template #bodyCell="{ column, record }">
+                    <template v-if="column.key === 'action'">
+                        <a-space>
+                            <!-- Đi tới trang chi tiết -->
+                            <a-tooltip title="Xem chi tiết">
+                                <a-button type="link" @click="goDetail(record)">
+                                    <EyeOutlined />
                                 </a-button>
                             </a-tooltip>
-                        </a-popconfirm>
-                    </a-space>
+
+                            <!-- Mở link gốc -->
+                            <a-tooltip title="Mở link gốc">
+                                <a-button type="link" @click="openOriginal(record)" :disabled="!record.file_path">
+                                    <ExportOutlined />
+                                </a-button>
+                            </a-tooltip>
+
+                            <!-- Sao chép link -->
+                            <a-tooltip title="Sao chép link">
+                                <a-button type="link" @click="copyLink(record)" :disabled="!record.file_path">
+                                    <CopyOutlined />
+                                </a-button>
+                            </a-tooltip>
+
+                            <!-- Sửa -->
+                            <a-tooltip title="Sửa">
+                                <a-button type="link" @click="editDocument(record.id)">
+                                    <EditOutlined />
+                                </a-button>
+                            </a-tooltip>
+
+                            <!-- Xoá -->
+                            <a-popconfirm title="Xác nhận xoá?" @confirm="deleteDoc(record.id)">
+                                <a-tooltip title="Xoá">
+                                    <a-button type="link" danger>
+                                        <DeleteOutlined />
+                                    </a-button>
+                                </a-tooltip>
+                            </a-popconfirm>
+                        </a-space>
+                    </template>
                 </template>
-            </template>
-        </a-table>
+            </a-table>
 
-        <!-- Edit modal -->
-        <a-modal
-            v-model:open="editModalVisible"
-            title="Chỉnh sửa tài liệu"
-            @ok="submitEdit"
-            @cancel="resetEditForm"
-            :confirm-loading="editLoading"
-            ok-text="Cập nhật"
-            cancel-text="Hủy"
-        >
-            <a-form layout="vertical">
-                <a-form-item label="Tiêu đề">
-                    <a-input v-model:value="editForm.title" placeholder="Nhập tiêu đề" />
-                </a-form-item>
+            <!-- Edit modal -->
+            <a-modal
+                v-model:open="editModalVisible"
+                title="Chỉnh sửa tài liệu"
+                @ok="submitEdit"
+                @cancel="resetEditForm"
+                :confirm-loading="editLoading"
+                ok-text="Cập nhật"
+                cancel-text="Hủy"
+            >
+                <a-form layout="vertical">
+                    <a-form-item label="Tiêu đề">
+                        <a-input v-model:value="editForm.title" placeholder="Nhập tiêu đề" />
+                    </a-form-item>
 
-                <a-form-item label="Phòng ban">
-                    <a-select
-                        v-model:value="editForm.department_id"
-                        :options="departments"
-                        placeholder="Chọn phòng ban"
-                    />
-                </a-form-item>
+                    <a-form-item label="Phòng ban">
+                        <a-select
+                            v-model:value="editForm.department_id"
+                            :options="departments"
+                            placeholder="Chọn phòng ban"
+                        />
+                    </a-form-item>
 
-                <a-form-item label="Đường dẫn file">
-                    <a-input v-model:value="editForm.file_path" placeholder="Link tài liệu" />
-                </a-form-item>
+                    <a-form-item label="Đường dẫn file">
+                        <a-input v-model:value="editForm.file_path" placeholder="Link tài liệu" />
+                    </a-form-item>
 
-                <a-form-item label="Quyền truy cập">
-                    <a-select v-model:value="editForm.visibility">
-                        <a-select-option value="private">Riêng tư</a-select-option>
-                        <a-select-option value="public">Công khai</a-select-option>
-                        <a-select-option value="department">Theo phòng ban</a-select-option>
-                        <a-select-option value="custom">Tùy chỉnh</a-select-option>
-                    </a-select>
-                </a-form-item>
-            </a-form>
-        </a-modal>
+                    <a-form-item label="Quyền truy cập">
+                        <a-select v-model:value="editForm.visibility">
+                            <a-select-option value="private">Riêng tư</a-select-option>
+                            <a-select-option value="public">Công khai</a-select-option>
+                            <a-select-option value="department">Theo phòng ban</a-select-option>
+                            <a-select-option value="custom">Tùy chỉnh</a-select-option>
+                        </a-select>
+                    </a-form-item>
+                </a-form>
+            </a-modal>
+        </a-card>
     </div>
 </template>
 

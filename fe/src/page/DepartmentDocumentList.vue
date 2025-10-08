@@ -1,25 +1,76 @@
 <template>
     <div>
-        <a-space style="margin-bottom: 16px" direction="vertical" size="middle">
-            <a-space>
-                <a-select
-                    v-model:value="selectedDept"
-                    :options="departmentOptions"
-                    placeholder="Chọn phòng ban"
-                    style="min-width: 240px"
-                    @change="fetchDocuments"
-                    allowClear
-                />
-                <a-input
-                    v-model:value="filterTitle"
-                    placeholder="Lọc theo tiêu đề"
-                    style="min-width: 200px"
-                />
-                <a-button ref="uploadBtn" type="primary" @click="showUploadModal">
-                    Upload tài liệu
-                </a-button>
+        <a-card>
+            <a-space style="margin-bottom: 16px" direction="vertical" size="middle">
+                <a-space>
+                    <a-select
+                        v-model:value="selectedDept"
+                        :options="departmentOptions"
+                        placeholder="Chọn phòng ban"
+                        style="min-width: 240px"
+                        @change="fetchDocuments"
+                        allowClear
+                    />
+                    <a-input
+                        v-model:value="filterTitle"
+                        placeholder="Lọc theo tiêu đề"
+                        style="min-width: 200px"
+                    />
+                    <a-button ref="uploadBtn" type="primary" @click="showUploadModal">
+                        Upload tài liệu
+                    </a-button>
+                </a-space>
             </a-space>
-        </a-space>
+            <a-table
+                :columns="columns"
+                :data-source="filteredDocs"
+                row-key="id"
+                :loading="loading"
+                :pagination="{ pageSize: 10 }"
+            >
+                <template #bodyCell="{ column, record }">
+                    <template v-if="column.key === 'action'">
+                        <a-space>
+                            <!-- Đi tới trang chi tiết -->
+                            <a-tooltip title="Xem chi tiết">
+                                <a-button type="link" @click="goDetail(record)">
+                                    <EyeOutlined />
+                                </a-button>
+                            </a-tooltip>
+
+                            <!-- Xem nhanh trong modal -->
+                            <a-tooltip title="Xem nhanh">
+                                <a-button type="link" @click="openDetailModal(record)">
+                                    <InfoCircleOutlined />
+                                </a-button>
+                            </a-tooltip>
+
+                            <!-- Mở link gốc -->
+                            <a-tooltip title="Mở link gốc">
+                                <a-button type="link" @click="openOriginal(record)" :disabled="!record.file_path">
+                                    <ExportOutlined />
+                                </a-button>
+                            </a-tooltip>
+
+                            <!-- Sao chép link -->
+                            <a-tooltip title="Sao chép link">
+                                <a-button type="link" @click="copyLink(record)" :disabled="!record.file_path">
+                                    <CopyOutlined />
+                                </a-button>
+                            </a-tooltip>
+
+                            <!-- Sửa -->
+                            <a-tooltip title="Sửa">
+                                <a-button type="link" @click="editDoc(record)">
+                                    <EditOutlined />
+                                </a-button>
+                            </a-tooltip>
+                        </a-space>
+                    </template>
+                </template>
+            </a-table>
+        </a-card>
+
 
         <!-- Modal thêm / sửa tài liệu -->
         <a-modal
@@ -94,54 +145,7 @@
             </a-descriptions>
         </a-modal>
 
-        <a-table
-            :columns="columns"
-            :data-source="filteredDocs"
-            row-key="id"
-            :loading="loading"
-            :pagination="{ pageSize: 10 }"
-        >
-            <template #bodyCell="{ column, record }">
-                <template v-if="column.key === 'action'">
-                    <a-space>
-                        <!-- Đi tới trang chi tiết -->
-                        <a-tooltip title="Xem chi tiết">
-                            <a-button type="link" @click="goDetail(record)">
-                                <EyeOutlined />
-                            </a-button>
-                        </a-tooltip>
 
-                        <!-- Xem nhanh trong modal -->
-                        <a-tooltip title="Xem nhanh">
-                            <a-button type="link" @click="openDetailModal(record)">
-                                <InfoCircleOutlined />
-                            </a-button>
-                        </a-tooltip>
-
-                        <!-- Mở link gốc -->
-                        <a-tooltip title="Mở link gốc">
-                            <a-button type="link" @click="openOriginal(record)" :disabled="!record.file_path">
-                                <ExportOutlined />
-                            </a-button>
-                        </a-tooltip>
-
-                        <!-- Sao chép link -->
-                        <a-tooltip title="Sao chép link">
-                            <a-button type="link" @click="copyLink(record)" :disabled="!record.file_path">
-                                <CopyOutlined />
-                            </a-button>
-                        </a-tooltip>
-
-                        <!-- Sửa -->
-                        <a-tooltip title="Sửa">
-                            <a-button type="link" @click="editDoc(record)">
-                                <EditOutlined />
-                            </a-button>
-                        </a-tooltip>
-                    </a-space>
-                </template>
-            </template>
-        </a-table>
     </div>
 </template>
 

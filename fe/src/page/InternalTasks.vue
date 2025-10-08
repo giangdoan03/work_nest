@@ -421,7 +421,7 @@ const columns = [
     },
     { title: 'Tên nhiệm vụ', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
     { title: 'Loại Task', dataIndex: 'linked_type', key: 'linked_type' },
-    { title: 'Uu tiên', dataIndex: 'priority', key: 'priority' },
+    { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority' },
     { title: 'Người thực hiện', dataIndex: 'assigned_to', key: 'assigned_to', width: 120, align: 'center' },
     { title: 'Bắt đầu', dataIndex: 'start_date', key: 'start_date', align: 'center' },
     { title: 'Kết thúc', dataIndex: 'end_date', key: 'end_date', align: 'center' },
@@ -560,12 +560,10 @@ const deleteConfirm = async (id) => {
     }
 }
 
-const showPopupDetail = async (record) => {
-    if (record.linked_type === 'bidding') {
-        await router.push({ name: 'workflow-bidding-tasks', params: { id: record.id } })
-    } else if (record.linked_type === 'contract') {
-        await router.push({ name: 'contract-task-info', params: { id: record.id } })
-    }
+const showPopupDetail = (record) => {
+    router.push({ name: 'workflow-task-info', params: { id: record.id } })
+    // hoặc dùng path:
+    // router.push(`/workflow/tasks/${record.id}/info`)
 }
 
 // ===== API helpers =====

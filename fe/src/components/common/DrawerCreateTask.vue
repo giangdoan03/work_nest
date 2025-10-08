@@ -132,7 +132,7 @@
                                 :options="linkedIdOption"
                                 @change="handleChangeLinkedId"
                                 placeholder="Chọn gói thầu"
-                                :disabled="!!formData.linked_id"
+                                :disabled="props.lockLinked"
                             />
                         </a-form-item>
                     </a-col>
@@ -156,7 +156,7 @@
                                 :options="linkedIdOption"
                                 @change="handleChangeLinkedId"
                                 placeholder="Chọn hợp đồng"
-                                :disabled="!!formData.linked_id"
+                                :disabled="props.lockLinked"
                             />
                         </a-form-item>
                     </a-col>
@@ -165,7 +165,7 @@
                             <a-select
                                 v-model:value="formData.step_code"
                                 :options="stepOption"
-                                :disabled="!formData.linked_id || !!formData.step_code"
+                                :disabled="!formData.linked_id || lockStepSelect"
                                 placeholder="Chọn bước hợp đồng"
                             />
                         </a-form-item>
@@ -181,7 +181,6 @@
                             </a-checkbox>
                         </a-form-item>
                     </a-col>
-
 
                     <a-col :span="24">
                         <a-form-item label="Mô tả" name="description">
@@ -215,15 +214,15 @@ import { getBiddingStepsAPI } from '@/api/bidding'
 import { getDepartments } from '@/api/department'
 import { useStepStore } from '@/stores/step'
 import { useCommonStore } from '@/stores/common'
+import { useRoute } from 'vue-router'
 
 import dayjs from 'dayjs'
 dayjs.locale('vi')
 import viVN from 'ant-design-vue/es/locale/vi_VN'
-import { defineProps } from '@vue/runtime-core'
 
 const stepStore = useStepStore()
 const commonStore = useCommonStore()
-const parentTaskId = computed(() => commonStore.parentTaskId) // ✅ NEW
+const parentTaskId = computed(() => commonStore.parentTaskId)
 const emit = defineEmits(['update:openDrawer', 'submitForm'])
 const store = useUserStore()
 const selectedStep = computed(() => stepStore.selectedStep)
@@ -235,6 +234,8 @@ const props = defineProps({
     type: { type: String, default: 'internal' },
     taskMeta: { type: Object, default: () => ({}) },
     createAsRoot: { type: Boolean, default: false },
+    /** Khóa select Liên kết (gói thầu/hợp đồng) nếu muốn */
+    lockLinked: { type: Boolean, default: false }
 })
 
 const locale = ref(viVN)
@@ -268,7 +269,6 @@ const formData = ref({
     needs_approval: 0
 })
 
-
 const effectiveParentId = computed(() =>
     props.createAsRoot
         ? null
@@ -289,7 +289,6 @@ const setDefaultData = () => {
         end_date: '',
         status: null,
         priority: null,
-        // ✅ NEW: ưu tiên props.taskParent -> Pinia.parentTaskId
         parent_id: props.taskParent ?? (parentTaskId.value ? Number(parentTaskId.value) : null),
         id_department: null,
         approval_steps: null,
@@ -299,101 +298,62 @@ const setDefaultData = () => {
     dateRange.value = null
 }
 
-
-import { useRoute } from 'vue-router'
 const currentRoute = useRoute()
 
-
-// === Route params: /biddings/:bidId/steps/:stepId/tasks ===
+// Route params cho bidding
 const routeBidId  = computed(() => currentRoute.params.bidId  || currentRoute.params.bid_id  || null)
 const routeStepId = computed(() => currentRoute.params.stepId || currentRoute.params.step_id || null)
+
+// Route params cho contract
+const routeContractId  = computed(() => currentRoute.params.contractId  || currentRoute.params.contract_id  || null)
+const routeContractStepId = computed(() => currentRoute.params.stepId || currentRoute.params.step_id || null)
 
 // Khóa select bước khi pref-fill từ URL
 const lockStepSelect = ref(false)
 const disableStepSelect = computed(() => !formData.value.linked_id || lockStepSelect.value)
 
-// Prefill bước từ URL /biddings/:bidId/steps/:stepId/tasks rồi khóa select
-const prefillStepFromRouteIfEmpty = async () => {
+// Prefill bước từ URL /biddings/:bidId/steps/:stepId/tasks
+const prefillBiddingFromRouteIfEmpty = async () => {
     const bidId  = routeBidId.value
     const stepId = routeStepId.value
-
-    // chỉ áp dụng với bidding và khi URL đầy đủ
     if (!bidId || !stepId) return
 
-    // Nếu chưa set loại → set "bidding"
     if (!formData.value.linked_type) formData.value.linked_type = 'bidding'
-
-    // Nếu chưa có linked_id → set từ route
     if (!formData.value.linked_id) formData.value.linked_id = String(bidId)
 
-    // Nạp option bước cho gói thầu hiện tại rồi gán step theo stepId
     await loadStepOptions('bidding', formData.value.linked_id)
-
-    // Tìm option có step_id khớp (options: { value: step_number, label, step_id })
     const picked = stepOption.value.find(o => String(o.step_id) === String(stepId))
     if (picked) {
-        formData.value.step_code = picked.value   // step_number
-        formData.value.step_id   = picked.step_id // step_id
-        lockStepSelect.value     = true           // khóa không cho đổi nữa
+        formData.value.step_code = picked.value
+        formData.value.step_id   = picked.step_id
+        lockStepSelect.value     = true
     }
 }
 
-watch(
-    () => ({
-        open: props.openDrawer,
-        type: formData.value.linked_type,
-        id: formData.value.linked_id,
-        selId: selectedStep.value?.id,
-        pId: parentTaskId.value
-    }),
-    async ({ open }) => {
-        if (!open) return
+// Prefill bước từ URL /contract/:contractId/steps/:stepId/tasks
+const prefillContractFromRouteIfEmpty = async () => {
+    const cid  = routeContractId.value
+    const sid  = routeContractStepId.value
+    if (!cid || !sid) return
 
-        // Ưu tiên step đang chọn trong store
-        if (selectedStep.value) {
-            setFormStepFromStore(selectedStep.value)
-        } else {
-            // Fallback từ commonStore
-            formData.value.linked_type = props.type || commonStore.linkedType || formData.value.linked_type
-            if (!formData.value.linked_id) {
-                formData.value.linked_id = commonStore.biddingIdParent ? String(commonStore.biddingIdParent) : null
-            }
-            // Fallback *từ route* nếu vẫn thiếu và URL có /biddings/:bidId/steps/:stepId/tasks
-            if (!formData.value.linked_type && routeBidId.value) {
-                formData.value.linked_type = 'bidding'
-            }
-            if (!formData.value.linked_id && routeBidId.value) {
-                formData.value.linked_id = String(routeBidId.value)
-            }
-        }
+    if (!formData.value.linked_type) formData.value.linked_type = 'contract'
+    if (!formData.value.linked_id) formData.value.linked_id = String(cid)
 
-        // parent_id (props > Pinia)
-        formData.value.parent_id = effectiveParentId.value
-
-        if (formData.value.linked_id) formData.value.linked_id = String(formData.value.linked_id)
-
-        await ensureLinkedIdInOptions()
-        linkedName.value = await getNameLinked(formData.value.linked_id)
-        await loadStepOptions(formData.value.linked_type, formData.value.linked_id)
-
-        // ⬇️ Prefill từ URL nếu chưa có bước
-        await prefillStepFromRouteIfEmpty()
-
-        // Lưu vào store dùng chung
-        commonStore.setLinkedType(formData.value.linked_type)
-        commonStore.setLinkedIdParent(formData.value.linked_id)
-    },
-    { immediate: true }
-)
-
-
+    await loadStepOptions('contract', formData.value.linked_id)
+    const picked = stepOption.value.find(o => String(o.step_id) === String(sid))
+    if (picked) {
+        formData.value.step_code = picked.value
+        formData.value.step_id   = picked.step_id
+        lockStepSelect.value     = true
+    }
+}
 
 const normalizeText = (s = '') =>
     s.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 
 const validateTitle = async (_r, v) => {
-    if (v === '') return Promise.reject('Vui lòng nhập họ và tên')
-    if (v.length > 200) return Promise.reject('Họ và tên không vượt quá 200 ký tự')
+    if (v === '') return Promise.reject('Vui lòng nhập tên nhiệm vụ')
+    if (v.length > 200) return Promise.reject('Tên nhiệm vụ không vượt quá 200 ký tự')
     return Promise.resolve()
 }
 const validateTime = async () => {
@@ -403,21 +363,13 @@ const validateTime = async () => {
 const validatePriority = async () => (!formData.value.priority ? Promise.reject('Vui lòng chọn độ ưu tiên') : Promise.resolve())
 const validateAsigned = async () => (!formData.value.assigned_to ? Promise.reject('Vui lòng chọn người phụ trách') : Promise.resolve())
 const validateProposed = async () => (!formData.value.proposed_by ? Promise.reject('Vui lòng chọn người đề nghị') : Promise.resolve())
-const validateLinkedType = async () => (!formData.value.linked_type ? Promise.reject('Vui lòng chọn công việc') : Promise.resolve())
+const validateLinkedType = async () => (!formData.value.linked_type ? Promise.reject('Vui lòng chọn loại công việc') : Promise.resolve())
 const validateDepartment = async () => (!formData.value.id_department ? Promise.reject('Vui lòng chọn phòng ban') : Promise.resolve())
 const validateDescription = async (_r, v) => (v === '' ? Promise.reject('Vui lòng nhập mô tả nhiệm vụ') : Promise.resolve())
-const validateApprovalSteps = async (_r, v) => {
-    if (v === undefined || v === null || v === '') return Promise.reject('Vui lòng chọn cấp duyệt')
-    if (![1, 2].includes(v)) return Promise.reject('Giá trị cấp duyệt không hợp lệ')
+const validateNeedsApproval = async (_r, value) => {
+    if (![0,1].includes(Number(value))) return Promise.reject('Giá trị needs_approval không hợp lệ')
     return Promise.resolve()
 }
-const validateNeedsApproval = async (rule, value) => {
-    if (![0,1].includes(Number(value))) {
-        return Promise.reject('Giá trị needs_approval không hợp lệ')
-    }
-    return Promise.resolve()
-}
-
 const validateStep = async () => {
     if (['bidding', 'contract'].includes(formData.value.linked_type)) {
         if (!formData.value.step_code && !formData.value.step_id) {
@@ -439,8 +391,6 @@ const rules = computed(() => ({
     step_code: [{ validator: validateStep, trigger: 'change' }],
     needs_approval: [{ required: true, validator: validateNeedsApproval, trigger: 'change' }]
 }))
-
-
 
 const priorityOption = ref([
     { value: 'low', label: 'Thấp' },
@@ -464,10 +414,7 @@ const linkedIdOption = computed(() => {
         return listBidding.value.map(ele => ({ value: String(ele.id), label: ele.title }))
     }
     if (formData.value.linked_type === 'contract') {
-        const arr = Array.isArray(listContract.value)
-            ? listContract.value
-            : (Array.isArray(listContract.value?.data) ? listContract.value.data : [])
-        return arr.map(ele => ({ value: String(ele.id), label: ele.title || ele.name || `Hợp đồng #${ele.id}` }))
+        return listContract.value.map(ele => ({ value: String(ele.id), label: ele.title || ele.name || `Hợp đồng #${ele.id}` }))
     }
     return []
 })
@@ -559,8 +506,7 @@ const getNameLinked = async id => {
         return res.data?.title ?? 'Gói thầu không tồn tại'
     }
     if (formData.value.linked_type === 'contract') {
-        const arr = Array.isArray(listContract.value) ? listContract.value : (Array.isArray(listContract.value?.data) ? listContract.value.data : [])
-        const found = arr.find(x => String(x.id) === String(id))
+        const found = listContract.value.find(x => String(x.id) === String(id))
         if (found) return found.title
         const res = await getContractAPI(id)
         return res.data?.title ?? res.data?.name ?? 'Hợp đồng không tồn tại'
@@ -570,38 +516,58 @@ const getNameLinked = async id => {
 
 /* ---------------- Ensure selected linked exists ---------------- */
 const ensureLinkedIdInOptions = async () => {
-    if (formData.value.linked_type !== 'bidding' || !formData.value.linked_id) return
-    const exists = listBidding.value.some(item => String(item.id) === String(formData.value.linked_id))
-    if (!exists) {
-        try {
-            const res = await getBiddingAPI(formData.value.linked_id)
-            if (res?.data) listBidding.value.push(res.data)
-        } catch (err) {
-            console.error('Không thể lấy thông tin gói thầu:', err)
+    if (!formData.value.linked_id) return
+    if (formData.value.linked_type === 'bidding') {
+        const exists = listBidding.value.some(item => String(item.id) === String(formData.value.linked_id))
+        if (!exists) {
+            try {
+                const res = await getBiddingAPI(formData.value.linked_id)
+                if (res?.data) listBidding.value.push(res.data)
+            } catch (err) {
+                console.error('Không thể lấy thông tin gói thầu:', err)
+            }
+        }
+    } else if (formData.value.linked_type === 'contract') {
+        const exists = listContract.value.some(item => String(item.id) === String(formData.value.linked_id))
+        if (!exists) {
+            try {
+                const res = await getContractAPI(formData.value.linked_id)
+                if (res?.data) {
+                    const rec = { ...res.data, id: String(res.data.id), title: res.data.title ?? res.data.name ?? '' }
+                    listContract.value.push(rec)
+                }
+            } catch (err) {
+                console.error('Không thể lấy thông tin hợp đồng:', err)
+            }
         }
     }
 }
 
 /* ---------------- UI Handlers ---------------- */
-const handleChangeLinkedType = () => {
+const handleChangeLinkedType = async () => {
     formData.value.linked_id = null
     formData.value.step_code = null
     formData.value.step_id = null
     stepOption.value = []
 }
+
 const handleChangeDepartment = () => {}
-const handleChangeLinkedId = () => {
+
+const handleChangeLinkedId = async () => {
     formData.value.step_code = null
     formData.value.step_id = null
+    await ensureLinkedIdInOptions()
+    await loadStepOptions(formData.value.linked_type, formData.value.linked_id)
+    lockStepSelect.value = false
 }
 
 const changeDateTime = (day, date) => {
     if (day) {
         formData.value.start_date = convertDateFormat(date[0])
-        formData.value.end_date = convertDateFormat(date[1])
+        formData.value.end_date   = convertDateFormat(date[1])
     } else {
         formData.value.start_date = ''
-        formData.value.end_date = ''
+        formData.value.end_date   = ''
     }
 }
 const convertDateFormat = dateStr => {
@@ -614,10 +580,13 @@ const createDrawerInternal = async () => {
     if (loadingCreate.value) return
     const payload = { ...formData.value }
 
-    // ✅ NEW: thiết lập parent_id từ props/Pinia nếu chưa có
     payload.parent_id = props.createAsRoot ? null : effectiveParentId.value
-    // map step_code -> step_id nếu thiếu
+
     if (['bidding', 'contract'].includes(payload.linked_type)) {
+        if (!payload.linked_id) {
+            message.error('Vui lòng chọn liên kết ' + (payload.linked_type === 'bidding' ? 'gói thầu' : 'hợp đồng'))
+            return
+        }
         if (!payload.step_id && payload.step_code) {
             const found = stepOption.value.find(it => String(it.value) === String(payload.step_code))
             payload.step_id = found?.step_id ?? null
@@ -632,8 +601,7 @@ const createDrawerInternal = async () => {
         }
     }
 
-    // ép kiểu số
-    ['created_by','assigned_to','proposed_by','parent_id','id_department','step_id','needs_approval']
+    ;['created_by','assigned_to','proposed_by','parent_id','id_department','step_id','needs_approval']
         .forEach(k => {
             payload[k] = payload[k] !== undefined && payload[k] !== null && payload[k] !== ''
                 ? Number(payload[k])
@@ -707,7 +675,7 @@ watch(
         type: formData.value.linked_type,
         id: formData.value.linked_id,
         selId: selectedStep.value?.id,
-        pId: parentTaskId.value // ✅ theo dõi thay đổi parent trong store
+        pId: parentTaskId.value
     }),
     async ({ open }) => {
         if (!open) return
@@ -716,22 +684,36 @@ watch(
         if (selectedStep.value) {
             setFormStepFromStore(selectedStep.value)
         } else {
-            // fallback từ commonStore
+            // fallback từ commonStore/props
             formData.value.linked_type = props.type || commonStore.linkedType || formData.value.linked_type
             if (!formData.value.linked_id) {
-                formData.value.linked_id = commonStore.biddingIdParent ? String(commonStore.biddingIdParent) : null
+                const parentFromStore = commonStore.biddingIdParent ? String(commonStore.biddingIdParent) : null
+                formData.value.linked_id = (formData.value.linked_type === 'bidding') ? parentFromStore : formData.value.linked_id
+            }
+            // Fallback route cho bidding
+            if (!formData.value.linked_type && routeBidId.value) formData.value.linked_type = 'bidding'
+            if (!formData.value.linked_id && routeBidId.value && formData.value.linked_type === 'bidding') {
+                formData.value.linked_id = String(routeBidId.value)
+            }
+            // Fallback route cho contract
+            if (!formData.value.linked_type && routeContractId.value) formData.value.linked_type = 'contract'
+            if (!formData.value.linked_id && routeContractId.value && formData.value.linked_type === 'contract') {
+                formData.value.linked_id = String(routeContractId.value)
             }
         }
 
-        // ✅ NEW: set parent_id (props > Pinia)
-        formData.value.parent_id = props.taskParent ?? (parentTaskId.value ? Number(parentTaskId.value) : formData.value.parent_id)
+        // parent_id (props > Pinia)
+        formData.value.parent_id = effectiveParentId.value
 
-        // chuẩn hóa type/id
         if (formData.value.linked_id) formData.value.linked_id = String(formData.value.linked_id)
 
         await ensureLinkedIdInOptions()
         linkedName.value = await getNameLinked(formData.value.linked_id)
         await loadStepOptions(formData.value.linked_type, formData.value.linked_id)
+
+        // Prefill từ URL nếu chưa có bước
+        await prefillBiddingFromRouteIfEmpty()
+        await prefillContractFromRouteIfEmpty()
 
         // lưu vào store dùng chung
         commonStore.setLinkedType(formData.value.linked_type)
@@ -749,7 +731,6 @@ watch(() => formData.value.step_code, (code) => {
 /* ---------------- Mounted ---------------- */
 onMounted(async () => {
     formData.value.linked_type = props.type || commonStore.linkedType || formData.value.linked_type
-    // ✅ set parent mặc định cả khi mới mount
     if (!formData.value.parent_id) {
         formData.value.parent_id = props.taskParent ?? (parentTaskId.value ? Number(parentTaskId.value) : null)
     }
