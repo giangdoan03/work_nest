@@ -1,24 +1,26 @@
 <template>
     <div>
-            <a-card bordered>
-                <a-flex justify="space-between" align="center" class="mb-3">
-                    <a-typography-title :level="4">Nhiệm vụ cần duyệt</a-typography-title>
+        <a-card bordered>
+            <a-flex justify="space-between" align="center" class="mb-3">
+                <a-typography-title :level="4">Nhiệm vụ cần duyệt</a-typography-title>
+                <a-input-search
+                    v-model:value="searchTitle"
+                    placeholder="Tìm theo tiêu đề"
+                    allow-clear
+                    style="max-width: 320px"
+                    @pressEnter="handleSearch"
+                />
+            </a-flex>
 
-                    <a-input-search
-                        v-model:value="searchTitle"
-                        placeholder="Tìm theo tiêu đề"
-                        allow-clear
-                        style="max-width: 320px"
-                        @pressEnter="handleSearch"
-                    />
-                </a-flex>
+            <!-- Tabs: Cần duyệt / Đã xử lý / Văn bản -->
+            <a-tabs v-model:activeKey="activeTab">
+                <a-tab-pane key="pending" tab="Cần duyệt" />
+                <a-tab-pane key="resolved" tab="Đã xử lý" />
+                <a-tab-pane key="docs" tab="Duyệt công văn" />
+            </a-tabs>
 
-                <!-- ✅ Chỉ còn 2 tab: Cần duyệt / Đã xử lý (bỏ @change để tránh fetch đôi) -->
-                <a-tabs v-model:activeKey="activeTab">
-                    <a-tab-pane key="pending" tab="Cần duyệt" />
-                    <a-tab-pane key="resolved" tab="Đã xử lý" />
-                </a-tabs>
-
+            <!-- Bảng cho pending + resolved -->
+            <template v-if="activeTab !== 'docs'">
                 <a-table
                     :columns="columns"
                     :data-source="rows"
@@ -36,9 +38,7 @@
                         </template>
 
                         <!-- Tiêu đề + Link (tự nhận diện external/internal) -->
-                        <!-- Tiêu đề + Link -->
                         <template v-else-if="column.dataIndex === 'title'">
-                            <!-- Tab Cần duyệt -->
                             <!-- Tab Cần duyệt -->
                             <template v-if="activeTab === 'pending'">
                                 <template v-if="isStep(record)">
@@ -73,7 +73,6 @@
                                     </router-link>
                                 </template>
                             </template>
-
                         </template>
 
                         <!-- Cấp hiện tại -->
@@ -88,11 +87,7 @@
 
                         <!-- Tiến độ -->
                         <template v-else-if="column.dataIndex === 'progress'">
-                            <a-progress
-                                :percent="progressPercent(record)"
-                                :status="progressStatus(record)"
-                                size="small"
-                            />
+                            <a-progress :percent="progressPercent(record)" :status="progressStatus(record)" size="small" />
                             <div class="text-xs text-gray-500">
                                 <a-tag :color="progressColor(record)" style="font-size:12px;">
                                     {{ progressText(record) }}
@@ -118,22 +113,20 @@
                         <!-- Hành động -->
                         <template v-else-if="column.dataIndex === 'action'">
                             <a-space>
-                                <a-button
-                                    v-if="activeTab === 'pending'"
-                                    type="primary"
-                                    @click="openModal(record, 'approve')"
-                                >Duyệt</a-button>
-                                <a-button
-                                    v-if="activeTab === 'pending'"
-                                    danger
-                                    @click="openModal(record, 'reject')"
-                                >Từ chối</a-button>
+                                <a-button v-if="activeTab === 'pending'" type="primary" @click="openModal(record, 'approve')">Duyệt</a-button>
+                                <a-button v-if="activeTab === 'pending'" danger @click="openModal(record, 'reject')">Từ chối</a-button>
                                 <a-button @click="viewTimeline(record)">Chi tiết</a-button>
                             </a-space>
                         </template>
                     </template>
                 </a-table>
-            </a-card>
+            </template>
+
+            <!-- Danh sách Văn bản cần duyệt (PDF) -->
+            <template v-else>
+                <DocumentApprovalList @refresh="fetchData" />
+            </template>
+        </a-card>
 
         <!-- Modal nhập comment -->
         <a-modal
@@ -154,11 +147,7 @@
         <!-- Modal Timeline -->
         <a-modal v-model:open="timelineVisible" title="Chi tiết phê duyệt" :footer="null" width="620px">
             <a-timeline>
-                <a-timeline-item
-                    v-for="st in timelineSteps"
-                    :key="st.level"
-                    :color="timelineColor(st.status)"
-                >
+                <a-timeline-item v-for="st in timelineSteps" :key="st.level" :color="timelineColor(st.status)">
                     <template v-if="st.status === 'approved'">
                         Cấp {{ st.level }}: {{ st._approver_name || ('#' + st.approver_id) }} đã duyệt lúc {{ formatTime(st.commented_at) }}
                         <div v-if="st.note">📝 {{ st.note }}</div>
@@ -188,8 +177,11 @@ import {
     listApprovals
 } from '@/api/approvals'
 
+// Lazy-load component văn bản để tách bớt bundle phần pdf-lib
+import DocumentApprovalList from '../components/Approval/DocumentApprovalList.vue'
+
 // ================== STATE ==================
-const activeTab   = ref('pending')   // 'pending' | 'resolved'
+const activeTab   = ref('pending')   // 'pending' | 'resolved' | 'docs'
 const rows        = ref([])
 const loading     = ref(false)
 const searchTitle = ref('')
@@ -230,32 +222,19 @@ const toInt = (v, d = 0) => {
     return Number.isFinite(n) ? n : d
 }
 const clamp = (n, min, max) => Math.max(min, Math.min(max, n))
+const safeParseJSON = (v) => { if (v == null) return null; if (typeof v === 'object') return v; try { return JSON.parse(v) } catch { return null } }
 
-const safeParseJSON = (v) => {
-    if (v == null) return null
-    if (typeof v === 'object') return v
-    try { return JSON.parse(v) } catch { return null }
-}
-
-// Thêm (hoặc sửa) helper để tạo URL nội bộ thống nhất
 const makeUrl = (type, id) => {
     const _id = Number(id)
     switch (type) {
-        case 'task':
-            return { name: 'tasks-detail', params: { id: _id } } // 👈 đúng route hiện có
-        case 'bidding':
-            return { name: 'biddings-info', params: { id: _id } }
-        case 'contract':
-            return { name: 'contract-detail', params: { id: _id } }
-        case 'bidding_step':
-            return { name: 'BiddingStepDetail', params: { id: _id } }
-        case 'contract_step':
-            return { name: 'ContractStepDetail', params: { id: _id } }
-        default:
-            return '/'
+        case 'task':          return { name: 'tasks-detail', params: { id: _id } }
+        case 'bidding':       return { name: 'biddings-info', params: { id: _id } }
+        case 'contract':      return { name: 'contract-detail', params: { id: _id } }
+        case 'bidding_step':  return { name: 'BiddingStepDetail', params: { id: _id } }
+        case 'contract_step': return { name: 'ContractStepDetail', params: { id: _id } }
+        default: return '/'
     }
 }
-
 
 const normalizeApprovalRow = (ai = {}) => {
     const meta = safeParseJSON(ai.meta_json)
@@ -265,12 +244,7 @@ const normalizeApprovalRow = (ai = {}) => {
     return {
         ...ai,
         title: meta?.title || ai.title || `[${ai.target_type}] #${ai.target_id}`,
-        // Nếu meta/url là string http(s) => external, nếu không thì build object route nội bộ
-        url:
-            isExternalUrl(meta?.url) ? meta.url
-                : isExternalUrl(ai.url)  ? ai.url
-                    : makeUrl(targetType, targetId),
-
+        url: isExternalUrl(meta?.url) ? meta.url : isExternalUrl(ai.url) ? ai.url : makeUrl(targetType, targetId),
         assignee_name: meta?.assignee_name ?? ai.assignee_name ?? null,
         id: ai.id || ai.approval_id || ai.request_id,
         meta_json: meta,
@@ -279,11 +253,11 @@ const normalizeApprovalRow = (ai = {}) => {
     }
 }
 
-
-const isExternalUrl = (u) => /^https?:\/\//i.test(u)
+const isExternalUrl = (u) => typeof u === 'string' && /^https?:\/\//i.test(u)
 
 // ================== FETCH ==================
 const fetchData = async () => {
+    if (activeTab.value === 'docs') return // tab docs tự fetch bên trong component con
     loading.value = true
     try {
         const { data } = activeTab.value === 'pending'
@@ -312,8 +286,6 @@ const fetchData = async () => {
 }
 
 const isStep = (r) => r?.target_type === 'bidding_step' || r?.target_type === 'contract_step'
-
-// Điều hướng sang trang chi tiết theo loại step, dùng chính target_id (id của step)
 const stepDetailRoute = (r) => {
     const id = Number(r?.target_id)
     if (!id) return '/'
@@ -327,23 +299,15 @@ const handleTableChange = (pg) => {
     pagination.value.pageSize = pg.pageSize
     fetchData()
 }
-const handleSearch = () => {
-    pagination.value.current = 1
-    fetchData()
-}
+const handleSearch = () => { pagination.value.current = 1; fetchData() }
 
 // ================== ACTIONS ==================
 const openModal = (record, action) => {
-    selectedRecord.value = {
-        ...record,
-        id: record.instance_id,  // đặt sau cùng để không bị record.id ghi đè
-        step_id: record.step_id, // cũng nên đặt cuối
-    }
+    selectedRecord.value = { ...record, id: record.instance_id, step_id: record.step_id }
     modalAction.value = action === 'reject' ? 'reject' : 'approve'
     comment.value = ''
     modalVisible.value = true
 }
-
 
 const handleModalSubmit = async () => {
     const id = selectedRecord.value?.id
@@ -351,9 +315,7 @@ const handleModalSubmit = async () => {
 
     submitting.value = true
     try {
-        console.log('Modal OK clicked', id)
         const payload = comment.value ? { note: comment.value } : {}
-
         if (modalAction.value === 'approve') {
             await approveApproval(id, payload)
             message.success('Duyệt thành công')
@@ -364,8 +326,8 @@ const handleModalSubmit = async () => {
 
         modalVisible.value = false
 
-        // cập nhật lại rows
-        rows.value = rows.value.filter(r => r.instance_id !== id)
+        // cập nhật lại rows cục bộ để nhanh, rồi refetch để chắc
+        rows.value = rows.value.filter(r => (r.instance_id || r.id) !== id)
         pagination.value.total = Math.max(0, pagination.value.total - 1)
         if (rows.value.length === 0 && pagination.value.current > 1) {
             pagination.value.current -= 1
@@ -374,10 +336,7 @@ const handleModalSubmit = async () => {
         if (activeTab.value === 'pending') activeTab.value = 'resolved'
         await fetchData()
     } catch (e) {
-        message.error(
-            e?.response?.data?.message ||
-            (modalAction.value === 'approve' ? 'Duyệt thất bại' : 'Từ chối thất bại')
-        )
+        message.error(e?.response?.data?.message || (modalAction.value === 'approve' ? 'Duyệt thất bại' : 'Từ chối thất bại'))
     } finally {
         submitting.value = false
     }
@@ -403,17 +362,8 @@ const mapTypeLabel = (t) => ({
     task: 'Nhiệm vụ',
 }[t] || t || '—')
 
-const statusColor = (s) =>
-    s === 'approved' ? 'green'
-        : s === 'rejected' ? 'red'
-            : s === 'pending' ? 'orange'
-                : 'default'
-
-const statusText = (s) =>
-    s === 'approved' ? 'Đã duyệt'
-        : s === 'rejected' ? 'Từ chối'
-            : s === 'pending' ? 'Đang chờ'
-                : '—'
+const statusColor = (s) => s === 'approved' ? 'green' : s === 'rejected' ? 'red' : s === 'pending' ? 'orange' : 'default'
+const statusText  = (s) => s === 'approved' ? 'Đã duyệt' : s === 'rejected' ? 'Từ chối' : s === 'pending' ? 'Đang chờ' : '—'
 
 const progressPercent = (r) => {
     const total = toInt(r._total_steps ?? r.total_steps, 0)
@@ -422,14 +372,8 @@ const progressPercent = (r) => {
     const approvedCount = Math.min(total, toInt(r.current_level))
     return clamp(Math.round((approvedCount / total) * 100), 0, 100)
 }
-
-const progressStatus = (r) => {
-    if (r.status === 'approved') return 'success'
-    if (r.status === 'rejected') return 'exception'
-    return undefined // để antd tự xử lý (hiệu ứng mặc định)
-}
-
-const progressText = (r) => {
+const progressStatus = (r) => r.status === 'approved' ? 'success' : r.status === 'rejected' ? 'exception' : undefined
+const progressText   = (r) => {
     const total = toInt(r._total_steps ?? r.total_steps, 0)
     if (total <= 0) {
         return r.status === 'pending' ? 'Chưa chọn người duyệt' : 'Không cần phê duyệt'
@@ -438,11 +382,7 @@ const progressText = (r) => {
     if (r.status === 'rejected') return `Bị từ chối tại cấp ${toInt(r.current_level) + 1}`
     return `Đang duyệt: Cấp ${toInt(r.current_level) + 1}/${total}`
 }
-
-const progressColor = (r) =>
-    r.status === 'approved' ? 'green'
-        : r.status === 'rejected' ? 'red'
-            : 'orange'
+const progressColor  = (r) => r.status === 'approved' ? 'green' : r.status === 'rejected' ? 'red' : 'orange'
 
 const displayFallbackTitle = (r) => `[${mapTypeLabel(r.target_type)}] #${r.target_id}`
 const formatTime = (ts) => (ts ? new Date(ts).toLocaleString('vi-VN') : '')
@@ -450,12 +390,17 @@ const timelineColor = (s) => (s === 'approved' ? 'green' : s === 'rejected' ? 'r
 
 // ================== WATCHERS ==================
 watch(activeTab, () => {
-    pagination.value.current = 1
-    fetchData()
+    // Chỉ fetch khi là 2 tab danh sách nhiệm vụ; tab docs dùng component con
+    if (activeTab.value !== 'docs') {
+        pagination.value.current = 1
+        fetchData()
+    }
 })
 watch(searchTitle, debounce(() => {
-    pagination.value.current = 1
-    fetchData()
+    if (activeTab.value !== 'docs') {
+        pagination.value.current = 1
+        fetchData()
+    }
 }, 400))
 
 onMounted(fetchData)
