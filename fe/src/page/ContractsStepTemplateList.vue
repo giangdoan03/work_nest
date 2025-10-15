@@ -1,56 +1,58 @@
 <template>
     <div>
-        <a-flex justify="space-between">
-            <div>
-                <a-typography-title :level="4">Danh sách bước mẫu hợp đồng</a-typography-title>
-            </div>
-            <a-button type="primary" @click="showPopupCreate">Thêm bước mới</a-button>
-        </a-flex>
+        <a-card>
+            <a-flex justify="space-between">
+                <div>
+                    <a-typography-title :level="4">Danh sách bước mẫu hợp đồng</a-typography-title>
+                </div>
+                <a-button type="primary" @click="showPopupCreate">Thêm bước mới</a-button>
+            </a-flex>
 
-        <a-table
-            :columns="columns"
-            :data-source="tableData"
-            :loading="loading"
-            row-key="id"
-            :pagination="pagination"
-            :scroll="{ x: 'max-content'}"
-            @change="onTableChange"
-        >
-            <template #bodyCell="{ column, record, index }">
-                <template v-if="column.dataIndex === 'stt'">
-                    {{ rowNumber(index) }}
+            <a-table
+                :columns="columns"
+                :data-source="tableData"
+                :loading="loading"
+                row-key="id"
+                :pagination="pagination"
+                :scroll="{ x: 'max-content'}"
+                @change="onTableChange"
+            >
+                <template #bodyCell="{ column, record, index }">
+                    <template v-if="column.dataIndex === 'stt'">
+                        {{ rowNumber(index) }}
+                    </template>
+                    <template v-else-if="column.dataIndex === 'step_number'">
+                        <a-tag color="blue">Bước {{ record.step_number }}</a-tag>
+                    </template>
+                    <template v-else-if="column.dataIndex === 'step_code'">
+                        <a-typography-text>{{ record.step_code }}</a-typography-text>
+                    </template>
+                    <template v-else-if="column.dataIndex === 'title'">
+                        <a-typography-text strong style="cursor: pointer;" @click="editStep(record)">
+                            {{ record.title }}
+                        </a-typography-text>
+                    </template>
+                    <template v-else-if="column.dataIndex === 'department'">
+                        <a-space wrap>
+                            <a-tag v-for="dept in record.department" :key="dept">{{ dept }}</a-tag>
+                        </a-space>
+                    </template>
+                    <template v-else-if="column.dataIndex === 'action'">
+                        <a-space>
+                            <EditOutlined class="icon-action" @click="editStep(record)" />
+                            <a-popconfirm
+                                title="Xoá bước này?"
+                                ok-text="Xoá"
+                                cancel-text="Hủy"
+                                @confirm="deleteStep(record.id)"
+                            >
+                                <DeleteOutlined class="icon-action" style="color: red;" />
+                            </a-popconfirm>
+                        </a-space>
+                    </template>
                 </template>
-                <template v-else-if="column.dataIndex === 'step_number'">
-                    <a-tag color="blue">Bước {{ record.step_number }}</a-tag>
-                </template>
-                <template v-else-if="column.dataIndex === 'step_code'">
-                    <a-typography-text>{{ record.step_code }}</a-typography-text>
-                </template>
-                <template v-else-if="column.dataIndex === 'title'">
-                    <a-typography-text strong style="cursor: pointer;" @click="editStep(record)">
-                        {{ record.title }}
-                    </a-typography-text>
-                </template>
-                <template v-else-if="column.dataIndex === 'department'">
-                    <a-space wrap>
-                        <a-tag v-for="dept in record.department" :key="dept">{{ dept }}</a-tag>
-                    </a-space>
-                </template>
-                <template v-else-if="column.dataIndex === 'action'">
-                    <a-space>
-                        <EditOutlined class="icon-action" @click="editStep(record)" />
-                        <a-popconfirm
-                            title="Xoá bước này?"
-                            ok-text="Xoá"
-                            cancel-text="Hủy"
-                            @confirm="deleteStep(record.id)"
-                        >
-                            <DeleteOutlined class="icon-action" style="color: red;" />
-                        </a-popconfirm>
-                    </a-space>
-                </template>
-            </template>
-        </a-table>
+            </a-table>
+        </a-card>
 
         <a-drawer
             :title="selectedStep ? 'Chỉnh sửa bước' : 'Thêm bước mới'"

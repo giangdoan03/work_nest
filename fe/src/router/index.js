@@ -343,6 +343,7 @@ const routes = [
                 component: DepartmentList,
                 meta: { breadcrumb: 'Phòng ban' }
             },
+
         ]
     }
 ]

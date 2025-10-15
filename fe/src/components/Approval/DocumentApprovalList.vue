@@ -48,6 +48,7 @@
                         </a-button>
                         <a-button danger @click="reject(record)" :disabled="record.__approved">Từ chối</a-button>
                         <a-button @click="openOriginal(record)" :disabled="!record.file_url">Mở file</a-button>
+                        <a-button @click="signAndPreview(record)">Ký thử (ảnh)</a-button>
 
                         <!-- Tick xanh khi đã duyệt -->
                         <a-tag v-if="record.__approved" color="green" style="margin-left:6px">
@@ -73,9 +74,14 @@
             />
         </div>
 
+
+
         <!-- Modal xem PDF -->
-        <a-modal v-model:open="previewOpen" title="Xem văn bản" :footer="null" width="80%">
-            <iframe v-if="previewUrl" :src="previewUrl" style="width:100%;height:78vh;border:none;"></iframe>
+        <a-modal v-model:open="previewOpen" title="Xem PDF" :footer="null" width="80%">
+            <iframe
+                :src="`/pdfjs/viewer.html?file=${encodeURIComponent(previewUrl)}`"
+                style="width:100%;height:78vh;border:none;"
+            ></iframe>
         </a-modal>
 
         <!-- Modal duyệt: nhập thông tin -->
@@ -122,10 +128,9 @@ import {PDFDocument, rgb} from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import {CheckCircleTwoTone} from '@ant-design/icons-vue'
 import {getDocumentsByDepartment} from '@/api/document'
-import checkIcon from '../../assets/tick.png?url'
+import fontUrl from '@/assets/fonts/Roboto-Regular.ttf?url' // font có tiếng Việt. Đặt file tại public/fonts/Roboto-Regular.ttf
 
 const baseURL = import.meta.env.VITE_API_URL
-import fontUrl from '@/assets/fonts/Roboto-Regular.ttf?url' // font có tiếng Việt. Đặt file tại public/fonts/Roboto-Regular.ttf
 
 // ====== State ======
 const selectedDept = ref(null)
@@ -145,6 +150,92 @@ const pagedRows = computed(() => {
     const start = (pager.value.current - 1) * pager.value.pageSize
     return rows.value.slice(start, start + pager.value.pageSize)
 })
+
+
+// Dùng chung: chuyển 1 url PDF bất kỳ sang đường dẫn có proxy (để tránh CORS)
+function toProxyUrl(pdfUrl) {
+    try {
+        const u = new URL(pdfUrl, window.location.origin)
+        // Nếu là absolute http/https khác origin → dùng /pdf-proxy + pathname
+        if (/^https?:/i.test(u.href) && u.origin !== window.location.origin) {
+            return '/pdf-proxy' + u.pathname + (u.search || '')
+        }
+        // Nếu đã là /pdf-proxy hoặc đã cùng origin → giữ nguyên
+        return u.pathname + (u.search || '')
+    } catch {
+        // relative path sẵn có
+        return pdfUrl
+    }
+}
+
+async function fetchBytesStrict(url) {
+    const r = await fetch(url, { cache: 'no-store' })
+    if (!r.ok) throw new Error(`Fetch failed ${r.status}: ${url}`)
+    const ab = await r.arrayBuffer()
+    // Bắt trường hợp trả về HTML (404 bị rewrite)
+    const head = new Uint8Array(ab.slice(0, 16))
+    const txt = new TextDecoder().decode(head)
+    if (txt.startsWith('<!') || txt.startsWith('<ht') || txt.includes('<html')) {
+        throw new Error(`Got HTML instead of image at ${url} (check path / proxy)`)
+    }
+    return ab
+}
+
+function detectImageType(u8) {
+    // PNG magic: 89 50 4E 47 0D 0A 1A 0A
+    if (u8[0] === 0x89 && u8[1] === 0x50 && u8[2] === 0x4E && u8[3] === 0x47) return 'png'
+    // JPEG magic: FF D8 FF
+    if (u8[0] === 0xFF && u8[1] === 0xD8 && u8[2] === 0xFF) return 'jpg'
+    return 'unknown'
+}
+
+async function embedImageAuto(pdfDoc, imgAb) {
+    const u8 = new Uint8Array(imgAb)
+    const kind = detectImageType(u8)
+    if (kind === 'png') return pdfDoc.embedPng(imgAb)
+    if (kind === 'jpg') return pdfDoc.embedJpg(imgAb)
+    throw new Error('Unsupported image format (need PNG or JPG)')
+}
+
+
+async function signPdfOnLastPage(pdfUrl, signPngUrl) {
+    const src = toProxyUrl(pdfUrl)
+    // 1) PDF
+    const pdfBytes = await fetchBytesStrict(src)
+    const pdfDoc = await PDFDocument.load(pdfBytes)
+
+    // 2) Ảnh chữ ký
+    //    - Nếu để trong `public/images/signature.png` thì URL là '/images/signature.png'
+    //    - Nếu dùng asset Vite import? Hãy để ở `public/` cho chắc.
+    const imgAb = await fetchBytesStrict(signPngUrl)
+    const sig = await embedImageAuto(pdfDoc, imgAb)
+
+    // 3) Trang cuối + đặt toạ độ
+    const last = pdfDoc.getPage(pdfDoc.getPageCount() - 1)
+    const { width } = last.getSize()
+    const sigW = 140, sigH = 60
+    last.drawImage(sig, { x: width - sigW - 48, y: 48, width: sigW, height: sigH })
+
+    // 4) Trả về blob URL để xem ngay
+    const out = await pdfDoc.save()
+    return URL.createObjectURL(new Blob([out], { type: 'application/pdf' }))
+}
+
+
+// Gọi từ UI
+async function signAndPreview(r) {
+    try {
+        const srcPdf = r?.file_url || '/pdf-proxy/wp-content/uploads/2025/10/Bang_gia_QR_Code_Marketing_2025.pdf'
+        // mở lại modal viewer với file đã ký (blob: URL cùng origin nên pdf.js v5 load được)
+        previewUrl.value = await signPdfOnLastPage(srcPdf, '/images/signature.png')
+        previewOpen.value = true
+    } catch (e) {
+        console.error(e)
+        message.error('Ký thử thất bại')
+    }
+}
+
+
 
 // Preview
 const previewOpen = ref(false)
@@ -237,9 +328,11 @@ function onPageSizeChange(cur, size) {
 
 // ====== View / Open ======
 function openPreview(r) {
-    previewUrl.value = r.file_url
+    // r.file_url có thể là absolute → chuyển sang proxy để không CORS
+    previewUrl.value = toProxyUrl(r.file_url || '/pdf-proxy/wp-content/uploads/2025/10/Bang_gia_QR_Code_Marketing_2025.pdf')
     previewOpen.value = true
 }
+
 
 function openOriginal(r) {
     if (!r.file_url) return
