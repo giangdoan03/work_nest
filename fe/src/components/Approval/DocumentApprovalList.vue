@@ -77,7 +77,7 @@
 
 
         <!-- Modal xem PDF -->
-        <a-modal v-model:open="previewOpen" title="Xem PDF" :footer="null" width="80%">
+        <a-modal v-model:open="previewOpen" title="Bản Xem trước" :footer="null" width="80%">
             <iframe
                 :src="`/pdfjs/viewer.html?file=${encodeURIComponent(previewUrl)}`"
                 style="width:100%;height:78vh;border:none;"
