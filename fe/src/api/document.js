@@ -50,3 +50,5 @@ export const getDocumentById = async (id) => {
     }
 }
 
+export const getDocumentDetail = (id) => instance.get(`/documents/${id}`)
+

@@ -1,313 +1,484 @@
 <?php
+
 namespace App\Controllers;
 
+use App\Models\DocumentApprovalLogModel;
 use App\Models\DocumentModel;
-use App\Models\ApprovalInstanceModel;
-use App\Models\ApprovalStepModel;
-use App\Models\ApprovalLogModel;
-use CodeIgniter\I18n\Time;
+use App\Models\DocumentApprovalModel;
+use App\Models\DocumentApprovalStepModel;
+use App\Models\UserModel; // 👈 thêm
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use Throwable;
 
 class DocumentApprovalController extends ResourceController
 {
     protected $format = 'json';
 
-    private function nowVN(): string
+    /** Approval (session) status */
+    private const A_PENDING  = 'pending';
+    private const A_APPROVED = 'approved';
+    private const A_REJECTED = 'rejected';
+
+    /** Step status */
+    private const S_WAITING  = 'waiting';
+    private const S_ACTIVE   = 'active';
+    private const S_APPROVED = 'approved';
+    private const S_REJECTED = 'rejected';
+
+    /* ==================== Helpers ==================== */
+
+    /** Kiểm tra có step nào đã hành động (approved/rejected) trong phiên chưa */
+    private function hasAnyAction(DocumentApprovalStepModel $stepM, int $approvalId): bool
     {
-        return Time::now('Asia/Ho_Chi_Minh')->toDateTimeString();
+        return (bool) $stepM
+            ->where('approval_id', $approvalId)
+            ->whereIn('status', [self::S_APPROVED, self::S_REJECTED])
+            ->first();
     }
 
-    private function isAdminSession(): bool
+    /** Chỉ owner hoặc admin */
+    private function assertOwnerOrAdmin(array $apv, int $userId): ?ResponseInterface
     {
-        $s     = session();
-        $role  = strtolower((string)($s->get('role') ?? ''));
-        $roles = array_map('strtolower', (array)($s->get('roles') ?? []));
-        return ($s->get('is_admin') ?? false)
-            || (int)($s->get('role_id') ?? 0) === 1
-            || in_array($role, ['admin','super admin'], true)
-            || in_array('admin', $roles, true)
-            || in_array('super admin', $roles, true);
+        $isOwner = ((int)$apv['created_by'] === (int)$userId);
+        $isAdmin = (bool) session()->get('is_admin');
+        if (!($isOwner || $isAdmin)) {
+            return $this->failForbidden('Bạn không có quyền thao tác trên phiên duyệt này.');
+        }
+        return null;
     }
 
-    private function buildSteps(array $approverIds): array
+    /** Chuẩn hoá mảng approver: int, unique, bỏ rỗng */
+    private function normalizeApprovers(array $ids): array
     {
-        // level: 1..n ; tất cả status=pending
-        return array_map(
-            fn($uid, $i) => [
-                'level'        => $i + 1,
-                'approver_id'  => (int)$uid,
-                'status'       => 'pending',
-                'commented_at' => null,
-                'note'         => null,
-            ],
-            $approverIds,
-            array_keys($approverIds)
-        );
+        $ids = array_map('intval', $ids);
+        $ids = array_filter($ids, fn($v) => $v > 0);
+        $ids = array_values(array_unique($ids));
+        return $ids;
     }
 
-    /** Gửi duyệt (chọn sẵn danh sách approver theo thứ tự) */
+    /** Gắn tên + chữ ký người duyệt vào danh sách step */
+    private function hydrateSteps(array $steps): array
+    {
+        if (empty($steps)) return $steps;
+
+        $userIds = [];
+        foreach ($steps as $s) {
+            if (!empty($s['approver_id'])) {
+                $userIds[] = (int) $s['approver_id'];
+            }
+            if (!empty($s['acted_by'])) {
+                $userIds[] = (int) $s['acted_by'];
+            }
+        }
+        $userIds = array_values(array_unique(array_filter($userIds)));
+
+        if (empty($userIds)) return $steps;
+
+        $um = new UserModel();
+        // tuỳ cột bảng users của bạn: id, name, signature_url
+        $users = $um->select('id, name, signature_url')->whereIn('id', $userIds)->findAll();
+        $map = [];
+        foreach ($users as $u) {
+            $map[(int)$u['id']] = $u;
+        }
+
+        foreach ($steps as &$s) {
+            $uid = (int) ($s['approver_id'] ?? 0);
+            $u   = $map[$uid] ?? null;
+            $s['_approver_name']           = $u['name']          ?? null;
+            $s['_approver_signature_url']  = $u['signature_url'] ?? null;
+
+            // (tuỳ chọn) meta người đã hành động
+            $actedId = (int) ($s['acted_by'] ?? 0);
+            if ($actedId && isset($map[$actedId])) {
+                $s['_acted_by_name']          = $map[$actedId]['name']          ?? null;
+                $s['_acted_by_signature_url'] = $map[$actedId]['signature_url'] ?? null;
+            }
+        }
+        unset($s);
+
+        return $steps;
+    }
+
+    /* ==================== End helpers ==================== */
+
+    /** ============ GET /api/document-approvals ============ */
+    public function index(): ResponseInterface
+    {
+        $docId = (int) ($this->request->getGet('document_id') ?? 0);
+
+        $approvalM = new DocumentApprovalModel();
+        $builder = $approvalM->orderBy('id', 'DESC');
+        if ($docId > 0) $builder->where('document_id', $docId);
+
+        $rows = $builder->findAll();
+
+        if (!empty($rows)) {
+            $ids   = array_column($rows, 'id');
+            $stepM = new DocumentApprovalStepModel();
+            $steps = $stepM->whereIn('approval_id', $ids)
+                ->orderBy('sequence', 'ASC')
+                ->findAll();
+
+            // gom theo approval_id
+            $map = [];
+            foreach ($steps as $s) {
+                $map[$s['approval_id']][] = $s;
+            }
+            // hydrate từng approval
+            foreach ($rows as &$r) {
+                $r['steps'] = $this->hydrateSteps($map[$r['id']] ?? []);
+            }
+            unset($r);
+        }
+
+        return $this->respond($rows);
+    }
+
+    /** ============ GET /api/document-approvals/{id} ============ */
+    public function show($id = null): ResponseInterface
+    {
+        $approvalM = new DocumentApprovalModel();
+        $stepM     = new DocumentApprovalStepModel();
+
+        $apv = $approvalM->find((int)$id);
+        if (!$apv) return $this->failNotFound('Không tìm thấy phiên duyệt');
+
+        $rawSteps = $stepM->where('approval_id', $apv['id'])
+            ->orderBy('sequence', 'ASC')
+            ->findAll();
+
+        $apv['steps'] = $this->hydrateSteps($rawSteps);
+
+        return $this->respond($apv);
+    }
+
+    /** ============ POST /api/document-approvals/send ============ */
     public function send(): ResponseInterface
     {
-        $p = $this->request->getJSON(true) ?? $this->request->getPost();
-        $docId = (int)($p['document_id'] ?? 0);
-        $approverIds = array_values(array_unique(array_filter(array_map('intval', (array)($p['approver_ids'] ?? [])))));
-        if ($docId <= 0 || count($approverIds) < 1) {
-            return $this->failValidationErrors('Cần document_id và ít nhất 1 approver.');
-        }
+        $userId = (int) session()->get('user_id');
+        if (!$userId) return $this->failUnauthorized('Chưa đăng nhập');
+
+        $body        = $this->request->getJSON(true) ?? [];
+        $documentId  = (int)($body['document_id'] ?? 0);
+        $approverIds = $this->normalizeApprovers($body['approver_ids'] ?? []);
+        $note        = trim((string)($body['note'] ?? ''));
+
+        if ($documentId <= 0)             return $this->failValidationErrors('Thiếu document_id.');
+        if (empty($approverIds))          return $this->failValidationErrors('Thiếu danh sách người duyệt.');
 
         $docM = new DocumentModel();
-        $doc  = $docM->find($docId);
-        if (!$doc) return $this->failNotFound('Không tìm thấy tài liệu.');
+        $doc  = $docM->find($documentId);
+        if (!$doc) return $this->failNotFound('Tài liệu không tồn tại.');
 
-        // Không cho gửi khi đang "pending" active
-        if (($doc['approval_status'] ?? 'draft') === 'pending') {
-            return $this->respond(['message' => 'Tài liệu đang chờ duyệt.'], 409);
+        $apvM  = new DocumentApprovalModel();
+        $stepM = new DocumentApprovalStepModel();
+
+        $exists = $apvM->where('document_id', $documentId)
+            ->where('status', self::A_PENDING)
+            ->first();
+        if ($exists) {
+            return $this->failValidationErrors('Tài liệu đang có phiên duyệt PENDING.');
         }
 
-        $aiM  = new ApprovalInstanceModel();
-        $asM  = new ApprovalStepModel();
-        $logM = new ApprovalLogModel();
-        $db   = db_connect();
-        $db->transStart();
+        $db = $apvM->db;
+        $db->transBegin();
+        try {
+            $apvId = $apvM->insert([
+                'document_id'        => $documentId,
+                'status'             => self::A_PENDING,
+                'created_by'         => $userId,
+                'current_step_index' => 0,
+                'note'               => $note,
+            ], true);
 
-        // deactivate phiên active cũ (nếu có)
-        $aiM->where(['target_type'=>'document', 'target_id'=>$docId, 'is_active'=>1])
-            ->set(['is_active'=>0])->update();
+            $seq   = 1;
+            $batch = [];
+            foreach ($approverIds as $uid) {
+                $batch[] = [
+                    'approval_id' => (int)$apvId,
+                    'approver_id' => (int)$uid,
+                    'sequence'    => $seq++,
+                    'status'      => self::S_WAITING,
+                    'acted_by'    => null,
+                    'acted_at'    => null,
+                    'comment'     => null,
+                ];
+            }
+            $stepM->insertBatch($batch);
 
-        // version mới
-        $maxV = (int)$aiM->selectMax('version','v')->where(['target_type'=>'document','target_id'=>$docId])->get()->getRow('v');
-        $newV = $maxV > 0 ? ($maxV + 1) : 1;
+            $first = $stepM->where('approval_id', $apvId)
+                ->orderBy('sequence', 'ASC')
+                ->first();
+            if ($first) {
+                $stepM->update($first['id'], ['status' => self::S_ACTIVE]);
+                $apvM->update($apvId, ['current_step_index' => (int)$first['sequence']]);
+            }
 
-        $userId = (int)(session()->get('user_id') ?? 0);
-        $meta = [
-            'title' => (string)($doc['title'] ?? ''),
-            'url'   => (string)($doc['file_path'] ?? ''),
-        ];
+            $db->transCommit();
 
-        $aiId = $aiM->insert([
-            'target_type'   => 'document',
-            'target_id'     => $docId,
-            'version'       => $newV,
-            'is_active'     => 1,
-            'status'        => 'pending',
-            'current_level' => 0,
-            'submitted_by'  => $userId ?: null,
-            'submitted_at'  => $this->nowVN(),
-            'meta_json'     => $meta,
-        ], true);
-
-        // tạo steps tuần tự
-        $rows = [];
-        foreach ($approverIds as $i => $uid) {
-            $rows[] = [
-                'approval_instance_id' => $aiId,
-                'level'       => $i + 1,
-                'approver_id' => $uid,
-                'status'      => 'pending',
-            ];
+            $apv          = $apvM->find($apvId);
+            $rawSteps     = $stepM->where('approval_id', $apvId)->orderBy('sequence', 'ASC')->findAll();
+            $apv['steps'] = $this->hydrateSteps($rawSteps);
+            return $this->respondCreated($apv);
+        } catch (Throwable $e) {
+            $db->transRollback();
+            return $this->failServerError('Khởi tạo duyệt thất bại: ' . $e->getMessage());
         }
-        if ($rows) $asM->insertBatch($rows);
-
-        // đồng bộ documents
-        $docM->update($docId, [
-            'approval_status' => 'pending',
-            'current_level'   => 0, // 0-based
-            'approval_steps'  => json_encode($this->buildSteps($approverIds), JSON_UNESCAPED_UNICODE),
-            'updated_at'      => $this->nowVN(),
-        ]);
-
-        // log
-        $logM->insert([
-            'approval_instance_id' => $aiId,
-            'actor_id'   => $userId ?: null,
-            'action'     => 'send',
-            'data_json'  => ['approver_ids' => $approverIds, 'meta' => $meta],
-            'created_at' => $this->nowVN(),
-        ]);
-
-        $db->transComplete();
-        if (!$db->transStatus()) return $this->failServerError('Không thể gửi phê duyệt.');
-
-        return $this->respondCreated([
-            'message' => 'Đã gửi phê duyệt.',
-            'approval_instance_id' => $aiId,
-            'version' => $newV,
-            'total_steps' => count($approverIds),
-            'current_level' => 0
-        ]);
     }
 
-    /** Duyệt cấp hiện tại (chỉ current approver hoặc admin) */
-    public function approve($instanceId = null): ResponseInterface
+    /** ============ POST /api/document-approvals/{id}/approve ============ */
+    public function approve($id = null): ResponseInterface
     {
-        $id = (int)$instanceId;
-        $note = $this->request->getPost('note') ?? ($this->request->getJSON(true)['note'] ?? null);
+        $userId = (int) session()->get('user_id');
+        if (!$userId) return $this->failUnauthorized('Chưa đăng nhập');
 
-        $aiM  = new ApprovalInstanceModel();
-        $asM  = new ApprovalStepModel();
-        $logM = new ApprovalLogModel();
+        $apvM  = new DocumentApprovalModel();
+        $stepM = new DocumentApprovalStepModel();
 
-        $ai = $aiM->find($id);
-        if (!$ai) return $this->failNotFound('Không tìm thấy phiên duyệt.');
-        if ($ai['status'] !== 'pending') return $this->failValidationErrors('Phiên không ở trạng thái chờ duyệt.');
-
-        $userId  = (int)(session()->get('user_id') ?? 0);
-        $isAdmin = $this->isAdminSession();
-        if (!$isAdmin && $userId <= 0) {
-            return $this->failForbidden('Bạn cần đăng nhập để duyệt.');
+        $apv = $apvM->find((int)$id);
+        if (!$apv) return $this->failNotFound('Không tìm thấy phiên duyệt');
+        if ($apv['status'] !== self::A_PENDING) {
+            return $this->failValidationErrors('Phiên không còn ở trạng thái pending.');
         }
 
-        $db = db_connect();
-        $db->transStart();
-
-        // Khoá chống race (cùng lúc có 2 người bấm)
-        $db->query('SELECT id FROM approval_instances WHERE id = ? FOR UPDATE', [$id]);
-
-        // Xác định cấp hiện tại (1-based) và step tương ứng
-        $currLevel1 = (int)$ai['current_level'] + 1;
-        $step = $asM->where('approval_instance_id', $id)->where('level', $currLevel1)->first();
-        if (!$step) {
-            $db->transComplete();
-            return $this->failValidationErrors('Thiếu cấu hình cấp duyệt.');
+        $step = $stepM->where('approval_id', $apv['id'])
+            ->where('status', self::S_ACTIVE)
+            ->orderBy('sequence', 'ASC')
+            ->first();
+        if (!$step) return $this->failValidationErrors('Không có step ACTIVE.');
+        if ((int)$step['approver_id'] !== $userId) {
+            return $this->failForbidden('Bạn không phải người duyệt ở bước hiện tại.');
         }
 
-        // Chỉ current approver mới được duyệt (trừ admin)
-        if (!$isAdmin && (int)$step['approver_id'] !== $userId) {
-            $db->transComplete();
-            return $this->failForbidden('Bạn không phải người duyệt ở cấp hiện tại.');
-        }
-        if (($step['status'] ?? '') === 'approved') {
-            $db->transComplete();
-            return $this->respond(['message' => 'Cấp hiện tại đã duyệt trước đó.', 'instance_status' => $ai['status']]);
-        }
+        // ===== NHẬN THÊM DỮ LIỆU TỪ FE =====
+        $payload       = $this->request->getJSON(true) ?? [];
+        $comment       = (string)($payload['comment'] ?? '');
+        $signatureUrl  = isset($payload['signature_url'])   ? (string)$payload['signature_url']   : null;
+        $signedPdfUrl  = isset($payload['signed_pdf_url'])  ? (string)$payload['signed_pdf_url']  : null;
+        $signerName    = (string) (session()->get('user_name') ?? session()->get('name') ?? ''); // tuỳ bạn set session
 
-        // Cập nhật step hiện tại -> approved
-        $asM->update($step['id'], [
-            'status'       => 'approved',
-            'commented_at' => $this->nowVN(),
-            'note'         => $note,
-            'acted_by'     => $userId ?: null,
-            'acted_role'   => $isAdmin ? 'admin' : 'approver',
-        ]);
-
-        // Còn cấp sau?
-        $hasNext = $asM->where('approval_instance_id', $id)->where('level >', $currLevel1)->countAllResults() > 0;
-
-        if ($hasNext) {
-            // Sang cấp kế tiếp (tuần tự)
-            $aiM->update($id, [
-                'current_level' => (int)$ai['current_level'] + 1, // 0-based
-                'status'        => 'pending',
-            ]);
-        } else {
-            // Hoàn tất phiên
-            $aiM->update($id, [
-                'status'       => 'approved',
-                'finalized_at' => $this->nowVN(),
+        $db = $apvM->db;
+        $db->transBegin();
+        try {
+            // 1) Mark step APPROVED
+            $stepM->update($step['id'], [
+                'status'   => self::S_APPROVED,
+                'acted_by' => $userId,
+                'acted_at' => date('Y-m-d H:i:s'),
+                'comment'  => $comment,
             ]);
 
-            // Đồng bộ bảng documents
-            $docM = new DocumentModel();
-            $docM->update((int)$ai['target_id'], [
-                'approval_status' => 'approved',
-                'updated_at'      => $this->nowVN(),
+            // 2) Next step hoặc kết thúc phiên
+            $next = $stepM->where('approval_id', $apv['id'])
+                ->where('sequence >', (int)$step['sequence'])
+                ->orderBy('sequence', 'ASC')
+                ->first();
+
+            if ($next) {
+                $stepM->update($next['id'], ['status' => self::S_ACTIVE]);
+                $apvM->update($apv['id'], ['current_step_index' => (int)$next['sequence']]);
+            } else {
+                $apvM->update($apv['id'], [
+                    'status'             => self::A_APPROVED,
+                    'current_step_index' => (int)$step['sequence'],
+                    'finished_at'        => date('Y-m-d H:i:s'),
+                ]);
+            }
+
+            // 3) Ghi log hành động (ai/bao giờ/chữ ký/link pdf đã ký)
+            //    - Không ràng buộc bắt buộc phải có signature_url, signed_pdf_url: nếu FE không gửi thì để null
+            $logM = new DocumentApprovalLogModel();
+            $logM->insert([
+                'approval_id'   => (int)$apv['id'],
+                'document_id'   => (int)$apv['document_id'],
+                'action'        => 'approved',
+                'acted_by'      => $userId,
+                'acted_at'      => date('Y-m-d H:i:s'),
+                'signer_name'   => $signerName ?: null,
+                'signature_url' => $signatureUrl,
+                'signed_pdf_url'=> $signedPdfUrl,
+                'comment'       => $comment,
             ]);
+
+            if (!empty($signedPdfUrl)) {
+                $apvM->update($apv['id'], ['signed_pdf_url' => $signedPdfUrl]);
+            }
+
+            $db->transCommit();
+
+            // trả về chi tiết mới nhất
+            $apv          = $apvM->find((int)$id);
+            $rawSteps     = $stepM->where('approval_id', (int)$id)->orderBy('sequence', 'ASC')->findAll();
+            // Nếu bạn có hydrateSteps:
+            $apv['steps'] = method_exists($this, 'hydrateSteps') ? $this->hydrateSteps($rawSteps) : $rawSteps;
+
+            return $this->respond($apv);
+        } catch (Throwable $e) {
+            $db->transRollback();
+            return $this->failServerError('Approve lỗi: ' . $e->getMessage());
         }
-
-        // Log
-        $logM->insert([
-            'approval_instance_id' => $id,
-            'actor_id'   => $userId ?: null,
-            'action'     => 'approve',
-            'data_json'  => ['note' => $note, 'level' => $currLevel1],
-            'created_at' => $this->nowVN(),
-        ]);
-
-        $db->transComplete();
-        if (!$db->transStatus()) return $this->failServerError('Không thể cập nhật phê duyệt.');
-
-        return $this->respond([
-            'message'         => $hasNext ? 'Đã duyệt cấp hiện tại.' : 'Đã duyệt hoàn tất.',
-            'has_next'        => $hasNext,
-            'instance_status' => $hasNext ? 'pending' : 'approved',
-            'current_level'   => $hasNext ? ((int)$ai['current_level'] + 1) : (int)$ai['current_level'],
-        ]);
     }
 
-    /** Từ chối ở cấp hiện tại (chỉ current approver hoặc admin) */
-    public function reject($instanceId = null): ResponseInterface
+
+    /** ============ POST /api/document-approvals/{id}/reject ============ */
+    public function reject($id = null): ResponseInterface
     {
-        $id = (int)$instanceId;
-        $note = $this->request->getPost('note') ?? ($this->request->getJSON(true)['note'] ?? null);
+        $userId = (int) session()->get('user_id');
+        if (!$userId) return $this->failUnauthorized('Chưa đăng nhập');
 
-        $aiM  = new ApprovalInstanceModel();
-        $asM  = new ApprovalStepModel();
-        $logM = new ApprovalLogModel();
+        $apvM  = new DocumentApprovalModel();
+        $stepM = new DocumentApprovalStepModel();
 
-        $ai = $aiM->find($id);
-        if (!$ai) return $this->failNotFound('Không tìm thấy phiên duyệt.');
-        if ($ai['status'] !== 'pending') return $this->failValidationErrors('Phiên không ở trạng thái chờ duyệt.');
-
-        $userId  = (int)(session()->get('user_id') ?? 0);
-        $isAdmin = $this->isAdminSession();
-        if (!$isAdmin && $userId <= 0) {
-            return $this->failForbidden('Bạn cần đăng nhập để từ chối.');
+        $apv = $apvM->find((int)$id);
+        if (!$apv) return $this->failNotFound('Không tìm thấy phiên duyệt');
+        if ($apv['status'] !== self::A_PENDING) {
+            return $this->failValidationErrors('Phiên không còn ở trạng thái pending.');
         }
 
-        $db = db_connect();
-        $db->transStart();
-        $db->query('SELECT id FROM approval_instances WHERE id = ? FOR UPDATE', [$id]);
-
-        $currLevel1 = (int)$ai['current_level'] + 1;
-        $step = $asM->where('approval_instance_id', $id)->where('level', $currLevel1)->first();
-        if (!$step) { $db->transComplete(); return $this->failValidationErrors('Thiếu cấu hình cấp duyệt.'); }
-        if (!$isAdmin && (int)$step['approver_id'] !== $userId) {
-            $db->transComplete(); return $this->failForbidden('Bạn không phải người duyệt ở cấp hiện tại.');
+        $step = $stepM->where('approval_id', $apv['id'])
+            ->where('status', self::S_ACTIVE)
+            ->orderBy('sequence', 'ASC')
+            ->first();
+        if (!$step) return $this->failValidationErrors('Không có step ACTIVE.');
+        if ((int)$step['approver_id'] !== $userId) {
+            return $this->failForbidden('Bạn không phải người duyệt ở bước hiện tại.');
         }
 
-        // step -> rejected, instance -> rejected, document -> rejected
-        $asM->update($step['id'], [
-            'status'       => 'rejected',
-            'commented_at' => $this->nowVN(),
-            'note'         => $note,
-            'acted_by'     => $userId ?: null,
-            'acted_role'   => $isAdmin ? 'admin' : 'approver',
-        ]);
+        $comment = (string)($this->request->getJSON(true)['comment'] ?? '');
 
-        $aiM->update($id, [
-            'status'       => 'rejected',
-            'finalized_at' => $this->nowVN(),
-        ]);
+        $db = $apvM->db;
+        $db->transBegin();
+        try {
+            $stepM->update($step['id'], [
+                'status'   => self::S_REJECTED,
+                'acted_by' => $userId,
+                'acted_at' => date('Y-m-d H:i:s'),
+                'comment'  => $comment,
+            ]);
 
-        (new DocumentModel())->update((int)$ai['target_id'], [
-            'approval_status' => 'rejected',
-            'updated_at'      => $this->nowVN(),
-        ]);
+            $apvM->update($apv['id'], [
+                'status'             => self::A_REJECTED,
+                'current_step_index' => (int)$step['sequence'],
+                'finished_at'        => date('Y-m-d H:i:s'),
+            ]);
 
-        $logM->insert([
-            'approval_instance_id' => $id,
-            'actor_id'   => $userId ?: null,
-            'action'     => 'reject',
-            'data_json'  => ['note' => $note, 'level' => $currLevel1],
-            'created_at' => $this->nowVN(),
-        ]);
+            $db->transCommit();
 
-        $db->transComplete();
-        if (!$db->transStatus()) return $this->failServerError('Không thể từ chối.');
-
-        return $this->respond(['message'=>'Đã từ chối.','instance_status'=>'rejected']);
+            $apv          = $apvM->find((int)$id);
+            $rawSteps     = $stepM->where('approval_id', (int)$id)->orderBy('sequence', 'ASC')->findAll();
+            $apv['steps'] = $this->hydrateSteps($rawSteps);
+            return $this->respond($apv);
+        } catch (Throwable $e) {
+            $db->transRollback();
+            return $this->failServerError('Reject lỗi: ' . $e->getMessage());
+        }
     }
 
-    /** (Tuỳ chọn) thay đổi danh sách approver khi CHƯA hoàn tất */
-    public function updateSteps($instanceId = null): ResponseInterface
+    /** ============ POST /api/document-approvals/{id}/update-steps ============ */
+    public function updateSteps($id = null): ResponseInterface
     {
-        $id = (int)$instanceId;
-        $p  = $this->request->getJSON(true) ?? $this->request->getPost();
-        $approverIds = array_values(array_unique(array_filter(array_map('intval', (array)($p['approver_ids'] ?? [])))));
-        if (count($approverIds) < 1) return $this->failValidationErrors('Cần tối thiểu 1 approver.');
+        $userId = (int) session()->get('user_id');
+        if (!$userId) return $this->failUnauthorized('Chưa đăng nhập');
 
-        // Có thể reuse ApprovalController::updateSteps() của bạn
-        return (new \App\Controllers\ApprovalController())->updateSteps($id);
+        $apvM  = new DocumentApprovalModel();
+        $stepM = new DocumentApprovalStepModel();
+
+        $apv = $apvM->find((int)$id);
+        if (!$apv) return $this->failNotFound('Không tìm thấy phiên duyệt');
+        if ($apv['status'] !== self::A_PENDING) {
+            return $this->failValidationErrors('Chỉ cập nhật khi phiên còn PENDING.');
+        }
+
+        if ($res = $this->assertOwnerOrAdmin($apv, $userId)) {
+            return $res;
+        }
+
+        if ($this->hasAnyAction($stepM, (int)$apv['id'])) {
+            return $this->failValidationErrors('Không thể cập nhật tuyến duyệt vì đã có người hành động.');
+        }
+
+        $body        = $this->request->getJSON(true) ?? [];
+        $approverIds = $this->normalizeApprovers($body['approver_ids'] ?? []);
+        $note        = trim((string)($body['note'] ?? ''));
+
+        if (empty($approverIds)) return $this->failValidationErrors('Thiếu approver_ids');
+
+        $db = $apvM->db;
+        $db->transBegin();
+        try {
+            $stepM->where('approval_id', $apv['id'])->delete();
+
+            $seq   = 1;
+            $batch = [];
+            foreach ($approverIds as $uid) {
+                $batch[] = [
+                    'approval_id' => (int)$apv['id'],
+                    'approver_id' => (int)$uid,
+                    'sequence'    => $seq++,
+                    'status'      => self::S_WAITING,
+                    'acted_by'    => null,
+                    'acted_at'    => null,
+                    'comment'     => null,
+                ];
+            }
+            $stepM->insertBatch($batch);
+
+            $first = $stepM->where('approval_id', $apv['id'])
+                ->orderBy('sequence', 'ASC')
+                ->first();
+            if ($first) {
+                $stepM->update($first['id'], ['status' => self::S_ACTIVE]);
+                $apvM->update($apv['id'], [
+                    'current_step_index' => (int)$first['sequence'],
+                    'note'               => ($note !== '' ? $note : $apv['note']),
+                ]);
+            }
+
+            $db->transCommit();
+
+            $apv          = $apvM->find((int)$id);
+            $rawSteps     = $stepM->where('approval_id', (int)$id)->orderBy('sequence', 'ASC')->findAll();
+            $apv['steps'] = $this->hydrateSteps($rawSteps);
+            return $this->respond($apv);
+        } catch (Throwable $e) {
+            $db->transRollback();
+            return $this->failServerError('Cập nhật tuyến duyệt lỗi: ' . $e->getMessage());
+        }
+    }
+
+    /** ============ DELETE /api/document-approvals/{id} ============ */
+    public function delete($id = null)
+    {
+        $userId = (int) session()->get('user_id');
+        if (!$userId) return $this->failUnauthorized('Chưa đăng nhập');
+
+        $apvM  = new DocumentApprovalModel();
+        $stepM = new DocumentApprovalStepModel();
+
+        $apv = $apvM->find((int)$id);
+        if (!$apv) return $this->failNotFound('Không tìm thấy phiên duyệt');
+
+        if ($res = $this->assertOwnerOrAdmin($apv, $userId)) {
+            return $res;
+        }
+
+        if ($this->hasAnyAction($stepM, (int)$apv['id'])) {
+            return $this->failValidationErrors('Phiên đã có người duyệt, không thể xoá.');
+        }
+
+        $db = $apvM->db;
+        $db->transBegin();
+        try {
+            $stepM->where('approval_id', $apv['id'])->delete();
+            $apvM->delete($apv['id']);
+            $db->transCommit();
+
+            return $this->respondDeleted(['status' => 'deleted']);
+        } catch (Throwable $e) {
+            $db->transRollback();
+            return $this->failServerError('Xoá thất bại: ' . $e->getMessage());
+        }
     }
 }

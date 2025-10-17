@@ -124,7 +124,7 @@
 
             <!-- Danh sách Văn bản cần duyệt (PDF) -->
             <template v-else>
-                <DocumentApprovalList @refresh="fetchData" />
+                <DocumentApprovalList :my-signature-url="mySignatureUrl" @refresh="fetchData" />
             </template>
         </a-card>
 
@@ -179,7 +179,9 @@ import {
 
 // Lazy-load component văn bản để tách bớt bundle phần pdf-lib
 import DocumentApprovalList from '../components/Approval/DocumentApprovalList.vue'
-
+const mySignatureUrl = ref('')
+import { useUserStore } from '@/stores/user'              // 👈 thêm
+import { getUserDetail, getUsers } from '@/api/user'      // 👈 thêm
 // ================== STATE ==================
 const activeTab   = ref('pending')   // 'pending' | 'resolved' | 'docs'
 const rows        = ref([])
@@ -404,6 +406,39 @@ watch(searchTitle, debounce(() => {
 }, 400))
 
 onMounted(fetchData)
+onMounted(async () => {
+    try {
+        const userStore = useUserStore()
+        const myId = userStore?.user?.id
+
+        // Ưu tiên: gọi /users/:id để lấy profile mới nhất
+        if (myId) {
+            try {
+                const res = await getUserDetail(myId)
+                // BE có thể trả {data:{...}} hoặc trực tiếp {...}
+                const me = res?.data?.data || res?.data || null
+                mySignatureUrl.value = me?.signature_url
+                    || userStore.user?.signature_url
+                    || ''
+                return
+            } catch {
+                // Fallback nhẹ: gọi /users và tìm theo id
+                const list = await getUsers()
+                const all = Array.isArray(list?.data) ? list.data : (list?.data?.data || [])
+                const me = all.find(u => String(u.id) === String(myId)) || null
+                mySignatureUrl.value = me?.signature_url
+                    || userStore.user?.signature_url
+                    || ''
+                return
+            }
+        }
+
+        // Nếu chưa có user trong store (trường hợp hy hữu)
+        mySignatureUrl.value = ''
+    } catch {
+        mySignatureUrl.value = ''
+    }
+})
 </script>
 
 <style scoped>
