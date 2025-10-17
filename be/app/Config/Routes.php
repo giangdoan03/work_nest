@@ -249,4 +249,20 @@ $routes->group('api', function ($routes) {
     $routes->get('documents/(:num)', 'DocumentController::show/$1');
     $routes->get('approvals/active-by-target', 'ApprovalController::activeByTarget');
 
+    // Gửi duyệt với danh sách người duyệt (đặt theo thứ tự bấm)
+    $routes->post('document-approvals/send', 'DocumentApprovalController::send');
+
+    // Duyệt/Từ chối tuần tự
+    $routes->post('document-approvals/(:num)/approve', 'DocumentApprovalController::approve/$1');
+    $routes->post('document-approvals/(:num)/reject',  'DocumentApprovalController::reject/$1');
+
+    // (tuỳ chọn) thay đổi danh sách approver khi phiên chưa xong
+    $routes->post('document-approvals/(:num)/update-steps', 'DocumentApprovalController::updateSteps/$1');
+
+    // ✅ WordPress Media Proxy
+    $routes->post('wp-media',          'WpMediaController::create');
+    $routes->post('wp-media/url',      'WpMediaController::uploadUrl');
+    $routes->patch('wp-media/(:num)',  'WpMediaController::update/$1');
+    $routes->delete('wp-media/(:num)', 'WpMediaController::delete/$1');
+
 });

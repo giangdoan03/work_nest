@@ -104,6 +104,19 @@
                         {{ getRoleName(record.role_id) || '—' }}
                     </template>
 
+                    <template v-else-if="column.dataIndex === 'signature_url'">
+                        <div class="sig-cell">
+                            <a-image
+                                v-if="record.signature_url"
+                                :src="record.signature_url"
+                                :alt="record.name"
+                                :width="100"
+                                :preview="{ src: record.signature_url }"
+                            />
+                            <span v-else class="sig-empty">—</span>
+                        </div>
+                    </template>
+
                     <template v-else-if="column.dataIndex === 'action'">
                         <a-dropdown trigger="click" placement="bottomRight">
                             <a-button type="text" :icon="h(MoreOutlined)" />
@@ -225,6 +238,46 @@
                         </a-row>
                     </a-form>
                 </a-tab-pane>
+
+                <a-tab-pane key="signature" tab="Chữ ký">
+                    <a-space direction="vertical" style="width:100%">
+                        <a-alert
+                            type="info"
+                            show-icon
+                            message="Tải ảnh chữ ký (PNG/JPG/WebP). Ảnh sẽ được đẩy lên WordPress/CDN và lưu vào hồ sơ người dùng."
+                        />
+                        <div class="sig-preview-box">
+                            <template v-if="formData.signature_url || selectedUser?.signature_url">
+                                <img :src="formData.signature_url || selectedUser?.signature_url" class="sig-big" alt="signature" />
+                            </template>
+                            <template v-else>
+                                <div class="sig-empty-box">Chưa có chữ ký</div>
+                            </template>
+                        </div>
+
+                        <a-upload
+                            :show-upload-list="false"
+                            :before-upload="() => false"
+                        accept="image/png,image/jpeg,image/webp"
+                        @change="onPickSignature"
+                        >
+                        <a-button type="primary" :loading="sigUploading">
+                            {{ (formData.signature_url || selectedUser?.signature_url) ? 'Đổi chữ ký' : 'Tải chữ ký' }}
+                        </a-button>
+                        </a-upload>
+
+                        <a-popconfirm
+                            v-if="selectedUser && (formData.signature_url || selectedUser?.signature_url)"
+                            title="Xoá liên kết chữ ký khỏi hồ sơ người dùng?"
+                            ok-text="Xoá"
+                            cancel-text="Huỷ"
+                            @confirm="removeSignature"
+                        >
+                            <a-button danger>Xoá chữ ký</a-button>
+                        </a-popconfirm>
+                    </a-space>
+                </a-tab-pane>
+
             </a-tabs>
 
             <template #extra>
@@ -254,6 +307,8 @@ import {
     TeamOutlined, IdcardOutlined
 } from '@ant-design/icons-vue'
 import BaseAvatar from '@/components/common/BaseAvatar.vue'
+import { uploadWpMedia } from '@/api/wpMedia'
+const sigUploading = ref(false)
 
 /* ===== State ===== */
 const router = useRouter()
@@ -308,6 +363,7 @@ const columns = [
     { title: 'Số điện thoại', dataIndex: 'phone', key: 'phone', width: 140, sorter: (a,b) => (a.phone||'').localeCompare(b.phone||'') },
     { title: 'Phòng ban', dataIndex: 'department_id', key: 'department_id', width: 200 },
     { title: 'Quyền', dataIndex: 'role_id', key: 'role_id', width: 180 },
+    { title: 'Chữ ký', dataIndex: 'signature_url', key: 'signature_url', width: 120, align: 'center' },
     { title: 'Hành động', dataIndex: 'action', key: 'action', width: 100, align:'center', fixed: 'right' },
 ]
 
@@ -435,10 +491,13 @@ const showPopupDetail = async (record) => {
         department_id: record.department_id,
         role_id: Number(record.role_id),
         password: '',
-        confirm_password: ''
+        confirm_password: '',
+        // 👇 lấy url chữ ký sẵn có (nếu API trả về)
+        signature_url: record.signature_url || null,
     }
     openDrawer.value = true
 }
+
 
 const onCloseDrawer = () => {
     openDrawer.value = false
@@ -485,6 +544,57 @@ const deleteConfirm = async (userId) => {
     }
 }
 
+const onPickSignature = async (info) => {
+    const file = info?.file
+    if (!file) return
+
+    if (!selectedUser.value?.id) {
+        message.warning('Hãy lưu user trước rồi mới tải chữ ký.')
+        return
+    }
+
+    // validate nhẹ
+    const okTypes = ['image/png','image/jpeg','image/webp']
+    if (!okTypes.includes(file.type)) return message.error('Chỉ chấp nhận PNG/JPG/WebP')
+    if (file.size > 4 * 1024 * 1024) return message.error('Tối đa 4MB')
+
+    try {
+        sigUploading.value = true
+        // 1) Upload lên WP qua proxy
+        const { data } = await uploadWpMedia(file, { filename: file.name })
+        const url = data?.source_url
+        if (!url) throw new Error('Thiếu source_url')
+
+        // 2) Lưu URL chữ ký vào hồ sơ user
+        await updateUser(selectedUser.value.id, { signature_url: url })
+
+        // 3) Cập nhật UI
+        formData.value.signature_url = url
+        const row = tableData.value.find(u => u.id === selectedUser.value.id)
+        if (row) row.signature_url = url
+
+        message.success('Cập nhật chữ ký thành công')
+    } catch (e) {
+        const msg = e?.response?.data?.message || e?.message || 'Tải chữ ký thất bại'
+        message.error(msg)
+    } finally {
+        sigUploading.value = false
+    }
+}
+
+const removeSignature = async () => {
+    if (!selectedUser.value?.id) return
+    try {
+        await updateUser(selectedUser.value.id, { signature_url: null })
+        formData.value.signature_url = null
+        const row = tableData.value.find(u => u.id === selectedUser.value.id)
+        if (row) row.signature_url = null
+        message.success('Đã xoá chữ ký')
+    } catch {
+        message.error('Xoá chữ ký thất bại')
+    }
+}
+
 /* ===== Init ===== */
 onMounted(async () => {
     await Promise.all([getListDepartments(), getListRoles(), getUser()])
@@ -508,4 +618,18 @@ onMounted(async () => {
 .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 
 :deep(.ant-pagination){ margin-bottom: 0 !important; }
+.sig-cell{ display:flex; align-items:center; justify-content:center; }
+.sig-thumb{ max-height:32px; max-width:100px; object-fit:contain; border:1px dashed #e5e7eb; padding:2px; border-radius:4px; background:#fff; }
+.sig-empty{ color:#999; }
+.sig-preview-box{ display:flex; align-items:center; justify-content:center; min-height:120px; border:1px dashed #e5e7eb; border-radius:8px; background:#fafafa; }
+.sig-big{ max-height:120px; max-width:100%; object-fit:contain; padding:8px; }
+.sig-empty-box{ color:#999; padding:16px; }
+.sig-cell :deep(.ant-image-img) {
+    max-height: 32px;
+    object-fit: contain;
+    border: 1px dashed #e5e7eb;
+    border-radius: 4px;
+    background: #fff;
+    padding: 2px;
+}
 </style>
