@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <title>pdf-lib demo: chèn chữ ký/ảnh vào PDF có sẵn</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:24px}
+    fieldset{margin-bottom:16px}
+    label{display:inline-block;margin:6px 0}
+    input[type=number]{width:100px}
+    #preview{width:100%;height:70vh;border:1px solid #ddd;margin-top:12px}
+    .row{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+    button{padding:8px 14px}
+    .warn{margin-top:10px;color:#b54708;background:#fff7ed;border:1px solid #fdba74;padding:8px 12px;border-radius:8px;display:none}
+    .warn ul{margin:6px 0 0 22px}
+    code.inline{background:#f5f5f5;padding:1px 4px;border-radius:4px}
+  </style>
+</head>
+<body>
+  <h2>Chèn chữ ký/ảnh vào PDF có sẵn (pdf-lib, JS thuần)</h2>
+
+  <fieldset>
+    <legend>Chọn file</legend>
+    <div class="row">
+      <label>PDF gốc: <input id="pdfFile" type="file" accept="application/pdf" /></label>
+      <label>Ảnh chữ ký Fallback (PNG/JPG): <input id="sigFile" type="file" accept="image/*" /></label>
+      <label>Font TTF (tuỳ chọn, để hiển thị tiếng Việt): <input id="fontFile" type="file" accept=".ttf" /></label>
+      <label>File JSON người ký (tuỳ chọn): <input id="jsonFile" type="file" accept="application/json" /></label>
+    </div>
+    <small>
+      Gợi ý: dùng ảnh <code class="inline">data:</code> URL hoặc ảnh cùng origin (ví dụ <code class="inline">./signatures/a.jpg</code>) để tránh CORS.
+    </small>
+  </fieldset>
+
+  <fieldset>
+    <legend>Cấu hình vị trí</legend>
+    <div class="row">
+      <label>Khoảng cách đáy (pt): <input id="bottomPt" type="number" value="30" /></label>
+      <label>Khoảng cách mép PHẢI (pt): <input id="sidePt" type="number" value="40" /></label>
+      <label>Rộng ảnh (pt) (tuỳ chọn): <input id="imgW" type="number" value="" placeholder="auto" /></label>
+      <label>Cao ảnh (pt) (tuỳ chọn): <input id="imgH" type="number" value="" placeholder="auto" /></label>
+      <label><input id="allPages" type="checkbox" checked /> Áp dụng mọi trang</label>
+      <label style="display:flex;align-items:center;gap:8px">
+        Kích thước ảnh (%):
+        <input id="imgScale" type="range" min="50" max="180" step="5" value="100" />
+        <span id="imgScaleVal">100%</span>
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Người ký (nhập tay nếu không dùng JSON)</legend>
+    <div class="row">
+      <label style="min-width: 520px">
+        Tên người ký (tối đa 5, cách nhau bằng dấu |):
+        <input id="signers" type="text" value="Nguyễn Thị A|Trần Văn B|Phạm Văn C|Lê Thị D|Hoàng Văn E" style="min-width:520px" />
+      </label>
+    </div>
+  </fieldset>
+
+  <div class="row">
+    <button id="btnRun">Chèn vào PDF</button>
+    <a id="downloadLink" href="#" download="signed.pdf" style="display:none">Tải xuống PDF</a>
+  </div>
+
+  <div id="warn" class="warn">
+    <strong>Các ảnh chữ ký không tải được (đã dùng ảnh fallback):</strong>
+    <ul id="warnList"></ul>
+  </div>
+
+  <iframe id="preview"></iframe>
+
+<script>
+(async () => {
+  const { PDFDocument, StandardFonts, rgb } = PDFLib;
+
+  // =================== DEMO JSON (nếu không upload JSON) ===================
+  // Hỗ trợ: order (thứ tự ký), position {row:'top', index:0..2} | {row:'bottom'},
+  // status: 'signed' | 'pending'. Nếu status thiếu, có signed_at → coi là signed.
+  const SIGNERS = [
+    {
+      signer_id:101, name:"Nguyễn Thị A",
+      signature_image:"./signatures/anh1.png",
+      signed_at:{date:"2025-10-20", time:"09:42"},
+      order:1,
+      position:{row:"top", index:0},
+      status:"signed"
+    },
+    {
+      signer_id:102, name:"Trần Văn B",
+      signature_image:"./signatures/anh2.png",
+      signed_at:{timestamp:1760931720},
+      order:2,
+      position:{row:"top", index:1},
+      status:"signed"
+    },
+    {
+      signer_id:103, name:"Phạm Văn C",
+      signature_image:"./signatures/anh3.png",
+      signed_at:null, // chưa ký
+      order:3,
+      position:{row:"top", index:2},
+      status:"pending"
+    },
+    {
+      signer_id:104, name:"Lê Thị D",
+      signature_image:"./signatures/anh1.jpg",
+      signed_at:null, // chưa ký
+      order:4,
+      position:{row:"bottom"},
+      status:"pending"
+    }
+  ];
+  // ========================================================================
+
+  const $ = id => document.getElementById(id);
+  const pdfInput=$('pdfFile'), sigInput=$('sigFile'), fontInput=$('fontFile'), jsonInput=$('jsonFile');
+  const btnRun=$('btnRun'), preview=$('preview'), downloadLink=$('downloadLink');
+  const warnBox=$('warn'), warnList=$('warnList');
+  const scaleInput=$('imgScale'), scaleVal=$('imgScaleVal');
+  if (scaleInput && scaleVal) scaleInput.addEventListener('input', () => scaleVal.textContent = (parseFloat(scaleInput.value)||100) + '%');
+
+  const readAsArrayBuffer = f => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsArrayBuffer(f); });
+  const readAsText        = f => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsText(f,'utf-8'); });
+
+  async function loadDefaultUnicodeFont() {
+    const urls=[
+      'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosans/NotoSans-Regular.ttf',
+      'https://unpkg.com/@fontsource/noto-sans/files/noto-sans-latin-400-normal.ttf'
+    ];
+    for (const url of urls) { try { const r=await fetch(url,{cache:'no-store'}); if (r.ok) return await r.arrayBuffer(); } catch {} }
+    try { const r=await fetch('./NotoSans-Regular.ttf',{cache:'no-store'}); if (r.ok) return await r.arrayBuffer(); } catch {}
+    return null;
+  }
+
+  function dataUrlToBytes(dataUrl){
+    const base64=dataUrl.split(',')[1]; const bin=atob(base64); const u8=new Uint8Array(bin.length);
+    for (let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i); return u8.buffer;
+  }
+  function sniffImageType(bytes){
+    const u8=new Uint8Array(bytes);
+    const isPng=u8[0]===0x89&&u8[1]===0x50&&u8[2]===0x4e&&u8[3]===0x47&&u8[4]===0x0d&&u8[5]===0x0a&&u8[6]===0x1a&&u8[7]===0x0a;
+    return isPng?'png':'jpg';
+  }
+  async function embedImageFromUrl(pdfDoc,url,cache){
+    if(!url) return null;
+    if(cache.has(url)) return cache.get(url);
+    let bytes;
+    if(url.startsWith('data:')) bytes=dataUrlToBytes(url);
+    else {
+      const res=await fetch(url,{cache:'no-store'});
+      if(!res.ok) throw new Error('Fetch ảnh thất bại: '+url);
+      bytes=await res.arrayBuffer();
+    }
+    const kind=sniffImageType(bytes);
+    const img=(kind==='png')?await pdfDoc.embedPng(bytes):await pdfDoc.embedJpg(bytes);
+    cache.set(url,img);
+    return img;
+  }
+
+  function parseSignedAt(rec){
+    const z=n=>String(n).padStart(2,'0');
+    if(rec?.signed_at?.date && rec?.signed_at?.time) return rec.signed_at.date+' '+rec.signed_at.time;
+    if(rec?.signed_at?.iso){ const d=new Date(rec.signed_at.iso); return `${z(d.getDate())}/${z(d.getMonth()+1)}/${d.getFullYear()} ${z(d.getHours())}:${z(d.getMinutes())}`; }
+    if(Number.isFinite(rec?.signed_at?.timestamp)){ const ts=rec.signed_at.timestamp>1e12?rec.signed_at.timestamp:rec.signed_at.timestamp*1000; const d=new Date(ts); return `${z(d.getDate())}/${z(d.getMonth()+1)}/${d.getFullYear()} ${z(d.getHours())}:${z(d.getMinutes())}`; }
+    const d=new Date(); return `${z(d.getDate())}/${z(d.getMonth()+1)}/${d.getFullYear()} ${z(d.getHours())}:${z(d.getMinutes())}`;
+  }
+
+  // === Quy tắc đã ký hay chưa
+  function normalizeSigned(rec) {
+    const hasSignedAt = !!(rec?.signed_at?.date || rec?.signed_at?.iso || Number.isFinite(rec?.signed_at?.timestamp));
+    return (rec?.status === 'signed') || hasSignedAt;
+  }
+
+  // === Chuẩn bị 4 slot theo thứ tự + vị trí
+  function prepareSignerSlots(records) {
+    // sort theo order (thiếu order → đẩy sau)
+    const sorted = [...records].sort((a,b) => {
+      const ao = Number.isFinite(a?.order) ? a.order : 1e9;
+      const bo = Number.isFinite(b?.order) ? b.order : 1e9;
+      return ao - bo;
+    });
+
+    // cắt theo quy tắc: gặp người đầu tiên chưa ký → dừng
+    const seq = [];
+    for (const r of sorted) {
+      if (normalizeSigned(r)) seq.push(r);
+      else break;
+    }
+
+    // 4 slot: top[0..2], bottom
+    const top = [null, null, null];
+    let bottom = null;
+
+    // Ưu tiên các bản ghi có position hợp lệ
+    for (const r of seq) {
+      const pos = r.position;
+      if (pos?.row === 'top' && [0,1,2].includes(pos.index)) {
+        if (!top[pos.index]) top[pos.index] = r;
+      } else if (pos?.row === 'bottom') {
+        if (!bottom) bottom = r;
+      }
+    }
+
+    // Phần còn lại fill lần lượt
+    for (const r of seq) {
+      if (r.position) continue;
+      const idx = top.findIndex(x => x === null);
+      if (idx !== -1) top[idx] = r;
+      else if (!bottom) bottom = r;
+    }
+
+    return [...top, bottom]; // [top0, top1, top2, bottom]
+  }
+
+  btnRun.onclick = async () => {
+    warnList.innerHTML=''; warnBox.style.display='none';
+    try{
+      if(!pdfInput.files[0]){ alert('Chọn PDF gốc trước đã.'); return; }
+
+      const pdfBytes=await readAsArrayBuffer(pdfInput.files[0]);
+      const pdfDoc=await PDFDocument.load(pdfBytes);
+      if(window.fontkit) pdfDoc.registerFontkit(window.fontkit);
+
+      // Font
+      let font=null;
+      if(fontInput.files[0]){ const fb=await readAsArrayBuffer(fontInput.files[0]); font=await pdfDoc.embedFont(fb,{subset:true}); }
+      else{ const noto=await loadDefaultUnicodeFont(); font = noto? await pdfDoc.embedFont(noto,{subset:true}) : await pdfDoc.embedFont(StandardFonts.Helvetica); }
+
+      // Dữ liệu
+      let signerRecords=[];
+      if(jsonInput.files && jsonInput.files[0]){
+        const txt=await readAsText(jsonInput.files[0]);
+        const parsed=JSON.parse(txt);
+        if(Array.isArray(parsed)) signerRecords=parsed;
+      } else {
+        signerRecords = SIGNERS;
+        // Nếu muốn “nhập tay” khi không có JSON: chỉ thay tên giữ nguyên ảnh demo
+        const manual = ($('#signers')?.value||'').trim();
+        if (manual) {
+          const names = manual.split('|').map(s=>s.trim()).filter(Boolean);
+          names.forEach((n,i)=>{ if (signerRecords[i]) signerRecords[i].name = n; });
+        }
+      }
+
+      // Fallback image (khi URL lỗi)
+      let fallbackSigImg=null;
+      if(sigInput.files[0]){ const b=await readAsArrayBuffer(sigInput.files[0]); const kind=sniffImageType(b); fallbackSigImg = (kind==='png')? await pdfDoc.embedPng(b) : await pdfDoc.embedJpg(b); }
+
+      // UI
+      const bottomPad=parseFloat(($('bottomPt').value||'30'));
+      const sidePad  =parseFloat(($('sidePt').value||'40'));
+      const allPages=$('allPages').checked;
+
+      // Optional user widths
+      let customW=parseFloat($('imgW').value);
+      let customH=parseFloat($('imgH').value);
+      if(!Number.isFinite(customW)) customW = null;
+      if(!Number.isFinite(customH)) customH = null;
+
+      // Slider scale (%)
+      const scaleFactor = (parseFloat(($('imgScale')?.value)||'100')||100)/100;
+
+      const pages=pdfDoc.getPages();
+      const targetPages = allPages? pages : [pages[pages.length-1]];
+      const imageCache=new Map(); const failedUrls=[];
+
+      // ƯỚC LƯỢNG TỈ LỆ ẢNH (aspect)
+      let aspect = 2.5;
+      if(fallbackSigImg) aspect = fallbackSigImg.width / fallbackSigImg.height;
+      else {
+        try{
+          const first = signerRecords.find(r=>r.signature_image);
+          if(first){
+            const tmp = await embedImageFromUrl(pdfDoc, first.signature_image, imageCache);
+            if(tmp && tmp.width && tmp.height) aspect = tmp.width/tmp.height;
+          }
+        }catch{}
+      }
+
+      // Tăng font label dưới ảnh
+      const nameSize=16, timeSize=14, lineGap=5, belowPad=7;
+
+      for(const page of targetPages){
+        const { width } = page.getSize();
+
+        // BỐ CỤC LỆCH PHẢI (không full width)
+        const colsTop=3;
+        const available = width - sidePad - 10;       // chừa 10pt an toàn bên trái
+        const baseW = available / (colsTop + 0.5);    // ước lượng hợp lý
+        let sigW = (customW || baseW) * scaleFactor;
+        let sigH = (customH ? customH * scaleFactor : Math.round(sigW / aspect));
+
+        // Gap động
+        const minGap = 6, maxGap = 28;
+        let gapTop = Math.min(maxGap, Math.max(minGap, sigW * 0.12));
+
+        // Fit vào available (ưu tiên giữ gap tối thiểu)
+        function fitWithinAvailable() {
+          let total = colsTop*sigW + (colsTop-1)*gapTop;
+          if (total <= available) return;
+          gapTop = minGap;
+          total = colsTop*sigW + (colsTop-1)*gapTop;
+          if (total <= available) return;
+          sigW = (available - (colsTop-1)*gapTop) / colsTop;
+          sigH = Math.round(sigW / aspect);
+        }
+        fitWithinAvailable();
+
+        const totalRowWidth = colsTop*sigW + (colsTop-1)*gapTop;
+        const xStartRight = width - sidePad - totalRowWidth;
+
+        // Hàng dưới (đáy ảnh)
+        const yBottomRow = bottomPad;
+        // Hàng trên
+        const vGap=26;
+        const yTop = yBottomRow + sigH + (nameSize + timeSize + lineGap + belowPad) + vGap;
+
+        // Chuẩn bị slot theo order/position và “ký theo thứ tự”
+        let list4 = prepareSignerSlots(signerRecords);
+
+        async function drawOne(rec, xLeft, yBottom, w){
+          let img=null;
+          if(rec?.signature_image){
+            try{ img = await embedImageFromUrl(pdfDoc, rec.signature_image, imageCache); }
+            catch(e){ if(!failedUrls.includes(rec.signature_image)) failedUrls.push(rec.signature_image); if(fallbackSigImg) img=fallbackSigImg; }
+          } else img = fallbackSigImg;
+
+          const H = Math.round(w / aspect);
+          if(img) page.drawImage(img, { x:xLeft, y:yBottom, width:w, height:H });
+
+          const name = rec?.name || 'Người ký';
+          const timeStr = parseSignedAt(rec);
+          const nameW = font.widthOfTextAtSize(name, nameSize);
+          const timeW = font.widthOfTextAtSize(timeStr, timeSize);
+          const nameX = xLeft + (w - nameW)/2;
+          const timeX = xLeft + (w - timeW)/2;
+          const baseY = Math.max(10, yBottom - belowPad - nameSize - timeSize - lineGap);
+
+          page.drawText(name, { x:nameX, y:baseY + timeSize + lineGap, size:nameSize, font, color:rgb(0,0,0) });
+          page.drawText(timeStr, { x:timeX, y:baseY, size:timeSize, font, color:rgb(0,0,0) });
+        }
+
+        // Vẽ 3 chữ ký hàng trên
+        let x = xStartRight;
+        for(let i=0;i<3;i++){
+          const rec = list4[i];
+          if (rec) await drawOne(rec, x, yTop, sigW);
+          x += sigW + gapTop;
+        }
+
+        // Vẽ 1 chữ ký hàng dưới (căn giữa block phải)
+        const bottomRec = list4[3];
+        if (bottomRec) {
+          const xCenter = xStartRight + (totalRowWidth - sigW)/2;
+          await drawOne(bottomRec, xCenter, yBottomRow, sigW);
+        }
+      }
+
+      // Cảnh báo URL lỗi
+      if(failedUrls.length){
+        warnList.innerHTML='';
+        failedUrls.forEach(u=>{ const li=document.createElement('li'); li.textContent=u; warnList.appendChild(li); });
+        warnBox.style.display='block';
+      }
+
+      const outBytes=await pdfDoc.save();
+      const blob=new Blob([outBytes],{type:'application/pdf'});
+      const url=URL.createObjectURL(blob);
+      preview.src=url; downloadLink.href=url; downloadLink.style.display='inline-block';
+    }catch(err){
+      console.error(err); alert('Có lỗi khi xử lý PDF: ' + (err?.message || err));
+    }
+  };
+})();
+</script>
+</body>
+</html>
