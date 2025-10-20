@@ -13,7 +13,7 @@
             <a-input-search
                 v-model:value="q"
                 placeholder="Tìm theo tiêu đề"
-                allow-clear
+                allowClear
                 style="max-width: 320px"
                 @search="reload"
             />
@@ -41,7 +41,7 @@
 
                 <!-- cột action -->
                 <template v-else-if="column.key === 'action'">
-                    <a-space align="center">
+                    <a-space align="center" wrap>
                         <a-button @click="openPreview(record)">Xem</a-button>
                         <a-button
                             type="primary"
@@ -80,7 +80,8 @@
         <!-- Modal xem PDF -->
         <a-modal v-model:open="previewOpen" title="Bản Xem trước" :footer="null" width="80%">
             <iframe
-                :src="`/pdfjs/viewer.html?file=${encodeURIComponent(previewUrl)}`"
+                v-if="previewUrl"
+                :src="previewUrl"
                 style="width:100%;height:78vh;border:none;"
             ></iframe>
         </a-modal>
@@ -128,219 +129,22 @@ import { message } from 'ant-design-vue'
 import { PDFDocument, rgb } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import { CheckCircleTwoTone } from '@ant-design/icons-vue'
-import {getDocumentsByDepartment, getDocumentDetail, getDocumentById} from '@/api/document'
+import { getDocumentsByDepartment, getDocumentById, uploadDocumentToWP } from '@/api/document'
+import { approveApproval, getApproval } from '@/api/approvals'
 import fontUrl from '@/assets/fonts/Roboto-Regular.ttf?url'
-
 import { useUserStore } from '@/stores/user'
-const userStore = useUserStore()
 
+const userStore = useUserStore()
 const baseURL = import.meta.env.VITE_API_URL
 
 const props = defineProps({
     mySignatureUrl: { type: String, default: '' }
 })
 
-const approvingId = ref(null)  // loading theo từng row
-
-import { uploadDocumentToWP } from '@/api/document'
-import { approveApproval, getApproval } from '@/api/approvals'
-
-/* ================= helpers URL / proxy ================= */
+/* ---------- State ---------- */
+const approvingId = ref(null)
 const previewPdfAb = ref(null)
 
-
-async function approveNow(r) {
-    if (approvingId.value) return
-    try {
-        approvingId.value = r.rowKey
-
-        // 1) kiểm tra chữ ký cá nhân
-        const signerName = userStore.user?.name || userStore.user?.full_name || 'Người duyệt'
-        const sigUrlRaw  = props.mySignatureUrl || ''
-        if (!sigUrlRaw) {
-            message.warning('Bạn chưa có chữ ký cá nhân. Vào hồ sơ người dùng để tải chữ ký.')
-            return
-        }
-
-        // 2) Lấy PDF nguồn + xác định slot (không chồng lên chữ ký trước)
-        const pdfUrl = await getPreviewPdfUrl(r)
-        if (!pdfUrl) { message.warning('Không tìm thấy file PDF để duyệt'); return }
-
-        const baseAb  = await fetchBytesStrict(pdfUrl, 'PDF')
-        const pdfDoc  = await PDFDocument.load(baseAb)
-
-        const idx = await getNextSignatureIndex(r.instance_id) // số chữ ký đã có
-        const last = pdfDoc.getPage(pdfDoc.getPageCount() - 1)
-        const { width: pageW } = last.getSize()
-        const pos = computeSignaturePosition(pageW, idx)
-
-        // 3) nhúng ảnh chữ ký và vẽ theo vị trí tính sẵn
-        const imgAb = await fetchBytesStrict(toProxyUrl(sigUrlRaw), 'ảnh chữ ký')
-        const sig   = await embedImageAuto(pdfDoc, imgAb)
-        last.drawImage(sig, { x: pos.x, y: pos.y, width: pos.sigW, height: pos.sigH })
-
-        // 4) caption dưới mỗi chữ ký (tên + ngày giờ)
-        // 4) caption dưới mỗi chữ ký (tên + ngày giờ) — DÙNG FONT UNICODE
-        const now = new Date()
-        const cap1 = signerName
-        const cap2 = `Ký: ${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN')}`
-
-// 👇 Nhúng font Unicode (Roboto) thay cho StandardFonts.Helvetica
-        pdfDoc.registerFontkit(fontkit)
-        const fontBytes = await loadFontBytes()          // bạn đã có hàm này ở dưới
-        const vnFont = await pdfDoc.embedFont(fontBytes, { subset: true })
-
-        const capSize = 8
-        last.drawText(cap1, { x: pos.x, y: pos.y - (capSize + pos.gapY), size: capSize, font: vnFont })
-        last.drawText(cap2, { x: pos.x, y: pos.y - (2 * capSize + pos.gapY + 2), size: capSize, font: vnFont })
-
-
-        const stampedAb = await pdfDoc.save()
-
-        // 5) upload bản đã ký lên WP
-        const file = new File([stampedAb], `signed_${r.title || 'document'}.pdf`, { type: 'application/pdf' })
-        const fd   = new FormData()
-        fd.append('file', file)
-        fd.append('title', `Đã duyệt - ${r.title || 'document'}`)
-        fd.append('department_id', String(r.department_id || selectedDept.value || 1))
-        fd.append('visibility', 'department')
-
-        const upRes = await uploadDocumentToWP(fd)
-        const signedPdfUrl = upRes?.data?.url || upRes?.data?.data?.url
-        if (!signedPdfUrl) throw new Error('Upload PDF đã ký thất bại')
-
-        // 6) Gọi BE để lưu vết + giữ URL bản đã ký
-        const nowStr = new Date().toLocaleString('vi-VN')
-        if (r.instance_id) {
-            await approveApproval(r.instance_id, {
-                note: `Đã duyệt bởi ${signerName} lúc ${nowStr}`,
-                signature_url: sigUrlRaw,
-                signed_pdf_url: signedPdfUrl,
-            })
-        }
-
-        // 7) Cập nhật UI + mở preview bản đã ký
-        const row = rows.value.find(x => x.rowKey === r.rowKey)
-        if (row) row.__approved = true
-        previewUrl.value = toProxyUrl(signedPdfUrl)
-        previewOpen.value = true
-        message.success('Duyệt & chèn chữ ký thành công')
-    } catch (e) {
-        console.error(e)
-        message.error(e?.message || 'Duyệt thất bại')
-    } finally {
-        approvingId.value = null
-    }
-}
-
-
-function toSameOrigin(url) {
-    if (!url) return ''
-    try {
-        const u = new URL(url, window.location.origin)
-        if (u.origin === window.location.origin) {
-            return u.pathname + (u.search || '')
-        }
-        // Nếu khác origin → dùng BE proxy (ví dụ /api/proxy?url=)
-        return `/api/proxy?url=${encodeURIComponent(u.href)}`
-    } catch {
-        return url
-    }
-}
-
-function toProxyUrl(url) {
-    try {
-        const u = new URL(url, window.location.origin)
-        if (/^https?:/i.test(u) && u.origin !== window.location.origin) {
-            return '/pdf-proxy' + u.pathname + (u.search || '')
-        }
-        return u.pathname + (u.search || '')
-    } catch { return url || '' }
-}
-
-const isPdfUrl = (u) => typeof u === 'string' && /\.pdf(\?|#|$)/i.test(u || '')
-
-const safeUrl = (p) => {
-    const s = String(p || '')
-    return /^https?:\/\//i.test(s) ? s : (s ? `${baseURL}/${s}` : '')
-}
-
-/** Lấy URL PDF để xem/ ký (từ record + fallback gọi chi tiết tài liệu) */
-
-async function getPreviewPdfUrl(record) {
-    // Ưu tiên: nếu có instance_id -> lấy bản đã ký gần nhất
-    if (record?.instance_id) {
-        try {
-            const { data } = await getApproval(record.instance_id)
-            const signed = data?.signed_pdf_url
-            if (signed && /\.pdf(\?|#|$)/i.test(signed)) {
-                return toProxyUrl(signed) // 👈 dùng bản đã ký gần nhất
-            }
-        } catch (e) {
-            console.warn('getPreviewPdfUrl: getApproval lỗi', e)
-        }
-    }
-
-    // fallback: từ chính record / document detail
-    if (isPdfUrl(record?.file_url)) return toProxyUrl(record.file_url)
-    if (isPdfUrl(record?.url))      return toProxyUrl(record.url)
-
-    if (record?.document_id && typeof getDocumentById === 'function') {
-        try {
-            const doc = await getDocumentById(record.document_id)
-            if (isPdfUrl(doc?.file_path)) return toProxyUrl(doc.file_path)
-        } catch (e) {
-            console.warn('getPreviewPdfUrl: getDocumentById lỗi', e)
-        }
-    }
-
-    return ''
-}
-
-/* =============== fetch strict =============== */
-async function fetchBytesStrict(url, label = 'file') {
-    const r = await fetch(url, { cache: 'no-store' })
-    if (!r.ok) throw new Error(`Tải ${label} thất bại (${r.status}). URL: ${url}`)
-    const ab = await r.arrayBuffer()
-    const head = new Uint8Array(ab.slice(0, 16))
-    const txt = new TextDecoder().decode(head)
-    if (txt.startsWith('<!') || txt.toLowerCase().includes('<html')) {
-        throw new Error(`Nhận về HTML thay vì ${label}. Kiểm tra proxy / đường dẫn: ${url}`)
-    }
-    return ab
-}
-
-function detectImageType(u8) {
-    if (u8[0] === 0x89 && u8[1] === 0x50 && u8[2] === 0x4E && u8[3] === 0x47) return 'png'
-    if (u8[0] === 0xFF && u8[1] === 0xD8 && u8[2] === 0xFF) return 'jpg'
-    return 'unknown'
-}
-
-async function embedImageAuto(pdfDoc, imgAb) {
-    const u8 = new Uint8Array(imgAb)
-    const kind = detectImageType(u8)
-    if (kind === 'png') return pdfDoc.embedPng(imgAb)
-    if (kind === 'jpg') return pdfDoc.embedJpg(imgAb)
-    throw new Error('Unsupported image format (need PNG or JPG)')
-}
-
-async function signPdfOnLastPage(pdfUrl, signUrl) {
-    const pdfBytes = await fetchBytesStrict(toProxyUrl(pdfUrl), 'PDF');
-    const pdfDoc = await PDFDocument.load(pdfBytes);
-
-    const imgAb = await fetchBytesStrict(toProxyUrl(signUrl), 'ảnh chữ ký');
-    const sig = await embedImageAuto(pdfDoc, imgAb);
-
-    const last = pdfDoc.getPage(pdfDoc.getPageCount() - 1);
-    const { width } = last.getSize();
-    const sigW = 140, sigH = 60;
-    last.drawImage(sig, { x: width - sigW - 48, y: 48, width: sigW, height: sigH });
-
-    const out = await pdfDoc.save();
-    return URL.createObjectURL(new Blob([out], { type: 'application/pdf' }));
-}
-
-/* ===================== state ===================== */
 const selectedDept = ref(null)
 const departmentOptions = ref([
     { label: 'Phòng Hành chính - Nhân sự', value: 1 },
@@ -359,14 +163,12 @@ const pagedRows = computed(() => {
     return rows.value.slice(start, start + pager.value.pageSize)
 })
 
-/* ===================== table ===================== */
 const cols = [
     { title: 'Tiêu đề', key: 'title', dataIndex: 'title' },
     { title: 'Gửi lúc', key: 'submitted_at', dataIndex: 'submitted_at', width: 180 },
     { title: 'Tác vụ',  key: 'action',       dataIndex: 'action',       width: 320 },
 ]
 
-/* ===================== utils ===================== */
 const formatTime = (ts) => (ts ? new Date(ts).toLocaleString('vi-VN') : '')
 
 function nextDocNoLocal() {
@@ -375,13 +177,298 @@ function nextDocNoLocal() {
     return n.toString().padStart(2, '0')
 }
 
-/* =============== fetch rows =============== */
+/* ---------- Proxy helpers ---------- */
+function toSameOrigin(url) {
+    if (!url) return ''
+    try {
+        const u = new URL(url, window.location.origin)
+        if (u.origin === window.location.origin) {
+            return u.pathname + (u.search || '')
+        }
+        return `/api/proxy?url=${encodeURIComponent(u.href)}`
+    } catch {
+        return url
+    }
+}
+function toProxyUrl(url) {
+    try {
+        const u = new URL(url, window.location.origin)
+        if (/^https?:/i.test(u) && u.origin !== window.location.origin) {
+            return '/pdf-proxy' + u.pathname + (u.search || '')
+        }
+        return u.pathname + (u.search || '')
+    } catch { return url || '' }
+}
+const isPdfUrl = (u) => typeof u === 'string' && /\.pdf(\?|#|$)/i.test(u || '')
+const safeUrl = (p) => {
+    const s = String(p || '')
+    return /^https?:\/\//i.test(s) ? s : (s ? `${baseURL}/${s}` : '')
+}
+
+/* ---------- Fetch strict ---------- */
+async function fetchBytesStrict(url, label = 'file') {
+    const r = await fetch(url, { cache: 'no-store' })
+    if (!r.ok) throw new Error(`Tải ${label} thất bại (${r.status}). URL: ${url}`)
+    const ab = await r.arrayBuffer()
+    const head = new Uint8Array(ab.slice(0, 16))
+    const txt = new TextDecoder().decode(head)
+    if (txt.startsWith('<!') || txt.toLowerCase().includes('<html')) {
+        throw new Error(`Nhận về HTML thay vì ${label}. Kiểm tra proxy / đường dẫn: ${url}`)
+    }
+    return ab
+}
+
+/* ---------- Font cache ---------- */
+let __fontBytesCache = null
+async function loadFontBytesCached() {
+    if (__fontBytesCache) return __fontBytesCache
+    const res = await fetch(fontUrl, { cache: 'force-cache' })
+    if (!res.ok) throw new Error('Không tải được font')
+    __fontBytesCache = new Uint8Array(await res.arrayBuffer())
+    return __fontBytesCache
+}
+
+/* ---------- Image helpers ---------- */
+function dataUrlToBytes(dataUrl) {
+    const base64 = dataUrl.split(',')[1]
+    const bin = atob(base64)
+    const u8 = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i)
+    return u8.buffer
+}
+function sniffImageType(bytes) {
+    const u8 = new Uint8Array(bytes)
+    const isPng = u8[0]===0x89 && u8[1]===0x50 && u8[2]===0x4e && u8[3]===0x47 && u8[4]===0x0d && u8[5]===0x0a && u8[6]===0x1a && u8[7]===0x0a
+    return isPng ? 'png' : 'jpg'
+}
+async function embedImageFromUrl(pdfDoc, url, cache) {
+    if (!url) return null
+    if (cache.has(url)) return cache.get(url)
+    let bytes
+    if (url.startsWith('data:')) {
+        bytes = dataUrlToBytes(url)
+    } else {
+        bytes = await fetchBytesStrict(toProxyUrl(url), 'ảnh chữ ký')
+    }
+    const kind = sniffImageType(bytes)
+    const img = (kind === 'png') ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes)
+    cache.set(url, img)
+    return img
+}
+
+/* ---------- Approval data normalize ---------- */
+function parseSignedAt(rec) {
+    var z = function(n){ return String(n).padStart(2,'0') }
+    if (rec && rec.signed_at && rec.signed_at.date && rec.signed_at.time) return rec.signed_at.date + ' ' + rec.signed_at.time
+    if (rec && rec.signed_at && rec.signed_at.iso) {
+        var d = new Date(rec.signed_at.iso); return z(d.getDate())+'/'+z(d.getMonth()+1)+'/'+d.getFullYear()+' '+z(d.getHours())+':'+z(d.getMinutes())
+    }
+    if (rec && rec.signed_at && Number.isFinite(rec.signed_at.timestamp)) {
+        var ts = rec.signed_at.timestamp > 1e12 ? rec.signed_at.timestamp : rec.signed_at.timestamp*1000
+        var d2 = new Date(ts); return z(d2.getDate())+'/'+z(d2.getMonth()+1)+'/'+d2.getFullYear()+' '+z(d2.getHours())+':'+z(d2.getMinutes())
+    }
+    var d3 = new Date(); return z(d3.getDate())+'/'+z(d3.getMonth()+1)+'/'+d3.getFullYear()+' '+z(d3.getHours())+':'+z(d3.getMinutes())
+}
+function isSigned(rec) {
+    var hasSignedAt = !!(rec && rec.signed_at && (rec.signed_at.date || rec.signed_at.iso || Number.isFinite(rec.signed_at.timestamp)))
+    return (rec && (rec.status === 'approved' || rec.status === 'signed')) || hasSignedAt
+}
+/* chuyển steps BE -> signerRecords */
+function stepsToSignerRecords(steps) {
+    return (steps||[]).map(function(s, i){
+        return {
+            signer_id: s.user_id || s.approver_id || (i+1),
+            name: s.approver_name || s.name || ('Người ký ' + (i+1)),
+            signature_image: s.signature_url || '',
+            signed_at: s.approved_at ? { iso: s.approved_at } : (s.signed_at || null),
+            order: Number.isFinite(s.order) ? s.order : (i+1),
+            position: s.position || null,
+            status: s.status || (s.approved_at ? 'signed' : 'pending')
+        }
+    })
+}
+async function fetchSignerRecords(instanceId) {
+    if (!instanceId) return []
+    try {
+        const res = await getApproval(instanceId)
+        const steps = res && (res.data?.steps || res.data?.data?.steps) || []
+        return stepsToSignerRecords(steps)
+    } catch {
+        return []
+    }
+}
+
+/* ---------- Core renderer: 3 trên + 1 dưới lệch phải ---------- */
+async function renderSignatureSlots(pdfDoc, signerRecords, opts) {
+    opts = opts || {}
+    var applyAllPages = !!opts.applyAllPages
+    var bottomPad = Number.isFinite(opts.bottomPad) ? opts.bottomPad : 48
+    var sidePad   = Number.isFinite(opts.sidePad)   ? opts.sidePad   : 40
+    var customW   = Number.isFinite(opts.customW)   ? opts.customW   : null
+    var customH   = Number.isFinite(opts.customH)   ? opts.customH   : null
+    var scalePercent = Number.isFinite(opts.scalePercent) ? opts.scalePercent : 100
+    var nameSize  = Number.isFinite(opts.nameSize)  ? opts.nameSize  : 16
+    var timeSize  = Number.isFinite(opts.timeSize)  ? opts.timeSize  : 14
+    var lineGap   = Number.isFinite(opts.lineGap)   ? opts.lineGap   : 5
+    var belowPad  = Number.isFinite(opts.belowPad)  ? opts.belowPad  : 7
+    var fallbackImageUrl = (typeof opts.fallbackImageUrl === 'string') ? opts.fallbackImageUrl : null
+
+    if (pdfDoc.registerFontkit) pdfDoc.registerFontkit(fontkit)
+    const fontBytes = await loadFontBytesCached()
+    const font = await pdfDoc.embedFont(fontBytes, { subset: true })
+
+    const pages = pdfDoc.getPages()
+    const targetPages = applyAllPages ? pages : [pages[pages.length - 1]]
+
+    const imageCache = new Map()
+    let fallbackSigImg = null
+    if (fallbackImageUrl) {
+        try { fallbackSigImg = await embedImageFromUrl(pdfDoc, fallbackImageUrl, imageCache) } catch {}
+    }
+
+    // Ước lượng tỉ lệ chung để ra slotH đồng nhất
+    let aspect = 2.5
+    if (fallbackSigImg) aspect = fallbackSigImg.width / fallbackSigImg.height
+    else {
+        try {
+            const first = (signerRecords||[]).find(r => r.signature_image)
+            if (first) {
+                const tmp = await embedImageFromUrl(pdfDoc, first.signature_image, imageCache)
+                if (tmp && tmp.width && tmp.height) aspect = tmp.width / tmp.height
+            }
+        } catch {}
+    }
+
+    const list4 = prepareSignerSlots(signerRecords)
+
+    async function drawOne(page, rec, xLeft, yBottom, slotW, slotH) {
+        if (!rec) return
+
+        // Ảnh nào cũng ép đúng kích thước slot (đảm bảo phẳng hàng)
+        let img = null
+        if (rec.signature_image) {
+            try { img = await embedImageFromUrl(pdfDoc, rec.signature_image, imageCache) }
+            catch { if (fallbackSigImg) img = fallbackSigImg }
+        } else if (fallbackSigImg) img = fallbackSigImg
+
+        const W = slotW
+        const H = slotH
+        if (img) page.drawImage(img, { x: xLeft, y: yBottom, width: W, height: H })
+
+        const name = rec.name || 'Người ký'
+        const timeStr = parseSignedAt(rec)
+
+        const nameW = font.widthOfTextAtSize(name, nameSize)
+        const timeW = font.widthOfTextAtSize(timeStr, timeSize)
+        const nameX = xLeft + (W - nameW)/2
+        const timeX = xLeft + (W - timeW)/2
+        const baseY = Math.max(10, yBottom - belowPad - nameSize - timeSize - lineGap)
+
+        page.drawText(name, { x: nameX, y: baseY + timeSize + lineGap, size: nameSize, font, color: rgb(0,0,0) })
+        page.drawText(timeStr, { x: timeX, y: baseY, size: timeSize, font, color: rgb(0,0,0) })
+    }
+
+    for (const page of targetPages) {
+        const { width } = page.getSize()
+
+        const colsTop = 3
+        const available = width - sidePad - 10
+        let slotW = (customW || (available / (colsTop + 0.5)))
+        let gapTop = Math.min(28, Math.max(6, slotW * 0.12))
+
+        // Fit vào vùng lệch phải
+        function fit() {
+            let total = colsTop * slotW + (colsTop - 1) * gapTop
+            if (total <= available) return
+            gapTop = 6
+            total = colsTop * slotW + (colsTop - 1) * gapTop
+            if (total <= available) return
+            slotW = (available - (colsTop - 1) * gapTop) / colsTop
+        }
+        fit()
+
+        // Chiều cao slot cố định cho mọi ảnh
+        let slotH = (customH || (slotW / aspect))
+        slotH = Math.round(slotH * (scalePercent / 100))
+
+        const totalRowW = colsTop * slotW + (colsTop - 1) * gapTop
+        const xStartRight = width - sidePad - totalRowW
+
+        const yBottomRow = bottomPad
+        const vGap = 26
+        const yTop = yBottomRow + slotH + (nameSize + timeSize + lineGap + belowPad) + vGap
+
+        // Hàng trên (3 ảnh) — cùng yBottom = yTop -> đáy trùng nhau => phẳng hàng
+        let x = xStartRight
+        for (let i=0;i<3;i++) {
+            await drawOne(page, list4[i], x, yTop, slotW, slotH)
+            x += slotW + gapTop
+        }
+        // Hàng dưới (1 ảnh) — căn giữa block
+        await drawOne(page, list4[3], xStartRight + (totalRowW - slotW)/2, yBottomRow, slotW, slotH)
+    }
+}
+
+
+/* dùng order + position nếu có, lấy chuỗi liên tiếp đã ký từ đầu */
+function prepareSignerSlots(records) {
+    const sorted = (records||[]).slice().sort(function(a,b){
+        const ao = Number.isFinite(a && a.order) ? a.order : 1e9
+        const bo = Number.isFinite(b && b.order) ? b.order : 1e9
+        return ao - bo
+    })
+    const seq = []
+    for (var i=0;i<sorted.length;i++) {
+        var r = sorted[i]
+        if (isSigned(r)) seq.push(r); else break
+    }
+    var top = [null,null,null]
+    var bottom = null
+    // ưu tiên position
+    for (var j=0;j<seq.length;j++) {
+        var rr = seq[j]; var pos = rr.position
+        if (pos && pos.row==='top' && [0,1,2].includes(pos.index)) {
+            if (!top[pos.index]) top[pos.index] = rr
+        } else if (pos && pos.row==='bottom') {
+            if (!bottom) bottom = rr
+        }
+    }
+    for (var k=0;k<seq.length;k++) {
+        var r2 = seq[k]; if (r2.position) continue
+        var idx = top.findIndex(function(x){return x===null})
+        if (idx !== -1) top[idx] = r2
+        else if (!bottom) bottom = r2
+    }
+    return [top[0], top[1], top[2], bottom]
+}
+
+/* ---------- API: get PDF URL ---------- */
+async function getPreviewPdfUrl(record) {
+    if (record && record.instance_id) {
+        try {
+            const { data } = await getApproval(record.instance_id)
+            const signed = data && data.signed_pdf_url
+            if (signed && /\.pdf(\?|#|$)/i.test(signed)) return toProxyUrl(signed)
+        } catch (e) { console.warn('getPreviewPdfUrl: getApproval lỗi', e) }
+    }
+    if (isPdfUrl(record?.file_url)) return toProxyUrl(record.file_url)
+    if (isPdfUrl(record?.url))      return toProxyUrl(record.url)
+
+    if (record?.document_id && typeof getDocumentById === 'function') {
+        try {
+            const doc = await getDocumentById(record.document_id)
+            if (isPdfUrl(doc?.file_path)) return toProxyUrl(doc.file_path)
+        } catch (e) { console.warn('getPreviewPdfUrl: getDocumentById lỗi', e) }
+    }
+    return ''
+}
+
+/* ---------- List fetch ---------- */
 async function fetchRows() {
     loading.value = true
     try {
         const res = await getDocumentsByDepartment(selectedDept.value)
         const docs = Array.isArray(res?.data?.data) ? res.data.data : []
-
         let adapted = docs
             .filter(d => String(d.file_path || '').toLowerCase().endsWith('.pdf'))
             .map(d => ({
@@ -389,7 +476,7 @@ async function fetchRows() {
                 instance_id: d.instance_id ?? null,
                 document_id: d.id,
                 title: d.title,
-                file_url: safeUrl(d.file_path), // có thể là relative → baseURL + path
+                file_url: safeUrl(d.file_path),
                 submitted_at: d.created_at,
                 step: d.step ?? null,
                 _approver_name: d._approver_name ?? null,
@@ -412,44 +499,13 @@ async function fetchRows() {
         loading.value = false
     }
 }
-
-function reload() {
-    pager.value.current = 1
-    fetchRows()
-}
+function reload() { pager.value.current = 1; fetchRows() }
 function onPageChange(p) { pager.value.current = p }
 function onPageSizeChange(cur, size) { pager.value.pageSize = size; pager.value.current = 1 }
 
-/* =============== actions =============== */
-async function openPreview(r) {
-    try {
-        const rawPdfUrl = await getPreviewPdfUrl(r)
-        if (!rawPdfUrl) { message.warning('Không tìm thấy file PDF của văn bản này.'); return }
-        previewUrl.value = isPdfUrl(rawPdfUrl) ? toProxyUrl(rawPdfUrl) : toSameOrigin(rawPdfUrl)
-        previewOpen.value = true
-
-        // reset đếm ký thử cho văn bản này
-        previewSigLocal.value[keyOf(r)] = 0
-
-        const resp = await fetch(toProxyUrl(r.file_url), { cache: 'no-store' })
-        if (!resp.ok) throw new Error('Không tải được PDF để ký nối tiếp')
-        previewPdfAb.value = await resp.arrayBuffer()
-    } catch (e) {
-        console.error(e)
-        message.error(e?.message || 'Không thể mở bản xem trước')
-    }
-}
-
-
-function openOriginal(r) {
-    if (!r.file_url) return
-    window.open(r.file_url, '_blank', 'noopener')
-}
-
+/* ---------- Actions ---------- */
 const previewOpen = ref(false)
 const previewUrl = ref('')
-
-/* =============== approve modal =============== */
 const approveOpen = ref(false)
 const approving = ref(false)
 const activeRecord = ref(null)
@@ -467,7 +523,6 @@ function openApproveModal(r) {
     form.docNo = nextDocNoLocal()
     form.note = ''
 }
-
 function onPickLocalPdf(e) {
     const f = e.target.files?.[0]
     if (!f) return
@@ -477,7 +532,27 @@ function onPickLocalPdf(e) {
     reader.readAsArrayBuffer(f)
 }
 
-/* =============== crypto / font =============== */
+async function openPreview(r) {
+    try {
+        const rawPdfUrl = await getPreviewPdfUrl(r)
+        if (!rawPdfUrl) { message.warning('Không tìm thấy file PDF của văn bản này.'); return }
+        previewUrl.value = isPdfUrl(rawPdfUrl) ? toProxyUrl(rawPdfUrl) : toSameOrigin(rawPdfUrl)
+        previewOpen.value = true
+
+        const resp = await fetch(toProxyUrl(r.file_url), { cache: 'no-store' })
+        if (!resp.ok) throw new Error('Không tải được PDF để ký nối tiếp')
+        previewPdfAb.value = await resp.arrayBuffer()
+    } catch (e) {
+        console.error(e)
+        message.error(e?.message || 'Không thể mở bản xem trước')
+    }
+}
+function openOriginal(r) {
+    if (!r.file_url) return
+    window.open(r.file_url, '_blank', 'noopener')
+}
+
+/* ---------- Crypto ---------- */
 async function sha256Hex(bufferLike) {
     const ab = bufferLike instanceof ArrayBuffer ? bufferLike : bufferLike.buffer
     if (typeof window !== 'undefined' && window.crypto?.subtle && window.isSecureContext) {
@@ -490,21 +565,14 @@ async function sha256Hex(bufferLike) {
     return CryptoJS.SHA256(wordArray).toString(CryptoJS.enc.Hex)
 }
 
-async function loadFontBytes() {
-    const res = await fetch(fontUrl)
-    if (!res.ok) throw new Error('Không tải được font')
-    return new Uint8Array(await res.arrayBuffer())
-}
-
-/* =============== stamp block text =============== */
+/* ---------- Block text ---------- */
 async function stampTextBlock(arrayBuffer, info) {
     const pdfDoc = await PDFDocument.load(arrayBuffer)
-    pdfDoc.registerFontkit(fontkit)
-    const fontBytes = await loadFontBytes()
+    if (pdfDoc.registerFontkit) pdfDoc.registerFontkit(fontkit)
+    const fontBytes = await loadFontBytesCached()
     const font = await pdfDoc.embedFont(fontBytes, { subset: true })
 
     const pages = pdfDoc.getPages()
-
     const boxW = 220
     const boxH = 46
     const BOTTOM_OFFSET = 16
@@ -549,48 +617,178 @@ async function stampTextBlock(arrayBuffer, info) {
     return await pdfDoc.save()
 }
 
-/* =============== ký thử (ảnh) =============== */
+/* ---------- Unified flows ---------- */
+// Ký thử: thêm “mình” là người kế tiếp (giả lập signed), rồi render theo layout
+// ==== REPLACE your signAndPreview with this version ====
 async function signAndPreview(r) {
     try {
+        // 1) Lấy PDF nguồn
         const pdfUrl = await getPreviewPdfUrl(r)
         if (!pdfUrl) { message.warning('Không tìm thấy file PDF để ký thử'); return }
-        const rawSig = props.mySignatureUrl || ''
-        if (!rawSig) { message.warning('Bạn chưa có chữ ký cá nhân. Vào hồ sơ người dùng để tải chữ ký.'); return }
-
         const baseAb = await fetchBytesStrict(pdfUrl, 'PDF')
         const pdfDoc = await PDFDocument.load(baseAb)
+        if (pdfDoc.registerFontkit) pdfDoc.registerFontkit(fontkit)
 
-        // ✅ index = approved trên BE + ký thử local
-        const approvedIdx = await getNextSignatureIndex(r.instance_id)
-        const key = keyOf(r)
-        const localIdx = previewSigLocal.value[key] || 0
-        const idx = approvedIdx + localIdx
+        // 2) Font Unicode (giống btnRun: ưu tiên font tuỳ chọn -> NotoSans -> Helvetica)
+        // Ở đây dùng font local Roboto bạn đã bundle để ổn định Unicode
+        const fontBytes = await loadFontBytesCached()
+        const font = await pdfDoc.embedFont(fontBytes, { subset: true })
 
-        const last = pdfDoc.getPage(pdfDoc.getPageCount() - 1)
-        const { width: pageW } = last.getSize()
-        const pos = computeSignaturePosition(pageW, idx)
-
-        const imgAb = await fetchBytesStrict(toProxyUrl(rawSig), 'ảnh chữ ký')
-        const sig = await embedImageAuto(pdfDoc, imgAb)
-        last.drawImage(sig, { x: pos.x, y: pos.y, width: pos.sigW, height: pos.sigH })
-
-        // caption Unicode
-        pdfDoc.registerFontkit(fontkit)
-        const fontBytes = await loadFontBytes()
-        const vnFont = await pdfDoc.embedFont(fontBytes, { subset: true })
+        // 3) Dữ liệu người ký (giống btnRun):
+        //    - Lấy từ BE (steps) → chuyển thành signerRecords
+        //    - Thêm “người ký thử” (bạn) vào cuối, status=signed
+        const signerRecords = await fetchSignerRecords(r.instance_id)
         const now = new Date()
-        const cap1 = userStore.user?.name || userStore.user?.full_name || 'Người duyệt'
-        const cap2 = `Ký: ${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN')}`
-        const capSize = 8
-        last.drawText(cap1, { x: pos.x, y: pos.y - (capSize + pos.gapY), size: capSize, font: vnFont })
-        last.drawText(cap2, { x: pos.x, y: pos.y - (2 * capSize + pos.gapY + 2), size: capSize, font: vnFont })
+        const myName = userStore.user?.name || userStore.user?.full_name || 'Người duyệt'
+        const mySig  = (props.mySignatureUrl || '').trim()
+        if (!mySig) { message.warning('Bạn chưa có chữ ký cá nhân. Vào hồ sơ người dùng để tải chữ ký.'); return }
+        signerRecords.push({
+            signer_id: 'me-preview',
+            name: myName,
+            signature_image: mySig,
+            signed_at: { iso: now.toISOString() },
+            order: (signerRecords.length + 1),
+            status: 'signed'
+        })
 
-        const out = await pdfDoc.save()
-        previewUrl.value = URL.createObjectURL(new Blob([out], { type: 'application/pdf' }))
+        // 4) Fallback image (nếu URL ảnh lỗi)
+        let fallbackSigImg = null
+        const imageCache = new Map()
+        async function embedImageFromUrlLocal(url) {
+            if (!url) return null
+            if (imageCache.has(url)) return imageCache.get(url)
+            let bytes
+            if (url.startsWith('data:')) {
+                bytes = dataUrlToBytes(url)
+            } else {
+                bytes = await fetchBytesStrict(toProxyUrl(url), 'ảnh chữ ký')
+            }
+            const kindIsPng = (() => {
+                const u8 = new Uint8Array(bytes)
+                return u8[0]===0x89 && u8[1]===0x50 && u8[2]===0x4e && u8[3]===0x47 && u8[4]===0x0d && u8[5]===0x0a && u8[6]===0x1a && u8[7]===0x0a
+            })()
+            const img = kindIsPng ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes)
+            imageCache.set(url, img)
+            return img
+        }
+        try { fallbackSigImg = await embedImageFromUrlLocal(mySig) } catch { /* optional */ }
+
+        // 5) ƯỚC LƯỢNG TỈ LỆ ẢNH (aspect) giống demo
+        let aspect = 2.5
+        if (fallbackSigImg) aspect = fallbackSigImg.width / fallbackSigImg.height
+        else {
+            try {
+                const first = signerRecords.find(r => r.signature_image)
+                if (first) {
+                    const tmp = await embedImageFromUrlLocal(first.signature_image)
+                    if (tmp && tmp.width && tmp.height) aspect = tmp.width / tmp.height
+                }
+            } catch {}
+        }
+
+        // 6) Tham số UI giống demo
+        const nameSize = 16, timeSize = 14, lineGap = 5, belowPad = 7
+        const bottomPad = 48    // tương đương $('bottomPt') trong demo
+        const sidePad   = 40    // tương đương $('sidePt')
+        const scaleFactor = 1.0 // tương đương slider 100%
+
+        // Chuẩn bị slot theo “ký theo thứ tự”
+        const list4 = prepareSignerSlots(signerRecords)
+
+        // Thu thập URL ảnh hỏng (để warn)
+        const failedUrls = []
+
+        async function drawOne(page, rec, xLeft, yBottom, w) {
+            if (!rec) return
+            let img = null
+            if (rec.signature_image) {
+                try { img = await embedImageFromUrlLocal(rec.signature_image) }
+                catch (e) {
+                    failedUrls.push(rec.signature_image)
+                    if (fallbackSigImg) img = fallbackSigImg
+                }
+            } else if (fallbackSigImg) img = fallbackSigImg
+
+            const H = Math.round((w / aspect) * scaleFactor)
+            if (img) page.drawImage(img, { x: xLeft, y: yBottom, width: w, height: H })
+
+            const name = rec.name || 'Người ký'
+            const timeStr = parseSignedAt(rec)
+            const nameW = font.widthOfTextAtSize(name, nameSize)
+            const timeW = font.widthOfTextAtSize(timeStr, timeSize)
+            const nameX = xLeft + (w - nameW) / 2
+            const timeX = xLeft + (w - timeW) / 2
+            const baseY = Math.max(10, yBottom - belowPad - nameSize - timeSize - lineGap)
+
+            page.drawText(name, { x: nameX, y: baseY + timeSize + lineGap, size: nameSize, font, color: rgb(0,0,0) })
+            page.drawText(timeStr, { x: timeX, y: baseY, size: timeSize, font, color: rgb(0,0,0) })
+
+            return H
+        }
+
+        // 7) Vẽ giống y hệt demo: bố cục lệch phải (3 trên + 1 dưới)
+        const pages = pdfDoc.getPages()
+        const targetPages = [pages[pages.length - 1]] // demo mặc định 1 trang cuối; muốn allPages thì đổi ở đây
+
+        for (const page of targetPages) {
+            const { width } = page.getSize()
+            const colsTop = 3
+            const available = width - sidePad - 10 // chừa 10pt trái giống demo
+            // baseW = available / (colsTop + 0.5)
+            let sigW = (available / (colsTop + 0.5)) * scaleFactor
+            let sigH = Math.round(sigW / aspect)
+
+            // Gap động
+            const minGap = 6, maxGap = 28
+            let gapTop = Math.min(maxGap, Math.max(minGap, sigW * 0.12))
+
+            // Fit vào available (giữ gap tối thiểu)
+            function fitWithinAvailable() {
+                let total = colsTop * sigW + (colsTop - 1) * gapTop
+                if (total <= available) return
+                gapTop = minGap
+                total = colsTop * sigW + (colsTop - 1) * gapTop
+                if (total <= available) return
+                sigW = (available - (colsTop - 1) * gapTop) / colsTop
+                sigH = Math.round(sigW / aspect)
+            }
+            fitWithinAvailable()
+
+            const totalRowWidth = colsTop * sigW + (colsTop - 1) * gapTop
+            const xStartRight = width - sidePad - totalRowWidth
+
+            // Hàng dưới (đáy ảnh)
+            const yBottomRow = bottomPad
+            // Hàng trên = hàng dưới + cao ảnh + nhãn + vGap
+            const vGap = 26
+            const yTop = yBottomRow + sigH + (nameSize + timeSize + lineGap + belowPad) + vGap
+
+            // Vẽ 3 chữ ký hàng trên
+            let x = xStartRight
+            for (let i = 0; i < 3; i++) {
+                const rec = list4[i]
+                if (rec) await drawOne(page, rec, x, yTop, sigW)
+                x += sigW + gapTop
+            }
+
+            // Vẽ 1 chữ ký hàng dưới (căn giữa block phải)
+            const bottomRec = list4[3]
+            if (bottomRec) {
+                const xCenter = xStartRight + (totalRowWidth - sigW) / 2
+                await drawOne(page, bottomRec, xCenter, yBottomRow, sigW)
+            }
+        }
+
+        // 8) Cảnh báo URL ảnh lỗi (nếu có)
+        if (failedUrls.length) {
+            message.warning(`Một số ảnh chữ ký không tải được và đã dùng ảnh fallback:\n- ` + failedUrls.join('\n- '))
+        }
+
+        // 9) Xuất xem trước
+        const outBytes = await pdfDoc.save()
+        const blob = new Blob([outBytes], { type: 'application/pdf' })
+        previewUrl.value = URL.createObjectURL(blob)
         previewOpen.value = true
-
-        // ✅ tăng bộ đếm ký thử cho lần sau
-        previewSigLocal.value[key] = localIdx + 1
     } catch (e) {
         console.error(e)
         message.error(e?.message || 'Ký thử thất bại (CORS hoặc URL không hợp lệ)')
@@ -598,8 +796,76 @@ async function signAndPreview(r) {
 }
 
 
+// Duyệt nhanh: mình là người kế tiếp thật → render + upload + notify BE
+async function approveNow(r) {
+    if (approvingId.value) return
+    try {
+        approvingId.value = r.rowKey
 
-/* =============== approve (chèn ký + text, cập nhật preview) =============== */
+        const signerName = userStore.user?.name || userStore.user?.full_name || 'Người duyệt'
+        const sigUrlRaw  = props.mySignatureUrl || ''
+        if (!sigUrlRaw) { message.warning('Bạn chưa có chữ ký cá nhân. Vào hồ sơ người dùng để tải chữ ký.'); return }
+
+        const pdfUrl = await getPreviewPdfUrl(r)
+        if (!pdfUrl) { message.warning('Không tìm thấy file PDF để duyệt'); return }
+
+        const baseAb  = await fetchBytesStrict(pdfUrl, 'PDF')
+        const pdfDoc  = await PDFDocument.load(baseAb)
+
+        const signerRecords = await fetchSignerRecords(r.instance_id)
+        const now = new Date()
+        signerRecords.push({
+            signer_id: 'me',
+            name: signerName,
+            signature_image: sigUrlRaw,
+            signed_at: { iso: now.toISOString() },
+            order: (signerRecords.length + 1),
+            status: 'signed'
+        })
+
+        await renderSignatureSlots(pdfDoc, signerRecords, {
+            applyAllPages:false, sidePad:40, bottomPad:48, scalePercent:100, fallbackImageUrl: sigUrlRaw
+        })
+
+        const stampedAb = await pdfDoc.save()
+
+        // upload bản đã ký lên WP
+        const file = new File([stampedAb], `signed_${r.title || 'document'}.pdf`, { type: 'application/pdf' })
+        const fd   = new FormData()
+        fd.append('file', file)
+        fd.append('title', `Đã duyệt - ${r.title || 'document'}`)
+        fd.append('department_id', String(r.department_id || selectedDept.value || 1))
+        fd.append('visibility', 'department')
+
+        const upRes = await uploadDocumentToWP(fd)
+        const signedPdfUrl = upRes?.data?.url || upRes?.data?.data?.url
+        if (!signedPdfUrl) throw new Error('Upload PDF đã ký thất bại')
+
+        // Gọi BE lưu vết
+        const nowStr = new Date().toLocaleString('vi-VN')
+        if (r.instance_id) {
+            await approveApproval(r.instance_id, {
+                note: `Đã duyệt bởi ${signerName} lúc ${nowStr}`,
+                signature_url: sigUrlRaw,
+                signed_pdf_url: signedPdfUrl,
+            })
+        }
+
+        // UI
+        const row = rows.value.find(x => x.rowKey === r.rowKey)
+        if (row) row.__approved = true
+        previewUrl.value = URL.createObjectURL(new Blob([stampedAb], { type: 'application/pdf' }))
+        previewOpen.value = true
+        message.success('Duyệt & chèn chữ ký thành công')
+    } catch (e) {
+        console.error(e)
+        message.error(e?.message || 'Duyệt thất bại')
+    } finally {
+        approvingId.value = null
+    }
+}
+
+/* Duyệt & tải xuống: render chữ ký theo layout rồi đóng block text, tải về + evidence */
 async function handleApproveSubmit() {
     if (!form.signerName || !form.docNo) {
         message.warning('Vui lòng nhập Người duyệt và Số văn bản')
@@ -610,7 +876,7 @@ async function handleApproveSubmit() {
 
     approving.value = true
     try {
-        // 1) Chọn nguồn PDF: preview -> local -> fetch URL
+        // 1) Chọn nguồn PDF
         let baseAb
         if (previewPdfAb?.value) {
             baseAb = previewPdfAb.value
@@ -626,32 +892,25 @@ async function handleApproveSubmit() {
 
         const beforeHash = await sha256Hex(baseAb)
 
-        // 2) Nếu có ảnh chữ ký cá nhân → chèn trước
+        // 2) Chèn chữ ký của mình theo layout chung (nếu có ảnh chữ ký)
         let stampedAb = baseAb
         if (props?.mySignatureUrl) {
-            const withSignatureImage = async (pdfAb, signatureUrl, opt = {}) => {
-                const { xRightPadding = 48, yBottom = 48, width = 140, height = 60 } = opt
-                const pdfDoc = await PDFDocument.load(pdfAb)
-                const imgRes = await fetch(toSameOrigin(signatureUrl), { cache: 'no-store' })
-                if (!imgRes.ok) throw new Error('Không tải được ảnh chữ ký')
-                const imgAb = await imgRes.arrayBuffer()
-                const u8 = new Uint8Array(imgAb)
-                const isPng = (u8[0] === 0x89 && u8[1] === 0x50 && u8[2] === 0x4E)
-
-                const sig = isPng ? await pdfDoc.embedPng(imgAb) : await pdfDoc.embedJpg(imgAb)
-                const page = pdfDoc.getPage(pdfDoc.getPageCount() - 1)
-                const { width: pageW } = page.getSize()
-                page.drawImage(sig, {
-                    x: pageW - width - xRightPadding,
-                    y: yBottom,
-                    width,
-                    height
-                })
-                return await pdfDoc.save()
-            }
-
             try {
-                stampedAb = await withSignatureImage(stampedAb, props.mySignatureUrl)
+                const pdfDoc = await PDFDocument.load(stampedAb)
+                const signerRecords = await fetchSignerRecords(r.instance_id)
+                const now = new Date()
+                signerRecords.push({
+                    signer_id: 'me-approve',
+                    name: form.signerName || userStore.user?.name || 'Người duyệt',
+                    signature_image: props.mySignatureUrl,
+                    signed_at: { iso: now.toISOString() },
+                    order: (signerRecords.length + 1),
+                    status: 'signed'
+                })
+                await renderSignatureSlots(pdfDoc, signerRecords, {
+                    applyAllPages:false, sidePad:40, bottomPad:48, scalePercent:100, fallbackImageUrl: props.mySignatureUrl
+                })
+                stampedAb = await pdfDoc.save()
             } catch (e) {
                 console.warn('Chèn ảnh chữ ký thất bại, vẫn tiếp tục đóng block text.', e)
             }
@@ -668,11 +927,12 @@ async function handleApproveSubmit() {
         }
         stampedAb = await stampTextBlock(stampedAb, info)
 
-        // 4) Hash sau khi đóng dấu
+        // 4) Hash sau
         const afterHash = await sha256Hex(stampedAb)
 
         // 5) Cập nhật preview + tải xuống
         previewPdfAb.value = stampedAb
+
         const blob = new Blob([stampedAb], { type: 'application/pdf' })
         const url = URL.createObjectURL(blob)
         previewUrl.value = url
@@ -712,7 +972,7 @@ async function handleApproveSubmit() {
 
         message.success('Đã chèn chữ ký & cập nhật bản xem thử')
 
-        // (Tuỳ chọn) Gọi API approve BE:
+        // (Tuỳ chọn) gọi BE approve:
         // if (r.instance_id) {
         //   await approveApproval(r.instance_id, {
         //     note: `Duyệt số văn bản ${info.docNo}`,
@@ -729,83 +989,11 @@ async function handleApproveSubmit() {
     }
 }
 
-/* =============== reject demo =============== */
+/* ---------- Reject demo ---------- */
 async function reject(r) {
-    try {
-        message.success('(Demo) Đã từ chối cục bộ')
-    } catch {
-        message.error('Từ chối thất bại')
-    }
+    try { message.success('(Demo) Đã từ chối cục bộ') }
+    catch { message.error('Từ chối thất bại') }
 }
-
-// Số chữ ký đã có trong phiên -> slot kế tiếp
-// Đếm số step đã approved để xác định slot kế tiếp
-async function getNextSignatureIndex(instanceId) {
-    if (!instanceId) return 0
-    try {
-        const res = await getApproval(instanceId) // GET /document-approvals/{id}
-        const steps = res?.data?.steps || res?.data?.data?.steps || []
-        return steps.filter(s => s.status === 'approved').length
-    } catch {
-        return 0
-    }
-}
-
-// đếm số lần ký thử (local) theo mỗi document/instance
-const previewSigLocal = ref(Object.create(null))
-const keyOf = (r) => String(r.instance_id || r.rowKey || r.document_id)
-
-/** Tính toạ độ dựa theo index: xếp 3 cột, 2 hàng (tối đa 6 chữ ký ở đáy trang) */
-/** Slot chữ ký: 2 cột (trái/phải), nhiều hàng; cao hơn để tránh block text */
-/**
- * Chia đều theo hàng: 3 cột/hàng (0..2 cùng 1 dòng), 3..5 ở dòng kế.
- * Tự co sigW nếu trang hẹp để không bị âm khoảng cách.
- */
-function computeSignaturePosition(pageWidth, index) {
-    // cấu hình
-    const MAX_PER_ROW   = 3;     // số chữ ký mỗi hàng
-    const PAD_H         = 48;    // lề trái/phải
-    const Y_BASE        = 120;   // nâng khỏi mép dưới để tránh block text/logo
-    const ROW_GAP       = 26;    // khoảng cách giữa 2 hàng
-    const CAP_GAP       = 8;     // khoảng cách giữa ảnh và caption
-    const CAP_HEIGHT    = 18 * 2; // 2 dòng caption cỡ ~8–9pt
-
-    // kích thước ảnh chữ ký gốc
-    let sigW = 160;
-    let sigH = 70;
-
-    // vùng khả dụng theo chiều ngang
-    const avail = Math.max(100, pageWidth - PAD_H * 2); // an toàn
-    // khoảng hở tối thiểu giữa các cột
-    const MIN_GAP = 16;
-
-    // tính khoảng hở nếu giữ nguyên sigW
-    let gap = (avail - MAX_PER_ROW * sigW) / (MAX_PER_ROW - 1);
-
-    // nếu trang hẹp → co sigW/sigH để gap >= MIN_GAP
-    if (gap < MIN_GAP) {
-        const needTotal = MAX_PER_ROW * sigW + (MAX_PER_ROW - 1) * MIN_GAP;
-        const scale = Math.min(1, avail / needTotal);
-        sigW = Math.floor(sigW * scale);
-        sigH = Math.floor(sigH * scale);
-        gap  = Math.max(MIN_GAP, (avail - MAX_PER_ROW * sigW) / (MAX_PER_ROW - 1));
-    }
-
-    // xác định hàng/cột theo index
-    const row = Math.floor(index / MAX_PER_ROW);       // 0,1,2,...
-    const col = index % MAX_PER_ROW;                   // 0..(MAX_PER_ROW-1)
-
-    // x bắt đầu từ trái, chia đều
-    const x = PAD_H + col * (sigW + gap);
-    // y: base + (sigH + CAP_HEIGHT + ROW_GAP) * row
-    const rowHeight = sigH + CAP_HEIGHT + ROW_GAP;
-    const y = Y_BASE + row * rowHeight;
-
-    return { x, y, sigW, sigH, gapY: CAP_GAP };
-}
-
-
-
 
 onMounted(fetchRows)
 </script>
