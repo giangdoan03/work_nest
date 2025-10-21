@@ -22,21 +22,29 @@
                 <template v-else-if="column.key === 'action'">
                     <a-space align="center" wrap>
                         <a-button @click="openPreview(record)">Xem trước</a-button>
-                        <a-button @click="openSignedPreview(record)">Bản có chữ ký</a-button>
+                        <a-tooltip :title="signedTooltip(record)">
+                            <a-button @click="openSignedPreview(record)">
+                                {{ signedButtonLabel(record) }}
+                            </a-button>
+                        </a-tooltip>
                         <a-button danger @click="reject(record)" :disabled="record.__approved">Từ chối</a-button>
 
                         <a-button
                             :loading="isSigning(record)"
-                            :disabled="isSigning(record)"
+                            :disabled="isSigning(record) || !record.__canSign"
                             @click="signAndPreview(record)"
                         >
                             Ký duyệt
                         </a-button>
 
-                        <a-tag v-if="record.__approved" color="green" style="margin-left:6px">
-                            <CheckCircleTwoTone twoToneColor="#52c41a" style="margin-right:4px" />
-                            Đã duyệt
-                        </a-tag>
+
+                        <a-tooltip :title="smartStatus(record).tooltip">
+                            <a-tag :color="smartStatus(record).color" style="margin-left:6px">
+                                <CheckCircleTwoTone v-if="record.__approved" twoToneColor="#52c41a" style="margin-right:4px" />
+                                {{ smartStatus(record).text }}
+                            </a-tag>
+                        </a-tooltip>
+
                     </a-space>
                 </template>
             </template>
@@ -86,6 +94,200 @@ const previewOpen = ref(false)
 const previewUrl = ref('')
 const loading = ref(false)
 
+// Chuẩn hoá mọi kiểu response thành mảng
+function normalizeArray(res) {
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res?.data)) return res.data;
+    if (Array.isArray(res?.data?.data)) return res.data.data;
+    return [];
+}
+
+async function hydrateRowState(rec, currentUserId) {
+    try {
+        const raw = await getApprovalsByDocument(rec.document_id);
+        const approvals = normalizeArray(raw);
+        const lower = s => String(s || '').toLowerCase();
+        const docFinishedFromRow = lower(rec.approval_status) === 'approved';
+
+        const myEverSigned = approvals.some(a =>
+            Array.isArray(a.steps) &&
+            a.steps.some(s => Number(s.approver_id) === Number(currentUserId) && lower(s.status) === 'approved')
+        );
+
+        const active = approvals
+            .filter(a => ['pending', 'active'].includes(lower(a.status)))
+            .sort((a, b) => Number(b.id) - Number(a.id))[0];
+
+        const pickName = (s) => s?._approver_name || `User #${s?.approver_id || ''}`;
+
+        if (active) {
+            rec.instance_id = Number(active.id);
+
+            const steps = Array.isArray(active.steps) ? active.steps : [];
+            const total = steps.length;
+            const approvedCount = steps.filter(s => lower(s.status) === 'approved').length;
+            const remaining = Math.max(total - approvedCount, 0);
+
+            // người tiếp theo (first step chưa approved)
+            const nextStep = steps.find(s => lower(s.status) !== 'approved');
+            rec.__nextApproverName = nextStep ? pickName(nextStep) : '';
+
+            // bạn có trong flow không?
+            const myStep = steps.find(s => Number(s.approver_id) === Number(currentUserId));
+            rec.__inFlow = !!myStep;
+
+            const mySignedInActive = !!(myStep && lower(myStep.status) === 'approved');
+
+            // Số người trước bạn (chưa approved và đứng trước bạn theo sequence)
+            const myOrder = myStep?.sequence ?? myStep?.order ?? Infinity;
+            rec.__pendingBeforeMe = steps.filter(s => {
+                const ord = s?.sequence ?? s?.order ?? 999999;
+                return ord < myOrder && lower(s.status) !== 'approved';
+            }).length;
+
+            rec.__totalSigners = total;
+            rec.__approvedCount = approvedCount;
+            rec.__remaining = remaining;
+
+            const signableStatuses = new Set(['pending', 'active', 'waiting', '']);
+            const myStepStatus = lower(myStep?.status);
+
+            rec.__signedByMe = myEverSigned || mySignedInActive;
+            rec.__canSign = !!myStep && !mySignedInActive && signableStatuses.has(myStepStatus);
+
+            rec.__approved = docFinishedFromRow;
+            return;
+        }
+
+        // Không có phiên active → lấy phiên mới nhất để thống kê
+        const latest = approvals.sort((a, b) => Number(b.id) - Number(a.id))[0];
+        const steps = Array.isArray(latest?.steps) ? latest.steps : [];
+
+        rec.__totalSigners = steps.length;
+        rec.__approvedCount = steps.filter(s => lower(s.status) === 'approved').length;
+        rec.__remaining = Math.max(rec.__totalSigners - rec.__approvedCount, 0);
+
+        rec.__nextApproverName = '';
+        rec.__pendingBeforeMe = 0;
+        rec.__inFlow = steps.some(s => Number(s.approver_id) === Number(currentUserId));
+
+        rec.__approved = docFinishedFromRow;
+        rec.__signedByMe = myEverSigned;
+        rec.__canSign = !docFinishedFromRow && !myEverSigned;
+
+    } catch (e) {
+        console.warn('hydrateRowState error', e);
+        rec.__canSign = false;
+    }
+}
+
+function smartStatus(rec) {
+    // 1) Đã hoàn tất
+    if (rec.__approved) {
+        const ratio = rec.__totalSigners ? ` (${rec.__approvedCount}/${rec.__totalSigners})` : '';
+        return {
+            color: 'green',
+            text: `Đã duyệt${ratio}`,
+            tooltip: 'Tài liệu đã hoàn tất quá trình ký.'
+        };
+    }
+
+    // 2) Bạn đã ký nhưng chưa hoàn tất
+    if (rec.__signedByMe) {
+        const remain = rec.__remaining;
+        const total = rec.__totalSigners;
+        return {
+            color: 'blue',
+            text: 'Bạn đã ký',
+            tooltip: total ? `Còn ${remain} người chưa ký trên tổng ${total}.` : 'Bạn đã ký.'
+        };
+    }
+
+    // 3) Đến lượt bạn ký
+    if (rec.__canSign) {
+        const afterYou = Math.max(rec.__remaining - 1, 0);
+        const hint = afterYou > 0 ? `Sau bạn còn ${afterYou} người.` : 'Bạn là người cuối cùng.';
+        return {
+            color: 'geekblue',
+            text: 'Đến lượt bạn ký',
+            tooltip: hint
+        };
+    }
+
+    // 4) Bạn trong flow nhưng chưa đến lượt
+    if (rec.__inFlow && rec.__pendingBeforeMe > 0) {
+        const nextName = rec.__nextApproverName || 'người trước';
+        return {
+            color: 'gold',
+            text: `Chờ ${rec.__pendingBeforeMe} người trước bạn`,
+            tooltip: `Tiếp theo: ${nextName}`
+        };
+    }
+
+    // 5) Bạn không nằm trong luồng ký
+    return {
+        color: 'default',
+        text: 'Ngoài luồng ký',
+        tooltip: 'Bạn không nằm trong danh sách ký của tài liệu này.'
+    };
+}
+
+async function hydrateRows() {
+    const me = await getCurrentUser();
+    const currentUserId = Number(me?.id || 0);
+    const tasks = rows.value.map(r => hydrateRowState(r, currentUserId));
+    await Promise.all(tasks);
+}
+
+
+function signedButtonLabel(rec) {
+    const n = Number(rec.__approvedCount || 0);
+    const total = Number(rec.__totalSigners || 0);
+
+    if (rec.__approved) {
+        // Đã hoàn tất
+        return total > 0
+            ? `Bản hoàn tất (${n}/${total})`
+            : `Bản hoàn tất`;
+    }
+
+    if (n <= 0) {
+        return 'Chưa có chữ ký';
+    }
+
+    // Đang trong quá trình, đã có chữ ký
+    return total > 0
+        ? `Bản có chữ ký (${n}/${total})`
+        : `Bản có chữ ký (${n})`;
+}
+
+function signedTooltip(rec) {
+    const n = Number(rec.__approvedCount || 0);
+    const total = Number(rec.__totalSigners || 0);
+    const remain = Number(rec.__remaining || 0);
+    const nextName = rec.__nextApproverName || '';
+
+    if (rec.__approved) {
+        return total > 0
+            ? `Tài liệu đã hoàn tất: ${n}/${total} người đã ký.`
+            : 'Tài liệu đã hoàn tất.';
+    }
+
+    if (n <= 0) {
+        return 'Chưa ai ký tài liệu này.';
+    }
+
+    // Đang trong quá trình ký
+    if (total > 0) {
+        const nextHint = nextName ? ` Tiếp theo: ${nextName}.` : '';
+        return `Đã có ${n}/${total} người ký. Còn ${remain} người chưa ký.${nextHint}`;
+    }
+
+    return `Đã có ${n} người ký.`;
+}
+
+
+
 
 
 const baseURL = import.meta.env.VITE_API_URL
@@ -129,10 +331,11 @@ const safeUrl = (p) => /^https?:\/\//i.test(p) ? p : `${baseURL}/${p}`
 
 /* ---------- Fetch documents ---------- */
 async function fetchRows() {
-    loading.value = true
+    loading.value = true;
     try {
-        const res = await getDocumentsByDepartment()
-        const docs = Array.isArray(res?.data?.data) ? res.data.data : []
+        const res = await getDocumentsByDepartment();
+        const docs = normalizeArray(res);
+
         rows.value = docs
             .filter(d => String(d.file_path || '').endsWith('.pdf'))
             .map(d => ({
@@ -143,16 +346,29 @@ async function fetchRows() {
                 file_url: safeUrl(d.file_path),
                 submitted_at: d.created_at,
                 approval_status: d.approval_status,
-                __approved: d.approval_status === 'approved',
-            }))
-        pager.value.total = rows.value.length
+                // hai cờ sẽ được hydrate sau:
+                __totalSigners: 0,
+                __approvedCount: 0,
+                __remaining: 0,
+                __nextApproverName: '',
+                __pendingBeforeMe: 0,
+                __inFlow: false,
+
+            }));
+
+        pager.value.total = rows.value.length;
+
+        // Đồng bộ trạng thái từ /document-approvals
+        await hydrateRows();
+
     } catch (err) {
-        console.error(err)
-        message.error('Không thể tải danh sách văn bản')
+        console.error(err);
+        message.error('Không thể tải danh sách văn bản');
     } finally {
-        loading.value = false
+        loading.value = false;
     }
 }
+
 
 /* ---------- User & Approval cache ---------- */
 let userCache = null
@@ -172,10 +388,10 @@ async function loadSignerRecordsFor(rec) {
         const { data } = await getApprovalDetail(rec.instance_id)
         steps = data?.steps || []
     } else {
-        const { data } = await getApprovalsByDocument(rec.document_id)
-        steps = Array.isArray(data?.data) ? data.data[0]?.steps || [] : []
+        const raw = await getApprovalsByDocument(rec.document_id);
+        const approvals = normalizeArray(raw);
+        steps = Array.isArray(approvals?.[0]?.steps) ? approvals[0].steps : [];
     }
-
     const users = await ensureUsersMap()
     const list = steps.map(s => {
         const u = users.get(String(s.approver_id)) || {}
@@ -242,11 +458,6 @@ async function drawOneSignature(pdfDoc, page, rec, xLeft, yBottom, sigW, sigH, a
     page.drawText(timeStr, { x: xLeft + (sigW - timeW) / 2, y: yBottom - 44, size: 14, font, color: rgb(0, 0, 0) })
 }
 
-// Cần các hàm đã có sẵn:
-// import { fetchActiveInstanceId, getApprovalsByDocument, sendApproval } from '@/api/approvals'
-// import { getUserDetail, getCurrentUser } from '@/api/user'
-//  - getCurrentUser: gọi GET /check, trả { user: {...} }
-//  - nếu bạn chưa có getCurrentUser, chỉ cần bỏ phần fallback đó đi.
 
 async function ensureInstance(rec) {
     // 0) Kiểm tra đầu vào
@@ -363,16 +574,17 @@ async function signAndPreview(rec) {
         previewUrl.value = URL.createObjectURL(blob)
         previewOpen.value = true
 
-        // D) Lưu DB (approve)
-        // Nếu bạn muốn upload file đã ký để có URL, hãy làm ở đây và gán vào signed_pdf_url
         await approveDocumentApproval(instanceId, {
             comment: 'Đã ký duyệt (preview phía client)',
             signature_url: props.mySignatureUrl || null,
             signed_pdf_url: null,
-        })
+        });
 
-        message.success({ content: 'Đã lưu trạng thái duyệt', key: msgKey })
-        rec.__approved = true
+        // Cập nhật lại đúng quyền của bạn & trạng thái phiên
+        const me = await getCurrentUser();
+        await hydrateRowState(rec, Number(me?.id || 0));
+
+        message.success({ content: 'Đã lưu trạng thái duyệt', key: msgKey });
 
     } catch (e) {
         console.error(e)
@@ -385,22 +597,20 @@ async function signAndPreview(rec) {
 
 // ========== helpers ==========
 
-// lấy instance id (tận dụng logic cũ)
-// helpers: đã có trong file của bạn
-// - embedUnicodeFont, embedImageFromUrl, tryEmbedFallback
-// - fetchActiveInstanceId, getApprovalsByDocument, getApprovalDetail
-
 async function resolveInstanceId(rec) {
     if (rec.instance_id) return rec.instance_id
     const id = await fetchActiveInstanceId(rec.document_id).catch(() => null)
     if (id) { rec.instance_id = id; return id }
     try {
-        const { data } = await getApprovalsByDocument(rec.document_id)
-        const list = Array.isArray(data?.data) ? data.data : []
+        const raw = await getApprovalsByDocument(rec.document_id);
+        const list = normalizeArray(raw);
         const pendingLatest = list
             .filter(r => String(r.status).toLowerCase() === 'pending')
-            .sort((a,b) => Number(b.id) - Number(a.id))[0]
-        if (pendingLatest?.id) { rec.instance_id = pendingLatest.id; return pendingLatest.id }
+            .sort((a, b) => Number(b.id) - Number(a.id))[0];
+        if (pendingLatest?.id) {
+            rec.instance_id = pendingLatest.id;
+            return pendingLatest.id;
+        }
     } catch {}
     return null
 }
@@ -482,16 +692,15 @@ async function openSignedPreview(rec) {
 
 // Lấy danh sách chữ ký đã ký (từ mọi phiên của 1 document)
 async function loadSignedRecordsByDocument(documentId) {
-    const { data } = await getApprovalsByDocument(documentId)
-    const approvals = Array.isArray(data?.data) ? data.data : []
+    const raw = await getApprovalsByDocument(documentId);
+    const approvals = normalizeArray(raw);
 
-    // duyệt qua tất cả phiên -> gom các step đã approved và có chữ ký
-    const signed = []
+    const signed = [];
     for (const apv of approvals) {
-        const steps = Array.isArray(apv?.steps) ? apv.steps : []
+        const steps = Array.isArray(apv?.steps) ? apv.steps : [];
         for (const s of steps) {
             if (String(s.status).toLowerCase() === 'approved') {
-                const sig = s.signature_url || s._acted_by_signature_url || s._approver_signature_url
+                const sig = s.signature_url || s._acted_by_signature_url || s._approver_signature_url;
                 if (sig) {
                     signed.push({
                         name: s._approver_name || `User #${s.approver_id}`,
@@ -501,22 +710,22 @@ async function loadSignedRecordsByDocument(documentId) {
                         instance_id: Number(apv.id || 0),
                         instance_status: apv.status,
                         instance_created_at: apv.created_at,
-                    })
+                    });
                 }
             }
         }
     }
 
-    // sắp xếp: theo thời gian ký, fallback theo order/instance
-    signed.sort((a,b) => {
-        const ta = a.signed_at ? +new Date(a.signed_at) : 0
-        const tb = b.signed_at ? +new Date(b.signed_at) : 0
-        if (ta !== tb) return ta - tb
-        if (a.order !== b.order) return a.order - b.order
-        return (a.instance_id || 0) - (b.instance_id || 0)
-    })
-    return signed
+    signed.sort((a, b) => {
+        const ta = a.signed_at ? +new Date(a.signed_at) : 0;
+        const tb = b.signed_at ? +new Date(b.signed_at) : 0;
+        if (ta !== tb) return ta - tb;
+        if (a.order !== b.order) return a.order - b.order;
+        return (a.instance_id || 0) - (b.instance_id || 0);
+    });
+    return signed;
 }
+
 
 
 // chỉ lấy NHỮNG NGƯỜI ĐÃ KÝ cho tài liệu này
