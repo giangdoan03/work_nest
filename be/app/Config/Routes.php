@@ -255,6 +255,7 @@ $routes->group('api', function ($routes) {
     // Duyệt/Từ chối tuần tự
     $routes->get('document-approvals', 'DocumentApprovalController::index');
     $routes->get('document-approvals/(:num)', 'DocumentApprovalController::show/$1');
+    $routes->get('document-approvals/active-by-document', 'DocumentApprovalController::activeByDocument');
     $routes->post('document-approvals/send', 'DocumentApprovalController::send');
     $routes->post('document-approvals/(:num)/approve', 'DocumentApprovalController::approve/$1');
     $routes->post('document-approvals/(:num)/reject',  'DocumentApprovalController::reject/$1');

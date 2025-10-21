@@ -124,7 +124,7 @@
 
             <!-- Danh sách Văn bản cần duyệt (PDF) -->
             <template v-else>
-                <DocumentApprovalList :my-signature-url="mySignatureUrl" @refresh="fetchData" />
+                <DocumentApprovalList :my-signature-url="mySignatureUrl" />
             </template>
         </a-card>
 
@@ -267,14 +267,14 @@ const fetchData = async () => {
                 page: pagination.value.current,
                 per_page: pagination.value.pageSize,
                 search: (searchTitle.value || '').trim() || undefined,
-                target_types: 'bidding,contract,bidding_step,contract_step,task',
+                target_types: 'bidding,contract,bidding_step,contract_step,task,document',
             })
             : await listApprovals({
                 page: pagination.value.current,
                 per_page: pagination.value.pageSize,
                 status: 'approved,rejected',
                 acted_by_me: 1,
-                target_types: 'bidding,contract,bidding_step,contract_step,task',
+                target_types: 'bidding,contract,bidding_step,contract_step,task,document',
             })
 
         const items = Array.isArray(data?.data) ? data.data : []

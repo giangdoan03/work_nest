@@ -1,9 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Oct 20, 2025 at 04:53 PM
+-- Generation Time: Oct 21, 2025 at 09:29 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -97,7 +97,11 @@ INSERT INTO `approval_instances` (`id`, `target_type`, `target_id`, `version`, `
 (105, 'document', 53, 1, 1, 'pending', 0, 3, '2025-10-05 16:50:34', NULL, NULL, '{\"url\": \"https://assets.develop.io.vn/wp-content/uploads/2025/10/logoMark-1.png\", \"title\": \"534543\"}', '2025-10-05 16:50:34', '2025-10-05 16:50:34'),
 (106, 'document', 51, 1, 0, 'pending', 0, 3, '2025-10-05 16:51:11', NULL, NULL, '{\"url\": \"https://assets.develop.io.vn/wp-content/uploads/2025/09/photo_2025-09-28_09-47-48.jpg\", \"title\": \"tài liệu batman\"}', '2025-10-05 16:51:11', '2025-10-05 16:52:33'),
 (107, 'document', 51, 2, 1, 'pending', 0, 3, '2025-10-05 16:52:33', NULL, NULL, '{\"url\": \"https://assets.develop.io.vn/wp-content/uploads/2025/09/photo_2025-09-28_09-47-48.jpg\", \"title\": \"tài liệu batman\"}', '2025-10-05 16:52:33', '2025-10-05 16:52:33'),
-(113, 'document', 52, 1, 1, 'pending', 0, 3, '2025-10-05 17:21:32', NULL, NULL, '{\"url\": \"https://vnexpress.net/\", \"title\": \"tài liệu vnexpress\"}', '2025-10-05 17:21:32', '2025-10-05 17:21:32');
+(113, 'document', 52, 1, 1, 'pending', 0, 3, '2025-10-05 17:21:32', NULL, NULL, '{\"url\": \"https://vnexpress.net/\", \"title\": \"tài liệu vnexpress\"}', '2025-10-05 17:21:32', '2025-10-05 17:21:32'),
+(116, 'document', 57, 1, 1, 'pending', 0, 3, '2025-10-21 11:33:35', NULL, NULL, '{\"url\": \"https://assets.develop.io.vn/wp-content/uploads/2025/10/20250922_BangtonghopdieuchinhbanDemolan3_T01.docx\", \"title\": \"xxxxxxxxxxxxx\"}', '2025-10-21 11:33:35', '2025-10-21 11:33:35'),
+(117, 'document', 58, 1, 1, 'pending', 0, 3, '2025-10-21 15:07:34', NULL, NULL, '{\"url\": \"https://assets.develop.io.vn/wp-content/uploads/2025/10/Bang_gia_QR_Code_Marketing_2025.pdf\", \"title\": \"vvvvvvvvvvvvvvvvvv\"}', '2025-10-21 15:07:34', '2025-10-21 15:07:34'),
+(118, 'document', 56, 1, 1, 'pending', 0, 3, '2025-10-21 15:07:40', NULL, NULL, '{\"url\": \"https://assets.develop.io.vn/wp-content/uploads/2025/10/20250925_TonghopDieuchinhChucnang-PM-QLCV_DemoL3-D.xlsx\", \"title\": \"435435453535\"}', '2025-10-21 15:07:40', '2025-10-21 15:07:40'),
+(119, 'document', 59, 1, 1, 'pending', 0, 3, '2025-10-21 15:11:18', NULL, NULL, '{\"url\": \"https://assets.develop.io.vn/wp-content/uploads/2025/10/20241007_GiahanphanmemMicrosoft365-1.pdf\", \"title\": \"công văn 01\"}', '2025-10-21 15:11:18', '2025-10-21 15:11:18');
 
 -- --------------------------------------------------------
 
@@ -178,7 +182,11 @@ INSERT INTO `approval_logs` (`id`, `approval_instance_id`, `actor_id`, `action`,
 (96, 105, 3, 'send', '{\"meta\": {\"url\": \"https://assets.develop.io.vn/wp-content/uploads/2025/10/logoMark-1.png\", \"title\": \"534543\"}, \"approver_ids\": [4, 5]}', '2025-10-05 16:50:34'),
 (97, 106, 3, 'send', '{\"meta\": {\"url\": \"https://assets.develop.io.vn/wp-content/uploads/2025/09/photo_2025-09-28_09-47-48.jpg\", \"title\": \"tài liệu batman\"}, \"approver_ids\": [3, 5]}', '2025-10-05 16:51:11'),
 (98, 107, 3, 'send', '{\"meta\": {\"url\": \"https://assets.develop.io.vn/wp-content/uploads/2025/09/photo_2025-09-28_09-47-48.jpg\", \"title\": \"tài liệu batman\"}, \"approver_ids\": [5]}', '2025-10-05 16:52:33'),
-(104, 113, 3, 'send', '{\"meta\": {\"url\": \"https://vnexpress.net/\", \"title\": \"tài liệu vnexpress\"}, \"approver_ids\": [5]}', '2025-10-05 17:21:32');
+(104, 113, 3, 'send', '{\"meta\": {\"url\": \"https://vnexpress.net/\", \"title\": \"tài liệu vnexpress\"}, \"approver_ids\": [5]}', '2025-10-05 17:21:32'),
+(107, 116, 3, 'send', '{\"meta\": {\"url\": \"https://assets.develop.io.vn/wp-content/uploads/2025/10/20250922_BangtonghopdieuchinhbanDemolan3_T01.docx\", \"title\": \"xxxxxxxxxxxxx\"}, \"approver_ids\": [3, 1, 4]}', '2025-10-21 11:33:35'),
+(108, 117, 3, 'send', '{\"meta\": {\"url\": \"https://assets.develop.io.vn/wp-content/uploads/2025/10/Bang_gia_QR_Code_Marketing_2025.pdf\", \"title\": \"vvvvvvvvvvvvvvvvvv\"}, \"approver_ids\": [3, 1, 4]}', '2025-10-21 15:07:34'),
+(109, 118, 3, 'send', '{\"meta\": {\"url\": \"https://assets.develop.io.vn/wp-content/uploads/2025/10/20250925_TonghopDieuchinhChucnang-PM-QLCV_DemoL3-D.xlsx\", \"title\": \"435435453535\"}, \"approver_ids\": [1, 3, 4]}', '2025-10-21 15:07:40'),
+(110, 119, 3, 'send', '{\"meta\": {\"url\": \"https://assets.develop.io.vn/wp-content/uploads/2025/10/20241007_GiahanphanmemMicrosoft365-1.pdf\", \"title\": \"công văn 01\"}, \"approver_ids\": [1, 3]}', '2025-10-21 15:11:18');
 
 -- --------------------------------------------------------
 
@@ -269,7 +277,18 @@ INSERT INTO `approval_steps` (`id`, `approval_instance_id`, `level`, `approver_i
 (136, 106, 1, 3, 'pending', NULL, NULL, NULL, NULL, '2025-10-05 16:51:11', '2025-10-05 16:51:11'),
 (137, 106, 2, 5, 'pending', NULL, NULL, NULL, NULL, '2025-10-05 16:51:11', '2025-10-05 16:51:11'),
 (138, 107, 1, 5, 'pending', NULL, NULL, NULL, NULL, '2025-10-05 16:52:33', '2025-10-05 16:52:33'),
-(147, 113, 1, 5, 'pending', NULL, NULL, NULL, NULL, '2025-10-05 17:21:32', '2025-10-05 17:21:32');
+(147, 113, 1, 5, 'pending', NULL, NULL, NULL, NULL, '2025-10-05 17:21:32', '2025-10-05 17:21:32'),
+(150, 116, 1, 3, 'pending', NULL, NULL, NULL, NULL, '2025-10-21 11:33:35', '2025-10-21 11:33:35'),
+(151, 116, 2, 1, 'pending', NULL, NULL, NULL, NULL, '2025-10-21 11:33:35', '2025-10-21 11:33:35'),
+(152, 116, 3, 4, 'pending', NULL, NULL, NULL, NULL, '2025-10-21 11:33:35', '2025-10-21 11:33:35'),
+(153, 117, 1, 3, 'pending', NULL, NULL, NULL, NULL, '2025-10-21 15:07:34', '2025-10-21 15:07:34'),
+(154, 117, 2, 1, 'pending', NULL, NULL, NULL, NULL, '2025-10-21 15:07:34', '2025-10-21 15:07:34'),
+(155, 117, 3, 4, 'pending', NULL, NULL, NULL, NULL, '2025-10-21 15:07:34', '2025-10-21 15:07:34'),
+(156, 118, 1, 1, 'pending', NULL, NULL, NULL, NULL, '2025-10-21 15:07:40', '2025-10-21 15:07:40'),
+(157, 118, 2, 3, 'pending', NULL, NULL, NULL, NULL, '2025-10-21 15:07:40', '2025-10-21 15:07:40'),
+(158, 118, 3, 4, 'pending', NULL, NULL, NULL, NULL, '2025-10-21 15:07:40', '2025-10-21 15:07:40'),
+(159, 119, 1, 1, 'pending', NULL, NULL, NULL, NULL, '2025-10-21 15:11:18', '2025-10-21 15:11:18'),
+(160, 119, 2, 3, 'pending', NULL, NULL, NULL, NULL, '2025-10-21 15:11:18', '2025-10-21 15:11:18');
 
 -- --------------------------------------------------------
 
@@ -1198,7 +1217,7 @@ CREATE TABLE `documents` (
   `tags` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `approval_steps` json DEFAULT NULL,
   `current_level` int NOT NULL DEFAULT '0',
-  `approval_status` enum('not_sent','pending','approved','rejected') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending'
+  `approval_status` enum('not_sent','pending','approved','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -1243,7 +1262,8 @@ INSERT INTO `documents` (`id`, `title`, `file_path`, `department_id`, `uploaded_
 (35, 'Đã duyệt - vvvvvvvvvvvvvvvvvv', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/signed_vvvvvvvvvvvvvvvvvv-5.pdf', 1, 3, 'department', 'wp_media', 56392, '2025-10-20 23:23:33', '2025-10-20 23:23:33', NULL, NULL, 0, 'pending'),
 (36, 'Đã duyệt - Đã duyệt - vvvvvvvvvvvvvvvvvv', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/signed_Da-duyet-vvvvvvvvvvvvvvvvvv-6.pdf', 1, 3, 'department', 'wp_media', 87270, '2025-10-20 23:24:02', '2025-10-20 23:24:02', NULL, NULL, 0, 'pending'),
 (37, 'Đã duyệt - vvvvvvvvvvvvvvvvvv', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/signed_vvvvvvvvvvvvvvvvvv-6.pdf', 1, 1, 'department', 'wp_media', 74320, '2025-10-20 23:26:53', '2025-10-20 23:26:53', NULL, NULL, 0, 'pending'),
-(38, 'Đã duyệt - Đã duyệt - vvvvvvvvvvvvvvvvvv', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/signed_Da-duyet-vvvvvvvvvvvvvvvvvv-7.pdf', 1, 1, 'department', 'wp_media', 109962, '2025-10-20 23:31:09', '2025-10-20 23:31:09', NULL, NULL, 0, 'pending');
+(38, 'Đã duyệt - Đã duyệt - vvvvvvvvvvvvvvvvvv', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/signed_Da-duyet-vvvvvvvvvvvvvvvvvv-7.pdf', 1, 1, 'department', 'wp_media', 109962, '2025-10-20 23:31:09', '2025-10-20 23:31:09', NULL, NULL, 0, 'pending'),
+(39, 'công văn 01', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20241007_GiahanphanmemMicrosoft365-1.pdf', 3, 3, 'private', 'wp_media', 1117047, '2025-10-21 15:11:13', '2025-10-21 15:11:13', NULL, NULL, 0, 'pending');
 
 -- --------------------------------------------------------
 
@@ -1264,6 +1284,17 @@ CREATE TABLE `document_approvals` (
   `updated_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+--
+-- Dumping data for table `document_approvals`
+--
+
+INSERT INTO `document_approvals` (`id`, `document_id`, `status`, `created_by`, `current_step_index`, `note`, `signed_pdf_url`, `finished_at`, `created_at`, `updated_at`) VALUES
+(1, 39, 'approved', 3, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-21 16:01:25', '2025-10-21 16:01:22', '2025-10-21 16:01:25'),
+(2, 38, 'approved', 3, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-21 16:02:24', '2025-10-21 16:02:23', '2025-10-21 16:02:24'),
+(3, 39, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-21 16:03:02', '2025-10-21 16:03:01', '2025-10-21 16:03:02'),
+(4, 37, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-21 16:13:13', '2025-10-21 16:13:10', '2025-10-21 16:13:13'),
+(5, 32, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-21 16:14:16', '2025-10-21 16:14:14', '2025-10-21 16:14:16');
+
 -- --------------------------------------------------------
 
 --
@@ -1274,14 +1305,25 @@ CREATE TABLE `document_approval_logs` (
   `id` int UNSIGNED NOT NULL,
   `approval_id` int UNSIGNED NOT NULL COMMENT 'ID của phiên duyệt (document_approvals.id)',
   `document_id` int UNSIGNED NOT NULL COMMENT 'ID của tài liệu gốc',
-  `action` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'approved' COMMENT 'Loại hành động: approved / rejected / reopened / etc',
+  `action` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'approved' COMMENT 'Loại hành động: approved / rejected / reopened / etc',
   `acted_by` int UNSIGNED NOT NULL COMMENT 'ID người thao tác',
   `acted_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời điểm thực hiện hành động',
-  `signer_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Tên người ký duyệt',
-  `signature_url` text COLLATE utf8mb4_unicode_ci COMMENT 'URL ảnh chữ ký',
-  `signed_pdf_url` text COLLATE utf8mb4_unicode_ci COMMENT 'Đường dẫn file PDF đã ký',
-  `comment` text COLLATE utf8mb4_unicode_ci COMMENT 'Ghi chú thêm của người duyệt'
+  `signer_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Tên người ký duyệt',
+  `signature_url` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'URL ảnh chữ ký',
+  `signed_pdf_url` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Đường dẫn file PDF đã ký',
+  `comment` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Ghi chú thêm của người duyệt'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lưu lịch sử duyệt tài liệu (ai duyệt, khi nào, file đã ký, chữ ký)';
+
+--
+-- Dumping data for table `document_approval_logs`
+--
+
+INSERT INTO `document_approval_logs` (`id`, `approval_id`, `document_id`, `action`, `acted_by`, `acted_at`, `signer_name`, `signature_url`, `signed_pdf_url`, `comment`) VALUES
+(1, 1, 39, 'approved', 3, '2025-10-21 16:01:25', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(2, 2, 38, 'approved', 3, '2025-10-21 16:02:24', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(3, 3, 39, 'approved', 1, '2025-10-21 16:03:02', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(4, 4, 37, 'approved', 1, '2025-10-21 16:13:13', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(5, 5, 32, 'approved', 1, '2025-10-21 16:14:16', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)');
 
 -- --------------------------------------------------------
 
@@ -1298,9 +1340,25 @@ CREATE TABLE `document_approval_steps` (
   `acted_by` int UNSIGNED DEFAULT NULL,
   `acted_at` datetime DEFAULT NULL,
   `comment` text,
+  `signature_url` varchar(255) DEFAULT NULL,
+  `signed_at` datetime DEFAULT NULL,
+  `pos_row` varchar(20) DEFAULT NULL,
+  `pos_index` int DEFAULT NULL,
+  `order_index` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `document_approval_steps`
+--
+
+INSERT INTO `document_approval_steps` (`id`, `approval_id`, `approver_id`, `sequence`, `status`, `acted_by`, `acted_at`, `comment`, `signature_url`, `signed_at`, `pos_row`, `pos_index`, `order_index`, `created_at`, `updated_at`) VALUES
+(1, 1, 3, 1, 'approved', 3, '2025-10-21 16:01:25', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', '2025-10-21 16:01:25', NULL, NULL, NULL, '2025-10-21 16:01:22', '2025-10-21 16:01:25'),
+(2, 2, 3, 1, 'approved', 3, '2025-10-21 16:02:24', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', '2025-10-21 16:02:24', NULL, NULL, NULL, '2025-10-21 16:02:23', '2025-10-21 16:02:24'),
+(3, 3, 1, 1, 'approved', 1, '2025-10-21 16:03:02', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-21 16:03:02', NULL, NULL, NULL, '2025-10-21 16:03:01', '2025-10-21 16:03:02'),
+(4, 4, 1, 1, 'approved', 1, '2025-10-21 16:13:13', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-21 16:13:13', NULL, NULL, NULL, '2025-10-21 16:13:10', '2025-10-21 16:13:13'),
+(5, 5, 1, 1, 'approved', 1, '2025-10-21 16:14:16', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-21 16:14:16', NULL, NULL, NULL, '2025-10-21 16:14:14', '2025-10-21 16:14:16');
 
 -- --------------------------------------------------------
 
@@ -2351,10 +2409,10 @@ CREATE TABLE `task_files` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL,
   `is_link` tinyint(1) DEFAULT '0',
-  `status` enum('pending','approved','rejected') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `status` enum('pending','approved','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
   `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` datetime DEFAULT NULL,
-  `review_note` varchar(1024) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `review_note` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `file_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'wp_media',
   `file_size` bigint UNSIGNED DEFAULT '0',
   `mime_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -2411,7 +2469,8 @@ INSERT INTO `task_files` (`id`, `task_id`, `document_id`, `comment_id`, `file_na
 (55, 302, NULL, NULL, NULL, 'https://vnexpress.net/', NULL, 3, 'https://vnexpress.net/', '2025-10-04 21:29:57', '2025-10-05 04:29:57', 1, 'pending', NULL, NULL, NULL, 'link', 0, NULL, NULL, NULL, 'link', 3, 'private', NULL),
 (56, 277, NULL, NULL, '20250925_TonghopDieuchinhChucnang PM QLCV_DemoL3 D.xlsx', '435435453535', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20250925_TonghopDieuchinhChucnang-PM-QLCV_DemoL3-D.xlsx', 3, NULL, '2025-10-05 17:04:14', '2025-10-06 00:04:14', 0, 'pending', NULL, NULL, NULL, 'wp_media', 843638, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx', 30, 'wordpress', 3, 'private', NULL),
 (57, 277, NULL, NULL, '20250922_BangtonghopdieuchinhbanDemolan3_T01.docx', 'xxxxxxxxxxxxx', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20250922_BangtonghopdieuchinhbanDemolan3_T01.docx', 3, NULL, '2025-10-05 17:08:07', '2025-10-06 00:08:07', 0, 'pending', NULL, NULL, NULL, 'wp_media', 111502, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'docx', 31, 'wordpress', 3, 'private', NULL),
-(58, 277, NULL, NULL, 'Bang_gia_QR_Code_Marketing_2025.pdf', 'vvvvvvvvvvvvvvvvvv', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/Bang_gia_QR_Code_Marketing_2025.pdf', 3, NULL, '2025-10-05 17:18:57', '2025-10-06 00:18:57', 0, 'pending', NULL, NULL, NULL, 'wp_media', 27190, 'application/pdf', 'pdf', 32, 'wordpress', 3, 'private', NULL);
+(58, 277, NULL, NULL, 'Bang_gia_QR_Code_Marketing_2025.pdf', 'vvvvvvvvvvvvvvvvvv', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/Bang_gia_QR_Code_Marketing_2025.pdf', 3, NULL, '2025-10-05 17:18:57', '2025-10-06 00:18:57', 0, 'pending', NULL, NULL, NULL, 'wp_media', 27190, 'application/pdf', 'pdf', 32, 'wordpress', 3, 'private', NULL),
+(59, 277, NULL, NULL, '20241007_GiahanphanmemMicrosoft365.pdf', 'công văn 01', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20241007_GiahanphanmemMicrosoft365-1.pdf', 3, NULL, '2025-10-21 08:11:13', '2025-10-21 15:11:13', 0, 'pending', NULL, NULL, NULL, 'wp_media', 1117047, 'application/pdf', 'pdf', 64, 'wordpress', 3, 'private', NULL);
 
 -- --------------------------------------------------------
 
@@ -2428,7 +2487,7 @@ CREATE TABLE `users` (
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `avatar` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `signature_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `signature_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `signature_wp_id` int DEFAULT NULL,
   `role` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'user',
   `department_id` int DEFAULT NULL,
@@ -2711,13 +2770,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `approval_instances`
 --
 ALTER TABLE `approval_instances`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=116;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=120;
 
 --
 -- AUTO_INCREMENT for table `approval_logs`
 --
 ALTER TABLE `approval_logs`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=107;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=111;
 
 --
 -- AUTO_INCREMENT for table `approval_reads`
@@ -2729,7 +2788,7 @@ ALTER TABLE `approval_reads`
 -- AUTO_INCREMENT for table `approval_steps`
 --
 ALTER TABLE `approval_steps`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=150;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=161;
 
 --
 -- AUTO_INCREMENT for table `biddings`
@@ -2813,25 +2872,25 @@ ALTER TABLE `departments`
 -- AUTO_INCREMENT for table `documents`
 --
 ALTER TABLE `documents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT for table `document_approvals`
 --
 ALTER TABLE `document_approvals`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `document_approval_logs`
 --
 ALTER TABLE `document_approval_logs`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `document_approval_steps`
 --
 ALTER TABLE `document_approval_steps`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `document_permissions`
@@ -2915,7 +2974,7 @@ ALTER TABLE `task_extensions`
 -- AUTO_INCREMENT for table `task_files`
 --
 ALTER TABLE `task_files`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
 
 --
 -- AUTO_INCREMENT for table `users`

@@ -264,11 +264,14 @@ class DocumentApprovalController extends ResourceController
         try {
             // 1) Mark step APPROVED
             $stepM->update($step['id'], [
-                'status'   => self::S_APPROVED,
-                'acted_by' => $userId,
-                'acted_at' => date('Y-m-d H:i:s'),
-                'comment'  => $comment,
+                'status'         => self::S_APPROVED,
+                'acted_by'       => $userId,
+                'acted_at'       => date('Y-m-d H:i:s'),
+                'comment'        => $comment,
+                'signature_url'  => $signatureUrl,          // ảnh chữ ký FE gửi lên
+                'signed_at'      => date('Y-m-d H:i:s'),    // thời điểm ký
             ]);
+
 
             // 2) Next step hoặc kết thúc phiên
             $next = $stepM->where('approval_id', $apv['id'])
@@ -323,6 +326,7 @@ class DocumentApprovalController extends ResourceController
 
 
     /** ============ POST /api/document-approvals/{id}/reject ============ */
+    /** ============ POST /api/document-approvals/{id}/reject ============ */
     public function reject($id = null): ResponseInterface
     {
         $userId = (int) session()->get('user_id');
@@ -346,26 +350,46 @@ class DocumentApprovalController extends ResourceController
             return $this->failForbidden('Bạn không phải người duyệt ở bước hiện tại.');
         }
 
-        $comment = (string)($this->request->getJSON(true)['comment'] ?? '');
+        // ---- Lấy dữ liệu từ FE ----
+        $payload      = $this->request->getJSON(true) ?? [];
+        $comment      = (string)($payload['comment'] ?? '');
+        $signatureUrl = isset($payload['signature_url']) ? (string)$payload['signature_url'] : null;
 
         $db = $apvM->db;
         $db->transBegin();
         try {
+            // 1) Cập nhật step bị từ chối
             $stepM->update($step['id'], [
-                'status'   => self::S_REJECTED,
-                'acted_by' => $userId,
-                'acted_at' => date('Y-m-d H:i:s'),
-                'comment'  => $comment,
+                'status'        => self::S_REJECTED,
+                'acted_by'      => $userId,
+                'acted_at'      => date('Y-m-d H:i:s'),
+                'comment'       => $comment,
+                'signature_url' => $signatureUrl,
+                'signed_at'     => date('Y-m-d H:i:s'),
             ]);
 
+            // 2) Đánh dấu phiên duyệt là bị từ chối
             $apvM->update($apv['id'], [
                 'status'             => self::A_REJECTED,
                 'current_step_index' => (int)$step['sequence'],
                 'finished_at'        => date('Y-m-d H:i:s'),
             ]);
 
+            // 3) Ghi log hành động (tùy chọn)
+            $logM = new DocumentApprovalLogModel();
+            $logM->insert([
+                'approval_id'   => (int)$apv['id'],
+                'document_id'   => (int)$apv['document_id'],
+                'action'        => 'rejected',
+                'acted_by'      => $userId,
+                'acted_at'      => date('Y-m-d H:i:s'),
+                'signature_url' => $signatureUrl,
+                'comment'       => $comment,
+            ]);
+
             $db->transCommit();
 
+            // 4) Trả lại dữ liệu mới nhất
             $apv          = $apvM->find((int)$id);
             $rawSteps     = $stepM->where('approval_id', (int)$id)->orderBy('sequence', 'ASC')->findAll();
             $apv['steps'] = $this->hydrateSteps($rawSteps);
@@ -375,6 +399,7 @@ class DocumentApprovalController extends ResourceController
             return $this->failServerError('Reject lỗi: ' . $e->getMessage());
         }
     }
+
 
     /** ============ POST /api/document-approvals/{id}/update-steps ============ */
     public function updateSteps($id = null): ResponseInterface
@@ -481,4 +506,39 @@ class DocumentApprovalController extends ResourceController
             return $this->failServerError('Xoá thất bại: ' . $e->getMessage());
         }
     }
+
+    // ============ GET /api/document-approvals/active-by-document?document_id=123 ============
+    public function activeByDocument(): ResponseInterface
+    {
+        $docId = (int) ($this->request->getGet('document_id') ?? 0);
+        if ($docId <= 0) return $this->failValidationErrors('Thiếu document_id');
+
+        $apvM = new DocumentApprovalModel();
+        $stepM = new DocumentApprovalStepModel();
+
+        // lấy phiên pending mới nhất (nếu cần có thể nới thêm approved)
+        $apv = $apvM->where('document_id', $docId)
+            ->where('status', self::A_PENDING)
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        if (!$apv) {
+            return $this->respond(['instance' => null]);
+        }
+
+        // kèm vài thông tin step cơ bản (tuỳ ý)
+        $rawSteps = $stepM->where('approval_id', (int)$apv['id'])
+            ->orderBy('sequence', 'ASC')
+            ->findAll();
+
+        $apv['steps'] = $this->hydrateSteps($rawSteps);
+
+        return $this->respond(['instance' => [
+            'id' => (int)$apv['id'],
+            'status' => $apv['status'],
+            'current_step_index' => (int)$apv['current_step_index'],
+            'steps' => $apv['steps'],
+        ]]);
+    }
+
 }

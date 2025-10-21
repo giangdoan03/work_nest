@@ -8,6 +8,7 @@ use App\Models\ApprovalLogModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\I18n\Time;
+use Exception;
 use ReflectionException;
 
 class ApprovalController extends ResourceController
@@ -16,7 +17,9 @@ class ApprovalController extends ResourceController
 
     /* ======================= Time helpers ======================= */
 
-    /** Datetime theo giờ Việt Nam (YYYY-mm-dd HH:ii:ss) */
+    /** Datetime theo giờ Việt Nam (YYYY-mm-dd HH:ii:ss)
+     * @throws Exception
+     */
     private function nowVN(): string
     {
         return Time::now('Asia/Ho_Chi_Minh')->toDateTimeString();
@@ -90,7 +93,9 @@ class ApprovalController extends ResourceController
         );
     }
 
-    /** Đồng bộ bảng đích khi GỬI DUYỆT / RESET STEPS */
+    /** Đồng bộ bảng đích khi GỬI DUYỆT / RESET STEPS
+     * @throws Exception
+     */
     private function syncTargetOnSend(string $type, int $id, array $approverIds): void
     {
         $table = $this->tableFor($type);
@@ -106,7 +111,9 @@ class ApprovalController extends ResourceController
         ]);
     }
 
-    /** Đồng bộ bảng đích khi APPROVE một cấp (hoặc hoàn tất) */
+    /** Đồng bộ bảng đích khi APPROVE một cấp (hoặc hoàn tất)
+     * @throws Exception
+     */
     private function syncTargetOnApprove(array $ai, int $currLevel0, ?string $note, bool $hasNext): void
     {
         $table = $this->tableFor((string)$ai['target_type']);
@@ -261,6 +268,7 @@ class ApprovalController extends ResourceController
 
     /** Gửi duyệt (khởi động phiên active mới hoặc reset phiên active hiện tại)
      * @throws ReflectionException
+     * @throws Exception
      */
     public function send(): ResponseInterface
     {
@@ -400,6 +408,7 @@ class ApprovalController extends ResourceController
 
     /** DUYỆT cấp hiện tại
      * @throws ReflectionException
+     * @throws Exception
      */
     public function approve($id = null): ResponseInterface
     {
@@ -500,6 +509,7 @@ class ApprovalController extends ResourceController
 
     /** TỪ CHỐI cấp hiện tại
      * @throws ReflectionException
+     * @throws Exception
      */
     public function reject($id = null): ResponseInterface
     {
@@ -568,6 +578,7 @@ class ApprovalController extends ResourceController
 
     /** Cập nhật lại danh sách người duyệt cho một instance
      * @throws ReflectionException
+     * @throws Exception
      */
     public function updateSteps($id = null): ResponseInterface
     {

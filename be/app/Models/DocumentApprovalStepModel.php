@@ -11,6 +11,8 @@ class DocumentApprovalStepModel extends Model
     protected $allowedFields = [
         'approval_id', 'approver_id', 'sequence',
         'status', 'acted_by', 'acted_at', 'comment',
+        'signature_url', 'signed_at',
+        'pos_row', 'pos_index', 'order_index',
         'created_at', 'updated_at'
     ];
     protected $useTimestamps = true;

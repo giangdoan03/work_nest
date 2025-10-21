@@ -42,3 +42,8 @@ export const updateUser = (userId, data) =>
 
 export const deleteUser = (userId) =>
     instance.delete(`/users/${userId}`)
+
+export const getCurrentUser = async () => {
+    const { data } = await instance.get('/check')
+    return data?.user || null
+}
