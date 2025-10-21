@@ -532,7 +532,7 @@ async function signAndPreview(rec) {
     signingRowKey.value = rec.rowKey
     previewLoading.value = true
     const msgKey = 'signing'
-    message.loading({ content: 'Đang chèn chữ ký...', key: msgKey, duration: 0 })
+    message.loading({ content: 'Đang thực hiện ký duyệt, vui lòng chờ...', key: msgKey, duration: 0 })
 
     try {
         // A) Đảm bảo có instance_id (tự tạo nếu chưa có)
