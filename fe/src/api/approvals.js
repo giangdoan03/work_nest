@@ -23,7 +23,7 @@ export const getApproval = (id) =>
     instance.get(`/approvals/${id}`)
 
 export const sendApproval = async (payload) => {
-    const res = await instance.post('/document-approvals/send', payload, {
+    const res = await instance.post('/document-approvals/request', payload, {
         validateStatus: (s) => (s >= 200 && s < 300) || s === 409 || s === 422 || s === 201,
     })
     return { ok: res.status >= 200 && res.status < 300, status: res.status, data: res.data }
@@ -74,7 +74,7 @@ export const sendDocumentApproval = async (payload) => {
 
 // Duyệt cấp hiện tại
 export const approveDocumentApproval = (instanceId, data = {}) =>
-    instance.post(`/document-approvals/${instanceId}/approve`, data)
+    instance.post(`/document-approvals/${instanceId}/sign`, data)
 // data gợi ý: { comment?, signature_url?, signed_pdf_url?, pos_row?, pos_index?, order_index? }
 
 // Từ chối cấp hiện tại

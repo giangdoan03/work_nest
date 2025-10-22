@@ -39,9 +39,9 @@
                 <a-form-item>
                     <a-space>
                         <a-button type="primary" :disabled="!canSubmitLink" @click="submitLink">
-                            Lưu tài liệu (link)
+                            Lưu link
                         </a-button>
-                        <a-typography-text type="secondary">URL phải hợp lệ và có tiêu đề.</a-typography-text>
+                        <a-typography-text type="secondary">Nhập tiêu đề và URL hợp lệ.</a-typography-text>
                     </a-space>
                 </a-form-item>
             </a-form>
@@ -56,7 +56,7 @@
                         :multiple="true"
                         :disabled="loadingUploadFile"
                         :show-upload-list="false"
-                        accept="*"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.jpg,.jpeg,.png,.webp,.gif,.bmp,.svg"
                     >
                         <p class="ant-upload-drag-icon"><PaperClipOutlined/></p>
                         <p class="ant-upload-text">Kéo thả file vào đây hoặc bấm để chọn</p>
@@ -91,7 +91,7 @@
                             :disabled="!canSubmitUpload || loadingUploadFile"
                             @click="submitUpload"
                         >
-                            Lưu tài liệu (file)
+                            Tải lên
                         </a-button>
                         <a-typography-text type="secondary">Yêu cầu: mỗi file cần có tiêu đề.</a-typography-text>
                     </a-space>
@@ -111,6 +111,12 @@
             <template #renderItem="{ item }">
                 <a-list-item>
                     <a-card hoverable class="att-card att-card--sm" :bodyStyle="{ padding: '10px 10px 8px' }">
+                        <template #extra>
+                            <a-tag v-if="approvalStateOf(item).pending" color="gold">Chờ duyệt</a-tag>
+                            <a-tag v-else-if="approvalStateOf(item).approved" color="green">Đã duyệt</a-tag>
+                            <a-tag v-else-if="approvalStateOf(item).rejected" color="red">Từ chối</a-tag>
+                        </template>
+
                         <!-- ẢNH -->
                         <template v-if="item.kind === 'image'">
                             <a-image :src="item.url" :height="thumbH" :alt="item.name" />
@@ -119,7 +125,7 @@
                         <!-- LINK: favicon + icon -->
                         <template v-else-if="item.kind === 'link'">
                             <div class="att-link-thumb">
-                                <img :src="favicon(item.url)" class="att-favicon" @error="hideBrokenFavicon" />
+                                <img :src="favicon(item.url)" class="att-favicon" referrerpolicy="no-referrer" @error="hideBrokenFavicon" />
                                 <LinkOutlined class="att-link-icon" />
                             </div>
                         </template>
@@ -140,7 +146,7 @@
                         </div>
 
                         <div class="att-actions">
-                            <a-tooltip title="Xem">
+                            <a-tooltip title="Xem trước">
                                 <a-button size="small" shape="circle" @click="openAttachment(item)"><EyeOutlined/></a-button>
                             </a-tooltip>
                             <a-tooltip v-if="!item.is_link" title="Tải xuống">
@@ -154,12 +160,11 @@
                                     shape="circle"
                                     type="primary"
                                     :disabled="!canSendApproval(item)"
-                                @click="openSendApproval(item)"
+                                    @click="openSendApproval(item)"
                                 >
-                                <SendOutlined />
+                                    <SendOutlined />
                                 </a-button>
                             </a-tooltip>
-
 
                             <a-tooltip title="Xoá">
                                 <a-button size="small" shape="circle" danger @click="removeAttachment(item)"><DeleteOutlined/></a-button>
@@ -168,13 +173,19 @@
 
                         <!-- badges -->
                         <span v-if="item.ext" class="att-ext">{{ item.ext }}</span>
-                        <a-tag v-if="item.pending" color="orange" class="att-badge">Chưa lưu</a-tag>
+                        <a-tag v-if="item.pending" color="orange" class="att-badge">Chưa tải lên</a-tag>
                     </a-card>
                 </a-list-item>
             </template>
         </a-list>
 
-        <a-empty v-else description="Chưa có tài liệu" />
+        <a-empty v-else>
+            <template #description>Chưa có tài liệu</template>
+            <a-space>
+                <a-button size="small" @click="activeMode = 'link'">Lưu link</a-button>
+                <a-button size="small" @click="activeMode = 'upload'">Upload file</a-button>
+            </a-space>
+        </a-empty>
 
         <!-- ======= Modal: Gửi duyệt ======= -->
         <a-modal
@@ -185,7 +196,11 @@
             @cancel="clearSendApproval"
         >
             <a-form layout="vertical">
-                <a-form-item label="Người duyệt" :validate-status="!sendForm.approver_ids.length ? 'error' : ''" :help="!sendForm.approver_ids.length ? 'Chọn ít nhất 1 người duyệt' : ''">
+                <a-form-item
+                    label="Người duyệt"
+                    :validate-status="!sendForm.approver_ids.length ? 'error' : ''"
+                    :help="!sendForm.approver_ids.length ? 'Chọn ít nhất 1 người duyệt' : ''"
+                >
                     <a-select
                         v-model:value="sendForm.approver_ids"
                         mode="multiple"
@@ -209,7 +224,7 @@ import {
     FilePdfOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined, FileTextOutlined,
     SendOutlined
 } from '@ant-design/icons-vue'
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { useUserStore } from '@/stores/user'
 import { parseApiError } from '@/utils/apiError'
@@ -239,6 +254,9 @@ const fileList = ref([])
 const pendingFiles = ref([])
 const manualLink = reactive({ title: '', url: '' })
 const thumbH = 96
+
+// blob URL tracking để revoke
+const blobUrls = new Set()
 
 // Gửi duyệt
 const showSend = ref(false)
@@ -322,18 +340,18 @@ function approvalStateOf(item) {
 function canSendApproval(item) {
     if (approvalLoading.value) return false
     const st = approvalStateOf(item)
+    // Cho phép gửi lại nếu bị từ chối; chặn khi đang pending hoặc đã approved
     return !st.pending && !st.approved
 }
 
-
 function sendBtnTooltip(item) {
-    if (approvalLoading.value) return 'Đang kiểm tra trạng thái...'
+    if (approvalLoading.value) return 'Đang kiểm tra trạng thái duyệt...'
     const st = approvalStateOf(item)
-    if (st.pending) return 'Đang chờ duyệt'
-    if (st.approved) return 'Đã duyệt'
-    return 'Gửi duyệt tài liệu'
+    if (st.pending)  return 'Đang chờ người duyệt phản hồi'
+    if (st.approved) return 'Tài liệu đã duyệt'
+    if (st.rejected) return 'Đã bị từ chối – bấm để gửi lại'
+    return 'Gửi đề nghị duyệt tài liệu'
 }
-
 
 /* Chuẩn hoá data hiển thị */
 const attachmentCards = computed(() => {
@@ -364,6 +382,7 @@ const attachmentCards = computed(() => {
 
     const pendingItems = (pendingFiles.value || []).filter(Boolean).map((p, i) => {
         const url = p.raw ? URL.createObjectURL(p.raw) : ''
+        if (url) blobUrls.add(url)
         const kind = detectKind({ is_link: false, name: p.name, mime_type: p.raw?.type, url })
         return {
             id: 'pending-' + i,
@@ -392,11 +411,29 @@ const canSubmitLink = computed(() => {
     const t = (manualLink.title || '').trim()
     const u = (manualLink.url || '').trim()
     if (!t || !u) return false
-    try { const parsed = new URL(u); return !!parsed.protocol && !!parsed.host } catch { return false }
+    try {
+        const parsed = new URL(u)
+        if (!['http:', 'https:'].includes(parsed.protocol)) return false
+        return !!parsed.host
+    } catch { return false }
 })
 
 /* ====== ACTIONS ====== */
 function handleBeforeUpload(file) {
+    const exists = (pendingFiles.value || []).some(p =>
+        p?.raw?.name === file.name &&
+        p?.raw?.size === file.size &&
+        p?.raw?.lastModified === file.lastModified
+    )
+    if (exists) {
+        message.warning('File đã có trong danh sách chờ.')
+        return false
+    }
+    const MAX = 50 * 1024 * 1024 // 50MB
+    if (file.size > MAX) {
+        message.error('File vượt quá giới hạn dung lượng (50MB).')
+        return false
+    }
     pendingFiles.value.push({ uid: file.uid, raw: file, name: file.name, title: '' })
     return false // chặn upload mặc định của AntD
 }
@@ -419,6 +456,7 @@ async function fetchTaskFiles() {
     } catch (e) {
         console.error('fetchTaskFiles error', e)
         fileList.value = []
+        message.error(parseApiError(e) || 'Không tải được danh sách tài liệu.')
     }
 }
 
@@ -426,7 +464,7 @@ async function fetchTaskFiles() {
 async function refreshApprovalStates() {
     const items = (fileList.value || []).filter(it => !it.pending)
 
-    approvalLoading.value = true     // <— bật loading trước khi gọi
+    approvalLoading.value = true
     try {
         const chunk = 5
         for (let i = 0; i < items.length; i += chunk) {
@@ -444,11 +482,9 @@ async function refreshApprovalStates() {
             )
         }
     } finally {
-        approvalLoading.value = false  // <— tắt loading khi xong
+        approvalLoading.value = false
     }
 }
-
-
 
 async function submitUpload() {
     const arr = (pendingFiles.value || []).filter(Boolean)
@@ -467,12 +503,18 @@ async function submitUpload() {
             fd.append('task_id', String(props.taskId)) // để BE gắn vào task_files
             await uploadDocumentToWP(fd)
         }
+        // cleanup blob URLs của pending
+        attachmentCards.value.forEach(it => {
+            if (it._source === 'pending' && it.url && blobUrls.has(it.url)) {
+                URL.revokeObjectURL(it.url); blobUrls.delete(it.url)
+            }
+        })
         pendingFiles.value = []
         await fetchTaskFiles()
         message.success('Đã lưu tài liệu.')
     } catch (e) {
         console.error(e)
-        message.error('Upload thất bại.')
+        message.error(parseApiError(e) || 'Upload thất bại.')
     } finally {
         loadingUploadFile.value = false
     }
@@ -494,10 +536,10 @@ async function submitLink() {
         manualLink.title = ''
         manualLink.url = ''
         await fetchTaskFiles()
-        message.success('Đã lưu link tài liệu.')
+        message.success('Đã lưu link.')
     } catch (e) {
         console.error(e)
-        message.error('Lưu link thất bại.')
+        message.error(parseApiError(e) || 'Lưu link thất bại.')
     }
 }
 function trySubmitLink() {
@@ -511,6 +553,7 @@ async function removeAttachment(it) {
     if (it._source === 'pending') {
         const i = pendingFiles.value.findIndex(p => p === it.full)
         if (i >= 0) pendingFiles.value.splice(i, 1)
+        if (it.url && blobUrls.has(it.url)) { URL.revokeObjectURL(it.url); blobUrls.delete(it.url) }
         return
     }
     try {
@@ -519,7 +562,7 @@ async function removeAttachment(it) {
         message.success('Đã xoá file.')
     } catch (e) {
         console.error(e)
-        message.error('Xoá thất bại.')
+        message.error(parseApiError(e) || 'Xoá thất bại.')
     }
 }
 
@@ -560,6 +603,7 @@ async function submitSendApproval() {
         const { ok, status, data } = await sendApproval({
             target_type: 'document',
             target_id: sendingItem.value.id,
+            document_id: sendingItem.value.id,
             approver_ids: sendForm.approver_ids,
             note: sendForm.note || '',
             meta: {
@@ -595,10 +639,13 @@ async function submitSendApproval() {
     }
 }
 
-
 /* ====== LIFECYCLE ====== */
 onMounted(fetchTaskFiles)
 watch(() => props.taskId, fetchTaskFiles)
+onUnmounted(() => {
+    blobUrls.forEach(u => URL.revokeObjectURL(u))
+    blobUrls.clear()
+})
 </script>
 
 <style scoped>

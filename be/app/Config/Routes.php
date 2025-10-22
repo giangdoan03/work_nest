@@ -250,15 +250,17 @@ $routes->group('api', function ($routes) {
     $routes->get('approvals/active-by-target', 'ApprovalController::activeByTarget');
 
     // Gửi duyệt với danh sách người duyệt (đặt theo thứ tự bấm)
-    $routes->post('document-approvals/send', 'DocumentApprovalController::send');
+    //    $routes->post('document-approvals/send', 'DocumentApprovalController::send');
 
     // Duyệt/Từ chối tuần tự
     $routes->get('document-approvals', 'DocumentApprovalController::index');
     $routes->get('document-approvals/(:num)', 'DocumentApprovalController::show/$1');
     $routes->get('document-approvals/active-by-document', 'DocumentApprovalController::activeByDocument');
-    $routes->post('document-approvals/send', 'DocumentApprovalController::send');
-    $routes->post('document-approvals/(:num)/approve', 'DocumentApprovalController::approve/$1');
-    $routes->post('document-approvals/(:num)/reject',  'DocumentApprovalController::reject/$1');
+
+    $routes->post('document-approvals/request', 'DocumentApprovalController::send');    // gửi duyệt
+    $routes->post('document-approvals/(:num)/sign', 'DocumentApprovalController::approve/$1'); // ký duyệt
+    $routes->post('document-approvals/(:num)/reject', 'DocumentApprovalController::reject/$1'); // từ chối
+
     $routes->post('document-approvals/(:num)/update-steps', 'DocumentApprovalController::updateSteps/$1'); // hoặc PATCH
     $routes->delete('document-approvals/(:num)', 'DocumentApprovalController::delete/$1');
 

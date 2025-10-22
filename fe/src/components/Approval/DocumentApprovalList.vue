@@ -316,14 +316,13 @@ const onPageSizeChange = (current, size) => {
 
 const pagedRows = computed(() => {
     const start = (pager.value.current - 1) * pager.value.pageSize
-    console.log('rows.value', rows.value)
     return rows.value.slice(start, start + pager.value.pageSize)
 })
 
 const cols = [
-    { title: 'Tiêu đề', key: 'title', dataIndex: 'title' },
+    { title: 'Tiêu đề', key: 'title', dataIndex: 'title', width: 300 },
     { title: 'Gửi lúc', key: 'submitted_at', dataIndex: 'submitted_at', width: 180 },
-    { title: 'Tác vụ', key: 'action', width: 320 },
+    { title: 'Tác vụ', key: 'action'},
 ]
 
 const formatTime = ts => (ts ? new Date(ts).toLocaleString('vi-VN') : '')

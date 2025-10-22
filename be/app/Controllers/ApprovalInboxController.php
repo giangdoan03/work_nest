@@ -180,7 +180,7 @@ WHERE ai.target_type IN ?
         $userId = (int)($s->get('user_id') ?? 0);
         $roleId = (int)($s->get('role_id') ?? 0);
         $role = strtolower((string)($s->get('role') ?? ''));
-        $isAdmin = (bool)($s->get('is_admin') ?? false) || $roleId === 1 || in_array($role, ['admin', 'super admin'], true);
+        $isAdmin = ($s->get('is_admin') ?? false) || $roleId === 1 || in_array($role, ['admin', 'super admin'], true);
 
         if ($userId <= 0) {
             return $this->failUnauthorized('Chưa đăng nhập.');

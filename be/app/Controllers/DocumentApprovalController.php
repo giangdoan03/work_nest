@@ -6,6 +6,7 @@ use App\Models\DocumentApprovalLogModel;
 use App\Models\DocumentModel;
 use App\Models\DocumentApprovalModel;
 use App\Models\DocumentApprovalStepModel;
+use App\Models\TaskFileModel;
 use App\Models\UserModel; // 👈 thêm
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
@@ -168,7 +169,7 @@ class DocumentApprovalController extends ResourceController
         if ($documentId <= 0)             return $this->failValidationErrors('Thiếu document_id.');
         if (empty($approverIds))          return $this->failValidationErrors('Thiếu danh sách người duyệt.');
 
-        $docM = new DocumentModel();
+        $docM = new TaskFileModel();
         $doc  = $docM->find($documentId);
         if (!$doc) return $this->failNotFound('Tài liệu không tồn tại.');
 

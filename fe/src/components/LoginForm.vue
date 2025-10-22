@@ -58,6 +58,7 @@ import { useRouter } from 'vue-router'
 import { login as loginApi } from '../api/auth'
 import { useUserStore } from '../stores/user'
 import { message } from 'ant-design-vue'
+import { connectNotifySocket, onNotify } from '@/utils/notify-socket.js'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -79,6 +80,13 @@ const onFinish = async () => {
 
         if (response.data.status === 'success') {
             userStore.setUser(response.data.user)
+            const user = response.data.user
+            const socket = connectNotifySocket(String(user.id))
+
+            onNotify((data) => {
+                console.log('🔔 Notify:', data)
+                // bạn có thể hiện message hoặc tăng badge ở đây
+            })
             await router.push('/project-overview')
         } else {
             showError(response.data.message || 'Đăng nhập thất bại')
