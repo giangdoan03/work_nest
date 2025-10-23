@@ -107,6 +107,16 @@
                                 —
                             </a-tag>
                         </template>
+                        <template v-else-if="column.key === 'action'">
+                            <a-space>
+                                <a-button size="small" type="primary" @click="approveTask(record)">
+                                    Duyệt
+                                </a-button>
+                                <a-button size="small" danger @click="rejectTask(record)">
+                                    Từ chối
+                                </a-button>
+                            </a-space>
+                        </template>
                     </template>
                 </a-table>
 
@@ -443,8 +453,118 @@ const columnsPersonal = [
     { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', align: 'center' },
     { title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date', align: 'center' },
     { title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date', align: 'center' },
-    { title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 120, align: 'center' }
+    { title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 120, align: 'center' },
+    { title: 'Hành động', key: 'action', align: 'center', width: 180 },
 ];
+
+
+const users = ref([
+    { id: 1, name: 'Quản trị' },
+    { id: 3, name: 'Giang Đoàn' },
+    { id: 7, name: 'Kế toán' },
+    { id: 9, name: 'Thư ký' },
+    { id: 12, name: 'Chủ tài liệu' },
+    { id: 28, name: 'QA' },
+    { id: 45, name: 'Viewer' },
+])
+
+
+import { useRealtimeNotifier } from "@/composables/useRealtimeNotifier.js"
+
+const currentUser = ref({ id: 3, name: 'Giang Đoàn' }) // demo: user đang login
+const { dispatch } = useRealtimeNotifier()
+
+async function notifyDocumentApproved(docId, approver) {
+    await dispatch({
+        entity: "document",
+        entityId: docId,
+        action: "approved",
+        title: `Tài liệu #${docId} đã được duyệt`,
+        body: `Người duyệt: ${approver.name}`,
+        link: `/documents/${docId}`,
+        actor: { id: approver.id, name: approver.name },
+        targets: {
+            userIds: [12, 28, 45],
+            roleKeys: ["DOC_ADMIN"],
+            tenantId: 1001,
+        },
+    })
+}
+
+// ✅ Duyệt công việc/tài liệu
+async function approveTask(record) {
+    try {
+        // 1) Cập nhật backend (ví dụ chuyển trạng thái + progress)
+        await updateTask(record.id, { status: 'done', progress: 100 })
+
+        // 2) Cập nhật UI tại chỗ (không cần reload toàn bộ)
+        const item = tasks.value.find(t => t.id === record.id)
+        if (item) {
+            item.status = 'done'
+            item.progress = 100
+        }
+
+        // 3) Gọi hàm chung realtime (nếu là tài liệu thì dùng 'document', còn lại dùng 'job')
+        const isDocument = record.type === 'document' || String(record.title || '').toLowerCase().includes('tài liệu')
+        if (isDocument) {
+            await notifyDocumentApproved(record.id, currentUser.value)
+        } else {
+            await dispatch({
+                entity: "job",
+                entityId: record.id,
+                action: "approved",
+                title: `Công việc #${record.id} đã được duyệt`,
+                body: `Người duyệt: ${currentUser.value.name}`,
+                link: `/non-workflow/${record.id}/info`,
+                actor: { id: currentUser.value.id, name: currentUser.value.name },
+                targets: {
+                    // ví dụ: bắn cho người thực hiện + admin vai trò
+                    userIds: [record.assigned_to_id].filter(Boolean),
+                    roleKeys: ["JOB_ADMIN"],
+                    tenantId: 1001,
+                },
+            })
+        }
+
+        message.success('Đã duyệt và gửi thông báo realtime')
+    } catch (e) {
+        console.error(e)
+        message.error('Duyệt thất bại')
+    }
+}
+
+// ❌ Từ chối công việc/tài liệu (demo)
+async function rejectTask(record) {
+    try {
+        await updateTask(record.id, { status: 'rejected' })
+
+        const item = tasks.value.find(t => t.id === record.id)
+        if (item) item.status = 'rejected'
+
+        await dispatch({
+            entity: record.type === 'document' ? 'document' : 'job',
+            entityId: record.id,
+            action: "rejected",
+            title: `${record.type === 'document' ? 'Tài liệu' : 'Công việc'} #${record.id} bị từ chối`,
+            body: `Người từ chối: ${currentUser.value.name}`,
+            link: record.type === 'document' ? `/documents/${record.id}` : `/non-workflow/${record.id}/info`,
+            actor: { id: currentUser.value.id, name: currentUser.value.name },
+            targets: {
+                userIds: [record.assigned_to_id].filter(Boolean),
+                roleKeys: ["JOB_ADMIN"],
+                tenantId: 1001,
+            },
+            priority: "high",
+            extra: { reason: "Demo: chưa nhập lý do" }
+        })
+
+        message.success('Đã từ chối và gửi thông báo realtime')
+    } catch (e) {
+        console.error(e)
+        message.error('Từ chối thất bại')
+    }
+}
+
 
 
 
