@@ -39,7 +39,7 @@
         <div class="task-info">
             <a-row :gutter="16">
                 <!-- LEFT: 2/3 — Thông tin nhiệm vụ -->
-                <a-col :span="16" :xs="24" :lg="16" :xl="16">
+                <a-col :span="15" :xs="24" :lg="15" :xl="15">
                     <a-card title="Chi tiết nhiệm vụ" bordered>
                         <div>
                             <a-tabs v-model:activeKey="leftTab" class="task-left-tabs">
@@ -403,17 +403,31 @@
                     </a-card>
                 </a-col>
                 <!-- RIGHT: 1/3 — Subtasks + Thảo luận -->
-                <a-col :span="8" :xs="24" :lg="8" :xl="8" class="right-col">
-                    <a-card title="Thảo luận" bordered class="discussion-card">
-                        <div class="task-info-left">
-                            <div class="task-info-content">
-                                <div class="task-in-end discussion-scroll" v-auto-maxheight="12">
-                                    <Comment/>
+                <a-col :span="9" :xs="24" :lg="9" :xl="9" class="right-col">
+                    <a-card title="Phê duyệt & Thảo luận" bordered class="discussion-card">
+                        <a-row :gutter="[16, 8]">
+
+
+
+                            <!-- Cột trái: Thảo luận -->
+                            <a-col :span="17" :xs="24" :lg="17">
+                                <div class="discussion-scroll" v-auto-maxheight="12">
+                                    <Comment />
                                 </div>
-                            </div>
-                        </div>
+                            </a-col>
+
+                            <!-- Cột phải: Trạng thái duyệt -->
+
+                            <a-col :span="7" :xs="24" :lg="7">
+                                <ApprovalStatus />
+                            </a-col>
+
+
+                        </a-row>
                     </a-card>
                 </a-col>
+
+
             </a-row>
         </div>
     </div>
@@ -457,6 +471,7 @@ import { useTaskDrawerStore } from '@/stores/taskDrawerStore'
 import { useCommonStore } from '@/stores/common'
 import debounce from 'lodash-es/debounce'
 import AttachmentsCard from '@/components/AttachmentsCard.vue'
+import ApprovalStatus from '@/components/Approval/ApprovalStatus.vue'
 
 const commonStore = useCommonStore()
 dayjs.locale('vi')
@@ -1236,32 +1251,30 @@ onMounted(async () => {
 
 /* vùng cuộn của Comment */
 .discussion-scroll {
-    overflow-y: auto; /* ✅ chỉ dọc */
-    overflow-x: hidden; /* ✅ chặn ngang */
+    overflow-y: auto;
+    overflow-x: hidden;
     scrollbar-gutter: stable;
     padding-right: 2px;
-    overscroll-behavior: contain; /* mượt hơn trên mobile */
-    scrollbar-width: thin; /* Firefox */
-    scrollbar-color: rgba(0, 0, 0, .35) transparent; /* Firefox */
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, .25) transparent;
 }
 
-/* Chrome/Edge/Safari */
+/* Chrome / Edge / Safari */
 .discussion-scroll::-webkit-scrollbar {
-    width: 6px;
+    width: 3px;
 }
-
 .discussion-scroll::-webkit-scrollbar-track {
     background: transparent;
 }
-
 .discussion-scroll::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, .28);
+    background: rgba(0, 0, 0, .25);
     border-radius: 8px;
 }
-
 .discussion-scroll:hover::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, .38);
+    background: rgba(0, 0, 0, .35);
 }
+
 
 /* cho text dài/URL tự xuống dòng, tránh tạo thanh ngang */
 .comment .content,
