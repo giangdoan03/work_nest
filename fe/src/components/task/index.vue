@@ -263,14 +263,14 @@
                                                             </a-form-item>
                                                         </a-col>
 
-                                                        <a-col :span="12">
-                                                            <a-form-item label="Phê duyệt" name="approval_status">
-                                                                <a-tag
-                                                                    :color="formData.approval_status === 'approved' ? 'green' : 'orange'">
-                                                                    {{formData.approval_status === 'approved' ? 'Đã duyệt' : 'Chưa duyệt' }}
-                                                                </a-tag>
-                                                            </a-form-item>
-                                                        </a-col>
+<!--                                                        <a-col :span="12">-->
+<!--                                                            <a-form-item label="Phê duyệt" name="approval_status">-->
+<!--                                                                <a-tag-->
+<!--                                                                    :color="formData.approval_status === 'approved' ? 'green' : 'orange'">-->
+<!--                                                                    {{formData.approval_status === 'approved' ? 'Đã duyệt' : 'Chưa duyệt' }}-->
+<!--                                                                </a-tag>-->
+<!--                                                            </a-form-item>-->
+<!--                                                        </a-col>-->
 
 
                                                         <a-col :span="12">
@@ -278,9 +278,7 @@
                                                                 <a-typography-text v-if="!isEditMode">
                                                                     {{ getDepartmentById(formData.id_department) }}
                                                                 </a-typography-text>
-                                                                <a-select v-else v-model:value="formData.id_department"
-                                                                          :options="departmentOptions"
-                                                                          placeholder="Chọn người dùng"/>
+                                                                <a-select v-else v-model:value="formData.id_department" :options="departmentOptions" placeholder="Chọn người dùng"/>
                                                             </a-form-item>
                                                         </a-col>
                                                         <a-col :span="12">
@@ -319,34 +317,33 @@
                                                         </a-col>
                                                         <!-- Phê duyệt -->
                                                         <a-col :span="24">
-                                                            <a-form-item label="Phê duyệt">
+<!--                                                            <a-form-item label="Phê duyệt">-->
                                                                 <!-- CẦN DUYỆT -->
-                                                                <template v-if="Number(formData.needs_approval) === 1">
-                                                                    <div class="approver-list">
-                                                                        <template v-if="approverRows.length">
-                                                                            <div
-                                                                                v-for="row in approverRows"
-                                                                                :key="row.id"
-                                                                                :class="['approver-item', row.status]"
-                                                                            >
-                                                                                <span class="name" style="margin-right: 10px">{{ row.name }}</span>
-                                                                                <a-tag v-if="row.status==='approved'" color="green">Đã duyệt</a-tag>
-                                                                                <a-tag v-else-if="row.status==='rejected'" color="red">Từ chối</a-tag>
-                                                                                <a-tag v-else color="orange">Đang chờ</a-tag>
-                                                                            </div>
-                                                                        </template>
-                                                                        <span v-else class="text-muted">Chưa chọn người duyệt</span>
-                                                                    </div>
-                                                                </template>
+<!--                                                                <template v-if="Number(formData.needs_approval) === 1">-->
+<!--                                                                    <div class="approver-list">-->
+<!--                                                                        <template v-if="approverRows.length">-->
+<!--                                                                            <div-->
+<!--                                                                                v-for="row in approverRows"-->
+<!--                                                                                :key="row.id"-->
+<!--                                                                                :class="['approver-item', row.status]"-->
+<!--                                                                            >-->
+<!--                                                                                <span class="name" style="margin-right: 10px">{{ row.name }}</span>-->
+<!--                                                                                <a-tag v-if="row.status==='approved'" color="green">Đã duyệt</a-tag>-->
+<!--                                                                                <a-tag v-else-if="row.status==='rejected'" color="red">Từ chối</a-tag>-->
+<!--                                                                                <a-tag v-else color="orange">Đang chờ</a-tag>-->
+<!--                                                                            </div>-->
+<!--                                                                        </template>-->
+<!--                                                                        <span v-else class="text-muted">Chưa chọn người duyệt</span>-->
+<!--                                                                    </div>-->
+<!--                                                                </template>-->
 
-                                                                <!-- KHÔNG CẦN DUYỆT -->
-                                                                <template v-else>
-                                                                    <a-tag>Không cần phê duyệt</a-tag>
-                                                                </template>
-                                                            </a-form-item>
+<!--                                                                &lt;!&ndash; KHÔNG CẦN DUYỆT &ndash;&gt;-->
+<!--                                                                <template v-else>-->
+<!--                                                                    <a-tag>Không cần phê duyệt</a-tag>-->
+<!--                                                                </template>-->
+<!--                                                                <ApprovalStatus />-->
+<!--                                                            </a-form-item>-->
                                                         </a-col>
-
-
                                                     </a-row>
                                                 </div>
                                             </a-form>
@@ -393,8 +390,7 @@
                                     <div class="task-info-content">
                                         <div class="task-in-end">
                                             <!-- TEMPLATE -->
-                                            <AttachmentsCard :task-id="route.params.id"
-                                                             :department-id="formData.id_department"/>
+                                            <AttachmentsCard :task-id="route.params.id" :department-id="formData.id_department"/>
                                         </div>
                                     </div>
                                 </a-tab-pane>
@@ -404,30 +400,21 @@
                 </a-col>
                 <!-- RIGHT: 1/3 — Subtasks + Thảo luận -->
                 <a-col :span="9" :xs="24" :lg="9" :xl="9" class="right-col">
-                    <a-card title="Phê duyệt & Thảo luận" bordered class="discussion-card">
+                    <a-card title="Thảo luận & Phê duyệt" bordered class="discussion-card">
                         <a-row :gutter="[16, 8]">
-
-
-
                             <!-- Cột trái: Thảo luận -->
-                            <a-col :span="17" :xs="24" :lg="17">
+                            <a-col :span="24" :xs="24" :lg="24">
                                 <div class="discussion-scroll" v-auto-maxheight="12">
                                     <Comment />
                                 </div>
                             </a-col>
-
-                            <!-- Cột phải: Trạng thái duyệt -->
-
-                            <a-col :span="7" :xs="24" :lg="7">
-                                <ApprovalStatus />
-                            </a-col>
-
-
+<!--                            &lt;!&ndash; Cột phải: Trạng thái duyệt &ndash;&gt;-->
+<!--                            <a-col :span="7" :xs="24" :lg="7">-->
+<!--                                <ApprovalStatus />-->
+<!--                            </a-col>-->
                         </a-row>
                     </a-card>
                 </a-col>
-
-
             </a-row>
         </div>
     </div>

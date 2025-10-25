@@ -273,4 +273,91 @@ class TaskFileController extends ResourceController
 
         return $this->respond(['message' => 'Đã từ chối tài liệu', 'data' => $this->model->find($id)]);
     }
+
+
+    protected function countPinnedInTask(int $taskId): int {
+        return (int)$this->model
+            ->where('task_id', $taskId)
+            ->where('is_pinned', 1)
+            ->countAllResults();
+    }
+
+    public function pinnedByTask($taskId): ResponseInterface
+    {
+        $rows = $this->model
+            ->where('task_id', (int)$taskId)
+            ->where('is_pinned', 1)
+            ->orderBy('pinned_at', 'DESC')
+            ->findAll();
+
+        return $this->respond($rows);
+    }
+
+    public function pin($fileId): ResponseInterface
+    {
+        $row = $this->model->find((int)$fileId);
+        if (!$row) return $this->failNotFound('File không tồn tại');
+
+        // enforce tối đa 2
+        $cnt = $this->model->where('task_id', $row['task_id'])->where('is_pinned', 1)->countAllResults();
+        if ($cnt >= 2) return $this->failForbidden('Đã đạt tối đa 2 file ghim');
+
+        $this->model->update((int)$fileId, [
+            'is_pinned' => 1,
+            'pinned_at' => date('Y-m-d H:i:s'),
+            'pinned_by' => (int)($this->request->getPost('user_id') ?? 0),
+        ]);
+
+        return $this->respond(['message' => 'Đã ghim']);
+    }
+
+    public function unpin($fileId): ResponseInterface
+    {
+        $row = $this->model->find((int)$fileId);
+        if (!$row) return $this->failNotFound('File không tồn tại');
+
+        $this->model->update((int)$fileId, [
+            'is_pinned' => 0,
+            'pinned_at' => null,
+            'pinned_by' => null,
+        ]);
+
+        return $this->respond(['message' => 'Đã bỏ ghim']);
+    }
+
+    public function adoptFromPath($task_id = null): ResponseInterface
+    {
+        $task_id = (int) $task_id;
+        $file_path = trim((string)$this->request->getPost('file_path'));
+        $file_name = trim((string)$this->request->getPost('file_name'));
+        $user_id   = (int) $this->request->getPost('user_id');
+
+        if (!$task_id || !$user_id || $file_path === '') {
+            return $this->failValidationErrors('Thiếu task_id, user_id hoặc file_path.');
+        }
+
+        // Tránh trùng: nếu đã có record cùng task_id + file_path thì trả về luôn
+        $existed = $this->model
+            ->where('task_id', $task_id)
+            ->where('file_path', $file_path)
+            ->first();
+        if ($existed) {
+            return $this->respond(['message' => 'Đã tồn tại', 'data' => $existed]);
+        }
+
+        $insert = [
+            'task_id'     => $task_id,
+            'title'       => $file_name ?: basename($file_path),
+            'file_name'   => $file_name ?: basename($file_path),
+            'file_path'   => $file_path,
+            'uploaded_by' => $user_id,
+            'is_link'     => 0,
+            'status'      => 'pending',
+        ];
+        $id = $this->model->insert($insert, true);
+        $row = $this->model->find($id);
+        return $this->respondCreated(['message' => 'Đã nhận file vào tài liệu', 'data' => $row]);
+    }
+
+
 }

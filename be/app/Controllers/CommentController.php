@@ -6,6 +6,7 @@ use App\Models\CommentModel;
 use App\Models\CommentReadModel;
 use App\Models\TaskCommentModel;
 use App\Models\TaskFileModel;
+use App\Models\TaskModel;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
@@ -350,6 +351,27 @@ class CommentController extends ResourceController
         } catch (Throwable) { /* ignore duplicate */ }
 
         return $this->respond(['ok' => true]);
+    }
+
+    protected function mergeMentionsIntoTaskRoster(int $taskId, ?string $mentionsJson): void
+    {
+        if (!$mentionsJson) return;
+        $arr = json_decode($mentionsJson, true);
+        if (!is_array($arr) || empty($arr)) return;
+
+        $norm = [];
+        foreach ($arr as $m) {
+            if (empty($m['user_id'])) continue;
+            $norm[] = [
+                'user_id' => (int)$m['user_id'],
+                'name'    => $m['name'] ?? ('#'.$m['user_id']),
+                'role'    => in_array($m['role'] ?? 'approve', ['approve','sign'], true) ? $m['role'] : 'approve',
+            ];
+        }
+        if (!$norm) return;
+
+        $taskModel = new TaskModel();
+        $taskModel->upsertRosterMembers($taskId, $norm);
     }
 
 

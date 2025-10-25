@@ -15,7 +15,9 @@ class TaskFileModel extends Model
         'uploaded_by','comment_id',
         'link_url','is_link',
         'department_id','visibility','tags',
-        'status','approved_by','approved_at','review_note'
+        'status','approved_by','approved_at','review_note',
+        'approvals_json',
+        'is_pinned','pinned_rank','pinned_by','pinned_at',
     ];
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';

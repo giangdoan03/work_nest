@@ -270,6 +270,19 @@ $routes->group('api', function ($routes) {
     $routes->patch('wp-media/(:num)',  'WpMediaController::update/$1');
     $routes->delete('wp-media/(:num)', 'WpMediaController::delete/$1');
 
+    $routes->get('tasks/(:num)/roster',          'TaskApprovalController::roster/$1');
+    $routes->post('tasks/(:num)/roster/merge',   'TaskApprovalController::merge/$1');
+    $routes->post('tasks/(:num)/roster/approve', 'TaskApprovalController::rosterApprove/$1');
+    $routes->post('tasks/(:num)/roster/reject',  'TaskApprovalController::rosterReject/$1');
+
+    $routes->get('tasks/(:num)/pinned-files',    'TaskFileController::pinnedByTask/$1');
+    $routes->post('task-files/(:num)/pin',       'TaskFileController::pin/$1');
+    $routes->post('task-files/(:num)/unpin',     'TaskFileController::unpin/$1');
+    $routes->post('tasks/(:num)/files/adopt', 'TaskFileController::adoptFromPath/$1');
+
+
+
+
 
 
 

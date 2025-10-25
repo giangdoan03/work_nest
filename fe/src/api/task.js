@@ -113,5 +113,38 @@ export const updateTaskApprovalStepsAPI = (taskId, approverIds) =>
     instance.put(`/tasks/${taskId}/approvals/steps`, { approver_ids: approverIds })
 
 
+// --- Roster (người duyệt/ký) ---
+/** Lấy roster đang lưu của task */
+export const getTaskRosterAPI = (taskId) =>
+    instance.get(`/tasks/${taskId}/roster`)
+
+/** Gộp (merge/upsert) roster từ FE vào task
+ * mentions: [{ user_id, name, role: 'approve'|'sign', status }]
+ */
+export const mergeTaskRosterAPI = (taskId, mentions=[]) =>
+    instance.post(`/tasks/${taskId}/roster/merge`, { mentions })
+
+/** Current user APPROVE trong roster */
+export const approveRosterAPI = (taskId, note) =>
+    instance.post(`/tasks/${taskId}/roster/approve`, { note })
+
+/** Current user REJECT trong roster */
+export const rejectRosterAPI = (taskId, note) =>
+    instance.post(`/tasks/${taskId}/roster/reject`, { note })
+
+// --- Pinned files (ghim tối đa 2) ---
+/** Lấy danh sách file đang ghim của task */
+export const getPinnedFilesAPI = (taskId) =>
+    instance.get(`/tasks/${taskId}/pinned-files`)
+
+// Ghim 1 file đã tồn tại trong task_files (dùng file.id)
+export const pinTaskFileAPI = (fileId, payload = {}) =>
+    instance.post(`/task-files/${fileId}/pin`, payload)
+
+// Bỏ ghim
+export const unpinTaskFileAPI = (fileId, payload = {}) =>
+    instance.post(`/task-files/${fileId}/unpin`, payload)
+
+
 
 

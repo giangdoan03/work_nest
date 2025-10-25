@@ -15,7 +15,7 @@ class TaskApprovalController extends ResourceController
     protected $format = 'json';
 
     /* ============================
-     * Helpers
+     * Helpers (giữ + bổ sung)
      * ============================ */
 
     private function getUserId(): ?int
@@ -24,7 +24,6 @@ class TaskApprovalController extends ResourceController
         return $session->get('user_id');
     }
 
-    /** Đọc payload JSON an toàn (fallback về POST) */
     private function getJsonBody(): array
     {
         $data = $this->request->getJSON(true);
@@ -33,107 +32,169 @@ class TaskApprovalController extends ResourceController
         return is_array($post) ? $post : [];
     }
 
-    /** Tính quyền cơ bản: đúng cấp đang chờ + (tuỳ chọn) nằm trong danh sách approver */
     private function computePermission(array $task, array $approval, int $userId): array
     {
-        // Phải là bản ghi pending và đúng current_level của task
         if (($approval['status'] ?? '') !== 'pending' || (int)$approval['level'] !== (int)$task['current_level']) {
             return [false, false, 'Không ở cấp đang chờ duyệt'];
         }
-
-        // TODO: Nếu có bảng task_approvers thì kiểm tra thật ở đây
         $isApprover = $this->userIsApproverOfLevel((int)$task['id'], (int)$task['current_level'], $userId);
         if (!$isApprover) {
             return [false, false, 'Bạn không nằm trong danh sách phê duyệt cấp này'];
         }
-
         return [true, true, null];
     }
 
-    /** Placeholder: hiện cho phép (trả true). Khi có bảng task_approvers hãy thay bằng query thật. */
     private function userIsApproverOfLevel(int $taskId, int $level, int $userId): bool
     {
         return true;
     }
 
-    /** Tiến độ theo cấp (đơn giản): số cấp đã khóa / tổng cấp */
     private function computeProgress(?int $currentLevel, int $total, string $status): int
     {
         if ($total <= 0) return 0;
-
-        // Nếu đã duyệt xong toàn bộ
-        if ($status === 'approved') {
-            return 100;
-        }
-
-        // Nếu bị từ chối => tuỳ nghiệp vụ, có thể 0% hoặc tính đến cấp đã xong
-        if ($status === 'rejected') {
-            return (int) round((($currentLevel - 1) / $total) * 100);
-        }
-
-        // Trạng thái pending (đang ở cấp nào đó)
+        if ($status === 'approved') return 100;
+        if ($status === 'rejected') return (int) round((($currentLevel - 1) / $total) * 100);
         $done = max(0, min($currentLevel - 1, $total));
         return (int) round(($done / $total) * 100);
     }
 
-
-
-    // ===== Helpers thêm trong class =====
     private function getRoleId(): ?int
     {
         $session = session();
         $rid = $session->get('role_id');
-        if (!empty($rid)) {
-            return (int) $rid;
-        }
+        if (!empty($rid)) return (int) $rid;
 
-        // Fallback: lấy từ DB theo user_id, rồi cache lại vào session
         $uid = $session->get('user_id');
-        if (empty($uid)) {
-            return null;
-        }
+        if (empty($uid)) return null;
 
         $db  = db_connect();
         $row = $db->table('users')->select('role_id')->where('id', (int)$uid)->get()->getRowArray();
         if ($row && isset($row['role_id'])) {
-            $session->set('role_id', (int)$row['role_id']); // cache vào session để lần sau không phải query
+            $session->set('role_id', (int)$row['role_id']);
             return (int)$row['role_id'];
         }
-
         return null;
     }
 
     private function canViewApprovalList(): bool
     {
         $roleId = $this->getRoleId();
-        if (in_array((int)$roleId, [1, 2], true)) {
-            return true; // 1: super admin, 2: admin
-        }
+        if (in_array((int)$roleId, [1, 2], true)) return true;
 
-        // Fallback theo tên (nếu bạn set role_name vào session)
         $session   = session();
         $roleName  = strtolower((string)$session->get('role_name') ?: (string)$session->get('role'));
-        if (in_array($roleName, ['super admin', 'admin'], true)) {
-            return true;
-        }
+        if (in_array($roleName, ['super admin', 'admin'], true)) return true;
 
         return false;
     }
 
+    /* ========= New helpers cho ROSTER (chip duyệt/ký) ========= */
+
+    /** Lấy task row */
+    private function getTaskRow(int $taskId): ?array
+    {
+        $db = db_connect();
+        return $db->table('tasks')->where('id', $taskId)->get()->getRowArray();
+    }
+
+    /** Đọc roster từ task.approval_roster_json → array */
+    private function readRoster(array $taskRow): array
+    {
+        $json = $taskRow['approval_roster_json'] ?? '[]';
+        $arr  = is_string($json) ? json_decode($json, true) : $json;
+        return is_array($arr) ? $arr : [];
+    }
+
+    /** Ghi roster vào task.approval_roster_json */
+    private function writeRoster(int $taskId, array $roster): bool
+    {
+        $db = db_connect();
+        return $db->table('tasks')->where('id', $taskId)->update([
+            'approval_roster_json' => json_encode(array_values($roster), JSON_UNESCAPED_UNICODE),
+        ]);
+    }
+
+    /** Chuẩn hoá 1 mention (FE gửi) */
+    private function normalizeMention(array $m): ?array
+    {
+        $uid  = (int)($m['user_id'] ?? 0);
+        $name = trim((string)($m['name'] ?? ''));
+        $role = strtolower((string)($m['role'] ?? 'approve'));
+        if ($uid <= 0) return null;
+        if (!in_array($role, ['approve', 'sign'], true)) $role = 'approve';
+        return [
+            'user_id'  => $uid,
+            'name'     => $name ?: ("#" . $uid),
+            'role'     => $role,
+            'status'   => 'pending',   // pending | approved | rejected
+            'acted_at' => null,
+            'note'     => null,
+        ];
+    }
+
+    /** Tính % tiến độ theo roster (tổng approved / tổng thành viên) */
+    private function computeRosterProgress(array $roster, string $taskApprovalStatus): int
+    {
+        if (empty($roster)) {
+            return $taskApprovalStatus === 'approved' ? 100 : 0;
+        }
+        if ($taskApprovalStatus === 'approved') return 100;
+
+        $total = count($roster);
+        $done  = 0;
+        foreach ($roster as $r) {
+            if (($r['status'] ?? '') === 'approved') $done++;
+        }
+        return (int) round(($done / max(1, $total)) * 100);
+    }
+
+    /** Kiểm tra quyền: user có trong roster và còn pending */
+    private function canUserActOnRoster(array $roster, int $userId): array
+    {
+        foreach ($roster as $idx => $r) {
+            if ((int)$r['user_id'] === $userId) {
+                $st = (string)($r['status'] ?? 'pending');
+                if ($st !== 'pending') return [false, $idx, 'Bạn đã xử lý rồi'];
+                return [true, $idx, null];
+            }
+        }
+        return [false, null, 'Bạn không nằm trong danh sách duyệt/ký'];
+    }
+
+    private function computeProgressByApprovedCount(int $approvedCount, int $total, string $taskApprovalStatus): int
+    {
+        if ($total <= 0) return 0;
+        if ($taskApprovalStatus === 'approved') return 100;
+        $approvedCount = max(0, min($approvedCount, $total));
+        return (int) round(($approvedCount / $total) * 100);
+    }
+
+    private function computeProgressSmart(int $taskId, int $stepsTotal, string $taskApprStatus): int
+    {
+        if ($stepsTotal <= 0) return 0;
+        if ($taskApprStatus === 'approved') return 100;
+        if ($taskApprStatus === 'rejected') return 0;
+
+        $db = db_connect();
+        $approvedCount = $db->table('task_approval_logs')
+            ->where('task_id', $taskId)
+            ->where('status', 'approved')
+            ->countAllResults();
+
+        return (int) round(($approvedCount / $stepsTotal) * 100);
+    }
+
     /* ============================
-     * API
+     * API (giữ + bổ sung)
      * ============================ */
 
-    /** Danh sách duyệt theo tab: pending | resolved */
-    // ===== Thay thế toàn bộ hàm index() bằng phiên bản này =====
+    /** Danh sách duyệt theo tab: pending | resolved (giữ nguyên, có tối ưu) */
     public function index()
     {
         $session = session();
         if (!$session->get('logged_in')) {
             return $this->failUnauthorized('Bạn chưa đăng nhập');
         }
-
-        // ✅ Chỉ role 1,2 được xem danh sách duyệt
         if (!$this->canViewApprovalList()) {
             return $this->failForbidden('Bạn không có quyền xem danh sách duyệt');
         }
@@ -146,7 +207,6 @@ class TaskApprovalController extends ResourceController
         $page   = (int)($this->request->getGet('page') ?? 1);
         $limit  = (int)($this->request->getGet('limit') ?? 10);
 
-        // Select thêm approval_status để biết đã hoàn tất duyệt chưa
         $builder = $model
             ->select('task_approvals.*, 
                   tasks.title, 
@@ -160,12 +220,9 @@ class TaskApprovalController extends ResourceController
             ->join('users u_approver', 'u_approver.id = task_approvals.approved_by', 'left');
 
         if ($status === 'pending') {
-            // Tất cả bản ghi đang chờ ở cấp hiện tại
             $builder->where('task_approvals.status', 'pending')
                 ->where('tasks.current_level = task_approvals.level');
-            // Nếu cần lọc theo approver hiện tại cho user thường, join bảng approvers tại đây.
         } else {
-            // Đã duyệt / Từ chối
             $builder->where('task_approvals.status !=', 'pending')
                 ->orderBy('task_approvals.approved_at', 'DESC');
         }
@@ -174,13 +231,11 @@ class TaskApprovalController extends ResourceController
             $builder->like('tasks.title', $search);
         }
 
-        // Lấy trang dữ liệu
         $rows  = $builder->paginate($limit, 'default', $page);
         $total = $model->pager->getTotal();
 
-        // ===== Tính số cấp đã duyệt thật (batch) để suy ra % =====
         $taskIds = array_values(array_unique(array_map(fn($r) => (int)$r['task_id'], $rows ?: [])));
-        $approvedMap = []; // task_id => số cấp đã approved
+        $approvedMap = [];
 
         if (!empty($taskIds)) {
             $db = db_connect();
@@ -197,24 +252,19 @@ class TaskApprovalController extends ResourceController
             }
         }
 
-        // Map dữ liệu trả về FE
         $data = array_map(function ($r) use ($approvedMap) {
             $stepsTotal     = (int)($r['approval_steps'] ?? 0);
             $currentLevel   = (int)($r['current_level'] ?? 0);
-            $rowStatus      = (string)($r['status'] ?? '');               // pending/approved/rejected (record hiện tại)
-            $taskApprStatus = (string)($r['task_approval_status'] ?? ''); // pending/approved/rejected (toàn task)
+            $rowStatus      = (string)($r['status'] ?? '');
+            $taskApprStatus = (string)($r['task_approval_status'] ?? '');
             $taskId         = (int)$r['task_id'];
 
             $approvedCount = $approvedMap[$taskId] ?? 0;
-
-            // ✅ TIẾN ĐỘ = số cấp đã duyệt thật / tổng cấp (ép 100% nếu task đã approved)
             $progress = $this->computeProgressByApprovedCount($approvedCount, $stepsTotal, $taskApprStatus);
-
-            // Nút hành động chỉ bật khi đúng cấp đang chờ
-            $can = ($rowStatus === 'pending' && (int)$r['level'] === $currentLevel);
+            $can      = ($rowStatus === 'pending' && (int)$r['level'] === $currentLevel);
 
             return array_merge($r, [
-                'approved_levels'       => $approvedCount,                          // optional cho FE
+                'approved_levels'       => $approvedCount,
                 'approval_steps_total'  => $stepsTotal,
                 'approval_progress'     => $progress,
                 'is_final_level'        => ($taskApprStatus === 'approved' || $approvedCount >= $stepsTotal),
@@ -236,50 +286,11 @@ class TaskApprovalController extends ResourceController
         ]);
     }
 
-
-    private function computeProgressByApprovedCount(int $approvedCount, int $total, string $taskApprovalStatus): int
-    {
-        if ($total <= 0) return 0;
-        if ($taskApprovalStatus === 'approved') return 100;
-
-        $approvedCount = max(0, min($approvedCount, $total));
-        return (int) round(($approvedCount / $total) * 100);
-    }
-
-
-
-// đặt trong class TaskApprovalController (phần Helpers)
-    private function computeProgressSmart(int $taskId, int $stepsTotal, string $taskApprStatus): int
-    {
-        if ($stepsTotal <= 0) return 0;
-
-        // Nếu task đã approved → 100%
-        if ($taskApprStatus === 'approved') {
-            return 100;
-        }
-        if ($taskApprStatus === 'rejected') {
-            return 0; // hoặc để riêng
-        }
-
-        // Đếm số cấp đã duyệt từ logs
-        $db = db_connect();
-        $approvedCount = $db->table('task_approval_logs')
-            ->where('task_id', $taskId)
-            ->where('status', 'approved')
-            ->countAllResults();
-
-        return (int) round(($approvedCount / $stepsTotal) * 100);
-    }
-
-
-
-    /** Kiểm tra quyền trước khi mở modal duyệt/từ chối */
+    /** Kiểm tra quyền trước khi mở modal duyệt/từ chối theo cấp */
     public function canAct($id): ResponseInterface
     {
         $session = session();
-        if (!$session->get('logged_in')) {
-            return $this->failUnauthorized('Bạn chưa đăng nhập');
-        }
+        if (!$session->get('logged_in')) return $this->failUnauthorized('Bạn chưa đăng nhập');
 
         $userId    = $this->getUserId();
         $model     = new TaskApprovalModel();
@@ -301,15 +312,13 @@ class TaskApprovalController extends ResourceController
         ]);
     }
 
-    /** Phê duyệt
+    /** Phê duyệt theo cấp (giữ nguyên)
      * @throws ReflectionException
      */
     public function approve($id): ResponseInterface
     {
         $session = session();
-        if (!$session->get('logged_in')) {
-            return $this->failUnauthorized('Bạn chưa đăng nhập');
-        }
+        if (!$session->get('logged_in')) return $this->failUnauthorized('Bạn chưa đăng nhập');
 
         $userId    = (int)$this->getUserId();
         $model     = new TaskApprovalModel();
@@ -318,7 +327,6 @@ class TaskApprovalController extends ResourceController
         $approval = $model->find($id);
         if (!$approval) return $this->failNotFound('Approval not found');
 
-        // Idempotency: đã xử lý rồi thì từ chối
         if (($approval['status'] ?? '') !== 'pending') {
             return $this->failResourceExists('Bản ghi đã được xử lý trước đó');
         }
@@ -335,7 +343,6 @@ class TaskApprovalController extends ResourceController
         $db = db_connect();
         $db->transStart();
 
-        // Cập nhật record hiện tại
         $model->update($id, [
             'status'      => 'approved',
             'approved_by' => $userId,
@@ -343,7 +350,6 @@ class TaskApprovalController extends ResourceController
             'comment'     => $comment
         ]);
 
-        // Ghi log
         $db->table('task_approval_logs')->insert([
             'task_id'     => $approval['task_id'],
             'level'       => $approval['level'],
@@ -353,12 +359,10 @@ class TaskApprovalController extends ResourceController
             'comment'     => $comment
         ]);
 
-        // Chuyển cấp / Hoàn tất
         $currentLevel  = (int)$approval['level'];
         $approvalSteps = (int)($task['approval_steps'] ?? 0);
 
         if ($approvalSteps <= 0 || $currentLevel >= $approvalSteps) {
-            // Cấp cuối
             $taskModel->update($task['id'], [
                 'approval_status' => 'approved',
                 'status'          => TaskStatus::DONE,
@@ -366,15 +370,12 @@ class TaskApprovalController extends ResourceController
                 'current_level'   => $approvalSteps,
             ]);
         } else {
-            // Tạo cấp kế tiếp
             $model->insert([
                 'task_id'    => $task['id'],
                 'level'      => $currentLevel + 1,
                 'status'     => 'pending',
-                // 'started_at' => date('Y-m-d H:i:s'), // nếu có cột
             ]);
 
-            // Cập nhật task: tăng current_level + progress theo cấp
             $progress = (int) round(($currentLevel / max(1, $approvalSteps)) * 100);
             $taskModel->update($task['id'], [
                 'current_level' => $currentLevel + 1,
@@ -388,15 +389,13 @@ class TaskApprovalController extends ResourceController
         return $this->respond(['message' => 'Approved successfully']);
     }
 
-    /** Từ chối
+    /** Từ chối theo cấp (giữ nguyên)
      * @throws ReflectionException
      */
     public function reject($id): ResponseInterface
     {
         $session = session();
-        if (!$session->get('logged_in')) {
-            return $this->failUnauthorized('Bạn chưa đăng nhập');
-        }
+        if (!$session->get('logged_in')) return $this->failUnauthorized('Bạn chưa đăng nhập');
 
         $userId    = (int)$this->getUserId();
         $model     = new TaskApprovalModel();
@@ -421,7 +420,6 @@ class TaskApprovalController extends ResourceController
         $db = db_connect();
         $db->transStart();
 
-        // Update record
         $model->update($id, [
             'status'      => 'rejected',
             'approved_by' => $userId,
@@ -429,7 +427,6 @@ class TaskApprovalController extends ResourceController
             'comment'     => $comment
         ]);
 
-        // Log
         $db->table('task_approval_logs')->insert([
             'task_id'     => $approval['task_id'],
             'level'       => $approval['level'],
@@ -439,7 +436,6 @@ class TaskApprovalController extends ResourceController
             'comment'     => $comment
         ]);
 
-        // Cập nhật task khi bị từ chối (tuỳ nghiệp vụ)
         $taskModel->update($approval['task_id'], [
             'approval_status' => 'rejected',
             'status'          => TaskStatus::TODO
@@ -451,7 +447,7 @@ class TaskApprovalController extends ResourceController
         return $this->respond(['message' => 'Rejected successfully']);
     }
 
-    /** Lịch sử đã duyệt (log) */
+    /** Lịch sử theo cấp (giữ nguyên) */
     public function history($taskId): ResponseInterface
     {
         $logModel = new TaskApprovalLogModel();
@@ -466,7 +462,7 @@ class TaskApprovalController extends ResourceController
         return $this->respond($logs);
     }
 
-    /** Trạng thái duyệt đầy đủ theo từng cấp (timeline) */
+    /** Timeline theo cấp (giữ nguyên) */
     public function fullApprovalStatus($taskId): ResponseInterface
     {
         $db = db_connect();
@@ -499,7 +495,6 @@ class TaskApprovalController extends ResourceController
                 'approved_by_name' => null,
                 'approved_at'      => null,
                 'comment'          => null,
-                // Có thể thêm: 'approvers' => [], 'rule_type' => 'any_one', 'started_at' => null, 'due_at' => null
             ];
 
             if ($log) {
@@ -518,34 +513,27 @@ class TaskApprovalController extends ResourceController
         return $this->respond($result);
     }
 
-    /**
-     * @throws ReflectionException
-     */
+    /** Duyệt theo task: tìm approval pending đúng cấp rồi gọi approve($approvalId) (giữ nguyên) */
     public function approveByTask($taskId): ResponseInterface
     {
         $session = session();
         if (!$session->get('logged_in')) return $this->failUnauthorized('Bạn chưa đăng nhập');
 
         $taskId = (int) $taskId;
-        $model  = new TaskApprovalModel();
-
-        // Tìm bản ghi approval PENDING đúng cấp hiện tại của task
         $db   = db_connect();
         $row  = $db->table('task_approvals ta')
             ->select('ta.id AS approval_id, ta.level, t.current_level')
             ->join('tasks t', 't.id = ta.task_id', 'inner')
             ->where('ta.task_id', $taskId)
             ->where('ta.status', 'pending')
-            ->where('ta.level = t.current_level')   // đảm bảo đúng cấp đang chờ
+            ->where('ta.level = t.current_level')
             ->get()->getRowArray();
 
         if (!$row) return $this->failNotFound('Không tìm thấy cấp duyệt đang chờ cho task này');
-
-        // Chuyển qua hàm approve($approval_id)
         return $this->approve((int)$row['approval_id']);
     }
 
-    /**
+    /** Từ chối theo task (giữ nguyên)
      * @throws ReflectionException
      */
     public function rejectByTask($taskId): ResponseInterface
@@ -565,8 +553,145 @@ class TaskApprovalController extends ResourceController
             ->get()->getRowArray();
 
         if (!$row) return $this->failNotFound('Không tìm thấy cấp duyệt đang chờ cho task này');
-
         return $this->reject((int)$row['approval_id']);
+    }
+
+    /* ========= NEW: APIs cho ROSTER chip approve/sign ========= */
+
+    /** GET /tasks/{id}/roster: trả roster + progress tính theo roster */
+    public function roster($taskId): ResponseInterface
+    {
+        $taskId = (int)$taskId;
+        $task   = $this->getTaskRow($taskId);
+        if (!$task) return $this->failNotFound('Task not found');
+
+        $roster   = $this->readRoster($task);
+        $progress = $this->computeRosterProgress($roster, (string)($task['approval_status'] ?? 'pending'));
+
+        return $this->respond(['roster' => $roster, 'progress' => $progress]);
+    }
+
+    /** POST /tasks/{id}/roster/merge: body: mentions(json|form) */
+    public function merge($taskId): ResponseInterface
+    {
+        $taskId = (int)$taskId;
+        $task   = $this->getTaskRow($taskId);
+        if (!$task) return $this->failNotFound('Task not found');
+
+        // Lấy mentions từ JSON hoặc form-data
+        $raw = $this->request->getPost('mentions') ?? ($this->getJsonBody()['mentions'] ?? '[]');
+        $mentions = is_string($raw) ? json_decode($raw, true) : $raw;
+        if (!is_array($mentions)) $mentions = [];
+
+        // Normalize & merge (dedup theo user_id, giữ status cũ nếu đã có)
+        $roster = $this->readRoster($task);
+        $map    = [];
+        foreach ($roster as $r) $map[(int)$r['user_id']] = $r;
+
+        foreach ($mentions as $m) {
+            $nm = $this->normalizeMention($m);
+            if (!$nm) continue;
+            $uid = (int)$nm['user_id'];
+            if (!isset($map[$uid])) {
+                $map[$uid] = $nm; // thêm mới
+            } else {
+                // nếu đã tồn tại thì chỉ update name/role (không đè status nếu đã approved/rejected)
+                $old = $map[$uid];
+                $old['name'] = $nm['name'];
+                $old['role'] = $nm['role'];
+                $map[$uid]   = $old;
+            }
+        }
+
+        $newRoster = array_values($map);
+        $this->writeRoster($taskId, $newRoster);
+
+        $progress = $this->computeRosterProgress($newRoster, (string)($task['approval_status'] ?? 'pending'));
+        return $this->respond(['message' => 'OK', 'roster' => $newRoster, 'progress' => $progress]);
+    }
+
+
+    // ========== ADD: helper dùng chung cho approve/reject roster ==========
+    /**
+     * Thực hiện hành động trên roster cho user hiện tại.
+     * $finalStatus: 'approved' | 'rejected'
+     */
+    private function actOnRoster(int $taskId, string $finalStatus): ResponseInterface
+    {
+        $session = session();
+        if (!$session->get('logged_in')) {
+            return $this->failUnauthorized('Bạn chưa đăng nhập');
+        }
+
+        if (!in_array($finalStatus, ['approved', 'rejected'], true)) {
+            return $this->failValidationErrors('Trạng thái không hợp lệ');
+        }
+
+        $task   = $this->getTaskRow($taskId);
+        if (!$task) return $this->failNotFound('Task not found');
+
+        $uid    = (int)$this->getUserId();
+        $roster = $this->readRoster($task);
+
+        // Quyền & vị trí trong roster
+        [$can, $idx, $reason] = $this->canUserActOnRoster($roster, $uid);
+        if (!$can) return $this->failForbidden($reason ?? 'Không thể thực hiện');
+
+        // Cập nhật member
+        $payload = $this->getJsonBody();
+        $roster[$idx]['status']   = $finalStatus;
+        $roster[$idx]['acted_at'] = date('Y-m-d H:i:s');
+        if (!empty($payload['note'])) {
+            $roster[$idx]['note'] = trim((string)$payload['note']);
+        }
+
+        // Lưu roster
+        $this->writeRoster($taskId, $roster);
+
+        // Tính & cập nhật trạng thái task
+        $taskUpd = [];
+        if ($finalStatus === 'rejected') {
+            // 1 người từ chối -> task rejected
+            $taskUpd = [
+                'approval_status' => 'rejected',
+                'status'          => \App\Enums\TaskStatus::TODO,
+                'progress'        => $this->computeRosterProgress($roster, 'rejected'),
+            ];
+        } else { // approved
+            // nếu tất cả đã approved -> DONE
+            $allApproved = !array_filter($roster, fn($r) => ($r['status'] ?? 'pending') !== 'approved');
+            $taskUpd = [
+                'progress' => $this->computeRosterProgress($roster, (string)($task['approval_status'] ?? 'pending')),
+            ];
+            if ($allApproved) {
+                $taskUpd['approval_status'] = 'approved';
+                $taskUpd['status']          = \App\Enums\TaskStatus::DONE;
+                $taskUpd['progress']        = 100;
+            }
+        }
+        if ($taskUpd) {
+            db_connect()->table('tasks')->where('id', $taskId)->update($taskUpd);
+        }
+
+        return $this->respond([
+            'message'     => $finalStatus === 'approved' ? 'Approved' : 'Rejected',
+            'roster'      => $roster,
+            'task_update' => $taskUpd,
+        ]);
+    }
+
+
+    /** POST /tasks/{id}/roster/approve: current user approve/sign */
+    // ========== REPLACE: rosterApprove ==========
+    public function rosterApprove($taskId): ResponseInterface
+    {
+        return $this->actOnRoster((int)$taskId, 'approved');
+    }
+
+    // ========== REPLACE: rosterReject ==========
+    public function rosterReject($taskId): ResponseInterface
+    {
+        return $this->actOnRoster((int)$taskId, 'rejected');
     }
 
 }

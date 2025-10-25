@@ -36,7 +36,7 @@ export const uploadTaskFileAPI = (taskId, formData) => uploadTaskFile(taskId, fo
 /** Lưu link tài liệu cho task (JSON: { title, url, user_id }) */
 export const uploadTaskFileLink = (taskId, payload) =>
     instance.post(`/tasks/${taskId}/files/link`, payload)
-export const uploadTaskFileLinkAPI = (taskId, payload) => uploadTaskFileLink(taskId, payload)
+// export const uploadTaskFileLinkAPI = (taskId, payload) => uploadTaskFileLink(taskId, payload)
 
 /** Cập nhật meta (title, link_url nếu là link) – chỉ khi chưa approved */
 export const updateTaskFileMeta = (fileId, payload) =>
@@ -69,6 +69,39 @@ export const deleteTaskFilesAPI = (fileId) => deleteTaskFile(fileId)
 export const getTaskFileDownloadUrl = (fileId) =>
     `${import.meta.env.VITE_API_URL}/task-files/${fileId}/download`
 
+export const getPinnedFilesAPI = (taskId) =>
+    instance.get(`/tasks/${taskId}/pinned-files`)
+
+export const pinTaskFileAPI = (fileId, payload = {}) =>
+    instance.post(`/task-files/${fileId}/pin`, payload)
+
+export const unpinTaskFileAPI = (fileId, payload = {}) =>
+    instance.post(`/task-files/${fileId}/unpin`, payload)
+
+// src/api/taskFiles.js
+// Gửi link tài liệu bằng FormData
+export const uploadTaskFileLinkAPI = (taskId, payload) => {
+    const fd = new FormData()
+    fd.append('title', payload.title)
+    fd.append('url', payload.url)
+    fd.append('user_id', String(payload.user_id))
+    return instance.post(`/tasks/${taskId}/files/link`, fd) // <-- FormData
+}
+
+// Nhận file nội bộ vào task_files (adopt) bằng FormData
+export const adoptTaskFileFromPathAPI = (taskId, payload) => {
+    const fd = new FormData()
+    fd.append('task_id', String(payload.task_id))   // đảm bảo truyền task_id
+    fd.append('user_id', String(payload.user_id))
+    fd.append('file_path', payload.file_path)
+    if (payload.file_name) fd.append('file_name', payload.file_name)
+    return instance.post(`/tasks/${taskId}/files/adopt`, fd) // <-- FormData
+}
+
+
+
+
+
 export default {
     // list & upload
     getTaskFiles,
@@ -92,4 +125,8 @@ export default {
 
     // helpers
     getTaskFileDownloadUrl,
+    getPinnedFilesAPI,
+    pinTaskFileAPI,
+    unpinTaskFileAPI,
+    adoptTaskFileFromPathAPI,
 }
