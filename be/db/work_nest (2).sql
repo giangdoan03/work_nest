@@ -1,9 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Oct 21, 2025 at 09:29 AM
+-- Generation Time: Oct 25, 2025 at 02:38 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -1263,7 +1263,9 @@ INSERT INTO `documents` (`id`, `title`, `file_path`, `department_id`, `uploaded_
 (36, 'Đã duyệt - Đã duyệt - vvvvvvvvvvvvvvvvvv', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/signed_Da-duyet-vvvvvvvvvvvvvvvvvv-6.pdf', 1, 3, 'department', 'wp_media', 87270, '2025-10-20 23:24:02', '2025-10-20 23:24:02', NULL, NULL, 0, 'pending'),
 (37, 'Đã duyệt - vvvvvvvvvvvvvvvvvv', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/signed_vvvvvvvvvvvvvvvvvv-6.pdf', 1, 1, 'department', 'wp_media', 74320, '2025-10-20 23:26:53', '2025-10-20 23:26:53', NULL, NULL, 0, 'pending'),
 (38, 'Đã duyệt - Đã duyệt - vvvvvvvvvvvvvvvvvv', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/signed_Da-duyet-vvvvvvvvvvvvvvvvvv-7.pdf', 1, 1, 'department', 'wp_media', 109962, '2025-10-20 23:31:09', '2025-10-20 23:31:09', NULL, NULL, 0, 'pending'),
-(39, 'công văn 01', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20241007_GiahanphanmemMicrosoft365-1.pdf', 3, 3, 'private', 'wp_media', 1117047, '2025-10-21 15:11:13', '2025-10-21 15:11:13', NULL, NULL, 0, 'pending');
+(39, 'công văn 01', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20241007_GiahanphanmemMicrosoft365-1.pdf', 3, 3, 'private', 'wp_media', 1117047, '2025-10-21 15:11:13', '2025-10-21 15:11:13', NULL, NULL, 0, 'pending'),
+(40, 'công văn 22/10/2025', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/Bang_gia_QR_Code_Marketing_2025-1.pdf', 3, 1, 'private', 'wp_media', 27190, '2025-10-22 00:50:41', '2025-10-22 00:50:41', NULL, NULL, 0, 'pending'),
+(41, 'công văn 3', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/Bang_gia_QR_Code_Marketing_2025-2.pdf', 3, 1, 'private', 'wp_media', 27190, '2025-10-22 00:58:06', '2025-10-22 00:58:06', NULL, NULL, 0, 'pending');
 
 -- --------------------------------------------------------
 
@@ -1293,7 +1295,24 @@ INSERT INTO `document_approvals` (`id`, `document_id`, `status`, `created_by`, `
 (2, 38, 'approved', 3, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-21 16:02:24', '2025-10-21 16:02:23', '2025-10-21 16:02:24'),
 (3, 39, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-21 16:03:02', '2025-10-21 16:03:01', '2025-10-21 16:03:02'),
 (4, 37, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-21 16:13:13', '2025-10-21 16:13:10', '2025-10-21 16:13:13'),
-(5, 32, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-21 16:14:16', '2025-10-21 16:14:14', '2025-10-21 16:14:16');
+(5, 32, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-21 16:14:16', '2025-10-21 16:14:14', '2025-10-21 16:14:16'),
+(6, 39, 'approved', 3, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-21 21:18:54', '2025-10-21 21:18:53', '2025-10-21 21:18:54'),
+(7, 38, 'approved', 3, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-21 21:21:32', '2025-10-21 21:21:32', '2025-10-21 21:21:32'),
+(8, 23, 'approved', 3, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-21 23:58:24', '2025-10-21 23:58:23', '2025-10-21 23:58:24'),
+(9, 23, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-21 23:59:11', '2025-10-21 23:59:10', '2025-10-21 23:59:11'),
+(10, 23, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-21 23:59:51', '2025-10-21 23:59:51', '2025-10-21 23:59:51'),
+(11, 23, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-22 00:00:31', '2025-10-22 00:00:30', '2025-10-22 00:00:31'),
+(12, 24, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-22 00:09:46', '2025-10-22 00:09:45', '2025-10-22 00:09:46'),
+(13, 24, 'approved', 3, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-22 00:17:23', '2025-10-22 00:17:22', '2025-10-22 00:17:23'),
+(14, 32, 'approved', 3, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-22 00:30:30', '2025-10-22 00:30:29', '2025-10-22 00:30:30'),
+(15, 31, 'approved', 3, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-22 00:36:22', '2025-10-22 00:36:21', '2025-10-22 00:36:22'),
+(16, 25, 'approved', 3, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-22 00:37:47', '2025-10-22 00:37:46', '2025-10-22 00:37:47'),
+(17, 37, 'approved', 3, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-22 00:39:01', '2025-10-22 00:39:00', '2025-10-22 00:39:01'),
+(18, 36, 'approved', 3, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-22 00:39:23', '2025-10-22 00:39:22', '2025-10-22 00:39:23'),
+(19, 36, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-22 00:39:55', '2025-10-22 00:39:54', '2025-10-22 00:39:55'),
+(20, 25, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-22 00:52:56', '2025-10-22 00:52:55', '2025-10-22 00:52:56'),
+(21, 26, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-22 00:55:35', '2025-10-22 00:55:34', '2025-10-22 00:55:35'),
+(22, 28, 'approved', 3, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-23 00:36:23', '2025-10-23 00:36:22', '2025-10-23 00:36:23');
 
 -- --------------------------------------------------------
 
@@ -1323,7 +1342,24 @@ INSERT INTO `document_approval_logs` (`id`, `approval_id`, `document_id`, `actio
 (2, 2, 38, 'approved', 3, '2025-10-21 16:02:24', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
 (3, 3, 39, 'approved', 1, '2025-10-21 16:03:02', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
 (4, 4, 37, 'approved', 1, '2025-10-21 16:13:13', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(5, 5, 32, 'approved', 1, '2025-10-21 16:14:16', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)');
+(5, 5, 32, 'approved', 1, '2025-10-21 16:14:16', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(6, 6, 39, 'approved', 3, '2025-10-21 21:18:54', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(7, 7, 38, 'approved', 3, '2025-10-21 21:21:32', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(8, 8, 23, 'approved', 3, '2025-10-21 23:58:24', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(9, 9, 23, 'approved', 1, '2025-10-21 23:59:11', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(10, 10, 23, 'approved', 1, '2025-10-21 23:59:51', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(11, 11, 23, 'approved', 1, '2025-10-22 00:00:31', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(12, 12, 24, 'approved', 1, '2025-10-22 00:09:46', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(13, 13, 24, 'approved', 3, '2025-10-22 00:17:23', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(14, 14, 32, 'approved', 3, '2025-10-22 00:30:30', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(15, 15, 31, 'approved', 3, '2025-10-22 00:36:22', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(16, 16, 25, 'approved', 3, '2025-10-22 00:37:47', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(17, 17, 37, 'approved', 3, '2025-10-22 00:39:01', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(18, 18, 36, 'approved', 3, '2025-10-22 00:39:23', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(19, 19, 36, 'approved', 1, '2025-10-22 00:39:55', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(20, 20, 25, 'approved', 1, '2025-10-22 00:52:56', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(21, 21, 26, 'approved', 1, '2025-10-22 00:55:35', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
+(22, 22, 28, 'approved', 3, '2025-10-23 00:36:23', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)');
 
 -- --------------------------------------------------------
 
@@ -1358,7 +1394,24 @@ INSERT INTO `document_approval_steps` (`id`, `approval_id`, `approver_id`, `sequ
 (2, 2, 3, 1, 'approved', 3, '2025-10-21 16:02:24', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', '2025-10-21 16:02:24', NULL, NULL, NULL, '2025-10-21 16:02:23', '2025-10-21 16:02:24'),
 (3, 3, 1, 1, 'approved', 1, '2025-10-21 16:03:02', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-21 16:03:02', NULL, NULL, NULL, '2025-10-21 16:03:01', '2025-10-21 16:03:02'),
 (4, 4, 1, 1, 'approved', 1, '2025-10-21 16:13:13', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-21 16:13:13', NULL, NULL, NULL, '2025-10-21 16:13:10', '2025-10-21 16:13:13'),
-(5, 5, 1, 1, 'approved', 1, '2025-10-21 16:14:16', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-21 16:14:16', NULL, NULL, NULL, '2025-10-21 16:14:14', '2025-10-21 16:14:16');
+(5, 5, 1, 1, 'approved', 1, '2025-10-21 16:14:16', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-21 16:14:16', NULL, NULL, NULL, '2025-10-21 16:14:14', '2025-10-21 16:14:16'),
+(6, 6, 3, 1, 'approved', 3, '2025-10-21 21:18:54', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', '2025-10-21 21:18:54', NULL, NULL, NULL, '2025-10-21 21:18:53', '2025-10-21 21:18:54'),
+(7, 7, 3, 1, 'approved', 3, '2025-10-21 21:21:32', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', '2025-10-21 21:21:32', NULL, NULL, NULL, '2025-10-21 21:21:32', '2025-10-21 21:21:32'),
+(8, 8, 3, 1, 'approved', 3, '2025-10-21 23:58:24', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', '2025-10-21 23:58:24', NULL, NULL, NULL, '2025-10-21 23:58:23', '2025-10-21 23:58:24'),
+(9, 9, 1, 1, 'approved', 1, '2025-10-21 23:59:11', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-21 23:59:11', NULL, NULL, NULL, '2025-10-21 23:59:10', '2025-10-21 23:59:11'),
+(10, 10, 1, 1, 'approved', 1, '2025-10-21 23:59:51', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-21 23:59:51', NULL, NULL, NULL, '2025-10-21 23:59:51', '2025-10-21 23:59:51'),
+(11, 11, 1, 1, 'approved', 1, '2025-10-22 00:00:31', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-22 00:00:31', NULL, NULL, NULL, '2025-10-22 00:00:30', '2025-10-22 00:00:31'),
+(12, 12, 1, 1, 'approved', 1, '2025-10-22 00:09:46', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-22 00:09:46', NULL, NULL, NULL, '2025-10-22 00:09:45', '2025-10-22 00:09:46'),
+(13, 13, 3, 1, 'approved', 3, '2025-10-22 00:17:23', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', '2025-10-22 00:17:23', NULL, NULL, NULL, '2025-10-22 00:17:22', '2025-10-22 00:17:23'),
+(14, 14, 3, 1, 'approved', 3, '2025-10-22 00:30:30', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', '2025-10-22 00:30:30', NULL, NULL, NULL, '2025-10-22 00:30:29', '2025-10-22 00:30:30'),
+(15, 15, 3, 1, 'approved', 3, '2025-10-22 00:36:22', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', '2025-10-22 00:36:22', NULL, NULL, NULL, '2025-10-22 00:36:21', '2025-10-22 00:36:22'),
+(16, 16, 3, 1, 'approved', 3, '2025-10-22 00:37:47', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', '2025-10-22 00:37:47', NULL, NULL, NULL, '2025-10-22 00:37:46', '2025-10-22 00:37:47'),
+(17, 17, 3, 1, 'approved', 3, '2025-10-22 00:39:01', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', '2025-10-22 00:39:01', NULL, NULL, NULL, '2025-10-22 00:39:00', '2025-10-22 00:39:01'),
+(18, 18, 3, 1, 'approved', 3, '2025-10-22 00:39:23', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', '2025-10-22 00:39:23', NULL, NULL, NULL, '2025-10-22 00:39:22', '2025-10-22 00:39:23'),
+(19, 19, 1, 1, 'approved', 1, '2025-10-22 00:39:55', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-22 00:39:55', NULL, NULL, NULL, '2025-10-22 00:39:54', '2025-10-22 00:39:55'),
+(20, 20, 1, 1, 'approved', 1, '2025-10-22 00:52:56', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-22 00:52:56', NULL, NULL, NULL, '2025-10-22 00:52:55', '2025-10-22 00:52:56'),
+(21, 21, 1, 1, 'approved', 1, '2025-10-22 00:55:35', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-22 00:55:35', NULL, NULL, NULL, '2025-10-22 00:55:34', '2025-10-22 00:55:35'),
+(22, 22, 3, 1, 'approved', 3, '2025-10-23 00:36:23', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', '2025-10-23 00:36:23', NULL, NULL, NULL, '2025-10-23 00:36:22', '2025-10-23 00:36:23');
 
 -- --------------------------------------------------------
 
@@ -2344,7 +2397,12 @@ INSERT INTO `task_comments` (`id`, `task_id`, `user_id`, `comment_id`, `content`
 (70, 214, 3, NULL, '53454535435', '2025-09-07 10:14:11', '2025-09-07 10:14:11', NULL, NULL, NULL),
 (71, 274, 3, NULL, 'xvxccxcxcxcx', '2025-09-07 10:18:44', '2025-09-07 10:18:44', 'xxxxx.png', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/xxxxx.webp', NULL),
 (72, 248, 3, NULL, '4354535', '2025-09-07 10:20:07', '2025-09-07 10:20:07', 'xxxxx.png', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/xxxxx-1.webp', NULL),
-(73, 249, 3, NULL, 'ưerwrwr', '2025-09-07 10:20:43', '2025-09-07 10:20:43', 'customers_20250906_232804.csv', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/customers_20250906_232804.csv', NULL);
+(73, 249, 3, NULL, 'ưerwrwr', '2025-09-07 10:20:43', '2025-09-07 10:20:43', 'customers_20250906_232804.csv', 'https://assets.develop.io.vn/wp-content/uploads/2025/09/customers_20250906_232804.csv', NULL),
+(74, 277, 3, NULL, 'xxxx', '2025-10-23 16:02:31', '2025-10-23 16:02:31', NULL, NULL, NULL),
+(75, 277, 3, NULL, '', '2025-10-23 16:03:12', '2025-10-23 16:03:12', 'Mau TTID 2.2_Bien ban hop ĐHĐCĐ.doc', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/Mau-TTID-2.2_Bien-ban-hop-DHDCD.doc', NULL),
+(76, 277, 3, NULL, 'ok', '2025-10-23 16:03:57', '2025-10-23 16:03:57', 'Bang_tinh_nang_phan_mem_draft.xlsx', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/Bang_tinh_nang_phan_mem_draft.xlsx', NULL),
+(77, 277, 1, NULL, 'xxxxxx', '2025-10-23 16:57:41', '2025-10-23 16:57:41', 'customers_20250906_232804.csv', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/customers_20250906_232804.csv', NULL),
+(78, 277, 1, NULL, 'đã duyệt', '2025-10-23 17:00:24', '2025-10-23 17:00:24', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2470,7 +2528,9 @@ INSERT INTO `task_files` (`id`, `task_id`, `document_id`, `comment_id`, `file_na
 (56, 277, NULL, NULL, '20250925_TonghopDieuchinhChucnang PM QLCV_DemoL3 D.xlsx', '435435453535', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20250925_TonghopDieuchinhChucnang-PM-QLCV_DemoL3-D.xlsx', 3, NULL, '2025-10-05 17:04:14', '2025-10-06 00:04:14', 0, 'pending', NULL, NULL, NULL, 'wp_media', 843638, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx', 30, 'wordpress', 3, 'private', NULL),
 (57, 277, NULL, NULL, '20250922_BangtonghopdieuchinhbanDemolan3_T01.docx', 'xxxxxxxxxxxxx', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20250922_BangtonghopdieuchinhbanDemolan3_T01.docx', 3, NULL, '2025-10-05 17:08:07', '2025-10-06 00:08:07', 0, 'pending', NULL, NULL, NULL, 'wp_media', 111502, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'docx', 31, 'wordpress', 3, 'private', NULL),
 (58, 277, NULL, NULL, 'Bang_gia_QR_Code_Marketing_2025.pdf', 'vvvvvvvvvvvvvvvvvv', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/Bang_gia_QR_Code_Marketing_2025.pdf', 3, NULL, '2025-10-05 17:18:57', '2025-10-06 00:18:57', 0, 'pending', NULL, NULL, NULL, 'wp_media', 27190, 'application/pdf', 'pdf', 32, 'wordpress', 3, 'private', NULL),
-(59, 277, NULL, NULL, '20241007_GiahanphanmemMicrosoft365.pdf', 'công văn 01', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20241007_GiahanphanmemMicrosoft365-1.pdf', 3, NULL, '2025-10-21 08:11:13', '2025-10-21 15:11:13', 0, 'pending', NULL, NULL, NULL, 'wp_media', 1117047, 'application/pdf', 'pdf', 64, 'wordpress', 3, 'private', NULL);
+(59, 277, NULL, NULL, '20241007_GiahanphanmemMicrosoft365.pdf', 'công văn 01', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20241007_GiahanphanmemMicrosoft365-1.pdf', 3, NULL, '2025-10-21 08:11:13', '2025-10-21 15:11:13', 0, 'pending', NULL, NULL, NULL, 'wp_media', 1117047, 'application/pdf', 'pdf', 64, 'wordpress', 3, 'private', NULL),
+(60, 302, NULL, NULL, 'Bang_gia_QR_Code_Marketing_2025.pdf', 'công văn 22/10/2025', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/Bang_gia_QR_Code_Marketing_2025-1.pdf', 1, NULL, '2025-10-21 17:50:41', '2025-10-22 00:50:41', 0, 'pending', NULL, NULL, NULL, 'wp_media', 27190, 'application/pdf', 'pdf', 65, 'wordpress', 3, 'private', NULL),
+(61, 278, NULL, NULL, 'Bang_gia_QR_Code_Marketing_2025.pdf', 'công văn 3', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/Bang_gia_QR_Code_Marketing_2025-2.pdf', 1, NULL, '2025-10-21 17:58:06', '2025-10-22 00:58:06', 0, 'pending', NULL, NULL, NULL, 'wp_media', 27190, 'application/pdf', 'pdf', 66, 'wordpress', 3, 'private', NULL);
 
 -- --------------------------------------------------------
 
@@ -2872,25 +2932,25 @@ ALTER TABLE `departments`
 -- AUTO_INCREMENT for table `documents`
 --
 ALTER TABLE `documents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `document_approvals`
 --
 ALTER TABLE `document_approvals`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `document_approval_logs`
 --
 ALTER TABLE `document_approval_logs`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `document_approval_steps`
 --
 ALTER TABLE `document_approval_steps`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `document_permissions`
@@ -2962,7 +3022,7 @@ ALTER TABLE `task_approval_logs`
 -- AUTO_INCREMENT for table `task_comments`
 --
 ALTER TABLE `task_comments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=79;
 
 --
 -- AUTO_INCREMENT for table `task_extensions`
@@ -2974,7 +3034,7 @@ ALTER TABLE `task_extensions`
 -- AUTO_INCREMENT for table `task_files`
 --
 ALTER TABLE `task_files`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=62;
 
 --
 -- AUTO_INCREMENT for table `users`
