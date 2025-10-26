@@ -106,10 +106,10 @@ class TaskApprovalController extends ResourceController
     }
 
     /** Ghi roster vào task.approval_roster_json */
-    private function writeRoster(int $taskId, array $roster): bool
+    private function writeRoster(int $taskId, array $roster): void
     {
         $db = db_connect();
-        return $db->table('tasks')->where('id', $taskId)->update([
+        $db->table('tasks')->where('id', $taskId)->update([
             'approval_roster_json' => json_encode(array_values($roster), JSON_UNESCAPED_UNICODE),
         ]);
     }
@@ -122,15 +122,31 @@ class TaskApprovalController extends ResourceController
         $role = strtolower((string)($m['role'] ?? 'approve'));
         if ($uid <= 0) return null;
         if (!in_array($role, ['approve', 'sign'], true)) $role = 'approve';
+
+        $status = 'pending';
+        if (true) {
+            $in = strtolower((string)($m['status'] ?? ''));
+            if (in_array($in, ['pending','approved','rejected'], true)) {
+                $status = $in;
+            }
+        }
+
+        // nếu có status=approved|rejected mà chưa có acted_at thì thêm
+        $actedAt = null;
+        if (in_array($status, ['approved','rejected'], true)) {
+            $actedAt = $m['acted_at'] ?? date('Y-m-d H:i:s');
+        }
+
         return [
             'user_id'  => $uid,
             'name'     => $name ?: ("#" . $uid),
             'role'     => $role,
-            'status'   => 'pending',   // pending | approved | rejected
-            'acted_at' => null,
-            'note'     => null,
+            'status'   => $status,
+            'acted_at' => $actedAt,
+            'note'     => $m['note'] ?? null,
         ];
     }
+
 
     /** Tính % tiến độ theo roster (tổng approved / tổng thành viên) */
     private function computeRosterProgress(array $roster, string $taskApprovalStatus): int
@@ -568,8 +584,19 @@ class TaskApprovalController extends ResourceController
         $roster   = $this->readRoster($task);
         $progress = $this->computeRosterProgress($roster, (string)($task['approval_status'] ?? 'pending'));
 
-        return $this->respond(['roster' => $roster, 'progress' => $progress]);
+        // ✅ Thêm đoạn mới ở đây
+        $allApproved = !array_filter($roster, fn($r) => ($r['status'] ?? 'pending') !== 'approved');
+        $approved_at = $allApproved ? max(array_map(fn($r) => $r['acted_at'] ?? null, $roster)) : null;
+
+        return $this->respond([
+            'roster'         => $this->addHumanDatesToRoster($roster),
+            'progress'       => $progress,
+            'all_approved'   => $allApproved,
+            'approved_at'    => $approved_at,
+            'approved_at_vi' => $approved_at ? date('H:i d/m/Y', strtotime($approved_at)) : null,
+        ]);
     }
+
 
     /** POST /tasks/{id}/roster/merge: body: mentions(json|form) */
     public function merge($taskId): ResponseInterface
@@ -578,37 +605,107 @@ class TaskApprovalController extends ResourceController
         $task   = $this->getTaskRow($taskId);
         if (!$task) return $this->failNotFound('Task not found');
 
-        // Lấy mentions từ JSON hoặc form-data
-        $raw = $this->request->getPost('mentions') ?? ($this->getJsonBody()['mentions'] ?? '[]');
-        $mentions = is_string($raw) ? json_decode($raw, true) : $raw;
+        $json     = $this->getJsonBody() ?? [];
+        $rawMent  = $this->request->getPost('mentions') ?? ($json['mentions'] ?? '[]');
+        $rawMode  = $this->request->getPost('mode')     ?? ($json['mode'] ?? 'merge');
+
+        $mentions = is_string($rawMent) ? json_decode($rawMent, true) : $rawMent;
         if (!is_array($mentions)) $mentions = [];
+        $mode = strtolower((string)$rawMode);
+        if (!in_array($mode, ['merge', 'replace'], true)) $mode = 'merge';
 
-        // Normalize & merge (dedup theo user_id, giữ status cũ nếu đã có)
-        $roster = $this->readRoster($task);
-        $map    = [];
-        foreach ($roster as $r) $map[(int)$r['user_id']] = $r;
+        // ✅ Lấy roster cũ
+        $oldRoster = $this->readRoster($task);
+        $oldMap = [];
+        foreach ($oldRoster as $r) $oldMap[(int)$r['user_id']] = $r;
 
-        foreach ($mentions as $m) {
-            $nm = $this->normalizeMention($m);
-            if (!$nm) continue;
-            $uid = (int)$nm['user_id'];
-            if (!isset($map[$uid])) {
-                $map[$uid] = $nm; // thêm mới
-            } else {
-                // nếu đã tồn tại thì chỉ update name/role (không đè status nếu đã approved/rejected)
-                $old = $map[$uid];
-                $old['name'] = $nm['name'];
-                $old['role'] = $nm['role'];
-                $map[$uid]   = $old;
+        $newList = [];
+
+        if ($mode === 'replace') {
+            foreach ($mentions as $m) {
+                $nm = $this->normalizeMention($m);
+                if (!$nm) continue;
+                $uid = (int)$nm['user_id'];
+
+                if (isset($oldMap[$uid])) {
+                    $old = $oldMap[$uid];
+                    // giữ status/acted_at/note/added_at
+                    if (empty($m['status'])) {
+                        $nm['status']   = $old['status']   ?? 'pending';
+                        $nm['acted_at'] = $old['acted_at'] ?? null;
+                        $nm['note']     = $old['note']     ?? null;
+                        $nm['added_at'] = date('Y-m-d H:i:s'); // 👈 thêm
+                    }
+                    $nm['added_at'] = $old['added_at'] ?? ($old['created_at'] ?? null);
+                } else {
+                    // người mới
+                    if (empty($m['status'])) {
+                        $nm['added_at'] = date('Y-m-d H:i:s'); // 👈 thêm
+                        $nm['status']   = 'pending';
+                        $nm['acted_at'] = null;
+                    }
+                    $nm['added_at'] = date('Y-m-d H:i:s');
+                }
+                $newList[] = $nm;
             }
+        } else { // MERGE
+            $map = $oldMap;
+            foreach ($mentions as $m) {
+                $nm  = $this->normalizeMention($m);
+                if (!$nm) continue;
+                $uid = (int)$nm['user_id'];
+
+                if (!isset($map[$uid])) {
+                    $nm['added_at'] = date('Y-m-d H:i:s');   // 👈 người mới
+                    $map[$uid] = $nm;
+                } else {
+                    $old = $map[$uid];
+                    // cập nhật name/role, giữ các field khác
+                    $old['name'] = $nm['name'];
+                    $old['role'] = $nm['role'];
+                    // chống “trôi” key (giữ old):
+                    $map[$uid] = $old + $nm;
+                }
+            }
+            $newList = array_values($map);
         }
 
-        $newRoster = array_values($map);
-        $this->writeRoster($taskId, $newRoster);
-
-        $progress = $this->computeRosterProgress($newRoster, (string)($task['approval_status'] ?? 'pending'));
-        return $this->respond(['message' => 'OK', 'roster' => $newRoster, 'progress' => $progress]);
+// lưu + respond humanized
+        $this->writeRoster($taskId, $newList);
+        $progress = $this->computeRosterProgress($newList, (string)($task['approval_status'] ?? 'pending'));
+        return $this->respond([
+            'message'  => 'OK',
+            'roster'   => $this->addHumanDatesToRoster($newList), // 👈
+            'progress' => $progress,
+        ]);
     }
+
+
+
+    private function addHumanDatesToRoster(array $roster): array
+    {
+        foreach ($roster as &$r) {
+            $dt = $r['acted_at'] ?? null;
+            if ($dt) {
+                $r['acted_at_vi']   = date('H:i d/m/Y', strtotime($dt));
+                $r['acted_date_vi'] = date('d/m/Y', strtotime($dt));
+                $r['acted_at_iso']  = date('c', strtotime($dt));
+            } else {
+                $r['acted_at_vi'] = $r['acted_date_vi'] = $r['acted_at_iso'] = null;
+            }
+
+            $ad = $r['added_at'] ?? null;
+            if ($ad) {
+                $r['added_at_vi']   = date('H:i d/m/Y', strtotime($ad));
+                $r['added_at_iso']  = date('c', strtotime($ad));
+            } else {
+                $r['added_at_vi'] = $r['added_at_iso'] = null;
+            }
+        }
+        return $roster;
+    }
+
+
 
 
     // ========== ADD: helper dùng chung cho approve/reject roster ==========
@@ -639,36 +736,43 @@ class TaskApprovalController extends ResourceController
 
         // Cập nhật member
         $payload = $this->getJsonBody();
+        $note = $payload['note'] ?? null;
+        if (is_array($note)) {
+            $note = json_encode($note, JSON_UNESCAPED_UNICODE);
+        }
         $roster[$idx]['status']   = $finalStatus;
         $roster[$idx]['acted_at'] = date('Y-m-d H:i:s');
-        if (!empty($payload['note'])) {
-            $roster[$idx]['note'] = trim((string)$payload['note']);
+        if ($note !== null && $note !== '') {
+            $roster[$idx]['note'] = (string) $note;
         }
+
 
         // Lưu roster
         $this->writeRoster($taskId, $roster);
 
-        // Tính & cập nhật trạng thái task
-        $taskUpd = [];
         if ($finalStatus === 'rejected') {
-            // 1 người từ chối -> task rejected
             $taskUpd = [
                 'approval_status' => 'rejected',
-                'status'          => \App\Enums\TaskStatus::TODO,
+                'status'          => TaskStatus::TODO,
                 'progress'        => $this->computeRosterProgress($roster, 'rejected'),
             ];
-        } else { // approved
-            // nếu tất cả đã approved -> DONE
+        } else {
             $allApproved = !array_filter($roster, fn($r) => ($r['status'] ?? 'pending') !== 'approved');
+            $taskUpd['approved_at'] = date('Y-m-d H:i:s'); // thêm cột approved_at vào bảng tasks nếu thấy hữu ích
             $taskUpd = [
-                'progress' => $this->computeRosterProgress($roster, (string)($task['approval_status'] ?? 'pending')),
+                'progress'     => $this->computeRosterProgress($roster, (string)($task['approval_status'] ?? 'pending')),
+                'approved_at'  => date('Y-m-d H:i:s'),
             ];
             if ($allApproved) {
                 $taskUpd['approval_status'] = 'approved';
-                $taskUpd['status']          = \App\Enums\TaskStatus::DONE;
+                $taskUpd['status']          = TaskStatus::DONE;
                 $taskUpd['progress']        = 100;
             }
         }
+
+        $roster = $this->addHumanDatesToRoster($roster);
+
+
         if ($taskUpd) {
             db_connect()->table('tasks')->where('id', $taskId)->update($taskUpd);
         }

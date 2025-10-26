@@ -121,8 +121,8 @@ export const getTaskRosterAPI = (taskId) =>
 /** Gộp (merge/upsert) roster từ FE vào task
  * mentions: [{ user_id, name, role: 'approve'|'sign', status }]
  */
-export const mergeTaskRosterAPI = (taskId, mentions=[]) =>
-    instance.post(`/tasks/${taskId}/roster/merge`, { mentions })
+export const mergeTaskRosterAPI = (taskId, mentions, mode = 'merge') =>
+    instance.post(`/tasks/${taskId}/roster/merge`, { mentions, mode })
 
 /** Current user APPROVE trong roster */
 export const approveRosterAPI = (taskId, note) =>

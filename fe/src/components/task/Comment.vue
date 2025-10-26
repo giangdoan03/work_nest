@@ -6,7 +6,7 @@
 
         <!-- Files ghim -->
             <div v-if="pinnedFiles.length" class="pinned-files">
-                <a-space wrap>
+                <a-space wrap style="margin-bottom: 0">
                     <div v-for="f in pinnedFiles" :key="f.id || f.file_path" class="pinned-item">
                         <a :href="hrefOf(f)" target="_blank" rel="noopener" class="pinned-link">
                             <PaperClipOutlined style="margin-right:4px" />
@@ -20,7 +20,7 @@
             </div>
 
             <!-- Chips người duyệt/ký -->
-            <a-space wrap>
+            <a-space wrap style="margin-bottom: 8px;">
                 <a-popover
                     v-for="m in mentionsSelected"
                     :key="m.user_id"
@@ -31,47 +31,57 @@
                 >
                     <template #content>
                         <div class="approve-pop">
-                            <div class="info">
-                                <b>{{ m.name }}</b>
-                                <span style="color:#999; margin-left:4px;">
-                  ({{ m.role === 'sign' ? 'Người ký' : 'Người duyệt' }})
-                </span>
+                            <div class="pop-head">
+                                <div class="role-pill">
+                                    <span class="dot" :class="statusDotClass(m.status)"></span>
+                                    {{ m.role === 'sign' ? 'Người ký' : 'Người duyệt' }}
+                                </div>
+                                <div class="pop-time" v-if="metaTime(m)">
+                                    {{ metaLabel(m) }}: <b>{{ metaTime(m) }}</b>
+                                </div>
                             </div>
                             <div class="actions">
-                                <a-button type="primary" size="small" @click="handleApproveAction(m, 'approved')">
+                                <a-button type="primary" size="small" @click="handleApproveAction(m,'approved')">
                                     <template #icon><CheckOutlined/></template> Đồng ý
                                 </a-button>
-                                <a-button danger size="small" @click="handleApproveAction(m, 'rejected')">
+                                <a-button danger size="small" @click="handleApproveAction(m,'rejected')">
                                     <template #icon><CloseOutlined/></template> Từ chối
                                 </a-button>
                             </div>
                         </div>
                     </template>
 
-                    <a-tag
-                        closable
-                        @close="removeMention(m.user_id)"
-                        :color="m.status === 'approved' ? 'green' : m.status === 'rejected' ? 'red' : 'blue'"
+                    <div
+                        class="chip-card"
+                        :class="{
+      'is-approved': m.status==='approved',
+      'is-pending': m.status==='pending' || m.status==='processing',
+      'is-rejected': m.status==='rejected'
+    }"
                     >
-                        @{{ m.name }}
-                        <a-badge :status="m.status === 'approved' ? 'success' : m.status === 'rejected' ? 'error' : 'processing'">
-                            <template #text>
-                <span :style="{
-                  fontWeight: 500,
-                  color: m.status === 'approved' ? '#52c41a' : m.status === 'rejected' ? '#ff4d4f' : '#1677ff'
-                }">
-                  {{
-                        m.status === 'approved'
-                            ? (m.role === 'sign' ? 'Đã ký' : 'Đã duyệt')
-                            : m.status === 'rejected'
-                                ? 'Đã từ chối'
-                                : (m.role === 'sign' ? 'Chờ ký' : 'Chờ duyệt')
-                    }}
-                </span>
-                            </template>
-                        </a-badge>
-                    </a-tag>
+                        <div class="chip-top">
+                            <div class="chip-title" :title="m.name">
+                                @{{ m.name }}
+                                <span class="role-dot" :class="statusDotClass(m.status)"></span>
+                                <span class="state-text">
+          {{ m.status==='approved' ? (m.role==='sign'?'Đã ký':'Đã duyệt')
+                                    : m.status==='rejected' ? 'Đã từ chối'
+                                        : (m.role==='sign'?'Chờ ký':'Chờ duyệt') }}
+        </span>
+                            </div>
+                            <a-tooltip title="Bỏ khỏi danh sách">
+                                <a-button type="text" size="small" class="chip-close" @click.stop="removeMention(m.user_id)">×</a-button>
+                            </a-tooltip>
+                        </div>
+
+                        <a-tooltip :title="fullTimeTooltip(m)" v-if="metaTime(m)">
+                            <div class="chip-meta">
+                                {{ metaLabel(m) }} · {{ metaTime(m) }}
+                            </div>
+                        </a-tooltip>
+                    </div>
                 </a-popover>
+
             </a-space>
         </div>
 
@@ -457,22 +467,30 @@ function isPinned(file){
 async function togglePin(file) {
     const tfId = await ensureTaskFileId(file)
     if (!tfId) return
+
     try {
-        if (isPinned({ ...file, task_file_id: tfId })) {
+        const already = isPinned({ ...file, task_file_id: tfId })
+
+        if (already) {
             await unpinTaskFileAPI(tfId, { user_id: store.currentUser.id })
         } else {
+            // chặn 2 chiếc ở UI trước khi gọi
             if ((pinnedFiles.value?.length || 0) >= 2) {
-                message.warning('Chỉ được ghim tối đa 2 file'); return
+                message.warning('Chỉ được ghim tối đa 2 file');
+                return
             }
             await pinTaskFileAPI(tfId, { user_id: store.currentUser.id })
         }
-        // 🔁 luôn đồng bộ lại từ server
+
+        // ✅ chỉ lấy theo server, không tự set state cục bộ
         await loadPinnedFiles()
+        message.success(already ? 'Đã bỏ ghim' : 'Đã ghim')
     } catch (e) {
         console.error('pin/unpin error', e?.response?.data || e)
         message.error('Không thao tác được ghim/bỏ ghim')
     }
 }
+
 
 
 /* ===== detect file type helpers ===== */
@@ -489,20 +507,25 @@ function kindOfCommentFile(f={}){ return detectKind({ name:f.file_name, url:f.fi
 
 /* ===== Approve popover control & actions ===== */
 const mentionPopoverOpen = ref({})
-async function handleApproveAction(m, status){
-    try{
-        if (status === 'approved') await approveRosterAPI(taskId.value, null)
-        else await rejectRosterAPI(taskId.value, null)
-        m.status = status
+async function handleApproveAction(m, status) {
+    try {
+        if (status === 'approved') {
+            await approveRosterAPI(taskId.value, { note: null })
+        } else {
+            await rejectRosterAPI(taskId.value, { note: null })
+        }
         mentionPopoverOpen.value[m.user_id] = false
-        await persistRoster()
-        message.success(status==='approved'
+        await syncRosterFromServer()   // ✅ chỉ đồng bộ từ server
+        message.success(status === 'approved'
             ? `${m.name} đã ${m.role === 'sign' ? 'ký' : 'duyệt'}`
-            : `${m.name} đã từ chối`)
-    }catch(e){
-        console.error(e); message.error('Xử lý không thành công')
+            : `${m.name} đã từ chối`);
+    } catch (e) {
+        console.error(e);
+        message.error('Xử lý không thành công');
     }
 }
+
+
 
 /* ===== users & mentions ===== */
 const getUserById = (id) => listUser.value.find(u => u.id === id) || {}
@@ -520,7 +543,8 @@ const addMention = async () => {
     if (mentionsSelected.value.some(m => String(m.user_id) === String(uid))) { message.info('Người này đã có trong danh sách'); return }
     const user = listUser.value.find(u => String(u.id) === String(uid))
     const displayName = user?.name || `#${uid}`
-    const newMention = { user_id:String(uid), name:displayName, role:mentionForm.value.role, status:'processing' }
+    const newMention = { user_id:String(uid), name:displayName, role:mentionForm.value.role, status:'pending' }
+
     mentionsSelected.value.push(newMention)
 
     const suffix = inputValue.value && !/\s$/.test(inputValue.value) ? ' ' : ''
@@ -533,12 +557,40 @@ const addMention = async () => {
     resetMentionForm()
 }
 
-function removeMention(uid){
+function removeMention(uid) {
     mentionsSelected.value = mentionsSelected.value.filter(m => String(m.user_id) !== String(uid))
-    persistRoster()
+    persistRoster('replace') // ghi đè roster còn lại, nhưng không gửi status => BE giữ nguyên status cũ
 }
+
+// Label meta và thời gian ngắn gọn
+function metaLabel(m){
+    if (m.status === 'approved') return 'đã duyệt';
+    if (m.status === 'rejected') return 'đã từ chối';
+    return 'thêm lúc';
+}
+function metaTime(m){
+    if (m.status === 'approved' || m.status === 'rejected') {
+        return m.acted_at_vi || formatVi(m.acted_at);
+    }
+    return m.added_at_vi || formatVi(m.added_at);
+}
+function fullTimeTooltip(m){
+    if (m.status === 'approved' || m.status === 'rejected') {
+        return m.acted_at_vi || formatVi(m.acted_at);
+    }
+    return m.added_at_vi || formatVi(m.added_at);
+}
+function statusDotClass(status){
+    return status === 'approved' ? 'ok'
+        : status === 'rejected' ? 'err'
+            : 'proc';
+}
+
+
+
 function hrefOf(f = {}) { return f.file_path || f.link_url || '' }
-function titleOf(f = {}) { return f.file_name || prettyUrl(f.file_path || f.link_url || '') }
+function titleOf(f = {}) { return f.file_name || f.title || prettyUrl(f.file_path || f.link_url || '') }
+
 function onInputDetectMention(e){ const v = String(e?.target?.value ?? ''); if (v.endsWith('@')) mentionPopupOpen.value = true }
 
 /* ===== upload handlers ===== */
@@ -614,23 +666,32 @@ async function getListComment(page = 1){
 async function getUser(){ try{ const { data } = await getUsers(); listUser.value = data } catch{ message.error('Không thể tải người dùng') } }
 
 /* ===== roster ===== */
-const persistRoster = async () => {
-    try{
+// FE
+async function persistRoster(mode = 'merge') {
+    try {
         const mentions = mentionsSelected.value.map(m => ({
-            user_id: Number(m.user_id), name:m.name, role:m.role, status:m.status || 'processing'
-        }))
-        await mergeTaskRosterAPI(taskId.value, mentions)
-    }catch(e){ console.error('merge roster error', e?.response?.data || e); message.error('Không lưu được danh sách người duyệt/ký') }
+            user_id: Number(m.user_id),
+            name: m.name,
+            role: m.role,
+            // KHÔNG gửi status ở đây
+        }));
+        await mergeTaskRosterAPI(taskId.value, mentions, mode);
+        await syncRosterFromServer();
+    } catch (e) {
+        console.error('persistRoster error', e);
+        message.error('Không thể lưu danh sách người duyệt/ký');
+    }
 }
+
+
+
 
 /* ===== pinned files load ===== */
 async function loadPinnedFiles() {
     try {
         const res = await getPinnedFilesAPI(taskId.value)
-
-        console.log('📦 API pinned-files raw', res)
         console.log('🔎 URL hit:', res?.config?.url)
-        console.log('📦 res.data type:', Array.isArray(res.data), res.data)
+        console.log('📦 res.data =', res.data)
 
         let arr = []
 
@@ -641,8 +702,7 @@ async function loadPinnedFiles() {
         } else if (Array.isArray(res.data?.files)) {
             arr = res.data.files.filter(x => Number(x.is_pinned) === 1)
         } else {
-            // 🚑 Fallback: bị trả nhầm task detail → tự gọi danh sách file rồi lọc is_pinned
-            console.warn('⚠️ pinned-files trả object task → fallback qua /tasks/:id/files')
+            console.warn('⚠️ /pinned-files trả kiểu lạ → fallback /tasks/:id/files')
             const filesRes = await getTaskFilesAPI(taskId.value)
             const filesArr = Array.isArray(filesRes.data)
                 ? filesRes.data
@@ -656,7 +716,7 @@ async function loadPinnedFiles() {
             title: x.title || x.file_name || '',
         }))
 
-        console.log('✅ pinnedFiles.value =', pinnedFiles.value)
+        console.log('✅ pinnedFiles =', pinnedFiles.value)
     } catch (e) {
         console.error('❌ loadPinnedFiles error', e)
         pinnedFiles.value = []
@@ -665,16 +725,25 @@ async function loadPinnedFiles() {
 
 
 
+
 /* ===== roster sync ===== */
 const syncRosterFromServer = async () => {
-    try{
+    try {
         const { data } = await getTaskRosterAPI(taskId.value)
         const roster = data?.roster || data || []
         mentionsSelected.value = roster.map(r => ({
-            user_id: String(r.user_id), name:r.name, role:r.role, status:r.status || 'processing'
+            user_id: String(r.user_id),
+            name: r.name,
+            role: r.role,
+            status: r.status || 'processing',
+            acted_at: r.acted_at || null,
+            acted_at_vi: r.acted_at_vi || null,
+            added_at: r.added_at || null,          // 👈
+            added_at_vi: r.added_at_vi || null,    // 👈
         }))
-    }catch{ /* no-op */ }
+    } catch { /* no-op */ }
 }
+
 
 /* ===== lifecycle ===== */
 onMounted(async () => {
@@ -709,7 +778,6 @@ onBeforeUnmount(() => { clearInterval(t); ro?.disconnect?.() })
     top: 0;
     z-index: 99;
     background: #fff;
-    padding: 6px 8px;
     border-bottom: 1px solid #eaeaea;
 }
 .pinned-item {
@@ -805,7 +873,6 @@ onBeforeUnmount(() => { clearInterval(t); ro?.disconnect?.() })
 .pinned-files{
     background:#fffbe6;
     border:1px solid #ffe58f;
-    padding:6px 8px;
     border-radius:8px;
     margin-bottom:8px;
 }
@@ -818,4 +885,55 @@ onBeforeUnmount(() => { clearInterval(t); ro?.disconnect?.() })
 .pinned-link:hover{ text-decoration:underline; }
 .unpin{ font-size:12px; color:#999; cursor:pointer; }
 .unpin:hover{ color:#ff4d4f; }
+/* Card nền mềm, bo tròn, viền nhẹ */
+.chip-card{
+    min-width: 240px;
+    max-width: 360px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid #e6ebf1;
+    background: #f7f9fc;
+    transition: box-shadow .15s ease, transform .05s ease;
+}
+.chip-card:hover{ box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+
+.chip-card.is-approved{ background:#f6ffed; border-color:#b7eb8f; }
+.chip-card.is-pending { background:#eef6ff; border-color:#b7d8ff; }
+.chip-card.is-rejected{ background:#fff2f0; border-color:#ffccc7; }
+
+.chip-top{
+    display:flex; align-items:center; justify-content:space-between; gap:6px;
+}
+.chip-title{
+    display:flex; align-items:center; gap:6px;
+    font-weight:600; color:#2b2f36; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.state-text{ font-weight:600; }
+.chip-close{
+    height:auto; line-height:1; padding:0 4px; font-size:14px; color:#9aa4b2;
+}
+.chip-close:hover{ color:#111827; background:transparent; }
+
+.chip-meta{
+    margin-top:4px; font-size:12px; color:#667085;
+}
+
+/* status dot */
+.role-dot, .dot{
+    display:inline-block; width:8px; height:8px; border-radius:50%;
+    transform: translateY(1px);
+}
+.role-dot.ok, .dot.ok{ background:#52c41a; }
+.role-dot.proc, .dot.proc{ background:#1677ff; }
+.role-dot.err, .dot.err{ background:#ff4d4f; }
+
+/* popover */
+.approve-pop{ min-width:260px; display:flex; flex-direction:column; gap:10px; }
+.pop-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.role-pill{
+    display:flex; align-items:center; gap:6px; font-size:12px; color:#475467;
+    border:1px dashed #d0d5dd; padding:2px 8px; border-radius:999px; background:#fafafa;
+}
+.pop-time{ font-size:12px; color:#475467; }
+
 </style>
