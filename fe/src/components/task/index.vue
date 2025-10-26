@@ -53,10 +53,9 @@
                                                     <a-row :gutter="16">
                                                         <a-col :span="12">
                                                             <a-form-item label="Tên công việc" name="title">
-                                                                <a-typography-text v-if="!isEditMode">{{formData.title }}
+                                                                <a-typography-text v-if="!isEditMode">{{formData.title}}
                                                                 </a-typography-text>
-                                                                <a-input v-else v-model:value="formData.title"
-                                                                         placeholder="Nhập tên nhiệm vụ"/>
+                                                                <a-input v-else v-model:value="formData.title" placeholder="Nhập tên nhiệm vụ"/>
                                                             </a-form-item>
                                                         </a-col>
                                                         <a-col :span="12">
@@ -91,15 +90,13 @@
                                                                 <template v-if="formData.parent_id">
                                                                     <a-tooltip
                                                                         :title="formData.parent_title || ('#' + formData.parent_id)">
-                                                                        <a-typography-link
-                                                                            @click="goTaskByParentId(formData.parent_id)">
+                                                                        <a-typography-link @click="goTaskByParentId(formData.parent_id)">
                                                                             {{formData.parent_title || ('#' + formData.parent_id) }}
                                                                         </a-typography-link>
                                                                     </a-tooltip>
                                                                 </template>
                                                                 <template v-else>
-                                                                    <a-typography-text type="secondary">—
-                                                                    </a-typography-text>
+                                                                    <a-typography-text type="secondary">—</a-typography-text>
                                                                 </template>
                                                             </a-form-item>
                                                         </a-col>
@@ -107,7 +104,7 @@
                                                         <!-- ================== BIDDING ================== -->
                                                         <a-col :span="12" v-if="formData.linked_type === 'bidding'">
                                                             <a-form-item label="Gói thầu" name="linked_id">
-                                                                <a-typography-text v-if="!isEditMode">{{linkedName}}
+                                                                <a-typography-text v-if="!isEditMode">{{ linkedName }}
                                                                 </a-typography-text>
                                                                 <a-select
                                                                     v-else
@@ -142,9 +139,7 @@
                                                                 <a-typography-text v-if="!isEditMode">
                                                                     {{ getUserById(formData.assigned_to) }}
                                                                 </a-typography-text>
-                                                                <a-select v-else v-model:value="formData.assigned_to"
-                                                                          :options="userOption"
-                                                                          placeholder="Chọn người dùng"/>
+                                                                <a-select v-else v-model:value="formData.assigned_to" :options="userOption" placeholder="Chọn người dùng"/>
                                                             </a-form-item>
                                                         </a-col>
 
@@ -168,9 +163,7 @@
                                                                 <a-typography-text v-if="!isEditMode">
                                                                     {{ getUserById(formData.collaborated_by) }}
                                                                 </a-typography-text>
-                                                                <a-select v-else v-model:value="formData.collaborated_by"
-                                                                          :options="userOption"
-                                                                          placeholder="Chọn người dùng"/>
+                                                                <a-select v-else v-model:value="formData.collaborated_by" :options="userOption" placeholder="Chọn người dùng"/>
                                                             </a-form-item>
                                                         </a-col>
 
@@ -198,7 +191,7 @@
                                                             <a-form-item label="Thời gian" name="time">
                                                                 <template v-if="!isEditMode">
                                                                     <a-typography-text>
-                                                                        {{(formatDate(formData.start_date) || "Trống") + " → " + (formatDate(formData.end_date) || "Trống") }}
+                                                                        {{(formatDate(formData.start_date) || "Trống") + " → " + (formatDate(formData.end_date) || "Trống")}}
                                                                     </a-typography-text>
                                                                 </template>
                                                                 <template v-else>
@@ -236,8 +229,7 @@
 
                                                         <a-col :span="12">
                                                             <a-form-item label="Ưu tiên" name="priority">
-                                                                <a-tag v-if="!isEditMode"
-                                                                       :color="checkPriority(formData.priority).color">
+                                                                <a-tag v-if="!isEditMode" :color="checkPriority(formData.priority).color">
                                                                     {{ checkPriority(formData.priority).label }}
                                                                 </a-tag>
                                                                 <a-select v-else v-model:value="formData.priority" :options="priorityOption" placeholder="Chọn độ ưu tiên"/>
@@ -252,25 +244,22 @@
                                                                         color="success">Hoàn
                                                                         thành
                                                                     </a-tag>
-                                                                    <a-tag v-else
-                                                                           :color="checkStatus(formData.status).color">
+                                                                    <a-tag v-else :color="checkStatus(formData.status).color">
                                                                         {{ checkStatus(formData.status).label }}
                                                                     </a-tag>
                                                                 </template>
-                                                                <a-select v-else v-model:value="formData.status"
-                                                                          :options="statusOption"
-                                                                          placeholder="Chọn trạng thái"/>
+                                                                <a-select v-else v-model:value="formData.status" :options="statusOption" placeholder="Chọn trạng thái"/>
                                                             </a-form-item>
                                                         </a-col>
 
-<!--                                                        <a-col :span="12">-->
-<!--                                                            <a-form-item label="Phê duyệt" name="approval_status">-->
-<!--                                                                <a-tag-->
-<!--                                                                    :color="formData.approval_status === 'approved' ? 'green' : 'orange'">-->
-<!--                                                                    {{formData.approval_status === 'approved' ? 'Đã duyệt' : 'Chưa duyệt' }}-->
-<!--                                                                </a-tag>-->
-<!--                                                            </a-form-item>-->
-<!--                                                        </a-col>-->
+                                                        <!--                                                        <a-col :span="12">-->
+                                                        <!--                                                            <a-form-item label="Phê duyệt" name="approval_status">-->
+                                                        <!--                                                                <a-tag-->
+                                                        <!--                                                                    :color="formData.approval_status === 'approved' ? 'green' : 'orange'">-->
+                                                        <!--                                                                    {{formData.approval_status === 'approved' ? 'Đã duyệt' : 'Chưa duyệt' }}-->
+                                                        <!--                                                                </a-tag>-->
+                                                        <!--                                                            </a-form-item>-->
+                                                        <!--                                                        </a-col>-->
 
 
                                                         <a-col :span="12">
@@ -287,18 +276,16 @@
                                                                 <a-typography-text v-if="!isEditMode">
                                                                     {{formData.description ? formData.description : "Trống" }}
                                                                 </a-typography-text>
-                                                                <a-textarea v-else v-model:value="formData.description"
-                                                                            :rows="4" placeholder="Nhập mô tả"/>
+                                                                <a-textarea v-else v-model:value="formData.description" :rows="4" placeholder="Nhập mô tả"/>
                                                             </a-form-item>
                                                         </a-col>
 
                                                         <a-col :span="12">
                                                             <a-form-item label="Tiến độ" name="progress">
                                                                 <template v-if="!isEditMode">
-                                                                    <a-tooltip
-                                                                        :title="rosterTotal > 0
-      ? `Đã duyệt: ${rosterApproved}/${rosterTotal}` + (approvedNames.length ? ` • ${approvedNames.join(', ')}` : '')
-      : 'Không có danh sách phê duyệt'">
+                                                                    <a-tooltip :title="rosterTotal > 0
+                                                                          ? `Đã duyệt: ${rosterApproved}/${rosterTotal}` + (approvedNames.length ? ` • ${approvedNames.join(', ')}` : '')
+                                                                          : 'Không có danh sách phê duyệt'">
                                                                         <a-progress
                                                                             :percent="displayProgress"
                                                                             :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
@@ -310,7 +297,7 @@
 
                                                                     <div v-if="rosterTotal > 0" class="mt8">
                                                                         <a-typography-text type="secondary">
-                                                                            (Theo phê duyệt: {{ rosterApproved }}/{{ rosterTotal }})
+                                                                            (Theo phê duyệt: {{rosterApproved }}/{{ rosterTotal }})
                                                                         </a-typography-text>
                                                                     </div>
                                                                 </template>
@@ -323,17 +310,18 @@
                                                                         :step="5"
                                                                         :marks="{ 0: '0%', 25: '25%', 50: '50%', 75: '75%', 100: '100%' }"
                                                                         :tooltip="{
-      formatter: (val) =>
-        rosterTotal > 0
-          ? `${val}% • Đã duyệt ${rosterApproved}/${rosterTotal}`
-          : `${val}%`
-    }"
+                                                                          formatter: (val) =>
+                                                                            rosterTotal > 0
+                                                                              ? `${val}% • Đã duyệt ${rosterApproved}/${rosterTotal}`
+                                                                              : `${val}%`
+                                                                        }"
                                                                         style="width: calc(83% + 50px); margin: 0 auto; display: block;"
                                                                     />
 
                                                                     <div v-if="rosterTotal > 0" class="mt8">
                                                                         <a-typography-text type="secondary">
-                                                                            Tiến độ bị giới hạn theo phê duyệt: {{ rosterApproved }}/{{ rosterTotal }}
+                                                                            Tiến độ bị giới hạn theo phê duyệt:
+                                                                            {{ rosterApproved }}/{{ rosterTotal }}
                                                                             ({{ rosterProgress }}%)
                                                                         </a-typography-text>
                                                                     </div>
@@ -344,32 +332,32 @@
 
                                                         <!-- Phê duyệt -->
                                                         <a-col :span="24">
-<!--                                                            <a-form-item label="Phê duyệt">-->
-                                                                <!-- CẦN DUYỆT -->
-<!--                                                                <template v-if="Number(formData.needs_approval) === 1">-->
-<!--                                                                    <div class="approver-list">-->
-<!--                                                                        <template v-if="approverRows.length">-->
-<!--                                                                            <div-->
-<!--                                                                                v-for="row in approverRows"-->
-<!--                                                                                :key="row.id"-->
-<!--                                                                                :class="['approver-item', row.status]"-->
-<!--                                                                            >-->
-<!--                                                                                <span class="name" style="margin-right: 10px">{{ row.name }}</span>-->
-<!--                                                                                <a-tag v-if="row.status==='approved'" color="green">Đã duyệt</a-tag>-->
-<!--                                                                                <a-tag v-else-if="row.status==='rejected'" color="red">Từ chối</a-tag>-->
-<!--                                                                                <a-tag v-else color="orange">Đang chờ</a-tag>-->
-<!--                                                                            </div>-->
-<!--                                                                        </template>-->
-<!--                                                                        <span v-else class="text-muted">Chưa chọn người duyệt</span>-->
-<!--                                                                    </div>-->
-<!--                                                                </template>-->
+                                                            <!--                                                            <a-form-item label="Phê duyệt">-->
+                                                            <!-- CẦN DUYỆT -->
+                                                            <!--                                                                <template v-if="Number(formData.needs_approval) === 1">-->
+                                                            <!--                                                                    <div class="approver-list">-->
+                                                            <!--                                                                        <template v-if="approverRows.length">-->
+                                                            <!--                                                                            <div-->
+                                                            <!--                                                                                v-for="row in approverRows"-->
+                                                            <!--                                                                                :key="row.id"-->
+                                                            <!--                                                                                :class="['approver-item', row.status]"-->
+                                                            <!--                                                                            >-->
+                                                            <!--                                                                                <span class="name" style="margin-right: 10px">{{ row.name }}</span>-->
+                                                            <!--                                                                                <a-tag v-if="row.status==='approved'" color="green">Đã duyệt</a-tag>-->
+                                                            <!--                                                                                <a-tag v-else-if="row.status==='rejected'" color="red">Từ chối</a-tag>-->
+                                                            <!--                                                                                <a-tag v-else color="orange">Đang chờ</a-tag>-->
+                                                            <!--                                                                            </div>-->
+                                                            <!--                                                                        </template>-->
+                                                            <!--                                                                        <span v-else class="text-muted">Chưa chọn người duyệt</span>-->
+                                                            <!--                                                                    </div>-->
+                                                            <!--                                                                </template>-->
 
-<!--                                                                &lt;!&ndash; KHÔNG CẦN DUYỆT &ndash;&gt;-->
-<!--                                                                <template v-else>-->
-<!--                                                                    <a-tag>Không cần phê duyệt</a-tag>-->
-<!--                                                                </template>-->
-<!--                                                                <ApprovalStatus />-->
-<!--                                                            </a-form-item>-->
+                                                            <!--                                                                &lt;!&ndash; KHÔNG CẦN DUYỆT &ndash;&gt;-->
+                                                            <!--                                                                <template v-else>-->
+                                                            <!--                                                                    <a-tag>Không cần phê duyệt</a-tag>-->
+                                                            <!--                                                                </template>-->
+                                                            <!--                                                                <ApprovalStatus />-->
+                                                            <!--                                                            </a-form-item>-->
                                                         </a-col>
                                                     </a-row>
                                                 </div>
@@ -432,13 +420,13 @@
                             <!-- Cột trái: Thảo luận -->
                             <a-col :span="24" :xs="24" :lg="24" style="padding-left: 0; padding-right: 0">
                                 <div class="discussion-scroll" v-auto-maxheight="12">
-                                    <Comment />
+                                    <Comment/>
                                 </div>
                             </a-col>
-<!--                            &lt;!&ndash; Cột phải: Trạng thái duyệt &ndash;&gt;-->
-<!--                            <a-col :span="7" :xs="24" :lg="7">-->
-<!--                                <ApprovalStatus />-->
-<!--                            </a-col>-->
+                            <!--                            &lt;!&ndash; Cột phải: Trạng thái duyệt &ndash;&gt;-->
+                            <!--                            <a-col :span="7" :xs="24" :lg="7">-->
+                            <!--                                <ApprovalStatus />-->
+                            <!--                            </a-col>-->
                         </a-row>
                     </a-card>
                 </a-col>
@@ -447,15 +435,15 @@
     </div>
 </template>
 <script setup>
-import { EllipsisOutlined, DeleteOutlined } from '@ant-design/icons-vue'
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
-import { message } from 'ant-design-vue'
+import {EllipsisOutlined, DeleteOutlined} from '@ant-design/icons-vue'
+import {computed, nextTick, onMounted, reactive, ref, watch} from 'vue'
+import {message} from 'ant-design-vue'
 import 'dayjs/locale/vi'
 import dayjs from 'dayjs'
 import viVN from 'ant-design-vue/es/locale/vi_VN'
-import { getUsers } from '@/api/user'
-import { useRoute, useRouter } from 'vue-router'
-import { formatDate } from '@/utils/formUtils'
+import {getUsers} from '@/api/user'
+import {useRoute, useRouter} from 'vue-router'
+import {formatDate} from '@/utils/formUtils'
 import {
     getTaskDetail,
     getTaskFilesAPI,
@@ -470,19 +458,19 @@ import {
     getBiddingStepsAPI,
     updateBiddingStepAPI,
 } from '@/api/bidding'
-import { getContractAPI, getContractsAPI } from '@/api/contract'
+import {getContractAPI, getContractsAPI} from '@/api/contract'
 import {
     getContractStepsAPI,
     // ⚠️ Nếu bạn có API tương đương để gán task vào step contract, import ở đây:
     // updateContractStepAPI
 } from '@/api/contract-steps'
-import { getDepartments } from '@/api/department'
+import {getDepartments} from '@/api/department'
 import Comment from './Comment.vue'
 import SubTasks from './SubTasks.vue'
-import { useUserStore } from '@/stores/user'
-import { getApprovalHistoryByTask } from '@/api/taskApproval'
-import { useTaskDrawerStore } from '@/stores/taskDrawerStore'
-import { useCommonStore } from '@/stores/common'
+import {useUserStore} from '@/stores/user'
+import {getApprovalHistoryByTask} from '@/api/taskApproval'
+import {useTaskDrawerStore} from '@/stores/taskDrawerStore'
+import {useCommonStore} from '@/stores/common'
 import debounce from 'lodash-es/debounce'
 import AttachmentsCard from '@/components/AttachmentsCard.vue'
 import ApprovalStatus from '@/components/Approval/ApprovalStatus.vue'
@@ -532,25 +520,25 @@ const formData = ref({
 })
 
 const priorityOption = ref([
-    { value: 'low',    label: 'Thấp',   color: 'success' },
-    { value: 'normal', label: 'Thường', color: 'warning' },
-    { value: 'high',   label: 'Cao',    color: 'error' },
+    {value: 'low', label: 'Thấp', color: 'success'},
+    {value: 'normal', label: 'Thường', color: 'warning'},
+    {value: 'high', label: 'Cao', color: 'error'},
 ])
 
 const statusOption = computed(() => [
-    { value: 'doing',            label: 'Đang chuẩn bị', color: 'processing' },
-    { value: 'request_approval', label: 'Gửi duyệt',     color: 'blue' },
-    { value: 'overdue',          label: 'Quá hạn',        color: 'error' },
+    {value: 'doing', label: 'Đang chuẩn bị', color: 'processing'},
+    {value: 'request_approval', label: 'Gửi duyệt', color: 'blue'},
+    {value: 'overdue', label: 'Quá hạn', color: 'error'},
 ])
 
 const departmentOptions = computed(() =>
-    (listDepartment.value || []).map(ele => ({ value: ele.id, label: ele.name }))
+    (listDepartment.value || []).map(ele => ({value: ele.id, label: ele.name}))
 )
 
 const linkedTypeOption = ref([
-    { value: 'bidding',  label: 'Gói thầu' },
-    { value: 'contract', label: 'Hợp đồng' },
-    { value: 'internal', label: 'Nhiệm vụ nội bộ' },
+    {value: 'bidding', label: 'Gói thầu'},
+    {value: 'contract', label: 'Hợp đồng'},
+    {value: 'internal', label: 'Nhiệm vụ nội bộ'},
 ])
 
 const getTextLinkedType = computed(() => {
@@ -575,17 +563,17 @@ const handleDeleteCurrentTask = async () => {
 
 // ===== Context theo route (QUAN TRỌNG) =====
 const isContractCtx = computed(() => !!route.params.contractId)
-const isBiddingCtx  = computed(() => !!route.params.bidId)
+const isBiddingCtx = computed(() => !!route.params.bidId)
 
 const effectiveLinkedType = computed(() => {
     if (isContractCtx.value) return 'contract'
-    if (isBiddingCtx.value)  return 'bidding'
+    if (isBiddingCtx.value) return 'bidding'
     return formData.value.linked_type || 'internal'
 })
 
 const effectiveLinkedId = computed(() => {
     if (isContractCtx.value) return String(route.params.contractId)
-    if (isBiddingCtx.value)  return String(route.params.bidId)
+    if (isBiddingCtx.value) return String(route.params.bidId)
     return formData.value.linked_id ? String(formData.value.linked_id) : ''
 })
 
@@ -600,7 +588,7 @@ watch(hasParent, v => {
 
 // ===== Users =====
 const userOption = computed(() =>
-    (listUser.value || []).map(u => ({ value: u.id, label: u.name }))
+    (listUser.value || []).map(u => ({value: u.id, label: u.name}))
 )
 
 const userNameById = computed(() => {
@@ -625,8 +613,8 @@ const resolveTaskMetaById = async (id) => {
         id: t.id,
         linked_type: t.linked_type,
         step_id: t.step_id ?? t.step_code ?? null,
-        bidding_id: t.linked_type === 'bidding'  ? (t.linked_id ?? null)   : null,
-        contract_id: t.linked_type === 'contract' ? (t.linked_id ?? null)  : null,
+        bidding_id: t.linked_type === 'bidding' ? (t.linked_id ?? null) : null,
+        contract_id: t.linked_type === 'contract' ? (t.linked_id ?? null) : null,
     }
     __taskMetaCache.set(key, meta)
     return meta
@@ -634,10 +622,10 @@ const resolveTaskMetaById = async (id) => {
 
 const buildDetailUrlFromMeta = (meta) => {
     const taskId = meta.id
-    if (meta.bidding_id && meta.step_id)  return `/biddings/${meta.bidding_id}/steps/${meta.step_id}/tasks/${taskId}/info`
+    if (meta.bidding_id && meta.step_id) return `/biddings/${meta.bidding_id}/steps/${meta.step_id}/tasks/${taskId}/info`
     if (meta.contract_id && meta.step_id) return `/contract/${meta.contract_id}/steps/${meta.step_id}/tasks/${taskId}/info`
-    if (meta.linked_type === 'bidding')   return `/workflow/bidding-tasks/${taskId}/info`
-    if (meta.linked_type === 'contract')  return `/workflow/contract-tasks/${taskId}/info`
+    if (meta.linked_type === 'bidding') return `/workflow/bidding-tasks/${taskId}/info`
+    if (meta.linked_type === 'contract') return `/workflow/contract-tasks/${taskId}/info`
     return `/non-workflow/tasks/${taskId}/info`
 }
 
@@ -659,7 +647,9 @@ const approverIds = computed(() => {
     try {
         const parsed = JSON.parse(raw || '[]')
         return Array.isArray(parsed) ? parsed.map(v => String(v)).filter(Boolean) : []
-    } catch { return [] }
+    } catch {
+        return []
+    }
 })
 
 const approvedMap = computed(() => {
@@ -713,12 +703,14 @@ const getNameLinked = async (id) => {
 
 watch(
     () => [effectiveLinkedId.value, effectiveLinkedType.value],
-    async () => { linkedName.value = await getNameLinked(effectiveLinkedId.value) },
-    { immediate: true }
+    async () => {
+        linkedName.value = await getNameLinked(effectiveLinkedId.value)
+    },
+    {immediate: true}
 )
 
 const searchBidding = debounce(async (value) => {
-    const res = await getBiddingsAPI({ search: value, per_page: 20 })
+    const res = await getBiddingsAPI({search: value, per_page: 20})
     listBidding.value = res.data.data
 }, 400)
 
@@ -730,11 +722,11 @@ const numericProgress = computed({
 const linkedIdOption = computed(() => {
     if (effectiveLinkedType.value === 'contract') {
         const arr = Array.isArray(listContract.value) ? listContract.value : []
-        return arr.map(ele => ({ value: String(ele.id), label: ele.title }))
+        return arr.map(ele => ({value: String(ele.id), label: ele.title}))
     }
     if (effectiveLinkedType.value === 'bidding') {
         const arr = Array.isArray(listBidding.value) ? listBidding.value : []
-        return arr.map(ele => ({ value: String(ele.id), label: ele.title }))
+        return arr.map(ele => ({value: String(ele.id), label: ele.title}))
     }
     return []
 })
@@ -766,12 +758,12 @@ const validateDescription = async (_r, v) => {
     return Promise.resolve()
 }
 const rules = computed(() => ({
-    title:        [{ required: true, validator: validateTitle,        trigger: 'change' }],
-    time:         [{ required: true, validator: validateTime,         trigger: 'change' }],
-    priority:     [{ required: true, validator: validatePriority,     trigger: 'change' }],
-    assigned_to:  [{ required: true, validator: validateAsigned,      trigger: 'change' }],
-    linked_type:  [{ required: true, validator: validateLinkedType,   trigger: 'change' }],
-    description:  [{ required: true, validator: validateDescription,  trigger: 'change' }],
+    title: [{required: true, validator: validateTitle, trigger: 'change'}],
+    time: [{required: true, validator: validateTime, trigger: 'change'}],
+    priority: [{required: true, validator: validatePriority, trigger: 'change'}],
+    assigned_to: [{required: true, validator: validateAsigned, trigger: 'change'}],
+    linked_type: [{required: true, validator: validateLinkedType, trigger: 'change'}],
+    description: [{required: true, validator: validateDescription, trigger: 'change'}],
 }))
 
 const stepOption = ref([])
@@ -779,8 +771,8 @@ const stepOption = ref([])
 // ===== Methods =====
 const handleChangeLinkedType = () => {
     formData.value.linked_type = effectiveLinkedType.value // đồng bộ UI
-    formData.value.linked_id   = effectiveLinkedId.value
-    formData.value.step_code   = null
+    formData.value.linked_id = effectiveLinkedId.value
+    formData.value.step_code = null
 }
 
 const handleChangeLinkedId = () => {
@@ -788,7 +780,7 @@ const handleChangeLinkedId = () => {
     commonStore.setLinkedType(effectiveLinkedType.value)
     commonStore.setLinkedIdParent(effectiveLinkedId.value)
 
-    if (effectiveLinkedType.value === 'bidding')  getBiddingStep()
+    if (effectiveLinkedType.value === 'bidding') getBiddingStep()
     else if (effectiveLinkedType.value === 'contract') getContractStep()
 }
 
@@ -799,24 +791,34 @@ const handleChangeStep = (e) => {
 
 const getContractStep = async () => {
     const id = effectiveLinkedId.value
-    if (!id) { stepOption.value = []; return }
+    if (!id) {
+        stepOption.value = [];
+        return
+    }
     try {
         const res = await getContractStepsAPI(id)
         stepOption.value = (res.data || []).map(ele => ({
             value: ele.step_number, label: ele.title, step_id: ele.id,
         }))
-    } catch { stepOption.value = [] }
+    } catch {
+        stepOption.value = []
+    }
 }
 
 const getBiddingStep = async () => {
     const id = effectiveLinkedId.value
-    if (!id) { stepOption.value = []; return }
+    if (!id) {
+        stepOption.value = [];
+        return
+    }
     try {
         const res = await getBiddingStepsAPI(id)
         stepOption.value = (res.data || []).map(ele => ({
             value: ele.step_number, label: ele.title, step_id: ele.id,
         }))
-    } catch { stepOption.value = [] }
+    } catch {
+        stepOption.value = []
+    }
 }
 
 const getStepByStepNo = (step) => {
@@ -824,8 +826,12 @@ const getStepByStepNo = (step) => {
     return data ? data.label : 'Trống'
 }
 
-const checkPriority = (text) => priorityOption.value.find(ele => ele.value === text) || { value: '', label: '', color: '' }
-const checkStatus   = (text) => statusOption.value.find(ele => ele.value === text)   || { value: '', label: '', color: '' }
+const checkPriority = (text) => priorityOption.value.find(ele => ele.value === text) || {
+    value: '',
+    label: '',
+    color: ''
+}
+const checkStatus = (text) => statusOption.value.find(ele => ele.value === text) || {value: '', label: '', color: ''}
 
 const getUser = async () => {
     loading.value = true
@@ -844,15 +850,15 @@ const getDepartmentById = (id) => (listDepartment.value.find(ele => ele.id === i
 const changeDateTime = (day) => {
     if (day && day.length === 2) {
         formData.value.start_date = day[0]?.format('YYYY-MM-DD')
-        formData.value.end_date   = day[1]?.format('YYYY-MM-DD')
+        formData.value.end_date = day[1]?.format('YYYY-MM-DD')
     } else {
         formData.value.start_date = ''
-        formData.value.end_date   = ''
+        formData.value.end_date = ''
     }
 }
 
 const editTask = () => {
-    formDataSave.value = { ...formData.value }
+    formDataSave.value = {...formData.value}
     isEditMode.value = true
 }
 
@@ -871,13 +877,13 @@ const saveEditTask = async () => {
     // Nếu không sửa ngày thì giữ nguyên
     if (!formData.value.start_date && !formData.value.end_date) {
         formData.value.start_date = formDataSave.value.start_date
-        formData.value.end_date   = formDataSave.value.end_date
+        formData.value.end_date = formDataSave.value.end_date
     }
 
     // Nếu chọn “Gửi duyệt” trong UI
     if (formData.value.status === 'request_approval') {
         formData.value.approval_status = 'pending'
-        formData.value.current_level   = 1
+        formData.value.current_level = 1
     }
 
     // Nếu đổi ngày kết thúc → thêm lý do gia hạn
@@ -898,7 +904,7 @@ const saveEditTask = async () => {
             ...formData.value,
             // đảm bảo backend nhận đúng ngữ cảnh:
             linked_type: effectiveLinkedType.value,
-            linked_id:   effectiveLinkedId.value,
+            linked_id: effectiveLinkedId.value,
         })
 
         // Upload file nếu có
@@ -913,7 +919,7 @@ const saveEditTask = async () => {
         // Gán task vào step nếu có step_id
         if (formData.value.step_id) {
             if (effectiveLinkedType.value === 'bidding') {
-                await updateBiddingStepAPI(formData.value.step_id, { task_id: route.params.id })
+                await updateBiddingStepAPI(formData.value.step_id, {task_id: route.params.id})
             } else if (effectiveLinkedType.value === 'contract') {
                 // Nếu đã có API cho contract step, mở comment dưới:
                 // await updateContractStepAPI(formData.value.step_id, { task_id: route.params.id })
@@ -936,7 +942,9 @@ const saveEditTask = async () => {
     }
 }
 
-const cancelEditTask = () => { isEditMode.value = false }
+const cancelEditTask = () => {
+    isEditMode.value = false
+}
 
 const getDetailTaskById = async () => {
     try {
@@ -946,10 +954,10 @@ const getDetailTaskById = async () => {
         // 🔧 Ép formData khớp context URL để UI/Watcher không gọi sai API
         if (isContractCtx.value) {
             formData.value.linked_type = 'contract'
-            formData.value.linked_id   = String(route.params.contractId)
+            formData.value.linked_id = String(route.params.contractId)
         } else if (isBiddingCtx.value) {
             formData.value.linked_type = 'bidding'
-            formData.value.linked_id   = String(route.params.bidId)
+            formData.value.linked_id = String(route.params.bidId)
         }
 
         const parentId = Number(route.params.id)
@@ -963,19 +971,25 @@ const getListBidding = async () => {
     try {
         const res = await getBiddingsAPI()
         listBidding.value = res.data.data
-    } catch { /* noop */ }
+    } catch { /* noop */
+    }
 }
 
 const getListContract = async () => {
     try {
-        const res = await getContractsAPI({ per_page: 1000, with_progress: 0 })
+        const res = await getContractsAPI({per_page: 1000, with_progress: 0})
         listContract.value = Array.isArray(res.data?.data) ? res.data.data : []
-    } catch { listContract.value = [] }
+    } catch {
+        listContract.value = []
+    }
 }
 
 const fetchTaskFiles = async () => {
     const taskId = route.params.id
-    if (!taskId) { fileList.value = []; return }
+    if (!taskId) {
+        fileList.value = [];
+        return
+    }
     try {
         const res = await getTaskFilesAPI(taskId)
         fileList.value = (res.data || []).map(f => ({
@@ -1002,32 +1016,43 @@ const fetchExtensionHistory = async () => {
 }
 
 const logColumns = [
-    { title: 'Cấp',        dataIndex: 'level' },
-    { title: 'Trạng thái', dataIndex: 'status' },
-    { title: 'Người duyệt',dataIndex: 'approved_by_name' },
-    { title: 'Ghi chú',    dataIndex: 'comment' },
+    {title: 'Cấp', dataIndex: 'level'},
+    {title: 'Trạng thái', dataIndex: 'status'},
+    {title: 'Người duyệt', dataIndex: 'approved_by_name'},
+    {title: 'Ghi chú', dataIndex: 'comment'},
 ]
 
 const getStatusColor = (status) => {
     switch (status) {
-        case 'pending':  return 'orange'
-        case 'approved': return 'green'
-        case 'rejected': return 'red'
-        default:         return ''
+        case 'pending':
+            return 'orange'
+        case 'approved':
+            return 'green'
+        case 'rejected':
+            return 'red'
+        default:
+            return ''
     }
 }
 const getStatusText = (status) => {
     switch (status) {
-        case 'pending':  return 'Đang chờ'
-        case 'approved': return 'Đã duyệt'
-        case 'rejected': return 'Từ chối'
-        default:         return 'Không xác định'
+        case 'pending':
+            return 'Đang chờ'
+        case 'approved':
+            return 'Đã duyệt'
+        case 'rejected':
+            return 'Từ chối'
+        default:
+            return 'Không xác định'
     }
 }
 
 const fetchLogHistory = async () => {
     const taskId = route.params.id
-    if (!taskId) { logData.value = []; return }
+    if (!taskId) {
+        logData.value = [];
+        return
+    }
     try {
         const res = await getApprovalHistoryByTask(taskId)
         logData.value = Array.isArray(res.data) ? res.data : []
@@ -1037,7 +1062,7 @@ const fetchLogHistory = async () => {
     }
 }
 
-const manualLink = reactive({ title: '', url: '' })
+const manualLink = reactive({title: '', url: ''})
 const manualLinks = ref([])
 
 const getDepartment = async () => {
@@ -1067,8 +1092,8 @@ const vAutoMaxheight = {
         ro.observe(document.body)
         setH()
         window.addEventListener('resize', onResize)
-        window.addEventListener('scroll', onScroll, { passive: true })
-        el.__autoMH = { ro, onResize, onScroll }
+        window.addEventListener('scroll', onScroll, {passive: true})
+        el.__autoMH = {ro, onResize, onScroll}
     },
     beforeUnmount(el) {
         const s = el.__autoMH
@@ -1087,7 +1112,9 @@ const rosterItems = computed(() => {
     try {
         const arr = typeof raw === 'string' ? JSON.parse(raw || '[]') : (raw || [])
         return Array.isArray(arr) ? arr : []
-    } catch { return [] }
+    } catch {
+        return []
+    }
 })
 
 const rosterTotal = computed(() => {
@@ -1138,7 +1165,6 @@ const approvedNames = computed(() =>
 )
 
 
-
 const goBack = () => {
     if (window.history.length > 1) router.back()
     else router.push('/non-workflow')
@@ -1146,7 +1172,7 @@ const goBack = () => {
 
 const goToTask = (id) => {
     if (!id) return
-    router.push({ name: 'non-workflow-info', params: { id } })
+    router.push({name: 'non-workflow-info', params: {id}})
 }
 
 // ===== Watchers =====
@@ -1160,7 +1186,7 @@ watch(
     ([start, end]) => {
         dateRange.value = (start && end) ? [dayjs(start), dayjs(end)] : []
     },
-    { immediate: true }
+    {immediate: true}
 )
 
 watch(numericProgress, (val) => {
@@ -1177,10 +1203,10 @@ onMounted(async () => {
         // Ép theo context ngay sau khi load để tránh gọi nhầm API
         if (isContractCtx.value) {
             formData.value.linked_type = 'contract'
-            formData.value.linked_id   = String(route.params.contractId)
+            formData.value.linked_id = String(route.params.contractId)
         } else if (isBiddingCtx.value) {
             formData.value.linked_type = 'bidding'
-            formData.value.linked_id   = String(route.params.bidId)
+            formData.value.linked_id = String(route.params.bidId)
         }
         await getUser()
         await getListBidding()
@@ -1337,13 +1363,16 @@ onMounted(async () => {
 .discussion-scroll::-webkit-scrollbar {
     width: 3px;
 }
+
 .discussion-scroll::-webkit-scrollbar-track {
     background: transparent;
 }
+
 .discussion-scroll::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, .25);
     border-radius: 8px;
 }
+
 .discussion-scroll:hover::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, .35);
 }
@@ -1374,9 +1403,11 @@ onMounted(async () => {
     flex-direction: column;
     gap: 4px;
 }
+
 .approver-item {
     color: #999; /* mặc định mờ */
 }
+
 .approver-item.approved {
     font-weight: 600;
     color: #000; /* đậm hơn khi đã duyệt */
@@ -1386,10 +1417,12 @@ onMounted(async () => {
     color: #999;
     margin-bottom: 4px;
 }
+
 .approver-item.approved .name {
     font-weight: 600;
     color: #000;
 }
+
 .approver-item.rejected .name {
     font-weight: 600;
     color: #c00;
