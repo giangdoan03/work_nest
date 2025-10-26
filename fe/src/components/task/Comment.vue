@@ -226,10 +226,7 @@
                         </a-typography-text>
                     </div>
 
-                    <a-divider
-                        v-if="index !== listComment.length - 1"
-                        style="height:1px; background-color:#e0e2e3; margin:5px 0 5px;"
-                    />
+                    <a-divider v-if="index !== listComment.length - 1" style="height:1px; background-color:#e0e2e3; margin:5px 0 5px;"/>
                 </div>
             </a-spin>
         </div>
@@ -749,9 +746,7 @@ function fullTimeTooltip(m) {
 }
 
 function statusDotClass(status) {
-    return status === 'approved' ? 'ok'
-        : status === 'rejected' ? 'err'
-            : 'proc';
+    return status === 'approved' ? 'ok' : status === 'rejected' ? 'err' : 'proc';
 }
 
 
