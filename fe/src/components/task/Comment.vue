@@ -86,29 +86,20 @@
                         </div>
                     </template>
 
-                    <div
-                        class="chip-card"
-                        :class="{
-          'is-approved': m.status==='approved',
-          'is-pending': m.status==='pending' || m.status==='processing',
-          'is-rejected': m.status==='rejected'
-        }"
+                    <div class="chip-card" :class="{
+                              'is-approved': m.status==='approved',
+                              'is-pending': m.status==='pending' || m.status==='processing',
+                              'is-rejected': m.status==='rejected'
+                            }"
                     >
                         <div class="chip-top">
                             <div class="chip-title" :title="m.name">
                                 @{{ m.name }}
                                 <span class="role-dot" :class="statusDotClass(m.status)"></span>
-                                <span class="state-text">
-              {{
-                                        m.status === 'approved' ? (m.role === 'sign' ? 'Đã ký' : 'Đã duyệt')
-                                            : m.status === 'rejected' ? 'Đã từ chối'
-                                                : (m.role === 'sign' ? 'Chờ ký' : 'Chờ duyệt')
-                                    }}
-            </span>
+                                <span class="state-text">{{m.status === 'approved' ? (m.role === 'sign' ? 'Đã ký' : 'Đã duyệt') : m.status === 'rejected' ? 'Đã từ chối' : (m.role === 'sign' ? 'Chờ ký' : 'Chờ duyệt') }}</span>
                             </div>
                             <a-tooltip title="Bỏ khỏi danh sách">
-                                <a-button type="text" size="small" class="chip-close"
-                                          @click.stop="removeMention(m.user_id)">×
+                                <a-button type="text" size="small" class="chip-close" @click.stop="removeMention(m.user_id)">×
                                 </a-button>
                             </a-tooltip>
                         </div>
@@ -267,10 +258,7 @@
                                 </div>
                                 <div class="row">
                                     <span class="lbl">Vai trò:</span>
-                                    <a-segmented
-                                        v-model:value="mentionForm.role"
-                                        :options="[{ label: 'Duyệt', value: 'approve' }, { label: 'Ký', value: 'sign' }]"
-                                    />
+                                    <a-segmented v-model:value="mentionForm.role" :options="[{ label: 'Duyệt', value: 'approve' }, { label: 'Ký', value: 'sign' }]"/>
                                 </div>
                                 <div class="row" style="justify-content:flex-end; gap:8px;">
                                     <a-button size="small" @click="resetMentionForm">Hủy</a-button>
@@ -295,14 +283,7 @@
                 </div>
 
                 <div class="composer-actions">
-                    <a-button
-                        type="primary"
-                        style="margin-right:12px; width:80px;"
-                        :disabled="!inputValue.trim() && !selectedFile && !(mentionsSelected?.length)"
-                        @click="createNewComment"
-                    >Gửi
-                    </a-button>
-
+                    <a-button type="primary" style="margin-right:12px; width:80px;" :disabled="!inputValue.trim() && !selectedFile && !(mentionsSelected?.length)" @click="createNewComment">Gửi</a-button>
                     <a-upload
                         :file-list="listFile"
                         :show-upload-list="false"

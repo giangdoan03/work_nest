@@ -633,7 +633,7 @@ const goTaskByParentId = async (parentId) => {
     if (!parentId) return
     try {
         const meta = await resolveTaskMetaById(parentId)
-        router.push(buildDetailUrlFromMeta(meta))
+        await router.push(buildDetailUrlFromMeta(meta))
     } catch (e) {
         console.error('Không mở được task cha:', e)
         message.error('Không mở được nhiệm vụ cha')
