@@ -529,7 +529,9 @@ class TaskApprovalController extends ResourceController
         return $this->respond($result);
     }
 
-    /** Duyệt theo task: tìm approval pending đúng cấp rồi gọi approve($approvalId) (giữ nguyên) */
+    /** Duyệt theo task: tìm approval pending đúng cấp rồi gọi approve($approvalId) (giữ nguyên)
+     * @throws ReflectionException
+     */
     public function approveByTask($taskId): ResponseInterface
     {
         $session = session();
@@ -670,7 +672,7 @@ class TaskApprovalController extends ResourceController
             $newList = array_values($map);
         }
 
-// lưu + respond humanized
+        // lưu + respond humanized
         $this->writeRoster($taskId, $newList);
         $progress = $this->computeRosterProgress($newList, (string)($task['approval_status'] ?? 'pending'));
         return $this->respond([

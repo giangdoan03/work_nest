@@ -1,28 +1,57 @@
 <template>
     <div class="comment">
         <!-- STICKY: người duyệt/ký + file ghim -->
-        <div class="mention-chips sticky-mentions"
-             v-if="(pinnedFiles && pinnedFiles.length > 0) || (mentionsSelected && mentionsSelected.length > 0)">
+        <div class="mention-chips sticky-mentions" v-if="(pinnedFiles && pinnedFiles.length) || (mentionsSelected && mentionsSelected.length)">
+            <!-- Header: summary + toggles -->
+            <div class="sticky-head">
+                <div class="sticky-left">
+                    <span class="sticky-title">Tài liệu & người duyệt</span>
+                    <span v-if="hiddenPinnedCount>0 || hiddenMentionsCount>0" class="sticky-more">
+                        (còn {{ hiddenPinnedCount + hiddenMentionsCount }} mục)
+                    </span>
+                </div>
+                <div class="sticky-actions">
+                    <a-tooltip :title="isStickyExpanded ? 'Thu gọn' : 'Hiện tất cả'">
+                        <a-button type="text" size="small" @click="toggleSticky()">
+                            <template #icon>
+                                <template v-if="!isStickyExpanded">
+                                    <PlusOutlined />
+                                </template>
+                                <template v-else>
+                                    <MinusOutlined />
+                                </template>
+                            </template>
+                            {{ isStickyExpanded ? 'Thu gọn' : 'Hiện tất cả' }}
+                        </a-button>
+                    </a-tooltip>
+                </div>
+            </div>
 
-        <!-- Files ghim -->
-            <div v-if="pinnedFiles.length" class="pinned-files">
-                <a-space wrap style="margin-bottom: 0">
-                    <div v-for="f in pinnedFiles" :key="f.id || f.file_path" class="pinned-item">
+            <!-- Pinned files -->
+            <div v-if="visiblePinnedFiles.length" class="pinned-files" style="padding:8px">
+                <a-space wrap style="margin-bottom:0">
+                    <div v-for="f in visiblePinnedFiles" :key="f.id || f.file_path" class="pinned-item">
                         <a :href="hrefOf(f)" target="_blank" rel="noopener" class="pinned-link">
-                            <PaperClipOutlined style="margin-right:4px" />
+                            <PaperClipOutlined style="margin-right:4px"/>
                             {{ titleOf(f) }}
                         </a>
                         <a-tooltip title="Bỏ ghim">
-                            <CloseOutlined class="unpin" @click="togglePin(f)" />
+                            <CloseOutlined class="unpin" @click="togglePin(f)"/>
                         </a-tooltip>
                     </div>
+
+                    <!-- “+N file” indicator when collapsed -->
+                    <a-tag v-if="!isStickyExpanded && hiddenPinnedCount>0" color="blue" class="more-pill"
+                           @click="expandSticky">
+                        +{{ hiddenPinnedCount }} file
+                    </a-tag>
                 </a-space>
             </div>
 
-            <!-- Chips người duyệt/ký -->
-            <a-space wrap style="margin-bottom: 8px;">
+            <!-- Approver/sign chips -->
+            <a-space wrap style="margin-bottom:8px;">
                 <a-popover
-                    v-for="m in mentionsSelected"
+                    v-for="m in visibleMentions"
                     :key="m.user_id"
                     trigger="click"
                     placement="top"
@@ -42,10 +71,16 @@
                             </div>
                             <div class="actions">
                                 <a-button type="primary" size="small" @click="handleApproveAction(m,'approved')">
-                                    <template #icon><CheckOutlined/></template> Đồng ý
+                                    <template #icon>
+                                        <CheckOutlined/>
+                                    </template>
+                                    Đồng ý
                                 </a-button>
                                 <a-button danger size="small" @click="handleApproveAction(m,'rejected')">
-                                    <template #icon><CloseOutlined/></template> Từ chối
+                                    <template #icon>
+                                        <CloseOutlined/>
+                                    </template>
+                                    Từ chối
                                 </a-button>
                             </div>
                         </div>
@@ -54,23 +89,27 @@
                     <div
                         class="chip-card"
                         :class="{
-      'is-approved': m.status==='approved',
-      'is-pending': m.status==='pending' || m.status==='processing',
-      'is-rejected': m.status==='rejected'
-    }"
+          'is-approved': m.status==='approved',
+          'is-pending': m.status==='pending' || m.status==='processing',
+          'is-rejected': m.status==='rejected'
+        }"
                     >
                         <div class="chip-top">
                             <div class="chip-title" :title="m.name">
                                 @{{ m.name }}
                                 <span class="role-dot" :class="statusDotClass(m.status)"></span>
                                 <span class="state-text">
-          {{ m.status==='approved' ? (m.role==='sign'?'Đã ký':'Đã duyệt')
-                                    : m.status==='rejected' ? 'Đã từ chối'
-                                        : (m.role==='sign'?'Chờ ký':'Chờ duyệt') }}
-        </span>
+              {{
+                                        m.status === 'approved' ? (m.role === 'sign' ? 'Đã ký' : 'Đã duyệt')
+                                            : m.status === 'rejected' ? 'Đã từ chối'
+                                                : (m.role === 'sign' ? 'Chờ ký' : 'Chờ duyệt')
+                                    }}
+            </span>
                             </div>
                             <a-tooltip title="Bỏ khỏi danh sách">
-                                <a-button type="text" size="small" class="chip-close" @click.stop="removeMention(m.user_id)">×</a-button>
+                                <a-button type="text" size="small" class="chip-close"
+                                          @click.stop="removeMention(m.user_id)">×
+                                </a-button>
                             </a-tooltip>
                         </div>
 
@@ -82,8 +121,18 @@
                     </div>
                 </a-popover>
 
+                <!-- “+N người” indicator when collapsed -->
+                <a-tag
+                    v-if="!isStickyExpanded && hiddenMentionsCount>0"
+                    color="processing"
+                    class="more-pill"
+                    @click="expandSticky"
+                >
+                    +{{ hiddenMentionsCount }} người
+                </a-tag>
             </a-space>
         </div>
+
 
         <!-- LIST COMMENT -->
         <div class="list-comment" v-if="listComment" ref="listEl" :style="{ paddingBottom: listPadBottom }">
@@ -122,7 +171,7 @@
                                     />
                                     <!-- FILE KHÁC -->
                                     <div v-else class="cm-att__icon">
-                                        <component :is="pickIcon(kindOfCommentFile(f))" class="cm-att__icon-i" />
+                                        <component :is="pickIcon(kindOfCommentFile(f))" class="cm-att__icon-i"/>
                                     </div>
 
                                     <a
@@ -160,7 +209,8 @@
                                                 cancel-text="Hủy"
                                                 @confirm="handleDeleteComment(item.id)"
                                                 placement="topRight"
-                                            >Xóa</a-popconfirm>
+                                            >Xóa
+                                            </a-popconfirm>
                                         </a-menu-item>
                                     </a-menu>
                                 </template>
@@ -187,7 +237,7 @@
         <!-- FOOTER: composer -->
         <div class="footer-fixed" ref="footerEl">
             <div class="load-more" v-if="currentPage < totalPage && !loadingComment">
-                <a-button block @click="getListComment(currentPage + 1)">Tải thêm</a-button>
+                <a-button size="small" @click="getListComment(currentPage + 1)">Tải thêm</a-button>
             </div>
 
             <div class="composer">
@@ -231,14 +281,16 @@
                                 </div>
                             </div>
                         </template>
-                        <a-button size="small" @click="mentionPopupOpen = true">+ Thêm người duyệt/ký</a-button>
+                        <!--  <a-button size="small" @click="mentionPopupOpen = true">+ Thêm người duyệt/ký</a-button>-->
                     </a-popover>
                 </div>
 
                 <div class="list-file" v-if="selectedFile">
                     <div class="file">
                         <a-button size="large" style="margin-right:12px;">
-                            <template #icon><FileTextOutlined/></template>
+                            <template #icon>
+                                <FileTextOutlined/>
+                            </template>
                         </a-button>
                         <a-typography-text>{{ selectedFile.name }}</a-typography-text>
                         <div class="close-file" @click="selectedFile=null">x</div>
@@ -249,10 +301,10 @@
                     <a-button
                         type="primary"
                         style="margin-right:12px; width:80px;"
-                        size="large"
                         :disabled="!inputValue.trim() && !selectedFile && !(mentionsSelected?.length)"
                         @click="createNewComment"
-                    >Gửi</a-button>
+                    >Gửi
+                    </a-button>
 
                     <a-upload
                         :file-list="listFile"
@@ -263,8 +315,10 @@
                         :before-upload="(file) => handleBeforeUpload('attachment', file)"
                         :customRequest="({ file }) => handleBeforeUpload('attachment', file)"
                     >
-                        <a-button size="large">
-                            <template #icon><PaperClipOutlined/></template>
+                        <a-button>
+                            <template #icon>
+                                <PaperClipOutlined/>
+                            </template>
                         </a-button>
                     </a-upload>
                 </div>
@@ -281,7 +335,7 @@
         >
             <a-form layout="vertical">
                 <a-form-item label="Nội dung bình luận">
-                    <a-input v-model:value="selectedComment.content" />
+                    <a-input v-model:value="selectedComment.content"/>
                 </a-form-item>
             </a-form>
         </a-modal>
@@ -301,7 +355,9 @@ import {
     FileWordOutlined,
     LinkOutlined,
     PaperClipOutlined,
-    PushpinOutlined
+    PushpinOutlined,
+    PlusOutlined,
+    MinusOutlined
 } from '@ant-design/icons-vue'
 import {
     approveRosterAPI,
@@ -337,9 +393,19 @@ dayjs.extend(relativeTime)
 dayjs.locale('vi')
 
 /* ===== time helpers (VI) ===== */
-const tick = ref(Date.now()); let t
-function fromNowVi(dt){ tick.value; const d = dayjs(dt); return d.isValid()? d.fromNow(): '' }
-function formatVi(dt){ const d = dayjs(dt); return d.isValid()? d.format('HH:mm DD/MM/YYYY'): '' }
+const tick = ref(Date.now());
+let t
+
+function fromNowVi(dt) {
+    tick.value;
+    const d = dayjs(dt);
+    return d.isValid() ? d.fromNow() : ''
+}
+
+function formatVi(dt) {
+    const d = dayjs(dt);
+    return d.isValid() ? d.format('HH:mm DD/MM/YYYY') : ''
+}
 
 /* ===== state ===== */
 const store = useUserStore()
@@ -356,11 +422,11 @@ const selectedFile = ref()
 const listFile = ref([])
 
 const loadingComment = ref(false)
-const loadingUpdate  = ref(false)
+const loadingUpdate = ref(false)
 const openModalEditComment = ref(false)
 const selectedComment = ref({})
 
-const totalPage   = ref(1)
+const totalPage = ref(1)
 const currentPage = ref(1)
 
 /* ===== sticky + scroll helpers ===== */
@@ -368,13 +434,58 @@ const listEl = ref(null)
 const footerEl = ref(null)
 const listPadBottom = ref('96px')
 let ro
-function measureFooter(){ const h = footerEl.value?.offsetHeight || 96; listPadBottom.value = h + 8 + 'px' }
-function scrollToBottom(){ const el = listEl.value; if (!el) return; el.scrollTop = el.scrollHeight }
+
+function measureFooter() {
+    const h = footerEl.value?.offsetHeight || 96;
+    listPadBottom.value = h + 8 + 'px'
+}
+
+function scrollToBottom() {
+    const el = listEl.value;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight
+}
 
 /* ===== task_files index để map file_path -> task_files.id ===== */
 const taskFileByPath = ref({}) // { normalized_path: TaskFileRow }
 
-function normalizePath(u=''){ return String(u).split('?')[0] }
+function normalizePath(u = '') {
+    return String(u).split('?')[0]
+}
+
+
+// collapse/expand state
+const isStickyExpanded = ref(false)
+const MAX_FILES_COLLAPSED = 1
+const MAX_MENTIONS_COLLAPSED = 1
+
+function toggleSticky() {
+    isStickyExpanded.value = !isStickyExpanded.value
+}
+
+function expandSticky() {
+    isStickyExpanded.value = true
+}
+
+// visible/hidden pinned files
+const visiblePinnedFiles = computed(() => {
+    const list = pinnedFiles.value || []
+    return isStickyExpanded.value ? list : list.slice(0, MAX_FILES_COLLAPSED)
+})
+const hiddenPinnedCount = computed(() => {
+    const list = pinnedFiles.value || []
+    return Math.max(0, list.length - MAX_FILES_COLLAPSED)
+})
+
+// visible/hidden mentions
+const visibleMentions = computed(() => {
+    const list = mentionsSelected.value || []
+    return isStickyExpanded.value ? list : list.slice(0, MAX_MENTIONS_COLLAPSED)
+})
+const hiddenMentionsCount = computed(() => {
+    const list = mentionsSelected.value || []
+    return Math.max(0, list.length - MAX_MENTIONS_COLLAPSED)
+})
 
 
 async function ensureTaskFileId(file) {
@@ -388,7 +499,7 @@ async function ensureTaskFileId(file) {
     // 2) link http(s) → tạo record link
     if (/^https?:\/\//i.test(path)) {
         try {
-            const { data } = await uploadTaskFileLinkAPI(taskId.value, {
+            const {data} = await uploadTaskFileLinkAPI(taskId.value, {
                 title: name,
                 url: path,
                 user_id: Number(store.currentUser.id),
@@ -409,7 +520,7 @@ async function ensureTaskFileId(file) {
     }
 
     try {
-        const { data } = await adoptTaskFileFromPathAPI(taskId.value, {
+        const {data} = await adoptTaskFileFromPathAPI(taskId.value, {
             task_id: Number(taskId.value),
             user_id: Number(store.currentUser.id),
             file_path: path,
@@ -427,24 +538,24 @@ async function ensureTaskFileId(file) {
 
 }
 
-async function loadTaskFiles(){
-    try{
-        const { data } = await getTaskFilesAPI(taskId.value)
+async function loadTaskFiles() {
+    try {
+        const {data} = await getTaskFilesAPI(taskId.value)
         const files = Array.isArray(data) ? data : (data?.data || [])
         const idx = {}
-        for(const f of files){
+        for (const f of files) {
             const key = normalizePath(f.file_path || f.link_url || '')
-            if (key) idx[key] = { ...f, file_path: f.file_path || f.link_url || '' }
+            if (key) idx[key] = {...f, file_path: f.file_path || f.link_url || ''}
         }
         taskFileByPath.value = idx
-    }catch(e){
+    } catch (e) {
         console.error('loadTaskFiles error', e)
         taskFileByPath.value = {}
     }
 }
 
 
-function getTaskFileId(f = {}){
+function getTaskFileId(f = {}) {
     if (f.task_file_id || f.taskFileId) return Number(f.task_file_id || f.taskFileId)
     if (typeof f.id === 'number' && (f.file_path || f.link_url)) {
         const key = normalizePath(f.file_path || f.link_url)
@@ -457,29 +568,30 @@ function getTaskFileId(f = {}){
 
 /* ===== Pinned files (max 2) ===== */
 const pinnedFiles = ref([]) // [{ id: task_file_id, file_path, file_name }]
-function isPinned(file){
+function isPinned(file) {
     const list = Array.isArray(pinnedFiles.value) ? pinnedFiles.value : []
     const tfId = getTaskFileId(file)
     if (tfId) return list.some(p => Number(p.id) === Number(tfId))
     const path = normalizePath(file.file_path || file.link_url || '')
     return list.some(p => normalizePath(p.file_path || p.link_url || '') === path)
 }
+
 async function togglePin(file) {
     const tfId = await ensureTaskFileId(file)
     if (!tfId) return
 
     try {
-        const already = isPinned({ ...file, task_file_id: tfId })
+        const already = isPinned({...file, task_file_id: tfId})
 
         if (already) {
-            await unpinTaskFileAPI(tfId, { user_id: store.currentUser.id })
+            await unpinTaskFileAPI(tfId, {user_id: store.currentUser.id})
         } else {
             // chặn 2 chiếc ở UI trước khi gọi
             if ((pinnedFiles.value?.length || 0) >= 2) {
                 message.warning('Chỉ được ghim tối đa 2 file');
                 return
             }
-            await pinTaskFileAPI(tfId, { user_id: store.currentUser.id })
+            await pinTaskFileAPI(tfId, {user_id: store.currentUser.id})
         }
 
         // ✅ chỉ lấy theo server, không tự set state cục bộ
@@ -492,27 +604,73 @@ async function togglePin(file) {
 }
 
 
-
 /* ===== detect file type helpers ===== */
-const IMAGE_EXTS=new Set(['jpg','jpeg','png','gif','webp','bmp','svg'])
-const PDF_EXTS=new Set(['pdf']); const WORD_EXTS=new Set(['doc','docx'])
-const EXCEL_EXTS=new Set(['xls','xlsx','csv']); const PPT_EXTS=new Set(['ppt','pptx'])
-function extOf(name=''){ const n=String(name).split('?')[0]; const m=n.lastIndexOf('.'); return m>=0? n.slice(m+1).toLowerCase(): '' }
-function detectKind(o={}){ const e=extOf(o.name||o.url||''); const t=o.file_type||''; if (String(t).indexOf('image/')===0) return 'image'
-    if (IMAGE_EXTS.has(e)) return 'image'; if (PDF_EXTS.has(e)) return 'pdf'; if (WORD_EXTS.has(e)) return 'word'
-    if (EXCEL_EXTS.has(e)) return 'excel'; if (PPT_EXTS.has(e)) return 'ppt'; if (/^https?:\/\//i.test(o.url||'')) return 'link'; return 'other' }
-function pickIcon(k){ switch(k){ case 'pdf':return FilePdfOutlined; case 'word':return FileWordOutlined; case 'excel':return FileExcelOutlined; case 'ppt':return FilePptOutlined; case 'link':return LinkOutlined; default:return FileTextOutlined } }
-function prettyUrl(u){ try{ const url=new URL(u); const path=url.pathname.replace(/^\/+/, ''); const short=path.length>30? path.slice(0,30)+'…': path; return url.host + (short? '/'+short:'') }catch{ return u } }
-function kindOfCommentFile(f={}){ return detectKind({ name:f.file_name, url:f.file_path, file_type:f.file_type }) }
+const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'])
+const PDF_EXTS = new Set(['pdf']);
+const WORD_EXTS = new Set(['doc', 'docx'])
+const EXCEL_EXTS = new Set(['xls', 'xlsx', 'csv']);
+const PPT_EXTS = new Set(['ppt', 'pptx'])
+
+function extOf(name = '') {
+    const n = String(name).split('?')[0];
+    const m = n.lastIndexOf('.');
+    return m >= 0 ? n.slice(m + 1).toLowerCase() : ''
+}
+
+function detectKind(o = {}) {
+    const e = extOf(o.name || o.url || '');
+    const t = o.file_type || '';
+    if (String(t).indexOf('image/') === 0) return 'image'
+    if (IMAGE_EXTS.has(e)) return 'image';
+    if (PDF_EXTS.has(e)) return 'pdf';
+    if (WORD_EXTS.has(e)) return 'word'
+    if (EXCEL_EXTS.has(e)) return 'excel';
+    if (PPT_EXTS.has(e)) return 'ppt';
+    if (/^https?:\/\//i.test(o.url || '')) return 'link';
+    return 'other'
+}
+
+function pickIcon(k) {
+    switch (k) {
+        case 'pdf':
+            return FilePdfOutlined;
+        case 'word':
+            return FileWordOutlined;
+        case 'excel':
+            return FileExcelOutlined;
+        case 'ppt':
+            return FilePptOutlined;
+        case 'link':
+            return LinkOutlined;
+        default:
+            return FileTextOutlined
+    }
+}
+
+function prettyUrl(u) {
+    try {
+        const url = new URL(u);
+        const path = url.pathname.replace(/^\/+/, '');
+        const short = path.length > 30 ? path.slice(0, 30) + '…' : path;
+        return url.host + (short ? '/' + short : '')
+    } catch {
+        return u
+    }
+}
+
+function kindOfCommentFile(f = {}) {
+    return detectKind({name: f.file_name, url: f.file_path, file_type: f.file_type})
+}
 
 /* ===== Approve popover control & actions ===== */
 const mentionPopoverOpen = ref({})
+
 async function handleApproveAction(m, status) {
     try {
         if (status === 'approved') {
-            await approveRosterAPI(taskId.value, { note: null })
+            await approveRosterAPI(taskId.value, {note: null})
         } else {
-            await rejectRosterAPI(taskId.value, { note: null })
+            await rejectRosterAPI(taskId.value, {note: null})
         }
         mentionPopoverOpen.value[m.user_id] = false
         await syncRosterFromServer()   // ✅ chỉ đồng bộ từ server
@@ -526,24 +684,31 @@ async function handleApproveAction(m, status) {
 }
 
 
-
 /* ===== users & mentions ===== */
 const getUserById = (id) => listUser.value.find(u => u.id === id) || {}
-const userOptions = computed(() => (listUser.value||[]).map(u => ({ value:String(u.id), label:u.name })))
+const userOptions = computed(() => (listUser.value || []).map(u => ({value: String(u.id), label: u.name})))
 const filterUser = (input, option) => (option?.label ?? '').toLowerCase().includes(String(input).toLowerCase())
 
 const mentionPopupOpen = ref(false)
 const mentionsSelected = ref([]) // [{ user_id, name, role, status }]
-const mentionForm = ref({ userId: null, role: 'approve' })
+const mentionForm = ref({userId: null, role: 'approve'})
 
-function resetMentionForm(){ mentionForm.value.userId = null; mentionForm.value.role = 'approve'; mentionPopupOpen.value = false }
+function resetMentionForm() {
+    mentionForm.value.userId = null;
+    mentionForm.value.role = 'approve';
+    mentionPopupOpen.value = false
+}
 
 const addMention = async () => {
-    const uid = mentionForm.value.userId; if (!uid) return
-    if (mentionsSelected.value.some(m => String(m.user_id) === String(uid))) { message.info('Người này đã có trong danh sách'); return }
+    const uid = mentionForm.value.userId;
+    if (!uid) return
+    if (mentionsSelected.value.some(m => String(m.user_id) === String(uid))) {
+        message.info('Người này đã có trong danh sách');
+        return
+    }
     const user = listUser.value.find(u => String(u.id) === String(uid))
     const displayName = user?.name || `#${uid}`
-    const newMention = { user_id:String(uid), name:displayName, role:mentionForm.value.role, status:'pending' }
+    const newMention = {user_id: String(uid), name: displayName, role: mentionForm.value.role, status: 'pending'}
 
     mentionsSelected.value.push(newMention)
 
@@ -552,7 +717,7 @@ const addMention = async () => {
     mentionPopupOpen.value = false
 
     await nextTick()
-    await createNewComment({ keepMentions: true }) // gửi comment nhưng giữ mentions
+    await createNewComment({keepMentions: true}) // gửi comment nhưng giữ mentions
     await persistRoster() // lưu roster lên BE
     resetMentionForm()
 }
@@ -563,72 +728,100 @@ function removeMention(uid) {
 }
 
 // Label meta và thời gian ngắn gọn
-function metaLabel(m){
+function metaLabel(m) {
     if (m.status === 'approved') return 'đã duyệt';
     if (m.status === 'rejected') return 'đã từ chối';
     return 'thêm lúc';
 }
-function metaTime(m){
+
+function metaTime(m) {
     if (m.status === 'approved' || m.status === 'rejected') {
         return m.acted_at_vi || formatVi(m.acted_at);
     }
     return m.added_at_vi || formatVi(m.added_at);
 }
-function fullTimeTooltip(m){
+
+function fullTimeTooltip(m) {
     if (m.status === 'approved' || m.status === 'rejected') {
         return m.acted_at_vi || formatVi(m.acted_at);
     }
     return m.added_at_vi || formatVi(m.added_at);
 }
-function statusDotClass(status){
+
+function statusDotClass(status) {
     return status === 'approved' ? 'ok'
         : status === 'rejected' ? 'err'
             : 'proc';
 }
 
 
+function hrefOf(f = {}) {
+    return f.file_path || f.link_url || ''
+}
 
-function hrefOf(f = {}) { return f.file_path || f.link_url || '' }
-function titleOf(f = {}) { return f.file_name || f.title || prettyUrl(f.file_path || f.link_url || '') }
+function titleOf(f = {}) {
+    return f.file_name || f.title || prettyUrl(f.file_path || f.link_url || '')
+}
 
-function onInputDetectMention(e){ const v = String(e?.target?.value ?? ''); if (v.endsWith('@')) mentionPopupOpen.value = true }
+function onInputDetectMention(e) {
+    const v = String(e?.target?.value ?? '');
+    if (v.endsWith('@')) mentionPopupOpen.value = true
+}
 
 /* ===== upload handlers ===== */
-async function handleBeforeUpload(_field, file){ selectedFile.value = file; return false }
-function handleRemoveFile(){ selectedFile.value = null }
+async function handleBeforeUpload(_field, file) {
+    selectedFile.value = file;
+    return false
+}
+
+function handleRemoveFile() {
+    selectedFile.value = null
+}
 
 /* ===== CRUD ===== */
-function showUpdateCommentModal(item){ openModalEditComment.value = true; selectedComment.value = { ...item } }
-async function handleUpdateComment(){
-    if (!selectedComment.value?.id){ message.error('Thiếu ID bình luận'); return }
+function showUpdateCommentModal(item) {
+    openModalEditComment.value = true;
+    selectedComment.value = {...item}
+}
+
+async function handleUpdateComment() {
+    if (!selectedComment.value?.id) {
+        message.error('Thiếu ID bình luận');
+        return
+    }
     loadingUpdate.value = true
-    try{
-        await updateComment(selectedComment.value.id, { content: selectedComment.value.content })
+    try {
+        await updateComment(selectedComment.value.id, {content: selectedComment.value.content})
         openModalEditComment.value = false
         await getListComment(currentPage.value)
         message.success('Cập nhật comment thành công')
-    }catch{ message.error('Không thể cập nhật comment') }
-    finally{ loadingUpdate.value = false }
+    } catch {
+        message.error('Không thể cập nhật comment')
+    } finally {
+        loadingUpdate.value = false
+    }
 }
 
-async function handleDeleteComment(commentId){
-    try{
+async function handleDeleteComment(commentId) {
+    try {
         await deleteComment(commentId)
         if (listComment.value.length === 1 && currentPage.value > 1) await getListComment(currentPage.value - 1)
         else await getListComment(currentPage.value)
         message.success('Đã xóa comment thành công')
-    }catch{ message.error('Không thể xóa comment') }
+    } catch {
+        message.error('Không thể xóa comment')
+    }
 }
 
 // Gửi comment
-const createNewComment = async ({ keepMentions = false } = {}) => {
+const createNewComment = async ({keepMentions = false} = {}) => {
     if (!inputValue.value.trim() && !selectedFile.value && !(mentionsSelected.value?.length)) return
-    try{
+    try {
         const form = new FormData()
         form.append('user_id', store.currentUser.id)
         form.append('content', inputValue.value ? inputValue.value.trim() : '')
-        form.append('mentions', JSON.stringify((mentionsSelected.value||[]).map(m => ({
-            user_id: Number(m.user_id), name:m.name, role:m.role, status:m.status || 'processing'
+        form.append('mentions', JSON.stringify((mentionsSelected.value || []).map(m => ({
+            user_id: Number(m.user_id), name: m.name, role: m.role, status: m.status || 'processing'
         }))))
         if (selectedFile.value) form.append('attachment', selectedFile.value)
 
@@ -639,31 +832,50 @@ const createNewComment = async ({ keepMentions = false } = {}) => {
         if (!keepMentions) mentionsSelected.value = []
 
         await getListComment(1)
-        await nextTick(); scrollToBottom()
-    }catch(e){ console.error(e); message.error('Không gửi được bình luận') }
+        await nextTick();
+        scrollToBottom()
+    } catch (e) {
+        console.error(e);
+        message.error('Không gửi được bình luận')
+    }
 }
 
 /* ===== load list (paging) ===== */
-async function getListComment(page = 1){
+async function getListComment(page = 1) {
     loadingComment.value = true
-    try{
-        const res = await getComments(taskId.value, { page })
-        if (page === 1){
+    try {
+        const res = await getComments(taskId.value, {page})
+        if (page === 1) {
             listComment.value = res.data.comments
-            await nextTick(); measureFooter(); scrollToBottom()
-        }else{
-            const el = listEl.value; const prevScrollBottom = el ? (el.scrollHeight - el.scrollTop) : 0
+            await nextTick();
+            measureFooter();
+            scrollToBottom()
+        } else {
+            const el = listEl.value;
+            const prevScrollBottom = el ? (el.scrollHeight - el.scrollTop) : 0
             listComment.value = [...listComment.value, ...res.data.comments]
-            await nextTick(); measureFooter(); if (el) el.scrollTop = el.scrollHeight - prevScrollBottom
+            await nextTick();
+            measureFooter();
+            if (el) el.scrollTop = el.scrollHeight - prevScrollBottom
         }
         totalPage.value = res.data.pagination.totalPages
         currentPage.value = page
-    }catch(e){ console.error(e) }
-    finally{ loadingComment.value = false }
+    } catch (e) {
+        console.error(e)
+    } finally {
+        loadingComment.value = false
+    }
 }
 
 /* ===== load users ===== */
-async function getUser(){ try{ const { data } = await getUsers(); listUser.value = data } catch{ message.error('Không thể tải người dùng') } }
+async function getUser() {
+    try {
+        const {data} = await getUsers();
+        listUser.value = data
+    } catch {
+        message.error('Không thể tải người dùng')
+    }
+}
 
 /* ===== roster ===== */
 // FE
@@ -682,8 +894,6 @@ async function persistRoster(mode = 'merge') {
         message.error('Không thể lưu danh sách người duyệt/ký');
     }
 }
-
-
 
 
 /* ===== pinned files load ===== */
@@ -724,12 +934,10 @@ async function loadPinnedFiles() {
 }
 
 
-
-
 /* ===== roster sync ===== */
 const syncRosterFromServer = async () => {
     try {
-        const { data } = await getTaskRosterAPI(taskId.value)
+        const {data} = await getTaskRosterAPI(taskId.value)
         const roster = data?.roster || data || []
         mentionsSelected.value = roster.map(r => ({
             user_id: String(r.user_id),
@@ -741,7 +949,8 @@ const syncRosterFromServer = async () => {
             added_at: r.added_at || null,          // 👈
             added_at_vi: r.added_at_vi || null,    // 👈
         }))
-    } catch { /* no-op */ }
+    } catch { /* no-op */
+    }
 }
 
 
@@ -754,22 +963,25 @@ onMounted(async () => {
     await loadPinnedFiles()
     await syncRosterFromServer()
     measureFooter()
-    if ('ResizeObserver' in window){
+    if ('ResizeObserver' in window) {
         ro = new ResizeObserver(measureFooter)
         footerEl.value && ro.observe(footerEl.value)
     }
 })
-onBeforeUnmount(() => { clearInterval(t); ro?.disconnect?.() })
+onBeforeUnmount(() => {
+    clearInterval(t);
+    ro?.disconnect?.()
+})
 </script>
 
 
 <style scoped>
 /* Layout tổng */
-.comment{
-    display:flex;
-    flex-direction:column;
-    height:100%;
-    min-height:0;
+.comment {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
 }
 
 /* Sticky mentions + pinned files */
@@ -780,6 +992,7 @@ onBeforeUnmount(() => { clearInterval(t); ro?.disconnect?.() })
     background: #fff;
     border-bottom: 1px solid #eaeaea;
 }
+
 .pinned-item {
     background: #fafafa;
     padding: 2px 6px;
@@ -787,106 +1000,231 @@ onBeforeUnmount(() => { clearInterval(t); ro?.disconnect?.() })
 }
 
 /* List comments */
-.list-comment{
-    flex:1 1 auto;
-    min-height:0;
-    overflow-y:auto;
-    overflow-x:hidden;
-    padding-right:2px;
-    scrollbar-width:thin;
-    scrollbar-color:rgba(0,0,0,.35) transparent;
+.list-comment {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 2px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, .35) transparent;
 }
-.list-comment::-webkit-scrollbar{ width:6px; }
-.list-comment::-webkit-scrollbar-track{ background:transparent; }
-.list-comment::-webkit-scrollbar-thumb{
-    background:rgba(0,0,0,.28);
-    border-radius:8px;
+
+.list-comment::-webkit-scrollbar {
+    width: 6px;
+}
+
+.list-comment::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.list-comment::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, .28);
+    border-radius: 8px;
 }
 
 /* Footer composer */
-.footer-fixed{
+.footer-fixed {
     position: sticky;
     bottom: 0;
     z-index: 5;
-    background:#fff;
-    border-top:1px solid #f0f0f0;
-    padding-top:10px;
-    box-shadow: 0 -4px 10px rgba(0,0,0,.03);
+    background: #fff;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 10px;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, .03);
 }
-.load-more{ margin-bottom:8px; }
-.composer-actions{
-    margin-top:10px;
-    display:flex;
-    align-items:center;
-    gap:8px;
+
+.load-more {
+    margin-bottom: 8px;
+    text-align: center
+}
+
+.composer-actions {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
 }
 
 /* Popover chọn người */
-.mention-row{ margin-top:8px; display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap; }
-.mention-pop{ display:grid; gap:8px; min-width: 320px; }
-.mention-pop .row{ display:flex; align-items:center; gap:8px; }
-.mention-pop .lbl{ width:64px; color:#666; }
+.mention-row {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.mention-pop {
+    display: grid;
+    gap: 8px;
+    min-width: 320px;
+}
+
+.mention-pop .row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mention-pop .lbl {
+    width: 64px;
+    color: #666;
+}
 
 /* Misc */
-.list-comment{ margin-top:8px; }
-.comment-content{ margin-bottom:10px; }
-.content{ margin-top:10px; overflow-wrap:anywhere; word-break:break-word; }
-.content-time{ margin-top:12px; }
-.list-file{ margin-top:10px; }
-.file{ position:relative; }
-.close-file{ position:absolute; top:-14px; left:34px; font-size:20px; cursor:pointer; }
+.list-comment {
+    margin-top: 8px;
+}
+
+.comment-content {
+    margin-bottom: 10px;
+}
+
+.content {
+    margin-top: 10px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.content-time {
+    margin-top: 12px;
+}
+
+.list-file {
+    margin-top: 10px;
+}
+
+.file {
+    position: relative;
+}
+
+.close-file {
+    position: absolute;
+    top: -14px;
+    left: 34px;
+    font-size: 20px;
+    cursor: pointer;
+}
 
 /* Attachments grid */
-.cm-att{
-    margin-top:8px;
-    display:grid;
+.cm-att {
+    margin-top: 8px;
+    display: grid;
     grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));
-    gap:8px;
+    gap: 8px;
 }
-.cm-att__card{
+
+.cm-att__card {
     position: relative;
-    border:1px solid #f0f0f0;
-    border-radius:10px;
-    padding:6px;
-    background:#fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+    padding: 6px;
+    background: #fff;
 }
-.cm-att__thumb{ width:100%; object-fit:cover; border-radius:6px; }
-.cm-att__icon{
-    height:56px; display:flex; align-items:center; justify-content:center;
-    background:#fafafa; border-radius:6px;
+
+.cm-att__thumb {
+    width: 100%;
+    object-fit: cover;
+    border-radius: 6px;
 }
-.cm-att__icon-i{ font-size:22px; opacity:.9; }
-.cm-att__title{
-    display:block; margin-top:6px; font-size:12px; line-height:1.2;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#1677ff;
+
+.cm-att__icon {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fafafa;
+    border-radius: 6px;
+}
+
+.cm-att__icon-i {
+    font-size: 22px;
+    opacity: .9;
+}
+
+.cm-att__title {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #1677ff;
 }
 
 /* Approve popover */
-.approve-pop{ min-width: 200px; display:flex; flex-direction:column; gap:8px; }
-.approve-pop .info{ font-size:13px; color:#444; }
-.approve-pop .actions{ display:flex; justify-content:space-between; gap:6px; }
+.approve-pop {
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.approve-pop .info {
+    font-size: 13px;
+    color: #444;
+}
+
+.approve-pop .actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+}
 
 /* Pin button + pinned files */
-.pin-btn{ position:absolute; top:6px; right:6px; font-size:16px; transition: color .2s; }
-.pin-btn:hover{ color:#faad14; }
+.pin-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    font-size: 16px;
+    transition: color .2s;
+}
 
-.pinned-files{
-    background:#fffbe6;
-    border:1px solid #ffe58f;
-    border-radius:8px;
-    margin-bottom:8px;
+.pin-btn:hover {
+    color: #faad14;
 }
-.pinned-item{
-    display:flex; align-items:center; gap:4px;
-    background:#fff; border:1px solid #f0f0f0;
-    padding:4px 8px; border-radius:6px;
+
+.pinned-files {
+    background: #fffbe6;
+    border: 1px solid #ffe58f;
+    border-radius: 8px;
+    margin-bottom: 8px;
 }
-.pinned-link{ color:#1677ff; text-decoration:none; }
-.pinned-link:hover{ text-decoration:underline; }
-.unpin{ font-size:12px; color:#999; cursor:pointer; }
-.unpin:hover{ color:#ff4d4f; }
+
+.pinned-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.pinned-link {
+    color: #1677ff;
+    text-decoration: none;
+}
+
+.pinned-link:hover {
+    text-decoration: underline;
+}
+
+.unpin {
+    font-size: 12px;
+    color: #999;
+    cursor: pointer;
+}
+
+.unpin:hover {
+    color: #ff4d4f;
+}
+
 /* Card nền mềm, bo tròn, viền nhẹ */
-.chip-card{
+.chip-card {
     min-width: 240px;
     max-width: 360px;
     padding: 8px 10px;
@@ -895,45 +1233,158 @@ onBeforeUnmount(() => { clearInterval(t); ro?.disconnect?.() })
     background: #f7f9fc;
     transition: box-shadow .15s ease, transform .05s ease;
 }
-.chip-card:hover{ box-shadow: 0 2px 8px rgba(0,0,0,.06); }
 
-.chip-card.is-approved{ background:#f6ffed; border-color:#b7eb8f; }
-.chip-card.is-pending { background:#eef6ff; border-color:#b7d8ff; }
-.chip-card.is-rejected{ background:#fff2f0; border-color:#ffccc7; }
+.chip-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+}
 
-.chip-top{
-    display:flex; align-items:center; justify-content:space-between; gap:6px;
+.chip-card.is-approved {
+    background: #f6ffed;
+    border-color: #b7eb8f;
 }
-.chip-title{
-    display:flex; align-items:center; gap:6px;
-    font-weight:600; color:#2b2f36; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.state-text{ font-weight:600; }
-.chip-close{
-    height:auto; line-height:1; padding:0 4px; font-size:14px; color:#9aa4b2;
-}
-.chip-close:hover{ color:#111827; background:transparent; }
 
-.chip-meta{
-    margin-top:4px; font-size:12px; color:#667085;
+.chip-card.is-pending {
+    background: #eef6ff;
+    border-color: #b7d8ff;
+}
+
+.chip-card.is-rejected {
+    background: #fff2f0;
+    border-color: #ffccc7;
+}
+
+.chip-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.chip-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: #2b2f36;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.state-text {
+    font-weight: 600;
+}
+
+.chip-close {
+    height: auto;
+    line-height: 1;
+    padding: 0 4px;
+    font-size: 14px;
+    color: #9aa4b2;
+}
+
+.chip-close:hover {
+    color: #111827;
+    background: transparent;
+}
+
+.chip-meta {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #667085;
 }
 
 /* status dot */
-.role-dot, .dot{
-    display:inline-block; width:8px; height:8px; border-radius:50%;
+.role-dot, .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
     transform: translateY(1px);
 }
-.role-dot.ok, .dot.ok{ background:#52c41a; }
-.role-dot.proc, .dot.proc{ background:#1677ff; }
-.role-dot.err, .dot.err{ background:#ff4d4f; }
+
+.role-dot.ok, .dot.ok {
+    background: #52c41a;
+}
+
+.role-dot.proc, .dot.proc {
+    background: #1677ff;
+}
+
+.role-dot.err, .dot.err {
+    background: #ff4d4f;
+}
 
 /* popover */
-.approve-pop{ min-width:260px; display:flex; flex-direction:column; gap:10px; }
-.pop-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.role-pill{
-    display:flex; align-items:center; gap:6px; font-size:12px; color:#475467;
-    border:1px dashed #d0d5dd; padding:2px 8px; border-radius:999px; background:#fafafa;
+.approve-pop {
+    min-width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
-.pop-time{ font-size:12px; color:#475467; }
+
+.pop-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.role-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #475467;
+    border: 1px dashed #d0d5dd;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #fafafa;
+}
+
+.pop-time {
+    font-size: 12px;
+    color: #475467;
+}
+
+.sticky-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fff;
+}
+
+.sticky-title {
+    font-weight: 600;
+    color: #333;
+}
+
+.sticky-more {
+    color: #888;
+    margin-left: 6px;
+    font-size: 12px;
+}
+
+.sticky-actions .ant-btn {
+    padding: 0 6px;
+}
+
+.more-pill {
+    cursor: pointer;
+    user-select: none;
+}
+
+.chip-card {
+    max-width: 340px;
+}
+
+@media (max-width: 768px) {
+    .chip-card {
+        max-width: 100%;
+    }
+}
+
 
 </style>
