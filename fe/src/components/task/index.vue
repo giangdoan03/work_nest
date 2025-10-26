@@ -295,26 +295,53 @@
                                                         <a-col :span="12">
                                                             <a-form-item label="Tiến độ" name="progress">
                                                                 <template v-if="!isEditMode">
-                                                                    <a-progress
-                                                                        :percent="numericProgress"
-                                                                        :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
-                                                                        :status="numericProgress >= 100 ? 'success' : 'active'"
-                                                                        size="small"
-                                                                        :show-info="true"
-                                                                    />
+                                                                    <a-tooltip
+                                                                        :title="rosterTotal > 0
+      ? `Đã duyệt: ${rosterApproved}/${rosterTotal}` + (approvedNames.length ? ` • ${approvedNames.join(', ')}` : '')
+      : 'Không có danh sách phê duyệt'">
+                                                                        <a-progress
+                                                                            :percent="displayProgress"
+                                                                            :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
+                                                                            :status="displayProgress >= 100 ? 'success' : 'active'"
+                                                                            size="small"
+                                                                            :show-info="true"
+                                                                        />
+                                                                    </a-tooltip>
+
+                                                                    <div v-if="rosterTotal > 0" class="mt8">
+                                                                        <a-typography-text type="secondary">
+                                                                            (Theo phê duyệt: {{ rosterApproved }}/{{ rosterTotal }})
+                                                                        </a-typography-text>
+                                                                    </div>
                                                                 </template>
+
                                                                 <template v-else>
                                                                     <a-slider
                                                                         v-model:value="numericProgress"
                                                                         :min="0"
-                                                                        :max="100"
+                                                                        :max="sliderMax"
                                                                         :step="5"
                                                                         :marks="{ 0: '0%', 25: '25%', 50: '50%', 75: '75%', 100: '100%' }"
+                                                                        :tooltip="{
+      formatter: (val) =>
+        rosterTotal > 0
+          ? `${val}% • Đã duyệt ${rosterApproved}/${rosterTotal}`
+          : `${val}%`
+    }"
                                                                         style="width: calc(83% + 50px); margin: 0 auto; display: block;"
                                                                     />
+
+                                                                    <div v-if="rosterTotal > 0" class="mt8">
+                                                                        <a-typography-text type="secondary">
+                                                                            Tiến độ bị giới hạn theo phê duyệt: {{ rosterApproved }}/{{ rosterTotal }}
+                                                                            ({{ rosterProgress }}%)
+                                                                        </a-typography-text>
+                                                                    </div>
                                                                 </template>
+
                                                             </a-form-item>
                                                         </a-col>
+
                                                         <!-- Phê duyệt -->
                                                         <a-col :span="24">
 <!--                                                            <a-form-item label="Phê duyệt">-->
@@ -1052,6 +1079,65 @@ const vAutoMaxheight = {
         delete el.__autoMH
     },
 }
+
+
+// Lấy roster từ payload (ưu tiên server đã trả sẵn roster_total/roster_progress)
+const rosterItems = computed(() => {
+    const raw = formData.value?.approval_roster_json
+    try {
+        const arr = typeof raw === 'string' ? JSON.parse(raw || '[]') : (raw || [])
+        return Array.isArray(arr) ? arr : []
+    } catch { return [] }
+})
+
+const rosterTotal = computed(() => {
+    // Nếu BE đã bổ sung field thì dùng luôn, không thì đếm từ JSON
+    const fromBE = Number(formData.value?.roster_total ?? 0)
+    return fromBE > 0 ? fromBE : rosterItems.value.length
+})
+
+const rosterApproved = computed(() =>
+    rosterItems.value.filter(x => (x?.status || '').toLowerCase() === 'approved').length
+)
+
+const rosterProgress = computed(() => {
+    // Nếu BE có 'roster_progress' thì ưu tiên
+    if (formData.value?.roster_progress != null) {
+        return Number(formData.value.roster_progress)
+    }
+    if (rosterTotal.value === 0) {
+        return formData.value?.approval_status === 'approved' ? 100 : 0
+    }
+    return Math.round((rosterApproved.value / rosterTotal.value) * 100)
+})
+
+// Tiến độ hiển thị: nếu có roster => dùng rosterProgress; ngược lại dùng numericProgress
+const displayProgress = computed(() => {
+    return rosterTotal.value > 0 ? rosterProgress.value : Number(formData.value.progress || 0)
+})
+
+// Khi CHỈNH SỬA: không cho kéo quá tiến độ theo roster (tránh set tay vượt quá thực tế duyệt)
+const sliderMax = computed(() => (rosterTotal.value > 0 ? rosterProgress.value : 100))
+
+// Ép không cho vượt max khi người dùng kéo slider
+watch(numericProgress, (val) => {
+    if (rosterTotal.value > 0 && val > sliderMax.value) {
+        numericProgress.value = sliderMax.value
+    }
+    // Giữ rule cũ nếu bạn vẫn cần:
+    if (val === 100 && Number(formData.value.approval_steps) > 0 && formData.value.approval_status !== 'approved') {
+        numericProgress.value = Math.min(95, sliderMax.value)
+    }
+})
+
+const approvedNames = computed(() =>
+    rosterItems.value
+        .filter(x => (x?.status || '').toLowerCase() === 'approved')
+        .map(x => x?.name || `#${x?.user_id}`)
+        .filter(Boolean)
+)
+
+
 
 const goBack = () => {
     if (window.history.length > 1) router.back()

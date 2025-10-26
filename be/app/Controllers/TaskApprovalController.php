@@ -586,9 +586,19 @@ class TaskApprovalController extends ResourceController
         $roster   = $this->readRoster($task);
         $progress = $this->computeRosterProgress($roster, (string)($task['approval_status'] ?? 'pending'));
 
-        // ✅ Thêm đoạn mới ở đây
-        $allApproved = !array_filter($roster, fn($r) => ($r['status'] ?? 'pending') !== 'approved');
-        $approved_at = $allApproved ? max(array_map(fn($r) => $r['acted_at'] ?? null, $roster)) : null;
+        // ✅ An toàn khi roster rỗng
+        $hasRoster   = !empty($roster);
+
+        // All approved chỉ đúng khi roster có phần tử và TẤT CẢ đều approved
+        $allApproved = $hasRoster && !array_filter($roster, fn($r) => strtolower((string)($r['status'] ?? 'pending')) !== 'approved');
+
+        // Lấy thời điểm approved_at lớn nhất, chỉ khi allApproved true và có acted_at hợp lệ
+        $approved_at = null;
+        if ($allApproved) {
+            // Lấy cột acted_at và tính max an toàn (bỏ null/invalid)
+            $actedList   = array_map(fn($r) => $r['acted_at'] ?? null, $roster);
+            $approved_at = $this->safeMaxDate($actedList);
+        }
 
         return $this->respond([
             'roster'         => $this->addHumanDatesToRoster($roster),
@@ -706,6 +716,21 @@ class TaskApprovalController extends ResourceController
         }
         return $roster;
     }
+
+
+    /** Lấy thời điểm lớn nhất từ danh sách datetime string an toàn */
+    private function safeMaxDate(array $dates): ?string
+    {
+        $ts = [];
+        foreach ($dates as $d) {
+            if (!$d) continue;
+            $t = strtotime((string)$d);
+            if ($t !== false) $ts[] = $t;
+        }
+        if (empty($ts)) return null;
+        return date('Y-m-d H:i:s', max($ts));
+    }
+
 
 
 

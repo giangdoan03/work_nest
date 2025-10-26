@@ -295,7 +295,7 @@ class TaskController extends ResourceController
             return $this->failNotFound('Task not found');
         }
 
-        // 🔁 Nếu đã duyệt mà progress < 100 → auto 100 (và tùy chọn set status=done)
+        // 🔁 Nếu đã duyệt mà progress < 100 → auto 100 (và tuỳ chọn set status=done)
         $row['progress'] = (int)($row['progress'] ?? 0);
         if (($row['approval_status'] ?? null) === 'approved' && $row['progress'] < 100) {
             $done = class_exists(TaskStatus::class) ? TaskStatus::DONE : 'done';
@@ -303,12 +303,12 @@ class TaskController extends ResourceController
             // cập nhật DB
             $this->model->update($id, [
                 'progress' => 100,
-                'status' => $done,
+                'status'   => $done,
             ]);
 
             // đồng bộ bản trả về
             $row['progress'] = 100;
-            $row['status'] = $done;
+            $row['status']   = $done;
         }
 
         // 🔎 Tính step_name theo linked_type + step_code
@@ -340,20 +340,71 @@ class TaskController extends ResourceController
             ->findAll();
 
         // ⏳ days_remaining / days_overdue (dựa vào end_date)
-        $diff = calculateDeadlineDiff($row['end_date'] ?? null); // helper của bạn
+        $diff = calculateDeadlineDiff($row['end_date'] ?? null);
         $row['days_remaining'] = $diff['days_remaining'] ?? null;
-        $row['days_overdue'] = $diff['days_overdue'] ?? null;
+        $row['days_overdue']   = $diff['days_overdue'] ?? null;
 
         // 👤 Chuẩn hoá assignee object giống FE đang dùng
-        $assigneeId = $row['assignee_id'] ?? null;
+        $assigneeId   = $row['assignee_id'] ?? null;
         $assigneeName = $row['assignee_name'] ?? null;
         $row['assignee'] = ($assigneeId || $assigneeName)
             ? ['id' => (string)$assigneeId, 'name' => $assigneeName]
             : null;
         unset($row['assignee_id'], $row['assignee_name']);
 
+        /* --------------------------------------------
+         * ✅ BỔ SUNG: Thống kê roster từ approval_roster_json
+         *  - roster_total: tổng số người duyệt/ký
+         *  - roster_totals: breakdown theo role/status
+         *  - roster_progress: % approved theo roster
+         * -------------------------------------------- */
+        $rawRoster = $row['approval_roster_json'] ?? '[]';
+        $roster    = is_string($rawRoster) ? json_decode($rawRoster, true) : (is_array($rawRoster) ? $rawRoster : []);
+        $roster    = is_array($roster) ? $roster : [];
+
+        // Lọc phần tử hợp lệ (có user_id)
+        $roster = array_values(array_filter($roster, fn($m) => isset($m['user_id'])));
+
+        // Totals by role & status
+        $totalMembers  = count($roster);
+        $totalApprove  = 0; // role=approve
+        $totalSign     = 0; // role=sign
+        $totalApproved = 0; // status=approved
+        $totalPending  = 0; // status=pending
+        $totalRejected = 0; // status=rejected
+
+        foreach ($roster as $r) {
+            $role = strtolower($r['role'] ?? 'approve');
+            $st   = strtolower($r['status'] ?? 'pending');
+            if ($role === 'sign') $totalSign++; else $totalApprove++;
+            if     ($st === 'approved') $totalApproved++;
+            elseif ($st === 'rejected') $totalRejected++;
+            else                        $totalPending++;
+        }
+
+        // Progress theo roster
+        $taskApprStatus = (string)($row['approval_status'] ?? 'pending');
+        if ($totalMembers === 0) {
+            $rosterProgress = ($taskApprStatus === 'approved') ? 100 : 0;
+        } else {
+            $rosterProgress = (int) round(($totalApproved / $totalMembers) * 100);
+        }
+
+        // Gắn vào payload trả về
+        $row['roster_total']  = $totalMembers;  // 👈 tổng số người duyệt/ký
+        $row['roster_totals'] = [
+            'members'   => $totalMembers,
+            'approvers' => $totalApprove,
+            'signers'   => $totalSign,
+            'approved'  => $totalApproved,
+            'pending'   => $totalPending,
+            'rejected'  => $totalRejected,
+        ];
+        $row['roster_progress'] = $rosterProgress;
+
         return $this->respond($row);
     }
+
 
 
     /**
