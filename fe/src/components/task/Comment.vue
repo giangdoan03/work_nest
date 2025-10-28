@@ -228,10 +228,11 @@
             </div>
 
             <div class="composer">
-                <a-input
+                <a-textarea
                     v-model:value="inputValue"
                     placeholder="Viết lời nhắn tại đây (gõ @ để thêm người duyệt/ký)"
-                    @keydown.enter.exact.prevent="createNewComment"
+                    :auto-size="{ minRows: 2, maxRows: 6 }"
+                    @pressEnter.exact.prevent="createNewComment"
                     @input="onInputDetectMention"
                 />
 

@@ -339,7 +339,7 @@ function sendBtnTooltip(item){
     if (st.pending)  return 'Đang chờ người duyệt phản hồi'
     if (st.approved) return 'Tài liệu đã duyệt'
     if (st.rejected) return 'Đã bị từ chối — bấm để gửi lại'
-    return 'Gửi đề nghị duyệt tài liệu'
+    return 'Gửi đề nghị ký duyệt'
 }
 
 /** đảm bảo có task_file_id cho 1 item (comment file) */
@@ -431,7 +431,7 @@ async function submitSendApproval(){
 
         if (ok){
             approvalMap[item.task_file_id] = { status:'pending', instanceId: data?.id || null }
-            message.success('Đã gửi duyệt tài liệu.')
+            message.success('Đã gửi ký duyệt tài liệu.')
             clearSendApproval()
             return
         }
