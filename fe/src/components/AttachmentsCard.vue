@@ -1,8 +1,6 @@
 <template>
     <a-card bordered class="doc-section">
-        <!-- SPIN LOADING -->
         <a-spin :spinning="loading" tip="Đang tải tài liệu...">
-            <!-- ============== PREVIEW: chỉ từ bình luận ============== -->
             <a-list
                 v-if="displayCards.length"
                 class="att-grid"
@@ -11,54 +9,64 @@
             >
                 <template #renderItem="{ item }">
                     <a-list-item>
-                        <a-card hoverable class="att-card att-card--sm" :bodyStyle="{ padding: '10px 10px 8px' }">
+                        <a-card hoverable class="att-card att-card--sm header_card" :bodyStyle="{ padding: '10px 10px 8px' }">
                             <template #extra>
                                 <a-tag color="blue">Từ bình luận</a-tag>
                             </template>
 
-                            <!-- ẢNH -->
+                            <!-- Thumb -->
                             <template v-if="item.kind === 'image'">
                                 <a-image :src="item.url" :height="thumbH" :alt="item.name" />
                             </template>
-
-                            <!-- LINK -->
                             <template v-else-if="item.kind === 'link'">
                                 <div class="att-link-thumb">
-                                    <img :src="favicon(item.url)" class="att-favicon" referrerpolicy="no-referrer" @error="hideBrokenFavicon" />
+                                    <img :src="favicon(item.url)" class="att-favicon" referrerpolicy="no-referrer" @error="hideBrokenFavicon" alt=""/>
                                     <LinkOutlined class="att-link-icon" />
                                 </div>
                             </template>
-
-                            <!-- FILE khác -->
                             <template v-else>
                                 <div class="att-icon-wrap">
                                     <component :is="item.icon" class="att-icon" />
                                 </div>
                             </template>
 
+                            <!-- Meta -->
                             <div class="att-meta">
                                 <div class="att-title" :title="item.title || item.name">{{ item.title || item.name }}</div>
+
                                 <div class="att-sub" v-if="item.is_link">
                                     <a :href="item.url" target="_blank" rel="noopener">{{ prettyUrl(item.url) }}</a>
                                 </div>
                                 <div class="att-sub" v-else :title="item.name">{{ item.name }}</div>
+                                <!-- Uploader line (non-wrapping, ellipsis) -->
+                                <div class="att-uploader" v-if="item.uploader_name || item.uploaded_by || item.created_at">
+                                    <div class="att-uploader-left">
+                                        <UserOutlined class="att-uploader-ico" />
+                                        <span class="att-uploader-name">
+                                          {{ item.uploader_name || nameOfUploader(item.uploaded_by) }}
+                                        </span>
+                                    </div>
+                                    <div class="att-uploader-time" v-if="item.created_at">
+                                        {{ formatTime(item.created_at) }} — {{ formatDateOnly(item.created_at) }}
+                                    </div>
+                                </div>
                             </div>
 
+                            <!-- Actions -->
                             <div class="att-actions">
                                 <a-tooltip title="Xem trước">
                                     <a-button size="small" shape="circle" @click="openAttachment(item)">
-                                        <EyeOutlined/>
+                                        <EyeOutlined />
                                     </a-button>
                                 </a-tooltip>
 
                                 <a-tooltip v-if="!item.is_link" title="Tải xuống / mở">
                                     <a-button size="small" shape="circle" @click="downloadAttachment(item)">
-                                        <DownloadOutlined/>
+                                        <DownloadOutlined />
                                     </a-button>
                                 </a-tooltip>
                             </div>
 
-                            <!-- badges -->
                             <span v-if="item.ext" class="att-ext">{{ item.ext }}</span>
                         </a-card>
                     </a-list-item>
@@ -75,33 +83,48 @@
 <script setup>
 import {
     LinkOutlined, EyeOutlined, DownloadOutlined,
-    FilePdfOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined, FileTextOutlined
+    FilePdfOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined, FileTextOutlined,
+    UserOutlined
 } from '@ant-design/icons-vue'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch, onBeforeUnmount } from 'vue'
 import { message } from 'ant-design-vue'
 import { parseApiError } from '@/utils/apiError'
 import { getComments } from '@/api/task'
+import { getUsers } from '@/api/user'
+import dayjs from 'dayjs'
+import 'dayjs/locale/vi'
+dayjs.locale('vi')
 
+/* ---------- props ---------- */
 const props = defineProps({
     taskId: { type: [String, Number], required: true }
 })
 
+/* ---------- state ---------- */
 const thumbH = 96
 const commentFileItems = ref([])
-const loading = ref(false) // ✅ spinner state
+const loading = ref(false)
+const userMap = ref(Object.create(null))
 
+/* ---------- constants & helpers ---------- */
 const IMAGE_EXTS = new Set(['jpg','jpeg','png','gif','webp','bmp','svg'])
 const PDF_EXTS   = new Set(['pdf'])
 const WORD_EXTS  = new Set(['doc','docx'])
 const EXCEL_EXTS = new Set(['xls','xlsx','csv'])
 const PPT_EXTS   = new Set(['ppt','pptx'])
+const OFFICE_EXTS = new Set(['doc','docx','xls','xlsx','ppt','pptx'])
+
+const aborter = { controller: null }
+
+const formatDateOnly = dt => dayjs(dt).isValid() ? dayjs(dt).format('DD/MM/YYYY') : ''
+const formatTime     = dt => dayjs(dt).isValid() ? dayjs(dt).format('HH:mm') : ''
+const formatDateFull = dt => dayjs(dt).isValid() ? dayjs(dt).format('HH:mm DD/MM/YYYY') : ''
 
 function extOf(name = '') {
     const n = String(name).split('?')[0]
     const i = n.lastIndexOf('.')
     return i >= 0 ? n.slice(i + 1).toLowerCase() : ''
 }
-
 function detectKind({ is_link, name, file_type, mime_type, url }) {
     const ft = String(mime_type || file_type || '').toLowerCase()
     const e  = extOf(name || url || '')
@@ -113,7 +136,6 @@ function detectKind({ is_link, name, file_type, mime_type, url }) {
     if (PPT_EXTS.has(e))   return 'ppt'
     return 'other'
 }
-
 function pickIcon(kind) {
     switch (kind) {
         case 'pdf': return FilePdfOutlined
@@ -124,7 +146,6 @@ function pickIcon(kind) {
         default: return FileTextOutlined
     }
 }
-
 function prettyUrl(u) {
     try {
         const url = new URL(u)
@@ -133,35 +154,51 @@ function prettyUrl(u) {
         return url.host + (short ? '/' + short : '')
     } catch { return u }
 }
-
 function favicon() {
-    return 'https://assets.develop.io.vn/wp-content/uploads/2025/10/favicon.png';
+    return 'https://assets.develop.io.vn/wp-content/uploads/2025/10/favicon.png'
 }
-
 function hideBrokenFavicon(e) {
     if (e?.target) e.target.style.opacity = 0
 }
+const normalizeKey = (url = '') => String(url || '').split('?')[0]
 
-function normalizeKey(url = '') {
-    return String(url || '').split('?')[0]
+/* ---------- user utils ---------- */
+async function loadUsers() {
+    try {
+        const { data } = await getUsers()
+        userMap.value = Object.fromEntries((data || []).map(u => [String(u.id), u]))
+    } catch (e) {
+        // không chặn render nếu lỗi
+        console.warn('loadUsers error', e)
+    }
 }
+const nameOfUploader = (id) => id ? (userMap.value[String(id)]?.name || `#${id}`) : '—'
 
+/* ---------- data compose ---------- */
 const displayCards = computed(() => commentFileItems.value)
 
-/** Lấy file từ bình luận */
+/* ---------- fetch comments -> flatten files ---------- */
 async function fetchAllCommentFiles() {
     if (!props.taskId) return
-    loading.value = true // ✅ bật spin
+    // cancel request cũ (nếu đang chạy)
+    aborter.controller?.abort?.()
+    aborter.controller = new AbortController()
+
+    loading.value = true
     const acc = []
     const seen = new Set()
+
     try {
         let page = 1
         while (true) {
-            const res = await getComments(props.taskId, { page })
+            const res = await getComments(props.taskId, { page, signal: aborter.controller.signal })
             const comments = res?.data?.comments || []
             const totalPages = res?.data?.pagination?.totalPages || 1
 
             for (const c of comments) {
+                const uploaderId = c.user_id || null
+                const uploaderName = c.user_name || null
+
                 for (const f of (c.files || [])) {
                     const isLink = !!f.link_url && !f.file_path
                     const url = isLink ? (f.link_url || '') : (f.file_path || '')
@@ -176,6 +213,7 @@ async function fetchAllCommentFiles() {
                         mime_type: f.mime_type,
                         url
                     })
+
                     acc.push({
                         id: f.id,
                         name: f.file_name || '',
@@ -185,6 +223,10 @@ async function fetchAllCommentFiles() {
                         kind,
                         icon: pickIcon(kind),
                         ext: extOf(f.file_name || url),
+                        created_at: f.created_at || c.created_at || null,
+                        updated_at: f.updated_at || c.updated_at || null,
+                        uploaded_by: f.uploaded_by || uploaderId || null, // fallback comment.user_id
+                        uploader_name: f.uploader_name || uploaderName || null,
                         _source: 'comment',
                         full: { ...f, comment_id: c.id },
                     })
@@ -195,41 +237,44 @@ async function fetchAllCommentFiles() {
             page++
         }
     } catch (e) {
-        console.error('fetchAllCommentFiles error', e)
-        message.error(parseApiError(e) || 'Không tải được file từ bình luận.')
+        if (e?.name !== 'AbortError') {
+            console.error('fetchAllCommentFiles error', e)
+            message.error(parseApiError(e) || 'Không tải được file từ bình luận.')
+        }
     } finally {
-        loading.value = false // ✅ tắt spin
+        loading.value = false
     }
+
     commentFileItems.value = acc
 }
 
+/* ---------- actions ---------- */
 function openAttachment(it) {
-    const url = encodeURIComponent(it.url)
     const ext = (it.ext || '').toLowerCase()
-    const officeExts = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']
-    if (officeExts.includes(ext)) {
+    if (OFFICE_EXTS.has(ext)) {
+        const url = encodeURIComponent(it.url)
         window.open(`https://view.officeapps.live.com/op/view.aspx?src=${url}`, '_blank', 'noopener')
-    } else if (ext === 'pdf') {
-        window.open(it.url, '_blank', 'noopener')
-    } else {
-        window.open(it.url, '_blank', 'noopener')
+        return
     }
+    window.open(it.url, '_blank', 'noopener') // pdf/ảnh/khác → mặc định trình duyệt
 }
+const downloadAttachment = (it) => window.open(it.url, '_blank', 'noopener')
 
-function downloadAttachment(it) {
-    window.open(it.url, '_blank', 'noopener')
-}
-
-onMounted(fetchAllCommentFiles)
-watch(() => props.taskId, fetchAllCommentFiles)
+/* ---------- lifecycle ---------- */
+onMounted(async () => {
+    await Promise.all([loadUsers(), fetchAllCommentFiles()])
+})
+watch(() => props.taskId, () => fetchAllCommentFiles())
+onBeforeUnmount(() => {
+    aborter.controller?.abort?.()
+})
 </script>
 
-
 <style scoped>
-/* Grid gọn hơn */
+/* Grid */
 .att-grid { margin-top: 8px; }
 
-/* Card nhỏ gọn */
+/* Card */
 .att-card { border-radius: 12px; overflow: hidden; }
 .att-card--sm {
     --att-thumb-h: 96px;
@@ -238,7 +283,7 @@ watch(() => props.taskId, fetchAllCommentFiles)
     --att-pad-y: 6px;
 }
 
-/* Vùng icon/ảnh nhỏ lại */
+/* Thumbs */
 .att-icon-wrap { display:flex; align-items:center; justify-content:center; height: var(--att-thumb-h); background:#fafafa; }
 .att-icon { font-size: var(--att-icon-size); opacity: .9; }
 
@@ -247,22 +292,79 @@ watch(() => props.taskId, fetchAllCommentFiles)
 .att-favicon { width:22px; height:23px; border-radius:6px; position:absolute; left:8px; top:8px; }
 .att-link-icon { font-size: var(--att-icon-size); opacity:.9; }
 
-/* Meta & chữ nhỏ hơn */
+/* Meta */
 .att-meta { padding: 6px var(--att-pad-x) 0; }
 .att-title { font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .att-sub { color:#889; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-/* Hàng nút hành động thu gọn */
+/* Uploader row (non wrapping) */
+.att-uploader{
+    margin-top: 2px;
+    font-size: 11px;
+    color: #666;
+
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    white-space: nowrap;
+}
+.att-uploader-left{
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+}
+.att-uploader-ico{ font-size: 12px; }
+.att-uploader-name{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.att-uploader-time{ flex:0 0 auto; white-space: nowrap; }
+
+/* Actions */
 .att-actions { display:flex; gap:6px; padding: 6px var(--att-pad-x) 8px; justify-content:flex-end; }
 .att-actions :deep(.ant-btn) { width:22px; height:22px; padding:0; }
 
-/* badges */
+/* Badges */
 .att-ext { position:absolute; top:6px; right:6px; font-size:10px; padding:0 6px; background:#f0f1f5; border-radius:999px; text-transform:uppercase; color:#555; }
 </style>
 
 <style>
-.ant-list-item {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+.ant-list-item{ padding-left:0 !important; padding-right:0 !important; }
+
+.att-uploader {
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: 2px;
+    font-size: 11px;
+    color: #666;
+    white-space: nowrap;
+}
+
+.att-uploader-left {
+    flex: 1;                     /* ✅ chiếm tối đa không gian còn lại */
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.att-uploader-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.att-uploader-time {
+    flex-shrink: 0;
+    color: #999;
+}
+
+.header_card .ant-card-extra {
+    margin-left: 0 !important;
 }
 </style>
