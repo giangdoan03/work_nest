@@ -1,10 +1,7 @@
 <template>
     <div class="comment">
         <!-- STICKY: người duyệt/ký + file ghim -->
-        <div
-            class="mention-chips sticky-mentions"
-            v-if="(pinnedFiles && pinnedFiles.length) || (mentionsSelected && mentionsSelected.length)"
-        >
+        <div class="mention-chips sticky-mentions" v-if="(pinnedFiles && pinnedFiles.length) || (mentionsSelected && mentionsSelected.length)">
             <!-- Header -->
             <div class="sticky-head">
                 <div class="sticky-left">
@@ -93,9 +90,7 @@
                         </div>
                     </template>
 
-                    <div
-                        class="chip-card"
-                        :key="`${m.user_id}-${m.status}-${m.acted_at || ''}-${m.added_at || ''}`"
+                    <div class="chip-card" :key="`${m.user_id}-${m.status}-${m.acted_at || ''}-${m.added_at || ''}`"
                         :class="{
               'is-approved': m.status==='approved',
               'is-pending' : m.status==='pending' || m.status==='processing',
@@ -103,17 +98,14 @@
             }"
                     >
                         <div class="chip-top">
-                            <div class="chip-title" :title="m.name">
-                                @{{ m.name }}
+                            <div class="chip-title" :title="m.name">@{{ m.name }}
                                 <span class="role-dot" :class="statusDotClass(m.status)"></span>
                                 <span class="state-text">
                                     {{ m.status === 'approved' ? (m.role === 'sign' ? 'Đã ký' : 'Đã duyệt') : m.status === 'rejected' ? 'Đã từ chối' : (m.role === 'sign' ? 'Chờ ký' : 'Chờ duyệt') }}
                                 </span>
                             </div>
                             <a-tooltip title="Bỏ khỏi danh sách">
-                                <a-button type="text" size="small" class="chip-close"
-                                          @click.stop="removeMention(m.user_id)">×
-                                </a-button>
+                                <a-button type="text" size="small" class="chip-close" @click.stop="removeMention(m.user_id)">×</a-button>
                             </a-tooltip>
                         </div>
 
@@ -205,8 +197,7 @@
                                 </div>
 
                                 <div class="cm-att__line">
-                                    <a
-                                        class="tg-file-link"
+                                    <a class="tg-file-link"
                                         :href="hrefOf(f)"
                                         target="_blank"
                                         rel="noopener"
