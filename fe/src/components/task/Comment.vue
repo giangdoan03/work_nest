@@ -257,7 +257,8 @@
                                 </div>
                                 <div class="row">
                                     <span class="lbl">Vai trò:</span>
-                                    <a-segmented v-model:value="mentionForm.role" :options="[{ label: 'Duyệt', value: 'approve' }, { label: 'Ký', value: 'sign' }]"/>
+<!--                                    <a-segmented v-model:value="mentionForm.role" :options="[{ label: 'Duyệt', value: 'approve' }, { label: 'Ký', value: 'sign' }]"/>-->
+                                    <a-segmented v-model:value="mentionForm.role" :options="[{ label: 'Duyệt', value: 'approve' }]"/>
                                 </div>
                                 <div class="row" style="justify-content:flex-end; gap:8px;">
                                     <a-button size="small" @click="resetMentionForm">Hủy</a-button>

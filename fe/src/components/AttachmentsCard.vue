@@ -11,7 +11,13 @@
                     <a-list-item>
                         <a-card hoverable class="att-card att-card--sm header_card" :bodyStyle="{ padding: '10px 10px 8px' }">
                             <template #extra>
-                                <a-tag color="blue">Từ bình luận</a-tag>
+                                <!-- tag trạng thái duyệt (nếu đã có) -->
+                                <template v-if="approvalStateOf(item).status">
+                                    <a-tag v-if="approvalStateOf(item).pending"  color="gold">Chờ duyệt</a-tag>
+                                    <a-tag v-else-if="approvalStateOf(item).approved" color="green">Đã duyệt</a-tag>
+                                    <a-tag v-else-if="approvalStateOf(item).rejected" color="red">Từ chối</a-tag>
+                                </template>
+<!--                                <a-tag color="blue">Từ bình luận</a-tag>-->
                             </template>
 
                             <!-- Thumb -->
@@ -20,7 +26,7 @@
                             </template>
                             <template v-else-if="item.kind === 'link'">
                                 <div class="att-link-thumb">
-                                    <img :src="favicon(item.url)" class="att-favicon" referrerpolicy="no-referrer" @error="hideBrokenFavicon" alt=""/>
+                                    <img :src="favicon(item.url)" class="att-favicon" referrerpolicy="no-referrer" @error="hideBrokenFavicon" alt="" />
                                     <LinkOutlined class="att-link-icon" />
                                 </div>
                             </template>
@@ -35,16 +41,19 @@
                                 <div class="att-title" :title="item.title || item.name">{{ item.title || item.name }}</div>
 
                                 <div class="att-sub" v-if="item.is_link">
-                                    <a :href="item.url" target="_blank" rel="noopener">{{ prettyUrl(item.url) }}</a>
+<!--                                    <a :href="item.url" target="_blank" rel="noopener">{{ prettyUrl(item.url) }}</a>-->
                                 </div>
                                 <div class="att-sub" v-else :title="item.name">{{ item.name }}</div>
-                                <!-- Uploader line (non-wrapping, ellipsis) -->
+
+                                <!-- Uploader line -->
                                 <div class="att-uploader" v-if="item.uploader_name || item.uploaded_by || item.created_at">
                                     <div class="att-uploader-left">
                                         <UserOutlined class="att-uploader-ico" />
-                                        <span class="att-uploader-name">
-                                          {{ item.uploader_name || nameOfUploader(item.uploaded_by) }}
-                                        </span>
+                                        <a-tooltip :title="item.uploader_name || nameOfUploader(item.uploaded_by)">
+                                          <span class="att-uploader-name">
+                                            {{ item.uploader_name || nameOfUploader(item.uploaded_by) }}
+                                          </span>
+                                        </a-tooltip>
                                     </div>
                                     <div class="att-uploader-time" v-if="item.created_at">
                                         {{ formatTime(item.created_at) }} — {{ formatDateOnly(item.created_at) }}
@@ -65,6 +74,20 @@
                                         <DownloadOutlined />
                                     </a-button>
                                 </a-tooltip>
+
+                                <!-- Gửi duyệt -->
+                                <a-tooltip :title="sendBtnTooltip(item)">
+                                    <a-button
+                                        size="small"
+                                        shape="circle"
+                                        type="primary"
+                                        :loading="ensuring[item._key]"
+                                        :disabled="!canSendApproval(item)"
+                                        @click="openSendApproval(item)"
+                                    >
+                                        <SendOutlined />
+                                    </a-button>
+                                </a-tooltip>
                             </div>
 
                             <span v-if="item.ext" class="att-ext">{{ item.ext }}</span>
@@ -77,23 +100,59 @@
                 <template #description>Chưa có tài liệu (từ bình luận)</template>
             </a-empty>
         </a-spin>
+
+        <!-- Modal gửi duyệt -->
+        <a-modal
+            v-model:open="showSend"
+            title="Gửi duyệt tài liệu"
+            :confirm-loading="sending"
+            @ok="submitSendApproval"
+            @cancel="clearSendApproval"
+        >
+            <a-form layout="vertical">
+                <a-form-item
+                    label="Người duyệt"
+                    :validate-status="!sendForm.approver_ids.length ? 'error' : ''"
+                    :help="!sendForm.approver_ids.length ? 'Chọn ít nhất 1 người duyệt' : ''"
+                >
+                    <a-select
+                        v-model:value="sendForm.approver_ids"
+                        mode="multiple"
+                        show-search
+                        :options="approverOptions"
+                        placeholder="Chọn người duyệt"
+                        :filter-option="filterUser"
+                    />
+                </a-form-item>
+                <a-form-item label="Ghi chú (tuỳ chọn)">
+                    <a-textarea v-model:value="sendForm.note" :rows="3" placeholder="Thông tin bổ sung cho người duyệt" />
+                </a-form-item>
+            </a-form>
+        </a-modal>
     </a-card>
 </template>
 
 <script setup>
 import {
-    LinkOutlined, EyeOutlined, DownloadOutlined,
-    FilePdfOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined, FileTextOutlined,
-    UserOutlined
+    LinkOutlined, EyeOutlined, DownloadOutlined, SendOutlined,
+    FilePdfOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined, FileTextOutlined, UserOutlined
 } from '@ant-design/icons-vue'
-import { computed, onMounted, ref, watch, onBeforeUnmount } from 'vue'
+import { computed, onMounted, ref, watch, onBeforeUnmount, reactive } from 'vue'
 import { message } from 'ant-design-vue'
 import { parseApiError } from '@/utils/apiError'
 import { getComments } from '@/api/task'
 import { getUsers } from '@/api/user'
+import { sendApproval, getActiveApproval } from '@/api/approvals'
+import {
+    adoptTaskFileFromPathAPI,
+    uploadTaskFileLinkAPI,
+} from '@/api/taskFiles'
 import dayjs from 'dayjs'
 import 'dayjs/locale/vi'
 dayjs.locale('vi')
+
+import { useUserStore } from '@/stores/user'
+const store = useUserStore()
 
 /* ---------- props ---------- */
 const props = defineProps({
@@ -105,6 +164,16 @@ const thumbH = 96
 const commentFileItems = ref([])
 const loading = ref(false)
 const userMap = ref(Object.create(null))
+const ensuring = reactive({}) // per-item ensuring tfId
+const approvalMap = reactive({}) // { task_file_id: {status, instanceId} }
+const approvalLoading = ref(false)
+
+/* gửi duyệt modal */
+const showSend = ref(false)
+const sending = ref(false)
+const sendingItem = ref(null)
+const sendForm = reactive({ approver_ids: [], note: '' })
+const approverOptions = ref([])
 
 /* ---------- constants & helpers ---------- */
 const IMAGE_EXTS = new Set(['jpg','jpeg','png','gif','webp','bmp','svg'])
@@ -118,7 +187,6 @@ const aborter = { controller: null }
 
 const formatDateOnly = dt => dayjs(dt).isValid() ? dayjs(dt).format('DD/MM/YYYY') : ''
 const formatTime     = dt => dayjs(dt).isValid() ? dayjs(dt).format('HH:mm') : ''
-const formatDateFull = dt => dayjs(dt).isValid() ? dayjs(dt).format('HH:mm DD/MM/YYYY') : ''
 
 function extOf(name = '') {
     const n = String(name).split('?')[0]
@@ -154,12 +222,8 @@ function prettyUrl(u) {
         return url.host + (short ? '/' + short : '')
     } catch { return u }
 }
-function favicon() {
-    return 'https://assets.develop.io.vn/wp-content/uploads/2025/10/favicon.png'
-}
-function hideBrokenFavicon(e) {
-    if (e?.target) e.target.style.opacity = 0
-}
+function favicon() { return 'https://assets.develop.io.vn/wp-content/uploads/2025/10/favicon.png' }
+function hideBrokenFavicon(e) { if (e?.target) e.target.style.opacity = 0 }
 const normalizeKey = (url = '') => String(url || '').split('?')[0]
 
 /* ---------- user utils ---------- */
@@ -167,9 +231,10 @@ async function loadUsers() {
     try {
         const { data } = await getUsers()
         userMap.value = Object.fromEntries((data || []).map(u => [String(u.id), u]))
+        approverOptions.value = (data || []).map(u => ({ value: String(u.id), label: u.name || u.email || `#${u.id}` }))
     } catch (e) {
-        // không chặn render nếu lỗi
         console.warn('loadUsers error', e)
+        approverOptions.value = []
     }
 }
 const nameOfUploader = (id) => id ? (userMap.value[String(id)]?.name || `#${id}`) : '—'
@@ -180,7 +245,6 @@ const displayCards = computed(() => commentFileItems.value)
 /* ---------- fetch comments -> flatten files ---------- */
 async function fetchAllCommentFiles() {
     if (!props.taskId) return
-    // cancel request cũ (nếu đang chạy)
     aborter.controller?.abort?.()
     aborter.controller = new AbortController()
 
@@ -201,7 +265,9 @@ async function fetchAllCommentFiles() {
 
                 for (const f of (c.files || [])) {
                     const isLink = !!f.link_url && !f.file_path
-                    const url = isLink ? (f.link_url || '') : (f.file_path || '')
+                    // THAY =>
+                    const url = (f.link_url || f.file_path || '')
+                    const isHttp = /^https?:\/\//i.test(url)
                     const key = normalizeKey(url)
                     if (!key || seen.has(key)) continue
                     seen.add(key)
@@ -215,18 +281,20 @@ async function fetchAllCommentFiles() {
                     })
 
                     acc.push({
-                        id: f.id,
+                        _key: key,                       // key nội bộ để track loading per-item
+                        id: f.id,                        // id trong comment (nếu có)
                         name: f.file_name || '',
                         title: f.title || '',
                         url,
-                        is_link: isLink,
+                        is_link: isHttp,            // <-- coi http(s) là link
                         kind,
                         icon: pickIcon(kind),
                         ext: extOf(f.file_name || url),
                         created_at: f.created_at || c.created_at || null,
                         updated_at: f.updated_at || c.updated_at || null,
-                        uploaded_by: f.uploaded_by || uploaderId || null, // fallback comment.user_id
+                        uploaded_by: f.uploaded_by || uploaderId || null,
                         uploader_name: f.uploader_name || uploaderName || null,
+                        task_file_id: f.task_file_id || null,   // nếu BE có map sẵn
                         _source: 'comment',
                         full: { ...f, comment_id: c.id },
                     })
@@ -246,6 +314,183 @@ async function fetchAllCommentFiles() {
     }
 
     commentFileItems.value = acc
+    // nếu có sẵn task_file_id, load trạng thái duyệt
+    await refreshApprovalStates()
+}
+
+/* ---------- approval helpers ---------- */
+function approvalStateOf(item) {
+    const tfId = item?.task_file_id
+    const st = tfId ? (approvalMap[tfId] || {}) : {}
+    return {
+        status: st.status || null,
+        pending: st.status === 'pending',
+        approved: st.status === 'approved',
+        rejected: st.status === 'rejected'
+    }
+}
+function canSendApproval(item) {
+    // Đang kiểm tra hay adopt → khoá
+    if (ensuring[item._key]) return false
+    // Nếu đã Approved thì không gửi nữa
+    const st = approvalStateOf(item)
+    if (st.approved) return false
+    // Nếu đang pending → có thể muốn cho “gửi lại” khi bị rejected; pending thì khoá
+    if (st.pending) return false
+    return true
+}
+function sendBtnTooltip(item) {
+    if (ensuring[item._key]) return 'Đang chuẩn bị tài liệu...'
+    const st = approvalStateOf(item)
+    if (st.pending)  return 'Đang chờ người duyệt phản hồi'
+    if (st.approved) return 'Tài liệu đã duyệt'
+    if (st.rejected) return 'Đã bị từ chối — bấm để gửi lại'
+    return 'Gửi đề nghị duyệt tài liệu'
+}
+
+/** đảm bảo có task_file_id cho 1 item (comment file) */
+async function ensureTaskFileId(item) {
+    if (item.task_file_id) return item.task_file_id
+    ensuring[item._key] = true
+    try {
+        const isHttp = /^https?:\/\//i.test(item.url)
+
+        if (isHttp) {
+            // link ngoài / wp_media: tạo record link
+            const { data } = await uploadTaskFileLinkAPI(props.taskId, {
+                title: item.title || item.name || '',
+                url: item.url,
+                user_id: Number(store.currentUser?.id),   // ← BẮT BUỘC
+            })
+            const created = Array.isArray(data) ? data[0] : (data?.data || data)
+            item.task_file_id = Number(created?.id)
+        } else {
+            // file nội bộ: adopt
+            const { data } = await adoptTaskFileFromPathAPI(props.taskId, {
+                task_id: Number(props.taskId),            // ← BẮT BUỘC
+                user_id: Number(store.currentUser?.id),   // ← BẮT BUỘC
+                file_path: item.url,                      // ← BẮT BUỘC
+                file_name: item.name || '',
+            })
+            const created = data?.data || data
+            item.task_file_id = Number(created?.id)
+        }
+        return item.task_file_id
+    } catch (e) {
+        console.error('ensureTaskFileId error', e?.response?.data || e)
+        const msg = e?.response?.data?.messages?.error || 'Không tạo được tài liệu để gửi duyệt.'
+        message.error(msg)
+        return null
+    } finally {
+        ensuring[item._key] = false
+    }
+}
+
+
+/** nạp trạng thái duyệt cho các item đã có task_file_id */
+async function refreshApprovalStates() {
+    const ids = (commentFileItems.value || []).map(i => i.task_file_id).filter(Boolean)
+    if (!ids.length) return
+    approvalLoading.value = true
+    try {
+        const chunk = 6
+        for (let i = 0; i < ids.length; i += chunk) {
+            await Promise.all(
+                ids.slice(i, i + chunk).map(async (id) => {
+                    try {
+                        const a = await getActiveApproval('document', id)
+                        const status = a?.status ?? a?.instance?.status ?? null
+                        const instanceId = a?.instanceId ?? a?.instance?.id ?? null
+                        approvalMap[id] = { status, instanceId }
+                    } catch {
+                        approvalMap[id] = { status: null, instanceId: null }
+                    }
+                })
+            )
+        }
+    } finally {
+        approvalLoading.value = false
+    }
+}
+
+/* ---------- open modal ---------- */
+function filterUser(input, option) {
+    return option?.label?.toLowerCase?.().includes?.(input.toLowerCase())
+}
+async function openSendApproval(item) {
+    const tfId = await ensureTaskFileId(item)
+    if (!tfId) return
+    // sau khi có tfId, nạp trạng thái hiện tại (nếu có)
+    try {
+        const a = await getActiveApproval('document', tfId)
+        const status = a?.status ?? a?.instance?.status ?? null
+        const instanceId = a?.instanceId ?? a?.instance?.id ?? null
+        approvalMap[tfId] = { status, instanceId }
+    } catch {
+        // ignore
+    }
+
+    sendingItem.value = item
+    sendForm.approver_ids = []
+    sendForm.note = ''
+    showSend.value = true
+}
+
+/* ---------- submit approval ---------- */
+async function submitSendApproval() {
+    if (!sendForm.approver_ids.length) {
+        return message.error('Vui lòng chọn ít nhất 1 người duyệt.')
+    }
+    const item = sendingItem.value
+    if (!item?.task_file_id) {
+        return message.error('Thiếu mã tài liệu.')
+    }
+
+    sending.value = true
+    try {
+        const { ok, status, data } = await sendApproval({
+            target_type: 'document',
+            target_id: item.task_file_id,
+            document_id: item.task_file_id,
+            approver_ids: sendForm.approver_ids,
+            note: sendForm.note || '',
+            meta: {
+                title: item.title || item.name || '',
+                url: String(item.url || '')
+            }
+        })
+
+        if (ok) {
+            approvalMap[item.task_file_id] = { status: 'pending', instanceId: data?.approval_instance_id || null }
+            message.success('Đã gửi duyệt tài liệu.')
+            clearSendApproval()
+            return
+        }
+        if (status === 409) {
+            approvalMap[item.task_file_id] = { status: 'pending', instanceId: null }
+            message.warning(data?.message || 'Đối tượng đang chờ duyệt.')
+            clearSendApproval()
+            return
+        }
+        if (status === 422) {
+            message.error(data?.message || 'Dữ liệu chưa hợp lệ.')
+            return
+        }
+        message.error(data?.message || 'Không thể gửi duyệt.')
+    } catch (err) {
+        const msg = err?.response?.data?.message || err.message || 'Lỗi máy chủ.'
+        message.error(msg)
+    } finally {
+        sending.value = false
+    }
+}
+
+/* ---------- misc ---------- */
+function clearSendApproval() {
+    showSend.value = false
+    sendingItem.value = null
+    sendForm.approver_ids = []
+    sendForm.note = ''
 }
 
 /* ---------- actions ---------- */
@@ -256,7 +501,7 @@ function openAttachment(it) {
         window.open(`https://view.officeapps.live.com/op/view.aspx?src=${url}`, '_blank', 'noopener')
         return
     }
-    window.open(it.url, '_blank', 'noopener') // pdf/ảnh/khác → mặc định trình duyệt
+    window.open(it.url, '_blank', 'noopener')
 }
 const downloadAttachment = (it) => window.open(it.url, '_blank', 'noopener')
 
@@ -297,18 +542,18 @@ onBeforeUnmount(() => {
 .att-title { font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .att-sub { color:#889; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-/* Uploader row (non wrapping) */
+/* Uploader row (1 dòng, co giãn hợp lý) */
 .att-uploader{
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
     margin-top: 2px;
     font-size: 11px;
     color: #666;
-
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
     white-space: nowrap;
 }
 .att-uploader-left{
+    flex: 1;
     min-width: 0;
     display: flex;
     align-items: center;
@@ -321,7 +566,7 @@ onBeforeUnmount(() => {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.att-uploader-time{ flex:0 0 auto; white-space: nowrap; }
+.att-uploader-time{ flex:0 0 auto; white-space: nowrap; color:#999; }
 
 /* Actions */
 .att-actions { display:flex; gap:6px; padding: 6px var(--att-pad-x) 8px; justify-content:flex-end; }
@@ -329,42 +574,10 @@ onBeforeUnmount(() => {
 
 /* Badges */
 .att-ext { position:absolute; top:6px; right:6px; font-size:10px; padding:0 6px; background:#f0f1f5; border-radius:999px; text-transform:uppercase; color:#555; }
+
+.header_card .ant-card-extra { margin-left: 0 !important; }
 </style>
 
 <style>
 .ant-list-item{ padding-left:0 !important; padding-right:0 !important; }
-
-.att-uploader {
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-    margin-top: 2px;
-    font-size: 11px;
-    color: #666;
-    white-space: nowrap;
-}
-
-.att-uploader-left {
-    flex: 1;                     /* ✅ chiếm tối đa không gian còn lại */
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    overflow: hidden;
-    min-width: 0;
-}
-
-.att-uploader-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.att-uploader-time {
-    flex-shrink: 0;
-    color: #999;
-}
-
-.header_card .ant-card-extra {
-    margin-left: 0 !important;
-}
 </style>
