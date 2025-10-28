@@ -1,24 +1,27 @@
 <template>
     <div class="comment">
         <!-- STICKY: người duyệt/ký + file ghim -->
-        <div class="mention-chips sticky-mentions" v-if="(pinnedFiles && pinnedFiles.length) || (mentionsSelected && mentionsSelected.length)">
-            <!-- Header: summary + toggles -->
+        <div
+            class="mention-chips sticky-mentions"
+            v-if="(pinnedFiles && pinnedFiles.length) || (mentionsSelected && mentionsSelected.length)"
+        >
+            <!-- Header -->
             <div class="sticky-head">
                 <div class="sticky-left">
                     <span class="sticky-title">Tài liệu & người duyệt</span>
                     <span v-if="hiddenPinnedCount>0 || hiddenMentionsCount>0" class="sticky-more">
-                        (còn {{ hiddenPinnedCount + hiddenMentionsCount }} mục)
-                    </span>
+            (còn {{ hiddenPinnedCount + hiddenMentionsCount }} mục)
+          </span>
                 </div>
                 <div class="sticky-actions">
                     <a-tooltip :title="isStickyExpanded ? 'Thu gọn' : 'Hiện tất cả'">
                         <a-button type="text" size="small" @click="toggleSticky()">
                             <template #icon>
                                 <template v-if="!isStickyExpanded">
-                                    <PlusOutlined />
+                                    <PlusOutlined/>
                                 </template>
                                 <template v-else>
-                                    <MinusOutlined />
+                                    <MinusOutlined/>
                                 </template>
                             </template>
                             {{ isStickyExpanded ? 'Thu gọn' : 'Hiện tất cả' }}
@@ -28,8 +31,8 @@
             </div>
 
             <!-- Pinned files -->
-            <div v-if="visiblePinnedFiles.length" class="pinned-files" style="padding:8px">
-                <a-space wrap style="margin-bottom:0">
+            <div v-if="visiblePinnedFiles.length" class="pinned-files">
+                <a-space wrap>
                     <div v-for="f in visiblePinnedFiles" :key="f.id || f.file_path" class="pinned-item">
                         <a :href="hrefOf(f)" target="_blank" rel="noopener" class="pinned-link">
                             <PaperClipOutlined style="margin-right:4px"/>
@@ -40,8 +43,13 @@
                         </a-tooltip>
                     </div>
 
-                    <!-- “+N file” indicator when collapsed -->
-                    <a-tag v-if="!isStickyExpanded && hiddenPinnedCount>0" color="blue" class="more-pill" @click="expandSticky">
+                    <!-- +N file -->
+                    <a-tag
+                        v-if="!isStickyExpanded && hiddenPinnedCount>0"
+                        color="blue"
+                        class="more-pill"
+                        @click="expandSticky"
+                    >
                         +{{ hiddenPinnedCount }} file
                     </a-tag>
                 </a-space>
@@ -51,7 +59,7 @@
             <a-space wrap style="margin-bottom:8px;">
                 <a-popover
                     v-for="m in visibleMentions"
-                    :key="m.user_id"
+                    :key="`${m.user_id}-${m.status}-${m.acted_at || ''}-${m.added_at || ''}`"
                     trigger="click"
                     placement="top"
                     v-model:open="mentionPopoverOpen[m.user_id]"
@@ -85,20 +93,32 @@
                         </div>
                     </template>
 
-                    <div class="chip-card" :class="{
-                              'is-approved': m.status==='approved',
-                              'is-pending': m.status==='pending' || m.status==='processing',
-                              'is-rejected': m.status==='rejected'
-                            }"
+                    <div
+                        class="chip-card"
+                        :key="`${m.user_id}-${m.status}-${m.acted_at || ''}-${m.added_at || ''}`"
+                        :class="{
+              'is-approved': m.status==='approved',
+              'is-pending' : m.status==='pending' || m.status==='processing',
+              'is-rejected': m.status==='rejected'
+            }"
                     >
                         <div class="chip-top">
                             <div class="chip-title" :title="m.name">
                                 @{{ m.name }}
                                 <span class="role-dot" :class="statusDotClass(m.status)"></span>
-                                <span class="state-text">{{m.status === 'approved' ? (m.role === 'sign' ? 'Đã ký' : 'Đã duyệt') : m.status === 'rejected' ? 'Đã từ chối' : (m.role === 'sign' ? 'Chờ ký' : 'Chờ duyệt') }}</span>
+                                <span class="state-text">
+                  {{
+                                        m.status === 'approved'
+                                            ? (m.role === 'sign' ? 'Đã ký' : 'Đã duyệt')
+                                            : m.status === 'rejected'
+                                                ? 'Đã từ chối'
+                                                : (m.role === 'sign' ? 'Chờ ký' : 'Chờ duyệt')
+                                    }}
+                </span>
                             </div>
                             <a-tooltip title="Bỏ khỏi danh sách">
-                                <a-button type="text" size="small" class="chip-close" @click.stop="removeMention(m.user_id)">×
+                                <a-button type="text" size="small" class="chip-close"
+                                          @click.stop="removeMention(m.user_id)">×
                                 </a-button>
                             </a-tooltip>
                         </div>
@@ -111,7 +131,7 @@
                     </div>
                 </a-popover>
 
-                <!-- “+N người” indicator when collapsed -->
+                <!-- +N người -->
                 <a-tag
                     v-if="!isStickyExpanded && hiddenMentionsCount>0"
                     color="processing"
@@ -123,72 +143,32 @@
             </a-space>
         </div>
 
-
-        <!-- LIST COMMENT -->
+        <!-- LIST COMMENT (bubbles) -->
         <div class="list-comment" v-if="listComment" ref="listEl" :style="{ paddingBottom: listPadBottom }">
             <a-spin :spinning="loadingComment">
-                <div class="comment-content" v-for="(item, index) in listComment" :key="item.id || index">
-                    <a-row :gutter="[12,12]">
-                        <a-col>
-                            <BaseAvatar
-                                :src="getUserById(item.user_id)?.avatar"
-                                :name="getUserById(item.user_id)?.name || 'Không rõ'"
-                                :size="40"
-                                shape="circle"
-                                :preferApiOrigin="true"
-                            />
-                        </a-col>
+                <div
+                    class="tg-row"
+                    v-for="(item, index) in listComment"
+                    :key="item.id || index"
+                    :class="{ me: String(item.user_id) === String(currentUserId) }"
+                >
+                    <div class="avatar" v-if="String(item.user_id) !== String(currentUserId)">
+                        <BaseAvatar
+                            :src="getUserById(item.user_id)?.avatar"
+                            :name="getUserById(item.user_id)?.name || 'Không rõ'"
+                            :size="34"
+                            shape="circle"
+                            :preferApiOrigin="true"
+                        />
+                    </div>
 
-                        <a-col flex="1" style="margin-top:6px;">
-                            <a-typography-text style="color:#5c5c5c;">
-                                {{ getUserById(item.user_id)?.name || 'Không rõ' }}
-                            </a-typography-text>
-
-                            <div class="content">
-                                {{ item.content }}
-                            </div>
-
-                            <!-- File đính kèm (nhỏ gọn) -->
-                            <div v-if="item.files && item.files.length" class="cm-att">
-                                <div v-for="f in item.files" :key="f.id || f.file_path" class="cm-att__card">
-                                    <!-- ẢNH -->
-                                    <a-image
-                                        v-if="kindOfCommentFile(f) === 'image'"
-                                        :src="f.file_path"
-                                        :height="56"
-                                        :preview="true"
-                                        class="cm-att__thumb"
-                                    />
-                                    <!-- FILE KHÁC -->
-                                    <div v-else class="cm-att__icon">
-                                        <component :is="pickIcon(kindOfCommentFile(f))" class="cm-att__icon-i"/>
-                                    </div>
-
-                                    <a
-                                        class="cm-att__title"
-                                        :href="f.file_path"
-                                        target="_blank"
-                                        rel="noopener"
-                                        :title="f.file_name || prettyUrl(f.file_path)"
-                                    >
-                                        {{ f.file_name || prettyUrl(f.file_path || f.link_url) }}
-                                    </a>
-
-                                    <!-- 📌 Nút Ghim -->
-                                    <a-tooltip :title="isPinned(f) ? 'Bỏ ghim file này' : 'Ghim file lên trên'">
-                                        <PushpinOutlined
-                                            class="pin-btn"
-                                            :style="{ color: isPinned(f) ? '#faad14' : '#aaa', cursor: 'pointer' }"
-                                            @click="togglePin(f)"
-                                        />
-                                    </a-tooltip>
-                                </div>
-                            </div>
-                        </a-col>
-
-                        <a-col>
+                    <div class="bubble" :class="{ me: String(item.user_id) === String(currentUserId) }">
+                        <!-- actions (sửa/xóa) -->
+                        <div class="actions" v-if="canEditOrDelete(item)">
                             <a-dropdown trigger="click" :getPopupContainer="t => t.parentNode">
-                                <EllipsisOutlined/>
+                                <a-button type="text" size="small">
+                                    <EllipsisOutlined/>
+                                </a-button>
                                 <template #overlay>
                                     <a-menu>
                                         <a-menu-item @click="showUpdateCommentModal(item)">Sửa</a-menu-item>
@@ -205,105 +185,159 @@
                                     </a-menu>
                                 </template>
                             </a-dropdown>
-                        </a-col>
-                    </a-row>
+                        </div>
 
-                    <div class="content-time">
-                        <a-typography-text type="secondary">
+                        <div class="text">
+                            <div class="author" v-if="String(item.user_id) !== String(currentUserId)">
+                                {{ getUserById(item.user_id)?.name || 'Không rõ' }}
+                            </div>
+                            {{ item.content }}
+                        </div>
+
+                        <!-- Attachments trong bubble -->
+                        <div v-if="item.files && item.files.length" class="tg-attachments">
+                            <div v-for="f in item.files" :key="f.id || f.file_path || f.link_url" class="tg-att-item">
+                                <!-- Image -->
+                                <a-image
+                                    v-if="kindOfCommentFile(f) === 'image'"
+                                    :src="srcWithBustIfImage(f)"
+                                    :height="72"
+                                    :preview="true"
+                                    class="cm-att__thumb"
+                                />
+                                <!-- Non-image -->
+                                <div v-else class="cm-att__icon">
+                                    <component :is="pickIcon(kindOfCommentFile(f))" class="cm-att__icon-i"/>
+                                </div>
+
+                                <div class="cm-att__line">
+                                    <a
+                                        class="tg-file-link"
+                                        :href="hrefOf(f)"
+                                        target="_blank"
+                                        rel="noopener"
+                                        :title="f.file_name || prettyUrl(hrefOf(f))"
+                                    >
+                                        {{ f.file_name || prettyUrl(hrefOf(f)) }}
+                                    </a>
+
+                                    <!-- 📌 Pin -->
+                                    <a-tooltip :title="isPinned(f) ? 'Bỏ ghim file này' : 'Ghim file lên trên'">
+                                        <PushpinOutlined
+                                            class="pin-btn"
+                                            :style="{ color: isPinned(f) ? '#faad14' : '#999' }"
+                                            @click="togglePin(f)"
+                                        />
+                                    </a-tooltip>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="meta">
                             <a-tooltip :title="formatVi(item.created_at)">
                                 {{ fromNowVi(item.created_at) }}
                             </a-tooltip>
-                        </a-typography-text>
+                        </div>
                     </div>
-
-                    <a-divider v-if="index !== listComment.length - 1" style="height:1px; background-color:#e0e2e3; margin:5px 0 5px;"/>
                 </div>
+
+                <!-- Divider mềm giữa các block (nếu muốn) -->
+                <!-- <a-divider v-if="index !== listComment.length - 1" /> -->
             </a-spin>
         </div>
 
-        <!-- FOOTER: composer -->
-        <div class="footer-fixed" ref="footerEl">
+        <!-- FOOTER: composer (Telegram-like) -->
+        <div class="footer-fixed tg-footer" ref="footerEl">
             <div class="load-more" v-if="currentPage < totalPage && !loadingComment">
                 <a-button size="small" @click="getListComment(currentPage + 1)">Tải thêm</a-button>
             </div>
 
-            <div class="composer">
+            <div class="tg-composer">
+                <!-- Attach (trái) -->
+                <a-upload
+                    :show-upload-list="false"
+                    :multiple="false"
+                    :max-count="1"
+                    :before-upload="handleBeforeUpload"
+                >
+                    <a-button type="text" class="tg-attach-btn" :title="'Đính kèm'">
+                        <PaperClipOutlined/>
+                    </a-button>
+                </a-upload>
+
+                <!-- Ô nhập dạng textarea borderless -->
                 <a-textarea
                     v-model:value="inputValue"
-                    placeholder="Viết lời nhắn tại đây (gõ @ để thêm người duyệt/ký)"
-                    :auto-size="{ minRows: 2, maxRows: 6 }"
-                    @pressEnter.exact.prevent="createNewComment"
+                    class="tg-input"
+                    :bordered="false"
+                    :auto-size="{ minRows: 1, maxRows: 6 }"
+                    placeholder="Viết lời nhắn… (Enter để gửi, Shift+Enter để xuống dòng, gõ @ để thêm người duyệt)"
+                    @keydown="onComposerKeydown"
                     @input="onInputDetectMention"
                 />
 
-                <div class="mention-row">
-                    <a-popover
-                        trigger="click"
-                        v-model:open="mentionPopupOpen"
-                        placement="topLeft"
-                        :getPopupContainer="(t)=>t.parentNode"
-                    >
-                        <template #content>
-                            <div class="mention-pop">
-                                <div class="row">
-                                    <span class="lbl">Người:</span>
-                                    <a-select
-                                        v-model:value="mentionForm.userId"
-                                        :options="userOptions"
-                                        show-search
-                                        :filterOption="filterUser"
-                                        style="min-width:220px;"
-                                        placeholder="Chọn người"
-                                    />
-                                </div>
-                                <div class="row">
-                                    <span class="lbl">Vai trò:</span>
-<!--                                    <a-segmented v-model:value="mentionForm.role" :options="[{ label: 'Duyệt', value: 'approve' }, { label: 'Ký', value: 'sign' }]"/>-->
-                                    <a-segmented v-model:value="mentionForm.role" :options="[{ label: 'Duyệt', value: 'approve' }]"/>
-                                </div>
-                                <div class="row" style="justify-content:flex-end; gap:8px;">
-                                    <a-button size="small" @click="resetMentionForm">Hủy</a-button>
-                                    <a-button size="small" type="primary" @click="addMention">Thêm</a-button>
-                                </div>
+                <!-- Nút gửi -->
+                <a-button
+                    class="tg-send-btn"
+                    :class="{ 'is-active': canSend }"
+                    shape="circle"
+                    :disabled="!canSend"
+                    @click="createNewComment()"
+                    :title="'Gửi'"
+                >
+                    <SendOutlined/>
+                </a-button>
+            </div>
+
+            <!-- file chip preview -->
+            <div class="tg-file-strip" v-if="selectedFile">
+                <div class="tg-file-pill">
+                    <PaperClipOutlined/>
+                    <span class="name">{{ selectedFile.name }}</span>
+                    <span class="x" @click="handleRemoveFile()">×</span>
+                </div>
+            </div>
+
+            <!-- Mention pop -->
+            <div class="mention-row">
+                <a-popover
+                    trigger="click"
+                    v-model:open="mentionPopupOpen"
+                    placement="topLeft"
+                    :getPopupContainer="(t)=>t.parentNode"
+                >
+                    <template #content>
+                        <div class="mention-pop">
+                            <div class="row">
+                                <span class="lbl">Người:</span>
+                                <a-select
+                                    v-model:value="mentionForm.userId"
+                                    :options="userOptions"
+                                    show-search
+                                    :filterOption="filterUser"
+                                    style="min-width:220px;"
+                                    placeholder="Chọn người"
+                                />
                             </div>
-                        </template>
-                        <!--  <a-button size="small" @click="mentionPopupOpen = true">+ Thêm người duyệt/ký</a-button>-->
-                    </a-popover>
-                </div>
+                            <div class="row">
+                                <span class="lbl">Vai trò:</span>
+                                <!-- Giữ đúng logic hiện tại: chỉ 'approve' -->
+                                <a-segmented v-model:value="mentionForm.role"
+                                             :options="[{ label: 'Duyệt', value: 'approve' }]"/>
+                            </div>
+                            <div class="row" style="justify-content:flex-end; gap:8px;">
+                                <a-button size="small" @click="resetMentionForm">Hủy</a-button>
+                                <a-button size="small" type="primary" @click="addMention">Thêm</a-button>
+                            </div>
+                        </div>
+                    </template>
 
-                <div class="list-file" v-if="selectedFile">
-                    <div class="file">
-                        <a-button size="large" style="margin-right:12px;">
-                            <template #icon>
-                                <FileTextOutlined/>
-                            </template>
-                        </a-button>
-                        <a-typography-text>{{ selectedFile.name }}</a-typography-text>
-                        <div class="close-file" @click="selectedFile=null">x</div>
-                    </div>
-                </div>
-
-                <div class="composer-actions">
-                    <a-button type="primary" style="margin-right:12px; width:80px;" :disabled="!inputValue.trim() && !selectedFile && !(mentionsSelected?.length)" @click="createNewComment">Gửi</a-button>
-                    <a-upload
-                        :file-list="listFile"
-                        :show-upload-list="false"
-                        :maxCount="1"
-                        :multiple="true"
-                        :on-remove="() => handleRemoveFile()"
-                        :before-upload="(file) => handleBeforeUpload('attachment', file)"
-                        :customRequest="({ file }) => handleBeforeUpload('attachment', file)"
-                    >
-                        <a-button>
-                            <template #icon>
-                                <PaperClipOutlined/>
-                            </template>
-                        </a-button>
-                    </a-upload>
-                </div>
+                    <!--                    <a-button size="small" @click="mentionPopupOpen = true">+ Thêm người duyệt</a-button>-->
+                </a-popover>
             </div>
         </div>
 
+        <!-- Modal sửa comment -->
         <a-modal
             v-model:open="openModalEditComment"
             title="Chỉnh sửa thông tin bình luận"
@@ -322,57 +356,38 @@
 </template>
 
 <script setup>
-import {computed, nextTick, onBeforeUnmount, onMounted, ref} from 'vue'
+import {ref, computed, nextTick, onMounted, onBeforeUnmount} from 'vue'
 import {
-    CheckOutlined,
-    CloseOutlined,
-    EllipsisOutlined,
-    FileExcelOutlined,
-    FilePdfOutlined,
-    FilePptOutlined,
-    FileTextOutlined,
-    FileWordOutlined,
-    LinkOutlined,
-    PaperClipOutlined,
-    PushpinOutlined,
-    PlusOutlined,
-    MinusOutlined
+    CheckOutlined, CloseOutlined, EllipsisOutlined,
+    FileExcelOutlined, FilePdfOutlined, FilePptOutlined, FileTextOutlined, FileWordOutlined,
+    LinkOutlined, PaperClipOutlined, PushpinOutlined,
+    PlusOutlined, MinusOutlined, SendOutlined
 } from '@ant-design/icons-vue'
+
 import {
-    approveRosterAPI,
-    createComment,
-    deleteComment,
-    getComments,
-    getTaskRosterAPI,
-    mergeTaskRosterAPI,
-    rejectRosterAPI,
-    updateComment
+    approveRosterAPI, createComment, deleteComment, getComments,
+    getTaskRosterAPI, mergeTaskRosterAPI, rejectRosterAPI, updateComment
 } from '@/api/task'
 
 import {
-    adoptTaskFileFromPathAPI,
-    getPinnedFilesAPI,
-    getTaskFilesAPI,
-    pinTaskFileAPI,
-    unpinTaskFileAPI,
-    uploadTaskFileLinkAPI
+    adoptTaskFileFromPathAPI, getPinnedFilesAPI, getTaskFilesAPI,
+    pinTaskFileAPI, unpinTaskFileAPI, uploadTaskFileLinkAPI
 } from '@/api/taskFiles'
 
 import {getUsers} from '@/api/user'
 import {useRoute} from 'vue-router'
 import {useUserStore} from '@/stores/user.js'
 import {message} from 'ant-design-vue'
-
 import dayjs from 'dayjs'
 import 'dayjs/locale/vi'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import BaseAvatar from "@/components/common/BaseAvatar.vue"
+import BaseAvatar from '@/components/common/BaseAvatar.vue'
 
 dayjs.extend(relativeTime)
 dayjs.locale('vi')
 
 /* ===== time helpers (VI) ===== */
-const tick = ref(Date.now());
+const tick = ref(Date.now())
 let t
 
 function fromNowVi(dt) {
@@ -390,15 +405,15 @@ function formatVi(dt) {
 const store = useUserStore()
 const route = useRoute()
 
-// ✅ LẤY taskId CHUẨN TỪ URL
 const taskId = computed(() => Number(route.params.taskId || route.params.id))
+const currentUserId = computed(() => store.currentUser?.id ?? null)
+const canEditOrDelete = (item) => String(item.user_id) === String(currentUserId.value) || !!store.currentUser?.is_admin
 
 const inputValue = ref('')
 const listComment = ref([])
 const listUser = ref([])
 
-const selectedFile = ref()
-const listFile = ref([])
+const selectedFile = ref(null)
 
 const loadingComment = ref(false)
 const loadingUpdate = ref(false)
@@ -415,81 +430,66 @@ const listPadBottom = ref('96px')
 let ro
 
 function measureFooter() {
-    const h = footerEl.value?.offsetHeight || 96;
-    listPadBottom.value = h + 8 + 'px'
+    const h = footerEl.value?.offsetHeight || 96
+    listPadBottom.value = `${h + 8}px`
 }
 
 function scrollToBottom() {
-    const el = listEl.value;
-    if (!el) return;
+    const el = listEl.value
+    if (!el) return
     el.scrollTop = el.scrollHeight
 }
 
 /* ===== task_files index để map file_path -> task_files.id ===== */
-const taskFileByPath = ref({}) // { normalized_path: TaskFileRow }
+const taskFileByPath = ref({})
+const normalizePath = (u = '') => String(u).split('?')[0]
 
-function normalizePath(u = '') {
-    return String(u).split('?')[0]
-}
-
-
-// collapse/expand state
+/* ===== sticky expand/collapse ===== */
 const isStickyExpanded = ref(false)
 const MAX_FILES_COLLAPSED = 1
 const MAX_MENTIONS_COLLAPSED = 1
-
-function toggleSticky() {
+const toggleSticky = () => {
     isStickyExpanded.value = !isStickyExpanded.value
 }
-
-function expandSticky() {
+const expandSticky = () => {
     isStickyExpanded.value = true
 }
 
-// visible/hidden pinned files
-const visiblePinnedFiles = computed(() => {
-    const list = pinnedFiles.value || []
-    return isStickyExpanded.value ? list : list.slice(0, MAX_FILES_COLLAPSED)
-})
-const hiddenPinnedCount = computed(() => {
-    const list = pinnedFiles.value || []
-    return Math.max(0, list.length - MAX_FILES_COLLAPSED)
-})
+const pinnedFiles = ref([])
+const visiblePinnedFiles = computed(() => isStickyExpanded.value ? (pinnedFiles.value || []) : (pinnedFiles.value || []).slice(0, MAX_FILES_COLLAPSED))
+const hiddenPinnedCount = computed(() => Math.max(0, (pinnedFiles.value?.length || 0) - MAX_FILES_COLLAPSED))
 
-// visible/hidden mentions
-const visibleMentions = computed(() => {
-    const list = mentionsSelected.value || []
-    return isStickyExpanded.value ? list : list.slice(0, MAX_MENTIONS_COLLAPSED)
-})
-const hiddenMentionsCount = computed(() => {
-    const list = mentionsSelected.value || []
-    return Math.max(0, list.length - MAX_MENTIONS_COLLAPSED)
-})
+/* ===== mentions ===== */
+const mentionsSelected = ref([])
+const visibleMentions = computed(() => isStickyExpanded.value ? (mentionsSelected.value || []) : (mentionsSelected.value || []).slice(0, MAX_MENTIONS_COLLAPSED))
+const hiddenMentionsCount = computed(() => Math.max(0, (mentionsSelected.value?.length || 0) - MAX_MENTIONS_COLLAPSED))
 
+/* ===== task file helpers ===== */
+function getTaskFileId(f = {}) {
+    if (f.task_file_id || f.taskFileId) return Number(f.task_file_id || f.taskFileId)
+    if (typeof f.id === 'number' && (f.file_path || f.link_url)) {
+        const key = normalizePath(f.file_path || f.link_url)
+        if (taskFileByPath.value[key]?.id === f.id) return f.id
+    }
+    const byPath = taskFileByPath.value[normalizePath(f.file_path || f.link_url || '')]
+    return byPath?.id ? Number(byPath.id) : null
+}
 
 async function ensureTaskFileId(file) {
-    // 1) đã có id?
     const existed = getTaskFileId(file)
     if (existed) return existed
 
-    const path = String(file.file_path || '')
-    const name = file.file_name || prettyUrl(path)
+    const path = String(file.file_path ?? file.url ?? '')
+    const name = file.file_name || file.name || prettyUrl(path)
 
-    // 2) link http(s) → tạo record link
     if (/^https?:\/\//i.test(path)) {
         try {
             const {data} = await uploadTaskFileLinkAPI(taskId.value, {
-                title: name,
-                url: path,
-                user_id: Number(store.currentUser.id),
+                title: name, url: path, user_id: Number(store.currentUser.id),
             })
-            const created = Array.isArray(data) ? data[0] : (data?.data || data)
-            // đồng bộ index
+            const created = Array.isArray(data) ? data[0] : data?.data || data
             const key = normalizePath(created?.file_path || created?.link_url || path)
-            taskFileByPath.value[key] = {
-                ...(created || {}),
-                file_path: created?.file_path || created?.link_url || path,
-            }
+            taskFileByPath.value[key] = {...(created || {}), file_path: created?.file_path || created?.link_url || path}
             return Number(created?.id)
         } catch (e) {
             console.error('uploadTaskFileLinkAPI error', e?.response?.data || e)
@@ -514,13 +514,12 @@ async function ensureTaskFileId(file) {
         message.error('Không tạo được tài liệu từ file nội bộ để ghim')
         return null
     }
-
 }
 
 async function loadTaskFiles() {
     try {
         const {data} = await getTaskFilesAPI(taskId.value)
-        const files = Array.isArray(data) ? data : (data?.data || [])
+        const files = Array.isArray(data) ? data : data?.data || []
         const idx = {}
         for (const f of files) {
             const key = normalizePath(f.file_path || f.link_url || '')
@@ -533,47 +532,29 @@ async function loadTaskFiles() {
     }
 }
 
-
-function getTaskFileId(f = {}) {
-    if (f.task_file_id || f.taskFileId) return Number(f.task_file_id || f.taskFileId)
-    if (typeof f.id === 'number' && (f.file_path || f.link_url)) {
-        const key = normalizePath(f.file_path || f.link_url)
-        if (taskFileByPath.value[key]?.id === f.id) return f.id
-    }
-    const byPath = taskFileByPath.value[normalizePath(f.file_path || f.link_url || '')]
-    if (byPath?.id) return Number(byPath.id)
-    return null
-}
-
-/* ===== Pinned files (max 2) ===== */
-const pinnedFiles = ref([]) // [{ id: task_file_id, file_path, file_name }]
+/* pin */
 function isPinned(file) {
     const list = Array.isArray(pinnedFiles.value) ? pinnedFiles.value : []
     const tfId = getTaskFileId(file)
-    if (tfId) return list.some(p => Number(p.id) === Number(tfId))
+    if (tfId) return list.some((p) => Number(p.id) === Number(tfId))
     const path = normalizePath(file.file_path || file.link_url || '')
-    return list.some(p => normalizePath(p.file_path || p.link_url || '') === path)
+    return list.some((p) => normalizePath(p.file_path || p.link_url || '') === path)
 }
 
 async function togglePin(file) {
     const tfId = await ensureTaskFileId(file)
     if (!tfId) return
-
     try {
         const already = isPinned({...file, task_file_id: tfId})
-
         if (already) {
             await unpinTaskFileAPI(tfId, {user_id: store.currentUser.id})
         } else {
-            // chặn 2 chiếc ở UI trước khi gọi
             if ((pinnedFiles.value?.length || 0) >= 2) {
-                message.warning('Chỉ được ghim tối đa 2 file');
+                message.warning('Chỉ được ghim tối đa 2 file')
                 return
             }
             await pinTaskFileAPI(tfId, {user_id: store.currentUser.id})
         }
-
-        // ✅ chỉ lấy theo server, không tự set state cục bộ
         await loadPinnedFiles()
         message.success(already ? 'Đã bỏ ghim' : 'Đã ghim')
     } catch (e) {
@@ -582,45 +563,44 @@ async function togglePin(file) {
     }
 }
 
-
-/* ===== detect file type helpers ===== */
+/* ===== file kind helpers ===== */
 const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'])
-const PDF_EXTS = new Set(['pdf']);
+const PDF_EXTS = new Set(['pdf'])
 const WORD_EXTS = new Set(['doc', 'docx'])
-const EXCEL_EXTS = new Set(['xls', 'xlsx', 'csv']);
+const EXCEL_EXTS = new Set(['xls', 'xlsx', 'csv'])
 const PPT_EXTS = new Set(['ppt', 'pptx'])
 
-function extOf(name = '') {
-    const n = String(name).split('?')[0];
-    const m = n.lastIndexOf('.');
+const extOf = (name = '') => {
+    const n = String(name).split('?')[0]
+    const m = n.lastIndexOf('.')
     return m >= 0 ? n.slice(m + 1).toLowerCase() : ''
 }
 
 function detectKind(o = {}) {
-    const e = extOf(o.name || o.url || '');
-    const t = o.file_type || '';
-    if (String(t).indexOf('image/') === 0) return 'image'
-    if (IMAGE_EXTS.has(e)) return 'image';
-    if (PDF_EXTS.has(e)) return 'pdf';
+    const e = extOf(o.name || o.url || '')
+    const t = o.file_type || ''
+    if (String(t).startsWith('image/')) return 'image'
+    if (IMAGE_EXTS.has(e)) return 'image'
+    if (PDF_EXTS.has(e)) return 'pdf'
     if (WORD_EXTS.has(e)) return 'word'
-    if (EXCEL_EXTS.has(e)) return 'excel';
-    if (PPT_EXTS.has(e)) return 'ppt';
-    if (/^https?:\/\//i.test(o.url || '')) return 'link';
+    if (EXCEL_EXTS.has(e)) return 'excel'
+    if (PPT_EXTS.has(e)) return 'ppt'
+    if (/^https?:\/\//i.test(o.url || '')) return 'link'
     return 'other'
 }
 
 function pickIcon(k) {
     switch (k) {
         case 'pdf':
-            return FilePdfOutlined;
+            return FilePdfOutlined
         case 'word':
-            return FileWordOutlined;
+            return FileWordOutlined
         case 'excel':
-            return FileExcelOutlined;
+            return FileExcelOutlined
         case 'ppt':
-            return FilePptOutlined;
+            return FilePptOutlined
         case 'link':
-            return LinkOutlined;
+            return LinkOutlined
         default:
             return FileTextOutlined
     }
@@ -628,67 +608,61 @@ function pickIcon(k) {
 
 function prettyUrl(u) {
     try {
-        const url = new URL(u);
-        const path = url.pathname.replace(/^\/+/, '');
-        const short = path.length > 30 ? path.slice(0, 30) + '…' : path;
+        const url = new URL(u)
+        const path = url.pathname.replace(/^\/+/, '')
+        const short = path.length > 30 ? path.slice(0, 30) + '…' : path
         return url.host + (short ? '/' + short : '')
     } catch {
         return u
     }
 }
 
-function kindOfCommentFile(f = {}) {
-    return detectKind({name: f.file_name, url: f.file_path, file_type: f.file_type})
-}
+const hrefOf = (f = {}) => f.file_path || f.link_url || ''
+const titleOf = (f = {}) => f.file_name || f.title || prettyUrl(hrefOf(f))
+const kindOfCommentFile = (f = {}) => detectKind({name: f.file_name, url: hrefOf(f), file_type: f.file_type})
 
-/* ===== Approve popover control & actions ===== */
+/* ===== Approve popover & roster actions ===== */
 const mentionPopoverOpen = ref({})
 
 async function handleApproveAction(m, status) {
     try {
-        if (status === 'approved') {
-            await approveRosterAPI(taskId.value, {note: null})
-        } else {
-            await rejectRosterAPI(taskId.value, {note: null})
-        }
+        if (status === 'approved') await approveRosterAPI(taskId.value, {note: null})
+        else await rejectRosterAPI(taskId.value, {note: null})
         mentionPopoverOpen.value[m.user_id] = false
-        await syncRosterFromServer()   // ✅ chỉ đồng bộ từ server
-        message.success(status === 'approved'
-            ? `${m.name} đã ${m.role === 'sign' ? 'ký' : 'duyệt'}`
-            : `${m.name} đã từ chối`);
+        await syncRosterFromServer()
+        message.success(
+            status === 'approved' ? `${m.name} đã ${m.role === 'sign' ? 'ký' : 'duyệt'}` : `${m.name} đã từ chối`
+        )
     } catch (e) {
-        console.error(e);
-        message.error('Xử lý không thành công');
+        console.error(e)
+        message.error('Xử lý không thành công')
     }
 }
 
-
-/* ===== users & mentions ===== */
-const getUserById = (id) => listUser.value.find(u => u.id === id) || {}
-const userOptions = computed(() => (listUser.value || []).map(u => ({value: String(u.id), label: u.name})))
+/* users & mentions add/remove */
+const getUserById = (id) => listUser.value.find((u) => u.id === id) || {}
+const userOptions = computed(() => (listUser.value || []).map((u) => ({value: String(u.id), label: u.name})))
 const filterUser = (input, option) => (option?.label ?? '').toLowerCase().includes(String(input).toLowerCase())
 
 const mentionPopupOpen = ref(false)
-const mentionsSelected = ref([]) // [{ user_id, name, role, status }]
 const mentionForm = ref({userId: null, role: 'approve'})
 
 function resetMentionForm() {
-    mentionForm.value.userId = null;
-    mentionForm.value.role = 'approve';
+    mentionForm.value.userId = null
+    mentionForm.value.role = 'approve'
     mentionPopupOpen.value = false
 }
 
 const addMention = async () => {
-    const uid = mentionForm.value.userId;
+    const uid = mentionForm.value.userId
     if (!uid) return
-    if (mentionsSelected.value.some(m => String(m.user_id) === String(uid))) {
-        message.info('Người này đã có trong danh sách');
+    if (mentionsSelected.value.some((m) => String(m.user_id) === String(uid))) {
+        message.info('Người này đã có trong danh sách')
         return
     }
-    const user = listUser.value.find(u => String(u.id) === String(uid))
+    const user = listUser.value.find((u) => String(u.id) === String(uid))
     const displayName = user?.name || `#${uid}`
     const newMention = {user_id: String(uid), name: displayName, role: mentionForm.value.role, status: 'pending'}
-
     mentionsSelected.value.push(newMention)
 
     const suffix = inputValue.value && !/\s$/.test(inputValue.value) ? ' ' : ''
@@ -696,59 +670,34 @@ const addMention = async () => {
     mentionPopupOpen.value = false
 
     await nextTick()
-    await createNewComment({keepMentions: true}) // gửi comment nhưng giữ mentions
-    await persistRoster() // lưu roster lên BE
+    await createNewComment({keepMentions: true}) // gửi ngay để “ping”
+    await persistRoster() // lưu roster
     resetMentionForm()
 }
 
 function removeMention(uid) {
-    mentionsSelected.value = mentionsSelected.value.filter(m => String(m.user_id) !== String(uid))
-    persistRoster('replace') // ghi đè roster còn lại, nhưng không gửi status => BE giữ nguyên status cũ
+    mentionsSelected.value = mentionsSelected.value.filter((m) => String(m.user_id) !== String(uid))
+    void persistRoster('replace')
 }
 
-// Label meta và thời gian ngắn gọn
-function metaLabel(m) {
-    if (m.status === 'approved') return 'đã duyệt';
-    if (m.status === 'rejected') return 'đã từ chối';
-    return 'thêm lúc';
-}
+/* meta helpers */
+const metaLabel = (m) => (m.status === 'approved' ? 'đã duyệt' : m.status === 'rejected' ? 'đã từ chối' : 'thêm lúc')
+const metaTime = (m) => (m.status === 'approved' || m.status === 'rejected')
+    ? (m.acted_at_vi || formatVi(m.acted_at))
+    : (m.added_at_vi || formatVi(m.added_at))
+const fullTimeTooltip = metaTime
+const statusDotClass = (status) => (status === 'approved' ? 'ok' : status === 'rejected' ? 'err' : 'proc')
 
-function metaTime(m) {
-    if (m.status === 'approved' || m.status === 'rejected') {
-        return m.acted_at_vi || formatVi(m.acted_at);
-    }
-    return m.added_at_vi || formatVi(m.added_at);
-}
-
-function fullTimeTooltip(m) {
-    if (m.status === 'approved' || m.status === 'rejected') {
-        return m.acted_at_vi || formatVi(m.acted_at);
-    }
-    return m.added_at_vi || formatVi(m.added_at);
-}
-
-function statusDotClass(status) {
-    return status === 'approved' ? 'ok' : status === 'rejected' ? 'err' : 'proc';
-}
-
-
-function hrefOf(f = {}) {
-    return f.file_path || f.link_url || ''
-}
-
-function titleOf(f = {}) {
-    return f.file_name || f.title || prettyUrl(f.file_path || f.link_url || '')
-}
-
+/* input mention detect */
 function onInputDetectMention(e) {
-    const v = String(e?.target?.value ?? '');
+    const v = String(e?.target?.value ?? '')
     if (v.endsWith('@')) mentionPopupOpen.value = true
 }
 
-/* ===== upload handlers ===== */
-async function handleBeforeUpload(_field, file) {
-    selectedFile.value = file;
-    return false
+/* ===== upload handlers (single file) ===== */
+async function handleBeforeUpload(file) {
+    selectedFile.value = file
+    return false // chặn auto upload
 }
 
 function handleRemoveFile() {
@@ -757,7 +706,7 @@ function handleRemoveFile() {
 
 /* ===== CRUD ===== */
 function showUpdateCommentModal(item) {
-    openModalEditComment.value = true;
+    openModalEditComment.value = true
     selectedComment.value = {...item}
 }
 
@@ -768,11 +717,11 @@ async function handleUpdateComment() {
     }
     loadingUpdate.value = true
     try {
-        await updateComment(selectedComment.value.id, {content: selectedComment.value.content})
+        await updateComment(selectedComment.value.id, {content: String(selectedComment.value.content ?? '')})
         openModalEditComment.value = false
         await getListComment(currentPage.value)
         message.success('Cập nhật comment thành công')
-    } catch {
+    } catch (e) {
         message.error('Không thể cập nhật comment')
     } finally {
         loadingUpdate.value = false
@@ -785,57 +734,132 @@ async function handleDeleteComment(commentId) {
         if (listComment.value.length === 1 && currentPage.value > 1) await getListComment(currentPage.value - 1)
         else await getListComment(currentPage.value)
         message.success('Đã xóa comment thành công')
-    } catch {
+    } catch (e) {
         message.error('Không thể xóa comment')
     }
 }
 
-// Gửi comment
-const createNewComment = async ({keepMentions = false} = {}) => {
-    if (!inputValue.value.trim() && !selectedFile.value && !(mentionsSelected.value?.length)) return
+/* gửi comment */
+const canSend = computed(() =>
+    !!inputValue.value.trim() || !!selectedFile.value || (mentionsSelected.value?.length > 0)
+)
+
+// Bỏ dấu / lowercase để so khớp tên
+function vnNorm(s = '') {
+    return String(s)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim()
+}
+
+// Tạo map tên chuẩn -> user
+const userNameMap = computed(() => {
+    const map = new Map()
+    for (const u of (listUser.value || [])) {
+        const key = vnNorm(u.name || '')
+        if (key) map.set(key, u)
+    }
+    return map
+})
+
+// Rút @mentions từ nội dung nhập
+function extractMentionsFromInput(input = '') {
+    const out = []
+    if (!input) return out
+    // Bắt mọi cụm sau ký tự @ tới khi gặp xuống dòng hoặc ký tự @ kế tiếp
+    const re = /@([^\n\r@]+)/g
+    let m
+    while ((m = re.exec(input))) {
+        const raw = m[1].trim()
+        if (!raw) continue
+        // bỏ ký tự lặt vặt cuối câu
+        const cleaned = raw.replace(/[.,;:!?)\]\}]+$/, '').trim()
+        const key = vnNorm(cleaned)
+        const u = userNameMap.value.get(key)
+        if (u) {
+            out.push({user_id: String(u.id), name: u.name, role: 'approve', status: 'pending'})
+        }
+    }
+    return out
+}
+
+// Dedup theo user_id
+function dedupeMentions(arr = []) {
+    const seen = new Set()
+    const res = []
+    for (const m of arr) {
+        const id = String(m.user_id)
+        if (seen.has(id)) continue
+        seen.add(id)
+        res.push(m)
+    }
+    return res
+}
+
+async function createNewComment({keepMentions = false} = {}) {
+    if (!canSend.value) return
     try {
+        // lấy mentions từ text + từ popover, rồi dedupe
+        const textMentions = extractMentionsFromInput(inputValue.value)
+        const mergedMentions = dedupeMentions([...(mentionsSelected.value || []), ...textMentions])
+        const hadMentions = mergedMentions.length > 0
+
         const form = new FormData()
-        form.append('user_id', store.currentUser.id)
-        form.append('content', inputValue.value ? inputValue.value.trim() : '')
-        form.append('mentions', JSON.stringify((mentionsSelected.value || []).map(m => ({
-            user_id: Number(m.user_id), name: m.name, role: m.role, status: m.status || 'processing'
-        }))))
-        if (selectedFile.value) form.append('attachment', selectedFile.value)
+        form.append('user_id', String(store.currentUser.id))
+        form.append('content', inputValue.value.trim())
+
+        const mentions = mergedMentions.map((m) => ({
+            user_id: Number(m.user_id), name: m.name, role: m.role, status: m.status || 'processing',
+        }))
+        form.append('mentions', JSON.stringify(mentions))
+
+        if (selectedFile.value) {
+            const raw = selectedFile.value
+            form.append('attachment', raw, raw.name || 'file')
+        }
 
         await createComment(taskId.value, form)
 
+
         inputValue.value = ''
         selectedFile.value = null
-        if (!keepMentions) mentionsSelected.value = []
+        // hiển thị chip ngay lập tức (không cần F5)
+        mentionsSelected.value = keepMentions ? mergedMentions : []
 
         await getListComment(1)
-        await nextTick();
+        if (hadMentions) await persistRoster()  // ghi roster rồi sync
+        await syncRosterFromServer()
+
+        await nextTick()
         scrollToBottom()
     } catch (e) {
-        console.error(e);
+        console.error(e)
         message.error('Không gửi được bình luận')
     }
 }
 
-/* ===== load list (paging) ===== */
+
+/* ===== list (paging) ===== */
 async function getListComment(page = 1) {
     loadingComment.value = true
     try {
         const res = await getComments(taskId.value, {page})
+        const comments = res?.data?.comments ?? []
         if (page === 1) {
-            listComment.value = res.data.comments
-            await nextTick();
-            measureFooter();
+            listComment.value = comments
+            await nextTick()
+            measureFooter()
             scrollToBottom()
         } else {
-            const el = listEl.value;
-            const prevScrollBottom = el ? (el.scrollHeight - el.scrollTop) : 0
-            listComment.value = [...listComment.value, ...res.data.comments]
-            await nextTick();
-            measureFooter();
+            const el = listEl.value
+            const prevScrollBottom = el ? el.scrollHeight - el.scrollTop : 0
+            listComment.value = [...listComment.value, ...comments]
+            await nextTick()
+            measureFooter()
             if (el) el.scrollTop = el.scrollHeight - prevScrollBottom
         }
-        totalPage.value = res.data.pagination.totalPages
+        totalPage.value = Number(res?.data?.pagination?.totalPages ?? 1)
         currentPage.value = page
     } catch (e) {
         console.error(e)
@@ -844,77 +868,54 @@ async function getListComment(page = 1) {
     }
 }
 
-/* ===== load users ===== */
+/* ===== users ===== */
 async function getUser() {
     try {
-        const {data} = await getUsers();
-        listUser.value = data
-    } catch {
+        const {data} = await getUsers()
+        listUser.value = Array.isArray(data) ? data : data?.data ?? []
+    } catch (e) {
         message.error('Không thể tải người dùng')
     }
 }
 
-/* ===== roster ===== */
-// FE
+/* ===== roster sync/persist ===== */
 async function persistRoster(mode = 'merge') {
     try {
-        const mentions = mentionsSelected.value.map(m => ({
-            user_id: Number(m.user_id),
-            name: m.name,
-            role: m.role,
-            // KHÔNG gửi status ở đây
-        }));
-        await mergeTaskRosterAPI(taskId.value, mentions, mode);
-        await syncRosterFromServer();
+        const payload = mentionsSelected.value.map((m) => ({user_id: Number(m.user_id), name: m.name, role: m.role}))
+        await mergeTaskRosterAPI(taskId.value, payload, mode)
+        await syncRosterFromServer()
     } catch (e) {
-        console.error('persistRoster error', e);
-        message.error('Không thể lưu danh sách người duyệt/ký');
+        console.error('persistRoster error', e)
+        message.error('Không thể lưu danh sách người duyệt/ký')
     }
 }
 
-
-/* ===== pinned files load ===== */
 async function loadPinnedFiles() {
     try {
         const res = await getPinnedFilesAPI(taskId.value)
-        console.log('🔎 URL hit:', res?.config?.url)
-        console.log('📦 res.data =', res.data)
-
         let arr = []
-
-        if (Array.isArray(res.data)) {
-            arr = res.data
-        } else if (Array.isArray(res.data?.pinned_files)) {
-            arr = res.data.pinned_files
-        } else if (Array.isArray(res.data?.files)) {
-            arr = res.data.files.filter(x => Number(x.is_pinned) === 1)
-        } else {
-            console.warn('⚠️ /pinned-files trả kiểu lạ → fallback /tasks/:id/files')
+        if (Array.isArray(res.data)) arr = res.data
+        else if (Array.isArray(res.data?.pinned_files)) arr = res.data.pinned_files
+        else if (Array.isArray(res.data?.files)) arr = res.data.files.filter((x) => Number(x.is_pinned) === 1)
+        else {
             const filesRes = await getTaskFilesAPI(taskId.value)
-            const filesArr = Array.isArray(filesRes.data) ? filesRes.data : (Array.isArray(filesRes.data?.data) ? filesRes.data.data : [])
-            arr = filesArr.filter(x => Number(x.is_pinned) === 1)
+            const filesArr = Array.isArray(filesRes.data) ? filesRes.data : Array.isArray(filesRes.data?.data) ? filesRes.data.data : []
+            arr = filesArr.filter((x) => Number(x.is_pinned) === 1)
         }
-
-        pinnedFiles.value = (arr || []).map(x => ({
-            ...x,
-            file_path: x.file_path || x.link_url || '',
-            title: x.title || x.file_name || '',
+        pinnedFiles.value = (arr || []).map((x) => ({
+            ...x, file_path: x.file_path || x.link_url || '', title: x.title || x.file_name || '',
         }))
-
-        console.log('✅ pinnedFiles =', pinnedFiles.value)
     } catch (e) {
-        console.error('❌ loadPinnedFiles error', e)
+        console.error('loadPinnedFiles error', e)
         pinnedFiles.value = []
     }
 }
 
-
-/* ===== roster sync ===== */
-const syncRosterFromServer = async () => {
+async function syncRosterFromServer() {
     try {
         const {data} = await getTaskRosterAPI(taskId.value)
         const roster = data?.roster || data || []
-        mentionsSelected.value = roster.map(r => ({
+        mentionsSelected.value = roster.map((r) => ({
             user_id: String(r.user_id),
             name: r.name,
             role: r.role,
@@ -924,34 +925,53 @@ const syncRosterFromServer = async () => {
             added_at: r.added_at || null,
             added_at_vi: r.added_at_vi || null,
         }))
-    } catch { /* no-op */
+    } catch { /* silent */
     }
 }
 
+/* ===== composer behavior: Enter/Shift+Enter ===== */
+function onComposerKeydown(e) {
+    if (e.key !== 'Enter') return
+    if (e.shiftKey) return
+    e.preventDefault()
+    if (canSend.value) void createNewComment()
+}
+
+function bustUrl(u, ver) {
+    if (!u) return u
+    const sep = u.includes('?') ? '&' : '?'
+    return `${u}${sep}v=${ver || Date.now()}`
+}
+
+function srcWithBustIfImage(f) {
+    const u = hrefOf(f)
+    return kindOfCommentFile(f) === 'image'
+        ? bustUrl(u, f.updated_at || f.acted_at || f.added_at || Date.now())
+        : u
+}
 
 /* ===== lifecycle ===== */
 onMounted(async () => {
     t = setInterval(() => (tick.value = Date.now()), 60_000)
     await getUser()
-    await getListComment()
-    await loadTaskFiles()     // cần để map file_path -> task_files.id
+    await getListComment(1)
+    await loadTaskFiles()
     await loadPinnedFiles()
     await syncRosterFromServer()
     measureFooter()
     if ('ResizeObserver' in window) {
-        ro = new ResizeObserver(measureFooter)
+        ro = new ResizeObserver(() => measureFooter())
         footerEl.value && ro.observe(footerEl.value)
     }
 })
 onBeforeUnmount(() => {
-    clearInterval(t);
+    clearInterval(t)
     ro?.disconnect?.()
 })
 </script>
 
-
 <style scoped>
-/* Layout tổng */
+/* ===== Layout tổng ===== */
 .comment {
     display: flex;
     flex-direction: column;
@@ -959,214 +979,44 @@ onBeforeUnmount(() => {
     min-height: 0;
 }
 
-/* Sticky mentions + pinned files */
+/* ===== Sticky mentions + pinned files ===== */
 .sticky-mentions {
     position: sticky;
     top: 0;
-    z-index: 99;
+    z-index: 9;
     background: #fff;
-    border-bottom: 1px solid #eaeaea;
+    border-bottom: 1px solid #eef1f3;
 }
 
-.pinned-item {
-    background: #fafafa;
-    padding: 2px 6px;
-    border-radius: 6px;
-}
-
-/* List comments */
-.list-comment {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 2px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, .35) transparent;
-}
-
-.list-comment::-webkit-scrollbar {
-    width: 6px;
-}
-
-.list-comment::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.list-comment::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, .28);
-    border-radius: 8px;
-}
-
-/* Footer composer */
-.footer-fixed {
-    position: sticky;
-    bottom: 0;
-    z-index: 5;
-    background: #fff;
-    border-top: 1px solid #f0f0f0;
-    padding-top: 10px;
-    box-shadow: 0 -4px 10px rgba(0, 0, 0, .03);
-}
-
-.load-more {
-    margin-bottom: 8px;
-    text-align: center
-}
-
-.composer-actions {
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    justify-content: flex-end;
-}
-
-/* Popover chọn người */
-.mention-row {
-    margin-top: 8px;
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
-    flex-wrap: wrap;
-}
-
-.mention-pop {
-    display: grid;
-    gap: 8px;
-    min-width: 320px;
-}
-
-.mention-pop .row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.mention-pop .lbl {
-    width: 64px;
-    color: #666;
-}
-
-/* Misc */
-.list-comment {
-    margin-top: 8px;
-}
-
-.comment-content {
-    margin-bottom: 10px;
-}
-
-.content {
-    margin-top: 10px;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-}
-
-.content-time {
-    margin-top: 12px;
-}
-
-.list-file {
-    margin-top: 10px;
-}
-
-.file {
-    position: relative;
-}
-
-.close-file {
-    position: absolute;
-    top: -14px;
-    left: 34px;
-    font-size: 20px;
-    cursor: pointer;
-}
-
-/* Attachments grid */
-.cm-att {
-    margin-top: 8px;
-    display: grid;
-    grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));
-    gap: 8px;
-}
-
-.cm-att__card {
-    position: relative;
-    border: 1px solid #f0f0f0;
-    border-radius: 10px;
-    padding: 6px;
-    background: #fff;
-}
-
-.cm-att__thumb {
-    width: 100%;
-    object-fit: cover;
-    border-radius: 6px;
-}
-
-.cm-att__icon {
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fafafa;
-    border-radius: 6px;
-}
-
-.cm-att__icon-i {
-    font-size: 22px;
-    opacity: .9;
-}
-
-.cm-att__title {
-    display: block;
-    margin-top: 6px;
-    font-size: 12px;
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: #1677ff;
-}
-
-/* Approve popover */
-.approve-pop {
-    min-width: 200px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.approve-pop .info {
-    font-size: 13px;
-    color: #444;
-}
-
-.approve-pop .actions {
+.sticky-head {
     display: flex;
     justify-content: space-between;
-    gap: 6px;
+    align-items: center;
+    padding: 6px 8px;
+    background: #fff;
 }
 
-/* Pin button + pinned files */
-.pin-btn {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    font-size: 16px;
-    transition: color .2s;
+.sticky-title {
+    font-weight: 600;
+    color: #222;
 }
 
-.pin-btn:hover {
-    color: #faad14;
+.sticky-more {
+    color: #888;
+    margin-left: 6px;
+    font-size: 12px;
+}
+
+.sticky-actions .ant-btn {
+    padding: 0 6px;
 }
 
 .pinned-files {
     background: #fffbe6;
     border: 1px solid #ffe58f;
     border-radius: 8px;
-    margin-bottom: 8px;
+    margin: 0 8px 8px;
+    padding: 8px;
 }
 
 .pinned-item {
@@ -1198,7 +1048,277 @@ onBeforeUnmount(() => {
     color: #ff4d4f;
 }
 
-/* Card nền mềm, bo tròn, viền nhẹ */
+.more-pill {
+    cursor: pointer;
+    user-select: none;
+}
+
+/* ===== List comments (scroll) ===== */
+.list-comment {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 8px 10px 0 10px;
+    gap: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, .35) transparent;
+}
+
+.list-comment::-webkit-scrollbar {
+    width: 6px;
+}
+
+.list-comment::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.list-comment::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, .28);
+    border-radius: 8px;
+}
+
+/* ===== Telegram-like bubbles ===== */
+.tg-row {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.tg-row.me {
+    justify-content: flex-end;
+}
+
+.tg-row .avatar {
+    align-self: flex-end;
+}
+
+.bubble {
+    max-width: 72%;
+    background: #fff;
+    border: 1px solid #e6ebf0;
+    border-radius: 12px 12px 12px 4px;
+    padding: 8px 10px 6px;
+    position: relative;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, .03);
+}
+
+.bubble.me {
+    background: #eaf2ff;
+    border-color: #cfe0ff;
+    border-radius: 12px 12px 4px 12px;
+}
+
+.bubble .actions {
+    position: absolute;
+    right: 4px;
+    top: 4px;
+}
+
+.bubble .actions :deep(.ant-btn) {
+    padding: 0 6px;
+}
+
+.bubble .author {
+    font-size: 12px;
+    color: #6b7a8c;
+    margin-bottom: 2px;
+}
+
+.bubble .text {
+    white-space: pre-wrap;
+    line-height: 1.38;
+    color: #24292f;
+}
+
+.bubble .meta {
+    font-size: 11px;
+    color: #8aa0b4;
+    margin-top: 6px;
+    text-align: right;
+}
+
+/* ===== Attachments trong bubble ===== */
+.tg-attachments {
+    margin-top: 6px;
+    display: grid;
+    grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+}
+
+.tg-att-item {
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+    padding: 6px;
+}
+
+.cm-att__thumb {
+    width: 100%;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.cm-att__icon {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fafafa;
+    border-radius: 6px;
+}
+
+.cm-att__icon-i {
+    font-size: 22px;
+    opacity: .9;
+}
+
+.tg-file-link {
+    font-size: 13px;
+    color: #1677ff;
+}
+
+.cm-att__line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+    gap: 8px;
+}
+
+.pin-btn {
+    font-size: 16px;
+    cursor: pointer;
+    transition: color .2s;
+}
+
+.pin-btn:hover {
+    color: #faad14;
+}
+
+/* ===== Footer composer ===== */
+.footer-fixed {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    background: #fff;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 10px;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, .03);
+}
+
+.load-more {
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.tg-footer {
+    background: #f0f4f7;
+    padding: 8px 12px;
+}
+
+.tg-composer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #dfe6eb;
+    border-radius: 24px;
+    padding: 6px 44px 6px 44px;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, .03);
+}
+
+.tg-input {
+    flex: 1;
+}
+
+.tg-input .ant-input {
+    padding: 6px 0 !important;
+}
+
+.tg-input textarea.ant-input {
+    box-shadow: none !important;
+    resize: none;
+    background: transparent;
+}
+
+.tg-attach-btn, .tg-send-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.tg-attach-btn {
+    left: 6px;
+    color: #6b7a8c;
+}
+
+.tg-send-btn {
+    right: 6px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #d7e3ff;
+    color: #6b7a8c;
+}
+
+.tg-send-btn.is-active {
+    background: #2a86ff;
+    color: #fff;
+}
+
+.tg-file-strip {
+    display: flex;
+    gap: 6px;
+    padding: 6px 4px 0;
+    flex-wrap: wrap;
+}
+
+.tg-file-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid #e2e8ef;
+    border-radius: 16px;
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.tg-file-pill .x {
+    cursor: pointer;
+    margin-left: 4px;
+    opacity: .7;
+}
+
+/* ===== Mentions pop ===== */
+.mention-row {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.mention-pop {
+    display: grid;
+    gap: 8px;
+    min-width: 320px;
+}
+
+.mention-pop .row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mention-pop .lbl {
+    width: 64px;
+    color: #666;
+}
+
+/* ===== Chips (approver) ===== */
 .chip-card {
     min-width: 240px;
     max-width: 360px;
@@ -1269,7 +1389,6 @@ onBeforeUnmount(() => {
     color: #667085;
 }
 
-/* status dot */
 .role-dot, .dot {
     display: inline-block;
     width: 8px;
@@ -1290,76 +1409,14 @@ onBeforeUnmount(() => {
     background: #ff4d4f;
 }
 
-/* popover */
-.approve-pop {
-    min-width: 260px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.pop-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.role-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: #475467;
-    border: 1px dashed #d0d5dd;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: #fafafa;
-}
-
-.pop-time {
-    font-size: 12px;
-    color: #475467;
-}
-
-.sticky-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 8px;
-    border-bottom: 1px solid #f0f0f0;
-    background: #fff;
-}
-
-.sticky-title {
-    font-weight: 600;
-    color: #333;
-}
-
-.sticky-more {
-    color: #888;
-    margin-left: 6px;
-    font-size: 12px;
-}
-
-.sticky-actions .ant-btn {
-    padding: 0 6px;
-}
-
-.more-pill {
-    cursor: pointer;
-    user-select: none;
-}
-
-.chip-card {
-    max-width: 340px;
-}
-
+/* ===== Responsive ===== */
 @media (max-width: 768px) {
+    .bubble {
+        max-width: 88%;
+    }
+
     .chip-card {
         max-width: 100%;
     }
 }
-
-
 </style>
