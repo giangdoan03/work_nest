@@ -10,8 +10,8 @@
                 <div class="sticky-left">
                     <span class="sticky-title">Tài liệu & người duyệt</span>
                     <span v-if="hiddenPinnedCount>0 || hiddenMentionsCount>0" class="sticky-more">
-            (còn {{ hiddenPinnedCount + hiddenMentionsCount }} mục)
-          </span>
+                        (còn {{ hiddenPinnedCount + hiddenMentionsCount }} mục)
+                    </span>
                 </div>
                 <div class="sticky-actions">
                     <a-tooltip :title="isStickyExpanded ? 'Thu gọn' : 'Hiện tất cả'">
@@ -107,14 +107,8 @@
                                 @{{ m.name }}
                                 <span class="role-dot" :class="statusDotClass(m.status)"></span>
                                 <span class="state-text">
-                  {{
-                                        m.status === 'approved'
-                                            ? (m.role === 'sign' ? 'Đã ký' : 'Đã duyệt')
-                                            : m.status === 'rejected'
-                                                ? 'Đã từ chối'
-                                                : (m.role === 'sign' ? 'Chờ ký' : 'Chờ duyệt')
-                                    }}
-                </span>
+                                    {{ m.status === 'approved' ? (m.role === 'sign' ? 'Đã ký' : 'Đã duyệt') : m.status === 'rejected' ? 'Đã từ chối' : (m.role === 'sign' ? 'Chờ ký' : 'Chờ duyệt') }}
+                                </span>
                             </div>
                             <a-tooltip title="Bỏ khỏi danh sách">
                                 <a-button type="text" size="small" class="chip-close"
