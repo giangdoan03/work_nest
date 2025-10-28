@@ -1006,7 +1006,14 @@ onBeforeUnmount(() => {
 .bubble .author{font-size:12px;color:var(--txt-muted);margin-bottom:2px}
 .bubble .text{white-space:pre-wrap;line-height:1.38;color:var(--txt-main)}
 .bubble .meta{font-size:11px;color:var(--txt-faint);margin-top:6px;text-align:right}
-
+.pinned-pill {
+    background: #fff6cc;
+    border-color: #ffd666;
+}
+.pinned-pill:hover {
+    background: #fff6cc;
+    border-color: #ffd666;
+}
 /* ===== Attachments trong bubble ===== */
 .tg-attachments{margin-top:6px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
 .tg-att-item{background:#fff;border:1px solid var(--bd-soft);border-radius:10px;padding:6px}
@@ -1073,7 +1080,7 @@ onBeforeUnmount(() => {
 .pinned-pill{
     margin-right: 5px;
     display:inline-flex;align-items:center;gap:8px;max-width:320px;padding:6px 10px;border:1px solid var(--bd-soft);
-    background:#fff;border-radius:999px;box-shadow:0 1px 0 rgba(0,0,0,.03);transition:box-shadow .16s,transform .04s,border-color .16s
+    background:#fff6cc;border-radius:999px;box-shadow:0 1px 0 rgba(0,0,0,.03);transition:box-shadow .16s,transform .04s,border-color .16s
 }
 .pinned-pill:hover{box-shadow:0 2px 8px rgba(0,0,0,.06);border-color:#cfd8e3}
 .pill-link{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#1f75ff;min-width:0}
