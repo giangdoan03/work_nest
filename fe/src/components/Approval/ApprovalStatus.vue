@@ -22,9 +22,9 @@
                         :disabled="!isCurrentUser(step.role)"
                         @change="() => toggleApproval(step)"
                     >
-            <span :style="{ fontWeight: isCurrentUser(step.role) ? '600' : '400' }">
-              {{ step.label }}
-            </span>
+                        <span :style="{ fontWeight: isCurrentUser(step.role) ? '600' : '400' }">
+                          {{ step.label }}
+                        </span>
                         <template v-if="step.status === 'approved'">
                             <CheckCircleTwoTone twoToneColor="#52c41a" style="margin-left: 4px"/>
                         </template>
