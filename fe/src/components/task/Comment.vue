@@ -29,14 +29,18 @@
 
             <!-- Pinned files -->
             <div v-if="visiblePinnedFiles.length" class="pinned-files">
-                <a-space wrap>
-                    <div v-for="f in visiblePinnedFiles" :key="f.id || f.file_path" class="pinned-item">
-                        <a :href="hrefOf(f)" target="_blank" rel="noopener" class="pinned-link">
-                            <PaperClipOutlined style="margin-right:4px"/>
-                            {{ titleOf(f) }}
+                <div class="pinned-line">
+                    <div
+                        v-for="f in visiblePinnedFiles"
+                        :key="f.id || f.file_path"
+                        class="pinned-pill"
+                    >
+                        <a :href="hrefOf(f)" target="_blank" rel="noopener" class="pill-link">
+                            <PaperClipOutlined class="pill-icon" />
+                            <span class="pill-text">{{ titleOf(f) }}</span>
                         </a>
                         <a-tooltip title="Bỏ ghim">
-                            <CloseOutlined class="unpin" @click="togglePin(f)"/>
+                            <button class="pill-x" type="button" @click="togglePin(f)">×</button>
                         </a-tooltip>
                     </div>
 
@@ -44,13 +48,14 @@
                     <a-tag
                         v-if="!isStickyExpanded && hiddenPinnedCount>0"
                         color="blue"
-                        class="more-pill"
+                        class="more-pill more-pill--file"
                         @click="expandSticky"
                     >
                         +{{ hiddenPinnedCount }} file
                     </a-tag>
-                </a-space>
+                </div>
             </div>
+
 
             <!-- Approver/sign chips -->
             <a-space wrap style="margin-bottom:8px;">
@@ -97,23 +102,21 @@
               'is-rejected': m.status==='rejected'
             }"
                     >
-                        <div class="chip-top">
-                            <div class="chip-title" :title="m.name">@{{ m.name }}
-                                <span class="role-dot" :class="statusDotClass(m.status)"></span>
-                                <span class="state-text">
-                                    {{ m.status === 'approved' ? (m.role === 'sign' ? 'Đã ký' : 'Đã duyệt') : m.status === 'rejected' ? 'Đã từ chối' : (m.role === 'sign' ? 'Chờ ký' : 'Chờ duyệt') }}
-                                </span>
-                            </div>
-                            <a-tooltip title="Bỏ khỏi danh sách">
-                                <a-button type="text" size="small" class="chip-close" @click.stop="removeMention(m.user_id)">×</a-button>
-                            </a-tooltip>
+                        <div class="chip-line">
+                            <span class="chip-name">@{{ m.name }}</span>
+                            <span class="role-dot" :class="statusDotClass(m.status)"></span>
+                            <span class="chip-state">
+      {{
+                                    m.status === 'approved'
+                                        ? 'Đã duyệt'
+                                        : m.status === 'rejected'
+                                            ? 'Đã từ chối'
+                                            : 'Chờ duyệt'
+                                }}
+    </span>
+                            <span class="chip-time">{{ metaTime(m) }}</span>
+                            <a-button type="text" size="small" class="chip-close" @click.stop="removeMention(m.user_id)">×</a-button>
                         </div>
-
-                        <a-tooltip :title="fullTimeTooltip(m)" v-if="metaTime(m)">
-                            <div class="chip-meta">
-                                {{ metaLabel(m) }} · {{ metaTime(m) }}
-                            </div>
-                        </a-tooltip>
                     </div>
                 </a-popover>
 
@@ -956,452 +959,136 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* ===== Reset nhỏ & token màu ===== */
+:where(.comment) {
+    --bg-surface: #fff;
+    --bg-subtle : #f0f4f7;
+    --bd-soft   : #e6ebf1;
+    --txt-main  : #24292f;
+    --txt-muted : #6b7a8c;
+    --txt-faint : #8aa0b4;
+    --blue-1: #eef6ff; --blue-2: #cfe3ff; --blue-3: #2a86ff;
+    --green-1:#f6ffed; --green-2:#b7eb8f;
+    --red-1  :#fff2f0; --red-2  :#ffccc7;
+}
+
 /* ===== Layout tổng ===== */
-.comment {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-}
+.comment{display:flex;flex-direction:column;height:100%;min-height:0}
 
-/* ===== Sticky mentions + pinned files ===== */
-.sticky-mentions {
-    position: sticky;
-    top: 0;
-    z-index: 9;
-    background: #fff;
-    border-bottom: 1px solid #eef1f3;
-}
-
-.sticky-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 8px;
-    background: #fff;
-}
-
-.sticky-title {
-    font-weight: 600;
-    color: #222;
-}
-
-.sticky-more {
-    color: #888;
-    margin-left: 6px;
-    font-size: 12px;
-}
-
-.sticky-actions .ant-btn {
-    padding: 0 6px;
-}
-
-.pinned-files {
-    background: #fffbe6;
-    border: 1px solid #ffe58f;
-    border-radius: 8px;
-    margin: 0 8px 8px;
-    padding: 8px;
-}
-
-.pinned-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: #fff;
-    border: 1px solid #f0f0f0;
-    padding: 4px 8px;
-    border-radius: 6px;
-}
-
-.pinned-link {
-    color: #1677ff;
-    text-decoration: none;
-}
-
-.pinned-link:hover {
-    text-decoration: underline;
-}
-
-.unpin {
-    font-size: 12px;
-    color: #999;
-    cursor: pointer;
-}
-
-.unpin:hover {
-    color: #ff4d4f;
-}
-
-.more-pill {
-    cursor: pointer;
-    user-select: none;
-}
+/* ===== Sticky header (mentions + pinned) ===== */
+.sticky-mentions{position:sticky;top:0;z-index:9;background:var(--bg-surface);border-bottom:1px solid #eef1f3}
+.sticky-head{display:flex;justify-content:space-between;align-items:center;padding:6px 8px}
+.sticky-title{font-weight:600;color:#222}
+.sticky-more{color:#888;margin-left:6px;font-size:12px}
+.sticky-actions .ant-btn{padding:0 6px}
 
 /* ===== List comments (scroll) ===== */
-.list-comment {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 8px 10px 0 10px;
-    gap: 6px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, .35) transparent;
+.list-comment{
+    flex:1 1 auto;min-height:0;overflow:auto;padding:8px 10px 0;
+    scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.35) transparent;
 }
-
-.list-comment::-webkit-scrollbar {
-    width: 6px;
-}
-
-.list-comment::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.list-comment::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, .28);
-    border-radius: 8px;
-}
+.list-comment::-webkit-scrollbar{width:6px}
+.list-comment::-webkit-scrollbar-thumb{background:rgba(0,0,0,.28);border-radius:8px}
 
 /* ===== Telegram-like bubbles ===== */
-.tg-row {
-    display: flex;
-    gap: 8px;
-    margin: 8px 0;
-}
+.tg-row{display:flex;gap:8px;margin:8px 0}
+.tg-row.me{justify-content:flex-end}
+.tg-row .avatar{align-self:flex-end}
 
-.tg-row.me {
-    justify-content: flex-end;
+.bubble{
+    max-width:72%;position:relative;padding:8px 10px 6px;
+    background:var(--bg-surface);border:1px solid #e6ebf0;border-radius:12px 12px 12px 4px;
+    box-shadow:0 1px 0 rgba(0,0,0,.03)
 }
-
-.tg-row .avatar {
-    align-self: flex-end;
-}
-
-.bubble {
-    max-width: 72%;
-    background: #fff;
-    border: 1px solid #e6ebf0;
-    border-radius: 12px 12px 12px 4px;
-    padding: 8px 10px 6px;
-    position: relative;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, .03);
-}
-
-.bubble.me {
-    background: #eaf2ff;
-    border-color: #cfe0ff;
-    border-radius: 12px 12px 4px 12px;
-}
-
-.bubble .actions {
-    position: absolute;
-    right: 4px;
-    top: 4px;
-}
-
-.bubble .actions :deep(.ant-btn) {
-    padding: 0 6px;
-}
-
-.bubble .author {
-    font-size: 12px;
-    color: #6b7a8c;
-    margin-bottom: 2px;
-}
-
-.bubble .text {
-    white-space: pre-wrap;
-    line-height: 1.38;
-    color: #24292f;
-}
-
-.bubble .meta {
-    font-size: 11px;
-    color: #8aa0b4;
-    margin-top: 6px;
-    text-align: right;
-}
+.bubble.me{background:#eaf2ff;border-color:#cfe0ff;border-radius:12px 12px 4px 12px}
+.bubble .actions{position:absolute;right:4px;top:4px}
+.bubble .actions :deep(.ant-btn){padding:0 6px}
+.bubble .author{font-size:12px;color:var(--txt-muted);margin-bottom:2px}
+.bubble .text{white-space:pre-wrap;line-height:1.38;color:var(--txt-main)}
+.bubble .meta{font-size:11px;color:var(--txt-faint);margin-top:6px;text-align:right}
 
 /* ===== Attachments trong bubble ===== */
-.tg-attachments {
-    margin-top: 6px;
-    display: grid;
-    grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
-    gap: 8px;
-}
-
-.tg-att-item {
-    background: #fff;
-    border: 1px solid #f0f0f0;
-    border-radius: 10px;
-    padding: 6px;
-}
-
-.cm-att__thumb {
-    width: 100%;
-    object-fit: cover;
-    border-radius: 6px;
-}
-
-.cm-att__icon {
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fafafa;
-    border-radius: 6px;
-}
-
-.cm-att__icon-i {
-    font-size: 22px;
-    opacity: .9;
-}
-
-.tg-file-link {
-    font-size: 13px;
-    color: #1677ff;
-}
-
-.cm-att__line {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 6px;
-    gap: 8px;
-}
-
-.pin-btn {
-    font-size: 16px;
-    cursor: pointer;
-    transition: color .2s;
-}
-
-.pin-btn:hover {
-    color: #faad14;
-}
+.tg-attachments{margin-top:6px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.tg-att-item{background:#fff;border:1px solid var(--bd-soft);border-radius:10px;padding:6px}
+.cm-att__thumb{width:100%;object-fit:cover;border-radius:6px}
+.cm-att__icon{height:64px;display:flex;align-items:center;justify-content:center;background:#fafafa;border-radius:6px}
+.cm-att__icon-i{font-size:22px;opacity:.9}
+.tg-file-link{font-size:13px;color:#1677ff}
+.cm-att__line{display:flex;align-items:center;justify-content:space-between;margin-top:6px;gap:8px}
+.pin-btn{font-size:16px;cursor:pointer;transition:color .2s}
+.pin-btn:hover{color:#faad14}
 
 /* ===== Footer composer ===== */
-.footer-fixed {
-    position: sticky;
-    bottom: 0;
-    z-index: 5;
-    background: #fff;
-    border-top: 1px solid #f0f0f0;
-    padding-top: 10px;
-    box-shadow: 0 -4px 10px rgba(0, 0, 0, .03);
+.footer-fixed{position:sticky;bottom:0;z-index:5;background:var(--bg-surface);border-top:1px solid #f0f0f0;padding-top:10px;box-shadow:0 -4px 10px rgba(0,0,0,.03)}
+.load-more{text-align:center;margin-bottom:8px}
+.tg-footer{background:var(--bg-subtle);padding:8px 12px}
+.tg-composer{
+    position:relative;display:flex;align-items:center;gap:8px;
+    background:#fff;border:1px solid #dfe6eb;border-radius:24px;padding:6px 44px;box-shadow:0 1px 0 rgba(0,0,0,.03)
 }
+.tg-input{flex:1}
+.tg-input .ant-input{padding:6px 0 !important}
+.tg-input textarea.ant-input{box-shadow:none !important;resize:none;background:transparent}
+.tg-attach-btn,.tg-send-btn{position:absolute;top:50%;transform:translateY(-50%)}
+.tg-attach-btn{left:6px;color:#6b7a8c}
+.tg-send-btn{right:6px;width:32px;height:32px;border:none;background:#d7e3ff;color:#6b7a8c}
+.tg-send-btn.is-active{background:var(--blue-3);color:#fff}
 
-.load-more {
-    margin-bottom: 8px;
-    text-align: center;
-}
-
-.tg-footer {
-    background: #f0f4f7;
-    padding: 8px 12px;
-}
-
-.tg-composer {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #fff;
-    border: 1px solid #dfe6eb;
-    border-radius: 24px;
-    padding: 6px 44px 6px 44px;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, .03);
-}
-
-.tg-input {
-    flex: 1;
-}
-
-.tg-input .ant-input {
-    padding: 6px 0 !important;
-}
-
-.tg-input textarea.ant-input {
-    box-shadow: none !important;
-    resize: none;
-    background: transparent;
-}
-
-.tg-attach-btn, .tg-send-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-.tg-attach-btn {
-    left: 6px;
-    color: #6b7a8c;
-}
-
-.tg-send-btn {
-    right: 6px;
-    width: 32px;
-    height: 32px;
-    border: none;
-    background: #d7e3ff;
-    color: #6b7a8c;
-}
-
-.tg-send-btn.is-active {
-    background: #2a86ff;
-    color: #fff;
-}
-
-.tg-file-strip {
-    display: flex;
-    gap: 6px;
-    padding: 6px 4px 0;
-    flex-wrap: wrap;
-}
-
-.tg-file-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #fff;
-    border: 1px solid #e2e8ef;
-    border-radius: 16px;
-    padding: 4px 8px;
-    font-size: 12px;
-}
-
-.tg-file-pill .x {
-    cursor: pointer;
-    margin-left: 4px;
-    opacity: .7;
-}
+/* file chip dưới composer */
+.tg-file-strip{display:flex;gap:6px;padding:6px 4px 0;flex-wrap:wrap}
+.tg-file-pill{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #e2e8ef;border-radius:16px;padding:4px 8px;font-size:12px}
+.tg-file-pill .x{cursor:pointer;margin-left:4px;opacity:.7}
 
 /* ===== Mentions pop ===== */
-.mention-row {
-    margin-top: 8px;
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
-    flex-wrap: wrap;
-}
+.mention-row{margin-top:8px;display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}
+.mention-pop{display:grid;gap:8px;min-width:320px}
+.mention-pop .row{display:flex;align-items:center;gap:8px}
+.mention-pop .lbl{width:64px;color:#666}
 
-.mention-pop {
-    display: grid;
-    gap: 8px;
-    min-width: 320px;
+/* ===== Chips (approver) + trạng thái trên 1 dòng ===== */
+.chip-card{
+    display:flex;align-items:center;gap:8px;border:1px solid var(--bd-soft);
+    border-radius:20px;background:var(--green-1);padding:4px 10px;font-size:13px;line-height:1.4;transition:box-shadow .15s,transform .05s
 }
+.chip-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.chip-card.is-approved{background:var(--green-1);border-color:var(--green-2)}
+.chip-card.is-pending {background:#e6f4ff;border-color:#91caff}
+.chip-card.is-rejected{background:var(--red-1);border-color:var(--red-2)}
 
-.mention-pop .row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+.chip-line{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.chip-name{font-weight:600;color:#2b2f36}
+.state-text{font-weight:600}
+.chip-time{color:#777;font-size:12px}
 
-.mention-pop .lbl {
-    width: 64px;
-    color: #666;
-}
+.role-dot,.dot{display:inline-block;width:8px;height:8px;border-radius:50%;transform:translateY(1px)}
+.role-dot.ok,.dot.ok{background:#52c41a}
+.role-dot.proc,.dot.proc{background:#1677ff}
+.role-dot.err,.dot.err{background:#ff4d4f}
 
-/* ===== Chips (approver) ===== */
-.chip-card {
-    min-width: 240px;
-    max-width: 360px;
-    padding: 8px 10px;
-    border-radius: 10px;
-    border: 1px solid #e6ebf1;
-    background: #f7f9fc;
-    transition: box-shadow .15s ease, transform .05s ease;
-}
+.chip-close{font-size:14px;color:#9aa4b2;line-height:1;padding:0 4px;cursor:pointer;background:transparent}
+.chip-close:hover{color:#111827}
 
-.chip-card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+/* ===== Pinned files → pill giống chip ===== */
+.pinned-files{border-radius:12px;margin:8px 0;padding:0}
+.pinned-pill{
+    margin-right: 5px;
+    display:inline-flex;align-items:center;gap:8px;max-width:320px;padding:6px 10px;border:1px solid var(--bd-soft);
+    background:#fff;border-radius:999px;box-shadow:0 1px 0 rgba(0,0,0,.03);transition:box-shadow .16s,transform .04s,border-color .16s
 }
-
-.chip-card.is-approved {
-    background: #f6ffed;
-    border-color: #b7eb8f;
-}
-
-.chip-card.is-pending {
-    background: #eef6ff;
-    border-color: #b7d8ff;
-}
-
-.chip-card.is-rejected {
-    background: #fff2f0;
-    border-color: #ffccc7;
-}
-
-.chip-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-}
-
-.chip-title {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-weight: 600;
-    color: #2b2f36;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.state-text {
-    font-weight: 600;
-}
-
-.chip-close {
-    height: auto;
-    line-height: 1;
-    padding: 0 4px;
-    font-size: 14px;
-    color: #9aa4b2;
-}
-
-.chip-close:hover {
-    color: #111827;
-    background: transparent;
-}
-
-.chip-meta {
-    margin-top: 4px;
-    font-size: 12px;
-    color: #667085;
-}
-
-.role-dot, .dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    transform: translateY(1px);
-}
-
-.role-dot.ok, .dot.ok {
-    background: #52c41a;
-}
-
-.role-dot.proc, .dot.proc {
-    background: #1677ff;
-}
-
-.role-dot.err, .dot.err {
-    background: #ff4d4f;
-}
+.pinned-pill:hover{box-shadow:0 2px 8px rgba(0,0,0,.06);border-color:#cfd8e3}
+.pill-link{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#1f75ff;min-width:0}
+.pill-icon{font-size:14px;opacity:.9}
+.pill-text{display:inline-block;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom}
+.pill-x{border:0;background:transparent;color:#9aa4b2;font-size:14px;line-height:1;padding:0 4px;cursor:pointer;border-radius:6px}
+.pill-x:hover{color:#ff4d4f;background:#fff1f0}
+.more-pill{border-radius:999px !important;padding:2px 8px !important;border:1px solid var(--blue-2);background:var(--blue-1);color:var(--blue-3)}
+.more-pill.more-pill--file{border-radius:999px !important;padding:2px 8px !important;border:1px solid var(--blue-2);background:var(--blue-1);color:var(--blue-3)}
 
 /* ===== Responsive ===== */
-@media (max-width: 768px) {
-    .bubble {
-        max-width: 88%;
-    }
-
-    .chip-card {
-        max-width: 100%;
-    }
+@media (max-width:768px){
+    .bubble{max-width:88%}
+    .chip-card{max-width:100%}
+    .pill-text{max-width:140px}
 }
+
 </style>
