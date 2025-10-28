@@ -41,8 +41,7 @@
                     </div>
 
                     <!-- “+N file” indicator when collapsed -->
-                    <a-tag v-if="!isStickyExpanded && hiddenPinnedCount>0" color="blue" class="more-pill"
-                           @click="expandSticky">
+                    <a-tag v-if="!isStickyExpanded && hiddenPinnedCount>0" color="blue" class="more-pill" @click="expandSticky">
                         +{{ hiddenPinnedCount }} file
                     </a-tag>
                 </a-space>
@@ -890,9 +889,7 @@ async function loadPinnedFiles() {
         } else {
             console.warn('⚠️ /pinned-files trả kiểu lạ → fallback /tasks/:id/files')
             const filesRes = await getTaskFilesAPI(taskId.value)
-            const filesArr = Array.isArray(filesRes.data)
-                ? filesRes.data
-                : (Array.isArray(filesRes.data?.data) ? filesRes.data.data : [])
+            const filesArr = Array.isArray(filesRes.data) ? filesRes.data : (Array.isArray(filesRes.data?.data) ? filesRes.data.data : [])
             arr = filesArr.filter(x => Number(x.is_pinned) === 1)
         }
 
@@ -922,8 +919,8 @@ const syncRosterFromServer = async () => {
             status: r.status || 'processing',
             acted_at: r.acted_at || null,
             acted_at_vi: r.acted_at_vi || null,
-            added_at: r.added_at || null,          // 👈
-            added_at_vi: r.added_at_vi || null,    // 👈
+            added_at: r.added_at || null,
+            added_at_vi: r.added_at_vi || null,
         }))
     } catch { /* no-op */
     }
