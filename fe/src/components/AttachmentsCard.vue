@@ -11,13 +11,11 @@
                     <a-list-item>
                         <a-card hoverable class="att-card att-card--sm header_card" :bodyStyle="{ padding: '10px 10px 8px' }">
                             <template #extra>
-                                <!-- tag trạng thái duyệt (nếu đã có) -->
                                 <template v-if="approvalStateOf(item).status">
                                     <a-tag v-if="approvalStateOf(item).pending"  color="gold">Chờ duyệt</a-tag>
                                     <a-tag v-else-if="approvalStateOf(item).approved" color="green">Đã duyệt</a-tag>
                                     <a-tag v-else-if="approvalStateOf(item).rejected" color="red">Từ chối</a-tag>
                                 </template>
-<!--                                <a-tag color="blue">Từ bình luận</a-tag>-->
                             </template>
 
                             <!-- Thumb -->
@@ -41,7 +39,7 @@
                                 <div class="att-title" :title="item.title || item.name">{{ item.title || item.name }}</div>
 
                                 <div class="att-sub" v-if="item.is_link">
-<!--                                    <a :href="item.url" target="_blank" rel="noopener">{{ prettyUrl(item.url) }}</a>-->
+                                    <!-- <a :href="item.url" target="_blank" rel="noopener">{{ prettyUrl(item.url) }}</a> -->
                                 </div>
                                 <div class="att-sub" v-else :title="item.name">{{ item.name }}</div>
 
@@ -50,15 +48,14 @@
                                     <div class="att-uploader-left">
                                         <UserOutlined class="att-uploader-ico" />
                                         <a-tooltip :title="item.uploader_name || nameOfUploader(item.uploaded_by)">
-                                          <span class="att-uploader-name">
-                                            {{ item.uploader_name || nameOfUploader(item.uploaded_by) }}
-                                          </span>
+                                            <span class="att-uploader-name">{{ item.uploader_name || nameOfUploader(item.uploaded_by) }}</span>
                                         </a-tooltip>
                                     </div>
                                     <div class="att-uploader-time" v-if="item.created_at">
                                         {{ formatTime(item.created_at) }} — {{ formatDateOnly(item.created_at) }}
                                     </div>
                                 </div>
+
                             </div>
 
                             <!-- Actions -->
@@ -88,6 +85,7 @@
                                         <SendOutlined />
                                     </a-button>
                                 </a-tooltip>
+
                             </div>
 
                             <span v-if="item.ext" class="att-ext">{{ item.ext }}</span>
@@ -102,33 +100,22 @@
         </a-spin>
 
         <!-- Modal gửi duyệt -->
-        <a-modal
-            v-model:open="showSend"
-            title="Gửi duyệt tài liệu"
-            :confirm-loading="sending"
-            @ok="submitSendApproval"
-            @cancel="clearSendApproval"
-        >
+        <a-modal v-model:open="showSend" title="Gửi duyệt tài liệu"
+                 :confirm-loading="sending" @ok="submitSendApproval" @cancel="clearSendApproval">
             <a-form layout="vertical">
-                <a-form-item
-                    label="Người duyệt"
-                    :validate-status="!sendForm.approver_ids.length ? 'error' : ''"
-                    :help="!sendForm.approver_ids.length ? 'Chọn ít nhất 1 người duyệt' : ''"
-                >
-                    <a-select
-                        v-model:value="sendForm.approver_ids"
-                        mode="multiple"
-                        show-search
-                        :options="approverOptions"
-                        placeholder="Chọn người duyệt"
-                        :filter-option="filterUser"
-                    />
+                <a-form-item label="Người duyệt"
+                             :validate-status="!sendForm.approver_ids.length ? 'error' : ''"
+                             :help="!sendForm.approver_ids.length ? 'Chọn ít nhất 1 người duyệt' : ''">
+                    <a-select v-model:value="sendForm.approver_ids" mode="multiple" show-search
+                              :options="approverOptions" placeholder="Chọn người duyệt"
+                              :filter-option="filterUser"/>
                 </a-form-item>
                 <a-form-item label="Ghi chú (tuỳ chọn)">
-                    <a-textarea v-model:value="sendForm.note" :rows="3" placeholder="Thông tin bổ sung cho người duyệt" />
+                    <a-textarea v-model:value="sendForm.note" :rows="3"/>
                 </a-form-item>
             </a-form>
         </a-modal>
+
     </a-card>
 </template>
 
@@ -142,7 +129,10 @@ import { message } from 'ant-design-vue'
 import { parseApiError } from '@/utils/apiError'
 import { getComments } from '@/api/task'
 import { getUsers } from '@/api/user'
-import { sendApproval, getActiveApproval } from '@/api/approvals'
+
+// ❗ Dùng API mới cho document approvals
+import { sendDocumentApproval, getActiveDocumentApproval } from '@/api/approvals.js'
+
 import {
     adoptTaskFileFromPathAPI,
     uploadTaskFileLinkAPI,
@@ -164,11 +154,11 @@ const thumbH = 96
 const commentFileItems = ref([])
 const loading = ref(false)
 const userMap = ref(Object.create(null))
-const ensuring = reactive({}) // per-item ensuring tfId
-const approvalMap = reactive({}) // { task_file_id: {status, instanceId} }
+const ensuring = reactive({})            // loading riêng cho từng item khi ensure TF id
+const approvalMap = reactive({})         // { [task_file_id]: { status, instanceId } }
 const approvalLoading = ref(false)
 
-/* gửi duyệt modal */
+// modal gửi duyệt
 const showSend = ref(false)
 const sending = ref(false)
 const sendingItem = ref(null)
@@ -265,7 +255,6 @@ async function fetchAllCommentFiles() {
 
                 for (const f of (c.files || [])) {
                     const isLink = !!f.link_url && !f.file_path
-                    // THAY =>
                     const url = (f.link_url || f.file_path || '')
                     const isHttp = /^https?:\/\//i.test(url)
                     const key = normalizeKey(url)
@@ -280,13 +269,13 @@ async function fetchAllCommentFiles() {
                         url
                     })
 
-                    acc.push({
-                        _key: key,                       // key nội bộ để track loading per-item
-                        id: f.id,                        // id trong comment (nếu có)
+                    const item = {
+                        _key: key,
+                        id: f.id,
                         name: f.file_name || '',
                         title: f.title || '',
                         url,
-                        is_link: isHttp,            // <-- coi http(s) là link
+                        is_link: isHttp, // coi http(s) là link
                         kind,
                         icon: pickIcon(kind),
                         ext: extOf(f.file_name || url),
@@ -294,10 +283,19 @@ async function fetchAllCommentFiles() {
                         updated_at: f.updated_at || c.updated_at || null,
                         uploaded_by: f.uploaded_by || uploaderId || null,
                         uploader_name: f.uploader_name || uploaderName || null,
-                        task_file_id: f.task_file_id || null,   // nếu BE có map sẵn
+                        task_file_id: f.task_file_id || null,
                         _source: 'comment',
                         full: { ...f, comment_id: c.id },
-                    })
+                    }
+
+                    acc.push(item)
+
+                    // Fallback: nếu BE đã nhồi sẵn status (từ task_files), map luôn để hiển thị tức thì
+                    const tfId = item.task_file_id
+                    const tfStatus = f?.status ? String(f.status) : null
+                    if (tfId && tfStatus && !approvalMap[tfId]) {
+                        approvalMap[tfId] = { status: tfStatus, instanceId: null }
+                    }
                 }
             }
 
@@ -314,12 +312,11 @@ async function fetchAllCommentFiles() {
     }
 
     commentFileItems.value = acc
-    // nếu có sẵn task_file_id, load trạng thái duyệt
-    await refreshApprovalStates()
+    await refreshApprovalStates() // lấy trạng thái active theo API mới
 }
 
 /* ---------- approval helpers ---------- */
-function approvalStateOf(item) {
+function approvalStateOf(item){
     const tfId = item?.task_file_id
     const st = tfId ? (approvalMap[tfId] || {}) : {}
     return {
@@ -329,17 +326,14 @@ function approvalStateOf(item) {
         rejected: st.status === 'rejected'
     }
 }
-function canSendApproval(item) {
-    // Đang kiểm tra hay adopt → khoá
+function canSendApproval(item){
     if (ensuring[item._key]) return false
-    // Nếu đã Approved thì không gửi nữa
     const st = approvalStateOf(item)
     if (st.approved) return false
-    // Nếu đang pending → có thể muốn cho “gửi lại” khi bị rejected; pending thì khoá
-    if (st.pending) return false
+    if (st.pending)  return false
     return true
 }
-function sendBtnTooltip(item) {
+function sendBtnTooltip(item){
     if (ensuring[item._key]) return 'Đang chuẩn bị tài liệu...'
     const st = approvalStateOf(item)
     if (st.pending)  return 'Đang chờ người duyệt phản hồi'
@@ -349,140 +343,109 @@ function sendBtnTooltip(item) {
 }
 
 /** đảm bảo có task_file_id cho 1 item (comment file) */
-async function ensureTaskFileId(item) {
+async function ensureTaskFileId(item){
     if (item.task_file_id) return item.task_file_id
     ensuring[item._key] = true
     try {
         const isHttp = /^https?:\/\//i.test(item.url)
-
-        if (isHttp) {
-            // link ngoài / wp_media: tạo record link
+        if (isHttp){
             const { data } = await uploadTaskFileLinkAPI(props.taskId, {
                 title: item.title || item.name || '',
                 url: item.url,
-                user_id: Number(store.currentUser?.id),   // ← BẮT BUỘC
+                user_id: Number(store.currentUser?.id),
             })
             const created = Array.isArray(data) ? data[0] : (data?.data || data)
             item.task_file_id = Number(created?.id)
         } else {
-            // file nội bộ: adopt
             const { data } = await adoptTaskFileFromPathAPI(props.taskId, {
-                task_id: Number(props.taskId),            // ← BẮT BUỘC
-                user_id: Number(store.currentUser?.id),   // ← BẮT BUỘC
-                file_path: item.url,                      // ← BẮT BUỘC
+                task_id: Number(props.taskId),
+                user_id: Number(store.currentUser?.id),
+                file_path: item.url,
                 file_name: item.name || '',
             })
             const created = data?.data || data
             item.task_file_id = Number(created?.id)
         }
         return item.task_file_id
-    } catch (e) {
-        console.error('ensureTaskFileId error', e?.response?.data || e)
-        const msg = e?.response?.data?.messages?.error || 'Không tạo được tài liệu để gửi duyệt.'
-        message.error(msg)
+    } catch(e){
+        message.error(e?.response?.data?.messages?.error || 'Không tạo được tài liệu để gửi duyệt.')
         return null
     } finally {
         ensuring[item._key] = false
     }
 }
 
-
 /** nạp trạng thái duyệt cho các item đã có task_file_id */
-async function refreshApprovalStates() {
+async function refreshApprovalStates(){
     const ids = (commentFileItems.value || []).map(i => i.task_file_id).filter(Boolean)
     if (!ids.length) return
     approvalLoading.value = true
-    try {
+    try{
         const chunk = 6
-        for (let i = 0; i < ids.length; i += chunk) {
-            await Promise.all(
-                ids.slice(i, i + chunk).map(async (id) => {
-                    try {
-                        const a = await getActiveApproval('document', id)
-                        const status = a?.status ?? a?.instance?.status ?? null
-                        const instanceId = a?.instanceId ?? a?.instance?.id ?? null
-                        approvalMap[id] = { status, instanceId }
-                    } catch {
-                        approvalMap[id] = { status: null, instanceId: null }
-                    }
-                })
-            )
+        for (let i=0;i<ids.length;i+=chunk){
+            await Promise.all(ids.slice(i,i+chunk).map(async id=>{
+                try{
+                    const a = await getActiveDocumentApproval(id)
+                    const status = a?.status ?? null
+                    const instanceId = a?.instanceId ?? null
+                    approvalMap[id] = { status, instanceId }
+                }catch{
+                    if (!approvalMap[id]) approvalMap[id] = { status:null, instanceId:null }
+                }
+            }))
         }
-    } finally {
-        approvalLoading.value = false
-    }
+    } finally { approvalLoading.value = false }
 }
 
 /* ---------- open modal ---------- */
 function filterUser(input, option) {
     return option?.label?.toLowerCase?.().includes?.(input.toLowerCase())
 }
-async function openSendApproval(item) {
+async function openSendApproval(item){
     const tfId = await ensureTaskFileId(item)
     if (!tfId) return
-    // sau khi có tfId, nạp trạng thái hiện tại (nếu có)
-    try {
-        const a = await getActiveApproval('document', tfId)
-        const status = a?.status ?? a?.instance?.status ?? null
-        const instanceId = a?.instanceId ?? a?.instance?.id ?? null
+    try{
+        const a = await getActiveDocumentApproval(tfId)
+        const status = a?.status ?? null
+        const instanceId = a?.instanceId ?? null
         approvalMap[tfId] = { status, instanceId }
-    } catch {
-        // ignore
-    }
-
+    }catch{}
     sendingItem.value = item
     sendForm.approver_ids = []
     sendForm.note = ''
     showSend.value = true
 }
 
-/* ---------- submit approval ---------- */
-async function submitSendApproval() {
-    if (!sendForm.approver_ids.length) {
-        return message.error('Vui lòng chọn ít nhất 1 người duyệt.')
-    }
+async function submitSendApproval(){
+    if (!sendForm.approver_ids.length) return message.error('Vui lòng chọn ít nhất 1 người duyệt.')
     const item = sendingItem.value
-    if (!item?.task_file_id) {
-        return message.error('Thiếu mã tài liệu.')
-    }
-
+    if (!item?.task_file_id) return message.error('Thiếu mã tài liệu.')
     sending.value = true
-    try {
-        const { ok, status, data } = await sendApproval({
-            target_type: 'document',
-            target_id: item.task_file_id,
+    try{
+        // ❗ Gọi API mới
+        const { ok, status, data } = await sendDocumentApproval({
             document_id: item.task_file_id,
             approver_ids: sendForm.approver_ids,
             note: sendForm.note || '',
-            meta: {
-                title: item.title || item.name || '',
-                url: String(item.url || '')
-            }
         })
 
-        if (ok) {
-            approvalMap[item.task_file_id] = { status: 'pending', instanceId: data?.approval_instance_id || null }
+        if (ok){
+            approvalMap[item.task_file_id] = { status:'pending', instanceId: data?.id || null }
             message.success('Đã gửi duyệt tài liệu.')
             clearSendApproval()
             return
         }
-        if (status === 409) {
-            approvalMap[item.task_file_id] = { status: 'pending', instanceId: null }
+        if (status === 409){
+            approvalMap[item.task_file_id] = { status:'pending', instanceId:null }
             message.warning(data?.message || 'Đối tượng đang chờ duyệt.')
             clearSendApproval()
             return
         }
-        if (status === 422) {
-            message.error(data?.message || 'Dữ liệu chưa hợp lệ.')
-            return
-        }
+        if (status === 422) return message.error(data?.message || 'Dữ liệu chưa hợp lệ.')
         message.error(data?.message || 'Không thể gửi duyệt.')
-    } catch (err) {
-        const msg = err?.response?.data?.message || err.message || 'Lỗi máy chủ.'
-        message.error(msg)
-    } finally {
-        sending.value = false
-    }
+    } catch (e){
+        message.error(e?.response?.data?.message || e.message || 'Lỗi máy chủ.')
+    } finally { sending.value = false }
 }
 
 /* ---------- misc ---------- */
@@ -510,6 +473,7 @@ onMounted(async () => {
     await Promise.all([loadUsers(), fetchAllCommentFiles()])
 })
 watch(() => props.taskId, () => fetchAllCommentFiles())
+
 onBeforeUnmount(() => {
     aborter.controller?.abort?.()
 })
@@ -580,4 +544,8 @@ onBeforeUnmount(() => {
 
 <style>
 .ant-list-item{ padding-left:0 !important; padding-right:0 !important; }
+.att-uploader{ align-items:center; justify-content:space-between; gap:6px; white-space:nowrap; }
+.att-uploader-left{ flex:1; min-width:0; display:flex; gap:6px; overflow:hidden; }
+.att-uploader-name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.att-uploader-time{ flex:0 0 auto; white-space:nowrap; color:#999; }
 </style>

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\TaskFileModel;
+use CodeIgniter\HTTP\DownloadResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use App\Libraries\Uploader;
@@ -61,7 +62,7 @@ class TaskFileController extends ResourceController
             'file_ext'    => $upload['file_ext'] ?? ($file->getExtension() ?? null),
             'uploaded_by' => $user_id,
             'is_link'     => 0,
-            'status'      => 'pending', // 🔒 luôn pending khi tạo
+            'status'      => 'uploaded',
         ];
 
         $id = $this->model->insert($data, true);
@@ -137,7 +138,7 @@ class TaskFileController extends ResourceController
             'link_url'    => $url,
             'uploaded_by' => $user_id,
             'is_link'     => 1,
-            'status'      => 'pending', // 🔒
+            'status'      => 'uploaded',
         ], true);
 
         return $this->respondCreated([
@@ -216,7 +217,7 @@ class TaskFileController extends ResourceController
     }
 
     // ✅ Tải/stream file theo id
-    public function download($id = null)
+    public function download($id = null): ResponseInterface|DownloadResponse|null
     {
         $row = $this->model->find($id);
         if (!$row) return $this->failNotFound('File không tồn tại');
@@ -352,7 +353,7 @@ class TaskFileController extends ResourceController
             'file_path'   => $file_path,
             'uploaded_by' => $user_id,
             'is_link'     => 0,
-            'status'      => 'pending',
+            'status'      => null,
         ];
         $id = $this->model->insert($insert, true);
         $row = $this->model->find($id);

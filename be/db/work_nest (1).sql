@@ -1,9 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Oct 26, 2025 at 03:22 PM
+-- Generation Time: Oct 28, 2025 at 09:44 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -1312,7 +1312,15 @@ INSERT INTO `document_approvals` (`id`, `document_id`, `status`, `created_by`, `
 (19, 36, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-22 00:39:55', '2025-10-22 00:39:54', '2025-10-22 00:39:55'),
 (20, 25, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-22 00:52:56', '2025-10-22 00:52:55', '2025-10-22 00:52:56'),
 (21, 26, 'approved', 1, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-22 00:55:35', '2025-10-22 00:55:34', '2025-10-22 00:55:35'),
-(22, 28, 'approved', 3, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-23 00:36:23', '2025-10-23 00:36:22', '2025-10-23 00:36:23');
+(22, 28, 'approved', 3, 1, 'Auto-created from Ký duyệt', NULL, '2025-10-23 00:36:23', '2025-10-23 00:36:22', '2025-10-23 00:36:23'),
+(23, 72, 'pending', 3, 1, '', NULL, NULL, '2025-10-28 15:49:56', '2025-10-28 15:49:56'),
+(24, 73, 'pending', 3, 1, '', NULL, NULL, '2025-10-28 15:52:25', '2025-10-28 15:52:25'),
+(25, 74, 'pending', 3, 1, '', NULL, NULL, '2025-10-28 16:03:13', '2025-10-28 16:03:13'),
+(26, 75, 'pending', 3, 1, '', NULL, NULL, '2025-10-28 16:17:54', '2025-10-28 16:17:54'),
+(27, 76, 'pending', 3, 1, '', NULL, NULL, '2025-10-28 16:18:10', '2025-10-28 16:18:10'),
+(28, 77, 'pending', 3, 1, '', NULL, NULL, '2025-10-28 16:26:35', '2025-10-28 16:26:35'),
+(29, 78, 'pending', 3, 1, '', NULL, NULL, '2025-10-28 16:34:35', '2025-10-28 16:34:35'),
+(30, 79, 'pending', 3, 1, '', NULL, NULL, '2025-10-28 16:38:12', '2025-10-28 16:38:12');
 
 -- --------------------------------------------------------
 
@@ -1411,7 +1419,15 @@ INSERT INTO `document_approval_steps` (`id`, `approval_id`, `approver_id`, `sequ
 (19, 19, 1, 1, 'approved', 1, '2025-10-22 00:39:55', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-22 00:39:55', NULL, NULL, NULL, '2025-10-22 00:39:54', '2025-10-22 00:39:55'),
 (20, 20, 1, 1, 'approved', 1, '2025-10-22 00:52:56', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-22 00:52:56', NULL, NULL, NULL, '2025-10-22 00:52:55', '2025-10-22 00:52:56'),
 (21, 21, 1, 1, 'approved', 1, '2025-10-22 00:55:35', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '2025-10-22 00:55:35', NULL, NULL, NULL, '2025-10-22 00:55:34', '2025-10-22 00:55:35'),
-(22, 22, 3, 1, 'approved', 3, '2025-10-23 00:36:23', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', '2025-10-23 00:36:23', NULL, NULL, NULL, '2025-10-23 00:36:22', '2025-10-23 00:36:23');
+(22, 22, 3, 1, 'approved', 3, '2025-10-23 00:36:23', 'Đã ký duyệt (preview phía client)', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', '2025-10-23 00:36:23', NULL, NULL, NULL, '2025-10-23 00:36:22', '2025-10-23 00:36:23'),
+(23, 23, 3, 1, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-10-28 15:49:56', '2025-10-28 15:49:56'),
+(24, 24, 5, 1, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-10-28 15:52:25', '2025-10-28 15:52:25'),
+(25, 25, 3, 1, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-10-28 16:03:13', '2025-10-28 16:03:13'),
+(26, 26, 3, 1, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-10-28 16:17:54', '2025-10-28 16:17:54'),
+(27, 27, 3, 1, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-10-28 16:18:10', '2025-10-28 16:18:10'),
+(28, 28, 4, 1, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-10-28 16:26:35', '2025-10-28 16:26:35'),
+(29, 29, 3, 1, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-10-28 16:34:35', '2025-10-28 16:34:35'),
+(30, 30, 3, 1, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-10-28 16:38:12', '2025-10-28 16:38:12');
 
 -- --------------------------------------------------------
 
@@ -2479,7 +2495,10 @@ INSERT INTO `task_comments` (`id`, `task_id`, `user_id`, `comment_id`, `content`
 (150, 304, 3, NULL, '@ @Đinh Văn Vịnh', '2025-10-26 15:12:26', '2025-10-26 15:12:26', NULL, NULL, NULL),
 (151, 304, 3, NULL, '', '2025-10-26 15:12:40', '2025-10-26 15:12:40', 'customers_20250906_232804.csv', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/customers_20250906_232804-1.csv', NULL),
 (152, 304, 3, NULL, 'duyệt bạn ơi', '2025-10-26 15:12:45', '2025-10-26 15:12:45', NULL, NULL, NULL),
-(153, 304, 3, NULL, '@ @Phạm Xuân Tuân', '2025-10-26 15:12:54', '2025-10-26 15:12:54', NULL, NULL, NULL);
+(153, 304, 3, NULL, '@ @Phạm Xuân Tuân', '2025-10-26 15:12:54', '2025-10-26 15:12:54', NULL, NULL, NULL),
+(154, 277, 3, NULL, '', '2025-10-28 07:07:49', '2025-10-28 07:07:49', 'photo_2025-10-17_10-09-10-1.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1-1.jpg', NULL),
+(155, 277, 3, NULL, '', '2025-10-28 07:47:19', '2025-10-28 07:47:19', 'signed_công văn 2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/signed_cong-van-2025.pdf', NULL),
+(156, 277, 3, NULL, '', '2025-10-28 08:32:31', '2025-10-28 08:32:31', '20250714TTID_BBHDTuan 29 D..xlsx', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20250714TTID_BBHDTuan-29-D.xlsx', NULL);
 
 -- --------------------------------------------------------
 
@@ -2620,7 +2639,18 @@ INSERT INTO `task_files` (`id`, `task_id`, `document_id`, `comment_id`, `file_na
 (66, 280, NULL, NULL, 'CHUYÊN  ĐỀ 1.docx', 'CHUYÊN  ĐỀ 1.docx', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/CHUYEN-DE-1.docx', '2025-10-26 15:10:35', '2025-10-26 22:10:35', 1, 'pending', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-10-26 22:10:35', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
 (67, 278, NULL, NULL, 'Mau TTID 2.2_Bien ban hop ĐHĐCĐ.doc', 'Mau TTID 2.2_Bien ban hop ĐHĐCĐ.doc', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/Mau-TTID-2.2_Bien-ban-hop-DHDCD-3.doc', '2025-10-26 15:11:22', '2025-10-26 22:11:23', 1, 'pending', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-10-26 22:11:23', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
 (68, 302, NULL, NULL, 'Mau TTID 2.2_Bien ban hop ĐHĐCĐ.doc', 'Mau TTID 2.2_Bien ban hop ĐHĐCĐ.doc', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/Mau-TTID-2.2_Bien-ban-hop-DHDCD-4.doc', '2025-10-26 15:12:08', '2025-10-26 22:12:08', 1, 'pending', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-10-26 22:12:08', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
-(69, 304, NULL, NULL, 'customers_20250906_232804.csv', 'customers_20250906_232804.csv', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/customers_20250906_232804-1.csv', '2025-10-26 15:12:47', '2025-10-26 22:12:47', 1, 'pending', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-10-26 22:12:47', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL);
+(69, 304, NULL, NULL, 'customers_20250906_232804.csv', 'customers_20250906_232804.csv', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/customers_20250906_232804-1.csv', '2025-10-26 15:12:47', '2025-10-26 22:12:47', 1, 'pending', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-10-26 22:12:47', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(70, 277, NULL, NULL, '20250922_BangtonghopdieuchinhbanDemolan3_T01.docx', '20250922_BangtonghopdieuchinhbanDemolan3_T01.docx', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20250922_BangtonghopdieuchinhbanDemolan3_T01-1.docx', '2025-10-28 06:56:10', '2025-10-28 13:56:10', 1, 'pending', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(71, 277, NULL, NULL, 'photo_2025-10-17_10-09-10-1.jpg', 'photo_2025-10-17_10-09-10-1.jpg', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1-1.jpg', '2025-10-28 08:47:16', '2025-10-28 15:47:16', 1, 'pending', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(72, 277, NULL, NULL, '20250714TTID_BBHDTuan 29 D..xlsx', '20250714TTID_BBHDTuan 29 D..xlsx', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20250714TTID_BBHDTuan-29-D.xlsx', '2025-10-28 08:49:52', '2025-10-28 15:49:52', 1, 'pending', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(73, 277, NULL, NULL, '20250714TTID_BBHDTuan 29 D..xlsx', '20250714TTID_BBHDTuan 29 D..xlsx', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20250714TTID_BBHDTuan-29-D.xlsx', '2025-10-28 08:52:22', '2025-10-28 15:52:22', 1, 'pending', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(74, 277, NULL, NULL, '20250714TTID_BBHDTuan 29 D..xlsx', '20250714TTID_BBHDTuan 29 D..xlsx', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20250714TTID_BBHDTuan-29-D.xlsx', '2025-10-28 09:03:10', '2025-10-28 16:03:10', 1, 'pending', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(75, 277, NULL, NULL, '20250714TTID_BBHDTuan 29 D..xlsx', '20250714TTID_BBHDTuan 29 D..xlsx', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20250714TTID_BBHDTuan-29-D.xlsx', '2025-10-28 09:17:51', '2025-10-28 16:17:54', 1, 'pending', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(76, 277, NULL, NULL, '20250714TTID_BBHDTuan 29 D..xlsx', '20250714TTID_BBHDTuan 29 D..xlsx', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20250714TTID_BBHDTuan-29-D.xlsx', '2025-10-28 09:18:07', '2025-10-28 16:18:10', 1, 'pending', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(77, 277, NULL, NULL, '20250714TTID_BBHDTuan 29 D..xlsx', '20250714TTID_BBHDTuan 29 D..xlsx', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20250714TTID_BBHDTuan-29-D.xlsx', '2025-10-28 09:26:31', '2025-10-28 16:26:35', 1, 'pending', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(78, 277, NULL, NULL, '20250714TTID_BBHDTuan 29 D..xlsx', '20250714TTID_BBHDTuan 29 D..xlsx', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20250714TTID_BBHDTuan-29-D.xlsx', '2025-10-28 09:34:28', '2025-10-28 16:34:35', 1, 'pending', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(79, 277, NULL, NULL, '20250714TTID_BBHDTuan 29 D..xlsx', '20250714TTID_BBHDTuan 29 D..xlsx', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20250714TTID_BBHDTuan-29-D.xlsx', '2025-10-28 09:38:09', '2025-10-28 16:38:12', 1, 'pending', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(80, 277, NULL, NULL, '20250714TTID_BBHDTuan 29 D..xlsx', '20250714TTID_BBHDTuan 29 D..xlsx', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/20250714TTID_BBHDTuan-29-D.xlsx', '2025-10-28 09:44:14', '2025-10-28 16:44:14', 1, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL);
 
 -- --------------------------------------------------------
 
@@ -3052,7 +3082,7 @@ ALTER TABLE `documents`
 -- AUTO_INCREMENT for table `document_approvals`
 --
 ALTER TABLE `document_approvals`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT for table `document_approval_logs`
@@ -3064,7 +3094,7 @@ ALTER TABLE `document_approval_logs`
 -- AUTO_INCREMENT for table `document_approval_steps`
 --
 ALTER TABLE `document_approval_steps`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT for table `document_permissions`
@@ -3136,7 +3166,7 @@ ALTER TABLE `task_approval_logs`
 -- AUTO_INCREMENT for table `task_comments`
 --
 ALTER TABLE `task_comments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=154;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=157;
 
 --
 -- AUTO_INCREMENT for table `task_extensions`
@@ -3148,7 +3178,7 @@ ALTER TABLE `task_extensions`
 -- AUTO_INCREMENT for table `task_files`
 --
 ALTER TABLE `task_files`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=81;
 
 --
 -- AUTO_INCREMENT for table `task_roster`

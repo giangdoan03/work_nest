@@ -219,6 +219,15 @@ class DocumentApprovalController extends ResourceController
 
             $db->transCommit();
 
+            // 🔗 Sync status to task_files: chuyển sang 'pending'
+            $tf = new TaskFileModel();
+            $tf->update($documentId, [
+                'status'      => 'pending',
+                'approved_by' => null,
+                'approved_at' => null,
+                'review_note' => $note ?: null,
+            ]);
+
             $apv          = $apvM->find($apvId);
             $rawSteps     = $stepM->where('approval_id', $apvId)->orderBy('sequence', 'ASC')->findAll();
             $apv['steps'] = $this->hydrateSteps($rawSteps);
@@ -288,6 +297,15 @@ class DocumentApprovalController extends ResourceController
                     'status'             => self::A_APPROVED,
                     'current_step_index' => (int)$step['sequence'],
                     'finished_at'        => date('Y-m-d H:i:s'),
+                ]);
+
+                // 🔗 Sync status to task_files: chuyển 'approved'
+                $tf = new TaskFileModel();
+                $tf->update((int)$apv['document_id'], [
+                    'status'      => 'approved',
+                    'approved_by' => $userId,                 // hoặc để null và ghi người cuối trong log
+                    'approved_at' => date('Y-m-d H:i:s'),
+                    // 'review_note' giữ nguyên
                 ]);
             }
 
@@ -375,6 +393,15 @@ class DocumentApprovalController extends ResourceController
                 'current_step_index' => (int)$step['sequence'],
                 'finished_at'        => date('Y-m-d H:i:s'),
             ]);
+
+            $tf = new TaskFileModel();
+            $tf->update((int)$apv['document_id'], [
+                'status'      => 'rejected',
+                'approved_by' => null,
+                'approved_at' => null,
+                'review_note' => $comment ?: null,
+            ]);
+
 
             // 3) Ghi log hành động (tùy chọn)
             $logM = new DocumentApprovalLogModel();
