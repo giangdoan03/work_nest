@@ -1,7 +1,8 @@
 <template>
     <div class="comment">
         <!-- STICKY: người duyệt/ký + file ghim -->
-        <div class="mention-chips sticky-mentions" v-if="(pinnedFiles && pinnedFiles.length) || (mentionsSelected && mentionsSelected.length)">
+        <div class="mention-chips sticky-mentions"
+             v-if="(pinnedFiles && pinnedFiles.length) || (mentionsSelected && mentionsSelected.length)">
             <!-- Header -->
             <div class="sticky-head">
                 <div class="sticky-left">
@@ -35,14 +36,19 @@
                         :key="f.id || f.file_path"
                         class="pinned-pill"
                     >
-                        <a :href="hrefOf(f)" target="_blank" rel="noopener" class="pill-link">
-                            <PaperClipOutlined class="pill-icon" />
+                        <a :href="displayHrefOf(f)"
+                           target="_blank"
+                           rel="noopener"
+                           class="pill-link">
+                            <PaperClipOutlined class="pill-icon"/>
                             <span class="pill-text">{{ titleOf(f) }}</span>
                         </a>
+
                         <a-tooltip title="Bỏ ghim">
                             <button class="pill-x" type="button" @click="togglePin(f)">×</button>
                         </a-tooltip>
                     </div>
+
 
                     <!-- +N file -->
                     <a-tag
@@ -96,7 +102,7 @@
                     </template>
 
                     <div class="chip-card" :key="`${m.user_id}-${m.status}-${m.acted_at || ''}-${m.added_at || ''}`"
-                        :class="{
+                         :class="{
               'is-approved': m.status==='approved',
               'is-pending' : m.status==='pending' || m.status==='processing',
               'is-rejected': m.status==='rejected'
@@ -115,7 +121,9 @@
                                 }}
     </span>
                             <span class="chip-time">{{ metaTime(m) }}</span>
-                            <a-button type="text" size="small" class="chip-close" @click.stop="removeMention(m.user_id)">×</a-button>
+                            <a-button type="text" size="small" class="chip-close"
+                                      @click.stop="removeMention(m.user_id)">×
+                            </a-button>
                         </div>
                     </div>
                 </a-popover>
@@ -200,12 +208,8 @@
                                 </div>
 
                                 <div class="cm-att__line">
-                                    <a class="tg-file-link"
-                                        :href="hrefOf(f)"
-                                        target="_blank"
-                                        rel="noopener"
-                                        :title="f.file_name || prettyUrl(hrefOf(f))"
-                                    >
+                                    <a class="tg-file-link" :href="displayHrefOf(f)" target="_blank" rel="noopener"
+                                       :title="f.file_name || prettyUrl(hrefOf(f))">
                                         {{ f.file_name || prettyUrl(hrefOf(f)) }}
                                     </a>
 
@@ -214,7 +218,7 @@
                                         <PushpinOutlined
                                             class="pin-btn"
                                             :style="{ color: isPinned(f) ? '#faad14' : '#999' }"
-                                            @click="togglePin(f)"
+                                            @click.stop="togglePin(f)"
                                         />
                                     </a-tooltip>
                                 </div>
@@ -609,6 +613,38 @@ const hrefOf = (f = {}) => f.file_path || f.link_url || ''
 const titleOf = (f = {}) => f.file_name || f.title || prettyUrl(hrefOf(f))
 const kindOfCommentFile = (f = {}) => detectKind({name: f.file_name, url: hrefOf(f), file_type: f.file_type})
 
+
+// Loại Office
+const OFFICE_EXTS = new Set(['doc', 'docx', 'xls', 'xlsx', 'csv', 'ppt', 'pptx'])
+
+function isOfficeKind(kind) {
+    return kind === 'word' || kind === 'excel' || kind === 'ppt'
+}
+
+// Bảo đảm URL tuyệt đối (Office viewer yêu cầu public absolute URL)
+function absUrl(u = '') {
+    try {
+        const url = new URL(u, window.location.origin) // xử lý cả relative
+        return url.toString()
+    } catch {
+        return u
+    }
+}
+
+// Tạo URL cho Office Online Viewer (nhớ encode)
+function officeViewerUrl(u = '') {
+    const absolute = absUrl(u)
+    return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(absolute)}`
+}
+
+// Href hiển thị: nếu Office => dùng viewer; ngược lại giữ nguyên
+function displayHrefOf(f = {}) {
+    const href = hrefOf(f)
+    const k = kindOfCommentFile(f)
+    return isOfficeKind(k) ? officeViewerUrl(href) : href
+}
+
+
 /* ===== Approve popover & roster actions ===== */
 const mentionPopoverOpen = ref({})
 
@@ -962,140 +998,510 @@ onBeforeUnmount(() => {
 /* ===== Reset nhỏ & token màu ===== */
 :where(.comment) {
     --bg-surface: #fff;
-    --bg-subtle : #f0f4f7;
-    --bd-soft   : #e6ebf1;
-    --txt-main  : #24292f;
-    --txt-muted : #6b7a8c;
-    --txt-faint : #8aa0b4;
-    --blue-1: #eef6ff; --blue-2: #cfe3ff; --blue-3: #2a86ff;
-    --green-1:#f6ffed; --green-2:#b7eb8f;
-    --red-1  :#fff2f0; --red-2  :#ffccc7;
+    --bg-subtle: #f0f4f7;
+    --bd-soft: #e6ebf1;
+    --txt-main: #24292f;
+    --txt-muted: #6b7a8c;
+    --txt-faint: #8aa0b4;
+    --blue-1: #eef6ff;
+    --blue-2: #cfe3ff;
+    --blue-3: #2a86ff;
+    --green-1: #f6ffed;
+    --green-2: #b7eb8f;
+    --red-1: #fff2f0;
+    --red-2: #ffccc7;
 }
 
 /* ===== Layout tổng ===== */
-.comment{display:flex;flex-direction:column;height:100%;min-height:0}
+.comment {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0
+}
 
 /* ===== Sticky header (mentions + pinned) ===== */
-.sticky-mentions{position:sticky;top:0;z-index:9;background:var(--bg-surface);border-bottom:1px solid #eef1f3}
-.sticky-head{display:flex;justify-content:space-between;align-items:center;padding:6px 8px}
-.sticky-title{font-weight:600;color:#222}
-.sticky-more{color:#888;margin-left:6px;font-size:12px}
-.sticky-actions .ant-btn{padding:0 6px}
+.sticky-mentions {
+    position: sticky;
+    top: 0;
+    z-index: 9;
+    background: var(--bg-surface);
+    border-bottom: 1px solid #eef1f3
+}
+
+.sticky-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px
+}
+
+.sticky-title {
+    font-weight: 600;
+    color: #222
+}
+
+.sticky-more {
+    color: #888;
+    margin-left: 6px;
+    font-size: 12px
+}
+
+.sticky-actions .ant-btn {
+    padding: 0 6px
+}
 
 /* ===== List comments (scroll) ===== */
-.list-comment{
-    flex:1 1 auto;min-height:0;overflow:auto;padding:8px 10px 0;
-    scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.35) transparent;
+.list-comment {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    padding: 8px 10px 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, .35) transparent;
 }
-.list-comment::-webkit-scrollbar{width:6px}
-.list-comment::-webkit-scrollbar-thumb{background:rgba(0,0,0,.28);border-radius:8px}
+
+.list-comment::-webkit-scrollbar {
+    width: 6px
+}
+
+.list-comment::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, .28);
+    border-radius: 8px
+}
 
 /* ===== Telegram-like bubbles ===== */
-.tg-row{display:flex;gap:8px;margin:8px 0}
-.tg-row.me{justify-content:flex-end}
-.tg-row .avatar{align-self:flex-end}
-
-.bubble{
-    max-width:72%;position:relative;padding:8px 10px 6px;
-    background:var(--bg-surface);border:1px solid #e6ebf0;border-radius:12px 12px 12px 4px;
-    box-shadow:0 1px 0 rgba(0,0,0,.03)
+.tg-row {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0
 }
-.bubble.me{background:#eaf2ff;border-color:#cfe0ff;border-radius:12px 12px 4px 12px}
-.bubble .actions{position:absolute;right:4px;top:4px}
-.bubble .actions :deep(.ant-btn){padding:0 6px}
-.bubble .author{font-size:12px;color:var(--txt-muted);margin-bottom:2px}
-.bubble .text{white-space:pre-wrap;line-height:1.38;color:var(--txt-main)}
-.bubble .meta{font-size:11px;color:var(--txt-faint);margin-top:6px;text-align:right}
+
+.tg-row.me {
+    justify-content: flex-end
+}
+
+.tg-row .avatar {
+    align-self: flex-end
+}
+
+.bubble {
+    max-width: 72%;
+    position: relative;
+    padding: 8px 10px 6px;
+    background: var(--bg-surface);
+    border: 1px solid #e6ebf0;
+    border-radius: 12px 12px 12px 4px;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, .03)
+}
+
+.bubble.me {
+    background: #eaf2ff;
+    border-color: #cfe0ff;
+    border-radius: 12px 12px 4px 12px
+}
+
+.bubble .actions {
+    position: absolute;
+    right: 4px;
+    top: 4px
+}
+
+.bubble .actions :deep(.ant-btn) {
+    padding: 0 6px
+}
+
+.bubble .author {
+    font-size: 12px;
+    color: var(--txt-muted);
+    margin-bottom: 2px
+}
+
+.bubble .text {
+    white-space: pre-wrap;
+    line-height: 1.38;
+    color: var(--txt-main)
+}
+
+.bubble .meta {
+    font-size: 11px;
+    color: var(--txt-faint);
+    margin-top: 6px;
+    text-align: right
+}
+
 .pinned-pill {
     background: #fff6cc;
     border-color: #ffd666;
 }
+
 .pinned-pill:hover {
     background: #fff6cc;
     border-color: #ffd666;
 }
+
 /* ===== Attachments trong bubble ===== */
-.tg-attachments{margin-top:6px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
-.tg-att-item{background:#fff;border:1px solid var(--bd-soft);border-radius:10px;padding:6px}
-.cm-att__thumb{width:100%;object-fit:cover;border-radius:6px}
-.cm-att__icon{height:64px;display:flex;align-items:center;justify-content:center;background:#fafafa;border-radius:6px}
-.cm-att__icon-i{font-size:22px;opacity:.9}
-.tg-file-link{font-size:13px;color:#1677ff}
-.cm-att__line{display:flex;align-items:center;justify-content:space-between;margin-top:6px;gap:8px}
-.pin-btn{font-size:16px;cursor:pointer;transition:color .2s}
-.pin-btn:hover{color:#faad14}
+.tg-attachments {
+    margin-top: 6px;
+    display: grid;
+    grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px
+}
+
+.tg-att-item {
+    background: #fff;
+    border: 1px solid var(--bd-soft);
+    border-radius: 10px;
+    padding: 6px
+}
+
+.cm-att__thumb {
+    width: 100%;
+    object-fit: cover;
+    border-radius: 6px
+}
+
+.cm-att__icon {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fafafa;
+    border-radius: 6px
+}
+
+.cm-att__icon-i {
+    font-size: 22px;
+    opacity: .9
+}
+
+.tg-file-link {
+    font-size: 13px;
+    color: #1677ff
+}
+
+.cm-att__line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+    gap: 8px
+}
+
+.pin-btn {
+    font-size: 16px;
+    cursor: pointer;
+    transition: color .2s
+}
+
+.pin-btn:hover {
+    color: #faad14
+}
 
 /* ===== Footer composer ===== */
-.footer-fixed{position:sticky;bottom:0;z-index:5;background:var(--bg-surface);border-top:1px solid #f0f0f0;padding-top:10px;box-shadow:0 -4px 10px rgba(0,0,0,.03)}
-.load-more{text-align:center;margin-bottom:8px}
-.tg-footer{background:var(--bg-subtle);padding:8px 12px}
-.tg-composer{
-    position:relative;display:flex;align-items:center;gap:8px;
-    background:#fff;border:1px solid #dfe6eb;border-radius:24px;padding:6px 44px;box-shadow:0 1px 0 rgba(0,0,0,.03)
+.footer-fixed {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    background: var(--bg-surface);
+    border-top: 1px solid #f0f0f0;
+    padding-top: 10px;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, .03)
 }
-.tg-input{flex:1}
-.tg-input .ant-input{padding:6px 0 !important}
-.tg-input textarea.ant-input{box-shadow:none !important;resize:none;background:transparent}
-.tg-attach-btn,.tg-send-btn{position:absolute;top:50%;transform:translateY(-50%)}
-.tg-attach-btn{left:6px;color:#6b7a8c}
-.tg-send-btn{right:6px;width:32px;height:32px;border:none;background:#d7e3ff;color:#6b7a8c}
-.tg-send-btn.is-active{background:var(--blue-3);color:#fff}
+
+.load-more {
+    text-align: center;
+    margin-bottom: 8px
+}
+
+.tg-footer {
+    background: var(--bg-subtle);
+    padding: 8px 12px
+}
+
+.tg-composer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #dfe6eb;
+    border-radius: 24px;
+    padding: 6px 44px;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, .03)
+}
+
+.tg-input {
+    flex: 1
+}
+
+.tg-input .ant-input {
+    padding: 6px 0 !important
+}
+
+.tg-input textarea.ant-input {
+    box-shadow: none !important;
+    resize: none;
+    background: transparent
+}
+
+.tg-attach-btn, .tg-send-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%)
+}
+
+.tg-attach-btn {
+    left: 6px;
+    color: #6b7a8c
+}
+
+.tg-send-btn {
+    right: 6px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #d7e3ff;
+    color: #6b7a8c
+}
+
+.tg-send-btn.is-active {
+    background: var(--blue-3);
+    color: #fff
+}
 
 /* file chip dưới composer */
-.tg-file-strip{display:flex;gap:6px;padding:6px 4px 0;flex-wrap:wrap}
-.tg-file-pill{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #e2e8ef;border-radius:16px;padding:4px 8px;font-size:12px}
-.tg-file-pill .x{cursor:pointer;margin-left:4px;opacity:.7}
+.tg-file-strip {
+    display: flex;
+    gap: 6px;
+    padding: 6px 4px 0;
+    flex-wrap: wrap
+}
+
+.tg-file-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid #e2e8ef;
+    border-radius: 16px;
+    padding: 4px 8px;
+    font-size: 12px
+}
+
+.tg-file-pill .x {
+    cursor: pointer;
+    margin-left: 4px;
+    opacity: .7
+}
 
 /* ===== Mentions pop ===== */
-.mention-row{margin-top:8px;display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}
-.mention-pop{display:grid;gap:8px;min-width:320px}
-.mention-pop .row{display:flex;align-items:center;gap:8px}
-.mention-pop .lbl{width:64px;color:#666}
+.mention-row {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    flex-wrap: wrap
+}
+
+.mention-pop {
+    display: grid;
+    gap: 8px;
+    min-width: 320px
+}
+
+.mention-pop .row {
+    display: flex;
+    align-items: center;
+    gap: 8px
+}
+
+.mention-pop .lbl {
+    width: 64px;
+    color: #666
+}
 
 /* ===== Chips (approver) + trạng thái trên 1 dòng ===== */
-.chip-card{
-    display:flex;align-items:center;gap:8px;border:1px solid var(--bd-soft);
-    border-radius:20px;background:var(--green-1);padding:4px 10px;font-size:13px;line-height:1.4;transition:box-shadow .15s,transform .05s
+.chip-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--bd-soft);
+    border-radius: 20px;
+    background: var(--green-1);
+    padding: 4px 10px;
+    font-size: 13px;
+    line-height: 1.4;
+    transition: box-shadow .15s, transform .05s
 }
-.chip-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.chip-card.is-approved{background:var(--green-1);border-color:var(--green-2)}
-.chip-card.is-pending {background:#e6f4ff;border-color:#91caff}
-.chip-card.is-rejected{background:var(--red-1);border-color:var(--red-2)}
 
-.chip-line{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
-.chip-name{font-weight:600;color:#2b2f36}
-.state-text{font-weight:600}
-.chip-time{color:#777;font-size:12px}
+.chip-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .06)
+}
 
-.role-dot,.dot{display:inline-block;width:8px;height:8px;border-radius:50%;transform:translateY(1px)}
-.role-dot.ok,.dot.ok{background:#52c41a}
-.role-dot.proc,.dot.proc{background:#1677ff}
-.role-dot.err,.dot.err{background:#ff4d4f}
+.chip-card.is-approved {
+    background: var(--green-1);
+    border-color: var(--green-2)
+}
 
-.chip-close{font-size:14px;color:#9aa4b2;line-height:1;padding:0 4px;cursor:pointer;background:transparent}
-.chip-close:hover{color:#111827}
+.chip-card.is-pending {
+    background: #e6f4ff;
+    border-color: #91caff
+}
+
+.chip-card.is-rejected {
+    background: var(--red-1);
+    border-color: var(--red-2)
+}
+
+.chip-line {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px
+}
+
+.chip-name {
+    font-weight: 600;
+    color: #2b2f36
+}
+
+.state-text {
+    font-weight: 600
+}
+
+.chip-time {
+    color: #777;
+    font-size: 12px
+}
+
+.role-dot, .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transform: translateY(1px)
+}
+
+.role-dot.ok, .dot.ok {
+    background: #52c41a
+}
+
+.role-dot.proc, .dot.proc {
+    background: #1677ff
+}
+
+.role-dot.err, .dot.err {
+    background: #ff4d4f
+}
+
+.chip-close {
+    font-size: 14px;
+    color: #9aa4b2;
+    line-height: 1;
+    padding: 0 4px;
+    cursor: pointer;
+    background: transparent
+}
+
+.chip-close:hover {
+    color: #111827
+}
 
 /* ===== Pinned files → pill giống chip ===== */
-.pinned-files{border-radius:12px;margin:8px 0;padding:0}
-.pinned-pill{
-    margin-right: 5px;
-    display:inline-flex;align-items:center;gap:8px;max-width:320px;padding:6px 10px;border:1px solid var(--bd-soft);
-    background:#fff6cc;border-radius:999px;box-shadow:0 1px 0 rgba(0,0,0,.03);transition:box-shadow .16s,transform .04s,border-color .16s
+.pinned-files {
+    border-radius: 12px;
+    margin: 8px 0;
+    padding: 0
 }
-.pinned-pill:hover{box-shadow:0 2px 8px rgba(0,0,0,.06);border-color:#cfd8e3}
-.pill-link{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#1f75ff;min-width:0}
-.pill-icon{font-size:14px;opacity:.9}
-.pill-text{display:inline-block;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom}
-.pill-x{border:0;background:transparent;color:#9aa4b2;font-size:14px;line-height:1;padding:0 4px;cursor:pointer;border-radius:6px}
-.pill-x:hover{color:#ff4d4f;background:#fff1f0}
-.more-pill{border-radius:999px !important;padding:2px 8px !important;border:1px solid var(--blue-2);background:var(--blue-1);color:var(--blue-3)}
-.more-pill.more-pill--file{border-radius:999px !important;padding:2px 8px !important;border:1px solid var(--blue-2);background:var(--blue-1);color:var(--blue-3)}
+
+.pinned-pill {
+    margin-right: 5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 320px;
+    padding: 6px 10px;
+    border: 1px solid var(--bd-soft);
+    background: #fff6cc;
+    border-radius: 999px;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, .03);
+    transition: box-shadow .16s, transform .04s, border-color .16s
+}
+
+.pinned-pill:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+    border-color: #cfd8e3
+}
+
+.pill-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: #1f75ff;
+    min-width: 0
+}
+
+.pill-icon {
+    font-size: 14px;
+    opacity: .9
+}
+
+.pill-text {
+    display: inline-block;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom
+}
+
+.pill-x {
+    border: 0;
+    background: transparent;
+    color: #9aa4b2;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 4px;
+    cursor: pointer;
+    border-radius: 6px
+}
+
+.pill-x:hover {
+    color: #ff4d4f;
+    background: #fff1f0
+}
+
+.more-pill {
+    border-radius: 999px !important;
+    padding: 2px 8px !important;
+    border: 1px solid var(--blue-2);
+    background: var(--blue-1);
+    color: var(--blue-3)
+}
+
+.more-pill.more-pill--file {
+    border-radius: 999px !important;
+    padding: 2px 8px !important;
+    border: 1px solid var(--blue-2);
+    background: var(--blue-1);
+    color: var(--blue-3)
+}
 
 /* ===== Responsive ===== */
-@media (max-width:768px){
-    .bubble{max-width:88%}
-    .chip-card{max-width:100%}
-    .pill-text{max-width:140px}
+@media (max-width: 768px) {
+    .bubble {
+        max-width: 88%
+    }
+
+    .chip-card {
+        max-width: 100%
+    }
+
+    .pill-text {
+        max-width: 140px
+    }
 }
 
 </style>
