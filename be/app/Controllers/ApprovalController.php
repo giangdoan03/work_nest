@@ -10,6 +10,7 @@ use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\I18n\Time;
 use Exception;
 use ReflectionException;
+use Throwable;
 
 class ApprovalController extends ResourceController
 {
@@ -493,7 +494,7 @@ class ApprovalController extends ResourceController
                 if (method_exists($this, 'onApproved')) {
                     $this->onApproved($fresh ?? $ai);
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 log_message('error', 'onApproved error: ' . $e->getMessage());
             }
         }
