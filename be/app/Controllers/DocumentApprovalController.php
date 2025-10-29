@@ -41,7 +41,7 @@ class DocumentApprovalController extends ResourceController
     /** Chỉ owner hoặc admin */
     private function assertOwnerOrAdmin(array $apv, int $userId): ?ResponseInterface
     {
-        $isOwner = ((int)$apv['created_by'] === (int)$userId);
+        $isOwner = ((int)$apv['created_by'] === $userId);
         $isAdmin = (bool) session()->get('is_admin');
         if (!($isOwner || $isAdmin)) {
             return $this->failForbidden('Bạn không có quyền thao tác trên phiên duyệt này.');
@@ -54,8 +54,7 @@ class DocumentApprovalController extends ResourceController
     {
         $ids = array_map('intval', $ids);
         $ids = array_filter($ids, fn($v) => $v > 0);
-        $ids = array_values(array_unique($ids));
-        return $ids;
+        return array_values(array_unique($ids));
     }
 
     /** Gắn tên + chữ ký người duyệt vào danh sách step */
