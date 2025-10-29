@@ -7,7 +7,7 @@ use App\Models\DocumentModel;
 use App\Models\DocumentApprovalModel;
 use App\Models\DocumentApprovalStepModel;
 use App\Models\TaskFileModel;
-use App\Models\UserModel; // 👈 thêm
+use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use Throwable;
@@ -176,9 +176,7 @@ class DocumentApprovalController extends ResourceController
         $apvM  = new DocumentApprovalModel();
         $stepM = new DocumentApprovalStepModel();
 
-        $exists = $apvM->where('document_id', $documentId)
-            ->where('status', self::A_PENDING)
-            ->first();
+        $exists = $apvM->where('document_id', $documentId)->where('status', self::A_PENDING)->first();
         if ($exists) {
             return $this->failValidationErrors('Tài liệu đang có phiên duyệt PENDING.');
         }
@@ -344,7 +342,6 @@ class DocumentApprovalController extends ResourceController
     }
 
 
-    /** ============ POST /api/document-approvals/{id}/reject ============ */
     /** ============ POST /api/document-approvals/{id}/reject ============ */
     public function reject($id = null): ResponseInterface
     {
