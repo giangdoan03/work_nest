@@ -328,8 +328,8 @@ function canSendApproval(item){
     if (ensuring[item._key]) return false
     const st = approvalStateOf(item)
     if (st.approved) return false
-    if (st.pending)  return false
-    return true
+    return !st.pending;
+
 }
 function sendBtnTooltip(item){
     if (ensuring[item._key]) return 'Đang chuẩn bị tài liệu...'
