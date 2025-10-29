@@ -83,7 +83,7 @@ class TaskModel extends Model
     {
         $cur = $this->getRoster($taskId);
         foreach ($cur as &$m) {
-            if ((int)$m['user_id'] === (int)$userId) {
+            if ((int)$m['user_id'] === $userId) {
                 $m['status'] = in_array($status, ['approved', 'rejected', 'pending'], true) ? $status : 'pending';
                 $m['acted_at'] = date('Y-m-d H:i:s');
             }
