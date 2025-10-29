@@ -31,7 +31,6 @@ $routes->group('api', function ($routes) {
 
     $routes->post('upload', 'UploadController::upload');
     $routes->post('upload-from-url', 'UploadController::uploadFromUrl');
-
     $routes->get('images/(:segment)/(:num)', 'ImageController::list/$1/$2');
     $routes->get('images/cover/(:segment)/(:num)', 'ImageController::cover/$1/$2');
     $routes->post('images/save/(:num)', 'ImageController::save/$1');
@@ -91,20 +90,13 @@ $routes->group('api', function ($routes) {
     $routes->get('tasks/(:num)/comments', 'CommentController::byTask/$1');
     $routes->post('tasks/(:num)/comments', 'CommentController::create/$1');
     $routes->get('tasks/(:num)/subtasks', 'TaskController::subtasks/$1');
-
-    // 📌 Lưu lịch sử gia hạn (nếu cần gọi riêng)
     $routes->post('tasks/(:num)/extend', 'TaskController::extendDeadline/$1');
-
-    // 📌 Đếm số lần gia hạn của user hiện tại với task
     $routes->get('tasks/(:num)/extensions/count', 'TaskController::countExtensions/$1');
-
-    // 📌 Lấy danh sách các lần đã gia hạn deadline
     $routes->get('tasks/(:num)/extensions', 'TaskController::getExtensions/$1');
 
 
     $routes->put('subtasks/(:num)', 'TaskController::updateSubtask/$1');
     $routes->delete('subtasks/(:num)', 'TaskController::deleteSubtask/$1');
-
 
     $routes->post('tasks/(:num)/upload-file', 'TaskFileController::upload/$1');
     $routes->get('tasks/(:num)/files', 'TaskFileController::byTask/$1');
