@@ -12,7 +12,6 @@ $routes->group('api', function ($routes) {
     $routes->get('logout', 'Auth::logout');
     $routes->get('check', 'Auth::check');
 
-    // ➕ CRUD API
     $routes->post('users', 'Auth::create');            // Thêm mới
     $routes->get('users', 'Auth::index');              // Danh sách
     $routes->get('users/(:num)', 'Auth::show/$1');     // Xem chi tiết
@@ -50,7 +49,6 @@ $routes->group('api', function ($routes) {
 
     $routes->post('users/upload-avatar', 'Auth::uploadAvatar');
 
-
     $routes->get('tasks/(:num)/roster',          'TaskApprovalController::roster/$1');
     $routes->post('tasks/(:num)/roster/merge',   'TaskApprovalController::merge/$1');
     $routes->post('tasks/(:num)/roster/approve', 'TaskApprovalController::rosterApprove/$1');
@@ -60,8 +58,6 @@ $routes->group('api', function ($routes) {
     $routes->post('task-files/(:num)/pin',       'TaskFileController::pin/$1');
     $routes->post('task-files/(:num)/unpin',     'TaskFileController::unpin/$1');
     $routes->post('tasks/(:num)/files/adopt', 'TaskFileController::adoptFromPath/$1');
-
-
 
     // Route đặc biệt có hậu tố, phải đặt trước
     $routes->get('contracts/(:num)/step-count', 'ContractController::stepCount/$1');
@@ -99,10 +95,10 @@ $routes->group('api', function ($routes) {
     // 📌 Lưu lịch sử gia hạn (nếu cần gọi riêng)
     $routes->post('tasks/(:num)/extend', 'TaskController::extendDeadline/$1');
 
-// 📌 Đếm số lần gia hạn của user hiện tại với task
+    // 📌 Đếm số lần gia hạn của user hiện tại với task
     $routes->get('tasks/(:num)/extensions/count', 'TaskController::countExtensions/$1');
 
-// 📌 Lấy danh sách các lần đã gia hạn deadline
+    // 📌 Lấy danh sách các lần đã gia hạn deadline
     $routes->get('tasks/(:num)/extensions', 'TaskController::getExtensions/$1');
 
 
@@ -127,7 +123,7 @@ $routes->group('api', function ($routes) {
     $routes->get('contract-steps/(:num)/tasks', 'TaskController::byContractStep/$1');
 
     $routes->put('bidding-steps/(:num)/complete', 'BiddingStepController::completeStep/$1');
-//    $routes->get('bidding-steps/(:num)/tasks', 'BiddingStepController::tasksByStep/$1');
+    //    $routes->get('bidding-steps/(:num)/tasks', 'BiddingStepController::tasksByStep/$1');
     $routes->resource('bidding-steps', ['controller' => 'BiddingStepController']);
     $routes->get('biddings/(:num)/steps', 'BiddingStepController::stepsByBidding/$1');
     $routes->get('biddings/(:num)/steps/(:num)', 'BiddingStepController::stepDetail/$1/$2');
@@ -137,7 +133,6 @@ $routes->group('api', function ($routes) {
 
     // Cuối cùng mới khai báo resource
     $routes->resource('tasks', ['controller' => 'TaskController']);
-
 
     $routes->get('customers/(:num)/transactions', 'CustomerTransactionController::byCustomer/$1');
     $routes->post('customers/transactions', 'CustomerTransactionController::create');
@@ -157,17 +152,13 @@ $routes->group('api', function ($routes) {
     $routes->resource('bidding-steps', ['controller' => 'BiddingStepController']);
     $routes->get('biddings/(:num)/steps', 'BiddingStepController::byBidding/$1');
 
-
     $routes->get('documents', 'DocumentController::index');
     $routes->post('documents/upload', 'DocumentController::upload');
     $routes->post('documents/share', 'DocumentController::share');
     $routes->get('documents/shared/me', 'DocumentController::sharedWithMe');
     $routes->put('documents/(:num)', 'DocumentController::update/$1');
     $routes->delete('documents/(:num)', 'DocumentController::delete/$1');
-
     $routes->get('documents/by-department', 'DocumentController::byDepartment');
-
-
     $routes->get('document-permissions', 'DocumentController::getPermissions');
     $routes->post('document-permissions', 'DocumentController::createPermission');
     $routes->put('document-permissions/(:num)', 'DocumentController::updatePermission/$1');
@@ -180,12 +171,12 @@ $routes->group('api', function ($routes) {
     $routes->delete('document-settings/(:num)', 'DocumentController::deleteSetting/$1');
 
     // Settings CRUD
-    $routes->get('settings', 'SettingController::index');            // Danh sách setting theo user
-    $routes->get('settings/(:num)', 'SettingController::show/$1');   // Chi tiết theo ID
+    $routes->get('settings', 'SettingController::index');
+    $routes->get('settings/(:num)', 'SettingController::show/$1');
     $routes->get('settings/key/(:segment)', 'SettingController::key/$1');
-    $routes->post('settings', 'SettingController::create');          // Tạo mới
-    $routes->put('settings/(:num)', 'SettingController::update/$1'); // Cập nhật
-    $routes->delete('settings/(:num)', 'SettingController::delete/$1'); // Xoá
+    $routes->post('settings', 'SettingController::create');
+    $routes->put('settings/(:num)', 'SettingController::update/$1');
+    $routes->delete('settings/(:num)', 'SettingController::delete/$1');
 
     $routes->get('contract-step-templates', 'ContractStepTemplateController::index');
     $routes->post('contract-step-templates', 'ContractStepTemplateController::create');
@@ -194,27 +185,20 @@ $routes->group('api', function ($routes) {
     $routes->put('contract-steps/(:num)/complete', 'ContractStepController::complete/$1');
 
     // Task Approvals
-    $routes->get('task-approvals', 'TaskApprovalController::index'); // ?page, ?limit, ?status=pending|resolved, ?search=
+    $routes->get('task-approvals', 'TaskApprovalController::index');
     $routes->post('task-approvals/(:num)/approve', 'TaskApprovalController::approve/$1');
     $routes->post('task-approvals/(:num)/reject',  'TaskApprovalController::reject/$1');
 
-    // ▶️ cần thêm:
-    $routes->get('task-approvals/(:num)/can-act',  'TaskApprovalController::canAct/$1');          // check quyền trước khi mở modal
-    $routes->get('task-approvals/full-status/(:num)', 'TaskApprovalController::fullApprovalStatus/$1'); // timeline theo cấp
+    $routes->get('task-approvals/(:num)/can-act',  'TaskApprovalController::canAct/$1');
+    $routes->get('task-approvals/full-status/(:num)', 'TaskApprovalController::fullApprovalStatus/$1');
     $routes->get('tasks/(:num)/approvals',         'TaskApprovalController::history/$1');
-
 
     // ✅ Approval (multi-entity) routes
     $routes->group('approvals', static function ($routes) {
         // Lấy trạng thái theo đối tượng (not_sent nếu chưa gửi): ?target_type=&target_id=
         $routes->get('inbox', 'ApprovalInboxController::index');
-
         $routes->get('/', 'ApprovalController::index');
-
         $routes->get('list', 'ApprovalController::list');
-
-        // Danh sách "cần duyệt" của user hiện tại
-
 
         // Xem 1 phiên duyệt + các cấp
         $routes->get('(:num)', 'ApprovalController::show/$1');
@@ -262,18 +246,15 @@ $routes->group('api', function ($routes) {
     $routes->get('documents/(:num)', 'DocumentController::show/$1');
     $routes->get('approvals/active-by-target', 'ApprovalController::activeByTarget');
 
-    // Gửi duyệt với danh sách người duyệt (đặt theo thứ tự bấm)
-    //    $routes->post('document-approvals/send', 'DocumentApprovalController::send');
+    // $routes->post('document-approvals/send', 'DocumentApprovalController::send');
 
     // Duyệt/Từ chối tuần tự
     $routes->get('document-approvals', 'DocumentApprovalController::index');
     $routes->get('document-approvals/(:num)', 'DocumentApprovalController::show/$1');
     $routes->get('document-approvals/active-by-document', 'DocumentApprovalController::activeByDocument');
-
     $routes->post('document-approvals/request', 'DocumentApprovalController::send');    // gửi duyệt
     $routes->post('document-approvals/(:num)/sign', 'DocumentApprovalController::approve/$1'); // ký duyệt
     $routes->post('document-approvals/(:num)/reject', 'DocumentApprovalController::reject/$1'); // từ chối
-
     $routes->post('document-approvals/(:num)/update-steps', 'DocumentApprovalController::updateSteps/$1'); // hoặc PATCH
     $routes->delete('document-approvals/(:num)', 'DocumentApprovalController::delete/$1');
 
@@ -282,13 +263,6 @@ $routes->group('api', function ($routes) {
     $routes->post('wp-media/url',      'WpMediaController::uploadUrl');
     $routes->patch('wp-media/(:num)',  'WpMediaController::update/$1');
     $routes->delete('wp-media/(:num)', 'WpMediaController::delete/$1');
-
-
-
-
-
-
-
 
 
 });

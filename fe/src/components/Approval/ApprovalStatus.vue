@@ -3,12 +3,6 @@
         <a-card :bordered="false" size="small">
             <div class="approval-header">
                 <a-tag color="blue">Trạng thái</a-tag>
-<!--                <a-progress-->
-<!--                    :percent="percent"-->
-<!--                    size="small"-->
-<!--                    status="active"-->
-<!--                    style="width: 60%; margin-left: 8px;"-->
-<!--                />-->
             </div>
 
             <a-divider style="margin: 8px 0"/>
@@ -82,11 +76,7 @@ function isCurrentUser(role) {
 
 function toggleApproval(step) {
     if (!isCurrentUser(step.role)) return;
-
-    // Giả lập approve
     step.status = step.status === "approved" ? "pending" : "approved";
-
-    // TODO: Gọi API PATCH /approvals/:id/steps
     console.log("✅ Cập nhật duyệt:", step.role, step.status);
 }
 </script>

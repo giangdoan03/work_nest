@@ -55,7 +55,6 @@
                                         {{ formatTime(item.created_at) }} — {{ formatDateOnly(item.created_at) }}
                                     </div>
                                 </div>
-
                             </div>
 
                             <!-- Actions -->
@@ -115,7 +114,6 @@
                 </a-form-item>
             </a-form>
         </a-modal>
-
     </a-card>
 </template>
 
