@@ -9,8 +9,7 @@
             >
                 <template #renderItem="{ item }">
                     <a-list-item>
-                        <a-card hoverable class="att-card att-card--sm header_card"
-                                :bodyStyle="{ padding: '10px 10px 8px' }">
+                        <a-card hoverable class="att-card att-card--sm header_card" :bodyStyle="{ padding: '10px 10px 8px' }">
                             <template #extra>
                                 <template v-if="approvalStateOf(item).status">
                                     <a-tag v-if="approvalStateOf(item).pending" color="gold">Chờ duyệt</a-tag>
@@ -49,8 +48,7 @@
                                 <div class="att-sub" v-else :title="item.name">{{ item.name }}</div>
 
                                 <!-- Uploader line -->
-                                <div class="att-uploader"
-                                     v-if="item.uploader_name || item.uploaded_by || item.created_at">
+                                <div class="att-uploader" v-if="item.uploader_name || item.uploaded_by || item.created_at">
                                     <div class="att-uploader-left">
                                         <UserOutlined class="att-uploader-ico"/>
                                         <a-tooltip :title="item.uploader_name || nameOfUploader(item.uploaded_by)">
