@@ -11,7 +11,13 @@
             <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'title'">
                     <div class="title">
-                        <a-typography-text>{{ record.title }}</a-typography-text>
+                        <a-typography-text
+                            v-if="formatSignerTrail(record)"
+                            type="secondary"
+                            style="display:block; margin-top:4px; white-space:nowrap;"
+                        >
+                            {{ formatSignerTrail(record) }}
+                        </a-typography-text>
                     </div>
                 </template>
 
@@ -38,10 +44,15 @@
                         </a-button>
 
 
-                        <a-tooltip :title="smartStatus(record).tooltip">
-                            <a-tag :color="smartStatus(record).color" style="margin-left:6px">
-                                <CheckCircleTwoTone v-if="record.__approved" twoToneColor="#52c41a" style="margin-right:4px" />
-                                {{ smartStatus(record).text }}
+                        <a-tooltip :title="statusInfo(record).tooltip">
+                            <a-tag :color="statusInfo(record).tone" class="status-pill" style="margin-left:6px">
+                                <CheckCircleTwoTone
+                                    v-if="record.__approved"
+                                    twoToneColor="#52c41a"
+                                    style="margin-right:4px"
+                                />
+                                <span class="status-main">{{ statusInfo(record).label }}</span>
+                                <span v-if="statusInfo(record).sub" class="status-sub"> · {{ statusInfo(record).sub }}</span>
                             </a-tag>
                         </a-tooltip>
 
@@ -107,6 +118,7 @@ async function hydrateRowState(rec, currentUserId) {
         const raw = await getApprovalsByDocument(rec.document_id);
         const approvals = normalizeArray(raw);
         const lower = s => String(s || '').toLowerCase();
+
         const docFinishedFromRow = lower(rec.approval_status) === 'approved';
 
         const myEverSigned = approvals.some(a =>
@@ -114,6 +126,7 @@ async function hydrateRowState(rec, currentUserId) {
             a.steps.some(s => Number(s.approver_id) === Number(currentUserId) && lower(s.status) === 'approved')
         );
 
+        // chọn phiên active (pending/active) mới nhất
         const active = approvals
             .filter(a => ['pending', 'active'].includes(lower(a.status)))
             .sort((a, b) => Number(b.id) - Number(a.id))[0];
@@ -154,8 +167,19 @@ async function hydrateRowState(rec, currentUserId) {
 
             rec.__signedByMe = myEverSigned || mySignedInActive;
             rec.__canSign = !!myStep && !mySignedInActive && signableStatuses.has(myStepStatus);
-
             rec.__approved = docFinishedFromRow;
+
+            // 🧩 Danh sách người đã ký & chưa ký
+            const signedSteps = steps
+                .filter(s => lower(s.status) === 'approved')
+                .sort((a,b) => (Number(a.sequence||0) - Number(b.sequence||0)));
+            const pendingSteps = steps
+                .filter(s => lower(s.status) !== 'approved')
+                .sort((a,b) => (Number(a.sequence||0) - Number(b.sequence||0)));
+
+            rec.__signedNames  = signedSteps.map(pickName);
+            rec.__pendingNames = pendingSteps.map(pickName);
+
             return;
         }
 
@@ -166,7 +190,6 @@ async function hydrateRowState(rec, currentUserId) {
         rec.__totalSigners = steps.length;
         rec.__approvedCount = steps.filter(s => lower(s.status) === 'approved').length;
         rec.__remaining = Math.max(rec.__totalSigners - rec.__approvedCount, 0);
-
         rec.__nextApproverName = '';
         rec.__pendingBeforeMe = 0;
         rec.__inFlow = steps.some(s => Number(s.approver_id) === Number(currentUserId));
@@ -175,62 +198,128 @@ async function hydrateRowState(rec, currentUserId) {
         rec.__signedByMe = myEverSigned;
         rec.__canSign = !docFinishedFromRow && !myEverSigned;
 
+        // 🧩 Thêm danh sách người đã ký & chưa ký
+        const pickName2 = (s) => s?._approver_name || `User #${s?.approver_id || ''}`;
+        const signedSteps2 = steps
+            .filter(s => lower(s.status) === 'approved')
+            .sort((a,b) => (Number(a.sequence||0) - Number(b.sequence||0)));
+        const pendingSteps2 = steps
+            .filter(s => lower(s.status) !== 'approved')
+            .sort((a,b) => (Number(a.sequence||0) - Number(b.sequence||0)));
+
+        rec.__signedNames  = signedSteps2.map(pickName2);
+        rec.__pendingNames = pendingSteps2.map(pickName2);
+
     } catch (e) {
         console.warn('hydrateRowState error', e);
         rec.__canSign = false;
+        rec.__signedNames = [];
+        rec.__pendingNames = [];
     }
 }
 
-function smartStatus(rec) {
-    // 1) Đã hoàn tất
+
+function statusInfo(rec) {
+    const lower = s => String(s || '').toLowerCase();
+    const total = Number(rec.__totalSigners || 0);
+    const done  = Number(rec.__approvedCount || 0);
+    const remain = Number(rec.__remaining || 0);
+    const nextName = rec.__nextApproverName || '';
+
+    // #1 Hoàn tất
     if (rec.__approved) {
-        const ratio = rec.__totalSigners ? ` (${rec.__approvedCount}/${rec.__totalSigners})` : '';
         return {
-            color: 'green',
-            text: `Đã duyệt${ratio}`,
-            tooltip: 'Tài liệu đã hoàn tất quá trình ký.'
+            tone: 'green',
+            label: 'Đã duyệt',
+            sub: total ? `${done}/${total}` : '',
+            progress: total ? { done, total } : null,
+            tooltip: total ? `Tài liệu đã hoàn tất: ${done}/${total} người đã ký.` : 'Tài liệu đã hoàn tất.'
         };
     }
 
-    // 2) Bạn đã ký nhưng chưa hoàn tất
+    // #2 Bạn đã ký (chưa hoàn tất)
     if (rec.__signedByMe) {
-        const remain = rec.__remaining;
-        const total = rec.__totalSigners;
         return {
-            color: 'blue',
-            text: 'Bạn đã ký',
-            tooltip: total ? `Còn ${remain} người chưa ký trên tổng ${total}.` : 'Bạn đã ký.'
+            tone: 'blue',
+            label: 'Bạn đã ký',
+            sub: total ? `${done}/${total}` : '',
+            progress: total ? { done, total } : null,
+            tooltip: total
+                ? `Còn ${remain} người chưa ký trên tổng ${total}.`
+                : 'Bạn đã ký.'
         };
     }
 
-    // 3) Đến lượt bạn ký
+    // #3 Đến lượt bạn
     if (rec.__canSign) {
-        const afterYou = Math.max(rec.__remaining - 1, 0);
-        const hint = afterYou > 0 ? `Sau bạn còn ${afterYou} người.` : 'Bạn là người cuối cùng.';
+        const afterYou = Math.max(remain - 1, 0);
         return {
-            color: 'geekblue',
-            text: 'Đến lượt bạn ký',
-            tooltip: hint
+            tone: 'geekblue',
+            label: 'Đến lượt bạn ký',
+            sub: total ? `${done}/${total}` : '',
+            progress: total ? { done, total } : null,
+            tooltip: afterYou > 0 ? `Sau bạn còn ${afterYou} người.` : 'Bạn là người cuối cùng.'
         };
     }
 
-    // 4) Bạn trong flow nhưng chưa đến lượt
+    // #4 Bạn trong flow nhưng chưa đến lượt
     if (rec.__inFlow && rec.__pendingBeforeMe > 0) {
-        const nextName = rec.__nextApproverName || 'người trước';
         return {
-            color: 'gold',
-            text: `Chờ ${rec.__pendingBeforeMe} người trước bạn`,
-            tooltip: `Tiếp theo: ${nextName}`
+            tone: 'gold',
+            label: `Chờ ${rec.__pendingBeforeMe} người`,
+            sub: nextName ? `Tiếp theo: ${nextName}` : '',
+            progress: total ? { done, total } : null,
+            tooltip: nextName ? `Tiếp theo: ${nextName}` : 'Chưa đến lượt bạn ký.'
         };
     }
 
-    // 5) Bạn không nằm trong luồng ký
+    // #5 Ngoài luồng ký
     return {
-        color: 'default',
-        text: 'Ngoài luồng ký',
+        tone: 'default',
+        label: 'Ngoài luồng ký',
+        sub: '',
+        progress: total ? { done, total } : null,
         tooltip: 'Bạn không nằm trong danh sách ký của tài liệu này.'
     };
 }
+
+
+function formatSignerTrail(rec, options = {}) {
+    const {
+        maxNames = 99,   // có thể rút gọn nếu danh sách ký dài
+    } = options;
+
+    const signedNames = Array.isArray(rec.__signedNames) ? rec.__signedNames : [];
+    const pendingNames = Array.isArray(rec.__pendingNames) ? rec.__pendingNames : [];
+
+    const fileTitle =
+        rec.title ||
+        rec.file_name ||
+        rec.file_url?.split('/').pop() ||
+        'Tài liệu'; // fallback
+
+    if (!signedNames.length) {
+        // chưa ai ký
+        return `Chưa ai duyệt - ${fileTitle}`;
+    }
+
+
+
+    const shown = signedNames.slice(0, maxNames);
+    const extra = signedNames.length > maxNames ? ` +${signedNames.length - maxNames}` : '';
+    const signedPart = shown.join(' - ') + extra;
+
+    if (pendingNames.length) {
+        const next = pendingNames.slice(0, 2).join(' - ');
+        return `${signedPart} đã duyệt - ${fileTitle} · Chờ: ${next}`;
+    }
+
+
+    return `${signedPart} đã duyệt - ${fileTitle}`;
+}
+
+
+
 
 async function hydrateRows() {
     const me = await getCurrentUser();
@@ -243,22 +332,9 @@ async function hydrateRows() {
 function signedButtonLabel(rec) {
     const n = Number(rec.__approvedCount || 0);
     const total = Number(rec.__totalSigners || 0);
-
-    if (rec.__approved) {
-        // Đã hoàn tất
-        return total > 0
-            ? `Bản hoàn tất (${n}/${total})`
-            : `Bản hoàn tất`;
-    }
-
-    if (n <= 0) {
-        return 'Chưa có chữ ký';
-    }
-
-    // Đang trong quá trình, đã có chữ ký
-    return total > 0
-        ? `Bản có chữ ký (${n}/${total})`
-        : `Bản có chữ ký (${n})`;
+    if (rec.__approved) return total ? `Bản hoàn tất (${n}/${total})` : 'Bản hoàn tất';
+    if (n <= 0) return 'Chưa có chữ ký';
+    return total ? `Bản có chữ ký (${n}/${total})` : `Bản có chữ ký (${n})`;
 }
 
 function signedTooltip(rec) {
@@ -266,26 +342,11 @@ function signedTooltip(rec) {
     const total = Number(rec.__totalSigners || 0);
     const remain = Number(rec.__remaining || 0);
     const nextName = rec.__nextApproverName || '';
-
-    if (rec.__approved) {
-        return total > 0
-            ? `Tài liệu đã hoàn tất: ${n}/${total} người đã ký.`
-            : 'Tài liệu đã hoàn tất.';
-    }
-
-    if (n <= 0) {
-        return 'Chưa ai ký tài liệu này.';
-    }
-
-    // Đang trong quá trình ký
-    if (total > 0) {
-        const nextHint = nextName ? ` Tiếp theo: ${nextName}.` : '';
-        return `Đã có ${n}/${total} người ký. Còn ${remain} người chưa ký.${nextHint}`;
-    }
-
-    return `Đã có ${n} người ký.`;
+    if (rec.__approved) return total ? `Hoàn tất: ${n}/${total} người đã ký.` : 'Tài liệu đã hoàn tất.';
+    if (n <= 0) return 'Chưa ai ký tài liệu này.';
+    const nextHint = nextName ? ` Tiếp theo: ${nextName}.` : '';
+    return total ? `Đã ký ${n}/${total}. Còn ${remain} người chưa ký.${nextHint}` : `Đã có ${n} người ký.`;
 }
-
 
 
 
@@ -789,4 +850,8 @@ onMounted(fetchRows)
 <style scoped>
 .mt-3 { margin-top: 12px; }
 .title { display: flex; align-items: center; }
+
+.status-pill { display:inline-flex; align-items:center; gap:2px; line-height:1; }
+.status-main { font-weight:600; }
+.status-sub  { opacity:.85; font-weight:500; }
 </style>

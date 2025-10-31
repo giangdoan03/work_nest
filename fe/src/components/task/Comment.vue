@@ -314,8 +314,7 @@
                             <div class="row">
                                 <span class="lbl">Vai trò:</span>
                                 <!-- Giữ đúng logic hiện tại: chỉ 'approve' -->
-                                <a-segmented v-model:value="mentionForm.role"
-                                             :options="[{ label: 'Duyệt', value: 'approve' }]"/>
+                                <a-segmented v-model:value="mentionForm.role" :options="[{ label: 'Duyệt', value: 'approve' }]"/>
                             </div>
                             <div class="row" style="justify-content:flex-end; gap:8px;">
                                 <a-button size="small" @click="resetMentionForm">Hủy</a-button>
@@ -674,30 +673,67 @@ const mentionForm = ref({userId: null, role: 'approve'})
 function resetMentionForm() {
     mentionForm.value.userId = null
     mentionForm.value.role = 'approve'
-    mentionPopupOpen.value = false
+    closeMentionPopover()
 }
 
 const addMention = async () => {
     const uid = mentionForm.value.userId
     if (!uid) return
-    if (mentionsSelected.value.some((m) => String(m.user_id) === String(uid))) {
-        message.info('Người này đã có trong danh sách')
-        return
-    }
+
+    // đã có trong danh sách thì chỉ chèn @ vào input (nếu chưa có)
     const user = listUser.value.find((u) => String(u.id) === String(uid))
     const displayName = user?.name || `#${uid}`
-    const newMention = {user_id: String(uid), name: displayName, role: mentionForm.value.role, status: 'pending'}
-    mentionsSelected.value.push(newMention)
 
-    const suffix = inputValue.value && !/\s$/.test(inputValue.value) ? ' ' : ''
-    inputValue.value = `${inputValue.value}${suffix}@${displayName} `
-    mentionPopupOpen.value = false
+    // ghi vào state mentionsSelected (để hiện chip trên sticky), nhưng KHÔNG gửi
+    if (!mentionsSelected.value.some((m) => String(m.user_id) === String(uid))) {
+        mentionsSelected.value.push({
+            user_id: String(uid),
+            name: displayName,
+            role: mentionForm.value.role,
+            status: 'pending',
+        })
+    } else {
+        message.info('Người này đã có trong danh sách')
+    }
 
+    // chèn @Tên vào ô nhập
+    insertMention(displayName);
+
+    // đóng popover & focus lại ô nhập
+    mentionPopupOpen.value = false // hoặc mentionPopupOpen.value = false nếu anh dùng tên biến cũ
     await nextTick()
-    await createNewComment({keepMentions: true}) // gửi ngay để “ping”
-    await persistRoster() // lưu roster
-    resetMentionForm()
+    // Cách focus an toàn (Ant Textarea là component):
+    const ta = document.querySelector('.tg-input textarea.ant-input')
+    ta?.focus()
+
+    // KHÔNG gửi, KHÔNG persist roster tại đây
 }
+
+function closeMentionPopover() {
+    mentionPopupOpen.value = false
+}
+
+function insertMention(displayName) {
+    let v = String(inputValue.value || '');
+
+    // Bỏ khoảng trắng dư ở cuối
+    v = v.replace(/[ \t]+$/u, '');
+
+    // Nếu đang gõ dở một token bắt đầu bằng '@' => thay thế nguyên token đó
+    // Ví dụ: "Xin chào @" hoặc "Xin chào @Ng"
+    if (/@[^@\s]*$/u.test(v)) {
+        v = v.replace(/@[^@\s]*$/u, `@${displayName}`);
+    } else {
+        // Không có token '@' dở → chèn mới, đảm bảo có khoảng trắng trước
+        if (v && !/\s$/u.test(v)) v += ' ';
+        v += `@${displayName}`;
+    }
+
+    // Thêm khoảng trắng sau mention cho tiện gõ tiếp
+    inputValue.value = `${v} `;
+}
+
+
 
 function removeMention(uid) {
     mentionsSelected.value = mentionsSelected.value.filter((m) => String(m.user_id) !== String(uid))
@@ -821,47 +857,62 @@ function dedupeMentions(arr = []) {
     return res
 }
 
-async function createNewComment({keepMentions = false} = {}) {
-    if (!canSend.value) return
+async function createNewComment({ keepMentions = false } = {}) {
+    if (!canSend.value) return;
+
     try {
-        // lấy mentions từ text + từ popover, rồi dedupe
-        const textMentions = extractMentionsFromInput(inputValue.value)
-        const mergedMentions = dedupeMentions([...(mentionsSelected.value || []), ...textMentions])
-        const hadMentions = mergedMentions.length > 0
+        // gom mentions từ text + từ chip đang chọn, rồi dedupe
+        const textMentions = extractMentionsFromInput(inputValue.value);
+        const mergedMentions = dedupeMentions([...(mentionsSelected.value || []), ...textMentions]);
+        const hadMentions = mergedMentions.length > 0;
 
-        const form = new FormData()
-        form.append('user_id', String(store.currentUser.id))
-        form.append('content', inputValue.value.trim())
+        // Form gửi comment
+        const form = new FormData();
+        form.append('user_id', String(store.currentUser.id));
+        form.append('content', inputValue.value.trim());
 
-        const mentions = mergedMentions.map((m) => ({
-            user_id: Number(m.user_id), name: m.name, role: m.role, status: m.status || 'processing',
-        }))
-        form.append('mentions', JSON.stringify(mentions))
+        // Đưa danh sách mentions vào payload (server sẽ quyết định status)
+        const mentions = mergedMentions.map(m => ({
+            user_id: Number(m.user_id),
+            name   : m.name,
+            role   : m.role,
+            status : m.status || 'processing',
+        }));
+        form.append('mentions', JSON.stringify(mentions));
 
+        // File đính kèm nếu có
         if (selectedFile.value) {
-            const raw = selectedFile.value
-            form.append('attachment', raw, raw.name || 'file')
+            const raw = selectedFile.value;
+            form.append('attachment', raw, raw.name || 'file');
         }
 
-        await createComment(taskId.value, form)
+        // Gửi comment
+        await createComment(taskId.value, form);
 
+        // Clear input/file
+        inputValue.value = '';
+        selectedFile.value = null;
 
-        inputValue.value = ''
-        selectedFile.value = null
-        // hiển thị chip ngay lập tức (không cần F5)
-        mentionsSelected.value = keepMentions ? mergedMentions : []
+        // Giữ/clear chip tại sticky theo flag keepMentions (mặc định là clear)
+        mentionsSelected.value = keepMentions ? mergedMentions : [];
 
-        await getListComment(1)
-        if (hadMentions) await persistRoster()  // ghi roster rồi sync
-        await syncRosterFromServer()
+        // Refresh list & roster
+        await getListComment(1);
 
-        await nextTick()
-        scrollToBottom()
+        // Persist roster CHỈ SAU KHI gửi thành công (nếu có mentions)
+        if (hadMentions) {
+            await persistRoster();        // ghi roster
+        }
+        await syncRosterFromServer();   // lấy trạng thái duyệt/từ chối mới nhất
+
+        await nextTick();
+        scrollToBottom();
     } catch (e) {
-        console.error(e)
-        message.error('Không gửi được bình luận')
+        console.error(e);
+        message.error('Không gửi được bình luận');
     }
 }
+
 
 
 /* ===== list (paging) ===== */
@@ -1487,6 +1538,15 @@ onBeforeUnmount(() => {
     border: 1px solid var(--blue-2);
     background: var(--blue-1);
     color: var(--blue-3)
+}
+
+.bubble {
+    position: relative;
+    padding: 8px 28px 6px 10px;
+}
+
+.bubble.me {
+    padding: 8px 28px 6px 10px;
 }
 
 /* ===== Responsive ===== */
