@@ -1,32 +1,42 @@
 <template>
     <div class="comment">
-        <!-- STICKY: người duyệt/ký + file ghim -->
-        <div class="mention-chips sticky-mentions"
-             v-if="(pinnedFiles && pinnedFiles.length) || (mentionsSelected && mentionsSelected.length)">
-            <!-- Header -->
+        <!-- STICKY: Tài liệu ghim (trái) + Drawer người duyệt (phải) -->
+        <div
+            class="mention-chips sticky-mentions"
+            v-if="(pinnedFiles && pinnedFiles.length) || (mentionsSelected && mentionsSelected.length)"
+        >
             <div class="sticky-head">
+                <!-- LEFT: tổng số file ghim + arrow toggle -->
                 <div class="sticky-left">
-                    <span class="sticky-title">Tài liệu & người duyệt</span>
-                    <span v-if="hiddenPinnedCount>0 || hiddenMentionsCount>0" class="sticky-more">
-                        (còn {{ hiddenPinnedCount + hiddenMentionsCount }} mục)
-                    </span>
+                    <button
+                        class="pinned-toggle"
+                        :disabled="!hasPinnedOverflow"
+                        @click="toggleSticky"
+                        :title="hasPinnedOverflow ? (isStickyExpanded ? 'Thu gọn file ghim' : 'Hiện tất cả file ghim') : 'Không có thêm file để mở'"
+                        role="button"
+                        :aria-expanded="!!isStickyExpanded"
+                        aria-controls="pinned-files-region"
+                    >
+                        <span class="sticky-title">Tài liệu ghim</span>
+                        <span class="sticky-count">({{ pinnedTotal }} file)</span>
+                        <component :is="isStickyExpanded ? CaretUpOutlined : CaretDownOutlined" class="arrow"/>
+                    </button>
                 </div>
+
+                <!-- RIGHT: Drawer người duyệt -->
                 <div class="sticky-actions">
-                    <a-tooltip :title="isStickyExpanded ? 'Thu gọn' : 'Hiện tất cả'">
-                        <a-button type="text" size="small" @click="toggleSticky()">
-                            <template #icon>
-                                <template v-if="!isStickyExpanded">
-                                    <PlusOutlined/>
-                                </template>
-                                <template v-else>
-                                    <MinusOutlined/>
-                                </template>
-                            </template>
-                            {{ isStickyExpanded ? 'Thu gọn' : 'Hiện tất cả' }}
-                        </a-button>
+                    <a-tooltip title="Danh sách người duyệt/ký">
+                        <a-badge :count="mentionsSelected?.length || 0" :offset="[-2, 3]">
+                            <a-button type="text" size="small" @click="openApproverDrawer = true" class="approver-btn">
+                                <TeamOutlined/>
+                                <span class="approver-text">Người duyệt</span>
+                            </a-button>
+                        </a-badge>
                     </a-tooltip>
                 </div>
             </div>
+
+            <div id="pinned-files-region"></div>
 
             <!-- Pinned files -->
             <div v-if="visiblePinnedFiles.length" class="pinned-files">
@@ -35,11 +45,9 @@
                         v-for="f in visiblePinnedFiles"
                         :key="f.id || f.file_path"
                         class="pinned-pill"
+                        :title="titleOf(f)"
                     >
-                        <a :href="displayHrefOf(f)"
-                           target="_blank"
-                           rel="noopener"
-                           class="pill-link">
+                        <a :href="displayHrefOf(f)" target="_blank" rel="noopener" class="pill-link">
                             <PaperClipOutlined class="pill-icon"/>
                             <span class="pill-text">{{ titleOf(f) }}</span>
                         </a>
@@ -49,95 +57,27 @@
                         </a-tooltip>
                     </div>
 
-
-                    <!-- +N file -->
+                    <!-- +N file (khi đang thu gọn) -->
                     <a-tag
-                        v-if="!isStickyExpanded && hiddenPinnedCount>0"
+                        v-if="!isStickyExpanded && hasPinnedOverflow"
                         color="blue"
                         class="more-pill more-pill--file"
-                        @click="expandSticky"
+                        @click.stop="expandSticky"
                     >
                         +{{ hiddenPinnedCount }} file
                     </a-tag>
+
+                    <!-- Thu gọn (khi đang mở) -->
+<!--                    <a-tag-->
+<!--                        v-if="isStickyExpanded && hasPinnedOverflow"-->
+<!--                        color="processing"-->
+<!--                        class="more-pill more-pill&#45;&#45;file"-->
+<!--                        @click.stop="collapseSticky"-->
+<!--                    >-->
+<!--                        Thu gọn-->
+<!--                    </a-tag>-->
                 </div>
             </div>
-
-
-            <!-- Approver/sign chips -->
-            <a-space wrap style="margin-bottom:8px;">
-                <a-popover
-                    v-for="m in visibleMentions"
-                    :key="`${m.user_id}-${m.status}-${m.acted_at || ''}-${m.added_at || ''}`"
-                    trigger="click"
-                    placement="top"
-                    v-model:open="mentionPopoverOpen[m.user_id]"
-                    :getPopupContainer="(t)=>t.parentNode"
-                >
-                    <template #content>
-                        <div class="approve-pop">
-                            <div class="pop-head">
-                                <div class="role-pill">
-                                    <span class="dot" :class="statusDotClass(m.status)"></span>
-                                    {{ m.role === 'sign' ? 'Người ký' : 'Người duyệt' }}
-                                </div>
-                                <div class="pop-time" v-if="metaTime(m)">
-                                    {{ metaLabel(m) }}: <b>{{ metaTime(m) }}</b>
-                                </div>
-                            </div>
-                            <div class="actions">
-                                <a-button type="primary" size="small" @click="handleApproveAction(m,'approved')">
-                                    <template #icon>
-                                        <CheckOutlined/>
-                                    </template>
-                                    Đồng ý
-                                </a-button>
-                                <a-button danger size="small" @click="handleApproveAction(m,'rejected')">
-                                    <template #icon>
-                                        <CloseOutlined/>
-                                    </template>
-                                    Từ chối
-                                </a-button>
-                            </div>
-                        </div>
-                    </template>
-
-                    <div class="chip-card" :key="`${m.user_id}-${m.status}-${m.acted_at || ''}-${m.added_at || ''}`"
-                         :class="{
-              'is-approved': m.status==='approved',
-              'is-pending' : m.status==='pending' || m.status==='processing',
-              'is-rejected': m.status==='rejected'
-            }"
-                    >
-                        <div class="chip-line">
-                            <span class="chip-name">@{{ m.name }}</span>
-                            <span class="role-dot" :class="statusDotClass(m.status)"></span>
-                            <span class="chip-state">
-      {{
-                                    m.status === 'approved'
-                                        ? 'Đã duyệt'
-                                        : m.status === 'rejected'
-                                            ? 'Đã từ chối'
-                                            : 'Chờ duyệt'
-                                }}
-    </span>
-                            <span class="chip-time">{{ metaTime(m) }}</span>
-                            <a-button type="text" size="small" class="chip-close"
-                                      @click.stop="removeMention(m.user_id)">×
-                            </a-button>
-                        </div>
-                    </div>
-                </a-popover>
-
-                <!-- +N người -->
-                <a-tag
-                    v-if="!isStickyExpanded && hiddenMentionsCount>0"
-                    color="processing"
-                    class="more-pill"
-                    @click="expandSticky"
-                >
-                    +{{ hiddenMentionsCount }} người
-                </a-tag>
-            </a-space>
         </div>
 
         <!-- LIST COMMENT (bubbles) -->
@@ -162,13 +102,13 @@
                     <div class="bubble" :class="{ me: String(item.user_id) === String(currentUserId) }">
                         <!-- actions (sửa/xóa) -->
                         <div class="actions" v-if="canEditOrDelete(item)">
-                            <a-dropdown trigger="click" :getPopupContainer="t => t.parentNode">
+                            <a-dropdown trigger="click" :getPopupContainer="(t) => t.parentNode">
                                 <a-button type="text" size="small">
                                     <EllipsisOutlined/>
                                 </a-button>
                                 <template #overlay>
                                     <a-menu>
-                                        <a-menu-item @click="showUpdateCommentModal(item)">Sửa</a-menu-item>
+                                        <a-menu-item @click="startEdit(item)">Sửa</a-menu-item>
                                         <a-menu-item>
                                             <a-popconfirm
                                                 title="Bạn chắc chắn muốn xóa comment này?"
@@ -208,8 +148,13 @@
                                 </div>
 
                                 <div class="cm-att__line">
-                                    <a class="tg-file-link" :href="displayHrefOf(f)" target="_blank" rel="noopener"
-                                       :title="f.file_name || prettyUrl(hrefOf(f))">
+                                    <a
+                                        class="tg-file-link"
+                                        :href="displayHrefOf(f)"
+                                        target="_blank"
+                                        rel="noopener"
+                                        :title="f.file_name || prettyUrl(hrefOf(f))"
+                                    >
                                         {{ f.file_name || prettyUrl(hrefOf(f)) }}
                                     </a>
 
@@ -226,58 +171,54 @@
                         </div>
 
                         <div class="meta">
-                            <a-tooltip :title="formatVi(item.created_at)">
-                                {{ fromNowVi(item.created_at) }}
-                            </a-tooltip>
+                            <a-tooltip :title="formatVi(item.created_at)">{{ fromNowVi(item.created_at) }}</a-tooltip>
                         </div>
                     </div>
                 </div>
-
-                <!-- Divider mềm giữa các block (nếu muốn) -->
-                <!-- <a-divider v-if="index !== listComment.length - 1" /> -->
             </a-spin>
         </div>
 
-        <!-- FOOTER: composer (Telegram-like) -->
+        <!-- FOOTER: composer -->
         <div class="footer-fixed tg-footer" ref="footerEl">
             <div class="load-more" v-if="currentPage < totalPage && !loadingComment">
                 <a-button size="small" @click="getListComment(currentPage + 1)">Tải thêm</a-button>
             </div>
 
             <div class="tg-composer">
-                <!-- Attach (trái) -->
-                <a-upload
-                    :show-upload-list="false"
-                    :multiple="false"
-                    :max-count="1"
-                    :before-upload="handleBeforeUpload"
-                >
+                <!-- Attach -->
+                <a-upload :show-upload-list="false" :multiple="false" :max-count="1"
+                          :before-upload="handleBeforeUpload">
                     <a-button type="text" class="tg-attach-btn" :title="'Đính kèm'">
                         <PaperClipOutlined/>
                     </a-button>
                 </a-upload>
 
-                <!-- Ô nhập dạng textarea borderless -->
+                <!-- Ô nhập -->
                 <a-textarea
                     v-model:value="inputValue"
                     class="tg-input"
                     :bordered="false"
                     :auto-size="{ minRows: 1, maxRows: 6 }"
-                    placeholder="Viết lời nhắn… (Enter để gửi, Shift+Enter để xuống dòng, gõ @ để thêm người duyệt)"
+                    :placeholder="isEditing ? 'Sửa bình luận… (Enter để lưu, Esc để hủy)' : 'Viết lời nhắn… (Enter để gửi, Shift+Enter để xuống dòng, gõ @ để thêm người duyệt)'"
                     @keydown="onComposerKeydown"
                     @input="onInputDetectMention"
                 />
 
-                <!-- Nút gửi -->
+                <!-- Nút gửi / lưu -->
                 <a-button
                     class="tg-send-btn"
                     :class="{ 'is-active': canSend }"
                     shape="circle"
                     :disabled="!canSend"
-                    @click="createNewComment()"
-                    :title="'Gửi'"
+                    @click="onSubmit()"
+                    :title="isEditing ? 'Lưu chỉnh sửa' : 'Gửi'"
                 >
-                    <SendOutlined/>
+                    <template v-if="isEditing">
+                        <CheckOutlined/>
+                    </template>
+                    <template v-else>
+                        <SendOutlined/>
+                    </template>
                 </a-button>
             </div>
 
@@ -294,9 +235,10 @@
             <div class="mention-row">
                 <a-popover
                     trigger="click"
-                    v-model:open="mentionPopupOpen"
+                    :open="addMentionOpen"
+                    @update:open="(v) => (addMentionOpen = v)"
                     placement="topLeft"
-                    :getPopupContainer="(t)=>t.parentNode"
+                    :getPopupContainer="(t) => t.parentNode"
                 >
                     <template #content>
                         <div class="mention-pop">
@@ -307,62 +249,151 @@
                                     :options="userOptions"
                                     show-search
                                     :filterOption="filterUser"
-                                    style="min-width:220px;"
+                                    style="min-width: 220px"
                                     placeholder="Chọn người"
                                 />
                             </div>
                             <div class="row">
                                 <span class="lbl">Vai trò:</span>
-                                <!-- Giữ đúng logic hiện tại: chỉ 'approve' -->
-                                <a-segmented v-model:value="mentionForm.role" :options="[{ label: 'Duyệt', value: 'approve' }]"/>
+                                <a-segmented v-model:value="mentionForm.role"
+                                             :options="[{ label: 'Duyệt', value: 'approve' }]"/>
                             </div>
-                            <div class="row" style="justify-content:flex-end; gap:8px;">
+                            <div class="row" style="justify-content: flex-end; gap: 8px">
                                 <a-button size="small" @click="resetMentionForm">Hủy</a-button>
                                 <a-button size="small" type="primary" @click="addMention">Thêm</a-button>
                             </div>
                         </div>
                     </template>
-
-                    <!--                    <a-button size="small" @click="mentionPopupOpen = true">+ Thêm người duyệt</a-button>-->
                 </a-popover>
             </div>
         </div>
 
-        <!-- Modal sửa comment -->
-        <a-modal
-            v-model:open="openModalEditComment"
-            title="Chỉnh sửa thông tin bình luận"
-            okText="Lưu"
-            cancelText="Hủy"
-            @ok="handleUpdateComment"
-            :confirm-loading="loadingUpdate"
+        <!-- Drawer người duyệt -->
+        <a-drawer
+            v-model:open="openApproverDrawer"
+            title="Người duyệt & ký"
+            placement="right"
+            width="420"
+            :get-container="false"
+            :style="{ position: 'absolute' }"
+            class="approver-drawer"
         >
-            <a-form layout="vertical">
-                <a-form-item label="Nội dung bình luận">
-                    <a-input v-model:value="selectedComment.content"/>
-                </a-form-item>
-            </a-form>
-        </a-modal>
+            <!-- Toolbar (bên phải tiêu đề) -->
+            <template #extra>
+                <a-switch
+                    v-model:checked="filterPendingOnly"
+                    checked-children="Chờ"
+                    un-checked-children="Tất cả"
+                    :title="filterPendingOnly ? 'Chỉ hiện đang chờ' : 'Hiện tất cả'"
+                />
+            </template>
+            <!-- Empty state -->
+            <div v-if="finalDrawerMentions.length === 0" class="drawer-empty">
+                <div class="empty-icon">😶‍🌫️</div>
+                <div>Chưa có người duyệt/ký phù hợp.</div>
+                <div class="hint">Hãy thêm người hoặc bỏ lọc để xem tất cả.</div>
+            </div>
+
+            <!-- Danh sách -->
+            <div v-else class="drawer-list">
+                <div
+                    v-for="m in finalDrawerMentions"
+                    :key="`${m.user_id}-${m.status}-${m.acted_at || ''}-${m.added_at || ''}`"
+                    class="drawer-chip"
+                >
+                    <div class="chip-card"
+                         :class="{
+                           'is-approved': m.status === 'approved',
+                           'is-pending': m.status === 'pending' || m.status === 'processing',
+                           'is-rejected': m.status === 'rejected',
+                         }">
+
+                        <!-- LEFT: avatar -->
+                        <div class="chip-avatar">
+                            <BaseAvatar
+                                :src="getUserById(m.user_id)?.avatar"
+                                :name="getUserById(m.user_id)?.name || m.name || 'U'"
+                                :size="28"
+                                shape="circle"
+                                :preferApiOrigin="true"
+                            />
+                        </div>
+
+                        <!-- RIGHT: 3 dòng -->
+                        <div class="chip-body">
+                            <!-- Dòng 1: tên 1 dòng -->
+                            <div class="name-row" :title="m.name">
+                                <span class="chip-name">@{{ m.name }}</span>
+                            </div>
+
+                            <!-- Dòng 2: trạng thái + thời gian -->
+                            <div class="meta-row">
+                                <span class="dot" :class="statusDotClass(m.status)"></span>
+                                <span class="chip-state">
+                                    {{ m.status === 'approved' ? 'Đã duyệt' : m.status === 'rejected' ? 'Đã từ chối' : 'Chờ duyệt' }}
+                                  </span>
+                                <span class="meta-sep">•</span>
+                                <span class="chip-time">{{ metaTime(m) }}</span>
+                            </div>
+
+                            <!-- Dòng 3: actions -->
+                            <div class="actions-row">
+                                <a-button size="small" type="primary" @click="handleApproveAction(m, 'approved')">
+                                    <template #icon><CheckOutlined /></template>Đồng ý
+                                </a-button>
+                                <a-button size="small" danger @click="handleApproveAction(m, 'rejected')">
+                                    <template #icon><CloseOutlined /></template>Từ chối
+                                </a-button>
+                                <a-button size="small" type="text" class="chip-close" @click="removeMention(m.user_id)">×</a-button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </a-drawer>
+
     </div>
 </template>
 
 <script setup>
-import {ref, computed, nextTick, onMounted, onBeforeUnmount} from 'vue'
+import {ref, reactive, computed, nextTick, onMounted, onBeforeUnmount} from 'vue'
 import {
-    CheckOutlined, CloseOutlined, EllipsisOutlined,
-    FileExcelOutlined, FilePdfOutlined, FilePptOutlined, FileTextOutlined, FileWordOutlined,
-    LinkOutlined, PaperClipOutlined, PushpinOutlined,
-    PlusOutlined, MinusOutlined, SendOutlined
+    CheckOutlined,
+    CloseOutlined,
+    EllipsisOutlined,
+    FileExcelOutlined,
+    FilePdfOutlined,
+    FilePptOutlined,
+    FileTextOutlined,
+    FileWordOutlined,
+    LinkOutlined,
+    PaperClipOutlined,
+    PushpinOutlined,
+    SendOutlined,
+    CaretDownOutlined,
+    CaretUpOutlined,
+    TeamOutlined,
 } from '@ant-design/icons-vue'
 
 import {
-    approveRosterAPI, createComment, deleteComment, getComments,
-    getTaskRosterAPI, mergeTaskRosterAPI, rejectRosterAPI, updateComment
+    approveRosterAPI,
+    createComment,
+    deleteComment,
+    getComments,
+    getTaskRosterAPI,
+    mergeTaskRosterAPI,
+    rejectRosterAPI,
+    updateComment,
 } from '@/api/task'
 
 import {
-    adoptTaskFileFromPathAPI, getPinnedFilesAPI, getTaskFilesAPI,
-    pinTaskFileAPI, unpinTaskFileAPI, uploadTaskFileLinkAPI
+    adoptTaskFileFromPathAPI,
+    getPinnedFilesAPI,
+    getTaskFilesAPI,
+    pinTaskFileAPI,
+    unpinTaskFileAPI,
+    uploadTaskFileLinkAPI,
 } from '@/api/taskFiles'
 
 import {getUsers} from '@/api/user'
@@ -382,13 +413,13 @@ const tick = ref(Date.now())
 let t
 
 function fromNowVi(dt) {
-    tick.value;
-    const d = dayjs(dt);
+    tick.value
+    const d = dayjs(dt)
     return d.isValid() ? d.fromNow() : ''
 }
 
 function formatVi(dt) {
-    const d = dayjs(dt);
+    const d = dayjs(dt)
     return d.isValid() ? d.format('HH:mm DD/MM/YYYY') : ''
 }
 
@@ -398,7 +429,8 @@ const route = useRoute()
 
 const taskId = computed(() => Number(route.params.taskId || route.params.id))
 const currentUserId = computed(() => store.currentUser?.id ?? null)
-const canEditOrDelete = (item) => String(item.user_id) === String(currentUserId.value) || !!store.currentUser?.is_admin
+const canEditOrDelete = (item) =>
+    String(item.user_id) === String(currentUserId.value) || !!store.currentUser?.is_admin
 
 const inputValue = ref('')
 const listComment = ref([])
@@ -408,8 +440,6 @@ const selectedFile = ref(null)
 
 const loadingComment = ref(false)
 const loadingUpdate = ref(false)
-const openModalEditComment = ref(false)
-const selectedComment = ref({})
 
 const totalPage = ref(1)
 const currentPage = ref(1)
@@ -433,27 +463,46 @@ function scrollToBottom() {
 
 /* ===== task_files index để map file_path -> task_files.id ===== */
 const taskFileByPath = ref({})
-const normalizePath = (u = '') => String(u).split('?')[0]
+const normalizePath = (u = '') => {
+    const s = String(u).split('?')[0]
+    return s.replace(/\/+$/, '')
+}
+
+/* ===== Drawer người duyệt ===== */
+const openApproverDrawer = ref(false)
+const filterPendingOnly = ref(false)
+const mentionsSelected = ref([])
+
+const drawerMentions = computed(() => {
+    const arr = mentionsSelected.value || []
+    return filterPendingOnly.value
+        ? arr.filter((m) => m.status === 'pending' || m.status === 'processing')
+        : arr
+})
 
 /* ===== sticky expand/collapse ===== */
 const isStickyExpanded = ref(false)
 const MAX_FILES_COLLAPSED = 1
-const MAX_MENTIONS_COLLAPSED = 1
-const toggleSticky = () => {
-    isStickyExpanded.value = !isStickyExpanded.value
-}
+const pinnedFiles = ref([])
+
+const hasPinnedOverflow = computed(() => (pinnedFiles.value?.length || 0) > MAX_FILES_COLLAPSED)
 const expandSticky = () => {
     isStickyExpanded.value = true
 }
-
-const pinnedFiles = ref([])
-const visiblePinnedFiles = computed(() => isStickyExpanded.value ? (pinnedFiles.value || []) : (pinnedFiles.value || []).slice(0, MAX_FILES_COLLAPSED))
-const hiddenPinnedCount = computed(() => Math.max(0, (pinnedFiles.value?.length || 0) - MAX_FILES_COLLAPSED))
-
-/* ===== mentions ===== */
-const mentionsSelected = ref([])
-const visibleMentions = computed(() => isStickyExpanded.value ? (mentionsSelected.value || []) : (mentionsSelected.value || []).slice(0, MAX_MENTIONS_COLLAPSED))
-const hiddenMentionsCount = computed(() => Math.max(0, (mentionsSelected.value?.length || 0) - MAX_MENTIONS_COLLAPSED))
+const collapseSticky = () => {
+    isStickyExpanded.value = false
+}
+const toggleSticky = () => {
+    if (!hasPinnedOverflow.value) return
+    isStickyExpanded.value = !isStickyExpanded.value
+}
+const pinnedTotal = computed(() => pinnedFiles.value?.length || 0)
+const visiblePinnedFiles = computed(() =>
+    isStickyExpanded.value ? pinnedFiles.value || [] : (pinnedFiles.value || []).slice(0, MAX_FILES_COLLAPSED)
+)
+const hiddenPinnedCount = computed(() =>
+    Math.max(0, (pinnedFiles.value?.length || 0) - MAX_FILES_COLLAPSED)
+)
 
 /* ===== task file helpers ===== */
 function getTaskFileId(f = {}) {
@@ -476,7 +525,9 @@ async function ensureTaskFileId(file) {
     if (/^https?:\/\//i.test(path)) {
         try {
             const {data} = await uploadTaskFileLinkAPI(taskId.value, {
-                title: name, url: path, user_id: Number(store.currentUser.id),
+                title: name,
+                url: path,
+                user_id: Number(store.currentUser.id),
             })
             const created = Array.isArray(data) ? data[0] : data?.data || data
             const key = normalizePath(created?.file_path || created?.link_url || path)
@@ -568,9 +619,12 @@ const extOf = (name = '') => {
 }
 
 function detectKind(o = {}) {
-    const e = extOf(o.name || o.url || '')
     const t = o.file_type || ''
-    if (String(t).startsWith('image/')) return 'image'
+    if (t) {
+        if (String(t).startsWith('image/')) return 'image'
+        if (t === 'application/pdf') return 'pdf'
+    }
+    const e = extOf(o.name || o.url || '')
     if (IMAGE_EXTS.has(e)) return 'image'
     if (PDF_EXTS.has(e)) return 'pdf'
     if (WORD_EXTS.has(e)) return 'word'
@@ -612,50 +666,37 @@ const hrefOf = (f = {}) => f.file_path || f.link_url || ''
 const titleOf = (f = {}) => f.file_name || f.title || prettyUrl(hrefOf(f))
 const kindOfCommentFile = (f = {}) => detectKind({name: f.file_name, url: hrefOf(f), file_type: f.file_type})
 
-
-// Loại Office
-const OFFICE_EXTS = new Set(['doc', 'docx', 'xls', 'xlsx', 'csv', 'ppt', 'pptx'])
-
 function isOfficeKind(kind) {
     return kind === 'word' || kind === 'excel' || kind === 'ppt'
 }
 
-// Bảo đảm URL tuyệt đối (Office viewer yêu cầu public absolute URL)
 function absUrl(u = '') {
     try {
-        const url = new URL(u, window.location.origin) // xử lý cả relative
+        const url = new URL(u, window.location.origin)
         return url.toString()
     } catch {
         return u
     }
 }
 
-// Tạo URL cho Office Online Viewer (nhớ encode)
 function officeViewerUrl(u = '') {
     const absolute = absUrl(u)
     return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(absolute)}`
 }
 
-// Href hiển thị: nếu Office => dùng viewer; ngược lại giữ nguyên
 function displayHrefOf(f = {}) {
     const href = hrefOf(f)
     const k = kindOfCommentFile(f)
     return isOfficeKind(k) ? officeViewerUrl(href) : href
 }
 
-
-/* ===== Approve popover & roster actions ===== */
-const mentionPopoverOpen = ref({})
-
+/* ===== Roster actions (Drawer) ===== */
 async function handleApproveAction(m, status) {
     try {
         if (status === 'approved') await approveRosterAPI(taskId.value, {note: null})
         else await rejectRosterAPI(taskId.value, {note: null})
-        mentionPopoverOpen.value[m.user_id] = false
         await syncRosterFromServer()
-        message.success(
-            status === 'approved' ? `${m.name} đã ${m.role === 'sign' ? 'ký' : 'duyệt'}` : `${m.name} đã từ chối`
-        )
+        message.success(status === 'approved' ? `${m.name} đã ${m.role === 'sign' ? 'ký' : 'duyệt'}` : `${m.name} đã từ chối`)
     } catch (e) {
         console.error(e)
         message.error('Xử lý không thành công')
@@ -667,7 +708,7 @@ const getUserById = (id) => listUser.value.find((u) => u.id === id) || {}
 const userOptions = computed(() => (listUser.value || []).map((u) => ({value: String(u.id), label: u.name})))
 const filterUser = (input, option) => (option?.label ?? '').toLowerCase().includes(String(input).toLowerCase())
 
-const mentionPopupOpen = ref(false)
+let addMentionOpen = ref(false)
 const mentionForm = ref({userId: null, role: 'approve'})
 
 function resetMentionForm() {
@@ -679,12 +720,9 @@ function resetMentionForm() {
 const addMention = async () => {
     const uid = mentionForm.value.userId
     if (!uid) return
-
-    // đã có trong danh sách thì chỉ chèn @ vào input (nếu chưa có)
     const user = listUser.value.find((u) => String(u.id) === String(uid))
     const displayName = user?.name || `#${uid}`
 
-    // ghi vào state mentionsSelected (để hiện chip trên sticky), nhưng KHÔNG gửi
     if (!mentionsSelected.value.some((m) => String(m.user_id) === String(uid))) {
         mentionsSelected.value.push({
             user_id: String(uid),
@@ -695,45 +733,28 @@ const addMention = async () => {
     } else {
         message.info('Người này đã có trong danh sách')
     }
-
-    // chèn @Tên vào ô nhập
-    insertMention(displayName);
-
-    // đóng popover & focus lại ô nhập
-    mentionPopupOpen.value = false // hoặc mentionPopupOpen.value = false nếu anh dùng tên biến cũ
+    insertMention(displayName)
+    addMentionOpen.value = false
     await nextTick()
-    // Cách focus an toàn (Ant Textarea là component):
     const ta = document.querySelector('.tg-input textarea.ant-input')
-    ta?.focus()
-
-    // KHÔNG gửi, KHÔNG persist roster tại đây
+    if (ta && typeof ta.focus === 'function') ta.focus()
 }
 
 function closeMentionPopover() {
-    mentionPopupOpen.value = false
+    addMentionOpen.value = false
 }
 
 function insertMention(displayName) {
-    let v = String(inputValue.value || '');
-
-    // Bỏ khoảng trắng dư ở cuối
-    v = v.replace(/[ \t]+$/u, '');
-
-    // Nếu đang gõ dở một token bắt đầu bằng '@' => thay thế nguyên token đó
-    // Ví dụ: "Xin chào @" hoặc "Xin chào @Ng"
+    let v = String(inputValue.value || '')
+    v = v.replace(/[ \t]+$/u, '')
     if (/@[^@\s]*$/u.test(v)) {
-        v = v.replace(/@[^@\s]*$/u, `@${displayName}`);
+        v = v.replace(/@[^@\s]*$/u, `@${displayName}`)
     } else {
-        // Không có token '@' dở → chèn mới, đảm bảo có khoảng trắng trước
-        if (v && !/\s$/u.test(v)) v += ' ';
-        v += `@${displayName}`;
+        if (v && !/\s$/u.test(v)) v += ' '
+        v += `@${displayName}`
     }
-
-    // Thêm khoảng trắng sau mention cho tiện gõ tiếp
-    inputValue.value = `${v} `;
+    inputValue.value = `${v} `
 }
-
-
 
 function removeMention(uid) {
     mentionsSelected.value = mentionsSelected.value.filter((m) => String(m.user_id) !== String(uid))
@@ -742,52 +763,47 @@ function removeMention(uid) {
 
 /* meta helpers */
 const metaLabel = (m) => (m.status === 'approved' ? 'đã duyệt' : m.status === 'rejected' ? 'đã từ chối' : 'thêm lúc')
-const metaTime = (m) => (m.status === 'approved' || m.status === 'rejected')
-    ? (m.acted_at_vi || formatVi(m.acted_at))
-    : (m.added_at_vi || formatVi(m.added_at))
-const fullTimeTooltip = metaTime
+const metaTime = (m) =>
+    m.status === 'approved' || m.status === 'rejected'
+        ? m.acted_at_vi || formatVi(m.acted_at)
+        : m.added_at_vi || formatVi(m.added_at)
 const statusDotClass = (status) => (status === 'approved' ? 'ok' : status === 'rejected' ? 'err' : 'proc')
+
+
+// TÌM NHANH TRONG DRAWER
+const drawerSearch = ref('')
+
+// Lọc cuối cùng cho UI (áp dụng search sau filterPendingOnly)
+const finalDrawerMentions = computed(() => {
+    const arr = drawerMentions.value || []
+    const q = vnNorm(drawerSearch.value || '')
+    if (!q) return arr
+    return arr.filter(m => vnNorm(m.name || '').includes(q))
+})
+
+// Counters cho toolbar
+const pendingCount = computed(() => finalDrawerMentions.value.filter(m => m.status === 'pending' || m.status === 'processing').length)
+const approvedCount = computed(() => finalDrawerMentions.value.filter(m => m.status === 'approved').length)
+const rejectedCount = computed(() => finalDrawerMentions.value.filter(m => m.status === 'rejected').length)
+
 
 /* input mention detect */
 function onInputDetectMention(e) {
     const v = String(e?.target?.value ?? '')
-    if (v.endsWith('@')) mentionPopupOpen.value = true
+    if (v.endsWith('@')) addMentionOpen.value = true
 }
 
 /* ===== upload handlers (single file) ===== */
 async function handleBeforeUpload(file) {
     selectedFile.value = file
-    return false // chặn auto upload
+    return false
 }
 
 function handleRemoveFile() {
     selectedFile.value = null
 }
 
-/* ===== CRUD ===== */
-function showUpdateCommentModal(item) {
-    openModalEditComment.value = true
-    selectedComment.value = {...item}
-}
-
-async function handleUpdateComment() {
-    if (!selectedComment.value?.id) {
-        message.error('Thiếu ID bình luận');
-        return
-    }
-    loadingUpdate.value = true
-    try {
-        await updateComment(selectedComment.value.id, {content: String(selectedComment.value.content ?? '')})
-        openModalEditComment.value = false
-        await getListComment(currentPage.value)
-        message.success('Cập nhật comment thành công')
-    } catch (e) {
-        message.error('Không thể cập nhật comment')
-    } finally {
-        loadingUpdate.value = false
-    }
-}
-
+/* ===== CRUD inline ===== */
 async function handleDeleteComment(commentId) {
     try {
         await deleteComment(commentId)
@@ -800,51 +816,39 @@ async function handleDeleteComment(commentId) {
 }
 
 /* gửi comment */
-const canSend = computed(() =>
-    !!inputValue.value.trim() || !!selectedFile.value || (mentionsSelected.value?.length > 0)
+const canSend = computed(
+    () => !!inputValue.value.trim() || !!selectedFile.value || (mentionsSelected.value?.length > 0)
 )
 
-// Bỏ dấu / lowercase để so khớp tên
 function vnNorm(s = '') {
-    return String(s)
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim()
+    return (s == null ? '' : String(s)).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
 }
 
-// Tạo map tên chuẩn -> user
 const userNameMap = computed(() => {
     const map = new Map()
-    for (const u of (listUser.value || [])) {
+    for (const u of listUser.value || []) {
         const key = vnNorm(u.name || '')
         if (key) map.set(key, u)
     }
     return map
 })
 
-// Rút @mentions từ nội dung nhập
 function extractMentionsFromInput(input = '') {
     const out = []
     if (!input) return out
-    // Bắt mọi cụm sau ký tự @ tới khi gặp xuống dòng hoặc ký tự @ kế tiếp
     const re = /@([^\n\r@]+)/g
     let m
     while ((m = re.exec(input))) {
         const raw = m[1].trim()
         if (!raw) continue
-        // bỏ ký tự lặt vặt cuối câu
         const cleaned = raw.replace(/[.,;:!?)\]\}]+$/, '').trim()
         const key = vnNorm(cleaned)
         const u = userNameMap.value.get(key)
-        if (u) {
-            out.push({user_id: String(u.id), name: u.name, role: 'approve', status: 'pending'})
-        }
+        if (u) out.push({user_id: String(u.id), name: u.name, role: 'approve', status: 'pending'})
     }
     return out
 }
 
-// Dedup theo user_id
 function dedupeMentions(arr = []) {
     const seen = new Set()
     const res = []
@@ -857,63 +861,46 @@ function dedupeMentions(arr = []) {
     return res
 }
 
-async function createNewComment({ keepMentions = false } = {}) {
-    if (!canSend.value) return;
-
+async function createNewComment({keepMentions = false} = {}) {
+    if (!canSend.value) return
     try {
-        // gom mentions từ text + từ chip đang chọn, rồi dedupe
-        const textMentions = extractMentionsFromInput(inputValue.value);
-        const mergedMentions = dedupeMentions([...(mentionsSelected.value || []), ...textMentions]);
-        const hadMentions = mergedMentions.length > 0;
+        const textMentions = extractMentionsFromInput(inputValue.value)
+        const mergedMentions = dedupeMentions([...(mentionsSelected.value || []), ...textMentions])
+        const hadMentions = mergedMentions.length > 0
 
-        // Form gửi comment
-        const form = new FormData();
-        form.append('user_id', String(store.currentUser.id));
-        form.append('content', inputValue.value.trim());
-
-        // Đưa danh sách mentions vào payload (server sẽ quyết định status)
-        const mentions = mergedMentions.map(m => ({
+        const form = new FormData()
+        form.append('user_id', String(store.currentUser.id))
+        form.append('content', inputValue.value.trim())
+        const mentions = mergedMentions.map((m) => ({
             user_id: Number(m.user_id),
-            name   : m.name,
-            role   : m.role,
-            status : m.status || 'processing',
-        }));
-        form.append('mentions', JSON.stringify(mentions));
+            name: m.name,
+            role: m.role,
+            status: m.status || 'processing',
+        }))
+        form.append('mentions', JSON.stringify(mentions))
 
-        // File đính kèm nếu có
         if (selectedFile.value) {
-            const raw = selectedFile.value;
-            form.append('attachment', raw, raw.name || 'file');
+            const raw = selectedFile.value
+            form.append('attachment', raw, raw.name || 'file')
         }
 
-        // Gửi comment
-        await createComment(taskId.value, form);
+        await createComment(taskId.value, form)
 
-        // Clear input/file
-        inputValue.value = '';
-        selectedFile.value = null;
+        inputValue.value = ''
+        selectedFile.value = null
+        mentionsSelected.value = keepMentions ? mergedMentions : []
 
-        // Giữ/clear chip tại sticky theo flag keepMentions (mặc định là clear)
-        mentionsSelected.value = keepMentions ? mergedMentions : [];
+        await getListComment(1)
+        if (hadMentions) await persistRoster()
+        await syncRosterFromServer()
 
-        // Refresh list & roster
-        await getListComment(1);
-
-        // Persist roster CHỈ SAU KHI gửi thành công (nếu có mentions)
-        if (hadMentions) {
-            await persistRoster();        // ghi roster
-        }
-        await syncRosterFromServer();   // lấy trạng thái duyệt/từ chối mới nhất
-
-        await nextTick();
-        scrollToBottom();
+        await nextTick()
+        scrollToBottom()
     } catch (e) {
-        console.error(e);
-        message.error('Không gửi được bình luận');
+        console.error(e)
+        message.error('Không gửi được bình luận')
     }
 }
-
-
 
 /* ===== list (paging) ===== */
 async function getListComment(page = 1) {
@@ -956,7 +943,11 @@ async function getUser() {
 /* ===== roster sync/persist ===== */
 async function persistRoster(mode = 'merge') {
     try {
-        const payload = mentionsSelected.value.map((m) => ({user_id: Number(m.user_id), name: m.name, role: m.role}))
+        const payload = mentionsSelected.value.map((m) => ({
+            user_id: Number(m.user_id),
+            name: m.name,
+            role: m.role,
+        }))
         await mergeTaskRosterAPI(taskId.value, payload, mode)
         await syncRosterFromServer()
     } catch (e) {
@@ -974,11 +965,17 @@ async function loadPinnedFiles() {
         else if (Array.isArray(res.data?.files)) arr = res.data.files.filter((x) => Number(x.is_pinned) === 1)
         else {
             const filesRes = await getTaskFilesAPI(taskId.value)
-            const filesArr = Array.isArray(filesRes.data) ? filesRes.data : Array.isArray(filesRes.data?.data) ? filesRes.data.data : []
+            const filesArr = Array.isArray(filesRes.data)
+                ? filesRes.data
+                : Array.isArray(filesRes.data?.data)
+                    ? filesRes.data.data
+                    : []
             arr = filesArr.filter((x) => Number(x.is_pinned) === 1)
         }
         pinnedFiles.value = (arr || []).map((x) => ({
-            ...x, file_path: x.file_path || x.link_url || '', title: x.title || x.file_name || '',
+            ...x,
+            file_path: x.file_path || x.link_url || '',
+            title: x.title || x.file_name || '',
         }))
     } catch (e) {
         console.error('loadPinnedFiles error', e)
@@ -1000,18 +997,69 @@ async function syncRosterFromServer() {
             added_at: r.added_at || null,
             added_at_vi: r.added_at_vi || null,
         }))
-    } catch { /* silent */
+    } catch {
+        /* silent */
     }
 }
 
-/* ===== composer behavior: Enter/Shift+Enter ===== */
+/* ===== composer behavior: Enter/Shift+Enter + Esc ===== */
 function onComposerKeydown(e) {
+    if (e.key === 'Escape' && isEditing.value) {
+        e.preventDefault()
+        cancelEdit()
+        return
+    }
     if (e.key !== 'Enter') return
     if (e.shiftKey) return
     e.preventDefault()
-    if (canSend.value) void createNewComment()
+    if (canSend.value) void onSubmit()
 }
 
+/* ===== inline edit state ===== */
+const editingCommentId = ref(null)
+const isEditing = computed(() => !!editingCommentId.value)
+
+function startEdit(item) {
+    editingCommentId.value = item?.id ?? null
+    inputValue.value = String(item?.content ?? '')
+    nextTick(() => {
+        const ta = document.querySelector('.tg-input textarea.ant-input')
+        if (ta && typeof ta.focus === 'function') ta.focus()
+    })
+}
+
+function cancelEdit() {
+    editingCommentId.value = null
+    inputValue.value = ''
+}
+
+async function handleUpdateCommentInline() {
+    if (!editingCommentId.value) return
+    const newContent = String(inputValue.value || '').trim()
+    if (!newContent) {
+        message.warning('Nội dung trống')
+        return
+    }
+    loadingUpdate.value = true
+    try {
+        await updateComment(editingCommentId.value, {content: newContent})
+        editingCommentId.value = null
+        inputValue.value = ''
+        await getListComment(currentPage.value)
+        message.success('Đã cập nhật bình luận')
+    } catch (e) {
+        message.error('Không thể cập nhật bình luận')
+    } finally {
+        loadingUpdate.value = false
+    }
+}
+
+async function onSubmit() {
+    if (isEditing.value) return handleUpdateCommentInline()
+    return createNewComment()
+}
+
+/* ===== misc ===== */
 function bustUrl(u, ver) {
     if (!u) return u
     const sep = u.includes('?') ? '&' : '?'
@@ -1046,7 +1094,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* ===== Reset nhỏ & token màu ===== */
 :where(.comment) {
     --bg-surface: #fff;
     --bg-subtle: #f0f4f7;
@@ -1063,77 +1110,134 @@ onBeforeUnmount(() => {
     --red-2: #ffccc7;
 }
 
-/* ===== Layout tổng ===== */
+/* Layout tổng */
 .comment {
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-height: 0
+    min-height: 0;
 }
 
-/* ===== Sticky header (mentions + pinned) ===== */
+/* Sticky header */
 .sticky-mentions {
     position: sticky;
     top: 0;
     z-index: 9;
     background: var(--bg-surface);
-    border-bottom: 1px solid #eef1f3
+    border-bottom: 1px solid #eef1f3;
+    backdrop-filter: saturate(1.2) blur(0px);
 }
 
 .sticky-head {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto;
     align-items: center;
-    padding: 6px 8px
+    gap: 8px;
+    padding: 8px 12px;
+    padding-left: 0;
+    border-bottom: 1px solid #eef1f3;
+    background: var(--bg-surface);
+}
+
+.pinned-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    line-height: 1;
+    transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .04s ease;
+}
+
+.pinned-toggle:hover:not(:disabled) {
+    background: #f6f9ff;
+    border-color: #e6efff;
+}
+
+.pinned-toggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(45, 140, 240, .2);
+}
+
+.pinned-toggle:disabled {
+    cursor: default;
+    opacity: .6;
 }
 
 .sticky-title {
     font-weight: 600;
-    color: #222
+    color: #1f2937;
 }
 
-.sticky-more {
-    color: #888;
-    margin-left: 6px;
-    font-size: 12px
+.sticky-count {
+    color: #64748b;
+    font-size: 12px;
 }
 
-.sticky-actions .ant-btn {
-    padding: 0 6px
+.arrow {
+    font-size: 12px;
+    opacity: .9;
+    transform: translateY(1px);
 }
 
-/* ===== List comments (scroll) ===== */
+.sticky-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.approver-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 8px !important;
+    height: 28px;
+    border-radius: 6px;
+}
+
+.approver-btn:hover {
+    background: #f6f9ff;
+}
+
+.approver-text {
+    margin-left: 4px;
+}
+
+/* List comments */
 .list-comment {
     flex: 1 1 auto;
     min-height: 0;
     overflow: auto;
     padding: 8px 10px 0;
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, .35) transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
 }
 
 .list-comment::-webkit-scrollbar {
-    width: 6px
+    width: 6px;
 }
 
 .list-comment::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, .28);
-    border-radius: 8px
+    background: rgba(0, 0, 0, 0.28);
+    border-radius: 8px;
 }
 
-/* ===== Telegram-like bubbles ===== */
+/* Bubbles */
 .tg-row {
     display: flex;
     gap: 8px;
-    margin: 8px 0
+    margin: 8px 0;
 }
 
 .tg-row.me {
-    justify-content: flex-end
+    justify-content: flex-end;
 }
 
 .tg-row .avatar {
-    align-self: flex-end
+    align-self: flex-end;
 }
 
 .bubble {
@@ -1143,73 +1247,63 @@ onBeforeUnmount(() => {
     background: var(--bg-surface);
     border: 1px solid #e6ebf0;
     border-radius: 12px 12px 12px 4px;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, .03)
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
 }
 
 .bubble.me {
     background: #eaf2ff;
     border-color: #cfe0ff;
-    border-radius: 12px 12px 4px 12px
+    border-radius: 12px 12px 4px 12px;
 }
 
 .bubble .actions {
     position: absolute;
     right: 4px;
-    top: 4px
+    top: 4px;
 }
 
 .bubble .actions :deep(.ant-btn) {
-    padding: 0 6px
+    padding: 0 6px;
 }
 
 .bubble .author {
     font-size: 12px;
     color: var(--txt-muted);
-    margin-bottom: 2px
+    margin-bottom: 2px;
 }
 
 .bubble .text {
     white-space: pre-wrap;
     line-height: 1.38;
-    color: var(--txt-main)
+    color: var(--txt-main);
 }
 
 .bubble .meta {
     font-size: 11px;
     color: var(--txt-faint);
     margin-top: 6px;
-    text-align: right
+    text-align: right;
 }
 
-.pinned-pill {
-    background: #fff6cc;
-    border-color: #ffd666;
-}
-
-.pinned-pill:hover {
-    background: #fff6cc;
-    border-color: #ffd666;
-}
-
-/* ===== Attachments trong bubble ===== */
+/* Attachments */
 .tg-attachments {
     margin-top: 6px;
     display: grid;
-    grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
-    gap: 8px
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
 }
 
 .tg-att-item {
     background: #fff;
     border: 1px solid var(--bd-soft);
     border-radius: 10px;
-    padding: 6px
+    padding: 6px;
 }
 
 .cm-att__thumb {
     width: 100%;
     object-fit: cover;
-    border-radius: 6px
+    border-radius: 6px;
 }
 
 .cm-att__icon {
@@ -1218,17 +1312,17 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: center;
     background: #fafafa;
-    border-radius: 6px
+    border-radius: 6px;
 }
 
 .cm-att__icon-i {
     font-size: 22px;
-    opacity: .9
+    opacity: 0.9;
 }
 
 .tg-file-link {
     font-size: 13px;
-    color: #1677ff
+    color: #1677ff;
 }
 
 .cm-att__line {
@@ -1236,20 +1330,20 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: space-between;
     margin-top: 6px;
-    gap: 8px
+    gap: 8px;
 }
 
 .pin-btn {
     font-size: 16px;
     cursor: pointer;
-    transition: color .2s
+    transition: color 0.2s;
 }
 
 .pin-btn:hover {
-    color: #faad14
+    color: #faad14;
 }
 
-/* ===== Footer composer ===== */
+/* Footer composer */
 .footer-fixed {
     position: sticky;
     bottom: 0;
@@ -1257,17 +1351,17 @@ onBeforeUnmount(() => {
     background: var(--bg-surface);
     border-top: 1px solid #f0f0f0;
     padding-top: 10px;
-    box-shadow: 0 -4px 10px rgba(0, 0, 0, .03)
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.03);
 }
 
 .load-more {
     text-align: center;
-    margin-bottom: 8px
+    margin-bottom: 8px;
 }
 
 .tg-footer {
     background: var(--bg-subtle);
-    padding: 8px 12px
+    padding: 8px 12px;
 }
 
 .tg-composer {
@@ -1279,32 +1373,32 @@ onBeforeUnmount(() => {
     border: 1px solid #dfe6eb;
     border-radius: 24px;
     padding: 6px 44px;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, .03)
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
 }
 
 .tg-input {
-    flex: 1
+    flex: 1;
 }
 
 .tg-input .ant-input {
-    padding: 6px 0 !important
+    padding: 6px 0 !important;
 }
 
 .tg-input textarea.ant-input {
     box-shadow: none !important;
     resize: none;
-    background: transparent
+    background: transparent;
 }
 
 .tg-attach-btn, .tg-send-btn {
     position: absolute;
     top: 50%;
-    transform: translateY(-50%)
+    transform: translateY(-50%);
 }
 
 .tg-attach-btn {
     left: 6px;
-    color: #6b7a8c
+    color: #6b7a8c;
 }
 
 .tg-send-btn {
@@ -1313,12 +1407,12 @@ onBeforeUnmount(() => {
     height: 32px;
     border: none;
     background: #d7e3ff;
-    color: #6b7a8c
+    color: #6b7a8c;
 }
 
 .tg-send-btn.is-active {
     background: var(--blue-3);
-    color: #fff
+    color: #fff;
 }
 
 /* file chip dưới composer */
@@ -1326,7 +1420,7 @@ onBeforeUnmount(() => {
     display: flex;
     gap: 6px;
     padding: 6px 4px 0;
-    flex-wrap: wrap
+    flex-wrap: wrap;
 }
 
 .tg-file-pill {
@@ -1337,42 +1431,20 @@ onBeforeUnmount(() => {
     border: 1px solid #e2e8ef;
     border-radius: 16px;
     padding: 4px 8px;
-    font-size: 12px
+    font-size: 12px;
 }
 
 .tg-file-pill .x {
     cursor: pointer;
     margin-left: 4px;
-    opacity: .7
+    opacity: 0.7;
 }
 
-/* ===== Mentions pop ===== */
-.mention-row {
-    margin-top: 8px;
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
-    flex-wrap: wrap
-}
+/* Chips (approver) – dùng trong Drawer */
 
-.mention-pop {
-    display: grid;
-    gap: 8px;
-    min-width: 320px
+.chip-card {
+    position: relative;
 }
-
-.mention-pop .row {
-    display: flex;
-    align-items: center;
-    gap: 8px
-}
-
-.mention-pop .lbl {
-    width: 64px;
-    color: #666
-}
-
-/* ===== Chips (approver) + trạng thái trên 1 dòng ===== */
 .chip-card {
     display: flex;
     align-items: center;
@@ -1383,47 +1455,43 @@ onBeforeUnmount(() => {
     padding: 4px 10px;
     font-size: 13px;
     line-height: 1.4;
-    transition: box-shadow .15s, transform .05s
+    transition: box-shadow 0.15s, transform 0.05s;
 }
 
 .chip-card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, .06)
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .chip-card.is-approved {
     background: var(--green-1);
-    border-color: var(--green-2)
+    border-color: var(--green-2);
 }
 
 .chip-card.is-pending {
     background: #e6f4ff;
-    border-color: #91caff
+    border-color: #91caff;
 }
 
 .chip-card.is-rejected {
     background: var(--red-1);
-    border-color: var(--red-2)
+    border-color: var(--red-2);
 }
 
 .chip-line {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 6px
+    gap: 6px;
 }
 
 .chip-name {
     font-weight: 600;
-    color: #2b2f36
-}
-
-.state-text {
-    font-weight: 600
+    color: #2b2f36;
 }
 
 .chip-time {
     color: #777;
-    font-size: 12px
+    font-size: 12px;
 }
 
 .role-dot, .dot {
@@ -1431,39 +1499,56 @@ onBeforeUnmount(() => {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    transform: translateY(1px)
+    transform: translateY(1px);
 }
 
 .role-dot.ok, .dot.ok {
-    background: #52c41a
+    background: #52c41a;
 }
 
 .role-dot.proc, .dot.proc {
-    background: #1677ff
+    background: #1677ff;
 }
 
 .role-dot.err, .dot.err {
-    background: #ff4d4f
+    background: #ff4d4f;
 }
 
+/* đưa nút × ra góc phải trên */
 .chip-close {
+    position: absolute !important;
+    top: 6px;
+    right: 8px;
+    padding: 0 !important;
+    width: 20px;
+    height: 20px;
+    line-height: 18px;
+    text-align: center;
+    border-radius: 50%;
     font-size: 14px;
-    color: #9aa4b2;
-    line-height: 1;
-    padding: 0 4px;
-    cursor: pointer;
-    background: transparent
+    color: #9ca3af;
+    transition: all 0.15s ease;
 }
 
 .chip-close:hover {
-    color: #111827
+    background: rgba(0, 0, 0, 0.04);
+    color: #111827;
 }
 
-/* ===== Pinned files → pill giống chip ===== */
+.chip-close:active {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* điều chỉnh khoảng padding phần nội dung để không bị nút che */
+.chip-body {
+    padding-right: 28px;
+}
+
+/* Pinned files → pill */
 .pinned-files {
     border-radius: 12px;
     margin: 8px 0;
-    padding: 0
+    padding: 0;
 }
 
 .pinned-pill {
@@ -1476,13 +1561,13 @@ onBeforeUnmount(() => {
     border: 1px solid var(--bd-soft);
     background: #fff6cc;
     border-radius: 999px;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, .03);
-    transition: box-shadow .16s, transform .04s, border-color .16s
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
+    transition: box-shadow 0.16s, transform 0.04s, border-color 0.16s;
 }
 
 .pinned-pill:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
-    border-color: #cfd8e3
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border-color: #cfd8e3;
 }
 
 .pill-link {
@@ -1491,12 +1576,12 @@ onBeforeUnmount(() => {
     gap: 8px;
     text-decoration: none;
     color: #1f75ff;
-    min-width: 0
+    min-width: 0;
 }
 
 .pill-icon {
     font-size: 14px;
-    opacity: .9
+    opacity: 0.9;
 }
 
 .pill-text {
@@ -1505,7 +1590,7 @@ onBeforeUnmount(() => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    vertical-align: bottom
+    vertical-align: bottom;
 }
 
 .pill-x {
@@ -1516,12 +1601,12 @@ onBeforeUnmount(() => {
     line-height: 1;
     padding: 0 4px;
     cursor: pointer;
-    border-radius: 6px
+    border-radius: 6px;
 }
 
 .pill-x:hover {
     color: #ff4d4f;
-    background: #fff1f0
+    background: #fff1f0;
 }
 
 .more-pill {
@@ -1529,39 +1614,212 @@ onBeforeUnmount(() => {
     padding: 2px 8px !important;
     border: 1px solid var(--blue-2);
     background: var(--blue-1);
-    color: var(--blue-3)
+    color: var(--blue-3);
+    cursor: pointer;
 }
 
-.more-pill.more-pill--file {
-    border-radius: 999px !important;
-    padding: 2px 8px !important;
-    border: 1px solid var(--blue-2);
-    background: var(--blue-1);
-    color: var(--blue-3)
+/* ==== Drawer người duyệt – skin hiện đại, nhịp độ thoáng ==== */
+.approver-drawer :deep(.ant-drawer-body) {
+    padding: 12px 12px 16px;
+    background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
 }
 
-.bubble {
-    position: relative;
-    padding: 8px 28px 6px 10px;
+.drawer-toolbar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
-.bubble.me {
-    padding: 8px 28px 6px 10px;
+.drawer-search :deep(.ant-input-affix-wrapper) {
+    border-radius: 10px;
 }
 
-/* ===== Responsive ===== */
+.drawer-stats {
+    display: inline-flex;
+    gap: 10px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.drawer-stats .stat b {
+    color: #111827;
+}
+
+.drawer-stats .stat-pending b {
+    color: #2563eb;
+}
+
+/* proc */
+.drawer-stats .stat-ok b {
+    color: #16a34a;
+}
+
+/* ok */
+.drawer-stats .stat-err b {
+    color: #dc2626;
+}
+
+/* err */
+
+.drawer-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: #6b7280;
+    padding: 8px 10px;
+    border: 1px dashed #e5e7eb;
+    border-radius: 10px;
+    background: #fafcff;
+    margin-bottom: 10px;
+}
+
+.drawer-legend .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    transform: translateY(1px);
+}
+
+.drawer-legend .dot.ok {
+    background: #52c41a;
+}
+
+.drawer-legend .dot.proc {
+    background: #1677ff;
+}
+
+.drawer-legend .dot.err {
+    background: #ff4d4f;
+}
+
+.drawer-legend .sep {
+    opacity: .6;
+}
+
+.drawer-empty {
+    text-align: center;
+    color: #6b7280;
+    padding: 28px 0 18px;
+}
+
+.drawer-empty .empty-icon {
+    font-size: 28px;
+    margin-bottom: 6px;
+}
+
+.drawer-empty .hint {
+    font-size: 12px;
+    opacity: .8;
+}
+
+/* Danh sách + thẻ người duyệt */
+.drawer-list {
+    display: grid;
+    gap: 10px;
+}
+
+.drawer-chip .chip-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid var(--bd-soft);
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03),
+    0 0 0 1px rgba(16, 24, 40, 0.02) inset;
+    transition: box-shadow .16s ease, transform .04s ease, border-color .16s ease, background .16s ease;
+}
+
+.drawer-chip .chip-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(17, 24, 39, 0.06);
+    border-color: #e6efff;
+    background: #f9fbff;
+}
+
+/* Card: 2 cột avatar | nội dung */
+.drawer-chip .chip-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    align-items: start;
+}
+
+/* Avatar cột trái */
+.chip-avatar { width: 28px; height: 28px; }
+
+/* Thân: 3 hàng */
+.chip-body {
+    min-width: 0;
+    display: grid;
+    grid-template-rows: auto auto auto;
+    gap: 6px;
+}
+
+/* Dòng 1: tên 1 dòng, ellipsis */
+.name-row { min-width: 0; }
+.chip-name {
+    font-weight: 700;
+    color: #111827;
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Dòng 2: trạng thái + thời gian trên một dòng */
+.meta-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #4b5563;
+    font-size: 12px;
+    min-width: 0;
+}
+.meta-row .chip-time {
+    white-space: nowrap; /* tránh xuống hàng giữa giờ & ngày */
+}
+.meta-sep { opacity: .55; }
+
+/* Dòng 3: actions cùng một dòng, tự wrap khi thiếu chỗ */
+.actions-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;         /* nếu quá hẹp thì các nút tự xuống hàng */
+}
+
+/* Giữ màu dot như trước */
+.dot.ok   { background: #52c41a; }
+.dot.proc { background: #1677ff; }
+.dot.err  { background: #ff4d4f; }
+
+/* Nền theo trạng thái (đã có ở bạn), giữ lại */
+.drawer-chip .chip-card.is-approved { background: #f6ffed; border-color: #b7eb8f; }
+.drawer-chip .chip-card.is-pending  { background: #eef6ff; border-color: #cfe3ff; }
+.drawer-chip .chip-card.is-rejected { background: #fff2f0; border-color: #ffccc7; }
+
+
+
+/* Responsive */
 @media (max-width: 768px) {
     .bubble {
-        max-width: 88%
+        max-width: 88%;
     }
 
     .chip-card {
-        max-width: 100%
+        max-width: 100%;
     }
 
     .pill-text {
-        max-width: 140px
+        max-width: 140px;
     }
 }
-
 </style>

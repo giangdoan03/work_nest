@@ -99,6 +99,12 @@ export const adoptTaskFileFromPathAPI = (taskId, payload) => {
 }
 
 
+export const getMyPendingFilesAPI = (params = {}) =>
+    instance.get('/document-approvals/inbox-files', { params })
+
+export const getMyResolvedFilesAPI = (params = {}) =>
+    instance.get('/document-approvals/resolved-files-by-me', { params })
+
 
 
 
@@ -129,4 +135,7 @@ export default {
     pinTaskFileAPI,
     unpinTaskFileAPI,
     adoptTaskFileFromPathAPI,
+
+    getMyPendingFilesAPI,
+    getMyResolvedFilesAPI
 }
