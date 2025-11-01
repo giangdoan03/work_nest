@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PDF Upload & Lightweight Editor (HTML/CSS/JS)</title>
+    <!-- pdf.js for rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- pdf-lib for editing/saving (global PDFLib) -->
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --muted: #1e293b;
+        --ink: #e2e8f0;
+        --accent: #22d3ee;
+        --line: #334155;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, Segoe UI,
+          Roboto, Arial;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: linear-gradient(
+          180deg,
+          rgba(15, 23, 42, 0.98),
+          rgba(15, 23, 42, 0.92)
+        );
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--line);
+      }
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+      h1 {
+        font-size: 18px;
+        margin: 0 0 6px;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .card {
+        background: var(--muted);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px;
+      }
+      label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px dashed var(--line);
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      input[type="file"] {
+        display: none;
+      }
+      button {
+        appearance: none;
+        border: 1px solid var(--line);
+        background: #0b1220;
+        color: var(--ink);
+        padding: 8px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      button.primary {
+        border-color: transparent;
+        background: linear-gradient(90deg, #06b6d4, #22d3ee);
+        color: #0b1220;
+        font-weight: 700;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .tools {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .tools input[type="text"],
+      .tools input[type="number"] {
+        background: #0b1220;
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px;
+      }
+      .canvasWrap {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 12px;
+        margin: 16px 0;
+      }
+      .right {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .hint {
+        opacity: 0.8;
+        font-size: 12px;
+      }
+      canvas {
+        width: 100%;
+        height: auto;
+        max-width: 900px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+      }
+      .list {
+        max-height: 360px;
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+      .listItem {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px;
+        border-bottom: 1px dashed var(--line);
+      }
+      .badge {
+        font-size: 12px;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: #0b1220;
+        border: 1px solid var(--line);
+      }
+      .radio {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+      .radio input {
+        margin: 0;
+      }
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 12px 0;
+      }
+      a.link {
+        color: var(--accent);
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <h1>PDF Upload & Lightweight Editor</h1>
+        <div class="row">
+          <label>
+            <input id="pdfInput" type="file" accept="application/pdf" />
+            <span>📄 Chọn PDF…</span>
+          </label>
+          <label>
+            <input id="imgInput" type="file" accept="image/*" />
+            <span>🖼️ Chọn ảnh để chèn…</span>
+          </label>
+          <div class="radio">
+            <input
+              type="radio"
+              name="tool"
+              id="toolText"
+              value="text"
+              checked
+            />
+            <label for="toolText">Chèn chữ</label>
+          </div>
+          <div class="radio">
+            <input type="radio" name="tool" id="toolImage" value="image" />
+            <label for="toolImage">Chèn ảnh</label>
+          </div>
+          <div class="tools">
+            <input
+              id="textValue"
+              type="text"
+              placeholder="Nội dung chữ…"
+              style="width: 260px"
+            />
+            <input
+              id="fontSize"
+              type="number"
+              min="6"
+              max="96"
+              value="18"
+              title="Cỡ chữ"
+            />
+            <button id="undoBtn" title="Hoàn tác">↩️ Hoàn tác</button>
+            <button id="clearBtn" title="Xoá tất cả">🧹 Xoá tất cả</button>
+          </div>
+          <div class="row">
+            <button id="exportBtn" class="primary" disabled>
+              Tải PDF đã chỉnh sửa
+            </button>
+          </div>
+          <div class="row">
+            <label class="radio"
+              >🔍 Zoom
+              <input
+                id="zoomRange"
+                type="range"
+                min="50"
+                max="200"
+                value="100"
+                style="width: 180px; margin-left: 8px"
+              />
+            </label>
+            <button id="fitBtn">Fit width</button>
+            <span id="zoomLabel" class="hint">100%</span>
+          </div>
+        </div>
+        <div class="hint">
+          Mẹo: bấm vào vị trí bất kỳ trên trang để chèn chữ/ảnh. Kéo thả ảnh đã
+          chọn vào vùng canvas cũng được.
+        </div>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <div class="canvasWrap">
+        <div>
+          <canvas id="pdfCanvas"></canvas>
+        </div>
+        <div class="right">
+          <div class="card">
+            <strong>Chú thích đã thêm</strong>
+            <div class="list" id="annoList"></div>
+          </div>
+          <div class="card">
+            <strong>Thông tin</strong>
+            <div class="hint" id="infoBox">Chưa có PDF.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span class="hint"
+          >⚠️ Giới hạn: script này <b>không sửa trực tiếp text gốc</b> trong
+          PDF. Thay vào đó chèn lớp chữ/ảnh mới lên trên (overlay). Muốn chỉnh
+          sửa text gốc cần pipeline phức tạp hơn.</span
+        >
+        <a class="link" href="#" id="sampleLink">Dùng thử với sample PDF</a>
+      </div>
+    </div>
+
+    <script>
+      // --- Setup pdf.js worker from CDN
+      if (window["pdfjsLib"]) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      }
+
+      // pdf-lib (global)
+      const { PDFDocument, rgb, StandardFonts } = PDFLib;
+
+      // --- DOM refs
+      const $ = (id) => document.getElementById(id);
+      const pdfInput = $("pdfInput");
+      const imgInput = $("imgInput");
+      const canvas = $("pdfCanvas");
+      const ctx = canvas.getContext("2d");
+      const annoList = $("annoList");
+      const infoBox = $("infoBox");
+      const exportBtn = $("exportBtn");
+      const undoBtn = $("undoBtn");
+      const clearBtn = $("clearBtn");
+      const textValue = $("textValue");
+      const fontSize = $("fontSize");
+      const sampleLink = $("sampleLink");
+      const zoomRange = $("zoomRange");
+      const fitBtn = $("fitBtn");
+      const zoomLabel = $("zoomLabel");
+
+      // --- State
+      let pdfDoc = null; // pdf.js instance
+      let pdfBytesOriginal = null; // Uint8Array preserved ONLY for export
+      let annotations = []; // [{type, pdfX, pdfY, ...}]
+      let droppedImageDataUrl = null; // for image tool
+
+      // viewport / size refs
+      let basePdfW = 0,
+        basePdfH = 0; // size of page at scale=1 (points)
+      let bufferScale = 1; // points -> canvas buffer pixels
+      let currentZoom = 100; // UI percent
+      const MAX_CSS_WIDTH = 900; // working width
+
+      function showInfo(msg) {
+        infoBox.innerHTML = msg;
+      }
+
+      function addAnnoItem(anno, idx) {
+        const div = document.createElement("div");
+        div.className = "listItem";
+        const label =
+          anno.type === "text"
+            ? `🅣 "${anno.text}" (pdfX:${Math.round(
+                anno.pdfX
+              )}, pdfY:${Math.round(anno.pdfY)})`
+            : `🖼️ ảnh (pdfX:${Math.round(anno.pdfX)}, pdfY:${Math.round(
+                anno.pdfY
+              )}, ${Math.round(anno.pdfW)}x${Math.round(anno.pdfH)})`;
+        div.innerHTML = `<span class="badge">#${
+          idx + 1
+        }</span> <span>${label}</span>`;
+        annoList.appendChild(div);
+      }
+      function rerenderAnnoList() {
+        annoList.innerHTML = "";
+        annotations.forEach(addAnnoItem);
+      }
+
+      // --- Render page (fit width + zoom + DPR)
+      async function renderPage() {
+        const page = await pdfDoc.getPage(1);
+        const baseViewport = page.getViewport({ scale: 1 });
+        basePdfW = baseViewport.width;
+        basePdfH = baseViewport.height;
+
+        const containerWidth =
+          canvas.parentElement.getBoundingClientRect().width || MAX_CSS_WIDTH;
+        const targetCssWidthFit = Math.min(containerWidth, MAX_CSS_WIDTH);
+        const cssScale =
+          (targetCssWidthFit * (currentZoom / 100)) / baseViewport.width;
+        const dpr = window.devicePixelRatio || 1;
+        bufferScale = cssScale * dpr;
+
+        const viewport = page.getViewport({ scale: bufferScale });
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+        canvas.style.width = `${Math.round(baseViewport.width * cssScale)}px`;
+        canvas.style.height = `${Math.round(baseViewport.height * cssScale)}px`;
+
+        await page.render({ canvasContext: ctx, viewport }).promise;
+
+        // redraw previews from PDF coords
+        for (const a of annotations) {
+          const xBuf = a.pdfX * bufferScale;
+          const yBuf = (basePdfH - a.pdfY) * bufferScale;
+          if (a.type === "text") {
+            ctx.save();
+            ctx.fillStyle = "rgba(34,211,238,0.85)";
+            ctx.font = `${(a.sizePdf || 18) * bufferScale}px sans-serif`;
+            ctx.fillText(a.text, xBuf, yBuf);
+            ctx.restore();
+          } else {
+            await new Promise((resolve) => {
+              const img = new Image();
+              img.onload = () => {
+                ctx.drawImage(
+                  img,
+                  xBuf,
+                  yBuf - a.pdfH * bufferScale,
+                  a.pdfW * bufferScale,
+                  a.pdfH * bufferScale
+                );
+                resolve();
+              };
+              img.src = a.src;
+            });
+          }
+        }
+      }
+
+      // --- Load PDF (pass a FRESH copy to pdf.js, keep a pristine copy for export)
+      async function loadPdfFromBytes(bytes) {
+        const loadingTask = pdfjsLib.getDocument({ data: bytes });
+        pdfDoc = await loadingTask.promise;
+        currentZoom = 100;
+        zoomRange.value = "100";
+        zoomLabel.textContent = "100%";
+        await renderPage();
+        exportBtn.disabled = false;
+        showInfo(
+          `Trang: ${pdfDoc.numPages}. Bấm lên canvas để chèn đối tượng.`
+        );
+      }
+
+      // === Events ===
+      pdfInput.addEventListener("change", async (e) => {
+        if (!e.target.files?.length) return;
+        const file = e.target.files[0];
+        const ab = await file.arrayBuffer();
+        const bytes = new Uint8Array(ab);
+        // Keep one pristine copy for export, and pass a separate copy to pdf.js
+        pdfBytesOriginal = bytes.slice();
+        annotations = [];
+        rerenderAnnoList();
+        await loadPdfFromBytes(bytes.slice());
+      });
+
+      // Drag & drop image to canvas (prepare image src)
+      canvas.addEventListener("dragover", (e) => e.preventDefault());
+      canvas.addEventListener("drop", async (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files?.[0];
+        if (file && file.type.startsWith("image/")) {
+          const url = URL.createObjectURL(file);
+          const img = new Image();
+          img.onload = () => {
+            droppedImageDataUrl = url;
+            showInfo(
+              'Ảnh đã sẵn sàng. Chọn công cụ "Chèn ảnh" và bấm lên canvas để đặt.'
+            );
+          };
+          img.src = url;
+        }
+      });
+
+      imgInput.addEventListener("change", async (e) => {
+        if (!e.target.files?.length) return;
+        const file = e.target.files[0];
+        if (!file.type.startsWith("image/")) return;
+        droppedImageDataUrl = URL.createObjectURL(file);
+        showInfo(
+          'Ảnh đã sẵn sàng. Chọn công cụ "Chèn ảnh" và bấm lên canvas để đặt.'
+        );
+      });
+
+      function currentTool() {
+        return document.querySelector('input[name="tool"]:checked').value;
+      }
+
+      // place annotation by click (store in PDF coordinates)
+      canvas.addEventListener("click", async (e) => {
+        if (!pdfDoc) return;
+        const rect = canvas.getBoundingClientRect();
+        const xBuf = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const yBuf = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+        // buffer px -> PDF points
+        const pdfX = xBuf / bufferScale;
+        const pdfY = basePdfH - yBuf / bufferScale;
+
+        const tool = currentTool();
+        if (tool === "text") {
+          const text = textValue.value?.trim();
+          if (!text) {
+            showInfo("Nhập nội dung chữ trước.");
+            return;
+          }
+          const sizePdf = parseInt(fontSize.value || 18, 10); // PDF points
+
+          // preview
+          ctx.save();
+          ctx.fillStyle = "rgba(34,211,238,0.85)";
+          ctx.font = `${sizePdf * bufferScale}px sans-serif`;
+          ctx.fillText(
+            text,
+            pdfX * bufferScale,
+            (basePdfH - pdfY) * bufferScale
+          );
+          ctx.restore();
+
+          annotations.push({ type: "text", pdfX, pdfY, text, sizePdf });
+          rerenderAnnoList();
+        } else if (tool === "image") {
+          if (!droppedImageDataUrl) {
+            showInfo("Hãy chọn/kéo thả ảnh trước.");
+            return;
+          }
+          const img = new Image();
+          img.onload = () => {
+            // Kích thước ảnh theo % chiều rộng trang (giữ như cũ)
+            const targetPdfW = basePdfW * 0.25; // 25% bề ngang trang
+            const scale = targetPdfW / img.naturalWidth;
+            const pdfW = targetPdfW;
+            const pdfH = img.naturalHeight * scale;
+
+            // === NEW: canh tâm ảnh vào đúng điểm click (pdfX, pdfY là điểm click, hệ toạ độ PDF gốc dưới-trái)
+            let pdfXPlace = pdfX - pdfW / 2;
+            let pdfYPlace = pdfY - pdfH / 2;
+
+            // (tuỳ chọn) chặn tràn mép trang
+            pdfXPlace = Math.max(0, Math.min(pdfXPlace, basePdfW - pdfW));
+            pdfYPlace = Math.max(0, Math.min(pdfYPlace, basePdfH - pdfH));
+
+            // preview (vẽ theo toạ độ buffer; drawImage nhận top-left, nên y phải trừ chiều cao)
+            ctx.drawImage(
+              img,
+              pdfXPlace * bufferScale,
+              (basePdfH - pdfYPlace) * bufferScale - pdfH * bufferScale,
+              pdfW * bufferScale,
+              pdfH * bufferScale
+            );
+
+            // Lưu annotation với toạ độ góc dưới-trái đã dịch
+            annotations.push({
+              type: "image",
+              pdfX: pdfXPlace,
+              pdfY: pdfYPlace,
+              pdfW,
+              pdfH,
+              src: droppedImageDataUrl,
+            });
+            rerenderAnnoList();
+          };
+          img.src = droppedImageDataUrl;
+        }
+      });
+
+      undoBtn.addEventListener("click", async () => {
+        if (!pdfDoc) return;
+        annotations.pop();
+        await renderPage();
+        rerenderAnnoList();
+      });
+
+      clearBtn.addEventListener("click", async () => {
+        if (!pdfDoc) return;
+        annotations = [];
+        await renderPage();
+        rerenderAnnoList();
+      });
+
+      // zoom controls
+      zoomRange.addEventListener("input", async (e) => {
+        currentZoom = parseInt(e.target.value, 10);
+        zoomLabel.textContent = currentZoom + "%";
+        if (pdfDoc) await renderPage();
+      });
+      fitBtn.addEventListener("click", async () => {
+        currentZoom = 100;
+        zoomRange.value = "100";
+        zoomLabel.textContent = "100%";
+        if (pdfDoc) await renderPage();
+      });
+      window.addEventListener("resize", async () => {
+        if (pdfDoc) await renderPage();
+      });
+
+      // export using pure PDF coordinates (accurate regardless of zoom)
+      exportBtn.addEventListener("click", async () => {
+        if (!pdfBytesOriginal) return;
+        const pdfDocOut = await PDFDocument.load(pdfBytesOriginal); // preserved, not detached
+        const page = pdfDocOut.getPage(0); // demo: first page
+        const font = await pdfDocOut.embedFont(StandardFonts.Helvetica);
+
+        for (const a of annotations) {
+          if (a.type === "text") {
+            page.drawText(a.text, {
+              x: a.pdfX,
+              y: a.pdfY,
+              size: a.sizePdf,
+              font,
+              color: rgb(0, 0.1, 0.2),
+            });
+          } else {
+            const bytes = await fetch(a.src).then((r) => r.arrayBuffer());
+            let imgEmbed;
+            try {
+              imgEmbed = await pdfDocOut.embedPng(bytes);
+            } catch {
+              imgEmbed = await pdfDocOut.embedJpg(bytes);
+            }
+            page.drawImage(imgEmbed, {
+              x: a.pdfX,
+              y: a.pdfY - a.pdfH,
+              width: a.pdfW,
+              height: a.pdfH,
+            });
+          }
+        }
+
+        const outBytes = await pdfDocOut.save();
+        const blob = new Blob([outBytes], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "edited.pdf";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // sample
+      sampleLink.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const ab = await fetch(
+          "https://unec.edu.az/application/uploads/2014/12/pdf-sample.pdf"
+        ).then((r) => r.arrayBuffer());
+        const bytes = new Uint8Array(ab);
+        pdfBytesOriginal = bytes.slice();
+        annotations = [];
+        rerenderAnnoList();
+        await loadPdfFromBytes(bytes.slice());
+      });
+    </script>
+  </body>
+</html>
