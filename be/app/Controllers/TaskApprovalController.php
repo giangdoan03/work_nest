@@ -167,15 +167,21 @@ class TaskApprovalController extends ResourceController
     /** Kiểm tra quyền: user có trong roster và còn pending */
     private function canUserActOnRoster(array $roster, int $userId): array
     {
+        $foundIdx = null;
         foreach ($roster as $idx => $r) {
             if ((int)$r['user_id'] === $userId) {
+                $foundIdx = $idx;
                 $st = (string)($r['status'] ?? 'pending');
                 if ($st !== 'pending') return [false, $idx, 'Bạn đã xử lý rồi'];
                 return [true, $idx, null];
             }
         }
+        // Có người khác đang pending?
+        $someonePending = array_filter($roster, fn($r) => ($r['status'] ?? 'pending') === 'pending');
+        if ($someonePending) return [false, null, 'Đây là lượt của người khác'];
         return [false, null, 'Bạn không nằm trong danh sách duyệt/ký'];
     }
+
 
     private function computeProgressByApprovedCount(int $approvedCount, int $total, string $taskApprovalStatus): int
     {

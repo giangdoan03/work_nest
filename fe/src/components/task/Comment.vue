@@ -338,14 +338,27 @@
 
                             <!-- Dòng 3: actions -->
                             <div class="actions-row">
-                                <a-button size="small" type="primary" @click="handleApproveAction(m, 'approved')">
-                                    <template #icon><CheckOutlined /></template>Đồng ý
-                                </a-button>
-                                <a-button size="small" danger @click="handleApproveAction(m, 'rejected')">
-                                    <template #icon><CloseOutlined /></template>Từ chối
-                                </a-button>
+                                <!-- Chỉ hiện nút cho đúng người & đúng trạng thái -->
+                                <template v-if="canActOnChip(m)">
+                                    <a-button size="small" type="primary" @click="handleApproveAction(m, 'approved')">
+                                        <template #icon><CheckOutlined /></template>Đồng ý
+                                    </a-button>
+                                    <a-button size="small" danger @click="handleApproveAction(m, 'rejected')">
+                                        <template #icon><CloseOutlined /></template>Từ chối
+                                    </a-button>
+                                </template>
+
+                                <!-- Người khác nhìn thấy chip thôi, không có nút hành động -->
+                                <template v-else>
+                                    <a-tag v-if="m.status==='pending' || m.status==='processing'" color="blue" style="border-radius:12px">
+                                        Lượt của @{{ m.name }}
+                                    </a-tag>
+                                </template>
+
+                                <!-- nút xóa chip vẫn cho chủ topic/admin; nếu muốn cấm luôn thì ẩn đi -->
                                 <a-button size="small" type="text" class="chip-close" @click="removeMention(m.user_id)">×</a-button>
                             </div>
+
                         </div>
                     </div>
 
@@ -692,17 +705,24 @@ function displayHrefOf(f = {}) {
 
 /* ===== Roster actions (Drawer) ===== */
 async function handleApproveAction(m, status) {
+    if (!canActOnChip(m)) {
+        message.warning('Đây là lượt của người khác');
+        return;
+    }
     try {
-        if (status === 'approved') await approveRosterAPI(taskId.value, {note: null})
-        else await rejectRosterAPI(taskId.value, {note: null})
-        await syncRosterFromServer()
-        message.success(status === 'approved' ? `${m.name} đã ${m.role === 'sign' ? 'ký' : 'duyệt'}` : `${m.name} đã từ chối`)
+        if (status === 'approved') await approveRosterAPI(taskId.value, { note: null });
+        else await rejectRosterAPI(taskId.value, { note: null });
+        await syncRosterFromServer();
+        message.success(
+            status === 'approved'
+                ? `${m.name} đã ${m.role === 'sign' ? 'ký' : 'duyệt'}`
+                : `${m.name} đã từ chối`
+        );
     } catch (e) {
-        console.error(e)
-        message.error('Xử lý không thành công')
+        console.error(e);
+        message.error('Xử lý không thành công');
     }
 }
-
 /* users & mentions add/remove */
 const getUserById = (id) => listUser.value.find((u) => u.id === id) || {}
 const userOptions = computed(() => (listUser.value || []).map((u) => ({value: String(u.id), label: u.name})))
@@ -871,12 +891,12 @@ async function createNewComment({keepMentions = false} = {}) {
         const form = new FormData()
         form.append('user_id', String(store.currentUser.id))
         form.append('content', inputValue.value.trim())
-        const mentions = mergedMentions.map((m) => ({
+        const mentions = mergedMentions.map(m => ({
             user_id: Number(m.user_id),
             name: m.name,
             role: m.role,
-            status: m.status || 'processing',
-        }))
+            status: m.status || 'pending', // thay 'processing' -> 'pending'
+        }));
         form.append('mentions', JSON.stringify(mentions))
 
         if (selectedFile.value) {
@@ -1032,6 +1052,12 @@ function cancelEdit() {
     editingCommentId.value = null
     inputValue.value = ''
 }
+
+
+const canActOnChip = (m) =>
+    String(m.user_id) === String(currentUserId.value) &&
+    (m.status === 'pending' || m.status === 'processing')
+
 
 async function handleUpdateCommentInline() {
     if (!editingCommentId.value) return
