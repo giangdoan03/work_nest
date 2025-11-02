@@ -157,83 +157,80 @@ class DocumentApprovalController extends ResourceController
     /** ============ POST /api/document-approvals/send ============ */
     public function send(): ResponseInterface
     {
-        $userId = (int) session()->get('user_id');
+        $userId = (int) (session()->get('user_id') ?? 0);
         if (!$userId) return $this->failUnauthorized('Chưa đăng nhập');
 
-        $body        = $this->request->getJSON(true) ?? [];
-        $documentId  = (int)($body['document_id'] ?? 0);
-        $approverIds = $this->normalizeApprovers($body['approver_ids'] ?? []);
-        $note        = trim((string)($body['note'] ?? ''));
+        $payload      = $this->request->getJSON(true) ?? [];
+        $documentId   = (int) ($payload['document_id'] ?? 0);
+        $approverIds  = array_values(array_unique(array_filter(array_map('intval', $payload['approver_ids'] ?? []))));
+        $note         = trim((string)($payload['note'] ?? ''));
 
-        if ($documentId <= 0)             return $this->failValidationErrors('Thiếu document_id.');
-        if (empty($approverIds))          return $this->failValidationErrors('Thiếu danh sách người duyệt.');
+        if ($documentId <= 0)       return $this->failValidationErrors('Thiếu document_id');
+        if (empty($approverIds))    return $this->failValidationErrors('Thiếu approver_ids');
 
-        $docM = new TaskFileModel();
-        $doc  = $docM->find($documentId);
-        if (!$doc) return $this->failNotFound('Tài liệu không tồn tại.');
+        // (tuỳ bạn) kiểm tra tồn tại file:
+        $tf = (new TaskFileModel())->find($documentId);
+        if (!$tf) return $this->failNotFound('Tài liệu không tồn tại');
 
         $apvM  = new DocumentApprovalModel();
         $stepM = new DocumentApprovalStepModel();
 
-        $exists = $apvM->where('document_id', $documentId)->where('status', self::A_PENDING)->first();
-        if ($exists) {
-            return $this->failValidationErrors('Tài liệu đang có phiên duyệt PENDING.');
-        }
+        // chặn trùng phiên pending
+        $existing = $apvM->where('document_id', $documentId)->where('status','pending')->first();
+        if ($existing) return $this->failValidationErrors('Tài liệu đang có phiên duyệt PENDING.');
 
-        $db = $apvM->db;
-        $db->transBegin();
+        $db = $apvM->db; $db->transBegin();
         try {
+            // 1) Tạo phiên
             $apvId = $apvM->insert([
                 'document_id'        => $documentId,
-                'status'             => self::A_PENDING,
+                'status'             => 'pending',
                 'created_by'         => $userId,
                 'current_step_index' => 0,
                 'note'               => $note,
+                'source_type' => 'task_file' , // trong send()
             ], true);
 
-            $seq   = 1;
-            $batch = [];
+            // 2) Tạo các bước
+            $seq = 1; $batch = [];
             foreach ($approverIds as $uid) {
                 $batch[] = [
-                    'approval_id' => (int)$apvId,
-                    'approver_id' => (int)$uid,
+                    'approval_id' => $apvId,
+                    'approver_id' => $uid,
                     'sequence'    => $seq++,
-                    'status'      => self::S_WAITING,
-                    'acted_by'    => null,
-                    'acted_at'    => null,
-                    'comment'     => null,
+                    'status'      => 'waiting',
                 ];
             }
             $stepM->insertBatch($batch);
 
-            $first = $stepM->where('approval_id', $apvId)
-                ->orderBy('sequence', 'ASC')
-                ->first();
+            // 3) Kích hoạt step đầu tiên
+            $first = $stepM->where('approval_id', $apvId)->orderBy('sequence','ASC')->first();
             if ($first) {
-                $stepM->update($first['id'], ['status' => self::S_ACTIVE]);
+                $stepM->update($first['id'], ['status' => 'active']);
                 $apvM->update($apvId, ['current_step_index' => (int)$first['sequence']]);
             }
 
             $db->transCommit();
 
-            // 🔗 Sync status to task_files: chuyển sang 'pending'
-            $tf = new TaskFileModel();
-            $tf->update($documentId, [
-                'status'      => 'pending',
-                'approved_by' => null,
-                'approved_at' => null,
-                'review_note' => $note ?: null,
+            // (khuyến nghị) đồng bộ trạng thái nguồn
+            (new TaskFileModel())->update($documentId, [
+                'status'       => 'pending',
+                'approved_by'  => null,
+                'approved_at'  => null,
+                'review_note'  => ($note ?: null),
             ]);
 
-            $apv          = $apvM->find($apvId);
-            $rawSteps     = $stepM->where('approval_id', $apvId)->orderBy('sequence', 'ASC')->findAll();
-            $apv['steps'] = $this->hydrateSteps($rawSteps);
-            return $this->respondCreated($apv);
+            return $this->respondCreated([
+                'id'           => (int)$apvId,
+                'document_id'  => $documentId,
+                'status'       => 'pending',
+            ]);
         } catch (Throwable $e) {
             $db->transRollback();
-            return $this->failServerError('Khởi tạo duyệt thất bại: ' . $e->getMessage());
+            return $this->failServerError('Khởi tạo duyệt thất bại: '.$e->getMessage());
         }
     }
+
 
     /** ============ POST /api/document-approvals/{id}/approve ============ */
     public function approve($id = null): ResponseInterface
@@ -564,5 +561,235 @@ class DocumentApprovalController extends ResourceController
             'steps' => $apv['steps'],
         ]]);
     }
+
+    public function inboxFiles(): ResponseInterface
+    {
+        // --- Auth ---
+        $uid = (int) (session()->get('user_id') ?? 0);
+        if (!$uid && function_exists('auth')) $uid = (int) (auth()->id() ?? 0);
+        $uid = $uid ?: (int) $this->request->getGet('user_id');
+        if (!$uid) return $this->failUnauthorized('Chưa đăng nhập');
+
+        // --- Paging ---
+        $page   = max(1, (int)$this->request->getGet('page'));
+        $ps     = min(100, max(1, (int)$this->request->getGet('pageSize')));
+        $offset = ($page - 1) * $ps;
+
+        $db = db_connect();
+
+        // --- TOTAL ---
+        $total = $db->table('document_approval_steps das')
+            ->join('document_approvals da', 'da.id = das.approval_id', 'inner')
+            ->where('das.approver_id', $uid)
+            ->where('das.status', 'active')
+            ->where('da.status', 'pending')
+            ->countAllResults();
+
+        // --- PAGE DATA (hỗ trợ cả task_file & comment) ---
+        $rows = $db->table('document_approval_steps das')
+            ->select("
+            das.id  AS step_id,
+            da.id   AS approval_id,
+            da.document_id,
+            da.source_type,
+
+            CASE WHEN da.source_type='comment' THEN c.file_name  ELSE tf.file_name  END AS file_name,
+            CASE WHEN da.source_type='comment' THEN c.file_path  ELSE tf.file_path  END AS file_path,
+            COALESCE(
+                CASE WHEN da.source_type='comment' THEN c.created_at ELSE tf.created_at END,
+                da.created_at
+            ) AS file_created_at,
+
+            -- người gửi: ưu tiên theo nguồn
+            COALESCE(u_sender_c.name, u_comment_author.name, u_sender_tf.name) AS sender_name,
+
+            u_approver.name AS approver_name,
+
+            da.status AS approval_status,
+            da.current_step_index,
+            das.sequence,
+            das.status AS step_status,
+            das.acted_at,
+            das.comment AS step_comment
+        ", false)
+            ->join('document_approvals da', 'da.id = das.approval_id', 'inner')
+            ->join('task_files tf', 'tf.id = da.document_id AND da.source_type="task_file"', 'left')
+            ->join('task_comments c', 'c.id = da.document_id AND da.source_type="comment"', 'left')
+
+            // 🔧 thay CASE trong ON bằng 2 JOIN riêng
+            ->join('users u_sender_tf', 'u_sender_tf.id = tf.uploaded_by', 'left')
+            ->join('users u_sender_c',  'u_sender_c.id  = c.uploaded_by',  'left')
+            ->join('users u_comment_author', 'u_comment_author.id = c.user_id', 'left')
+
+            ->join('users u_approver',  'u_approver.id  = das.approver_id', 'left')
+
+            ->where('das.approver_id', $uid)
+            ->where('das.status', 'active')
+            ->where('da.status', 'pending')
+            ->orderBy('file_created_at', 'DESC')
+            ->orderBy('das.sequence', 'ASC')
+            ->limit($ps, $offset)
+            ->get()->getResultArray();
+
+        $base = base_url();
+        $items = array_map(static function(array $r) use ($base) {
+            $url = $r['file_path'] ?? null;
+            $abs = $url ? (str_starts_with($url, 'http') ? $url : $base . ltrim($url, '/')) : null;
+
+            return [
+                'approval_id' => (int)$r['approval_id'],
+                'step_id'     => (int)$r['step_id'],
+                'document_id' => (int)$r['document_id'],
+                'source_type' => $r['source_type'],                     // 'task_file' | 'comment'
+                'name'        => $r['file_name'] ?: '(Không tên)',
+                'url'         => $abs,
+                'created_at'  => $r['file_created_at'],
+                'sender_name' => $r['sender_name'] ?: null,
+                'status'      => $r['approval_status'],                  // phiên: pending
+                'step_info'   => [
+                    'sequence'      => (int)$r['sequence'],
+                    'status'        => $r['step_status'],               // step: active
+                    'approver_name' => $r['approver_name'] ?? null,
+                    'acted_at'      => $r['acted_at'],
+                    'comment'       => $r['step_comment'],
+                ],
+            ];
+        }, $rows);
+
+        return $this->respond([
+            'items'    => $items,
+            'total'    => (int)$total,
+            'page'     => $page,
+            'pageSize' => $ps,
+        ]);
+    }
+
+    public function resolvedByMe(): ResponseInterface
+    {
+        // --- Auth ---
+        $uid = (int) (session()->get('user_id') ?? 0);
+        if (!$uid && function_exists('auth')) $uid = (int) (auth()->id() ?? 0);
+        $uid = $uid ?: (int) $this->request->getGet('user_id');
+        if (!$uid) return $this->failUnauthorized('Chưa đăng nhập');
+
+        // --- Paging ---
+        $page   = max(1, (int)$this->request->getGet('page'));
+        $ps     = min(100, max(1, (int)$this->request->getGet('pageSize')));
+        $offset = ($page - 1) * $ps;
+
+        $db = db_connect();
+
+        // --- TOTAL: step của tôi đã hành động ---
+        $total = $db->table('document_approval_steps das')
+            ->join('document_approvals da', 'da.id = das.approval_id', 'inner')
+            ->where('das.approver_id', $uid)
+            ->where('das.acted_at IS NOT NULL', null, false)
+            ->countAllResults();
+
+        // --- PAGE DATA ---
+        $rows = $db->table('document_approval_steps das')
+            ->select("
+            das.id  AS step_id,
+            da.id   AS approval_id,
+            da.document_id,
+            da.source_type,
+
+            CASE WHEN da.source_type='comment' THEN c.file_name  ELSE tf.file_name  END AS file_name,
+            CASE WHEN da.source_type='comment' THEN c.file_path  ELSE tf.file_path  END AS file_path,
+            COALESCE(
+                CASE WHEN da.source_type='comment' THEN c.created_at ELSE tf.created_at END,
+                da.created_at
+            ) AS file_created_at,
+
+            COALESCE(u_sender_c.name, u_comment_author.name, u_sender_tf.name) AS sender_name,
+
+            da.status AS approval_status,
+            da.current_step_index,
+            das.sequence,
+            das.status AS step_status,
+            das.acted_at,
+            das.comment AS step_comment,
+
+            u_approver.name AS approver_name
+        ", false)
+            ->join('document_approvals da', 'da.id = das.approval_id', 'inner')
+            ->join('task_files tf', 'tf.id = da.document_id AND da.source_type="task_file"', 'left')
+            ->join('task_comments c', 'c.id = da.document_id AND da.source_type="comment"', 'left')
+
+            ->join('users u_sender_tf', 'u_sender_tf.id = tf.uploaded_by', 'left')
+            ->join('users u_sender_c',  'u_sender_c.id  = c.uploaded_by',  'left')
+            ->join('users u_approver',  'u_approver.id  = das.approver_id','left')
+            ->join('users u_comment_author', 'u_comment_author.id = c.user_id', 'left')
+
+            ->where('das.approver_id', $uid)
+            ->where('das.acted_at IS NOT NULL', null, false)
+            ->orderBy('das.acted_at', 'DESC')
+            ->limit($ps, $offset)
+            ->get()->getResultArray();
+
+        $base = base_url();
+        $items = array_map(static function(array $r) use ($base) {
+            $url = $r['file_path'] ?? null;
+            $abs = $url ? (str_starts_with($url, 'http') ? $url : $base . ltrim($url, '/')) : null;
+
+            // Với tab "đã xử lý" → ưu tiên trạng thái step (approved/rejected/…)
+            $finalStatus = $r['step_status'] ?: $r['approval_status'];
+
+            return [
+                'approval_id' => (int)$r['approval_id'],
+                'step_id'     => (int)$r['step_id'],
+                'document_id' => (int)$r['document_id'],
+                'source_type' => $r['source_type'],                 // 'task_file' | 'comment'
+                'name'        => $r['file_name'] ?: '(Không tên)',
+                'url'         => $abs,
+                'created_at'  => $r['file_created_at'] ?: $r['acted_at'],
+                'sender_name' => $r['sender_name'] ?: null,
+                'status'      => $finalStatus,                      // approved | rejected | …
+                'step_info'   => [
+                    'sequence'      => (int)$r['sequence'],
+                    'status'        => $r['step_status'],
+                    'approver_name' => $r['approver_name'] ?? null,
+                    'acted_at'      => $r['acted_at'],
+                    'comment'       => $r['step_comment'],
+                ],
+            ];
+        }, $rows);
+
+        return $this->respond([
+            'items'    => $items,
+            'total'    => (int)$total,
+            'page'     => $page,
+            'pageSize' => $ps,
+        ]);
+    }
+
+    public function act($id = null): ResponseInterface
+    {
+        // Gộp payload từ mọi kiểu gửi
+        $json = (array)($this->request->getJSON(true) ?? []);
+        $post = (array)$this->request->getPost();
+        $get  = (array)$this->request->getGet();
+        $payload = array_merge($get, $post, $json);
+
+        // Lấy approval_id và action
+        $approvalId = (int)($id ?? ($payload['approval_id'] ?? 0));
+        $action = strtolower(trim((string)($payload['action'] ?? '')));
+        $comment = (string)($payload['comment'] ?? '');
+
+        if (!$approvalId || !in_array($action, ['approve', 'reject'], true)) {
+            return $this->failValidationErrors('Thiếu approval_id hoặc action không hợp lệ.');
+        }
+
+        // Gắn dữ liệu cho reuse
+        $this->request->setGlobal('post', array_merge($post, ['comment' => $comment]));
+
+        // Gọi lại các hàm xử lý chính
+        if ($action === 'approve') {
+            return $this->approve($approvalId);
+        }
+        return $this->reject($approvalId);
+    }
+
+
 
 }

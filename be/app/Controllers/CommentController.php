@@ -4,6 +4,8 @@ namespace App\Controllers;
 
 use App\Models\CommentModel;
 use App\Models\CommentReadModel;
+use App\Models\DocumentApprovalModel;
+use App\Models\DocumentApprovalStepModel;
 use App\Models\TaskCommentModel;
 use App\Models\TaskFileModel;
 use App\Models\TaskModel;
@@ -106,6 +108,137 @@ class CommentController extends ResourceController
             ]
         ]);
     }
+
+
+    public function filesByTask($task_id = null): ResponseInterface
+    {
+        $task_id = (int) $task_id;
+        if (!$task_id) {
+            return $this->failValidationErrors('Thiếu task_id.');
+        }
+
+        $db = db_connect();
+
+        // Lấy tất cả comment có file + kèm trạng thái duyệt
+        $sql = "
+        SELECT
+            c.id AS comment_id,
+            c.task_id,
+            c.user_id,
+            u.name AS user_name,
+            c.file_name,
+            c.file_path,
+            c.created_at,
+            c.approval_status,
+            c.approval_sent_by,
+            c.approval_sent_at
+        FROM task_comments c
+        LEFT JOIN users u ON u.id = c.user_id
+        WHERE c.task_id = ?
+          AND c.file_path IS NOT NULL
+          AND c.file_path <> ''
+        ORDER BY c.created_at DESC
+    ";
+
+        $rows = $db->query($sql, [$task_id])->getResultArray();
+
+        // Chuẩn hóa dữ liệu trả về cho FE
+        $files = [];
+        foreach ($rows as $r) {
+            $files[] = [
+                'id'              => (int) $r['comment_id'],
+                'task_id'         => (int) $r['task_id'],
+                'file_name'       => $r['file_name'],
+                'file_path'       => $r['file_path'],
+                'uploaded_by'     => (int) $r['user_id'],
+                'uploader_name'   => $r['user_name'] ?? null,
+                'created_at'      => $r['created_at'],
+                'source'          => 'comment',
+                'status'          => $r['approval_status'] ?? null,       // ✅ trạng thái duyệt
+                'approval_sent_by'=> $r['approval_sent_by'] ?? null,
+                'approval_sent_at'=> $r['approval_sent_at'] ?? null,
+            ];
+        }
+
+        return $this->respond([
+            'task_id' => $task_id,
+            'files'   => $files,
+            'count'   => count($files),
+        ]);
+    }
+
+
+    /**
+     * @throws ReflectionException
+     */
+    public function sendApprovalForComment($id = null): ResponseInterface
+    {
+        $payload    = $this->request->getJSON(true) ?? [];
+        $userId     = (int) ($payload['user_id'] ?? 0);
+        $approvers  = array_values(array_unique(array_filter(array_map('intval', $payload['approver_ids'] ?? []))));
+        $note       = trim((string)($payload['note'] ?? ''));
+
+        if (!$id || !$userId || empty($approvers))
+            return $this->failValidationErrors('Thiếu comment_id, user_id hoặc approver_ids');
+
+        $cm = $this->model->find((int)$id);
+        if (!$cm || empty($cm['file_path']))
+            return $this->failNotFound('Comment không hợp lệ hoặc không có file.');
+
+        $apvM  = new DocumentApprovalModel();
+        $stepM = new DocumentApprovalStepModel();
+
+        $db = $apvM->db; $db->transBegin();
+        try {
+            // 1) Tạo phiên (document_id bạn có thể dùng chính comment_id)
+            $apvId = $apvM->insert([
+                'document_id'        => (int)$id,
+                'status'             => 'pending',
+                'created_by'         => $userId,
+                'current_step_index' => 0,
+                'note'               => $note ?: 'Gửi duyệt file trong comment',
+                'source_type' => 'comment'
+            ], true);
+
+            // 2) Tạo các bước
+            $seq=1; $batch=[];
+            foreach ($approvers as $uid) {
+                $batch[] = [
+                    'approval_id' => $apvId,
+                    'approver_id' => $uid,
+                    'sequence'    => $seq++,
+                    'status'      => 'waiting',
+                ];
+            }
+            $stepM->insertBatch($batch);
+
+            // 3) Kích hoạt step đầu tiên
+            $first = $stepM->where('approval_id', $apvId)->orderBy('sequence','ASC')->first();
+            if ($first) {
+                $stepM->update($first['id'], ['status' => 'active']);
+                $apvM->update($apvId, ['current_step_index' => (int)$first['sequence']]);
+            }
+
+            // 4) Cập nhật trạng thái comment
+            $this->model->update((int)$id, [
+                'approval_status'  => 'pending',
+                'approval_sent_by' => $userId,
+                'approval_sent_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            $db->transCommit();
+
+            return $this->respond([
+                'ok'          => true,
+                'message'     => 'Đã gửi duyệt file comment.',
+                'approval_id' => (int)$apvId,
+            ]);
+        } catch (Throwable $e) {
+            $db->transRollback();
+            return $this->failServerError('Gửi duyệt thất bại: '.$e->getMessage());
+        }
+    }
+
 
 
 

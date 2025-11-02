@@ -105,8 +105,23 @@ export const getMyPendingFilesAPI = (params = {}) =>
 export const getMyResolvedFilesAPI = (params = {}) =>
     instance.get('/document-approvals/resolved-files-by-me', { params })
 
+export function getCommentFilesByTask(taskId) {
+    return instance.get(`/tasks/${taskId}/comment-files`)
+}
+// src/api/taskFiles.js (hoặc api riêng cho comments)
+export function sendCommentApproval(commentId, payload) {
+    // payload: { user_id: number, approver_ids: number[], note?: string }
+    return instance.post(`/comments/${commentId}/send-approval`, payload, {
+        headers: { 'Content-Type': 'application/json' }
+    })
+}
 
-
+export const actOnApprovalAPI = (approvalId, payload) =>
+    instance.post(`/document-approvals/${approvalId}/act`, {
+        action: payload.action,          // 'approve' | 'reject'  (lowercase)
+        comment: payload.comment || '',
+        // có thể thêm pos_row, pos_index, order_index nếu BE cần
+    })
 
 export default {
     // list & upload
@@ -116,6 +131,9 @@ export default {
     uploadTaskFileAPI,
     uploadTaskFileLink,
     uploadTaskFileLinkAPI,
+    getCommentFilesByTask,
+    sendCommentApproval,
+    actOnApprovalAPI,
 
     // item actions
     updateTaskFileMeta,

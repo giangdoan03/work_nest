@@ -19,6 +19,10 @@ class TaskCommentModel extends Model
         'comment_id',
         'file_name',
         'file_path',
+        'approval_status',
+        'approval_sent_by',
+        'approval_sent_at',
+        'approver_ids','approval_note',
         'created_at',
         'updated_at',
     ];

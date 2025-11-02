@@ -90,3 +90,58 @@ export const deadlineInfo = (end) => {
     if (diff > 0)   return { type: 'remaining', days: diff }
     return { type: 'overdue', days: Math.abs(diff) }
 }
+
+// ---------- Utils ----------
+const OFFICE_EXTS = new Set(['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']);
+
+function getExt(nameOrUrl = '') {
+    try {
+        const clean = String(nameOrUrl).split('?')[0].split('#')[0];
+        const dot = clean.lastIndexOf('.');
+        return dot >= 0 ? clean.slice(dot + 1).toLowerCase() : '';
+    } catch {
+        return '';
+    }
+}
+
+function pickUrl(obj = {}) {
+    // Ưu tiên các field hay gặp
+    return obj.file_url || obj.url || obj.file_path || obj.link_url || '';
+}
+
+// ---------- Openers ----------
+/**
+ * Mở xem trước tài liệu:
+ * - Nếu là file Office -> mở Office Online Viewer
+ * - Còn lại -> mở trực tiếp
+ * @param {Object} file like { url/file_url/file_path, ext?, name? }
+ * @returns {boolean} true nếu đã cố mở
+ */
+export function openPreviewFile(file) {
+    if (!file) return false;
+    const url = pickUrl(file);
+    if (!url) return false;
+
+    const ext = (file.ext || getExt(file.name || url)).toLowerCase();
+
+    if (OFFICE_EXTS.has(ext)) {
+        const enc = encodeURIComponent(url);
+        window.open(`https://view.officeapps.live.com/op/view.aspx?src=${enc}`, '_blank', 'noopener');
+        return true;
+    }
+
+    // PDF / ảnh / các loại khác: để trình duyệt tự xử lý
+    window.open(url, '_blank', 'noopener');
+    return true;
+}
+
+/**
+ * Mở/tải file (không ép Office viewer), dùng khi muốn “Tải xuống/Mở”
+ */
+export function openDownloadFile(file) {
+    if (!file) return false;
+    const url = pickUrl(file);
+    if (!url) return false;
+    window.open(url, '_blank', 'noopener');
+    return true;
+}

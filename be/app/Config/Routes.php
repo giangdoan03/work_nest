@@ -89,6 +89,8 @@ $routes->group('api', function ($routes) {
     // 🧩 Comment API cho task — phải đặt TRƯỚC
     $routes->get('tasks/(:num)/comments', 'CommentController::byTask/$1');
     $routes->post('tasks/(:num)/comments', 'CommentController::create/$1');
+    $routes->get('tasks/(:num)/comment-files', 'CommentController::filesByTask/$1');
+    $routes->post('comments/(:num)/send-approval', 'CommentController::sendApprovalForComment/$1');
     $routes->get('tasks/(:num)/subtasks', 'TaskController::subtasks/$1');
     $routes->post('tasks/(:num)/extend', 'TaskController::extendDeadline/$1');
     $routes->get('tasks/(:num)/extensions/count', 'TaskController::countExtensions/$1');
@@ -238,7 +240,15 @@ $routes->group('api', function ($routes) {
     $routes->get('documents/(:num)', 'DocumentController::show/$1');
     $routes->get('approvals/active-by-target', 'ApprovalController::activeByTarget');
 
-    // $routes->post('document-approvals/send', 'DocumentApprovalController::send');
+     $routes->post('document-approvals/send', 'DocumentApprovalController::send');
+    // 👇 thêm 2 route hộp thư duyệt
+    // đúng theo FE đang gọi
+    $routes->get('document-approvals/inbox-files', 'DocumentApprovalController::inboxFiles');
+    $routes->get('document-approvals/resolved-files-by-me', 'DocumentApprovalController::resolvedByMe');
+    $routes->post('document-approvals/(:num)/act', 'DocumentApprovalController::act/$1');
+
+
+
 
     // Duyệt/Từ chối tuần tự
     $routes->get('document-approvals', 'DocumentApprovalController::index');

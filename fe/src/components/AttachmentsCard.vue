@@ -37,9 +37,7 @@
 
                             <!-- Meta -->
                             <div class="att-meta">
-                                <div class="att-title" :title="item.title || item.name">{{
-                                        item.title || item.name
-                                    }}
+                                <div class="att-title" :title="item.title || item.name">{{item.title || item.name }}
                                 </div>
 
                                 <div class="att-sub" v-if="item.is_link">
@@ -52,9 +50,7 @@
                                     <div class="att-uploader-left">
                                         <UserOutlined class="att-uploader-ico"/>
                                         <a-tooltip :title="item.uploader_name || nameOfUploader(item.uploaded_by)">
-                                            <span class="att-uploader-name">{{
-                                                    item.uploader_name || nameOfUploader(item.uploaded_by)
-                                                }}</span>
+                                            <span class="att-uploader-name">{{item.uploader_name || nameOfUploader(item.uploaded_by) }}</span>
                                         </a-tooltip>
                                     </div>
                                     <div class="att-uploader-time" v-if="item.created_at">
@@ -100,7 +96,7 @@
             </a-list>
 
             <a-empty v-else>
-                <template #description>Chưa có tài liệu (từ bình luận)</template>
+                <template #description>Chưa có tài liệu của công việc</template>
             </a-empty>
         </a-spin>
 
@@ -128,222 +124,173 @@ import {
     LinkOutlined, EyeOutlined, DownloadOutlined, SendOutlined,
     FilePdfOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined, FileTextOutlined, UserOutlined
 } from '@ant-design/icons-vue'
-import {computed, onMounted, ref, watch, onBeforeUnmount, reactive} from 'vue'
-import {message} from 'ant-design-vue'
-import {parseApiError} from '@/utils/apiError'
-import {getComments} from '@/api/task'
-import {getUsers} from '@/api/user'
-
-// ❗ Dùng API mới cho document approvals
-import {sendDocumentApproval, getActiveDocumentApproval} from '@/api/approvals.js'
-
-import {
-    adoptTaskFileFromPathAPI,
-    uploadTaskFileLinkAPI,
-} from '@/api/taskFiles'
+import { computed, onMounted, ref, watch, reactive, nextTick, onBeforeUnmount } from 'vue'
+import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/vi'
 
+// API
+import { getUsers } from '@/api/user'
+import { sendDocumentApproval, getActiveDocumentApproval } from '@/api/approvals.js'
+import {
+    adoptTaskFileFromPathAPI,
+    uploadTaskFileLinkAPI,
+    getCommentFilesByTask,
+    sendCommentApproval
+} from '@/api/taskFiles'
+import { useUserStore } from '@/stores/user'
+
+// ---------- setup ----------
 dayjs.locale('vi')
-
-import {useUserStore} from '@/stores/user'
-
 const store = useUserStore()
 
-/* ---------- props ---------- */
+// ---------- props ----------
 const props = defineProps({
-    taskId: {type: [String, Number], required: true}
+    taskId: { type: [String, Number], required: true }
 })
 
-/* ---------- state ---------- */
+// ---------- state ----------
 const thumbH = 96
-const commentFileItems = ref([])
 const loading = ref(false)
-const userMap = ref(Object.create(null))
-const ensuring = reactive({})            // loading riêng cho từng item khi ensure TF id
-const approvalMap = reactive({})         // { [task_file_id]: { status, instanceId } }
 const approvalLoading = ref(false)
+const ensuring = reactive({})                   // per-item loading khi ensure id
+const userMap = ref(Object.create(null))
+const approverOptions = ref([])
+const taskFileItems = ref([])                   // danh sách item hiển thị
+
+// Trạng thái duyệt: Map id (task_file_id hoặc comment id) -> {status, instanceId}
+const approvalMap = ref({})
 
 // modal gửi duyệt
 const showSend = ref(false)
 const sending = ref(false)
 const sendingItem = ref(null)
-const sendForm = reactive({approver_ids: [], note: ''})
-const approverOptions = ref([])
+const sendForm = reactive({ approver_ids: [], note: '' })
 
-/* ---------- constants & helpers ---------- */
+// ---------- consts & helpers ----------
 const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'])
-const PDF_EXTS = new Set(['pdf'])
-const WORD_EXTS = new Set(['doc', 'docx'])
+const PDF_EXTS   = new Set(['pdf'])
+const WORD_EXTS  = new Set(['doc', 'docx'])
 const EXCEL_EXTS = new Set(['xls', 'xlsx', 'csv'])
-const PPT_EXTS = new Set(['ppt', 'pptx'])
-const OFFICE_EXTS = new Set(['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'])
+const PPT_EXTS   = new Set(['ppt', 'pptx'])
+const OFFICE_EXTS= new Set(['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'])
 
-const aborter = {controller: null}
+const aborter = { controller: null }
 
 const formatDateOnly = dt => dayjs(dt).isValid() ? dayjs(dt).format('DD/MM/YYYY') : ''
-const formatTime = dt => dayjs(dt).isValid() ? dayjs(dt).format('HH:mm') : ''
-
-function extOf(name = '') {
+const formatTime     = dt => dayjs(dt).isValid() ? dayjs(dt).format('HH:mm') : ''
+const extOf = (name = '') => {
     const n = String(name).split('?')[0]
     const i = n.lastIndexOf('.')
     return i >= 0 ? n.slice(i + 1).toLowerCase() : ''
 }
-
-function detectKind({is_link, name, file_type, mime_type, url}) {
+const detectKind = ({ is_link, name, file_type, mime_type, url }) => {
     const ft = String(mime_type || file_type || '').toLowerCase()
     const e = extOf(name || url || '')
     if (is_link) return 'link'
     if (ft.startsWith('image/') || IMAGE_EXTS.has(e)) return 'image'
-    if (PDF_EXTS.has(e)) return 'pdf'
-    if (WORD_EXTS.has(e)) return 'word'
+    if (PDF_EXTS.has(e))   return 'pdf'
+    if (WORD_EXTS.has(e))  return 'word'
     if (EXCEL_EXTS.has(e)) return 'excel'
-    if (PPT_EXTS.has(e)) return 'ppt'
+    if (PPT_EXTS.has(e))   return 'ppt'
     return 'other'
 }
+const pickIcon = (kind) => ({
+    pdf:  FilePdfOutlined,
+    word: FileWordOutlined,
+    excel:FileExcelOutlined,
+    ppt:  FilePptOutlined,
+    link: LinkOutlined
+}[kind] || FileTextOutlined)
 
-function pickIcon(kind) {
-    switch (kind) {
-        case 'pdf':
-            return FilePdfOutlined
-        case 'word':
-            return FileWordOutlined
-        case 'excel':
-            return FileExcelOutlined
-        case 'ppt':
-            return FilePptOutlined
-        case 'link':
-            return LinkOutlined
-        default:
-            return FileTextOutlined
-    }
-}
-
-function prettyUrl(u) {
-    try {
-        const url = new URL(u)
-        const path = url.pathname.replace(/^\/+/, '')
-        const short = path.length > 36 ? path.slice(0, 36) + '…' : path
-        return url.host + (short ? '/' + short : '')
-    } catch {
-        return u
-    }
-}
-
-function favicon() {
-    return 'https://assets.develop.io.vn/wp-content/uploads/2025/10/favicon.png'
-}
-
-function hideBrokenFavicon(e) {
-    if (e?.target) e.target.style.opacity = 0
-}
-
+const favicon = () => 'https://assets.develop.io.vn/wp-content/uploads/2025/10/favicon.png'
+const hideBrokenFavicon = e => { if (e?.target) e.target.style.opacity = 0 }
 const normalizeKey = (url = '') => String(url || '').split('?')[0]
 
-/* ---------- user utils ---------- */
-async function loadUsers() {
+// ---------- users ----------
+async function loadUsers () {
     try {
-        const {data} = await getUsers()
+        const { data } = await getUsers()
         userMap.value = Object.fromEntries((data || []).map(u => [String(u.id), u]))
-        approverOptions.value = (data || []).map(u => ({value: String(u.id), label: u.name || u.email || `#${u.id}`}))
+        approverOptions.value = (data || []).map(u => ({
+            value: String(u.id),
+            label: u.name || u.email || `#${u.id}`
+        }))
     } catch (e) {
         console.warn('loadUsers error', e)
         approverOptions.value = []
     }
 }
+const nameOfUploader = id => id ? (userMap.value[String(id)]?.name || `#${id}`) : '—'
+const filterUser = (input, option) =>
+    option?.label?.toLowerCase?.().includes?.(input.toLowerCase())
 
-const nameOfUploader = (id) => id ? (userMap.value[String(id)]?.name || `#${id}`) : '—'
+// ---------- data compose ----------
+const displayCards = computed(() => taskFileItems.value)
 
-/* ---------- data compose ---------- */
-const displayCards = computed(() => commentFileItems.value)
-
-/* ---------- fetch comments -> flatten files ---------- */
-async function fetchAllCommentFiles() {
+// ---------- fetch task files (comment files + task_files nếu BE đã gộp) ----------
+async function fetchTaskFiles () {
     if (!props.taskId) return
-    aborter.controller?.abort?.()
-    aborter.controller = new AbortController()
-
     loading.value = true
-    const acc = []
     const seen = new Set()
-
     try {
-        let page = 1
-        while (true) {
-            const res = await getComments(props.taskId, {page, signal: aborter.controller.signal})
-            const comments = res?.data?.comments || []
-            const totalPages = res?.data?.pagination?.totalPages || 1
+        const { data } = await getCommentFilesByTask(props.taskId)
+        const rows = data?.files || []
 
-            for (const c of comments) {
-                const uploaderId = c.user_id || null
-                const uploaderName = c.user_name || null
+        const items = []
+        for (const r of rows) {
+            const url   = r.file_path || ''
+            const name  = r.file_name || ''
+            const key   = normalizeKey(url)
+            if (!key || seen.has(key)) continue
+            seen.add(key)
 
-                for (const f of (c.files || [])) {
-                    const isLink = !!f.link_url && !f.file_path
-                    const url = (f.link_url || f.file_path || '')
-                    const isHttp = /^https?:\/\//i.test(url)
-                    const key = normalizeKey(url)
-                    if (!key || seen.has(key)) continue
-                    seen.add(key)
+            const isLink = /^https?:\/\//i.test(url)
+            const kind   = detectKind({ is_link: isLink, name, url })
 
-                    const kind = detectKind({
-                        is_link: isLink,
-                        name: f.file_name,
-                        file_type: f.file_type,
-                        mime_type: f.mime_type,
-                        url
-                    })
-
-                    const item = {
-                        _key: key,
-                        id: f.id,
-                        name: f.file_name || '',
-                        title: f.title || '',
-                        url,
-                        is_link: isHttp, // coi http(s) là link
-                        kind,
-                        icon: pickIcon(kind),
-                        ext: extOf(f.file_name || url),
-                        created_at: f.created_at || c.created_at || null,
-                        updated_at: f.updated_at || c.updated_at || null,
-                        uploaded_by: f.uploaded_by || uploaderId || null,
-                        uploader_name: f.uploader_name || uploaderName || null,
-                        task_file_id: f.task_file_id || null,
-                        _source: 'comment',
-                        full: {...f, comment_id: c.id},
-                    }
-
-                    acc.push(item)
-
-                    // Fallback: nếu BE đã nhồi sẵn status (từ task_files), map luôn để hiển thị tức thì
-                    const tfId = item.task_file_id
-                    const tfStatus = f?.status ? String(f.status) : null
-                    if (tfId && tfStatus && !approvalMap[tfId]) {
-                        approvalMap[tfId] = {status: tfStatus, instanceId: null}
-                    }
-                }
+            const it = {
+                _key: key,
+                id: r.id,                                // id nguồn (task_files.id hoặc comment.id)
+                task_file_id: r.source === 'task_file' ? r.id : (r.task_file_id ?? null),
+                name,
+                title: r.title || name,
+                url,
+                is_link: isLink,
+                kind,
+                icon: pickIcon(kind),
+                ext: extOf(name || url),
+                created_at: r.created_at || null,
+                updated_at: r.updated_at || null,
+                uploaded_by: r.uploaded_by || null,
+                uploader_name: r.uploader_name || null,
+                _source: r.source,                        // 'task_file' | 'comment'
+                status: r.status || null,                 // BE có thể đổ sẵn
+                full: r
             }
 
-            if (page >= totalPages) break
-            page++
+            // seed trạng thái duyệt ngay nếu BE trả sẵn
+            const mapKey = it.task_file_id || it.id
+            if (r.status && !approvalMap.value[mapKey]) {
+                approvalMap.value[mapKey] = { status: String(r.status), instanceId: null }
+            }
+
+            items.push(it)
         }
+
+        taskFileItems.value = items
+        await refreshApprovalStates()                 // lấy active state cho task_file_ids
     } catch (e) {
-        if (e?.name !== 'AbortError') {
-            console.error('fetchAllCommentFiles error', e)
-            message.error(parseApiError(e) || 'Không tải được file từ bình luận.')
-        }
+        message.error((e?.response?.data?.message) || 'Không tải được tài liệu của task.')
     } finally {
         loading.value = false
     }
-
-    commentFileItems.value = acc
-    await refreshApprovalStates() // lấy trạng thái active theo API mới
 }
 
-/* ---------- approval helpers ---------- */
-function approvalStateOf(item) {
-    const tfId = item?.task_file_id
-    const st = tfId ? (approvalMap[tfId] || {}) : {}
+// ---------- approvals helpers ----------
+function approvalStateOf (item) {
+    const key = item.task_file_id || item.id
+    // ưu tiên map, fallback item.status nếu có
+    const st = approvalMap.value[key] || (item.status ? { status: item.status } : {})
     return {
         status: st.status || null,
         pending: st.status === 'pending',
@@ -352,43 +299,44 @@ function approvalStateOf(item) {
     }
 }
 
-function canSendApproval(item) {
+function canSendApproval (item) {
     if (ensuring[item._key]) return false
     const st = approvalStateOf(item)
     if (st.approved) return false
-    return !st.pending;
-
+    return !st.pending
 }
 
-function sendBtnTooltip(item) {
+function sendBtnTooltip (item) {
     if (ensuring[item._key]) return 'Đang chuẩn bị tài liệu...'
     const st = approvalStateOf(item)
-    if (st.pending) return 'Đang chờ người duyệt phản hồi'
+    if (st.pending)  return 'Đang chờ người duyệt phản hồi'
     if (st.approved) return 'Tài liệu đã duyệt'
     if (st.rejected) return 'Đã bị từ chối — bấm để gửi lại'
     return 'Gửi đề nghị ký duyệt'
 }
 
-/** đảm bảo có task_file_id cho 1 item (comment file) */
-async function ensureTaskFileId(item) {
-    if (item.task_file_id) return item.task_file_id
+// đảm bảo có task_file_id (chỉ dùng cho nguồn task_file hoặc khi thực sự muốn adopt/link)
+async function ensureTaskFileId (item) {
+    if (item.task_file_id || item._source === 'task_file') {
+        return (item.task_file_id ||= item.id)
+    }
     ensuring[item._key] = true
     try {
         const isHttp = /^https?:\/\//i.test(item.url)
         if (isHttp) {
-            const {data} = await uploadTaskFileLinkAPI(props.taskId, {
+            const { data } = await uploadTaskFileLinkAPI(props.taskId, {
                 title: item.title || item.name || '',
                 url: item.url,
-                user_id: Number(store.currentUser?.id),
+                user_id: Number(store.currentUser?.id)
             })
             const created = Array.isArray(data) ? data[0] : (data?.data || data)
             item.task_file_id = Number(created?.id)
         } else {
-            const {data} = await adoptTaskFileFromPathAPI(props.taskId, {
+            const { data } = await adoptTaskFileFromPathAPI(props.taskId, {
                 task_id: Number(props.taskId),
                 user_id: Number(store.currentUser?.id),
                 file_path: item.url,
-                file_name: item.name || '',
+                file_name: item.name || ''
             })
             const created = data?.data || data
             item.task_file_id = Number(created?.id)
@@ -402,10 +350,13 @@ async function ensureTaskFileId(item) {
     }
 }
 
-/** nạp trạng thái duyệt cho các item đã có task_file_id */
-async function refreshApprovalStates() {
-    const ids = (commentFileItems.value || []).map(i => i.task_file_id).filter(Boolean)
+// nạp trạng thái active cho các task_file_id (comment-id không có API này)
+async function refreshApprovalStates () {
+    const ids = (taskFileItems.value || [])
+        .map(i => i.task_file_id)
+        .filter(Boolean)
     if (!ids.length) return
+
     approvalLoading.value = true
     try {
         const chunk = 6
@@ -415,9 +366,9 @@ async function refreshApprovalStates() {
                     const a = await getActiveDocumentApproval(id)
                     const status = a?.status ?? null
                     const instanceId = a?.instanceId ?? null
-                    approvalMap[id] = {status, instanceId}
+                    approvalMap.value[id] = { status, instanceId }
                 } catch {
-                    if (!approvalMap[id]) approvalMap[id] = {status: null, instanceId: null}
+                    if (!approvalMap.value[id]) approvalMap.value[id] = { status: null, instanceId: null }
                 }
             }))
         }
@@ -426,54 +377,88 @@ async function refreshApprovalStates() {
     }
 }
 
-/* ---------- open modal ---------- */
-function filterUser(input, option) {
-    return option?.label?.toLowerCase?.().includes?.(input.toLowerCase())
-}
+// ---------- modal ----------
+async function openSendApproval (item) {
+    // Nếu là comment: mở modal ngay, KHÔNG ensure
+    if (item._source === 'comment') {
+        sendingItem.value = item
+        sendForm.approver_ids = []
+        sendForm.note = ''
+        showSend.value = true
+        return
+    }
 
-async function openSendApproval(item) {
+    // Nếu là task_file → ensure + preload trạng thái
     const tfId = await ensureTaskFileId(item)
     if (!tfId) return
     try {
         const a = await getActiveDocumentApproval(tfId)
-        const status = a?.status ?? null
-        const instanceId = a?.instanceId ?? null
-        approvalMap[tfId] = {status, instanceId}
-    } catch {
-    }
+        approvalMap.value[tfId] = { status: a?.status ?? null, instanceId: a?.instanceId ?? null }
+    } catch {}
     sendingItem.value = item
     sendForm.approver_ids = []
     sendForm.note = ''
     showSend.value = true
 }
 
-async function submitSendApproval() {
-    if (!sendForm.approver_ids.length) return message.error('Vui lòng chọn ít nhất 1 người duyệt.')
+async function submitSendApproval () {
+    if (!sendForm.approver_ids.length) {
+        return message.error('Vui lòng chọn ít nhất 1 người duyệt.')
+    }
     const item = sendingItem.value
-    if (!item?.task_file_id) return message.error('Thiếu mã tài liệu.')
+    if (!item) return
     sending.value = true
+
     try {
-        // ❗ Gọi API mới
-        const {ok, status, data} = await sendDocumentApproval({
-            document_id: item.task_file_id,
-            approver_ids: sendForm.approver_ids,
-            note: sendForm.note || '',
-        })
+        // Nguồn comment → API riêng, map theo comment.id
+        if (item._source === 'comment') {
+            const { data } = await sendCommentApproval(item.id, {
+                user_id: Number(store.currentUser.id),
+                approver_ids: sendForm.approver_ids.map(Number),   // lấy từ select trong modal
+                note: sendForm.note || ''
+            })
+            message.success(data?.message || 'Đã gửi duyệt file trong comment.')
+
+            // cập nhật trạng thái ngay
+            approvalMap.value[item.id] = { status: 'pending', instanceId: null }
+            item.status = 'pending'
+            taskFileItems.value = taskFileItems.value.map(x =>
+                (x.id === item.id && x._source === 'comment') ? { ...x, status: 'pending' } : x
+            )
+            await nextTick()
+            clearSendApproval()
+            return
+        }
+
+        // Nguồn task_file → document approval chuẩn
+        const tfId = await ensureTaskFileId(item)
+        if (!tfId) return
+        const payload = {
+            document_id: tfId,
+            approver_ids: sendForm.approver_ids.map(Number),
+            note: sendForm.note || ''
+        }
+        const { ok, status, data } = await sendDocumentApproval(payload)
 
         if (ok) {
-            approvalMap[item.task_file_id] = {status: 'pending', instanceId: data?.id || null}
+            approvalMap.value[tfId] = { status: 'pending', instanceId: data?.id || null }
+            item.status = 'pending'
+            taskFileItems.value = taskFileItems.value.map(x =>
+                (x.task_file_id === tfId) ? { ...x, status: 'pending' } : x
+            )
             message.success('Đã gửi ký duyệt tài liệu.')
             clearSendApproval()
-            return
-        }
-        if (status === 409) {
-            approvalMap[item.task_file_id] = {status: 'pending', instanceId: null}
+        } else if (status === 409) {
+            approvalMap.value[tfId] = { status: 'pending', instanceId: null }
+            item.status = 'pending'
+            taskFileItems.value = taskFileItems.value.map(x =>
+                (x.task_file_id === tfId) ? { ...x, status: 'pending' } : x
+            )
             message.warning(data?.message || 'Đối tượng đang chờ duyệt.')
             clearSendApproval()
-            return
+        } else {
+            message.error(data?.message || 'Không thể gửi duyệt.')
         }
-        if (status === 422) return message.error(data?.message || 'Dữ liệu chưa hợp lệ.')
-        message.error(data?.message || 'Không thể gửi duyệt.')
     } catch (e) {
         message.error(e?.response?.data?.message || e.message || 'Lỗi máy chủ.')
     } finally {
@@ -481,16 +466,15 @@ async function submitSendApproval() {
     }
 }
 
-/* ---------- misc ---------- */
-function clearSendApproval() {
+function clearSendApproval () {
     showSend.value = false
     sendingItem.value = null
     sendForm.approver_ids = []
     sendForm.note = ''
 }
 
-/* ---------- actions ---------- */
-function openAttachment(it) {
+// ---------- actions ----------
+function openAttachment (it) {
     const ext = (it.ext || '').toLowerCase()
     if (OFFICE_EXTS.has(ext)) {
         const url = encodeURIComponent(it.url)
@@ -499,19 +483,18 @@ function openAttachment(it) {
     }
     window.open(it.url, '_blank', 'noopener')
 }
-
 const downloadAttachment = (it) => window.open(it.url, '_blank', 'noopener')
 
-/* ---------- lifecycle ---------- */
+// ---------- lifecycle ----------
 onMounted(async () => {
-    await Promise.all([loadUsers(), fetchAllCommentFiles()])
+    await Promise.all([loadUsers(), fetchTaskFiles()])
 })
-watch(() => props.taskId, () => fetchAllCommentFiles())
-
+watch(() => props.taskId, () => fetchTaskFiles())
 onBeforeUnmount(() => {
     aborter.controller?.abort?.()
 })
 </script>
+
 
 <style scoped>
 /* Grid */
