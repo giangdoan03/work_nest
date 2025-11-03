@@ -247,9 +247,6 @@ $routes->group('api', function ($routes) {
     $routes->get('document-approvals/resolved-files-by-me', 'DocumentApprovalController::resolvedByMe');
     $routes->post('document-approvals/(:num)/act', 'DocumentApprovalController::act/$1');
 
-
-
-
     // Duyệt/Từ chối tuần tự
     $routes->get('document-approvals', 'DocumentApprovalController::index');
     $routes->get('document-approvals/(:num)', 'DocumentApprovalController::show/$1');
@@ -259,6 +256,9 @@ $routes->group('api', function ($routes) {
     $routes->post('document-approvals/(:num)/reject', 'DocumentApprovalController::reject/$1'); // từ chối
     $routes->post('document-approvals/(:num)/update-steps', 'DocumentApprovalController::updateSteps/$1'); // hoặc PATCH
     $routes->delete('document-approvals/(:num)', 'DocumentApprovalController::delete/$1');
+    // Kế hoạch ký cho 1 phiên duyệt (KHÔNG có tọa độ)
+    $routes->get('document-approvals/(:num)/signature-plan', 'DocumentApprovalController::signaturePlan/$1');
+
 
     // ✅ WordPress Media Proxy
     $routes->post('wp-media',          'WpMediaController::create');

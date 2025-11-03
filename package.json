@@ -1,6 +1,1 @@
-{
-  "dependencies": {
-    "@ant-design/icons-vue": "^7.0.1",
-    "pinia-plugin-persistedstate": "^4.4.1"
-  }
-}
+{}

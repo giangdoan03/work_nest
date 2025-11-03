@@ -1,13 +1,38 @@
 <!DOCTYPE html>
 <html lang="">
-  <head>
+<head>
     <meta charset="UTF-8">
     <link rel="icon" href="/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Ứng dụng quản lý ĐT-HĐ TTID</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+    <title>Ứng dụng quản lý ĐT-HĐ TTID</title>
+
+
+</head>
+<body>
+<div id="app"></div>
+<script>
+    setTimeout(() => {
+        console.log('📦 runtime check → pdf.js', window.pdfjsLib?.version);
+    }, 2000);
+</script>
+<!-- pdf.js (CDN) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+    window.addEventListener('load', () => {
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+                "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+            console.log("[pdf.js] READY (on load)", pdfjsLib.version);
+        } else {
+            console.warn("[pdf.js] not available on window.load");
+        }
+    });
+</script>
+
+<!-- pdf-lib -->
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+<!-- Tesseract.js -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.1/dist/tesseract.min.js"></script>
+<script type="module" src="/src/main.js"></script>
+</body>
 </html>

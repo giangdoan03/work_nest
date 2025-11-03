@@ -564,103 +564,65 @@ class DocumentApprovalController extends ResourceController
 
     public function inboxFiles(): ResponseInterface
     {
-        // --- Auth ---
         $uid = (int) (session()->get('user_id') ?? 0);
         if (!$uid && function_exists('auth')) $uid = (int) (auth()->id() ?? 0);
-        $uid = $uid ?: (int) $this->request->getGet('user_id');
         if (!$uid) return $this->failUnauthorized('Chưa đăng nhập');
 
-        // --- Paging ---
-        $page   = max(1, (int)$this->request->getGet('page'));
-        $ps     = min(100, max(1, (int)$this->request->getGet('pageSize')));
-        $offset = ($page - 1) * $ps;
+        $page = max(1, (int)$this->request->getGet('page'));
+        $ps   = min(100, max(1,(int)$this->request->getGet('pageSize')));
+        $offset = ($page-1)*$ps;
+        $db = db_connect(); $base = base_url();
 
-        $db = db_connect();
-
-        // --- TOTAL ---
+        // tổng
         $total = $db->table('document_approval_steps das')
-            ->join('document_approvals da', 'da.id = das.approval_id', 'inner')
-            ->where('das.approver_id', $uid)
-            ->where('das.status', 'active')
-            ->where('da.status', 'pending')
+            ->join('document_approvals da','da.id=das.approval_id','inner')
+            ->where('das.approver_id',$uid)
+            ->where('das.status','active')
+            ->where('da.status','pending')
             ->countAllResults();
 
-        // --- PAGE DATA (hỗ trợ cả task_file & comment) ---
+        // page rows
         $rows = $db->table('document_approval_steps das')
             ->select("
-            das.id  AS step_id,
-            da.id   AS approval_id,
-            da.document_id,
-            da.source_type,
-
-            CASE WHEN da.source_type='comment' THEN c.file_name  ELSE tf.file_name  END AS file_name,
-            CASE WHEN da.source_type='comment' THEN c.file_path  ELSE tf.file_path  END AS file_path,
-            COALESCE(
-                CASE WHEN da.source_type='comment' THEN c.created_at ELSE tf.created_at END,
-                da.created_at
-            ) AS file_created_at,
-
-            -- người gửi: ưu tiên theo nguồn
-            COALESCE(u_sender_c.name, u_comment_author.name, u_sender_tf.name) AS sender_name,
-
-            u_approver.name AS approver_name,
-
-            da.status AS approval_status,
-            da.current_step_index,
-            das.sequence,
-            das.status AS step_status,
-            das.acted_at,
-            das.comment AS step_comment
-        ", false)
-            ->join('document_approvals da', 'da.id = das.approval_id', 'inner')
-            ->join('task_files tf', 'tf.id = da.document_id AND da.source_type="task_file"', 'left')
+        das.id AS step_id, das.sequence, das.status AS step_status,
+        da.id AS approval_id, da.document_id, da.source_type, da.status AS approval_status,
+        tf.file_name AS tf_file_name, tf.file_path AS tf_file_path, tf.created_at AS tf_created_at,
+        c.file_name  AS c_file_name,  c.file_path  AS c_file_path,  c.created_at  AS c_created_at,
+        u.name AS approver_name, u.signature_url AS approver_signature_url
+      ", false)
+            ->join('document_approvals da','da.id=das.approval_id','inner')
             ->join('task_comments c', 'c.id = da.document_id AND da.source_type="comment"', 'left')
-
-            // 🔧 thay CASE trong ON bằng 2 JOIN riêng
-            ->join('users u_sender_tf', 'u_sender_tf.id = tf.uploaded_by', 'left')
-            ->join('users u_sender_c',  'u_sender_c.id  = c.uploaded_by',  'left')
-            ->join('users u_comment_author', 'u_comment_author.id = c.user_id', 'left')
-
-            ->join('users u_approver',  'u_approver.id  = das.approver_id', 'left')
-
-            ->where('das.approver_id', $uid)
-            ->where('das.status', 'active')
-            ->where('da.status', 'pending')
-            ->orderBy('file_created_at', 'DESC')
-            ->orderBy('das.sequence', 'ASC')
-            ->limit($ps, $offset)
+            ->join('task_files tf',   'tf.id = da.document_id AND da.source_type="task_file"', 'left')
+            ->join('users u','u.id=das.approver_id','left')
+            ->where('das.approver_id',$uid)
+            ->where('das.status','active')
+            ->where('da.status','pending')
+            ->orderBy('das.id','DESC')
+            ->limit($ps,$offset)
             ->get()->getResultArray();
 
-        $base = base_url();
-        $items = array_map(static function(array $r) use ($base) {
-            $url = $r['file_path'] ?? null;
-            $abs = $url ? (str_starts_with($url, 'http') ? $url : $base . ltrim($url, '/')) : null;
+        $items = array_map(static function($r) use($base){
+            $filePath = ($r['source_type']==='comment') ? ($r['c_file_path']??null) : ($r['tf_file_path']??null);
+            $fileUrl  = $filePath ? (str_starts_with($filePath,'http') ? $filePath : $base.ltrim($filePath,'/')) : null;
+
+            $sig = $r['approver_signature_url'] ?? null;
+            $sigAbs = $sig ? (str_starts_with($sig,'http') ? $sig : $base.ltrim($sig,'/')) : null;
 
             return [
                 'approval_id' => (int)$r['approval_id'],
-                'step_id'     => (int)$r['step_id'],
                 'document_id' => (int)$r['document_id'],
-                'source_type' => $r['source_type'],                     // 'task_file' | 'comment'
-                'name'        => $r['file_name'] ?: '(Không tên)',
-                'url'         => $abs,
-                'created_at'  => $r['file_created_at'],
-                'sender_name' => $r['sender_name'] ?: null,
-                'status'      => $r['approval_status'],                  // phiên: pending
-                'step_info'   => [
-                    'sequence'      => (int)$r['sequence'],
-                    'status'        => $r['step_status'],               // step: active
-                    'approver_name' => $r['approver_name'] ?? null,
-                    'acted_at'      => $r['acted_at'],
-                    'comment'       => $r['step_comment'],
-                ],
+                'file_url'    => $fileUrl,
+                'name'        => ($r['source_type']==='comment') ? ($r['c_file_name']??'(Không tên)') : ($r['tf_file_name']??'(Không tên)'),
+                'created_at'  => ($r['source_type']==='comment') ? ($r['c_created_at']??$r['tf_created_at']) : ($r['tf_created_at']??$r['c_created_at']),
+                'status'      => $r['approval_status'],
+                // để FE binding nhanh:
+                'markers'     => ['chuky'.$r['sequence']],   // trùng quy ước marker theo thứ tự step
+                'signatures'  => $sigAbs ? [[ 'marker'=>'chuky'.$r['sequence'], 'image_url'=>$sigAbs ]] : [],
             ];
         }, $rows);
 
         return $this->respond([
-            'items'    => $items,
-            'total'    => (int)$total,
-            'page'     => $page,
-            'pageSize' => $ps,
+            'items'=>$items, 'total'=>(int)$total, 'page'=>$page, 'pageSize'=>$ps
         ]);
     }
 
