@@ -119,14 +119,21 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, shallowRef, markRaw, computed, onMounted, onBeforeUnmount } from 'vue'
 
 
 
-// Dùng globals do index.html đã nạp
-const pdfjsLib = window.pdfjsLib
-const { PDFDocument, StandardFonts, rgb } = window.PDFLib
-const Tesseract = window.Tesseract
+// pdf.js (ESM) + worker qua Vite
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf'
+import pdfWorker from 'pdfjs-dist/legacy/build/pdf.worker.min.js?url'
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
+
+// pdf-lib (ESM)
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
+
+// tesseract.js (ESM)
+import Tesseract from 'tesseract.js'
+const TESSDATA_URL = 'https://tessdata.projectnaptha.com/4.0.0'
 
 // Refs / state
 const canvasEl = ref(null)
@@ -134,7 +141,7 @@ const pdfInput = ref(null)
 const imgInput = ref(null)
 
 const info = ref('Chưa có PDF.')
-const pdfDoc = ref(null)
+const pdfDoc = shallowRef(null)
 const pdfBytesOriginal = ref(null)
 const currentPage = ref(1)
 const pageCount = ref(0)
@@ -184,8 +191,9 @@ async function getBasePageSize(pageIndex) {
 
 // Load PDF
 async function loadPdfFromBytes(bytes) {
-    const loadingTask = pdfjsLib.getDocument({ data: bytes, disableWorker: true })
-    pdfDoc.value = await loadingTask.promise
+    const loadingTask = pdfjsLib.getDocument({ data: bytes })
+    const doc = await loadingTask.promise
+    pdfDoc.value = markRaw(doc)
     currentPage.value = 1
     pageCount.value = pdfDoc.value.numPages
     pageSizeCache.value.clear()
@@ -224,6 +232,9 @@ async function onPickImages(e) {
 // Render page + overlays
 async function renderPage() {
     if (!pdfDoc.value) return
+    if (!canvasEl.value) return
+    const _ctx = ctx.value
+    if (!_ctx) { console.warn('Canvas context chưa sẵn sàng'); return }
     const page = await pdfDoc.value.getPage(currentPage.value)
     const baseViewport = page.getViewport({ scale: 1 })
     basePdfW.value = baseViewport.width
@@ -241,7 +252,7 @@ async function renderPage() {
     canvasEl.value.style.width = `${Math.round(baseViewport.width * cssScale)}px`
     canvasEl.value.style.height = `${Math.round(baseViewport.height * cssScale)}px`
 
-    await page.render({ canvasContext: ctx.value, viewport }).promise
+    await page.render({ canvasContext: _ctx, viewport }).promise
 
     // rect overlays
     for (const a of annotations.value.filter(x => x.pageIndex === currentPage.value && x.type === 'rect')) {
@@ -554,10 +565,6 @@ async function loadSample() {
 const onResize = () => { if (pdfDoc.value) renderPage() }
 
 onMounted(() => {
-    if (!pdfjsLib || !PDFDocument || !Tesseract) {
-        console.error('Thiếu thư viện CDN. Kiểm tra lại index.html (pdf.js, pdf-lib, tesseract).')
-        return
-    }
     // KHÔNG set workerSrc ở đây nữa — index.html đã cấu hình Blob worker
     pdfInput.value?.addEventListener('change', onPickPdf)
     imgInput.value?.addEventListener('change', onPickImages)
