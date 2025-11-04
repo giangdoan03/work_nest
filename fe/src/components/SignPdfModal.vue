@@ -71,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick, shallowRef, markRaw, computed } from 'vue'
+import { ref, watch, nextTick, shallowRef, markRaw, computed, watchEffect} from 'vue'
 import { message } from 'ant-design-vue'
 
 // --- pdf.js setup ---
@@ -165,17 +165,24 @@ async function loadPdf() {
     if (!props.pdfUrl) return
     isPdfReady.value = false
     try {
-        const task = pdfjsLib.getDocument({ url: props.pdfUrl })
+        console.log('📥 Fetch PDF:', props.pdfUrl)
+        const res = await fetch(props.pdfUrl)
+        const buffer = await res.arrayBuffer()
+        const task = pdfjsLib.getDocument({ data: buffer })
         const doc = await task.promise
         pdfDoc.value = markRaw(doc)
         pageCount.value = doc.numPages
         pageNum.value = 1
         await renderPage()
         isPdfReady.value = true
+        console.log('✅ PDF load qua fetch thành công')
     } catch (err) {
         console.error('❌ loadPdf lỗi:', err)
+        message.error('Không tải được tài liệu PDF.')
     }
 }
+
+
 async function renderPage() {
     if (!pdfDoc.value) return
     const page = await pdfDoc.value.getPage(pageNum.value)
@@ -212,8 +219,12 @@ watch(() => props.open, async (v) => {
         await loadPdf()
     }
 })
-watch([pageNum, scale], () => {
-    if (pdfDoc.value) renderPage()
+watch([pageNum, scale], async () => {
+    if (pdfDoc.value) {
+        isPdfReady.value = false // 👈 thêm dòng này
+        await renderPage()
+        isPdfReady.value = true  // 👈 đảm bảo sau khi render xong
+    }
 })
 
 async function handleSave() {
@@ -282,6 +293,13 @@ async function handleSave() {
         saving.value = false
     }
 }
+
+watchEffect(() => {
+    console.log('[DEBUG] open:', props.open)
+    console.log('[DEBUG] isPdfReady:', isPdfReady.value)
+    console.log('[DEBUG] pdfUrl:', props.pdfUrl)
+    console.log('[DEBUG] signatureUrl:', props.signatureUrl)
+})
 </script>
 
 <style scoped>
