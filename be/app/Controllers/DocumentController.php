@@ -987,6 +987,9 @@ class DocumentController extends ResourceController
         return $this->respondCreated(['status' => 'created']);
     }
 
+    /**
+     * @throws ReflectionException
+     */
     public function updatePermission($id = null): ResponseInterface
     {
         if (!$id) return $this->failValidationErrors('Thiếu ID');

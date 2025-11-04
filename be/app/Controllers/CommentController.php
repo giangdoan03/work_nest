@@ -6,9 +6,11 @@ use App\Models\CommentModel;
 use App\Models\CommentReadModel;
 use App\Models\DocumentApprovalModel;
 use App\Models\DocumentApprovalStepModel;
+use App\Models\DocumentModel;
 use App\Models\TaskCommentModel;
 use App\Models\TaskFileModel;
 use App\Models\TaskModel;
+use App\Models\UserModel;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
@@ -22,13 +24,13 @@ use Throwable;
 class CommentController extends ResourceController
 {
     protected $modelName = TaskCommentModel::class;
-    protected $format    = 'json';
+    protected $format = 'json';
 
     // cấu hình upload cơ bản
     protected int $maxUploadKB = 8192; // 8MB
     protected array $allowedMimes = [
         // image
-        'image/jpeg','image/png','image/gif','image/webp',
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
         // pdf, office
         'application/pdf',
         'application/msword',
@@ -43,18 +45,19 @@ class CommentController extends ResourceController
         'application/octet-stream',
     ];
 
-    private function extToMime(string $ext): ?string {
+    private function extToMime(string $ext): ?string
+    {
         $map = [
-            'jpg'=>'image/jpeg','jpeg'=>'image/jpeg','png'=>'image/png','gif'=>'image/gif','webp'=>'image/webp',
-            'pdf'=>'application/pdf',
-            'doc'=>'application/msword',
-            'docx'=>'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'xls'=>'application/vnd.ms-excel',
-            'xlsx'=>'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'csv'=>'text/csv',
-            'ppt'=>'application/vnd.ms-powerpoint',
-            'pptx'=>'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            'zip'=>'application/zip',
+            'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'gif' => 'image/gif', 'webp' => 'image/webp',
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'csv' => 'text/csv',
+            'ppt' => 'application/vnd.ms-powerpoint',
+            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'zip' => 'application/zip',
         ];
         return $map[strtolower($ext)] ?? null;
     }
@@ -73,7 +76,7 @@ class CommentController extends ResourceController
     // ✅ Danh sách comment theo task
     public function byTask($task_id): ResponseInterface
     {
-        $page  = (int) $this->request->getGet('page') ?: 1;
+        $page = (int)$this->request->getGet('page') ?: 1;
         $limit = 5;
 
         // Lấy comment có phân trang (mới nhất lên đầu)
@@ -99,12 +102,12 @@ class CommentController extends ResourceController
         }
 
         return $this->respond([
-            'comments'   => $comments,
+            'comments' => $comments,
             'pagination' => [
                 'currentPage' => $pager->getCurrentPage(),
-                'totalPages'  => $pager->getPageCount(),
-                'totalItems'  => $pager->getTotal(),
-                'perPage'     => $limit,
+                'totalPages' => $pager->getPageCount(),
+                'totalItems' => $pager->getTotal(),
+                'perPage' => $limit,
             ]
         ]);
     }
@@ -112,51 +115,48 @@ class CommentController extends ResourceController
 
     public function filesByTask($task_id = null): ResponseInterface
     {
-        $task_id = (int) $task_id;
-        if (!$task_id) {
+        $task_id = (int)$task_id;
+        if ($task_id <= 0) {
             return $this->failValidationErrors('Thiếu task_id.');
         }
 
         $db = db_connect();
 
-        // Lấy tất cả comment có file + kèm trạng thái duyệt
         $sql = "
         SELECT
-            c.id AS comment_id,
-            c.task_id,
-            c.user_id,
-            u.name AS user_name,
-            c.file_name,
-            c.file_path,
-            c.created_at,
-            c.approval_status,
-            c.approval_sent_by,
-            c.approval_sent_at
-        FROM task_comments c
-        LEFT JOIN users u ON u.id = c.user_id
-        WHERE c.task_id = ?
-          AND c.file_path IS NOT NULL
-          AND c.file_path <> ''
-        ORDER BY c.created_at DESC
+            d.id,
+            d.title,
+            d.file_path,
+            d.file_type,
+            d.file_size,
+            d.uploaded_by,
+            u.name AS uploader_name,
+            d.created_at,
+            d.approval_status,
+            d.approval_sent_by,
+            d.approval_sent_at
+        FROM documents d
+        LEFT JOIN users u ON u.id = d.uploaded_by
+        ORDER BY d.created_at DESC
     ";
 
         $rows = $db->query($sql, [$task_id])->getResultArray();
 
-        // Chuẩn hóa dữ liệu trả về cho FE
+        // Chuẩn hoá cho FE (giữ cấu trúc tương tự trước đây)
         $files = [];
         foreach ($rows as $r) {
             $files[] = [
-                'id'              => (int) $r['comment_id'],
-                'task_id'         => (int) $r['task_id'],
-                'file_name'       => $r['file_name'],
-                'file_path'       => $r['file_path'],
-                'uploaded_by'     => (int) $r['user_id'],
-                'uploader_name'   => $r['user_name'] ?? null,
-                'created_at'      => $r['created_at'],
-                'source'          => 'comment',
-                'status'          => $r['approval_status'] ?? null,       // ✅ trạng thái duyệt
-                'approval_sent_by'=> $r['approval_sent_by'] ?? null,
-                'approval_sent_at'=> $r['approval_sent_at'] ?? null,
+                'id'               => (int)$r['id'],
+                'task_id'          => $task_id,
+                'file_name'        => $r['title'] ?: basename(parse_url($r['file_path'] ?? '', PHP_URL_PATH) ?: ''),
+                'file_path'        => $r['file_path'],
+                'uploaded_by'      => (int)$r['uploaded_by'],
+                'uploader_name'    => $r['uploader_name'] ?? null,
+                'created_at'       => $r['created_at'],
+                'source'           => 'document',                    // ⬅ khác trước
+                'status'           => $r['approval_status'] ?? null,
+                'approval_sent_by' => $r['approval_sent_by'] ?? null,
+                'approval_sent_at' => $r['approval_sent_at'] ?? null,
             ];
         }
 
@@ -173,10 +173,10 @@ class CommentController extends ResourceController
      */
     public function sendApprovalForComment($id = null): ResponseInterface
     {
-        $payload    = $this->request->getJSON(true) ?? [];
-        $userId     = (int) ($payload['user_id'] ?? 0);
-        $approvers  = array_values(array_unique(array_filter(array_map('intval', $payload['approver_ids'] ?? []))));
-        $note       = trim((string)($payload['note'] ?? ''));
+        $payload = $this->request->getJSON(true) ?? [];
+        $userId = (int)($payload['user_id'] ?? 0);
+        $approvers = array_values(array_unique(array_filter(array_map('intval', $payload['approver_ids'] ?? []))));
+        $note = trim((string)($payload['note'] ?? ''));
 
         if (!$id || !$userId || empty($approvers))
             return $this->failValidationErrors('Thiếu comment_id, user_id hoặc approver_ids');
@@ -185,35 +185,37 @@ class CommentController extends ResourceController
         if (!$cm || empty($cm['file_path']))
             return $this->failNotFound('Comment không hợp lệ hoặc không có file.');
 
-        $apvM  = new DocumentApprovalModel();
+        $apvM = new DocumentApprovalModel();
         $stepM = new DocumentApprovalStepModel();
 
-        $db = $apvM->db; $db->transBegin();
+        $db = $apvM->db;
+        $db->transBegin();
         try {
             // 1) Tạo phiên (document_id bạn có thể dùng chính comment_id)
             $apvId = $apvM->insert([
-                'document_id'        => (int)$id,
-                'status'             => 'pending',
-                'created_by'         => $userId,
+                'document_id' => (int)$id,
+                'status' => 'pending',
+                'created_by' => $userId,
                 'current_step_index' => 0,
-                'note'               => $note ?: 'Gửi duyệt file trong comment',
+                'note' => $note ?: 'Gửi duyệt file trong comment',
                 'source_type' => 'comment'
             ], true);
 
             // 2) Tạo các bước
-            $seq=1; $batch=[];
+            $seq = 1;
+            $batch = [];
             foreach ($approvers as $uid) {
                 $batch[] = [
                     'approval_id' => $apvId,
                     'approver_id' => $uid,
-                    'sequence'    => $seq++,
-                    'status'      => 'waiting',
+                    'sequence' => $seq++,
+                    'status' => 'waiting',
                 ];
             }
             $stepM->insertBatch($batch);
 
             // 3) Kích hoạt step đầu tiên
-            $first = $stepM->where('approval_id', $apvId)->orderBy('sequence','ASC')->first();
+            $first = $stepM->where('approval_id', $apvId)->orderBy('sequence', 'ASC')->first();
             if ($first) {
                 $stepM->update($first['id'], ['status' => 'active']);
                 $apvM->update($apvId, ['current_step_index' => (int)$first['sequence']]);
@@ -221,7 +223,7 @@ class CommentController extends ResourceController
 
             // 4) Cập nhật trạng thái comment
             $this->model->update((int)$id, [
-                'approval_status'  => 'pending',
+                'approval_status' => 'pending',
                 'approval_sent_by' => $userId,
                 'approval_sent_at' => date('Y-m-d H:i:s'),
             ]);
@@ -229,105 +231,159 @@ class CommentController extends ResourceController
             $db->transCommit();
 
             return $this->respond([
-                'ok'          => true,
-                'message'     => 'Đã gửi duyệt file comment.',
+                'ok' => true,
+                'message' => 'Đã gửi duyệt file comment.',
                 'approval_id' => (int)$apvId,
             ]);
         } catch (Throwable $e) {
             $db->transRollback();
-            return $this->failServerError('Gửi duyệt thất bại: '.$e->getMessage());
+            return $this->failServerError('Gửi duyệt thất bại: ' . $e->getMessage());
         }
     }
 
 
+    /** Lấy department_id cho user (ưu tiên session, fallback DB) */
+    private function resolveDepartmentId(int $userId): ?int
+    {
+        $s = session();
+        if ($s && $s->has('department_id')) {
+            $dept = (int)$s->get('department_id');
+            return $dept > 0 ? $dept : null;
+        }
+        $u = (new UserModel())->select('department_id')->find($userId);
+        $dept = (int)($u['department_id'] ?? 0);
+        return $dept > 0 ? $dept : null;
+    }
 
-
-
-    // ✅ Tạo comment mới (POST /tasks/{task_id}/comments)
 
     /**
      * @throws ReflectionException
      */
-
-    /** POST /tasks/{task_id}/comments (form-data: user_id, content, attachment?) */
     public function create($task_id = null): ResponseInterface
     {
-        $userId  = (int) ($this->request->getPost('user_id') ?? 0);
-        $content = trim((string) $this->request->getPost('content', FILTER_UNSAFE_RAW));
-
-        $data = ['task_id' => (int)$task_id, 'user_id' => $userId, 'content' => $content];
+        $userId  = (int)($this->request->getPost('user_id') ?? 0);
+        if ($userId <= 0) {
+            return $this->failValidationErrors(['user_id' => 'Thiếu user_id.']);
+        }
 
         /** @var UploadedFile|null $file */
         $file = $this->request->getFile('attachment');
-
-        if ($file && $file->isValid() && !$file->hasMoved()) {
-            // validate size/mime cơ bản
-            $sizeKB = (int) ceil(($file->getSize() ?: 0) / 1024);
-            if ($sizeKB > $this->maxUploadKB) {
-                return $this->failValidationErrors(['attachment' => 'Kích thước vượt giới hạn.']);
-            }
-            $ctype = $this->guessContentType($file);
-            if (!in_array($ctype, $this->allowedMimes, true)) {
-                return $this->failValidationErrors(['attachment' => 'Định dạng không được hỗ trợ.']);
-            }
-
-            // đẩy binary lên WP
-            $endpoint = (string) env('WP_MEDIA_ENDPOINT', '');
-            $wpUser   = (string) env('WP_USER', '');
-            $wpPass   = (string) env('WP_APP_PASSWORD', '');
-            if ($endpoint === '' || $wpUser === '' || $wpPass === '') {
-                return $this->failServerError('Thiếu cấu hình WP_MEDIA_ENDPOINT / WP_USER / WP_APP_PASSWORD.');
-            }
-            $auth   = 'Basic ' . base64_encode($wpUser . ':' . $wpPass);
-
-            $client = Services::curlrequest([
-                'timeout'     => 60,
-                'http_errors' => false,
-                'headers'     => [
-                    'Authorization' => $auth,
-                    'Accept'        => 'application/json',
-                ],
-            ]);
-
-            $clientName = $file->getClientName(); // tên gốc để hiển thị
-            $resp = $client->post($endpoint, [
-                'headers' => [
-                    'Content-Type'        => $ctype,
-                    'Content-Disposition' => 'attachment; filename="' . basename($clientName) . '"',
-                ],
-                'body' => file_get_contents($file->getTempName()),
-            ]);
-
-            $code = $resp->getStatusCode();
-            $body = (string) $resp->getBody();
-            if ($code !== 201) {
-                // trả về body WP để dễ debug
-                return $this->failServerError($body ?: ('WordPress trả mã ' . $code));
-            }
-
-            $json  = json_decode($body, true) ?: [];
-            $wpUrl = $json['source_url'] ?? ($json['guid']['rendered'] ?? null);
-            if (!$wpUrl) return $this->failServerError('Upload thành công nhưng thiếu URL media từ WordPress.');
-
-            // -> lưu vào task_comments
-            $data['file_name'] = $clientName;
-            $data['file_path'] = $wpUrl;
+        if (!$file || !$file->isValid() || $file->hasMoved()) {
+            return $this->failValidationErrors(['attachment' => 'Thiếu file hoặc file không hợp lệ.']);
         }
 
-        if (!$this->model->insert($data)) {
-            return $this->failValidationErrors($this->model->errors());
+        // Validate size / mime cơ bản
+        $sizeKB = (int)ceil(($file->getSize() ?: 0) / 1024);
+        if ($sizeKB > $this->maxUploadKB) {
+            return $this->failValidationErrors(['attachment' => 'Kích thước vượt giới hạn.']);
+        }
+        $ctype = $this->guessContentType($file);
+        if (!in_array($ctype, $this->allowedMimes, true)) {
+            return $this->failValidationErrors(['attachment' => 'Định dạng không được hỗ trợ.']);
         }
 
+        // Cấu hình WP
+        $endpoint = (string) env('WP_MEDIA_ENDPOINT', '');
+        $wpUser   = (string) env('WP_USER', '');
+        $wpPass   = (string) env('WP_APP_PASSWORD', '');
+        if ($endpoint === '' || $wpUser === '' || $wpPass === '') {
+            return $this->failServerError('Thiếu cấu hình WP_MEDIA_ENDPOINT / WP_USER / WP_APP_PASSWORD.');
+        }
+
+        // Upload binary lên WordPress
+        $auth = 'Basic ' . base64_encode($wpUser . ':' . $wpPass);
+        $client = Services::curlrequest([
+            'timeout'     => 60,
+            'http_errors' => false,
+            'headers'     => [
+                'Authorization' => $auth,
+                'Accept'        => 'application/json',
+            ],
+        ]);
+
+        $clientName = $file->getClientName(); // tên gốc để hiển thị
+        $resp = $client->post($endpoint, [
+            'headers' => [
+                'Content-Type'        => $ctype,
+                'Content-Disposition' => 'attachment; filename="' . basename($clientName) . '"',
+            ],
+            'body' => file_get_contents($file->getTempName()),
+        ]);
+
+        $code = $resp->getStatusCode();
+        $body = (string)$resp->getBody();
+        if ($code !== 201) {
+            return $this->failServerError($body ?: ('WordPress trả mã ' . $code));
+        }
+
+        $json  = json_decode($body, true) ?: [];
+        $wpUrl = $json['source_url'] ?? ($json['guid']['rendered'] ?? null);
+        if (!$wpUrl) {
+            return $this->failServerError('Upload thành công nhưng thiếu URL media từ WordPress.');
+        }
+
+        // Chuẩn bị dữ liệu chèn vào `documents`
+        $docM     = new DocumentModel();
+        $deptId   = $this->resolveDepartmentId($userId);
+        $sizeByte = (int)($file->getSize() ?: 0);
+
+        // Tránh trùng (user up lại cùng URL)
+        $exist = $docM->where('file_path', $wpUrl)
+            ->where('uploaded_by', $userId)
+            ->first();
+        if ($exist) {
+            // đã có → trả về doc cũ
+            return $this->respondCreated([
+                'document' => [
+                    'id'            => (int)$exist['id'],
+                    'title'         => $exist['title'],
+                    'file_path'     => $exist['file_path'],
+                    'file_type'     => $exist['file_type'],
+                    'file_size'     => (int)($exist['file_size'] ?? 0),
+                    'department_id' => $exist['department_id'] !== null ? (int)$exist['department_id'] : null,
+                    'uploaded_by'   => (int)$exist['uploaded_by'],
+                    'visibility'    => $exist['visibility'] ?? 'private',
+                    'tags'          => $exist['tags'] ?? null,
+                    'approval_status'=> $exist['approval_status'] ?? 'not_sent',
+                    'created_at'    => $exist['created_at'] ?? null,
+                    'updated_at'    => $exist['updated_at'] ?? null,
+                    // (tuỳ ý) ghim thêm task_id nguồn để tra cứu
+                    'source_task_id'=> $task_id ? (int)$task_id : null,
+                ]
+            ]);
+        }
+
+        // Chèn document mới
+        $insertId = $docM->insert([
+            'title'           => $clientName,
+            'file_path'       => $wpUrl,
+            'file_type'       => 'wp_media',
+            'file_size'       => $sizeByte,
+            'department_id'   => $deptId,
+            'uploaded_by'     => $userId,
+            'visibility'      => 'private',
+            'tags'            => 'task_upload',        // gắn nhãn cho biết nguồn
+            'approval_status' => 'not_sent',           // chưa gửi duyệt
+        ], true);
+        if (!$insertId) $insertId = $docM->getInsertID();
+
+        // Trả về document; KHÔNG tạo bản ghi task_comments
         return $this->respondCreated([
-            'id'        => $this->model->getInsertID(),
-            'task_id'   => (int)$task_id,
-            'user_id'   => $userId,
-            'content'   => $content,
-            'file_name' => $data['file_name'] ?? null,
-            'file_path' => $data['file_path'] ?? null,
+            'document' => [
+                'id'            => (int)$insertId,
+                'title'         => $clientName,
+                'file_path'     => $wpUrl,
+                'file_type'     => 'wp_media',
+                'file_size'     => $sizeByte,
+                'department_id' => $deptId,
+                'uploaded_by'   => $userId,
+                'visibility'    => 'private',
+                'tags'          => 'task_upload',
+                'approval_status'=> 'not_sent',
+                'source_task_id'=> $task_id ? (int)$task_id : null,
+            ]
         ]);
     }
-
 
 
 
@@ -354,11 +410,11 @@ class CommentController extends ResourceController
 
     public function inbox(): ResponseInterface
     {
-        $uid = (int) ($this->request->getGet('user_id') ?? 0);
+        $uid = (int)($this->request->getGet('user_id') ?? 0);
         if (!$uid) return $this->fail('Missing user_id', 400);
 
-        $page   = max(1, (int) ($this->request->getGet('page') ?: 1));
-        $limit  = min(50, (int) ($this->request->getGet('limit') ?: 10));
+        $page = max(1, (int)($this->request->getGet('page') ?: 1));
+        $limit = min(50, (int)($this->request->getGet('limit') ?: 10));
         $offset = ($page - 1) * $limit;
 
         $db = db_connect();
@@ -394,15 +450,15 @@ class CommentController extends ResourceController
             FROM task_comments c
             INNER JOIN tasks t ON t.id = c.task_id
             WHERE (t.assigned_to = ? OR t.created_by = ?)";
-            $total = (int) $db->query($countSql, [$uid, $uid])->getRow('cnt');
+            $total = (int)$db->query($countSql, [$uid, $uid])->getRow('cnt');
 
             return $this->respond([
                 'comments' => $rows,
                 'pagination' => [
                     'currentPage' => $page,
-                    'totalPages'  => (int) ceil($total / $limit),
-                    'totalItems'  => $total,
-                    'perPage'     => $limit,
+                    'totalPages' => (int)ceil($total / $limit),
+                    'totalItems' => $total,
+                    'perPage' => $limit,
                 ],
             ]);
         } catch (Throwable $e) {
@@ -417,7 +473,7 @@ class CommentController extends ResourceController
      */
     public function unreadCount(): ResponseInterface
     {
-        $uid = (int) ($this->request->getGet('user_id') ?? 0);
+        $uid = (int)($this->request->getGet('user_id') ?? 0);
         if (!$uid) return $this->fail('Missing user_id', 400);
 
         $db = db_connect();
@@ -432,7 +488,7 @@ class CommentController extends ResourceController
               WHERE cr.comment_id = c.id AND cr.user_id = ?
             )";
             $row = $db->query($sql, [$uid, $uid, $uid])->getRowArray();
-            return $this->respond(['unread' => (int) ($row['cnt'] ?? 0)]);
+            return $this->respond(['unread' => (int)($row['cnt'] ?? 0)]);
         } catch (Throwable $e) {
             log_message('error', 'UnreadCount failed: {msg}', ['msg' => $e->getMessage()]);
             return $this->respond(['unread' => 0]); // đừng văng 500 chỉ vì đếm lỗi
@@ -445,22 +501,25 @@ class CommentController extends ResourceController
      */
     public function markReadBatch(): ResponseInterface
     {
-        $uid = (int) $this->request->getVar('user_id');
-        $ids = (array) ($this->request->getVar('comment_ids') ?? []);
+        $uid = (int)$this->request->getVar('user_id');
+        $ids = (array)($this->request->getVar('comment_ids') ?? []);
         if (!$uid || !$ids) return $this->fail('Missing user_id or comment_ids', 400);
 
         $readModel = new CommentReadModel();
         $now = date('Y-m-d H:i:s');
 
         $rows = array_map(fn($cid) => [
-            'user_id'    => $uid,
-            'comment_id' => (int) $cid,
-            'read_at'    => $now
+            'user_id' => $uid,
+            'comment_id' => (int)$cid,
+            'read_at' => $now
         ], $ids);
 
         // insert ignore theo cặp unique (user_id, comment_id)
         foreach ($rows as $r) {
-            try { $readModel->insert($r, false); } catch (Throwable $e) { /* ignore duplicate */ }
+            try {
+                $readModel->insert($r, false);
+            } catch (Throwable $e) { /* ignore duplicate */
+            }
         }
 
         return $this->respond(['ok' => true, 'marked' => count($rows)]);
@@ -471,17 +530,18 @@ class CommentController extends ResourceController
      */
     public function markRead($id = null): ResponseInterface
     {
-        $uid = (int) $this->request->getVar('user_id');
+        $uid = (int)$this->request->getVar('user_id');
         if (!$uid || !$id) return $this->fail('Missing user_id or id', 400);
 
         $readModel = new CommentReadModel();
         try {
             $readModel->insert([
                 'user_id' => $uid,
-                'comment_id' => (int) $id,
+                'comment_id' => (int)$id,
                 'read_at' => date('Y-m-d H:i:s')
             ], false);
-        } catch (Throwable) { /* ignore duplicate */ }
+        } catch (Throwable) { /* ignore duplicate */
+        }
 
         return $this->respond(['ok' => true]);
     }
@@ -497,8 +557,8 @@ class CommentController extends ResourceController
             if (empty($m['user_id'])) continue;
             $norm[] = [
                 'user_id' => (int)$m['user_id'],
-                'name'    => $m['name'] ?? ('#'.$m['user_id']),
-                'role'    => in_array($m['role'] ?? 'approve', ['approve','sign'], true) ? $m['role'] : 'approve',
+                'name' => $m['name'] ?? ('#' . $m['user_id']),
+                'role' => in_array($m['role'] ?? 'approve', ['approve', 'sign'], true) ? $m['role'] : 'approve',
             ];
         }
         if (!$norm) return;

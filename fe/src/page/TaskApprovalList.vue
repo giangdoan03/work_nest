@@ -1,450 +1,249 @@
+<!-- src/components/ApprovalInboxFiles.vue -->
 <template>
-    <div>
-        <a-card bordered>
-            <a-flex justify="space-between" align="center" class="mb-3">
-                <a-typography-title :level="4">Nhiệm vụ cần duyệt</a-typography-title>
-                <a-input-search
-                    v-model:value="searchTitle"
-                    placeholder="Tìm theo tiêu đề"
-                    allow-clear
-                    style="max-width: 320px"
-                    @pressEnter="handleSearch"
-                />
-            </a-flex>
+    <a-card :bordered="false" class="inbox-files">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <a-input-search
+                v-model:value="keyword"
+                :placeholder="'Tìm theo tên tệp, người gửi…'"
+                allow-clear
+                @search="onSearch"
+                style="max-width: 440px"
+            >
+                <template #enterButton>
+                    <a-button type="primary">
+                        <template #icon><SearchOutlined /></template>
+                        Tìm
+                    </a-button>
+                </template>
+            </a-input-search>
 
-            <!-- Tabs: Cần duyệt / Đã xử lý / Văn bản -->
-            <a-tabs v-model:activeKey="activeTab">
-                <a-tab-pane key="pending" tab="Cần duyệt" />
-                <a-tab-pane key="resolved" tab="Đã xử lý" />
-                <a-tab-pane key="docs" tab="Duyệt công văn" />
-            </a-tabs>
+            <a-space>
+                <a-button @click="fetchData" :loading="loading">
+                    <template #icon><ReloadOutlined /></template>
+                    Làm mới
+                </a-button>
+            </a-space>
+        </div>
 
-            <!-- Bảng cho pending + resolved -->
-            <template v-if="activeTab !== 'docs'">
-                <a-table
-                    :columns="columns"
-                    :data-source="rows"
-                    :loading="loading"
-                    :pagination="pagination"
-                    row-key="id"
-                    :locale="{ emptyText: 'Không có bản ghi' }"
-                    :scroll="{ x: 1300 }"
-                    @change="handleTableChange"
-                >
-                    <template #bodyCell="{ column, record }">
-                        <!-- Loại -->
-                        <template v-if="column.dataIndex === 'target_type'">
-                            <a-tag>{{ mapTypeLabel(record.target_type) }}</a-tag>
-                        </template>
-
-                        <!-- Tiêu đề + Link (tự nhận diện external/internal) -->
-                        <template v-else-if="column.dataIndex === 'title'">
-                            <!-- Tab Cần duyệt -->
-                            <template v-if="activeTab === 'pending'">
-                                <template v-if="isStep(record)">
-                                    <router-link :to="stepDetailRoute(record)" class="link">
-                                        {{ record.title || displayFallbackTitle(record) }}
-                                    </router-link>
-                                </template>
-                                <template v-else>
-                                    <template v-if="isExternalUrl(record.url)">
-                                        <a :href="record.url" class="link" target="_blank" rel="noopener">
-                                            {{ record.title || displayFallbackTitle(record) }}
-                                        </a>
-                                    </template>
-                                    <template v-else>
-                                        <router-link :to="record.url" class="link">
-                                            {{ record.title || displayFallbackTitle(record) }}
-                                        </router-link>
-                                    </template>
-                                </template>
-                            </template>
-
-                            <!-- Tab Đã xử lý -->
-                            <template v-else-if="activeTab === 'resolved'">
-                                <template v-if="isExternalUrl(record.url)">
-                                    <a-typography-link :href="record.url" target="_blank" rel="noopener">
-                                        {{ record.title || displayFallbackTitle(record) }}
-                                    </a-typography-link>
-                                </template>
-                                <template v-else>
-                                    <router-link :to="record.url" class="link">
-                                        {{ record.title || displayFallbackTitle(record) }}
-                                    </router-link>
-                                </template>
-                            </template>
-                        </template>
-
-                        <!-- Cấp hiện tại -->
-                        <template v-else-if="column.dataIndex === 'current_level'">
-                            Cấp {{ (record.current_level ?? 0) + 1 }}
-                        </template>
-
-                        <!-- Tổng cấp -->
-                        <template v-else-if="column.dataIndex === 'total_steps'">
-                            {{ record._total_steps ?? '—' }}
-                        </template>
-
-                        <!-- Tiến độ -->
-                        <template v-else-if="column.dataIndex === 'progress'">
-                            <a-progress :percent="progressPercent(record)" :status="progressStatus(record)" size="small" />
-                            <div class="text-xs text-gray-500">
-                                <a-tag :color="progressColor(record)" style="font-size:12px;">
-                                    {{ progressText(record) }}
-                                </a-tag>
-                            </div>
-                        </template>
-
-                        <!-- Trạng thái -->
-                        <template v-else-if="column.dataIndex === 'status'">
-                            <a-tag :color="statusColor(record.status)">{{ statusText(record.status) }}</a-tag>
-                        </template>
-
-                        <!-- Người gửi -->
-                        <template v-else-if="column.dataIndex === 'submitted_by'">
-                            {{ record._submitted_by_name || ('#' + (record.submitted_by ?? '—')) }}
-                        </template>
-
-                        <!-- Thời điểm gửi -->
-                        <template v-else-if="column.dataIndex === 'submitted_at'">
-                            {{ formatTime(record.submitted_at) || '—' }}
-                        </template>
-
-                        <!-- Hành động -->
-                        <template v-else-if="column.dataIndex === 'action'">
-                            <a-space>
-                                <a-button v-if="activeTab === 'pending'" type="primary" @click="openModal(record, 'approve')">Duyệt</a-button>
-                                <a-button v-if="activeTab === 'pending'" danger @click="openModal(record, 'reject')">Từ chối</a-button>
-                                <a-button @click="viewTimeline(record)">Chi tiết</a-button>
-                            </a-space>
-                        </template>
-                    </template>
-                </a-table>
-            </template>
-
-            <!-- Danh sách Văn bản cần duyệt (PDF) -->
-            <template v-else>
-                <DocumentApprovalList :my-signature-url="mySignatureUrl" />
-            </template>
-        </a-card>
-
-        <!-- Modal nhập comment -->
-        <a-modal
-            v-model:open="modalVisible"
-            :title="modalAction === 'approve' ? 'Xác nhận duyệt' : 'Từ chối phê duyệt'"
-            ok-text="Xác nhận"
-            cancel-text="Hủy"
-            :confirm-loading="submitting"
-            @ok="handleModalSubmit"
+        <!-- List -->
+        <a-list
+            :loading="loading"
+            :data-source="paged"
+            :locale="{ emptyText: 'Không có tài liệu nào cần bạn duyệt.' }"
+            item-layout="horizontal"
+            :pagination="paginationCfg"
+            class="mt-3"
         >
-            <a-form layout="vertical">
-                <a-form-item label="Ghi chú (không bắt buộc)">
-                    <a-textarea v-model:value="comment" placeholder="Nhập ghi chú…" />
-                </a-form-item>
-            </a-form>
-        </a-modal>
+            <template #renderItem="{ item }">
+                <a-list-item :key="item.approval_id">
+                    <a-card class="file-card" :hoverable="true">
+                        <div class="row">
+                            <div class="thumb">
+                                <component :is="item.icon" class="thumb-icon" v-if="item.kind!=='image'" />
+                                <a-image v-else :src="item.url" :height="64" />
+                            </div>
 
-        <!-- Modal Timeline -->
-        <a-modal v-model:open="timelineVisible" title="Chi tiết phê duyệt" :footer="null" width="620px">
-            <a-timeline>
-                <a-timeline-item v-for="st in timelineSteps" :key="st.level" :color="timelineColor(st.status)">
-                    <template v-if="st.status === 'approved'">
-                        Cấp {{ st.level }}: {{ st._approver_name || ('#' + st.approver_id) }} đã duyệt lúc {{ formatTime(st.commented_at) }}
-                        <div v-if="st.note">📝 {{ st.note }}</div>
-                    </template>
-                    <template v-else-if="st.status === 'rejected'">
-                        Cấp {{ st.level }}: {{ st._approver_name || ('#' + st.approver_id) }} từ chối lúc {{ formatTime(st.commented_at) }}
-                        <div v-if="st.note">📝 {{ st.note }}</div>
-                    </template>
-                    <template v-else>
-                        Cấp {{ st.level }}: Đang chờ duyệt
-                    </template>
-                </a-timeline-item>
-            </a-timeline>
-        </a-modal>
-    </div>
+                            <div class="meta">
+                                <div class="title" :title="item.title || item.name">
+                                    {{ item.title || item.name }}
+                                </div>
+
+                                <div class="sub">
+                                    <UserOutlined /> {{ item.uploader_name || '—' }}
+                                    · {{ formatDate(item.created_at) }}
+                                </div>
+
+                                <div class="url" v-if="item.url">
+                                    <a-button type="link" :href="item.url" target="_blank" rel="noopener">Mở tệp</a-button>
+                                    <a-typography-text type="secondary" copyable>{{ item.url }}</a-typography-text>
+                                </div>
+
+                                <div class="status">
+                                    <a-tag color="blue">Bước #{{ item.current_step_index || item.sequence || 1 }}</a-tag>
+                                    <a-tag :color="statusColor(item.status)">{{ labelStatus(item.status) }}</a-tag>
+                                </div>
+                            </div>
+
+                            <div class="actions">
+                                <a-tooltip title="Xem trước">
+                                    <a-button size="small" shape="circle" @click="openFile(item)">
+                                        <EyeOutlined />
+                                    </a-button>
+                                </a-tooltip>
+
+                                <a-tooltip title="Tải / mở">
+                                    <a-button size="small" shape="circle" @click="download(item)">
+                                        <DownloadOutlined />
+                                    </a-button>
+                                </a-tooltip>
+                            </div>
+                        </div>
+                    </a-card>
+                </a-list-item>
+            </template>
+        </a-list>
+    </a-card>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { message } from 'ant-design-vue'
-import debounce from 'lodash/debounce'
+import { ref, computed, onMounted } from 'vue'
+import dayjs from 'dayjs'
+import 'dayjs/locale/vi'
+dayjs.locale('vi')
+
 import {
-    getApprovalInbox,
-    getApproval,
-    approveApproval,
-    rejectApproval,
-    listApprovals
-} from '@/api/approvals'
+    ReloadOutlined, EyeOutlined, DownloadOutlined, SearchOutlined,
+    FilePdfOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined, FileTextOutlined,
+    UserOutlined
+} from '@ant-design/icons-vue'
+import { message } from 'ant-design-vue'
 
-// Lazy-load component văn bản để tách bớt bundle phần pdf-lib
-import DocumentApprovalList from '../components/Approval/DocumentApprovalList.vue'
-const mySignatureUrl = ref('')
-import { useUserStore } from '@/stores/user'              // 👈 thêm
-import { getUserDetail, getUsers } from '@/api/user'      // 👈 thêm
-// ================== STATE ==================
-const activeTab   = ref('pending')   // 'pending' | 'resolved' | 'docs'
-const rows        = ref([])
-const loading     = ref(false)
-const searchTitle = ref('')
+// 👉 API wrapper bạn đã có
+// export function getMyApprovalInboxFiles() { return instance.get('/approvals/inbox-files') }
+import { getMyApprovalInboxFiles } from '@/api/document' // chỉnh path đúng file api của bạn
 
-const pagination = ref({
-    current: 1,
-    pageSize: 10,
-    total: 0,
-    showSizeChanger: true,
-    showTotal: (t) => `Tổng ${t} bản ghi`
+/* ---------------- state ---------------- */
+const loading = ref(false)
+const rows    = ref([])
+const keyword = ref('')
+
+const current  = ref(1)
+const pageSize = ref(10)
+
+/* ---------------- helpers ---------------- */
+const IMAGE = new Set(['jpg','jpeg','png','gif','webp','bmp','svg'])
+const WORD  = new Set(['doc','docx'])
+const EXCEL = new Set(['xls','xlsx','csv'])
+const PPT   = new Set(['ppt','pptx'])
+const PDF   = new Set(['pdf'])
+
+const extOf = (name='') => {
+    const base = String(name).split('?')[0]
+    const i = base.lastIndexOf('.')
+    return i >= 0 ? base.slice(i+1).toLowerCase() : ''
+}
+const detectKind = (obj={}) => {
+    const src = obj.name || obj.title || obj.url || ''
+    const e = extOf(src)
+    if (IMAGE.has(e)) return 'image'
+    if (PDF.has(e))   return 'pdf'
+    if (WORD.has(e))  return 'word'
+    if (EXCEL.has(e)) return 'excel'
+    if (PPT.has(e))   return 'ppt'
+    return 'other'
+}
+const pickIcon = (kind) => ({
+    pdf: FilePdfOutlined, word: FileWordOutlined, excel: FileExcelOutlined, ppt: FilePptOutlined
+}[kind] || FileTextOutlined)
+
+const formatDate = (dt) => dt ? dayjs(dt).format('HH:mm DD/MM/YYYY') : '—'
+const labelStatus = (s) => {
+    s = String(s || '').toLowerCase()
+    if (s === 'pending')  return 'Chờ duyệt'
+    if (s === 'approved') return 'Đã duyệt'
+    if (s === 'rejected') return 'Từ chối'
+    return s || '—'
+}
+const statusColor = (s) => {
+    s = String(s || '').toLowerCase()
+    if (s === 'pending')  return 'gold'
+    if (s === 'approved') return 'green'
+    if (s === 'rejected') return 'red'
+    return 'default'
+}
+
+/* ---------------- data shaping ---------------- */
+/**
+ * BE (DocumentApprovalController::inboxFiles) trả về:
+ * {
+ *   items: [{
+ *     approval_id, document_id, file_url, name, created_at, status,
+ *     markers, signatures, ...
+ *   }], total, page, pageSize
+ * }
+ */
+const shaped = computed(() =>
+    (rows.value || []).map(r => {
+        const kind = detectKind({ name: r.name, url: r.file_url })
+        return {
+            ...r,
+            title: r.title || r.name,
+            url: r.file_url,
+            kind,
+            icon: pickIcon(kind),
+        }
+    })
+)
+
+const filtered = computed(() => {
+    const k = keyword.value.trim().toLowerCase()
+    if (!k) return shaped.value
+    return shaped.value.filter(it =>
+        (it.title || '').toLowerCase().includes(k) ||
+        (it.uploader_name || '').toLowerCase().includes(k)
+    )
 })
 
-const modalVisible   = ref(false)
-const submitting     = ref(false)
-const comment        = ref('')
-const modalAction    = ref('approve') // 'approve' | 'reject'
-const selectedRecord = ref(null)
+const total = computed(() => filtered.value.length)
+const paged = computed(() => {
+    const start = (current.value - 1) * pageSize.value
+    return filtered.value.slice(start, start + pageSize.value)
+})
+const paginationCfg = computed(() => ({
+    current: current.value,
+    pageSize: pageSize.value,
+    total: total.value,
+    showTotal: t => `Tổng ${t} mục`,
+    showSizeChanger: true,
+    pageSizeOptions: ['5','10','20','50'],
+    onChange: (p, ps) => { current.value = p; pageSize.value = ps }
+}))
+const onSearch = () => { current.value = 1 }
 
-const timelineVisible = ref(false)
-const timelineSteps   = ref([])
-
-// ================== COLUMNS ==================
-const columns = [
-    { title: 'Loại',         dataIndex: 'target_type',   key: 'target_type',   width: 120 },
-    { title: 'Tiêu đề',      dataIndex: 'title',         key: 'title',         width: 300 },
-    { title: 'Cấp hiện tại', dataIndex: 'current_level', key: 'current_level', width: 120, align: 'center' },
-    { title: 'Tổng cấp',     dataIndex: 'total_steps',   key: 'total_steps',   width: 110, align: 'center' },
-    { title: 'Tiến độ',      dataIndex: 'progress',      key: 'progress',      width: 200 },
-    { title: 'Trạng thái',   dataIndex: 'status',        key: 'status',        width: 120, align: 'center' },
-    { title: 'Người gửi',    dataIndex: 'submitted_by',  key: 'submitted_by',  width: 160 },
-    { title: 'Gửi lúc',      dataIndex: 'submitted_at',  key: 'submitted_at',  width: 180 },
-    { title: 'Hành động',    dataIndex: 'action',        key: 'action',        width: 240 }
-]
-
-// ================== UTILS ==================
-const toInt = (v, d = 0) => {
-    const n = Number(v)
-    return Number.isFinite(n) ? n : d
+/* ---------------- actions ---------------- */
+function openFile (it) {
+    if (!it.url) return
+    window.open(it.url, '_blank', 'noopener')
 }
-const clamp = (n, min, max) => Math.max(min, Math.min(max, n))
-const safeParseJSON = (v) => { if (v == null) return null; if (typeof v === 'object') return v; try { return JSON.parse(v) } catch { return null } }
-
-const makeUrl = (type, id) => {
-    const _id = Number(id)
-    switch (type) {
-        case 'task':          return { name: 'tasks-detail', params: { id: _id } }
-        case 'bidding':       return { name: 'biddings-info', params: { id: _id } }
-        case 'contract':      return { name: 'contract-detail', params: { id: _id } }
-        case 'bidding_step':  return { name: 'BiddingStepDetail', params: { id: _id } }
-        case 'contract_step': return { name: 'ContractStepDetail', params: { id: _id } }
-        default: return '/'
-    }
+function download (it) {
+    if (!it.url) return
+    window.open(it.url, '_blank', 'noopener')
 }
 
-const normalizeApprovalRow = (ai = {}) => {
-    const meta = safeParseJSON(ai.meta_json)
-    const targetType = meta?.target_type || ai.target_type
-    const targetId   = meta?.target_id   || ai.target_id
-
-    return {
-        ...ai,
-        title: meta?.title || ai.title || `[${ai.target_type}] #${ai.target_id}`,
-        url: isExternalUrl(meta?.url) ? meta.url : isExternalUrl(ai.url) ? ai.url : makeUrl(targetType, targetId),
-        assignee_name: meta?.assignee_name ?? ai.assignee_name ?? null,
-        id: ai.id || ai.approval_id || ai.request_id,
-        meta_json: meta,
-        current_level: toInt(ai.current_level),
-        _total_steps: ai._total_steps != null ? toInt(ai._total_steps) : undefined,
-    }
-}
-
-const isExternalUrl = (u) => typeof u === 'string' && /^https?:\/\//i.test(u)
-
-// ================== FETCH ==================
-const fetchData = async () => {
-    if (activeTab.value === 'docs') return // tab docs tự fetch bên trong component con
+/* ---------------- fetch ---------------- */
+async function fetchData () {
     loading.value = true
     try {
-        const { data } = activeTab.value === 'pending'
-            ? await getApprovalInbox({
-                page: pagination.value.current,
-                per_page: pagination.value.pageSize,
-                search: (searchTitle.value || '').trim() || undefined,
-                target_types: 'bidding,contract,bidding_step,contract_step,task,document',
-            })
-            : await listApprovals({
-                page: pagination.value.current,
-                per_page: pagination.value.pageSize,
-                status: 'approved,rejected',
-                acted_by_me: 1,
-                target_types: 'bidding,contract,bidding_step,contract_step,task,document',
-            })
-
-        const items = Array.isArray(data?.data) ? data.data : []
-        rows.value = items.map(normalizeApprovalRow)
-        pagination.value.total = toInt(data?.pager?.total, items.length)
+        const { data } = await getMyApprovalInboxFiles()
+        // ưu tiên `items` nếu có, fallback `data`
+        const items = data?.items ?? data?.data ?? []
+        rows.value = items
+        current.value = 1
     } catch (e) {
-        message.error('Không thể tải danh sách phê duyệt')
+        console.error(e)
+        message.error(e?.response?.data?.message || 'Không tải được danh sách cần duyệt.')
     } finally {
         loading.value = false
     }
 }
 
-const isStep = (r) => r?.target_type === 'bidding_step' || r?.target_type === 'contract_step'
-const stepDetailRoute = (r) => {
-    const id = Number(r?.target_id)
-    if (!id) return '/'
-    return r.target_type === 'bidding_step'
-        ? { name: 'BiddingStepDetail', params: { id } }
-        : { name: 'ContractStepDetail', params: { id } }
-}
-
-const handleTableChange = (pg) => {
-    pagination.value.current = pg.current
-    pagination.value.pageSize = pg.pageSize
-    fetchData()
-}
-const handleSearch = () => { pagination.value.current = 1; fetchData() }
-
-// ================== ACTIONS ==================
-const openModal = (record, action) => {
-    selectedRecord.value = { ...record, id: record.instance_id, step_id: record.step_id }
-    modalAction.value = action === 'reject' ? 'reject' : 'approve'
-    comment.value = ''
-    modalVisible.value = true
-}
-
-const handleModalSubmit = async () => {
-    const id = selectedRecord.value?.id
-    if (!id || submitting.value) return
-
-    submitting.value = true
-    try {
-        const payload = comment.value ? { note: comment.value } : {}
-        if (modalAction.value === 'approve') {
-            await approveApproval(id, payload)
-            message.success('Duyệt thành công')
-        } else {
-            await rejectApproval(id, payload)
-            message.success('Từ chối thành công')
-        }
-
-        modalVisible.value = false
-
-        // cập nhật lại rows cục bộ để nhanh, rồi refetch để chắc
-        rows.value = rows.value.filter(r => (r.instance_id || r.id) !== id)
-        pagination.value.total = Math.max(0, pagination.value.total - 1)
-        if (rows.value.length === 0 && pagination.value.current > 1) {
-            pagination.value.current -= 1
-        }
-
-        if (activeTab.value === 'pending') activeTab.value = 'resolved'
-        await fetchData()
-    } catch (e) {
-        message.error(e?.response?.data?.message || (modalAction.value === 'approve' ? 'Duyệt thất bại' : 'Từ chối thất bại'))
-    } finally {
-        submitting.value = false
-    }
-}
-
-// ================== TIMELINE ==================
-const viewTimeline = async (record) => {
-    try {
-        const { data } = await getApproval(record.id)
-        timelineSteps.value = Array.isArray(data?.steps) ? data.steps : []
-        timelineVisible.value = true
-    } catch {
-        message.error('Không thể tải chi tiết phê duyệt')
-    }
-}
-
-// ================== UI HELPERS ==================
-const mapTypeLabel = (t) => ({
-    bidding: 'Gói thầu',
-    contract: 'Hợp đồng',
-    bidding_step: 'Bước gói thầu',
-    contract_step: 'Bước hợp đồng',
-    task: 'Nhiệm vụ',
-}[t] || t || '—')
-
-const statusColor = (s) => s === 'approved' ? 'green' : s === 'rejected' ? 'red' : s === 'pending' ? 'orange' : 'default'
-const statusText  = (s) => s === 'approved' ? 'Đã duyệt' : s === 'rejected' ? 'Từ chối' : s === 'pending' ? 'Đang chờ' : '—'
-
-const progressPercent = (r) => {
-    const total = toInt(r._total_steps ?? r.total_steps, 0)
-    if (total <= 0) return r.status === 'approved' ? 100 : 0
-    if (r.status === 'approved') return 100
-    const approvedCount = Math.min(total, toInt(r.current_level))
-    return clamp(Math.round((approvedCount / total) * 100), 0, 100)
-}
-const progressStatus = (r) => r.status === 'approved' ? 'success' : r.status === 'rejected' ? 'exception' : undefined
-const progressText   = (r) => {
-    const total = toInt(r._total_steps ?? r.total_steps, 0)
-    if (total <= 0) {
-        return r.status === 'pending' ? 'Chưa chọn người duyệt' : 'Không cần phê duyệt'
-    }
-    if (r.status === 'approved') return `Hoàn tất (${total}/${total})`
-    if (r.status === 'rejected') return `Bị từ chối tại cấp ${toInt(r.current_level) + 1}`
-    return `Đang duyệt: Cấp ${toInt(r.current_level) + 1}/${total}`
-}
-const progressColor  = (r) => r.status === 'approved' ? 'green' : r.status === 'rejected' ? 'red' : 'orange'
-
-const displayFallbackTitle = (r) => `[${mapTypeLabel(r.target_type)}] #${r.target_id}`
-const formatTime = (ts) => (ts ? new Date(ts).toLocaleString('vi-VN') : '')
-const timelineColor = (s) => (s === 'approved' ? 'green' : s === 'rejected' ? 'red' : 'orange')
-
-// ================== WATCHERS ==================
-watch(activeTab, () => {
-    // Chỉ fetch khi là 2 tab danh sách nhiệm vụ; tab docs dùng component con
-    if (activeTab.value !== 'docs') {
-        pagination.value.current = 1
-        fetchData()
-    }
-})
-watch(searchTitle, debounce(() => {
-    if (activeTab.value !== 'docs') {
-        pagination.value.current = 1
-        fetchData()
-    }
-}, 400))
-
 onMounted(fetchData)
-onMounted(async () => {
-    try {
-        const userStore = useUserStore()
-        const myId = userStore?.user?.id
-
-        // Ưu tiên: gọi /users/:id để lấy profile mới nhất
-        if (myId) {
-            try {
-                const res = await getUserDetail(myId)
-                // BE có thể trả {data:{...}} hoặc trực tiếp {...}
-                const me = res?.data?.data || res?.data || null
-                mySignatureUrl.value = me?.signature_url
-                    || userStore.user?.signature_url
-                    || ''
-                return
-            } catch {
-                // Fallback nhẹ: gọi /users và tìm theo id
-                const list = await getUsers()
-                const all = Array.isArray(list?.data) ? list.data : (list?.data?.data || [])
-                const me = all.find(u => String(u.id) === String(myId)) || null
-                mySignatureUrl.value = me?.signature_url
-                    || userStore.user?.signature_url
-                    || ''
-                return
-            }
-        }
-
-        // Nếu chưa có user trong store (trường hợp hy hữu)
-        mySignatureUrl.value = ''
-    } catch {
-        mySignatureUrl.value = ''
-    }
-})
 </script>
 
 <style scoped>
-.mb-3 { margin-bottom: 12px; }
-.text-xs { font-size: 12px; }
-.text-gray-500 { color: #8c8c8c; }
-.p-3 { padding: 12px; }
-.link { color: #1677ff; }
+.inbox-files { background: transparent; }
+.toolbar { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+.mt-3 { margin-top: 12px; }
+
+.file-card { width: 100%; }
+.row { display:flex; align-items:flex-start; gap:12px; }
+.thumb { width: 72px; display:flex; align-items:center; justify-content:center; background:#fafafa; border-radius:8px; height:72px; overflow:hidden; }
+.thumb-icon { font-size:28px; opacity:.85; }
+.meta { flex:1; min-width:0; }
+.title { font-weight:600; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sub { color:#667; font-size:12px; margin-top:2px; }
+.url { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:4px; }
+.status { margin-top:6px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.actions { display:flex; gap:6px; align-items:center; }
 </style>

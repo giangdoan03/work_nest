@@ -12,8 +12,8 @@ class DocumentApprovalModel extends Model
         'document_id', 'status', 'created_by',
         'current_step_index', 'note', 'finished_at',
         'created_at', 'updated_at',
-        'source_type',           // 👈 THÊM
-        'signed_pdf_url'         // (nếu bạn có cột này)
+        'source_type',
+        'signed_pdf_url'
     ];
     protected $useTimestamps = true;
     protected $returnType = 'array';

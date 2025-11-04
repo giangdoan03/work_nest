@@ -564,67 +564,44 @@ class DocumentApprovalController extends ResourceController
 
     public function inboxFiles(): ResponseInterface
     {
-        $uid = (int) (session()->get('user_id') ?? 0);
-        if (!$uid && function_exists('auth')) $uid = (int) (auth()->id() ?? 0);
-        if (!$uid) return $this->failUnauthorized('Chưa đăng nhập');
+        $s = session();
+        $userId = (int) ($s->get('user_id') ?? 0);
+        if ($userId <= 0) {
+            return $this->failUnauthorized('Chưa đăng nhập.');
+        }
 
-        $page = max(1, (int)$this->request->getGet('page'));
-        $ps   = min(100, max(1,(int)$this->request->getGet('pageSize')));
-        $offset = ($page-1)*$ps;
-        $db = db_connect(); $base = base_url();
+        $db = db_connect();
 
-        // tổng
-        $total = $db->table('document_approval_steps das')
-            ->join('document_approvals da','da.id=das.approval_id','inner')
-            ->where('das.approver_id',$uid)
-            ->where('das.status','active')
-            ->where('da.status','pending')
-            ->countAllResults();
+        $sql = "
+        SELECT
+            das.id          AS step_id,
+            das.status      AS step_status,
+            da.id           AS approval_id,
+            da.document_id,
+            da.source_type,
+            da.status       AS approval_status,
+            d.title,
+            d.file_path,
+            d.uploaded_by,
+            u.name AS uploader_name,
+            d.created_at
+        FROM document_approval_steps das
+        JOIN document_approvals da ON da.id = das.approval_id
+        LEFT JOIN documents d      ON d.id  = da.document_id
+        LEFT JOIN users u          ON u.id  = d.uploaded_by
+        WHERE das.approver_id = ?
+        
+        ORDER BY das.id DESC
+    ";
 
-        // page rows
-        $rows = $db->table('document_approval_steps das')
-            ->select("
-        das.id AS step_id, das.sequence, das.status AS step_status,
-        da.id AS approval_id, da.document_id, da.source_type, da.status AS approval_status,
-        tf.file_name AS tf_file_name, tf.file_path AS tf_file_path, tf.created_at AS tf_created_at,
-        c.file_name  AS c_file_name,  c.file_path  AS c_file_path,  c.created_at  AS c_created_at,
-        u.name AS approver_name, u.signature_url AS approver_signature_url
-      ", false)
-            ->join('document_approvals da','da.id=das.approval_id','inner')
-            ->join('task_comments c', 'c.id = da.document_id AND da.source_type="comment"', 'left')
-            ->join('task_files tf',   'tf.id = da.document_id AND da.source_type="task_file"', 'left')
-            ->join('users u','u.id=das.approver_id','left')
-            ->where('das.approver_id',$uid)
-            ->where('das.status','active')
-            ->where('da.status','pending')
-            ->orderBy('das.id','DESC')
-            ->limit($ps,$offset)
-            ->get()->getResultArray();
-
-        $items = array_map(static function($r) use($base){
-            $filePath = ($r['source_type']==='comment') ? ($r['c_file_path']??null) : ($r['tf_file_path']??null);
-            $fileUrl  = $filePath ? (str_starts_with($filePath,'http') ? $filePath : $base.ltrim($filePath,'/')) : null;
-
-            $sig = $r['approver_signature_url'] ?? null;
-            $sigAbs = $sig ? (str_starts_with($sig,'http') ? $sig : $base.ltrim($sig,'/')) : null;
-
-            return [
-                'approval_id' => (int)$r['approval_id'],
-                'document_id' => (int)$r['document_id'],
-                'file_url'    => $fileUrl,
-                'name'        => ($r['source_type']==='comment') ? ($r['c_file_name']??'(Không tên)') : ($r['tf_file_name']??'(Không tên)'),
-                'created_at'  => ($r['source_type']==='comment') ? ($r['c_created_at']??$r['tf_created_at']) : ($r['tf_created_at']??$r['c_created_at']),
-                'status'      => $r['approval_status'],
-                // để FE binding nhanh:
-                'markers'     => ['chuky'.$r['sequence']],   // trùng quy ước marker theo thứ tự step
-                'signatures'  => $sigAbs ? [[ 'marker'=>'chuky'.$r['sequence'], 'image_url'=>$sigAbs ]] : [],
-            ];
-        }, $rows);
+        $rows = $db->query($sql, [$userId])->getResultArray();
 
         return $this->respond([
-            'items'=>$items, 'total'=>(int)$total, 'page'=>$page, 'pageSize'=>$ps
+            'data' => $rows,
+            'count' => count($rows),
         ]);
     }
+
 
     public function resolvedByMe(): ResponseInterface
     {

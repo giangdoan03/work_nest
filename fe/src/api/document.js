@@ -50,5 +50,9 @@ export const getDocumentById = async (id) => {
     }
 }
 
+export function getMyApprovalInboxFiles() {
+    return instance.get('/approvals/inbox-files')
+}
+
 export const getDocumentDetail = (id) => instance.get(`/documents/${id}`)
 
