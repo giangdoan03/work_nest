@@ -1,4 +1,3 @@
-<!-- src/components/ApprovalInboxFiles.vue -->
 <template>
     <a-card :bordered="false" class="inbox-files">
         <!-- Toolbar -->
@@ -40,7 +39,7 @@
                     <a-card class="file-card" :hoverable="true">
                         <div class="row">
                             <div class="thumb">
-                                <component :is="item.icon" class="thumb-icon" v-if="item.kind!=='image'" />
+                                <component :is="item.icon" class="thumb-icon" v-if="item.kind !== 'image'" />
                                 <a-image v-else :src="item.url" :height="64" />
                             </div>
 
@@ -77,39 +76,109 @@
                                         <DownloadOutlined />
                                     </a-button>
                                 </a-tooltip>
+
+                                <a-tooltip v-if="item.kind === 'pdf' && mySignatureUrl" title="Ký tài liệu">
+                                    <a-button size="small" shape="circle" type="primary" @click="openSign(item)">
+                                        🖋
+                                    </a-button>
+                                </a-tooltip>
                             </div>
                         </div>
                     </a-card>
                 </a-list-item>
             </template>
         </a-list>
+
+        <!-- Modal ký PDF -->
+        <SignPdfModal
+            v-if="signOpen && signTarget?.url"
+            v-model:open="signOpen"
+            :pdf-url="signTarget.url"
+            :signature-url="mySignatureUrl"
+            @done="handleSignedBlob"
+        />
     </a-card>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/vi'
-dayjs.locale('vi')
-
 import {
-    ReloadOutlined, EyeOutlined, DownloadOutlined, SearchOutlined,
-    FilePdfOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined, FileTextOutlined,
+    DownloadOutlined,
+    EyeOutlined,
+    FileExcelOutlined,
+    FilePdfOutlined,
+    FilePptOutlined,
+    FileTextOutlined,
+    FileWordOutlined,
+    ReloadOutlined,
+    SearchOutlined,
     UserOutlined
 } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
+import {message} from 'ant-design-vue'
 
-// 👉 API wrapper bạn đã có
-// export function getMyApprovalInboxFiles() { return instance.get('/approvals/inbox-files') }
-import { getMyApprovalInboxFiles } from '@/api/document' // chỉnh path đúng file api của bạn
+// 📦 API
+import {getMyApprovalInboxFiles, uploadSignedPdf} from '@/api/document'
+import {approveApproval} from '@/api/approvals'
+
+
+// 🖋 Modal ký PDF
+import SignPdfModal from '../components/SignPdfModal.vue'
+
+dayjs.locale('vi')
 
 /* ---------------- state ---------------- */
 const loading = ref(false)
 const rows    = ref([])
 const keyword = ref('')
-
 const current  = ref(1)
 const pageSize = ref(10)
+
+/* ---------------- ký file ---------------- */
+const signOpen   = ref(false)
+const signTarget = ref(null)
+const mySignatureUrl = ref('')
+
+
+async function fetchSignature() {
+    try {
+        const res = await fetch('http://api.worknest.local/api/check', {
+            credentials: 'include',
+        })
+        const json = await res.json()
+        mySignatureUrl.value = json?.user?.signature_url || ''
+        console.log('✅ Signature URL:', mySignatureUrl.value)
+    } catch (e) {
+        console.error('Lỗi khi lấy signature_url:', e)
+    }
+}
+
+function openSign(item) {
+    if (!item.url) return message.warning('Không có file PDF để ký.')
+    signTarget.value = item
+    signOpen.value = true
+}
+
+async function handleSignedBlob(blob) {
+    const it = signTarget.value
+    if (!it?.approval_id) return
+
+    try {
+        const form = new FormData()
+        form.append('file', blob, it.name || 'signed.pdf')
+        form.append('approval_id', it.approval_id)
+
+        await uploadSignedPdf(form)
+        await approveApproval(it.approval_id)
+
+        message.success('Đã ký và duyệt thành công.')
+        await fetchData()
+    } catch (e) {
+        console.error(e)
+        message.error('Lỗi khi ký hoặc duyệt.')
+    }
+}
 
 /* ---------------- helpers ---------------- */
 const IMAGE = new Set(['jpg','jpeg','png','gif','webp','bmp','svg'])
@@ -124,7 +193,7 @@ const extOf = (name='') => {
     return i >= 0 ? base.slice(i+1).toLowerCase() : ''
 }
 const detectKind = (obj={}) => {
-    const src = obj.name || obj.title || obj.url || ''
+    const src = obj.url || obj.name || obj.title || ''
     const e = extOf(src)
     if (IMAGE.has(e)) return 'image'
     if (PDF.has(e))   return 'pdf'
@@ -154,22 +223,14 @@ const statusColor = (s) => {
 }
 
 /* ---------------- data shaping ---------------- */
-/**
- * BE (DocumentApprovalController::inboxFiles) trả về:
- * {
- *   items: [{
- *     approval_id, document_id, file_url, name, created_at, status,
- *     markers, signatures, ...
- *   }], total, page, pageSize
- * }
- */
 const shaped = computed(() =>
     (rows.value || []).map(r => {
-        const kind = detectKind({ name: r.name, url: r.file_url })
+        const fileUrl = r.file_url || r.file_path || ''
+        const kind = detectKind({ url: fileUrl }) // 👈 truyền đúng key
         return {
             ...r,
             title: r.title || r.name,
-            url: r.file_url,
+            url: fileUrl,
             kind,
             icon: pickIcon(kind),
         }
@@ -184,7 +245,6 @@ const filtered = computed(() => {
         (it.uploader_name || '').toLowerCase().includes(k)
     )
 })
-
 const total = computed(() => filtered.value.length)
 const paged = computed(() => {
     const start = (current.value - 1) * pageSize.value
@@ -202,23 +262,21 @@ const paginationCfg = computed(() => ({
 const onSearch = () => { current.value = 1 }
 
 /* ---------------- actions ---------------- */
-function openFile (it) {
+function openFile(it) {
     if (!it.url) return
     window.open(it.url, '_blank', 'noopener')
 }
-function download (it) {
+function download(it) {
     if (!it.url) return
     window.open(it.url, '_blank', 'noopener')
 }
 
 /* ---------------- fetch ---------------- */
-async function fetchData () {
+async function fetchData() {
     loading.value = true
     try {
         const { data } = await getMyApprovalInboxFiles()
-        // ưu tiên `items` nếu có, fallback `data`
-        const items = data?.items ?? data?.data ?? []
-        rows.value = items
+        rows.value = data?.items ?? data?.data ?? []
         current.value = 1
     } catch (e) {
         console.error(e)
@@ -228,7 +286,12 @@ async function fetchData () {
     }
 }
 
-onMounted(fetchData)
+onMounted(() => {
+    fetchSignature()
+    fetchData()
+})
+
+
 </script>
 
 <style scoped>
