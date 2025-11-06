@@ -121,7 +121,7 @@
                         <a-dropdown trigger="click" placement="bottomRight">
                             <a-button type="text" :icon="h(MoreOutlined)" />
                             <template #overlay>
-                                <a-menu @click.stop>
+                                <a-menu @click="(info) => info?.domEvent?.stopPropagation?.()">
                                     <a-menu-item @click="goToUserDetail(record.id)">
                                         <EyeOutlined class="mr-6" /> Xem chi tiết
                                     </a-menu-item>
@@ -192,10 +192,21 @@
                         <a-row :gutter="16">
                             <a-col :span="12">
                                 <a-form-item label="Loại tài khoản" name="role_id" has-feedback>
-                                    <a-select
-                                        v-model:value="formData.role_id"
-                                        :options="roles"
-                                        placeholder="Chọn loại tài khoản"
+                                    <a-select v-model:value="formData.role_id" :options="roles" placeholder="Chọn loại tài khoản" allow-clear />
+                                </a-form-item>
+                            </a-col>
+
+                            <!-- 👇 NEW -->
+                            <a-col :span="12">
+                                <a-form-item
+                                    label="Marker ưu tiên để auto-ký"
+                                    name="preferred_marker"
+                                    extra="Ví dụ: chuky1, chuky2… (chỉ chữ/số, dấu . _ -)"
+                                    has-feedback
+                                >
+                                    <a-input
+                                        v-model:value="formData.preferred_marker"
+                                        placeholder="VD: chuky2"
                                         allow-clear
                                     />
                                 </a-form-item>
@@ -343,6 +354,7 @@ const formData = ref({
     role_id: undefined,
     password: '',
     confirm_password: '',
+    preferred_marker: ''
 })
 
 /* ===== Refs for master data ===== */
@@ -363,6 +375,7 @@ const columns = [
     { title: 'Số điện thoại', dataIndex: 'phone', key: 'phone', width: 140, sorter: (a,b) => (a.phone||'').localeCompare(b.phone||'') },
     { title: 'Phòng ban', dataIndex: 'department_id', key: 'department_id', width: 200 },
     { title: 'Quyền', dataIndex: 'role_id', key: 'role_id', width: 180 },
+    { title: 'Marker ưu tiên', dataIndex: 'preferred_marker', key: 'preferred_marker', width: 140 },
     { title: 'Chữ ký', dataIndex: 'signature_url', key: 'signature_url', width: 120, align: 'center' },
     { title: 'Hành động', dataIndex: 'action', key: 'action', width: 100, align:'center', fixed: 'right' },
 ]
@@ -398,6 +411,7 @@ const displayData = computed(() => {
 /* ===== Rules & validators ===== */
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const vnPhoneRe = /^(0|\+84)(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-5]|9[0-9])[0-9]{7}$/
+const markerRe = /^[A-Za-z0-9._-]{1,64}$/  // cho phép chữ/số . _ -
 
 const rules = computed(() => {
     const base = {
@@ -418,6 +432,16 @@ const rules = computed(() => {
         }],
         department_id: [{ required: true, message: 'Vui lòng chọn phòng ban', trigger: ['blur','change'] }],
         role_id: [{ required: true, message: 'Vui lòng chọn loại tài khoản', trigger: ['blur','change'] }],
+        preferred_marker: [{
+            required: false,
+            validator: (_r, v) => {
+                if (!v) return Promise.resolve()
+                return markerRe.test(v)
+                    ? Promise.resolve()
+                    : Promise.reject('Chỉ cho phép chữ/số, dấu chấm, gạch dưới, gạch nối (tối đa 64 ký tự)')
+            },
+            trigger: ['blur','change']
+        }]
     }
     if (!selectedUser.value || changePassword.value) {
         base.password = [{
@@ -474,7 +498,7 @@ const showPopupCreate = () => {
     formData.value = {
         name: '', email: '', phone: '',
         department_id: undefined, role_id: undefined,
-        password: '', confirm_password: ''
+        password: '', confirm_password: '', preferred_marker: ''
     }
     openDrawer.value = true
 }
@@ -492,8 +516,8 @@ const showPopupDetail = async (record) => {
         role_id: Number(record.role_id),
         password: '',
         confirm_password: '',
-        // 👇 lấy url chữ ký sẵn có (nếu API trả về)
         signature_url: record.signature_url || null,
+        preferred_marker: record.preferred_marker || ''
     }
     openDrawer.value = true
 }
