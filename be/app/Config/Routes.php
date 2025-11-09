@@ -226,6 +226,7 @@ $routes->group('api', function ($routes) {
     $routes->post('documents/upload-remote-to-wp', 'DocumentController::uploadRemoteToWordPress');
     $routes->post('documents/upload',              'DocumentController::upload'); // lưu link vào DB
     $routes->post('documents/upload-link', 'DocumentController::uploadLink'); // ⬅️ mới
+    $routes->post('documents/upload-signed',       'DocumentController::uploadSignedPdf');
 
     // ✅ Route gửi duyệt task
     $routes->post('tasks/(:num)/approvals/send', 'TaskController::sendApproval/$1');
@@ -246,6 +247,8 @@ $routes->group('api', function ($routes) {
     $routes->get('approvals/inbox-files', 'DocumentApprovalController::inboxFiles');
     $routes->get('document-approvals/resolved-files-by-me', 'DocumentApprovalController::resolvedByMe');
     $routes->post('document-approvals/(:num)/act', 'DocumentApprovalController::act/$1');
+    $routes->get('document-approvals/(:num)', 'DocumentApprovalController::detail/$1');
+    $routes->post('documents/signed', 'DocumentController::signed');
 
     // Duyệt/Từ chối tuần tự
     $routes->get('document-approvals', 'DocumentApprovalController::index');

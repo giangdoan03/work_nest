@@ -11,7 +11,9 @@
             >
                 <template #enterButton>
                     <a-button type="primary">
-                        <template #icon><SearchOutlined /></template>
+                        <template #icon>
+                            <SearchOutlined/>
+                        </template>
                         Tìm
                     </a-button>
                 </template>
@@ -19,7 +21,9 @@
 
             <a-space>
                 <a-button @click="fetchData" :loading="loading">
-                    <template #icon><ReloadOutlined /></template>
+                    <template #icon>
+                        <ReloadOutlined/>
+                    </template>
                     Làm mới
                 </a-button>
             </a-space>
@@ -39,8 +43,8 @@
                     <a-card class="file-card" :hoverable="true">
                         <div class="row">
                             <div class="thumb">
-                                <component :is="item.icon" class="thumb-icon" v-if="item.kind !== 'image'" />
-                                <a-image v-else :src="item.url" :height="64" />
+                                <component :is="item.icon" class="thumb-icon" v-if="item.kind !== 'image'"/>
+                                <a-image v-else :src="item.url" :height="64"/>
                             </div>
 
                             <div class="meta">
@@ -49,36 +53,47 @@
                                 </div>
 
                                 <div class="sub">
-                                    <UserOutlined /> {{ item.uploader_name || '—' }}
+                                    <UserOutlined/>
+                                    {{ item.uploader_name || '—' }}
                                     · {{ formatDate(item.created_at) }}
                                 </div>
 
                                 <div class="url" v-if="item.url">
-                                    <a-button type="link" :href="item.url" target="_blank" rel="noopener">Mở tệp</a-button>
                                     <a-typography-text type="secondary" copyable>{{ item.url }}</a-typography-text>
                                 </div>
 
                                 <div class="status">
-                                    <a-tag color="blue">Bước #{{ item.current_step_index || item.sequence || 1 }}</a-tag>
+                                    <a-tag color="blue">Bước #{{item.current_step_index || item.sequence || 1}}</a-tag>
                                     <a-tag :color="statusColor(item.status)">{{ labelStatus(item.status) }}</a-tag>
+                                </div>
+                                <div class="steps-line" v-if="stepsOf(item).length">
+                                    <span class="steps-label">Chuỗi ký:</span>
+                                    <template v-for="(s, idx) in stepsOf(item)" :key="s.id || s.step_id || idx">
+                                        <a-tag :class="pillClass(s)" style="font-size: 11px; padding: 0 6px; border-radius: 12px; line-height: 18px;">
+                                            {{ s.approver_name || ('#' + (s.approver_id || s.id || idx)) }}
+                                            <span class="att-approval-pill-status">
+                                                ({{ shortStepStatus(s) }})
+                                            </span>
+                                        </a-tag>
+                                    </template>
                                 </div>
                             </div>
 
                             <div class="actions">
                                 <a-tooltip title="Xem trước">
-                                    <a-button size="small" shape="circle" @click="openFile(item)">
-                                        <EyeOutlined />
+                                    <a-button size="large" shape="circle" @click="openFile(item)">
+                                        <EyeOutlined/>
                                     </a-button>
                                 </a-tooltip>
 
                                 <a-tooltip title="Tải / mở">
-                                    <a-button size="small" shape="circle" @click="download(item)">
-                                        <DownloadOutlined />
+                                    <a-button size="large" shape="circle" @click="download(item)">
+                                        <DownloadOutlined/>
                                     </a-button>
                                 </a-tooltip>
 
                                 <a-tooltip v-if="item.kind === 'pdf' && mySignatureUrl" title="Ký tài liệu">
-                                    <a-button size="small" shape="circle" type="primary" @click="openSign(item)">
+                                    <a-button size="large" shape="circle" type="dashed" @click="openSign(item)">
                                         🖋
                                     </a-button>
                                 </a-tooltip>
@@ -91,9 +106,9 @@
 
         <!-- Modal ký PDF -->
         <SignPdfModal
-            v-if="signOpen && signTarget?.url"
+            v-if="signOpen && signTarget?.pdfUrl"
             v-model:open="signOpen"
-            :pdf-url="signTarget.url"
+            :pdf-url="signTarget.pdfUrl"
             :signature-url="mySignatureUrl"
             @done="handleSignedBlob"
         />
@@ -120,44 +135,73 @@ import {message} from 'ant-design-vue'
 
 // 📦 API
 import {getMyApprovalInboxFiles, uploadSignedPdf} from '@/api/document'
-import {approveApproval} from '@/api/approvals'
+import {approveDocumentApproval, getApprovalDetail} from '@/api/approvals'
 
 
 // 🖋 Modal ký PDF
 import SignPdfModal from '../components/SignPdfModal.vue'
+import {checkSession} from "@/api/auth.js";
 
 dayjs.locale('vi')
 
 /* ---------------- state ---------------- */
 const loading = ref(false)
-const rows    = ref([])
+const rows = ref([])
 const keyword = ref('')
-const current  = ref(1)
+const current = ref(1)
 const pageSize = ref(10)
 
 /* ---------------- ký file ---------------- */
-const signOpen   = ref(false)
+const signOpen = ref(false)
 const signTarget = ref(null)
 const mySignatureUrl = ref('')
 
 
 async function fetchSignature() {
     try {
-        const res = await fetch('http://api.worknest.local/api/check', {
-            credentials: 'include',
-        })
-        const json = await res.json()
-        mySignatureUrl.value = json?.user?.signature_url || ''
+        const res = await checkSession()
+        const user = res.data?.user || res.data || {}
+        mySignatureUrl.value = user.signature_url || ''
         console.log('✅ Signature URL:', mySignatureUrl.value)
     } catch (e) {
         console.error('Lỗi khi lấy signature_url:', e)
     }
 }
 
-function openSign(item) {
-    if (!item.url) return message.warning('Không có file PDF để ký.')
-    signTarget.value = item
-    signOpen.value = true
+async function openSign(item) {
+    // item đã qua shaped: có url nếu có file_path
+    const fallbackUrl = item?.url || item?.file_path
+    if (!fallbackUrl) {
+        return message.warning('Không có file PDF để ký.')
+    }
+
+    try {
+        const res = await getApprovalDetail(item.approval_id)
+        const {approval, document, steps} = res.data || {}
+
+        const pdfUrl =
+            document?.signed_pdf_url ||   // ✅ nếu phiên đã ký 1 lần
+            document?.file_path ||
+            fallbackUrl
+        if (!pdfUrl) {
+            return message.error('Không tìm thấy đường dẫn file để ký.')
+        }
+
+        signTarget.value = {
+            ...item,
+            approval,
+            steps: steps || [],
+            pdfUrl,              // 👈 modal dùng trường này
+        }
+
+        signOpen.value = true
+    } catch (e) {
+        console.error(e)
+        message.error(
+            e?.response?.data?.message ||
+            'Không tải được thông tin phiên duyệt.'
+        )
+    }
 }
 
 async function handleSignedBlob(blob) {
@@ -169,37 +213,38 @@ async function handleSignedBlob(blob) {
         form.append('file', blob, it.name || 'signed.pdf')
         form.append('approval_id', it.approval_id)
 
-        await uploadSignedPdf(form)
-        await approveApproval(it.approval_id)
+        await uploadSignedPdf(form)                    // lưu bản PDF đã ký
+        await approveDocumentApproval(it.approval_id)  // gọi đúng DocumentApproval
 
         message.success('Đã ký và duyệt thành công.')
         await fetchData()
     } catch (e) {
-        console.error(e)
-        message.error('Lỗi khi ký hoặc duyệt.')
+        console.error('Upload signed PDF error:', e)
+        message.error(e?.response?.data?.message || 'Lỗi khi ký hoặc duyệt.')
     }
 }
 
-/* ---------------- helpers ---------------- */
-const IMAGE = new Set(['jpg','jpeg','png','gif','webp','bmp','svg'])
-const WORD  = new Set(['doc','docx'])
-const EXCEL = new Set(['xls','xlsx','csv'])
-const PPT   = new Set(['ppt','pptx'])
-const PDF   = new Set(['pdf'])
 
-const extOf = (name='') => {
+/* ---------------- helpers ---------------- */
+const IMAGE = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'])
+const WORD = new Set(['doc', 'docx'])
+const EXCEL = new Set(['xls', 'xlsx', 'csv'])
+const PPT = new Set(['ppt', 'pptx'])
+const PDF = new Set(['pdf'])
+
+const extOf = (name = '') => {
     const base = String(name).split('?')[0]
     const i = base.lastIndexOf('.')
-    return i >= 0 ? base.slice(i+1).toLowerCase() : ''
+    return i >= 0 ? base.slice(i + 1).toLowerCase() : ''
 }
-const detectKind = (obj={}) => {
+const detectKind = (obj = {}) => {
     const src = obj.url || obj.name || obj.title || ''
     const e = extOf(src)
     if (IMAGE.has(e)) return 'image'
-    if (PDF.has(e))   return 'pdf'
-    if (WORD.has(e))  return 'word'
+    if (PDF.has(e)) return 'pdf'
+    if (WORD.has(e)) return 'word'
     if (EXCEL.has(e)) return 'excel'
-    if (PPT.has(e))   return 'ppt'
+    if (PPT.has(e)) return 'ppt'
     return 'other'
 }
 const pickIcon = (kind) => ({
@@ -209,14 +254,14 @@ const pickIcon = (kind) => ({
 const formatDate = (dt) => dt ? dayjs(dt).format('HH:mm DD/MM/YYYY') : '—'
 const labelStatus = (s) => {
     s = String(s || '').toLowerCase()
-    if (s === 'pending')  return 'Chờ duyệt'
+    if (s === 'pending') return 'Chờ duyệt'
     if (s === 'approved') return 'Đã duyệt'
     if (s === 'rejected') return 'Từ chối'
     return s || '—'
 }
 const statusColor = (s) => {
     s = String(s || '').toLowerCase()
-    if (s === 'pending')  return 'gold'
+    if (s === 'pending') return 'gold'
     if (s === 'approved') return 'green'
     if (s === 'rejected') return 'red'
     return 'default'
@@ -225,23 +270,28 @@ const statusColor = (s) => {
 /* ---------------- data shaping ---------------- */
 const shaped = computed(() =>
     (rows.value || []).map(r => {
-        const fileUrl = r.file_url || r.file_path || ''
-        const kind = detectKind({ url: fileUrl }) // 👈 truyền đúng key
+        const url =
+            r.signed_pdf_url ||   // ✅ nếu đã ký thì dùng bản ký
+            r.file_path ||
+            r.url || ''
+        const kind = detectKind({url})
+
         return {
             ...r,
-            title: r.title || r.name,
-            url: fileUrl,
+            url,            // 👈 từ giờ dùng url chung
             kind,
             icon: pickIcon(kind),
         }
     })
 )
 
+
 const filtered = computed(() => {
     const k = keyword.value.trim().toLowerCase()
     if (!k) return shaped.value
     return shaped.value.filter(it =>
         (it.title || '').toLowerCase().includes(k) ||
+        (it.uploader_name || '').toLowerCase().includes(k)
         (it.uploader_name || '').toLowerCase().includes(k)
     )
 })
@@ -256,16 +306,22 @@ const paginationCfg = computed(() => ({
     total: total.value,
     showTotal: t => `Tổng ${t} mục`,
     showSizeChanger: true,
-    pageSizeOptions: ['5','10','20','50'],
-    onChange: (p, ps) => { current.value = p; pageSize.value = ps }
+    pageSizeOptions: ['5', '10', '20', '50'],
+    onChange: (p, ps) => {
+        current.value = p;
+        pageSize.value = ps
+    }
 }))
-const onSearch = () => { current.value = 1 }
+const onSearch = () => {
+    current.value = 1
+}
 
 /* ---------------- actions ---------------- */
 function openFile(it) {
     if (!it.url) return
     window.open(it.url, '_blank', 'noopener')
 }
+
 function download(it) {
     if (!it.url) return
     window.open(it.url, '_blank', 'noopener')
@@ -276,7 +332,27 @@ async function fetchData() {
     loading.value = true
     try {
         const { data } = await getMyApprovalInboxFiles()
-        rows.value = data?.items ?? data?.data ?? []
+        const baseItems = data?.items ?? data?.data ?? data?.data ?? []
+
+        // Lấy thêm chi tiết bước ký cho từng approval
+        rows.value = await Promise.all(
+            baseItems.map(async (r) => {
+                try {
+                    if (!r.approval_id) return r
+                    const detailRes = await getApprovalDetail(r.approval_id)
+                    const detail = detailRes.data || {}
+                    return {
+                        ...r,
+                        steps: detail.steps || [],
+                        approval: detail.approval || null,
+                        document: detail.document || null,
+                    }
+                } catch (e) {
+                    console.error('getApprovalDetail error for', r.approval_id, e)
+                    return r
+                }
+            })
+        )
         current.value = 1
     } catch (e) {
         console.error(e)
@@ -285,6 +361,73 @@ async function fetchData() {
         loading.value = false
     }
 }
+
+const stepStatusLabel = (step) => {
+    const s = String(step.status || step.step_status || '').toLowerCase()
+
+    if (step.is_approved || s === 'approved') return 'Đã ký'
+    if (step.is_rejected || s === 'rejected') return 'Từ chối'
+    if (step.is_current || s === 'active')   return 'Đang chờ bạn ký'
+    if (s === 'waiting')                     return 'Chờ ký'
+    return 'Chưa ký'
+}
+
+const stepStatusColor = (step) => {
+    const s = String(step.status || step.step_status || '').toLowerCase()
+
+    if (step.is_rejected || s === 'rejected') return 'red'
+    if (step.is_approved || s === 'approved') return 'green'
+    if (step.is_current || s === 'active')    return 'blue'
+    if (s === 'waiting')                      return 'gold'
+    return 'default'
+}
+
+
+// Lấy danh sách bước ký cho 1 item
+function stepsOf(item) {
+    if (!item) return []
+    return Array.isArray(item.steps) ? item.steps : []
+}
+
+// Trạng thái rút gọn cho từng bước
+function shortStepStatus(step) {
+    const s =
+        String(
+            step.status
+            || (step.is_approved && 'approved')
+            || (step.is_rejected && 'rejected')
+            || (step.is_pending && 'pending')
+            || (step.is_current && 'current')
+            || ''
+        ).toLowerCase()
+
+    if (s === 'approved') return 'đã ký'
+    if (s === 'rejected') return 'từ chối'
+    if (s === 'current')  return 'đang chờ'
+    if (s === 'waiting' || s === 'pending') return 'chờ ký'
+    return 'chưa ký'
+}
+
+// CSS class màu theo trạng thái bước
+function pillClass(step) {
+    const s =
+        String(
+            step.status
+            || (step.is_approved && 'approved')
+            || (step.is_rejected && 'rejected')
+            || (step.is_pending && 'pending')
+            || (step.is_current && 'current')
+            || ''
+        ).toLowerCase()
+
+    if (s === 'approved') return 'att-approval-pill--approved'
+    if (s === 'rejected') return 'att-approval-pill--rejected'
+    if (s === 'current' || s === 'waiting' || s === 'pending')
+        return 'att-approval-pill--pending'
+    return 'att-approval-pill--idle'
+}
+
+
 
 onMounted(() => {
     fetchSignature()
@@ -295,18 +438,143 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.inbox-files { background: transparent; }
-.toolbar { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
-.mt-3 { margin-top: 12px; }
+.inbox-files {
+    background: transparent;
+}
 
-.file-card { width: 100%; }
-.row { display:flex; align-items:flex-start; gap:12px; }
-.thumb { width: 72px; display:flex; align-items:center; justify-content:center; background:#fafafa; border-radius:8px; height:72px; overflow:hidden; }
-.thumb-icon { font-size:28px; opacity:.85; }
-.meta { flex:1; min-width:0; }
-.title { font-weight:600; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.sub { color:#667; font-size:12px; margin-top:2px; }
-.url { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:4px; }
-.status { margin-top:6px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-.actions { display:flex; gap:6px; align-items:center; }
+.toolbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.mt-3 {
+    margin-top: 12px;
+}
+
+.file-card {
+    width: 100%;
+}
+
+.row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.thumb {
+    width: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fafafa;
+    border-radius: 8px;
+    height: 72px;
+    overflow: hidden;
+}
+
+.thumb-icon {
+    font-size: 28px;
+    opacity: .85;
+}
+
+.meta {
+    flex: 1;
+    min-width: 0;
+}
+
+.title {
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sub {
+    color: #667;
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.url {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.status {
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.steps-line {
+    margin-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+.steps-label {
+    color: #888;
+}
+.att-approval {
+    margin-top: 3px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    align-items: center;
+    line-height: 1.2;
+}
+
+.att-approval-label {
+    color: #999;
+    margin-right: 3px;
+}
+
+.att-approval-pill {
+    border: 1px solid transparent;
+}
+
+
+/* màu sắc giữ nguyên nhưng dịu hơn */
+.att-approval-pill--approved {
+    background: #f6ffed;
+    color: #52c41a;
+    border-color: #b7eb8f;
+}
+
+.att-approval-pill--pending {
+    background: #fffbe6;
+    color: #d48806;
+    border-color: #ffe58f;
+}
+
+.att-approval-pill--rejected {
+    background: #fff1f0;
+    color: #cf1322;
+    border-color: #ffa39e;
+}
+
+.att-approval-pill--idle {
+    background: #fafafa;
+    color: #999;
+}
+.att-approval-more {
+    font-size: 10px;
+    color: #888;
+}
+
 </style>

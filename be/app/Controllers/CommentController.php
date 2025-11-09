@@ -122,6 +122,7 @@ class CommentController extends ResourceController
 
         $db = db_connect();
 
+        // 1. Lấy danh sách document thuộc task
         $sql = "
         SELECT
             d.id,
@@ -137,26 +138,104 @@ class CommentController extends ResourceController
             d.approval_sent_at
         FROM documents d
         LEFT JOIN users u ON u.id = d.uploaded_by
+        WHERE d.source_task_id = ?
+          AND d.tags = 'task_upload'
         ORDER BY d.created_at DESC
     ";
 
         $rows = $db->query($sql, [$task_id])->getResultArray();
 
-        // Chuẩn hoá cho FE (giữ cấu trúc tương tự trước đây)
+        if (!$rows) {
+            return $this->respond([
+                'task_id' => $task_id,
+                'files'   => [],
+                'count'   => 0,
+            ]);
+        }
+
+        // Danh sách document_id
+        $docIds = array_map(static fn($r) => (int)$r['id'], $rows);
+
+        // 2. Lấy phiên duyệt hiện tại (mới nhất) cho từng document
+        $inIds = implode(',', $docIds);
+
+        $approvalRows = $db->query("
+        SELECT da.*
+        FROM document_approvals da
+        JOIN (
+            SELECT document_id, MAX(id) AS max_id
+            FROM document_approvals
+            WHERE source_type = 'document'
+              AND document_id IN ($inIds)
+            GROUP BY document_id
+        ) x ON x.max_id = da.id
+    ")->getResultArray();
+
+        $approvalsByDoc   = [];
+        $approvalIds      = [];
+
+        foreach ($approvalRows as $a) {
+            $docId = (int)$a['document_id'];
+            $approvalsByDoc[$docId] = $a;              // đã là bản mới nhất
+            $approvalIds[] = (int)$a['id'];
+        }
+
+        // 3. Lấy các bước ký cho các approval_id ở trên
+        $stepsByApproval = [];
+
+        if ($approvalIds) {
+            $inApproval = implode(',', $approvalIds);
+
+            $stepRows = $db->query("
+            SELECT
+                s.*,
+                u.name          AS approver_name,
+                u.signature_url AS approver_signature_url
+            FROM document_approval_steps s
+            LEFT JOIN users u ON u.id = s.approver_id
+            WHERE s.approval_id IN ($inApproval)
+            ORDER BY s.sequence ASC, s.id ASC
+        ")->getResultArray();
+
+            foreach ($stepRows as $s) {
+                $aid = (int)$s['approval_id'];
+                $stepsByApproval[$aid][] = $s;
+            }
+        }
+
+        // 4. Gộp vào response cho từng file
         $files = [];
         foreach ($rows as $r) {
+            $docId = (int)$r['id'];
+
+            // chuẩn hóa status
+            $rawStatus = isset($r['approval_status']) ? trim((string)$r['approval_status']) : '';
+            $status    = $rawStatus !== '' ? $rawStatus : 'not_sent';
+
+            $approval  = $approvalsByDoc[$docId] ?? null;
+            $steps     = $approval
+                ? ($stepsByApproval[(int)$approval['id']] ?? [])
+                : [];
+
             $files[] = [
-                'id'               => (int)$r['id'],
+                'id'               => $docId,
                 'task_id'          => $task_id,
-                'file_name'        => $r['title'] ?: basename(parse_url($r['file_path'] ?? '', PHP_URL_PATH) ?: ''),
+                'file_name'        => $r['title']
+                    ?: basename(parse_url($r['file_path'] ?? '', PHP_URL_PATH) ?: ''),
                 'file_path'        => $r['file_path'],
                 'uploaded_by'      => (int)$r['uploaded_by'],
                 'uploader_name'    => $r['uploader_name'] ?? null,
                 'created_at'       => $r['created_at'],
-                'source'           => 'document',                    // ⬅ khác trước
-                'status'           => $r['approval_status'] ?? null,
+                'source'           => 'document',
+
+                // trạng thái tổng thể
+                'status'           => $status,
                 'approval_sent_by' => $r['approval_sent_by'] ?? null,
                 'approval_sent_at' => $r['approval_sent_at'] ?? null,
+
+                // ⭐ thêm để FE hiển thị chuỗi ký:
+                'approval'         => $approval,                    // phiên duyệt hiện tại (nếu có)
+                'steps'            => $steps,                       // các bước ký (approver_name, status,...)
             ];
         }
 
@@ -344,7 +423,7 @@ class CommentController extends ResourceController
                     'uploaded_by'   => (int)$exist['uploaded_by'],
                     'visibility'    => $exist['visibility'] ?? 'private',
                     'tags'          => $exist['tags'] ?? null,
-                    'approval_status'=> $exist['approval_status'] ?? 'not_sent',
+                    'approval_status'=> $exist['approval_status'] ?? 'waiting',
                     'created_at'    => $exist['created_at'] ?? null,
                     'updated_at'    => $exist['updated_at'] ?? null,
                     // (tuỳ ý) ghim thêm task_id nguồn để tra cứu
@@ -362,9 +441,12 @@ class CommentController extends ResourceController
             'department_id'   => $deptId,
             'uploaded_by'     => $userId,
             'visibility'      => 'private',
-            'tags'            => 'task_upload',        // gắn nhãn cho biết nguồn
-            'approval_status' => 'not_sent',           // chưa gửi duyệt
+            'tags'            => 'task_upload',
+            'approval_status' => 'waiting',
+            'source_task_id'  => $task_id ? (int)$task_id : null,
         ], true);
+
+
         if (!$insertId) $insertId = $docM->getInsertID();
 
         // Trả về document; KHÔNG tạo bản ghi task_comments
@@ -379,7 +461,7 @@ class CommentController extends ResourceController
                 'uploaded_by'   => $userId,
                 'visibility'    => 'private',
                 'tags'          => 'task_upload',
-                'approval_status'=> 'not_sent',
+                'approval_status'=> 'waiting',
                 'source_task_id'=> $task_id ? (int)$task_id : null,
             ]
         ]);

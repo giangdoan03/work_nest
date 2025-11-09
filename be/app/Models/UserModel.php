@@ -12,5 +12,5 @@ class UserModel extends Model
     protected $allowedFields = ['name', 'email', 'phone', 'password', 'role', 'avatar', 'role_id', 'department_id',  'signature_url','signature_wp_id', 'preferred_marker'];
 
     protected $useTimestamps = true;
-    protected $returnType    = 'array'; // ✅ Bắt buộc dùng nếu dùng password_verify()
+    protected $returnType    = 'array';
 }

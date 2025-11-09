@@ -37,25 +37,45 @@
 
                             <!-- Meta -->
                             <div class="att-meta">
-                                <div class="att-title" :title="item.title || item.name">{{item.title || item.name }}
+                                <div class="att-title" :title="item.title || item.name">
+                                    {{ item.title || item.name }}
                                 </div>
 
-                                <div class="att-sub" v-if="item.is_link">
-                                    <!-- <a :href="item.url" target="_blank" rel="noopener">{{ prettyUrl(item.url) }}</a> -->
-                                </div>
+                                <div class="att-sub" v-if="item.is_link"></div>
                                 <div class="att-sub" v-else :title="item.name">{{ item.name }}</div>
 
                                 <!-- Uploader line -->
-                                <div class="att-uploader" v-if="item.uploader_name || item.uploaded_by || item.created_at">
+                                <div
+                                    class="att-uploader"
+                                    v-if="item.uploader_name || item.uploaded_by || item.created_at"
+                                >
                                     <div class="att-uploader-left">
-                                        <UserOutlined class="att-uploader-ico"/>
+                                        <UserOutlined class="att-uploader-ico" />
                                         <a-tooltip :title="item.uploader_name || nameOfUploader(item.uploaded_by)">
-                                            <span class="att-uploader-name">{{item.uploader_name || nameOfUploader(item.uploaded_by) }}</span>
+                                            <span class="att-uploader-name">
+                                                {{ item.uploader_name || nameOfUploader(item.uploaded_by) }}
+                                            </span>
                                         </a-tooltip>
                                     </div>
                                     <div class="att-uploader-time" v-if="item.created_at">
                                         {{ formatTime(item.created_at) }} — {{ formatDateOnly(item.created_at) }}
                                     </div>
+                                </div>
+
+                                <!-- ✅ Chuỗi ký duyệt: ai đã ký / đang chờ / chưa ký -->
+                                <div v-if="stepsOf(item).length" class="att-approval">
+                                    <span class="att-approval-label">Ký duyệt:</span>
+                                    <span
+                                        v-for="s in stepsOf(item)"
+                                        :key="s.id"
+                                        class="att-approval-pill"
+                                        :class="pillClass(s)"
+                                    >
+                                    {{ s.approver_name || nameOfUploader(s.approver_id) || ('#' + s.approver_id) }}
+                                    <span class="att-approval-pill-status">
+                                      ({{ shortStepStatus(s) }})
+                                    </span>
+                                  </span>
                                 </div>
                             </div>
 
@@ -86,6 +106,7 @@
                                         <SendOutlined/>
                                     </a-button>
                                 </a-tooltip>
+
 
                             </div>
 
@@ -299,21 +320,14 @@ function approvalStateOf (item) {
     }
 }
 
-function canSendApproval (item) {
-    if (ensuring[item._key]) return false
-    const st = approvalStateOf(item)
-    if (st.approved) return false
-    return !st.pending
-}
+const canSendApproval = (item) => item.status === 'not_sent'
 
-function sendBtnTooltip (item) {
-    if (ensuring[item._key]) return 'Đang chuẩn bị tài liệu...'
-    const st = approvalStateOf(item)
-    if (st.pending)  return 'Đang chờ người duyệt phản hồi'
-    if (st.approved) return 'Tài liệu đã duyệt'
-    if (st.rejected) return 'Đã bị từ chối — bấm để gửi lại'
-    return 'Gửi đề nghị ký duyệt'
-}
+const sendBtnTooltip = (item) => {
+    if (item.status === 'pending') return 'Đã gửi duyệt, đang chờ xử lý';
+    if (item.status === 'approved') return 'Tài liệu đã được duyệt';
+    if (item.status === 'rejected') return 'Tài liệu đã bị từ chối, hãy cập nhật rồi gửi lại';
+    return 'Gửi tài liệu này vào quy trình duyệt';
+};
 
 // đảm bảo có task_file_id (chỉ dùng cho nguồn task_file hoặc khi thực sự muốn adopt/link)
 async function ensureTaskFileId (item) {
@@ -366,7 +380,9 @@ async function refreshApprovalStates () {
                     const a = await getActiveDocumentApproval(id)
                     const status = a?.status ?? null
                     const instanceId = a?.instanceId ?? null
-                    approvalMap.value[id] = { status, instanceId }
+// 👇 thêm steps (tùy BE: steps / approval_steps / data.steps)
+                    const steps = a?.steps || a?.approval_steps || []
+                    approvalMap.value[id] = { status, instanceId, steps }
                 } catch {
                     if (!approvalMap.value[id]) approvalMap.value[id] = { status: null, instanceId: null }
                 }
@@ -410,61 +426,100 @@ async function submitSendApproval () {
     sending.value = true
 
     try {
-        // Nguồn comment → API riêng, map theo comment.id
+        // 1) Nguồn comment -> giữ nguyên như bạn đã làm
         if (item._source === 'comment') {
             const { data } = await sendCommentApproval(item.id, {
                 user_id: Number(store.currentUser.id),
-                approver_ids: sendForm.approver_ids.map(Number),   // lấy từ select trong modal
+                approver_ids: sendForm.approver_ids.map(Number),
                 note: sendForm.note || ''
             })
             message.success(data?.message || 'Đã gửi duyệt file trong comment.')
-
-            // cập nhật trạng thái ngay
-            approvalMap.value[item.id] = { status: 'pending', instanceId: null }
             item.status = 'pending'
-            taskFileItems.value = taskFileItems.value.map(x =>
-                (x.id === item.id && x._source === 'comment') ? { ...x, status: 'pending' } : x
-            )
-            await nextTick()
             clearSendApproval()
             return
         }
 
-        // Nguồn task_file → document approval chuẩn
-        const tfId = await ensureTaskFileId(item)
-        if (!tfId) return
-        const payload = {
-            document_id: tfId,
-            approver_ids: sendForm.approver_ids.map(Number),
-            note: sendForm.note || ''
+        // 2) Nguồn document (tài liệu trong tab Tài liệu)
+        // comment-files đã trả id là document_id + source: 'document'
+        const docId = Number(item.id)
+        if (!docId) {
+            message.error('Thiếu document_id hợp lệ.')
+            return
         }
+
+        const payload = {
+            document_id: docId,
+            approver_ids: sendForm.approver_ids.map(Number),
+            note: sendForm.note || '',
+            source_type: 'document', // optional, cho chắc khớp BE
+        }
+
         const { ok, status, data } = await sendDocumentApproval(payload)
 
         if (ok) {
-            approvalMap.value[tfId] = { status: 'pending', instanceId: data?.id || null }
             item.status = 'pending'
-            taskFileItems.value = taskFileItems.value.map(x =>
-                (x.task_file_id === tfId) ? { ...x, status: 'pending' } : x
-            )
             message.success('Đã gửi ký duyệt tài liệu.')
             clearSendApproval()
         } else if (status === 409) {
-            approvalMap.value[tfId] = { status: 'pending', instanceId: null }
             item.status = 'pending'
-            taskFileItems.value = taskFileItems.value.map(x =>
-                (x.task_file_id === tfId) ? { ...x, status: 'pending' } : x
-            )
             message.warning(data?.message || 'Đối tượng đang chờ duyệt.')
             clearSendApproval()
         } else {
             message.error(data?.message || 'Không thể gửi duyệt.')
         }
+
     } catch (e) {
         message.error(e?.response?.data?.message || e.message || 'Lỗi máy chủ.')
     } finally {
         sending.value = false
     }
 }
+
+// Lấy danh sách bước ký cho 1 item
+function stepsOf(item) {
+    return item.steps || item.full?.steps || [];
+}
+
+// Trạng thái rút gọn cho từng bước
+function shortStepStatus(step) {
+    const s =
+        String(
+            step.status
+            || (step.is_approved && 'approved')
+            || (step.is_rejected && 'rejected')
+            || (step.is_pending && 'pending')
+            || (step.is_current && 'current')
+            || ''
+        ).toLowerCase()
+
+    if (s === 'approved') return 'đã ký'
+    if (s === 'rejected') return 'từ chối'
+    if (s === 'current')  return 'đang chờ'
+    if (s === 'waiting' || s === 'pending') return 'chờ ký'
+    return 'chưa ký'
+}
+
+// CSS class màu theo trạng thái bước
+function pillClass(step) {
+    const s =
+        String(
+            step.status
+            || (step.is_approved && 'approved')
+            || (step.is_rejected && 'rejected')
+            || (step.is_pending && 'pending')
+            || (step.is_current && 'current')
+            || ''
+        ).toLowerCase()
+
+    if (s === 'approved') return 'att-approval-pill--approved'
+    if (s === 'rejected') return 'att-approval-pill--rejected'
+    if (s === 'current' || s === 'waiting' || s === 'pending')
+        return 'att-approval-pill--pending'
+    return 'att-approval-pill--idle'
+}
+
+
+
 
 function clearSendApproval () {
     showSend.value = false
@@ -640,6 +695,64 @@ onBeforeUnmount(() => {
 .header_card .ant-card-extra {
     margin-left: 0 !important;
 }
+
+.att-approval {
+    margin-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+.att-approval-label {
+    color: #999;
+    margin-right: 2px;
+}
+
+.att-approval-pill {
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #f5f5f5;
+    color: #555;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    border: 1px solid transparent;
+}
+
+.att-approval-pill-status {
+    opacity: .9;
+}
+
+/* Đã ký */
+.att-approval-pill--approved {
+    background: #f6ffed;
+    color: #389e0d;
+    border-color: #b7eb8f;
+}
+
+/* Đang/Chờ ký */
+.att-approval-pill--pending {
+    background: #fffbe6;
+    color: #d48806;
+    border-color: #ffe58f;
+}
+
+/* Từ chối */
+.att-approval-pill--rejected {
+    background: #fff1f0;
+    color: #cf1322;
+    border-color: #ffa39e;
+}
+
+/* Chưa tới lượt / chưa đụng */
+.att-approval-pill--idle {
+    background: #fafafa;
+    color: #999;
+}
+
 </style>
 
 <style>
@@ -674,4 +787,88 @@ onBeforeUnmount(() => {
     white-space: nowrap;
     color: #999;
 }
+
+/* ========== Wrapper: grid để nhiều card nhỏ gọn ========== */
+.att-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* mỗi card tối thiểu 300px */
+    gap: 16px;
+    align-items: start;
+    padding: 8px; /* tuỳ chỉnh */
+    box-sizing: border-box;
+}
+
+/* Nếu a-list dùng .ant-list-item wrappers */
+.att-list .ant-list-item {
+    display: block;
+    width: 100%;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ========== Giới hạn chiều rộng từng card, canh giữa trong ô grid ========== */
+.att-card {
+    width: 100%;
+    max-width: 300px; /* giảm từ 520 -> 480, chỉnh theo ý */
+    margin: 0 auto;
+    box-sizing: border-box;
+    border-radius: 10px;
+}
+
+/* ========== Phiên bản nhỏ hơn của card ========== */
+.att-card--sm {
+    --att-thumb-h: 68px;      /* index: giảm từ 96 -> 68 */
+    --att-icon-size: 22px;    /* giảm từ 30 -> 22 */
+    --att-pad-x: 8px;
+    --att-pad-y: 6px;
+}
+
+/* Giảm padding / font để card trông nhẹ hơn */
+.att-meta { padding: 6px var(--att-pad-x) 0; }
+.att-title { font-size: 13px; font-weight: 600; line-height: 1.2; }
+.att-sub { font-size: 11px; color: #6f7680; }
+.att-uploader { font-size: 11px; color: #666; margin-top: 4px; }
+
+/* Thu nhỏ các nút hành động */
+.att-actions {
+    display: flex;
+    gap: 6px;
+    padding: 6px var(--att-pad-x) 8px;
+    justify-content: flex-end;
+}
+.att-actions :deep(.ant-btn) {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    font-size: 12px;
+}
+
+/* Thu nhỏ pill/status */
+.att-approval { font-size: 10px; gap: 6px; margin-top: 6px; }
+.att-approval-pill { padding: 0 6px; font-size: 11px; }
+
+/* Badge ext */
+.att-ext { top: 6px; right: 6px; font-size: 10px; }
+
+/* Thumbs: đảm bảo thumb không quá cao */
+.att-icon-wrap, .att-link-thumb, .a-image {
+    height: var(--att-thumb-h);
+    max-height: var(--att-thumb-h);
+    overflow: hidden;
+}
+
+/* ========== Media queries: mobile / tablet ========== */
+@media (max-width: 920px) {
+    .att-list { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .att-card { max-width: 100%; }
+    .att-card--sm { --att-thumb-h: 60px; --att-icon-size: 20px; }
+}
+
+@media (max-width: 600px) {
+    .att-list { grid-template-columns: 1fr; padding: 6px; gap: 10px; }
+    .att-card--sm { --att-thumb-h: 56px; --att-icon-size: 18px; --att-pad-x: 6px; }
+    .att-title { font-size: 13px; }
+    .att-sub, .att-uploader { font-size: 11px; }
+}
+
 </style>

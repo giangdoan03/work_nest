@@ -56,9 +56,12 @@ export function getMyApprovalInboxFiles() {
 
 export const getDocumentDetail = (id) => instance.get(`/documents/${id}`)
 
-export function uploadSignedPdf(formData) {
-    return instance.post('/documents/signed', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    })
-}
+export const uploadSignedPdf = (formData) =>
+    instance.post('/documents/upload-signed', formData)
+
+// api/document.js
+export const saveSignedDocument = (payload) =>
+    instance.post('/documents/signed', payload)
+
+
 

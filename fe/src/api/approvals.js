@@ -73,8 +73,8 @@ export const sendDocumentApproval = async (payload) => {
 }
 
 // Duyệt cấp hiện tại
-export const approveDocumentApproval = (instanceId, data = {}) =>
-    instance.post(`/document-approvals/${instanceId}/sign`, data)
+export const approveDocumentApproval = (id) =>
+    instance.post(`/document-approvals/${id}/sign`)
 // data gợi ý: { comment?, signature_url?, signed_pdf_url?, pos_row?, pos_index?, order_index? }
 
 // Từ chối cấp hiện tại
@@ -128,6 +128,8 @@ export const fetchActiveInstanceId = async (documentId) => {
         return null
     }
 }
+
+
 
 
 // Export default gộp, tiện import *

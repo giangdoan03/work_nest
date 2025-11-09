@@ -277,7 +277,7 @@ class Auth extends Controller
                 ->find($userId);
 
             if ($user) {
-                unset($user['password']); // không trả về mật khẩu
+                unset($user['password']);
 
                 return $this->response->setJSON([
                     'status' => 'success',

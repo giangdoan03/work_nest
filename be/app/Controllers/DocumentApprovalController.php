@@ -11,9 +11,14 @@ use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use Throwable;
+use App\Traits\AuthTrait;
+use App\Traits\ApprovalContextTrait;
 
 class DocumentApprovalController extends ResourceController
 {
+
+    use AuthTrait, ApprovalContextTrait;
+
     protected $format = 'json';
 
     /** Approval (session) status */
@@ -158,41 +163,72 @@ class DocumentApprovalController extends ResourceController
     public function send(): ResponseInterface
     {
         $userId = (int) (session()->get('user_id') ?? 0);
-        if (!$userId) return $this->failUnauthorized('Chưa đăng nhập');
+        if ($userId <= 0) {
+            return $this->failUnauthorized('Chưa đăng nhập');
+        }
 
-        $payload      = $this->request->getJSON(true) ?? [];
-        $documentId   = (int) ($payload['document_id'] ?? 0);
-        $approverIds  = array_values(array_unique(array_filter(array_map('intval', $payload['approver_ids'] ?? []))));
-        $note         = trim((string)($payload['note'] ?? ''));
+        $payload     = $this->request->getJSON(true) ?? [];
+        $documentId  = (int) ($payload['document_id'] ?? 0);
+        $approverIds = array_values(array_unique(array_filter(array_map('intval', $payload['approver_ids'] ?? []))));
+        $note        = trim((string)($payload['note'] ?? ''));
 
-        if ($documentId <= 0)       return $this->failValidationErrors('Thiếu document_id');
-        if (empty($approverIds))    return $this->failValidationErrors('Thiếu approver_ids');
+        if ($documentId <= 0) {
+            return $this->failValidationErrors('Thiếu document_id');
+        }
+        if (empty($approverIds)) {
+            return $this->failValidationErrors('Thiếu approver_ids');
+        }
 
-        // (tuỳ bạn) kiểm tra tồn tại file:
-        $tf = (new TaskFileModel())->find($documentId);
-        if (!$tf) return $this->failNotFound('Tài liệu không tồn tại');
-
-        $apvM  = new DocumentApprovalModel();
+        $docM = new DocumentModel();
+        $apvM = new DocumentApprovalModel();
         $stepM = new DocumentApprovalStepModel();
 
-        // chặn trùng phiên pending
-        $existing = $apvM->where('document_id', $documentId)->where('status','pending')->first();
-        if ($existing) return $this->failValidationErrors('Tài liệu đang có phiên duyệt PENDING.');
+        // 1) Kiểm tra tài liệu tồn tại
+        $doc = $docM->find($documentId);
+        if (!$doc) {
+            return $this->failNotFound('Tài liệu không tồn tại.');
+        }
 
-        $db = $apvM->db; $db->transBegin();
+        if (empty($doc['file_path'])) {
+            return $this->failValidationErrors('Tài liệu chưa có file_path hợp lệ.');
+        }
+
+        // 2) Chặn trùng phiên pending cho cùng document (nguồn: document)
+        $existing = $apvM
+            ->where('document_id', $documentId)
+            ->where('source_type', 'document')
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existing) {
+            return $this->failValidationErrors(
+                'Tài liệu này đã được gửi duyệt và đang ở trạng thái PENDING (approval_id='
+                . (int)$existing['id'] . ').'
+            );
+        }
+
+        // 3) Tạo phiên + các bước trong transaction
+        $db = $apvM->db;
+        $db->transBegin();
+
         try {
-            // 1) Tạo phiên
+            // 3.1) Tạo phiên duyệt
             $apvId = $apvM->insert([
                 'document_id'        => $documentId,
                 'status'             => 'pending',
                 'created_by'         => $userId,
                 'current_step_index' => 0,
-                'note'               => $note,
-                'source_type' => 'task_file' , // trong send()
+                'note'               => ($note !== '' ? $note : null),
+                'source_type'        => 'document',
             ], true);
 
-            // 2) Tạo các bước
-            $seq = 1; $batch = [];
+            if (!$apvId) {
+                throw new \RuntimeException('Không tạo được phiên duyệt.');
+            }
+
+            // 3.2) Tạo các bước duyệt
+            $seq   = 1;
+            $batch = [];
             foreach ($approverIds as $uid) {
                 $batch[] = [
                     'approval_id' => $apvId,
@@ -201,33 +237,45 @@ class DocumentApprovalController extends ResourceController
                     'status'      => 'waiting',
                 ];
             }
-            $stepM->insertBatch($batch);
-
-            // 3) Kích hoạt step đầu tiên
-            $first = $stepM->where('approval_id', $apvId)->orderBy('sequence','ASC')->first();
-            if ($first) {
-                $stepM->update($first['id'], ['status' => 'active']);
-                $apvM->update($apvId, ['current_step_index' => (int)$first['sequence']]);
+            if ($batch) {
+                $stepM->insertBatch($batch);
             }
+
+            // 3.3) Kích hoạt bước đầu tiên
+            $first = $stepM
+                ->where('approval_id', $apvId)
+                ->orderBy('sequence', 'ASC')
+                ->first();
+
+            if (!$first) {
+                throw new \RuntimeException('Không có bước duyệt nào được tạo.');
+            }
+
+            $stepM->update($first['id'], ['status' => 'active']);
+            $apvM->update($apvId, [
+                'current_step_index' => (int)$first['sequence'],
+            ]);
 
             $db->transCommit();
 
-            // (khuyến nghị) đồng bộ trạng thái nguồn
-            (new TaskFileModel())->update($documentId, [
-                'status'       => 'pending',
-                'approved_by'  => null,
-                'approved_at'  => null,
-                'review_note'  => ($note ?: null),
+            // 4) Đồng bộ trạng thái tài liệu nguồn
+            $docM->update($documentId, [
+                'approval_status'   => 'pending',
+                'approval_sent_by'  => $userId,
+                'approval_sent_at'  => date('Y-m-d H:i:s'),
             ]);
 
+            // 5) Trả về
             return $this->respondCreated([
                 'id'           => (int)$apvId,
                 'document_id'  => $documentId,
+                'source_type'  => 'document',
                 'status'       => 'pending',
             ]);
+
         } catch (Throwable $e) {
             $db->transRollback();
-            return $this->failServerError('Khởi tạo duyệt thất bại: '.$e->getMessage());
+            return $this->failServerError('Khởi tạo duyệt thất bại: ' . $e->getMessage());
         }
     }
 
@@ -235,10 +283,12 @@ class DocumentApprovalController extends ResourceController
     /** ============ POST /api/document-approvals/{id}/approve ============ */
     public function approve($id = null): ResponseInterface
     {
-        $userId = (int) session()->get('user_id');
-        if (!$userId) return $this->failUnauthorized('Chưa đăng nhập');
+        $userId = $this->requireLogin();
+        if ($userId instanceof ResponseInterface) {
+            return $userId; // chưa login
+        }
 
-        $apvM  = new DocumentApprovalModel();
+        $apvM = new DocumentApprovalModel();
         $stepM = new DocumentApprovalStepModel();
 
         $apv = $apvM->find((int)$id);
@@ -574,33 +624,116 @@ class DocumentApprovalController extends ResourceController
 
         $sql = "
         SELECT
-            das.id          AS step_id,
-            das.status      AS step_status,
-            da.id           AS approval_id,
+            das.id                 AS step_id,
+            das.status             AS step_status,
+            das.sequence           AS step_sequence,
+
+            da.id                  AS approval_id,
             da.document_id,
             da.source_type,
-            da.status       AS approval_status,
-            d.title,
-            d.file_path,
+            da.status              AS approval_status,
+            da.current_step_index,
+
+            d.title                AS title,
+            d.file_path            AS file_path,
             d.uploaded_by,
-            u.name AS uploader_name,
+            u.name                 AS uploader_name,
             d.created_at
+
         FROM document_approval_steps das
-        JOIN document_approvals da ON da.id = das.approval_id
-        LEFT JOIN documents d      ON d.id  = da.document_id
-        LEFT JOIN users u          ON u.id  = d.uploaded_by
+        JOIN document_approvals da
+            ON da.id = das.approval_id
+
+        LEFT JOIN documents d
+            ON d.id = da.document_id
+
+        LEFT JOIN users u
+            ON u.id = d.uploaded_by
+
         WHERE das.approver_id = ?
-        
+          AND da.source_type = 'document'
+
         ORDER BY das.id DESC
     ";
 
         $rows = $db->query($sql, [$userId])->getResultArray();
 
         return $this->respond([
-            'data' => $rows,
+            'data'  => $rows,
             'count' => count($rows),
         ]);
     }
+
+    public function detail($id): ResponseInterface
+    {
+        $userId = (int) (session()->get('user_id') ?? 0);
+        if (!$userId) {
+            return $this->failUnauthorized('Chưa đăng nhập.');
+        }
+
+        $apvM   = new DocumentApprovalModel();
+        $stepM  = new DocumentApprovalStepModel();
+        $docM   = new DocumentModel();
+
+        $approval = $apvM->find($id);
+        if (!$approval) {
+            return $this->failNotFound('Không tìm thấy phiên duyệt.');
+        }
+
+        $doc = $docM->find($approval['document_id']);
+        if (!$doc) {
+            return $this->failNotFound('Không tìm thấy tài liệu gốc.');
+        }
+
+        // Lấy steps + info user: tên, chữ ký, preferred_marker
+        $steps = $stepM
+            ->select(
+                'document_approval_steps.*,
+             u.name            AS approver_name,
+             u.signature_url   AS approver_signature_url,
+             u.preferred_marker'
+            )
+            ->join('users u', 'u.id = document_approval_steps.approver_id', 'left')
+            ->where('document_approval_steps.approval_id', $id)
+            ->orderBy('document_approval_steps.sequence', 'ASC')
+            ->findAll();
+
+        // Xác định step hiện tại (first pending sau tất cả approved)
+        $currentStepId = null;
+        foreach ($steps as $s) {
+            if ($s['status'] === 'pending') {
+                $currentStepId = (int) $s['id'];
+                break;
+            }
+        }
+
+        // Gắn thêm meta cho FE: is_approved, is_rejected, is_pending, is_current, can_act
+        foreach ($steps as &$s) {
+            $status = strtolower((string) $s['status']);
+
+            $s['sequence']     = (int) $s['sequence'];
+            $s['is_approved']  = $status === 'approved';
+            $s['is_rejected']  = $status === 'rejected';
+            $s['is_pending']   = $status === 'pending';
+            $s['is_current']   = ((int) $s['id'] === $currentStepId);
+            $s['can_act']      = $s['is_current'] && ((int) $s['approver_id'] === $userId);
+
+            // Để FE scan chữ ký đúng người:
+            // preferred_marker lấy trực tiếp từ user (vd: "dinhvanvinh")
+            // signature_url của approver để so hoặc hiển thị nếu cần
+        }
+        unset($s);
+
+        return $this->respond([
+            'approval'       => $approval,
+            'document'       => $doc,
+            'steps'          => $steps,
+            'current_step_id'=> $currentStepId,
+        ]);
+    }
+
+
+
 
 
     public function resolvedByMe(): ResponseInterface
