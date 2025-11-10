@@ -55,7 +55,33 @@ export const uploadTaskLinkAPI = (taskId, data) =>
 export const getComments = (task_id, data={}) =>  instance.get(`/tasks/${task_id}/comments`, {params: data})
 
 // 🔹 Gửi bình luận cho task
-export const createComment = (task_id, data={}) =>  instance.post(`/tasks/${task_id}/comments`, data)
+// api/task.js
+export const createComment = (task_id, data = {}) => {
+    // Nếu data là FormData -> cho axios gửi nguyên vẹn, KHÔNG ép Content-Type
+    if (typeof FormData !== 'undefined' && data instanceof FormData) {
+        // config đảm bảo không truyền Content-Type (nếu instance có mặc định)
+        const config = { headers: {} };
+
+        // copy default headers nhưng xoá content-type nếu tồn tại
+        const defaults = instance.defaults?.headers || {};
+        // flatten common/post headers nếu có (tùy cấu hình instance)
+        const allDefault = {
+            ...(defaults.common || {}),
+            ...(defaults.post || {}),
+            ...(defaults || {}),
+        };
+        // copy allDefault vào config.headers rồi xoá content-type key
+        config.headers = {...allDefault};
+        delete config.headers['Content-Type'];
+        delete config.headers['content-type'];
+
+        return instance.post(`/tasks/${task_id}/comments`, data, config);
+    }
+
+    // bình thường gửi JSON cho object
+    return instance.post(`/tasks/${task_id}/comments`, data);
+};
+
 
 // 🔹 xóa bình luận cho task
 export const deleteComment = (comment_id, data={}) =>  instance.delete(`/comments/${comment_id}`)

@@ -251,17 +251,6 @@
                                                                 <a-select v-else v-model:value="formData.status" :options="statusOption" placeholder="Chọn trạng thái"/>
                                                             </a-form-item>
                                                         </a-col>
-
-                                                        <!--                                                        <a-col :span="12">-->
-                                                        <!--                                                            <a-form-item label="Phê duyệt" name="approval_status">-->
-                                                        <!--                                                                <a-tag-->
-                                                        <!--                                                                    :color="formData.approval_status === 'approved' ? 'green' : 'orange'">-->
-                                                        <!--                                                                    {{formData.approval_status === 'approved' ? 'Đã duyệt' : 'Chưa duyệt' }}-->
-                                                        <!--                                                                </a-tag>-->
-                                                        <!--                                                            </a-form-item>-->
-                                                        <!--                                                        </a-col>-->
-
-
                                                         <a-col :span="12">
                                                             <a-form-item label="Phòng ban" name="id_department">
                                                                 <a-typography-text v-if="!isEditMode">
@@ -332,32 +321,6 @@
 
                                                         <!-- Phê duyệt -->
                                                         <a-col :span="24">
-                                                            <!--                                                            <a-form-item label="Phê duyệt">-->
-                                                            <!-- CẦN DUYỆT -->
-                                                            <!--                                                                <template v-if="Number(formData.needs_approval) === 1">-->
-                                                            <!--                                                                    <div class="approver-list">-->
-                                                            <!--                                                                        <template v-if="approverRows.length">-->
-                                                            <!--                                                                            <div-->
-                                                            <!--                                                                                v-for="row in approverRows"-->
-                                                            <!--                                                                                :key="row.id"-->
-                                                            <!--                                                                                :class="['approver-item', row.status]"-->
-                                                            <!--                                                                            >-->
-                                                            <!--                                                                                <span class="name" style="margin-right: 10px">{{ row.name }}</span>-->
-                                                            <!--                                                                                <a-tag v-if="row.status==='approved'" color="green">Đã duyệt</a-tag>-->
-                                                            <!--                                                                                <a-tag v-else-if="row.status==='rejected'" color="red">Từ chối</a-tag>-->
-                                                            <!--                                                                                <a-tag v-else color="orange">Đang chờ</a-tag>-->
-                                                            <!--                                                                            </div>-->
-                                                            <!--                                                                        </template>-->
-                                                            <!--                                                                        <span v-else class="text-muted">Chưa chọn người duyệt</span>-->
-                                                            <!--                                                                    </div>-->
-                                                            <!--                                                                </template>-->
-
-                                                            <!--                                                                &lt;!&ndash; KHÔNG CẦN DUYỆT &ndash;&gt;-->
-                                                            <!--                                                                <template v-else>-->
-                                                            <!--                                                                    <a-tag>Không cần phê duyệt</a-tag>-->
-                                                            <!--                                                                </template>-->
-                                                            <!--                                                                <ApprovalStatus />-->
-                                                            <!--                                                            </a-form-item>-->
                                                         </a-col>
                                                     </a-row>
                                                 </div>
@@ -391,7 +354,10 @@
                                                             {{ record.approved_by_name || '—' }}
                                                         </template>
                                                         <template v-else-if="column.dataIndex === 'comment'">
-                                                            {{ record.comment || '—' }}
+                                                            <div>{{ record.comment || '—' }}</div>
+                                                            <div style="font-size: 12px; color: #888; margin-top:6px;">
+                                                                {{ record.acted_at_vi || record.added_at_vi || '' }}
+                                                            </div>
                                                         </template>
                                                     </template>
                                                 </a-table>
@@ -423,10 +389,6 @@
                                     <Comment/>
                                 </div>
                             </a-col>
-                            <!--                            &lt;!&ndash; Cột phải: Trạng thái duyệt &ndash;&gt;-->
-                            <!--                            <a-col :span="7" :xs="24" :lg="7">-->
-                            <!--                                <ApprovalStatus />-->
-                            <!--                            </a-col>-->
                         </a-row>
                     </a-card>
                 </a-col>
@@ -451,6 +413,7 @@ import {
     uploadTaskFileAPI,
     getTaskExtensions,
     deleteTask,
+    getTaskRosterAPI
 } from '@/api/task'
 import {
     getBiddingAPI,
@@ -461,8 +424,6 @@ import {
 import {getContractAPI, getContractsAPI} from '@/api/contract'
 import {
     getContractStepsAPI,
-    // ⚠️ Nếu bạn có API tương đương để gán task vào step contract, import ở đây:
-    // updateContractStepAPI
 } from '@/api/contract-steps'
 import {getDepartments} from '@/api/department'
 import Comment from './Comment.vue'
@@ -1047,20 +1008,55 @@ const getStatusText = (status) => {
     }
 }
 
+// thay thế function fetchLogHistory cũ
 const fetchLogHistory = async () => {
-    const taskId = route.params.id
+    const taskId = route.params.id;
     if (!taskId) {
         logData.value = [];
-        return
+        return;
     }
+
     try {
-        const res = await getApprovalHistoryByTask(taskId)
-        logData.value = Array.isArray(res.data) ? res.data : []
+        const res = await getTaskRosterAPI(taskId);
+        const body = res?.data ?? {};
+
+        // roster là mảng các bước duyệt
+        const roster = Array.isArray(body.roster) ? body.roster : [];
+
+        // Map sang cấu trúc logData hiện dùng trong table
+        logData.value = roster.map((r, idx) => {
+            // note có thể là JSON string (ví dụ: "{\"note\":null}") hoặc null/raw string
+            let parsedNote = '';
+            if (r.note) {
+                try {
+                    const maybe = typeof r.note === 'string' ? JSON.parse(r.note) : r.note;
+                    // lấy trường note nếu có
+                    if (maybe && typeof maybe === 'object') parsedNote = maybe.note ?? JSON.stringify(maybe);
+                    else parsedNote = String(maybe);
+                } catch {
+                    parsedNote = String(r.note);
+                }
+            }
+
+            return {
+                id: `${r.user_id || 'u'}-${idx}`,
+                level: idx + 1, // hoặc lấy sequence nếu backend gửi
+                status: r.status || 'pending',
+                approved_by_name: r.name || '',
+                comment: parsedNote || '—',
+                acted_at: r.acted_at || null,
+                acted_at_vi: r.acted_at_vi || null,
+                added_at: r.added_at || null,
+                added_at_vi: r.added_at_vi || null,
+                raw: r, // giữ nguyên cho các thao tác sau nếu cần
+            };
+        });
+
     } catch (e) {
-        console.error('Lỗi khi lấy log:', e)
-        logData.value = []
+        console.error('Lỗi khi lấy roster:', e);
+        logData.value = [];
     }
-}
+};
 
 const manualLink = reactive({title: '', url: ''})
 const manualLinks = ref([])

@@ -1,5 +1,21 @@
 <template>
     <a-card bordered class="doc-section">
+        <div class="doc-header">
+            <div class="doc-header-title">Danh sách tài liệu</div>
+            <a-tooltip title="Tải lại danh sách tài liệu">
+                <a-button
+                    type="text"
+                    size="small"
+                    class="refresh-btn"
+                    @click="refresh"
+                >
+                    <ReloadOutlined
+                        class="refresh-icon"
+                        :class="{ 'is-rotating': loading }"
+                    />
+                </a-button>
+            </a-tooltip>
+        </div>
         <a-spin :spinning="loading" tip="Đang tải tài liệu...">
             <a-list
                 v-if="displayCards.length"
@@ -143,7 +159,7 @@
 <script setup>
 import {
     LinkOutlined, EyeOutlined, DownloadOutlined, SendOutlined,
-    FilePdfOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined, FileTextOutlined, UserOutlined
+    FilePdfOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined, FileTextOutlined, UserOutlined, ReloadOutlined
 } from '@ant-design/icons-vue'
 import { computed, onMounted, ref, watch, reactive, nextTick, onBeforeUnmount } from 'vue'
 import { message } from 'ant-design-vue'
@@ -540,6 +556,21 @@ function openAttachment (it) {
 }
 const downloadAttachment = (it) => window.open(it.url, '_blank', 'noopener')
 
+const refresh = async () => {
+    try {
+        loading.value = true
+        await fetchTaskFiles()
+        message.destroy()
+        message.success('Danh sách tài liệu đã được cập nhật')
+    } catch (e) {
+        message.error('Không thể tải lại tài liệu')
+    } finally {
+        loading.value = false
+    }
+}
+
+defineExpose({ refresh }) // nếu bạn muốn parent gọi được
+
 // ---------- lifecycle ----------
 onMounted(async () => {
     await Promise.all([loadUsers(), fetchTaskFiles()])
@@ -720,6 +751,10 @@ onBeforeUnmount(() => {
     align-items: center;
     gap: 2px;
     border: 1px solid transparent;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .att-approval-pill-status {
@@ -856,6 +891,50 @@ onBeforeUnmount(() => {
     max-height: var(--att-thumb-h);
     overflow: hidden;
 }
+.doc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    margin-bottom: 8px;
+}
+
+.doc-header-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.refresh-btn {
+    color: #555;
+    transition: all 0.25s ease;
+    border-radius: 6px;
+}
+
+.refresh-btn:hover {
+    color: #1677ff;
+    background-color: #f5f8ff;
+}
+
+/* Icon xoay nhẹ khi đang tải */
+.refresh-icon {
+    font-size: 16px;
+    transition: transform 0.25s ease;
+}
+
+.is-rotating {
+    animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
 
 /* ========== Media queries: mobile / tablet ========== */
 @media (max-width: 920px) {

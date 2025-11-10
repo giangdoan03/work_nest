@@ -159,11 +159,12 @@
                                     </a>
 
                                     <!-- 📌 Pin -->
-                                    <a-tooltip :title="isPinned(f) ? 'Bỏ ghim file này' : 'Ghim file lên trên'">
+                                    <a-tooltip :title="isPinnable(f) ? (isPinned(f) ? 'Bỏ ghim file này' : 'Ghim file lên trên') : 'Chưa upload xong, không thể ghim'">
                                         <PushpinOutlined
                                             class="pin-btn"
+                                            :class="{ 'disabled-pin': !isPinnable(f) }"
                                             :style="{ color: isPinned(f) ? '#faad14' : '#999' }"
-                                            @click.stop="togglePin(f)"
+                                            @click.stop="isPinnable(f) ? togglePin(f) : null"
                                         />
                                     </a-tooltip>
                                 </div>
@@ -186,8 +187,7 @@
 
             <div class="tg-composer">
                 <!-- Attach -->
-                <a-upload :show-upload-list="false" :multiple="false" :max-count="1"
-                          :before-upload="handleBeforeUpload">
+                <a-upload :show-upload-list="false" :multiple="false" :max-count="1" :before-upload="handleBeforeUpload">
                     <a-button type="text" class="tg-attach-btn" :title="'Đính kèm'">
                         <PaperClipOutlined/>
                     </a-button>
@@ -815,9 +815,13 @@ function onInputDetectMention(e) {
 
 /* ===== upload handlers (single file) ===== */
 async function handleBeforeUpload(file) {
-    selectedFile.value = file
-    return false
+    // file là instance của File/Blob do AntD truyền vào
+    console.log('handleBeforeUpload got file:', file);
+    selectedFile.value = file; // LƯU lại để append vào FormData khi submit
+    // return false để AntD không tự upload và cho phép you control upload manually
+    return false;
 }
+
 
 function handleRemoveFile() {
     selectedFile.value = null
@@ -881,46 +885,77 @@ function dedupeMentions(arr = []) {
     return res
 }
 
-async function createNewComment({keepMentions = false} = {}) {
-    if (!canSend.value) return
-    try {
-        const textMentions = extractMentionsFromInput(inputValue.value)
-        const mergedMentions = dedupeMentions([...(mentionsSelected.value || []), ...textMentions])
-        const hadMentions = mergedMentions.length > 0
+// helper debug
+function logFormData(fd) {
+    for (const entry of fd.entries()) {
+        console.log('FormData:', entry[0], entry[1]);
+    }
+}
 
-        const form = new FormData()
-        form.append('user_id', String(store.currentUser.id))
-        form.append('content', inputValue.value.trim())
-        const mentions = mergedMentions.map(m => ({
+async function createNewComment({ keepMentions = false } = {}) {
+    if (!canSend.value) return;
+
+    try {
+        // --- Ghép mentions ---
+        const textMentions = extractMentionsFromInput(inputValue.value);
+        const mergedMentions = dedupeMentions([
+            ...(mentionsSelected.value || []),
+            ...textMentions
+        ]);
+
+        // 🟢 Khai báo biến mentionsPayload ở đây
+        const mentionsPayload = mergedMentions.map(m => ({
             user_id: Number(m.user_id),
             name: m.name,
             role: m.role,
-            status: m.status || 'pending', // thay 'processing' -> 'pending'
+            status: m.status || 'pending'
         }));
-        form.append('mentions', JSON.stringify(mentions))
 
+        // --- Build FormData ---
+        const form = new FormData();
+        form.append('user_id', String(store.currentUser.id));
+        form.append('content', String(inputValue.value || ''));
+        form.append('mentions', JSON.stringify(mentionsPayload));
+
+        console.log('selectedFile before append:', selectedFile.value);
+
+        // 🟢 Append file nếu có
         if (selectedFile.value) {
-            const raw = selectedFile.value
-            form.append('attachment', raw, raw.name || 'file')
+            form.append('attachment', selectedFile.value, selectedFile.value.name || 'attachment');
+        } else {
+            console.warn('⚠️ No selectedFile to append — attachment will be missing');
         }
 
-        await createComment(taskId.value, form)
+        // Debug log form data
+        // for (const pair of form.entries()) {
+        //     console.log('FormData:', pair[0], pair[1]);
+        // }
 
-        inputValue.value = ''
-        selectedFile.value = null
-        mentionsSelected.value = keepMentions ? mergedMentions : []
+        // --- Gửi request ---
+        const res = await createComment(taskId.value, form);
 
-        await getListComment(1)
-        if (hadMentions) await persistRoster()
-        await syncRosterFromServer()
+        // --- Reset ---
+        inputValue.value = '';
+        selectedFile.value = null;
+        mentionsSelected.value = keepMentions ? mergedMentions : [];
 
-        await nextTick()
-        scrollToBottom()
-    } catch (e) {
-        console.error(e)
-        message.error('Không gửi được bình luận')
+        await getListComment(1);
+        await syncRosterFromServer();
+        await nextTick();
+        scrollToBottom();
+
+    } catch (err) {
+        console.error('createNewComment error', err);
+        if (err?.response?.data) {
+            console.error('Server response:', err.response.data);
+            message.error(err.response.data?.messages?.attachment || 'Không gửi được bình luận');
+        } else {
+            message.error('Không gửi được bình luận');
+        }
     }
 }
+
+
 
 /* ===== list (paging) ===== */
 async function getListComment(page = 1) {
@@ -1052,6 +1087,15 @@ function cancelEdit() {
     editingCommentId.value = null
     inputValue.value = ''
 }
+
+function isPinnable(f) {
+    const href = hrefOf(f) // file_path or link_url
+    // nếu là blob (local preview) thì href sẽ bắt đầu bằng blob: hoặc rỗng -> không pinnable
+    if (!href) return false
+    if (String(href).startsWith('blob:')) return false
+    return true
+}
+
 
 
 const canActOnChip = (m) =>
@@ -1831,6 +1875,76 @@ onBeforeUnmount(() => {
 .drawer-chip .chip-card.is-approved { background: #f6ffed; border-color: #b7eb8f; }
 .drawer-chip .chip-card.is-pending  { background: #eef6ff; border-color: #cfe3ff; }
 .drawer-chip .chip-card.is-rejected { background: #fff2f0; border-color: #ffccc7; }
+
+/* ===== Mention Popover ===== */
+.mention-pop {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 280px;
+    padding: 14px 16px;
+    background: #fff;
+    border-radius: 10px;
+    font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+.mention-pop .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.mention-pop .lbl {
+    flex-shrink: 0;
+    width: 60px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #444;
+    text-align: right;
+}
+
+/* Select & Segmented alignment */
+.mention-pop .ant-select,
+.mention-pop .ant-segmented {
+    flex: 1;
+}
+
+/* Segmented buttons subtle style */
+.mention-pop .ant-segmented {
+    background: #f6f7fb;
+    border-radius: 8px;
+}
+
+.mention-pop .ant-segmented-item-selected {
+    background: #1677ff !important;
+    color: #fff !important;
+    font-weight: 500;
+}
+
+/* Footer buttons */
+.mention-pop .row:last-child {
+    margin-top: 6px;
+    justify-content: flex-end;
+}
+
+.mention-pop .ant-btn {
+    border-radius: 6px;
+}
+
+.mention-pop .ant-btn-primary {
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.04);
+}
+
+/* Hover states for clarity */
+.mention-pop .ant-btn:hover:not(.ant-btn-primary) {
+    background: #f5f5f5;
+}
+.ant-popover-inner {
+    border-radius: 12px !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease-in-out;
+}
 
 
 

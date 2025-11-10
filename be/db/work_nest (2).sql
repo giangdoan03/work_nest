@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Nov 06, 2025 at 04:59 PM
+-- Generation Time: Nov 09, 2025 at 03:30 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -1207,8 +1207,12 @@ CREATE TABLE `documents` (
   `id` int NOT NULL,
   `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `file_path` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `signed_pdf_url` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `signed_by` int UNSIGNED DEFAULT NULL,
+  `signed_at` datetime DEFAULT NULL,
   `department_id` int DEFAULT NULL,
   `uploaded_by` int NOT NULL,
+  `source_task_id` int DEFAULT NULL,
   `visibility` enum('private','public','department','custom') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'private',
   `file_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `file_size` int DEFAULT NULL,
@@ -1226,9 +1230,10 @@ CREATE TABLE `documents` (
 -- Dumping data for table `documents`
 --
 
-INSERT INTO `documents` (`id`, `title`, `file_path`, `department_id`, `uploaded_by`, `visibility`, `file_type`, `file_size`, `created_at`, `updated_at`, `tags`, `approval_steps`, `current_level`, `approval_sent_by`, `approval_sent_at`, `approval_status`) VALUES
-(2, 'maudonphuc_khao123.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao123.pdf', 2, 3, 'private', 'wp_media', 128195, '2025-11-04 21:10:39', '2025-11-04 21:10:39', 'task_upload', NULL, 0, NULL, NULL, 'not_sent'),
-(3, 'signed.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/signed.pdf', 2, 3, 'private', 'wp_media', 183694, '2025-11-04 22:45:19', '2025-11-04 22:45:19', 'task_upload', NULL, 0, NULL, NULL, 'not_sent');
+INSERT INTO `documents` (`id`, `title`, `file_path`, `signed_pdf_url`, `signed_by`, `signed_at`, `department_id`, `uploaded_by`, `source_task_id`, `visibility`, `file_type`, `file_size`, `created_at`, `updated_at`, `tags`, `approval_steps`, `current_level`, `approval_sent_by`, `approval_sent_at`, `approval_status`) VALUES
+(21, '2022104_TTr-HCNS_Dexuatgiahanphanmem1office.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/2022104_TTr-HCNS_Dexuatgiahanphanmem1office-3.pdf', NULL, NULL, NULL, 3, 1, 277, 'private', 'wp_media', 518522, '2025-11-09 11:19:02', '2025-11-09 11:34:16', 'task_upload', NULL, 0, NULL, NULL, 'pending'),
+(22, 'maudonphuc_khao123.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao123-7.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/signed-19.pdf', 3, '2025-11-09 15:02:40', 3, 1, 277, 'private', 'wp_media', 128195, '2025-11-09 11:38:39', '2025-11-09 15:02:40', 'task_upload', NULL, 0, NULL, NULL, ''),
+(23, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/signed-32.pdf', 4, '2025-11-09 17:30:11', 2, 3, 277, 'private', 'wp_media', 129360, '2025-11-09 15:52:15', '2025-11-09 17:30:11', 'task_upload', NULL, 0, NULL, NULL, 'pending');
 
 -- --------------------------------------------------------
 
@@ -1239,7 +1244,7 @@ INSERT INTO `documents` (`id`, `title`, `file_path`, `department_id`, `uploaded_
 CREATE TABLE `document_approvals` (
   `id` int UNSIGNED NOT NULL,
   `document_id` int UNSIGNED NOT NULL,
-  `source_type` enum('task_file','comment') DEFAULT 'task_file',
+  `source_type` enum('task_file','comment','document') DEFAULT 'task_file',
   `status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
   `created_by` int UNSIGNED NOT NULL,
   `current_step_index` int UNSIGNED NOT NULL DEFAULT '0',
@@ -1255,8 +1260,9 @@ CREATE TABLE `document_approvals` (
 --
 
 INSERT INTO `document_approvals` (`id`, `document_id`, `source_type`, `status`, `created_by`, `current_step_index`, `note`, `signed_pdf_url`, `finished_at`, `created_at`, `updated_at`) VALUES
-(3, 2, 'task_file', 'pending', 3, 1, '', NULL, NULL, '2025-11-04 21:14:30', '2025-11-04 21:14:30'),
-(4, 3, 'task_file', 'pending', 3, 1, '', NULL, NULL, '2025-11-04 22:46:03', '2025-11-04 22:46:03');
+(19, 21, 'document', 'pending', 1, 1, NULL, NULL, NULL, '2025-11-09 11:34:16', '2025-11-09 11:34:16'),
+(20, 22, 'document', 'pending', 1, 2, NULL, NULL, NULL, '2025-11-09 11:38:53', '2025-11-09 14:53:17'),
+(21, 23, 'document', 'pending', 3, 4, NULL, NULL, NULL, '2025-11-09 15:52:48', '2025-11-09 17:30:11');
 
 -- --------------------------------------------------------
 
@@ -1282,38 +1288,10 @@ CREATE TABLE `document_approval_logs` (
 --
 
 INSERT INTO `document_approval_logs` (`id`, `approval_id`, `document_id`, `action`, `acted_by`, `acted_at`, `signer_name`, `signature_url`, `signed_pdf_url`, `comment`) VALUES
-(1, 1, 39, 'approved', 3, '2025-10-21 16:01:25', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(2, 2, 38, 'approved', 3, '2025-10-21 16:02:24', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(3, 3, 39, 'approved', 1, '2025-10-21 16:03:02', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(4, 4, 37, 'approved', 1, '2025-10-21 16:13:13', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(5, 5, 32, 'approved', 1, '2025-10-21 16:14:16', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(6, 6, 39, 'approved', 3, '2025-10-21 21:18:54', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(7, 7, 38, 'approved', 3, '2025-10-21 21:21:32', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(8, 8, 23, 'approved', 3, '2025-10-21 23:58:24', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(9, 9, 23, 'approved', 1, '2025-10-21 23:59:11', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(10, 10, 23, 'approved', 1, '2025-10-21 23:59:51', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(11, 11, 23, 'approved', 1, '2025-10-22 00:00:31', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(12, 12, 24, 'approved', 1, '2025-10-22 00:09:46', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(13, 13, 24, 'approved', 3, '2025-10-22 00:17:23', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(14, 14, 32, 'approved', 3, '2025-10-22 00:30:30', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(15, 15, 31, 'approved', 3, '2025-10-22 00:36:22', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(16, 16, 25, 'approved', 3, '2025-10-22 00:37:47', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(17, 17, 37, 'approved', 3, '2025-10-22 00:39:01', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(18, 18, 36, 'approved', 3, '2025-10-22 00:39:23', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(19, 19, 36, 'approved', 1, '2025-10-22 00:39:55', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(20, 20, 25, 'approved', 1, '2025-10-22 00:52:56', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(21, 21, 26, 'approved', 1, '2025-10-22 00:55:35', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(22, 22, 28, 'approved', 3, '2025-10-23 00:36:23', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07-3.jpg', NULL, 'Đã ký duyệt (preview phía client)'),
-(23, 32, 89, 'approved', 3, '2025-11-02 21:44:15', NULL, NULL, NULL, ''),
-(24, 31, 88, 'approved', 3, '2025-11-02 21:44:30', NULL, NULL, NULL, ''),
-(25, 30, 79, 'approved', 3, '2025-11-02 21:45:01', NULL, NULL, NULL, ''),
-(26, 29, 78, 'approved', 3, '2025-11-02 21:45:34', NULL, NULL, NULL, ''),
-(27, 27, 76, 'approved', 3, '2025-11-02 21:45:53', NULL, NULL, NULL, ''),
-(28, 26, 75, 'approved', 3, '2025-11-02 21:48:12', NULL, NULL, NULL, ''),
-(29, 25, 74, 'approved', 3, '2025-11-02 21:50:13', NULL, NULL, NULL, ''),
-(30, 34, 76, 'approved', 4, '2025-11-02 22:17:05', NULL, NULL, NULL, ''),
-(31, 35, 100, 'approved', 3, '2025-11-02 22:35:06', NULL, NULL, NULL, ''),
-(32, 36, 178, 'approved', 4, '2025-11-02 22:46:27', NULL, NULL, NULL, '');
+(33, 20, 22, 'approved', 3, '2025-11-09 14:53:17', NULL, NULL, NULL, ''),
+(34, 21, 23, 'approved', 1, '2025-11-09 17:03:24', NULL, NULL, NULL, ''),
+(35, 21, 23, 'approved', 3, '2025-11-09 17:24:35', NULL, NULL, NULL, ''),
+(36, 21, 23, 'approved', 4, '2025-11-09 17:30:11', NULL, NULL, NULL, '');
 
 -- --------------------------------------------------------
 
@@ -1344,14 +1322,17 @@ CREATE TABLE `document_approval_steps` (
 --
 
 INSERT INTO `document_approval_steps` (`id`, `approval_id`, `approver_id`, `sequence`, `status`, `acted_by`, `acted_at`, `comment`, `signature_url`, `signed_at`, `pos_row`, `pos_index`, `order_index`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 1, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-04 15:36:11', '2025-11-04 15:36:11'),
-(2, 1, 3, 2, 'waiting', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-04 15:36:11', '2025-11-04 15:36:11'),
-(3, 2, 1, 1, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-04 15:46:30', '2025-11-04 15:46:30'),
-(4, 2, 3, 2, 'waiting', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-04 15:46:30', '2025-11-04 15:46:30'),
-(5, 3, 3, 1, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-04 21:14:30', '2025-11-04 21:14:30'),
-(6, 3, 1, 2, 'waiting', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-04 21:14:30', '2025-11-04 21:14:30'),
-(7, 4, 1, 1, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-04 22:46:03', '2025-11-04 22:46:03'),
-(8, 4, 3, 2, 'waiting', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-04 22:46:03', '2025-11-04 22:46:03');
+(56, 19, 3, 1, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-09 11:34:16', '2025-11-09 11:34:16'),
+(57, 19, 4, 2, 'waiting', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-09 11:34:16', '2025-11-09 11:34:16'),
+(58, 19, 1, 3, 'waiting', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-09 11:34:16', '2025-11-09 11:34:16'),
+(59, 20, 3, 1, 'approved', 3, '2025-11-09 14:53:17', '', NULL, '2025-11-09 14:53:17', NULL, NULL, NULL, '2025-11-09 11:38:53', '2025-11-09 14:53:17'),
+(60, 20, 1, 2, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-09 11:38:53', '2025-11-09 14:53:17'),
+(61, 20, 4, 3, 'waiting', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-09 11:38:53', '2025-11-09 11:38:53'),
+(62, 20, 5, 4, 'waiting', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-09 11:38:53', '2025-11-09 11:38:53'),
+(63, 21, 1, 1, 'approved', 1, '2025-11-09 17:03:24', '', NULL, '2025-11-09 17:03:24', NULL, NULL, NULL, '2025-11-09 15:52:48', '2025-11-09 17:03:24'),
+(64, 21, 3, 2, 'approved', 3, '2025-11-09 17:24:35', '', NULL, '2025-11-09 17:24:35', NULL, NULL, NULL, '2025-11-09 15:52:48', '2025-11-09 17:24:35'),
+(65, 21, 4, 3, 'approved', 4, '2025-11-09 17:30:11', '', NULL, '2025-11-09 17:30:11', NULL, NULL, NULL, '2025-11-09 15:52:48', '2025-11-09 17:30:11'),
+(66, 21, 5, 4, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-09 15:52:48', '2025-11-09 17:30:11');
 
 -- --------------------------------------------------------
 
@@ -1985,180 +1966,6 @@ CREATE TABLE `task_approvals` (
   `comment` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `task_approvals`
---
-
-INSERT INTO `task_approvals` (`id`, `task_id`, `level`, `status`, `approved_by`, `approved_at`, `comment`) VALUES
-(4, 3, 1, 'rejected', 1, '2025-07-06 13:45:36', 'vẫn chưa dc'),
-(5, 10, 1, 'rejected', 1, '2025-07-06 13:50:29', 'van chua dc'),
-(6, 2, 1, 'approved', 1, '2025-07-06 13:57:23', 'ok dc'),
-(8, 27, 1, 'approved', 1, '2025-07-06 14:10:04', 'ok'),
-(10, 28, 1, 'approved', 1, '2025-07-06 13:52:52', 'ok'),
-(11, 30, 1, 'approved', 1, '2025-07-06 14:10:40', 'ok'),
-(12, 32, 1, 'approved', 1, '2025-07-08 14:25:09', 'ok'),
-(13, 1, 1, 'approved', 1, '2025-08-05 07:19:40', 'ok'),
-(14, 96, 1, 'pending', NULL, NULL, NULL),
-(15, 97, 1, 'pending', NULL, NULL, NULL),
-(16, 98, 1, 'pending', NULL, NULL, NULL),
-(17, 99, 1, 'pending', NULL, NULL, NULL),
-(18, 100, 1, 'pending', NULL, NULL, NULL),
-(19, 101, 1, 'pending', NULL, NULL, NULL),
-(20, 102, 1, 'pending', NULL, NULL, NULL),
-(21, 103, 1, 'pending', NULL, NULL, NULL),
-(22, 104, 1, 'rejected', 1, '2025-08-05 06:26:07', 'ko'),
-(23, 105, 1, 'pending', NULL, NULL, NULL),
-(24, 106, 1, 'pending', NULL, NULL, NULL),
-(25, 107, 1, 'pending', NULL, NULL, NULL),
-(26, 108, 1, 'pending', NULL, NULL, NULL),
-(27, 109, 1, 'pending', NULL, NULL, NULL),
-(28, 110, 1, 'pending', NULL, NULL, NULL),
-(29, 111, 1, 'pending', NULL, NULL, NULL),
-(30, 113, 1, 'pending', NULL, NULL, NULL),
-(31, 114, 1, 'pending', NULL, NULL, NULL),
-(32, 115, 1, 'pending', NULL, NULL, NULL),
-(33, 117, 1, 'pending', NULL, NULL, NULL),
-(34, 118, 1, 'pending', NULL, NULL, NULL),
-(35, 119, 1, 'pending', NULL, NULL, NULL),
-(36, 120, 1, 'pending', NULL, NULL, NULL),
-(37, 121, 1, 'pending', NULL, NULL, NULL),
-(38, 123, 1, 'pending', NULL, NULL, NULL),
-(39, 124, 1, 'pending', NULL, NULL, NULL),
-(40, 125, 1, 'pending', NULL, NULL, NULL),
-(41, 126, 1, 'pending', NULL, NULL, NULL),
-(42, 127, 1, 'pending', NULL, NULL, NULL),
-(43, 129, 1, 'pending', NULL, NULL, NULL),
-(44, 130, 1, 'pending', NULL, NULL, NULL),
-(45, 131, 1, 'pending', NULL, NULL, NULL),
-(46, 133, 1, 'pending', NULL, NULL, NULL),
-(47, 134, 1, 'approved', 1, '2025-08-05 16:46:20', '{\"comment\":\"ok nhé\"}'),
-(48, 136, 1, 'pending', NULL, NULL, NULL),
-(49, 137, 1, 'pending', NULL, NULL, NULL),
-(50, 138, 1, 'pending', NULL, NULL, NULL),
-(51, 139, 1, 'pending', NULL, NULL, NULL),
-(52, 142, 1, 'pending', NULL, NULL, NULL),
-(53, 143, 1, 'pending', NULL, NULL, NULL),
-(54, 144, 1, 'pending', NULL, NULL, NULL),
-(55, 146, 1, 'pending', NULL, NULL, NULL),
-(56, 147, 1, 'pending', NULL, NULL, NULL),
-(57, 148, 1, 'pending', NULL, NULL, NULL),
-(58, 149, 1, 'pending', NULL, NULL, NULL),
-(59, 150, 1, 'pending', NULL, NULL, NULL),
-(60, 153, 1, 'pending', NULL, NULL, NULL),
-(61, 156, 1, 'pending', NULL, NULL, NULL),
-(62, 157, 1, 'pending', NULL, NULL, NULL),
-(63, 158, 1, 'pending', NULL, NULL, NULL),
-(64, 160, 1, 'pending', NULL, NULL, NULL),
-(65, 162, 1, 'approved', 1, '2025-08-05 06:25:12', 'ok'),
-(66, 164, 1, 'approved', 1, '2025-08-05 06:28:15', 'ok'),
-(67, 164, 2, 'approved', 1, '2025-08-05 06:29:22', 'ok'),
-(68, 50, 1, 'pending', NULL, NULL, NULL),
-(69, 166, 1, 'pending', NULL, NULL, NULL),
-(71, 201, 1, 'approved', 3, '2025-08-22 14:52:11', '{\"comment\":\"ok duyệt\"}'),
-(73, 202, 1, 'approved', 3, '2025-08-22 15:05:37', '{\"comment\":\"ok\"}'),
-(75, 203, 1, 'approved', 3, '2025-08-22 17:14:07', '{\"comment\":\"ok nhé\"}'),
-(76, 204, 1, 'approved', 3, '2025-08-23 15:31:05', 'ok'),
-(77, 205, 1, 'rejected', 3, '2025-08-23 15:35:50', 'chưa dc nhé, cần xem xét lại'),
-(78, 206, 1, 'approved', 3, '2025-08-23 15:50:26', 'test duyệt'),
-(80, 207, 1, 'approved', 3, '2025-08-27 14:15:14', 'ok nhes'),
-(82, 208, 1, 'pending', NULL, NULL, NULL),
-(84, 209, 1, 'approved', 1, '2025-08-23 15:51:17', 'Ái duyệt'),
-(86, 33, 1, 'approved', 3, '2025-08-23 02:20:30', '{\"comment\":\"ok nhé\"}'),
-(88, 211, 1, 'approved', 3, '2025-08-23 02:22:05', '{\"comment\":\"ok rồi\"}'),
-(89, 210, 1, 'approved', 3, '2025-08-23 02:23:23', '{\"comment\":\"\"}'),
-(91, 212, 1, 'approved', 3, '2025-08-23 02:52:06', '{\"comment\":\"ok\"}'),
-(93, 213, 1, 'approved', 3, '2025-08-23 02:53:54', '{\"comment\":\"ok\"}'),
-(95, 214, 1, 'approved', 3, '2025-08-23 02:55:34', '{\"comment\":\"xxxx\"}'),
-(97, 215, 1, 'approved', 3, '2025-08-23 02:56:39', '{\"comment\":\"534543535\"}'),
-(99, 216, 1, 'approved', 3, '2025-08-23 02:58:52', '{\"comment\":\"32424324\"}'),
-(101, 217, 1, 'approved', 3, '2025-08-23 03:00:17', '{\"comment\":\"42342342\"}'),
-(103, 218, 1, 'approved', 3, '2025-08-23 03:02:07', '{\"comment\":\"\"}'),
-(105, 219, 1, 'approved', 3, '2025-08-23 03:03:28', '{\"comment\":\"32424324\"}'),
-(107, 220, 1, 'approved', 3, '2025-08-23 03:05:11', '{\"comment\":\"34424\"}'),
-(109, 221, 1, 'approved', 3, '2025-08-23 03:06:27', '{\"comment\":\"424324\"}'),
-(111, 222, 1, 'approved', 3, '2025-08-23 03:07:31', '{\"comment\":\"3224234\"}'),
-(113, 223, 1, 'approved', 3, '2025-08-23 03:08:16', '{\"comment\":\"rưerewrw\"}'),
-(115, 224, 1, 'approved', 3, '2025-08-23 03:09:38', '{\"comment\":\"eqwewqe\"}'),
-(116, 225, 1, 'pending', NULL, NULL, NULL),
-(117, 226, 1, 'pending', NULL, NULL, NULL),
-(118, 227, 1, 'pending', NULL, NULL, NULL),
-(120, 228, 1, 'approved', 3, '2025-08-23 15:43:46', 'ok rồi'),
-(121, 228, 2, 'approved', 3, '2025-08-23 15:44:13', 'bước 2 ok'),
-(122, 229, 1, 'pending', NULL, NULL, NULL),
-(123, 230, 1, 'pending', NULL, NULL, NULL),
-(124, 231, 1, 'pending', NULL, NULL, NULL),
-(125, 232, 1, 'pending', NULL, NULL, NULL),
-(126, 233, 1, 'pending', NULL, NULL, NULL),
-(127, 234, 1, 'pending', NULL, NULL, NULL),
-(128, 235, 1, 'pending', NULL, NULL, NULL),
-(129, 236, 1, 'pending', NULL, NULL, NULL),
-(130, 237, 1, 'pending', NULL, NULL, NULL),
-(132, 239, 1, 'pending', NULL, NULL, NULL),
-(134, 241, 1, 'pending', NULL, NULL, NULL),
-(139, 244, 1, 'approved', 3, '2025-08-24 09:40:34', 'ok nhé'),
-(141, 245, 1, 'approved', 3, '2025-08-24 09:42:35', 'ok duyệt'),
-(144, 242, 1, 'pending', NULL, NULL, NULL),
-(145, 240, 1, 'pending', NULL, NULL, NULL),
-(147, 243, 1, 'pending', NULL, NULL, NULL),
-(148, 247, 1, 'pending', NULL, NULL, NULL),
-(149, 248, 1, 'pending', NULL, NULL, NULL),
-(150, 249, 1, 'pending', NULL, NULL, NULL),
-(151, 250, 1, 'pending', NULL, NULL, NULL),
-(152, 251, 1, 'pending', NULL, NULL, NULL),
-(153, 252, 1, 'pending', NULL, NULL, NULL),
-(154, 253, 1, 'pending', NULL, NULL, NULL),
-(155, 254, 1, 'pending', NULL, NULL, NULL),
-(156, 255, 1, 'pending', NULL, NULL, NULL),
-(157, 256, 1, 'pending', NULL, NULL, NULL),
-(158, 257, 1, 'pending', NULL, NULL, NULL),
-(159, 258, 1, 'pending', NULL, NULL, NULL),
-(160, 259, 1, 'pending', NULL, NULL, NULL),
-(161, 260, 1, 'pending', NULL, NULL, NULL),
-(162, 261, 1, 'pending', NULL, NULL, NULL),
-(163, 262, 1, 'pending', NULL, NULL, NULL),
-(164, 263, 1, 'pending', NULL, NULL, NULL),
-(165, 264, 1, 'pending', NULL, NULL, NULL),
-(166, 265, 1, 'pending', NULL, NULL, NULL),
-(167, 266, 1, 'pending', NULL, NULL, NULL),
-(169, 268, 1, 'pending', NULL, NULL, NULL),
-(170, 269, 1, 'pending', NULL, NULL, NULL),
-(172, 271, 1, 'pending', NULL, NULL, NULL),
-(173, 270, 1, 'pending', NULL, NULL, NULL),
-(174, 267, 1, 'pending', NULL, NULL, NULL),
-(175, 246, 1, 'pending', NULL, NULL, NULL),
-(176, 272, 1, 'pending', NULL, NULL, NULL),
-(177, 273, 1, 'pending', NULL, NULL, NULL),
-(178, 274, 1, 'pending', NULL, NULL, NULL),
-(179, 275, 1, 'pending', NULL, NULL, NULL),
-(180, 276, 1, 'pending', NULL, NULL, NULL),
-(182, 278, 1, 'pending', NULL, NULL, NULL),
-(184, 280, 1, 'pending', NULL, NULL, NULL),
-(186, 282, 1, 'pending', NULL, NULL, NULL),
-(187, 283, 1, 'pending', NULL, NULL, NULL),
-(188, 284, 1, 'pending', NULL, NULL, NULL),
-(189, 285, 1, 'pending', NULL, NULL, NULL),
-(190, 286, 1, 'pending', NULL, NULL, NULL),
-(194, 287, 1, 'pending', NULL, NULL, NULL),
-(195, 288, 1, 'pending', NULL, NULL, NULL),
-(196, 238, 1, 'pending', NULL, NULL, NULL),
-(197, 289, 1, 'pending', NULL, NULL, NULL),
-(199, 291, 1, 'pending', NULL, NULL, NULL),
-(201, 292, 1, 'pending', NULL, NULL, NULL),
-(203, 294, 1, 'pending', NULL, NULL, NULL),
-(205, 295, 1, 'pending', NULL, NULL, NULL),
-(206, 290, 1, 'pending', NULL, NULL, NULL),
-(207, 296, 1, 'pending', NULL, NULL, NULL),
-(208, 297, 1, 'pending', NULL, NULL, NULL),
-(209, 298, 1, 'pending', NULL, NULL, NULL),
-(210, 299, 1, 'approved', 3, '2025-10-01 16:14:30', NULL),
-(211, 300, 1, 'pending', NULL, NULL, NULL),
-(212, 301, 1, 'pending', NULL, NULL, NULL),
-(214, 281, 1, 'pending', NULL, NULL, NULL),
-(215, 279, 1, 'pending', NULL, NULL, NULL),
-(216, 302, 1, 'pending', NULL, NULL, NULL),
-(217, 293, 1, 'pending', NULL, NULL, NULL),
-(219, 277, 1, 'approved', 3, '2025-10-01 16:11:07', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -2338,8 +2145,11 @@ CREATE TABLE `task_files` (
 --
 
 INSERT INTO `task_files` (`id`, `task_id`, `document_id`, `comment_id`, `file_name`, `title`, `file_path`, `uploaded_by`, `link_url`, `created_at`, `updated_at`, `is_link`, `status`, `approved_by`, `approved_at`, `review_note`, `approvals_json`, `is_pinned`, `pinned_rank`, `pinned_by`, `pinned_at`, `file_type`, `file_size`, `mime_type`, `file_ext`, `wp_media_id`, `source`, `department_id`, `visibility`, `tags`) VALUES
-(2, 277, NULL, NULL, 'maudonphuc_khao123.pdf', 'maudonphuc_khao123.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao123.pdf', '2025-11-04 14:14:25', '2025-11-04 21:14:30', 1, 'pending', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
-(3, 277, NULL, NULL, 'signed.pdf', 'signed.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/signed.pdf', '2025-11-04 15:46:00', '2025-11-04 22:46:03', 1, 'pending', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL);
+(24, 277, NULL, NULL, '2022104_TTr-HCNS_Dexuatgiahanphanmem1office.pdf', '2022104_TTr-HCNS_Dexuatgiahanphanmem1office.pdf', NULL, 1, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/2022104_TTr-HCNS_Dexuatgiahanphanmem1office-3.pdf', '2025-11-09 04:25:57', '2025-11-09 11:25:57', 1, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(25, 277, NULL, NULL, '2022104_TTr-HCNS_Dexuatgiahanphanmem1office.pdf', '2022104_TTr-HCNS_Dexuatgiahanphanmem1office.pdf', NULL, 1, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/2022104_TTr-HCNS_Dexuatgiahanphanmem1office-3.pdf', '2025-11-09 04:34:12', '2025-11-09 11:34:12', 1, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(26, 277, NULL, NULL, 'maudonphuc_khao123.pdf', 'maudonphuc_khao123.pdf', NULL, 1, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao123-7.pdf', '2025-11-09 04:38:49', '2025-11-09 11:38:49', 1, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(27, 277, NULL, NULL, 'to_trinh_09_11_2025.pdf', 'to_trinh_09_11_2025.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025.pdf', '2025-11-09 08:52:42', '2025-11-09 15:52:42', 1, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(28, 277, NULL, NULL, 'maudonphuc_khao123.pdf', 'maudonphuc_khao123.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao123-7.pdf', '2025-11-09 15:14:53', '2025-11-09 22:14:53', 1, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL);
 
 -- --------------------------------------------------------
 
@@ -2391,7 +2201,7 @@ INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `nam
 (4, 'nguyenvana@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-05-26 04:33:21', '2025-11-06 23:39:13', 'Tạ Quý Thọ', '0909123456', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/photo_2025-10-17_10-09-07-1.jpg', NULL, 'taquytho', 'Nhân viên', 3, 2),
 (5, 'a@worknest.vn', '$2y$10$fPUyT/hhSHhPknmvWgPtxelsaQfNLRiOVZ3Wayj2tbcNo4lApUFEW', '2025-06-04 09:10:50', '2025-11-06 23:39:22', 'Nguyễn Văn Chiểu', '0911111111', 'uploads/avatars/1757035675_b1a8dfcbbebca0a39cb1.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-04-1.jpg', NULL, 'nguyenvanchieu', 'user', 3, 3),
 (6, 'b@worknest.vn', '$2y$10$ZKKb/DZ/dk0eFQW/xfG3Ne8Ozrdt1TcQcR1alq4KP5biJpmUm2Uuy', '2025-06-04 09:11:21', '2025-11-06 23:39:39', 'Phạm Xuân Tuân', '0911111112', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/z7010742803776_61e4e0e6d2380894deeebfd1b1d5d8c0.jpg', NULL, 'phamxuantuan', 'user', 3, 2),
-(7, 'c@worknest.vn', '$2y$10$jgPXJb32zl6WxQb5B805dulKanOyUl4jsb.HQRp.ZzXc7BBZ/.OKO', '2025-06-04 09:11:44', '2025-11-06 23:39:49', 'Nhạc Quang Huy', '0911111113', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10.jpg', NULL, 'nhacquanghuy', 'user', 3, 3),
+(7, 'c@worknest.vn', '$2y$10$jgPXJb32zl6WxQb5B805dulKanOyUl4jsb.HQRp.ZzXc7BBZ/.OKO', '2025-06-04 09:11:44', '2025-11-09 17:25:19', 'Nhạc Quang Huy', '0911111113', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10.jpg', NULL, 'nhacquanghuy', 'user', 3, 1),
 (8, 'd@worknest.vn', '$2y$10$UfmfTcnJd1Hc1wcH0Utaz.w9IFmXwNCzoFUQdahizBIri0BTfsDp2', '2025-06-04 09:12:07', '2025-11-06 23:40:02', 'Hoàng Văn Dũng', '0911111114', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07.jpg', NULL, 'hoangvandung', 'user', 3, 3),
 (9, 't@worknest.vn', '$2y$10$hGqQg.IGey/1/3a6Dt/3rOQKKdPgz2U787lWDghxeDqCmCk30v7SW', '2025-06-04 09:12:52', '2025-11-06 23:40:12', 'Nguyễn Danh Vương Bình', '0911111115', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-04.jpg', NULL, 'nguyendanhvuong', 'user', 3, 3),
 (10, 'l@worknest.vn', '$2y$10$In9Y8TToyh9hICfylJG.Iesgd1mvrE4L./GTSwgcuXX8zXe.tGqM2', '2025-06-04 09:13:10', '2025-11-06 23:40:24', 'Vũ Thị Thuỷ', '0911111116', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-08-52.jpg', NULL, 'vuthithuy', 'user', 2, 3),
@@ -2769,25 +2579,25 @@ ALTER TABLE `departments`
 -- AUTO_INCREMENT for table `documents`
 --
 ALTER TABLE `documents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `document_approvals`
 --
 ALTER TABLE `document_approvals`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `document_approval_logs`
 --
 ALTER TABLE `document_approval_logs`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `document_approval_steps`
 --
 ALTER TABLE `document_approval_steps`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
 
 --
 -- AUTO_INCREMENT for table `document_permissions`
@@ -2871,7 +2681,7 @@ ALTER TABLE `task_extensions`
 -- AUTO_INCREMENT for table `task_files`
 --
 ALTER TABLE `task_files`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `task_roster`

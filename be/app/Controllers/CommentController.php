@@ -340,18 +340,49 @@ class CommentController extends ResourceController
      */
     public function create($task_id = null): ResponseInterface
     {
+        $task_id = $task_id ? (int)$task_id : null;
         $userId  = (int)($this->request->getPost('user_id') ?? 0);
         if ($userId <= 0) {
             return $this->failValidationErrors(['user_id' => 'Thiếu user_id.']);
         }
 
+        $content = trim((string)($this->request->getPost('content') ?? ''));
+        $mentionsJson = $this->request->getPost('mentions') ?? null;
+
         /** @var UploadedFile|null $file */
-        $file = $this->request->getFile('attachment');
+        $file = $this->request->getFile('attachment') ?: $this->request->getFile('file');
+
+        // Nếu không có file -> tạo comment plain
         if (!$file || !$file->isValid() || $file->hasMoved()) {
-            return $this->failValidationErrors(['attachment' => 'Thiếu file hoặc file không hợp lệ.']);
+            // Create text-only comment
+            $commentData = [
+                'task_id'   => $task_id,
+                'user_id'   => $userId,
+                'content'   => $content,
+                'created_at'=> date('Y-m-d H:i:s'),
+            ];
+
+            // nếu muốn lưu mentions raw
+            if ($mentionsJson) $commentData['mentions'] = $mentionsJson;
+
+            $taskCommentModel = new TaskCommentModel();
+            $inserted = $taskCommentModel->insert($commentData, true);
+            if (!$inserted) {
+                return $this->failServerError('Không tạo được comment.');
+            }
+
+            $commentId = is_int($inserted) ? $inserted : $taskCommentModel->getInsertID();
+            $created = $taskCommentModel->find($commentId);
+
+            // merge mentions into roster if provided
+            $this->mergeMentionsIntoTaskRoster((int)$task_id, $mentionsJson);
+
+            return $this->respondCreated([
+                'comment' => $created
+            ]);
         }
 
-        // Validate size / mime cơ bản
+        // === Nếu file có, validate size/mime như trước ===
         $sizeKB = (int)ceil(($file->getSize() ?: 0) / 1024);
         if ($sizeKB > $this->maxUploadKB) {
             return $this->failValidationErrors(['attachment' => 'Kích thước vượt giới hạn.']);
@@ -361,7 +392,7 @@ class CommentController extends ResourceController
             return $this->failValidationErrors(['attachment' => 'Định dạng không được hỗ trợ.']);
         }
 
-        // Cấu hình WP
+        // WP config
         $endpoint = (string) env('WP_MEDIA_ENDPOINT', '');
         $wpUser   = (string) env('WP_USER', '');
         $wpPass   = (string) env('WP_APP_PASSWORD', '');
@@ -380,7 +411,7 @@ class CommentController extends ResourceController
             ],
         ]);
 
-        $clientName = $file->getClientName(); // tên gốc để hiển thị
+        $clientName = $file->getClientName();
         $resp = $client->post($endpoint, [
             'headers' => [
                 'Content-Type'        => $ctype,
@@ -392,6 +423,8 @@ class CommentController extends ResourceController
         $code = $resp->getStatusCode();
         $body = (string)$resp->getBody();
         if ($code !== 201) {
+            // debug log
+            log_message('error', 'WP upload failed: ' . $body);
             return $this->failServerError($body ?: ('WordPress trả mã ' . $code));
         }
 
@@ -401,69 +434,69 @@ class CommentController extends ResourceController
             return $this->failServerError('Upload thành công nhưng thiếu URL media từ WordPress.');
         }
 
-        // Chuẩn bị dữ liệu chèn vào `documents`
+        // Insert into documents
         $docM     = new DocumentModel();
         $deptId   = $this->resolveDepartmentId($userId);
         $sizeByte = (int)($file->getSize() ?: 0);
 
-        // Tránh trùng (user up lại cùng URL)
         $exist = $docM->where('file_path', $wpUrl)
             ->where('uploaded_by', $userId)
             ->first();
+
         if ($exist) {
-            // đã có → trả về doc cũ
-            return $this->respondCreated([
-                'document' => [
-                    'id'            => (int)$exist['id'],
-                    'title'         => $exist['title'],
-                    'file_path'     => $exist['file_path'],
-                    'file_type'     => $exist['file_type'],
-                    'file_size'     => (int)($exist['file_size'] ?? 0),
-                    'department_id' => $exist['department_id'] !== null ? (int)$exist['department_id'] : null,
-                    'uploaded_by'   => (int)$exist['uploaded_by'],
-                    'visibility'    => $exist['visibility'] ?? 'private',
-                    'tags'          => $exist['tags'] ?? null,
-                    'approval_status'=> $exist['approval_status'] ?? 'waiting',
-                    'created_at'    => $exist['created_at'] ?? null,
-                    'updated_at'    => $exist['updated_at'] ?? null,
-                    // (tuỳ ý) ghim thêm task_id nguồn để tra cứu
-                    'source_task_id'=> $task_id ? (int)$task_id : null,
-                ]
-            ]);
+            $docId = (int)$exist['id'];
+            $doc = $exist;
+        } else {
+            $docId = $docM->insert([
+                'title'           => $clientName,
+                'file_path'       => $wpUrl,
+                'file_type'       => 'wp_media',
+                'file_size'       => $sizeByte,
+                'department_id'   => $deptId,
+                'uploaded_by'     => $userId,
+                'visibility'      => 'private',
+                'tags'            => 'task_upload',
+                'approval_status' => 'waiting',
+                'source_task_id'  => $task_id ? (int)$task_id : null,
+                'created_at'      => date('Y-m-d H:i:s'),
+            ], true);
+
+            if (!$docId) $docId = $docM->getInsertID();
+            $doc = $docM->find($docId);
         }
 
-        // Chèn document mới
-        $insertId = $docM->insert([
-            'title'           => $clientName,
-            'file_path'       => $wpUrl,
-            'file_type'       => 'wp_media',
-            'file_size'       => $sizeByte,
-            'department_id'   => $deptId,
-            'uploaded_by'     => $userId,
-            'visibility'      => 'private',
-            'tags'            => 'task_upload',
-            'approval_status' => 'waiting',
-            'source_task_id'  => $task_id ? (int)$task_id : null,
-        ], true);
+        // Tạo comment kèm file info (ghi vào task_comments.file_name, file_path)
+        $taskCommentModel = new TaskCommentModel();
+        $commentData = [
+            'task_id'   => $task_id,
+            'user_id'   => $userId,
+            'content'   => $content,
+            'file_name' => $clientName,
+            'file_path' => $wpUrl,
+            'created_at'=> date('Y-m-d H:i:s'),
+        ];
+        if ($mentionsJson) $commentData['mentions'] = $mentionsJson;
 
+        $inserted = $taskCommentModel->insert($commentData, true);
+        if (!$inserted) {
+            // Nếu fail ở đây, log để debug
+            log_message('error', 'Insert task_comment failed: ' . json_encode($taskCommentModel->errors()));
+            return $this->failServerError('Không tạo được comment kèm file.');
+        }
+        $commentId = is_int($inserted) ? $inserted : $taskCommentModel->getInsertID();
+        $createdComment = $taskCommentModel->find($commentId);
 
-        if (!$insertId) $insertId = $docM->getInsertID();
+        // merge mentions into roster
+        $this->mergeMentionsIntoTaskRoster((int)$task_id, $mentionsJson);
 
-        // Trả về document; KHÔNG tạo bản ghi task_comments
+        // trả về comment kèm file thông tin (FE sẽ dùng files[] để hiển thị)
+        $createdComment['files'] = [[
+            'file_name' => $doc['title'] ?? $clientName,
+            'file_path' => $doc['file_path'] ?? $wpUrl,
+        ]];
+
         return $this->respondCreated([
-            'document' => [
-                'id'            => (int)$insertId,
-                'title'         => $clientName,
-                'file_path'     => $wpUrl,
-                'file_type'     => 'wp_media',
-                'file_size'     => $sizeByte,
-                'department_id' => $deptId,
-                'uploaded_by'   => $userId,
-                'visibility'    => 'private',
-                'tags'          => 'task_upload',
-                'approval_status'=> 'waiting',
-                'source_task_id'=> $task_id ? (int)$task_id : null,
-            ]
+            'comment' => $createdComment
         ]);
     }
 
