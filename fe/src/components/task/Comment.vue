@@ -47,10 +47,18 @@
                         class="pinned-pill"
                         :title="titleOf(f)"
                     >
-                        <a :href="displayHrefOf(f)" target="_blank" rel="noopener" class="pill-link">
-                            <PaperClipOutlined class="pill-icon"/>
-                            <span class="pill-text">{{ titleOf(f) }}</span>
-                        </a>
+                        <!-- Tooltip giàu nội dung -->
+                        <a-tooltip :title="pinTooltip(f)" placement="top">
+                            <a
+                                :href="displayHrefOf(f)"
+                                target="_blank"
+                                rel="noopener"
+                                class="pill-link"
+                            >
+                                <PaperClipOutlined class="pill-icon"/>
+                                <span class="pill-text">{{ titleOf(f) }}</span>
+                            </a>
+                        </a-tooltip>
 
                         <a-tooltip title="Bỏ ghim">
                             <button class="pill-x" type="button" @click="togglePin(f)">×</button>
@@ -101,28 +109,28 @@
 
                     <div class="bubble" :class="{ me: String(item.user_id) === String(currentUserId) }">
                         <!-- actions (sửa/xóa) -->
-                        <div class="actions" v-if="canEditOrDelete(item)">
-                            <a-dropdown trigger="click" :getPopupContainer="(t) => t.parentNode">
-                                <a-button type="text" size="small">
-                                    <EllipsisOutlined/>
-                                </a-button>
-                                <template #overlay>
-                                    <a-menu>
-                                        <a-menu-item @click="startEdit(item)">Sửa</a-menu-item>
-                                        <a-menu-item>
-                                            <a-popconfirm
-                                                title="Bạn chắc chắn muốn xóa comment này?"
-                                                ok-text="Xóa"
-                                                cancel-text="Hủy"
-                                                @confirm="handleDeleteComment(item.id)"
-                                                placement="topRight"
-                                            >Xóa
-                                            </a-popconfirm>
-                                        </a-menu-item>
-                                    </a-menu>
-                                </template>
-                            </a-dropdown>
-                        </div>
+<!--                        <div class="actions" v-if="canEditOrDelete(item)">-->
+<!--                            <a-dropdown trigger="click" :getPopupContainer="(t) => t.parentNode">-->
+<!--                                <a-button type="text" size="small">-->
+<!--                                    <EllipsisOutlined/>-->
+<!--                                </a-button>-->
+<!--                                <template #overlay>-->
+<!--                                    <a-menu>-->
+<!--                                        <a-menu-item @click="startEdit(item)">Sửa</a-menu-item>-->
+<!--                                        <a-menu-item>-->
+<!--                                            <a-popconfirm-->
+<!--                                                title="Bạn chắc chắn muốn xóa comment này?"-->
+<!--                                                ok-text="Xóa"-->
+<!--                                                cancel-text="Hủy"-->
+<!--                                                @confirm="handleDeleteComment(item.id)"-->
+<!--                                                placement="topRight"-->
+<!--                                            >Xóa-->
+<!--                                            </a-popconfirm>-->
+<!--                                        </a-menu-item>-->
+<!--                                    </a-menu>-->
+<!--                                </template>-->
+<!--                            </a-dropdown>-->
+<!--                        </div>-->
 
                         <div class="text">
                             <div class="author" v-if="String(item.user_id) !== String(currentUserId)">
@@ -159,14 +167,14 @@
                                     </a>
 
                                     <!-- 📌 Pin -->
-                                    <a-tooltip :title="isPinnable(f) ? (isPinned(f) ? 'Bỏ ghim file này' : 'Ghim file lên trên') : 'Chưa upload xong, không thể ghim'">
-                                        <PushpinOutlined
-                                            class="pin-btn"
-                                            :class="{ 'disabled-pin': !isPinnable(f) }"
-                                            :style="{ color: isPinned(f) ? '#faad14' : '#999' }"
-                                            @click.stop="isPinnable(f) ? togglePin(f) : null"
-                                        />
-                                    </a-tooltip>
+<!--                                    <a-tooltip :title="isPinnable(f) ? (isPinned(f) ? 'Bỏ ghim file này' : 'Ghim file lên trên') : 'Chưa upload xong, không thể ghim'">-->
+<!--                                        <PushpinOutlined-->
+<!--                                            class="pin-btn"-->
+<!--                                            :class="{ 'disabled-pin': !isPinnable(f) }"-->
+<!--                                            :style="{ color: isPinned(f) ? '#faad14' : '#999' }"-->
+<!--                                            @click.stop="isPinnable(f) ? togglePin(f) : null"-->
+<!--                                        />-->
+<!--                                    </a-tooltip>-->
                                 </div>
                             </div>
                         </div>
@@ -468,6 +476,27 @@ function measureFooter() {
     listPadBottom.value = `${h + 8}px`
 }
 
+const currentUserRole = computed(() => store.currentUser?.role || '')
+
+// cho file object f (có pinned_by)
+function canUnpinFile(f) {
+    if (!f) return false
+    // super admin hoặc chính người đã ghim
+    return String(currentUserRole.value) === 'super admin' || Number(f.pinned_by) === Number(currentUserId.value)
+}
+
+function getLocalUser() {
+    // ưu tiên store nếu bạn đã có pin/store pattern
+    if (store && store.currentUser) return store.currentUser
+    try {
+        const raw = localStorage.getItem('user')
+        if (!raw) return null
+        return JSON.parse(raw)?.user ?? JSON.parse(raw)
+    } catch (e) {
+        return null
+    }
+}
+
 function scrollToBottom() {
     const el = listEl.value
     if (!el) return
@@ -528,15 +557,20 @@ function getTaskFileId(f = {}) {
     return byPath?.id ? Number(byPath.id) : null
 }
 
-async function ensureTaskFileId(file) {
+async function ensureTaskFileId(file, { autoPin = false } = {}) {
     const existed = getTaskFileId(file)
-    if (existed) return existed
+    if (existed) {
+        if (autoPin) {
+            try { await pinTaskFileAPI(existed, { user_id: store.currentUser.id }); await loadPinnedFiles(); } catch (e) { /* ignore pin error */ }
+        }
+        return existed
+    }
 
     const path = String(file.file_path ?? file.url ?? '')
     const name = file.file_name || file.name || prettyUrl(path)
 
-    if (/^https?:\/\//i.test(path)) {
-        try {
+    try {
+        if (/^https?:\/\//i.test(path)) {
             const {data} = await uploadTaskFileLinkAPI(taskId.value, {
                 title: name,
                 url: path,
@@ -545,31 +579,35 @@ async function ensureTaskFileId(file) {
             const created = Array.isArray(data) ? data[0] : data?.data || data
             const key = normalizePath(created?.file_path || created?.link_url || path)
             taskFileByPath.value[key] = {...(created || {}), file_path: created?.file_path || created?.link_url || path}
-            return Number(created?.id)
-        } catch (e) {
-            console.error('uploadTaskFileLinkAPI error', e?.response?.data || e)
-            message.error('Không tạo được tài liệu từ link để ghim')
-            return null
-        }
-    }
 
-    try {
-        const {data} = await adoptTaskFileFromPathAPI(taskId.value, {
-            task_id: Number(taskId.value),
-            user_id: Number(store.currentUser.id),
-            file_path: path,
-            file_name: name,
-        })
-        const created = data?.data || data
-        const key = normalizePath(created?.file_path || path)
-        taskFileByPath.value[key] = created
-        return Number(created?.id)
+            const newId = Number(created?.id)
+            if (autoPin && newId) {
+                try { await pinTaskFileAPI(newId, { user_id: store.currentUser.id }); await loadPinnedFiles(); } catch (e) { /* handle pin error silently */ }
+            }
+            return newId
+        } else {
+            const {data} = await adoptTaskFileFromPathAPI(taskId.value, {
+                task_id: Number(taskId.value),
+                user_id: Number(store.currentUser.id),
+                file_path: path,
+                file_name: name,
+            })
+            const created = data?.data || data
+            const key = normalizePath(created?.file_path || path)
+            taskFileByPath.value[key] = created
+            const newId = Number(created?.id)
+            if (autoPin && newId) {
+                try { await pinTaskFileAPI(newId, { user_id: store.currentUser.id }); await loadPinnedFiles(); } catch (e) { /* ignore */ }
+            }
+            return newId
+        }
     } catch (e) {
-        console.error('adoptTaskFileFromPathAPI error', e?.response?.data || e)
-        message.error('Không tạo được tài liệu từ file nội bộ để ghim')
+        console.error('ensureTaskFileId error', e?.response?.data || e)
+        message.error('Không tạo được tài liệu để ghim')
         return null
     }
 }
+
 
 async function loadTaskFiles() {
     try {
@@ -599,24 +637,41 @@ function isPinned(file) {
 async function togglePin(file) {
     const tfId = await ensureTaskFileId(file)
     if (!tfId) return
+
+    const localUser = getLocalUser() || {}
+    const userId = Number(localUser.id || store.currentUser?.id || 0)
+    const userRole = String(localUser.role || store.currentUser?.role || '')
+
     try {
         const already = isPinned({...file, task_file_id: tfId})
+
         if (already) {
-            await unpinTaskFileAPI(tfId, {user_id: store.currentUser.id})
-        } else {
-            if ((pinnedFiles.value?.length || 0) >= 2) {
-                message.warning('Chỉ được ghim tối đa 2 file')
+            // client-side check: nếu không có quyền thì đừng gọi API
+            if (!(userRole === 'super admin' || Number(file.pinned_by) === Number(userId))) {
+                message.warning('Bạn không có quyền bỏ ghim file này')
                 return
             }
-            await pinTaskFileAPI(tfId, {user_id: store.currentUser.id})
+            // gửi user_id & user_role kèm POST (server nếu chấp nhận sẽ dùng)
+            await unpinTaskFileAPI(tfId, { user_id: userId, user_role: userRole })
+        } else {
+            await pinTaskFileAPI(tfId, { user_id: userId, user_role: userRole })
         }
+
         await loadPinnedFiles()
         message.success(already ? 'Đã bỏ ghim' : 'Đã ghim')
     } catch (e) {
-        console.error('pin/unpin error', e?.response?.data || e)
-        message.error('Không thao tác được ghim/bỏ ghim')
+        const status = e?.response?.status
+        if (status === 403) {
+            // show nhẹ, đừng log to console
+            message.warning(e.response?.data?.messages?.error || 'Không có quyền')
+        } else {
+            console.error('pin/unpin error', e?.response?.data || e)
+            message.error('Không thao tác được ghim/bỏ ghim')
+        }
     }
 }
+
+
 
 /* ===== file kind helpers ===== */
 const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'])
@@ -702,6 +757,37 @@ function displayHrefOf(f = {}) {
     const k = kindOfCommentFile(f)
     return isOfficeKind(k) ? officeViewerUrl(href) : href
 }
+
+// format date helper (sử dụng dayjs đã import)
+const formatDate = (v) => {
+    try {
+        return v ? dayjs(v).format('DD/MM/YYYY HH:mm') : 'Không rõ thời gian'
+    } catch {
+        return 'Không rõ thời gian'
+    }
+}
+
+// Lấy tên người ghim: ưu tiên trường pinned_by_name, fallback dùng danh sách user
+function nameOfPinnedBy(f) {
+    if (!f) return 'Không rõ'
+    if (f.pinned_by_name) return f.pinned_by_name
+    const id = Number(f.pinned_by || 0)
+    if (id && getUserById(id)?.name) return getUserById(id).name
+    // nếu uploaded_by có tên hữu ích
+    if (f.uploaded_by && getUserById(Number(f.uploaded_by))?.name) return getUserById(Number(f.uploaded_by)).name
+    return f.pinned_by ? String(f.pinned_by) : 'Không rõ'
+}
+
+// xây tooltip — trả chuỗi nhiều dòng (Antd sẽ hiển thị \n như xuống dòng)
+const pinTooltip = (f) => {
+    if (!f) return ''
+    const by = nameOfPinnedBy(f)
+    const at = formatDate(f.pinned_at || f.updated_at || f.created_at)
+    // nếu muốn hiển thị thêm nguồn:
+    const source = f.source ? `Nguồn: ${f.source}` : ''
+    return `Ghim bởi: ${by}\nThời gian: ${at}${source ? '\n' + source : ''}`
+}
+
 
 /* ===== Roster actions (Drawer) ===== */
 async function handleApproveAction(m, status) {
@@ -896,14 +982,13 @@ async function createNewComment({ keepMentions = false } = {}) {
     if (!canSend.value) return;
 
     try {
-        // --- Ghép mentions ---
+        // --- Ghép mentions từ UI + text ---
         const textMentions = extractMentionsFromInput(inputValue.value);
         const mergedMentions = dedupeMentions([
             ...(mentionsSelected.value || []),
             ...textMentions
         ]);
 
-        // 🟢 Khai báo biến mentionsPayload ở đây
         const mentionsPayload = mergedMentions.map(m => ({
             user_id: Number(m.user_id),
             name: m.name,
@@ -917,41 +1002,96 @@ async function createNewComment({ keepMentions = false } = {}) {
         form.append('content', String(inputValue.value || ''));
         form.append('mentions', JSON.stringify(mentionsPayload));
 
-        console.log('selectedFile before append:', selectedFile.value);
-
-        // 🟢 Append file nếu có
+        // Nếu có file local được chọn thì append vào form (AntD beforeUpload trả file)
         if (selectedFile.value) {
             form.append('attachment', selectedFile.value, selectedFile.value.name || 'attachment');
-        } else {
-            console.warn('⚠️ No selectedFile to append — attachment will be missing');
+            console.log('Appending attachment:', selectedFile.value.name || selectedFile.value);
         }
 
-        // Debug log form data
-        // for (const pair of form.entries()) {
-        //     console.log('FormData:', pair[0], pair[1]);
-        // }
-
-        // --- Gửi request ---
+        // --- Gửi request tạo comment ---
         const res = await createComment(taskId.value, form);
 
-        // --- Reset ---
+        // --- Nếu server trả lỗi/validation thì ném để catch bắt ---
+        // (giữ flow bình thường; response handled below)
+
+        // --- Thử auto-pin attachments nếu server trả thông tin file ---
+        // Lưu ý: cấu trúc response khác nhau giữa backend; thử đoán ở vài chỗ phổ biến
+        try {
+            const data = res?.data || {};
+            // Các nơi có thể chứa attachments/files:
+            const attachments =
+                data?.attachments ||
+                data?.files ||
+                data?.comment?.attachments ||
+                data?.comment?.files ||
+                data?.data?.attachments ||
+                data?.data?.files ||
+                [];
+
+            if (Array.isArray(attachments) && attachments.length) {
+                for (const att of attachments) {
+                    try {
+                        // att có thể chứa id, file_path, link_url, v.v.
+                        await ensureTaskFileId(att, { autoPin: true });
+                    } catch (e) {
+                        console.warn('Auto-pin per attachment failed for', att, e);
+                    }
+                }
+                // refresh pinned files list after attempts
+                await loadPinnedFiles();
+            } else {
+                // Fallback: server có thể trả về single file info (không trong mảng)
+                const maybeFile = data?.file || data?.comment?.file || data?.data?.file || null;
+                if (maybeFile) {
+                    try {
+                        await ensureTaskFileId(maybeFile, { autoPin: true });
+                        await loadPinnedFiles();
+                    } catch (e) {
+                        console.warn('Auto-pin fallback failed', e);
+                    }
+                } else {
+                    // Nếu chúng ta vừa gửi một local File (selectedFile) và backend không trả file info,
+                    // thì không thể map local->remote để ghim. Để pin tự động hoạt động trong trường hợp này,
+                    // backend cần trả thông tin file đã lưu (id/file_path) trong response createComment.
+                    if (selectedFile.value) {
+                        console.info('No attachment info returned by server to auto-pin the uploaded file.');
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Auto-pin stage failed', e);
+        }
+
+        // --- Reset UI state ---
         inputValue.value = '';
         selectedFile.value = null;
         mentionsSelected.value = keepMentions ? mergedMentions : [];
 
+        // --- Refresh UI data ---
         await getListComment(1);
         await syncRosterFromServer();
+        await loadPinnedFiles(); // reload pinned list just in case
         await nextTick();
         scrollToBottom();
 
+        message.success('Đã gửi bình luận');
+
+        return res;
     } catch (err) {
         console.error('createNewComment error', err);
+        // Try to show useful server messages when có
         if (err?.response?.data) {
             console.error('Server response:', err.response.data);
-            message.error(err.response.data?.messages?.attachment || 'Không gửi được bình luận');
+            const msg =
+                err.response.data?.messages?.attachment ||
+                err.response.data?.message ||
+                err.response.data?.errors ||
+                'Không gửi được bình luận';
+            message.error(typeof msg === 'string' ? msg : 'Không gửi được bình luận');
         } else {
             message.error('Không gửi được bình luận');
         }
+        throw err; // rethrow in case caller wants to handle further
     }
 }
 

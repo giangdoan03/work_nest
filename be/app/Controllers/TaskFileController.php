@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\TaskFileModel;
+use App\Models\UserModel;
 use CodeIgniter\HTTP\DownloadResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
@@ -19,10 +20,47 @@ class TaskFileController extends ResourceController
         return site_url("task-files/{$id}/download");
     }
 
+    protected function currentUser(): ?array
+    {
+        $sess = session();
+        // Nếu login() lưu theo key phẳng
+        $id = $sess->get('user_id');
+        if ($id) {
+            return [
+                'id'       => (int)$sess->get('user_id'),
+                'email'    => $sess->get('user_email'),
+                'role_id'  => $sess->get('role_id'),
+                'role'     => $sess->get('role'),
+                'is_admin' => $sess->get('is_admin'),
+            ];
+        }
+
+        // DEV fallback: client gửi user_id/user_role
+        $postId   = (int)$this->request->getPost('user_id');
+        $postRole = trim((string)$this->request->getPost('user_role') ?? '');
+        if ($postId > 0) {
+            return [
+                'id'   => $postId,
+                'role' => $postRole ?: null,
+            ];
+        }
+
+        return null;
+    }
+
+
+
     /* Helper: user hiện tại (tuỳ hệ thống auth của bạn) */
+    protected function currentUserRole(): ?string
+    {
+        $u = $this->currentUser();
+        return $u ? (string)($u['role'] ?? ($u['user_role'] ?? '')) : null;
+    }
+
     protected function currentUserId(): ?int
     {
-        return (int)($this->request->getPost('user_id') ?? $this->request->getVar('user_id') ?? 0);
+        $u = $this->currentUser();
+        return $u ? (int)($u['id'] ?? 0) : null;
     }
 
     /* Helper: kiểm tra quyền duyệt (tùy app của bạn chỉnh lại) */
@@ -33,11 +71,11 @@ class TaskFileController extends ResourceController
         return $userId > 0;
     }
 
-    // ✅ Upload file cho task (cha hoặc con) — luôn ở trạng thái pending
+    // ✅ Upload file cho task (cha hoặc con) — luôn ở trạng thái uploaded và auto-pin
     public function upload($task_id = null): ResponseInterface
     {
         $file     = $this->request->getFile('file');
-        $user_id  = $this->request->getPost('user_id');
+        $user_id  = (int)$this->request->getPost('user_id');
         $title    = $this->request->getPost('title');
 
         if (!$task_id || !$user_id) {
@@ -52,6 +90,8 @@ class TaskFileController extends ResourceController
             return $this->fail('Lỗi khi lưu file.');
         }
 
+        $now = date('Y-m-d H:i:s');
+
         $data = [
             'task_id'     => $task_id,
             'title'       => $title ?: ($upload['file_name'] ?? ''),
@@ -63,13 +103,20 @@ class TaskFileController extends ResourceController
             'uploaded_by' => $user_id,
             'is_link'     => 0,
             'status'      => 'uploaded',
+            // auto-pin on upload
+            'is_pinned'   => 1,
+            'pinned_at'   => $now,
+            'pinned_by'   => $user_id,
         ];
 
         $id = $this->model->insert($data, true);
 
+        $fresh = $this->model->find($id);
+        $fresh['download_url'] = $this->buildDownloadUrl((int)$id);
+
         return $this->respondCreated([
-            'message' => 'Upload thành công',
-            'data'    => array_merge($this->model->find($id) ?? [], ['download_url' => $this->buildDownloadUrl($id)])
+            'message' => 'Upload thành công và đã ghim tài liệu',
+            'data'    => $fresh
         ]);
     }
 
@@ -114,12 +161,12 @@ class TaskFileController extends ResourceController
         return $this->respondDeleted(['message' => 'Đã xoá file']);
     }
 
-    // ✅ Lưu link tài liệu — luôn pending
+    // ✅ Lưu link tài liệu — luôn pending và auto-pin
     public function uploadLink($task_id = null): ResponseInterface
     {
         $title   = $this->request->getPost('title');
         $url     = $this->request->getPost('url'); // nhận 'url'
-        $user_id = $this->request->getPost('user_id');
+        $user_id = (int)$this->request->getPost('user_id');
 
         if (!$task_id || !$user_id) {
             return $this->failValidationErrors('Thiếu task_id hoặc user_id.');
@@ -131,6 +178,8 @@ class TaskFileController extends ResourceController
             return $this->failValidationErrors('URL không hợp lệ.');
         }
 
+        $now = date('Y-m-d H:i:s');
+
         $id = $this->model->insert([
             'task_id'     => $task_id,
             'title'       => $title,
@@ -139,11 +188,17 @@ class TaskFileController extends ResourceController
             'uploaded_by' => $user_id,
             'is_link'     => 1,
             'status'      => 'uploaded',
+            // auto-pin link on save
+            'is_pinned'   => 1,
+            'pinned_at'   => $now,
+            'pinned_by'   => $user_id,
         ], true);
 
+        $fresh = $this->model->find($id);
+
         return $this->respondCreated([
-            'message' => 'Đã lưu link tài liệu',
-            'data'    => $this->model->find($id)
+            'message' => 'Đã lưu link tài liệu và đã ghim',
+            'data'    => $fresh
         ]);
     }
 
@@ -283,6 +338,7 @@ class TaskFileController extends ResourceController
             ->countAllResults();
     }
 
+
     public function pinnedByTask($taskId): ResponseInterface
     {
         $rows = $this->model
@@ -291,32 +347,85 @@ class TaskFileController extends ResourceController
             ->orderBy('pinned_at', 'DESC')
             ->findAll();
 
+        if (empty($rows)) {
+            return $this->respond([]);
+        }
+
+        // ✅ Map ID -> tên user (chỉ query 1 lần)
+        $userIds = array_unique(array_filter(array_column($rows, 'uploaded_by')));
+        $userNames = [];
+        if (!empty($userIds)) {
+            $users = (new UserModel())
+                ->select('id, name')
+                ->whereIn('id', $userIds)
+                ->findAll();
+            foreach ($users as $u) {
+                $userNames[(int)$u['id']] = $u['name'];
+            }
+        }
+
+        // ✅ Gắn thêm tên vào mỗi record
+        foreach ($rows as &$r) {
+            $r['pinned_by_name'] = $userNames[(int)$r['uploaded_by']] ?? null;
+        }
+
         return $this->respond($rows);
     }
 
+
+    // ✅ Pin: bỏ giới hạn (server now allows unlimited pins)
     public function pin($fileId): ResponseInterface
     {
         $row = $this->model->find((int)$fileId);
         if (!$row) return $this->failNotFound('File không tồn tại');
 
-        // enforce tối đa 2
-        $cnt = $this->model->where('task_id', $row['task_id'])->where('is_pinned', 1)->countAllResults();
-        if ($cnt >= 2) return $this->failForbidden('Đã đạt tối đa 2 file ghim');
+        $userId = (int)($this->request->getPost('user_id') ?? 0);
+        $now = date('Y-m-d H:i:s');
 
         $this->model->update((int)$fileId, [
             'is_pinned' => 1,
-            'pinned_at' => date('Y-m-d H:i:s'),
-            'pinned_by' => (int)($this->request->getPost('user_id') ?? 0),
+            'pinned_at' => $now,
+            'pinned_by' => $userId,
         ]);
 
         return $this->respond(['message' => 'Đã ghim']);
     }
 
+
     public function unpin($fileId): ResponseInterface
     {
         $row = $this->model->find((int)$fileId);
-        if (!$row) return $this->failNotFound('File không tồn tại');
+        if (!$row) {
+            return $this->failNotFound('File không tồn tại');
+        }
 
+        // Ưu tiên lấy từ session
+        $uid  = $this->currentUserId();
+        $role = $this->currentUserRole();
+
+        dd($role);
+
+        // Dù có uid hay không, nếu role rỗng -> dùng fallback từ POST
+        $postUid  = (int)($this->request->getPost('user_id') ?? 0);
+        $postRole = trim((string)($this->request->getPost('user_role') ?? ''));
+
+        if (empty($uid) && $postUid > 0) {
+            $uid = $postUid;
+        }
+        if (empty($role) && $postRole !== '') {
+            $role = $postRole;
+        }
+
+        log_message('debug', "unpin: uid={$uid}, role={$role}, postRole={$postRole}");
+
+        // Chuẩn hoá role (tránh lỗi chữ hoa/thường hoặc khoảng trắng)
+        $roleNorm = strtolower(trim((string)$role));
+
+        if ($roleNorm !== 'super admin') {
+            return $this->failForbidden('Chỉ Super Admin mới được bỏ ghim file này.');
+        }
+
+        // Cập nhật record
         $this->model->update((int)$fileId, [
             'is_pinned' => 0,
             'pinned_at' => null,
@@ -326,6 +435,12 @@ class TaskFileController extends ResourceController
         return $this->respond(['message' => 'Đã bỏ ghim']);
     }
 
+
+
+
+
+
+    // adopt từ file_path trên server — auto-pin; nếu đã tồn tại record thì trả về và ensure pinned
     public function adoptFromPath($task_id = null): ResponseInterface
     {
         $task_id = (int) $task_id;
@@ -337,13 +452,24 @@ class TaskFileController extends ResourceController
             return $this->failValidationErrors('Thiếu task_id, user_id hoặc file_path.');
         }
 
-        // Tránh trùng: nếu đã có record cùng task_id + file_path thì trả về luôn
+        // Tránh trùng: nếu đã có record cùng task_id + file_path thì trả về luôn (và đảm bảo nó được ghim)
         $existed = $this->model
             ->where('task_id', $task_id)
             ->where('file_path', $file_path)
             ->first();
+        $now = date('Y-m-d H:i:s');
+
         if ($existed) {
-            return $this->respond(['message' => 'Đã tồn tại', 'data' => $existed]);
+            // nếu chưa ghim thì ghim luôn
+            if (empty($existed['is_pinned']) || intval($existed['is_pinned']) !== 1) {
+                $this->model->update((int)$existed['id'], [
+                    'is_pinned' => 1,
+                    'pinned_at' => $now,
+                    'pinned_by' => $user_id,
+                ]);
+                $existed = $this->model->find((int)$existed['id']);
+            }
+            return $this->respond(['message' => 'Đã tồn tại (và đã ghim nếu chưa ghim)', 'data' => $existed]);
         }
 
         $insert = [
@@ -354,11 +480,15 @@ class TaskFileController extends ResourceController
             'uploaded_by' => $user_id,
             'is_link'     => 0,
             'status'      => null,
+            // auto-pin new adopted file
+            'is_pinned'   => 1,
+            'pinned_at'   => $now,
+            'pinned_by'   => $user_id,
         ];
         $id = $this->model->insert($insert, true);
         $row = $this->model->find($id);
-        return $this->respondCreated(['message' => 'Đã nhận file vào tài liệu', 'data' => $row]);
-    }
 
+        return $this->respondCreated(['message' => 'Đã nhận file vào tài liệu và đã ghim', 'data' => $row]);
+    }
 
 }
