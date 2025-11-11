@@ -490,5 +490,68 @@ class TaskFileController extends ResourceController
 
         return $this->respondCreated(['message' => 'Đã nhận file vào tài liệu và đã ghim', 'data' => $row]);
     }
+    // kiểm tra quyền: chỉ super admin hoặc owner/creator của task (tuỳ policy bạn muốn)
+    protected function canReorder(int $taskId, int $userId, ?string $role): bool {
+        if ($role && strtolower($role) === 'super admin') return true;
+        // TODO: optionally check if $userId is task owner, or has role is_admin flag
+        // Example: check task owner (requires TaskModel)
+        // $task = (new \App\Models\TaskModel())->find($taskId);
+        // return $task && (int)$task['created_by'] === $userId;
+        return false;
+    }
+
+    public function reorder($taskId = null): ResponseInterface
+    {
+        if (!$taskId) return $this->failValidationErrors('Thiếu task id.');
+
+        // accept JSON body { order: [{ user_id: 3, order: 1 }, ...] }
+        $json = $this->request->getJSON(true);
+        $order = $json['order'] ?? $this->request->getPost('order');
+
+        if (empty($order) || !is_array($order)) {
+            return $this->failValidationErrors('Payload không hợp lệ. Cần mảng "order".');
+        }
+
+        $user = $this->currentUser();
+        $uid = $user ? (int)$user['id'] : 0;
+        $role = $this->currentUserRole();
+
+        if (!$this->canReorder((int)$taskId, $uid, $role)) {
+            return $this->failForbidden('Không có quyền sắp xếp danh sách này.');
+        }
+
+        $db = \Config\Database::connect();
+        $trans = $db->transStart();
+
+        // Chuẩn hoá và cập nhật từng record (tìm theo task_id + user_id)
+        foreach ($order as $item) {
+            $uId = isset($item['user_id']) ? (int)$item['user_id'] : null;
+            $rank = isset($item['order']) ? (int)$item['order'] : null;
+            if ($uId === null || $rank === null) continue;
+
+            // Update record nếu tồn tại (cập nhật order_rank)
+            $this->model
+                ->where('task_id', (int)$taskId)
+                ->where('user_id', $uId)
+                ->set(['order_rank' => $rank])
+                ->update();
+        }
+
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            return $this->fail('Không thể lưu thứ tự mới.');
+        }
+
+        // Optionally return updated roster
+        $rows = $this->model->where('task_id', (int)$taskId)->orderBy('order_rank', 'ASC')->findAll();
+
+        return $this->respond([
+            'message' => 'Đã cập nhật thứ tự',
+            'data' => $rows
+        ]);
+    }
+
+
 
 }

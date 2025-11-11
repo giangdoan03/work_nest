@@ -304,73 +304,89 @@
 
             <!-- Danh sách -->
             <div v-else class="drawer-list">
-                <div
-                    v-for="m in finalDrawerMentions"
-                    :key="`${m.user_id}-${m.status}-${m.acted_at || ''}-${m.added_at || ''}`"
-                    class="drawer-chip"
+
+                <!-- thay bằng Draggable (PascalCase) -->
+                <Draggable
+                    v-model="dragList"
+                    item-key="user_id"
+                    handle=".chip-card"
+                    ghost-class="chip-ghost"
+                    animation="200"
+                    @end="handleReorder"
                 >
-                    <div class="chip-card"
-                         :class="{
-                           'is-approved': m.status === 'approved',
-                           'is-pending': m.status === 'pending' || m.status === 'processing',
-                           'is-rejected': m.status === 'rejected',
-                         }">
+                    <template v-slot:item="{ element: m, index }">
+                        <div
+                            :key="m.user_id + '-' + (m.status || '') + '-' + (m.acted_at || '') + '-' + (m.added_at || '')"
+                            class="drawer-chip"
+                        >
+                            <!-- Tooltip hướng dẫn kéo thả; đặt trên chip-card để người dùng thấy khi hover -->
+                            <a-tooltip title="Kéo thả để thay đổi thứ tự duyệt" placement="top">
+                                <div
+                                    class="chip-card"
+                                    role="button"
+                                    tabindex="0"
+                                    :class="{
+          'is-approved': m.status === 'approved',
+          'is-pending': m.status === 'pending' || m.status === 'processing',
+          'is-rejected': m.status === 'rejected',
+        }"
+                                >
+                                    <!-- Avatar -->
+                                    <div class="chip-avatar" aria-hidden="true">
+                                        <BaseAvatar
+                                            :src="getUserById(m.user_id)?.avatar"
+                                            :name="getUserById(m.user_id)?.name || m.name || 'U'"
+                                            :size="28"
+                                            shape="circle"
+                                            :preferApiOrigin="true"
+                                        />
+                                    </div>
 
-                        <!-- LEFT: avatar -->
-                        <div class="chip-avatar">
-                            <BaseAvatar
-                                :src="getUserById(m.user_id)?.avatar"
-                                :name="getUserById(m.user_id)?.name || m.name || 'U'"
-                                :size="28"
-                                shape="circle"
-                                :preferApiOrigin="true"
-                            />
+                                    <!-- Thông tin -->
+                                    <div class="chip-body">
+                                        <div class="name-row" :title="m.name">
+                                            <span class="chip-name">@{{ m.name }}</span>
+                                        </div>
+                                        <div class="meta-row">
+                                            <span class="dot" :class="statusDotClass(m.status)"></span>
+                                            <span class="chip-state">
+              {{ m.status === 'approved' ? 'Đã duyệt' : m.status === 'rejected' ? 'Đã từ chối' : 'Chờ duyệt' }}
+            </span>
+                                            <span class="meta-sep">•</span>
+                                            <span class="chip-time">{{ metaTime(m) }}</span>
+                                        </div>
+
+                                        <div class="actions-row">
+                                            <template v-if="canActOnChip(m)">
+                                                <a-button size="small" type="primary" @click="handleApproveAction(m, 'approved')">
+                                                    <template #icon><CheckOutlined /></template>Đồng ý
+                                                </a-button>
+                                                <a-button size="small" danger @click="handleApproveAction(m, 'rejected')">
+                                                    <template #icon><CloseOutlined /></template>Từ chối
+                                                </a-button>
+                                            </template>
+
+                                            <template v-else>
+                                                <a-tag
+                                                    v-if="m.status === 'pending' || m.status === 'processing'"
+                                                    color="blue"
+                                                    style="border-radius:12px"
+                                                >
+                                                    Lượt của @{{ m.name }}
+                                                </a-tag>
+                                            </template>
+
+                                            <a-button size="small" type="text" class="chip-close" @click="removeMention(m.user_id)">×</a-button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a-tooltip>
                         </div>
+                    </template>
 
-                        <!-- RIGHT: 3 dòng -->
-                        <div class="chip-body">
-                            <!-- Dòng 1: tên 1 dòng -->
-                            <div class="name-row" :title="m.name">
-                                <span class="chip-name">@{{ m.name }}</span>
-                            </div>
+                </Draggable>
 
-                            <!-- Dòng 2: trạng thái + thời gian -->
-                            <div class="meta-row">
-                                <span class="dot" :class="statusDotClass(m.status)"></span>
-                                <span class="chip-state">
-                                    {{ m.status === 'approved' ? 'Đã duyệt' : m.status === 'rejected' ? 'Đã từ chối' : 'Chờ duyệt' }}
-                                  </span>
-                                <span class="meta-sep">•</span>
-                                <span class="chip-time">{{ metaTime(m) }}</span>
-                            </div>
 
-                            <!-- Dòng 3: actions -->
-                            <div class="actions-row">
-                                <!-- Chỉ hiện nút cho đúng người & đúng trạng thái -->
-                                <template v-if="canActOnChip(m)">
-                                    <a-button size="small" type="primary" @click="handleApproveAction(m, 'approved')">
-                                        <template #icon><CheckOutlined /></template>Đồng ý
-                                    </a-button>
-                                    <a-button size="small" danger @click="handleApproveAction(m, 'rejected')">
-                                        <template #icon><CloseOutlined /></template>Từ chối
-                                    </a-button>
-                                </template>
-
-                                <!-- Người khác nhìn thấy chip thôi, không có nút hành động -->
-                                <template v-else>
-                                    <a-tag v-if="m.status==='pending' || m.status==='processing'" color="blue" style="border-radius:12px">
-                                        Lượt của @{{ m.name }}
-                                    </a-tag>
-                                </template>
-
-                                <!-- nút xóa chip vẫn cho chủ topic/admin; nếu muốn cấm luôn thì ẩn đi -->
-                                <a-button size="small" type="text" class="chip-close" @click="removeMention(m.user_id)">×</a-button>
-                            </div>
-
-                        </div>
-                    </div>
-
-                </div>
             </div>
         </a-drawer>
 
@@ -378,7 +394,7 @@
 </template>
 
 <script setup>
-import {ref, reactive, computed, nextTick, onMounted, onBeforeUnmount} from 'vue'
+import {ref, reactive, computed, nextTick, onMounted, onBeforeUnmount, watch, watchEffect } from 'vue'
 import {
     CheckOutlined,
     CloseOutlined,
@@ -428,6 +444,35 @@ import BaseAvatar from '@/components/common/BaseAvatar.vue'
 
 dayjs.extend(relativeTime)
 dayjs.locale('vi')
+
+import Draggable from 'vuedraggable'
+// finalDrawerMentions: mảng các mention
+// bạn có thể lắng nghe sự kiện @update để cập nhật lại thứ tự
+const handleReorder = async (evt) => {
+    // dragList hiện đã chứa order mới
+    console.log('drag end, new order', dragList.value)
+
+    // cập nhật mentionsSelected (nguồn truth)
+    mentionsSelected.value = dragList.value.map(m => ({ ...m }))
+
+    // nếu muốn persist lên server: chuẩn hoá payload và gọi API
+    try {
+        const payload = mentionsSelected.value.map((m, idx) => ({
+            user_id: Number(m.user_id),
+            order: idx + 1
+        }))
+        // giả sử backend có endpoint mergeTaskRosterAPI(taskId, payload, 'replace')
+        await persistRoster('replace') // nếu backend xử lý vị trí theo thứ tự list
+        // hoặc gọi API riêng: await axios.post(`/tasks/${taskId.value}/reorder-mentions`, { order: payload })
+        message.success('Đã lưu thứ tự người duyệt')
+    } catch (e) {
+        console.error('save reorder failed', e)
+        message.error('Không lưu được thứ tự')
+    }
+}
+
+// new reactive list for draggable
+const dragList = ref([])
 
 /* ===== time helpers (VI) ===== */
 const tick = ref(Date.now())
@@ -886,6 +931,11 @@ const finalDrawerMentions = computed(() => {
     if (!q) return arr
     return arr.filter(m => vnNorm(m.name || '').includes(q))
 })
+
+// Khi finalDrawerMentions thay đổi (filter/search), cập nhật dragList
+watch(finalDrawerMentions, (v) => {
+    dragList.value = Array.isArray(v) ? v.map(x => ({ ...x })) : []
+}, { immediate: true, deep: true })
 
 // Counters cho toolbar
 const pendingCount = computed(() => finalDrawerMentions.value.filter(m => m.status === 'pending' || m.status === 'processing').length)
@@ -1953,6 +2003,17 @@ onBeforeUnmount(() => {
     background: #f9fbff;
 }
 
+
+.chip-ghost {
+    opacity: 0.4;
+    background: #f0f0f0;
+    border-radius: 8px;
+    transform: scale(0.98);
+}
+.drawer-chip {
+    cursor: grab;
+    margin-bottom: 15px;
+}
 /* Card: 2 cột avatar | nội dung */
 .drawer-chip .chip-card {
     display: grid;
