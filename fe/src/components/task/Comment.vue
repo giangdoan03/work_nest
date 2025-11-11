@@ -326,10 +326,10 @@
                                     role="button"
                                     tabindex="0"
                                     :class="{
-          'is-approved': m.status === 'approved',
-          'is-pending': m.status === 'pending' || m.status === 'processing',
-          'is-rejected': m.status === 'rejected',
-        }"
+                                      'is-approved': m.status === 'approved',
+                                      'is-pending': m.status === 'pending' || m.status === 'processing',
+                                      'is-rejected': m.status === 'rejected',
+                                    }"
                                 >
                                     <!-- Avatar -->
                                     <div class="chip-avatar" aria-hidden="true">
@@ -350,8 +350,8 @@
                                         <div class="meta-row">
                                             <span class="dot" :class="statusDotClass(m.status)"></span>
                                             <span class="chip-state">
-              {{ m.status === 'approved' ? 'Đã duyệt' : m.status === 'rejected' ? 'Đã từ chối' : 'Chờ duyệt' }}
-            </span>
+                                              {{ m.status === 'approved' ? 'Đã duyệt' : m.status === 'rejected' ? 'Đã từ chối' : 'Chờ duyệt' }}
+                                            </span>
                                             <span class="meta-sep">•</span>
                                             <span class="chip-time">{{ metaTime(m) }}</span>
                                         </div>
@@ -385,8 +385,6 @@
                     </template>
 
                 </Draggable>
-
-
             </div>
         </a-drawer>
 
