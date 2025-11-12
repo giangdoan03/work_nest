@@ -580,8 +580,6 @@ class TaskApprovalController extends ResourceController
         return $this->reject((int)$row['approval_id']);
     }
 
-    /* ========= NEW: APIs cho ROSTER chip approve/sign ========= */
-
     /** GET /tasks/{id}/roster: trả roster + progress tính theo roster */
     public function roster($taskId): ResponseInterface
     {
@@ -589,31 +587,65 @@ class TaskApprovalController extends ResourceController
         $task   = $this->getTaskRow($taskId);
         if (!$task) return $this->failNotFound('Task not found');
 
-        $roster   = $this->readRoster($task);
-        $progress = $this->computeRosterProgress($roster, (string)($task['approval_status'] ?? 'pending'));
+        $roster = $this->readRoster($task) ?: [];
 
-        // ✅ An toàn khi roster rỗng
-        $hasRoster   = !empty($roster);
+        // 1) Tổng số người trong roster (không lọc gì thêm)
+        $total = count($roster);
 
-        // All approved chỉ đúng khi roster có phần tử và TẤT CẢ đều approved
-        $allApproved = $hasRoster && !array_filter($roster, fn($r) => strtolower((string)($r['status'] ?? 'pending')) !== 'approved');
+        // 2) Số người đã approved (case-insensitive)
+        $approvedCount = 0;
+        foreach ($roster as $r) {
+            if (strtolower((string)($r['status'] ?? '')) === 'approved') {
+                $approvedCount++;
+            }
+        }
 
-        // Lấy thời điểm approved_at lớn nhất, chỉ khi allApproved true và có acted_at hợp lệ
+        // 3) Tính approved percent (rõ ràng)
+        $approvedPercent = $total > 0 ? (int) round(($approvedCount / $total) * 100) : 0;
+
+        // 4) progress_legacy: giữ behavior cũ (dựa vào task.approval_status) để backward-compat
+        $progress_legacy = $this->computeRosterProgress($roster, (string)($task['approval_status'] ?? 'pending'));
+
+        // 5) progress: bây giờ là percent theo roster (approvedPercent)
+        $progress = $approvedPercent;
+
+        // 6) all_approved (tất cả đều approved)
+        $hasRoster = $total > 0;
+        $allApproved = $hasRoster && ($approvedCount === $total);
+
+        // 7) approved_at only when allApproved
         $approved_at = null;
         if ($allApproved) {
-            // Lấy cột acted_at và tính max an toàn (bỏ null/invalid)
-            $actedList   = array_map(fn($r) => $r['acted_at'] ?? null, $roster);
+            $actedList = array_map(fn($r) => $r['acted_at'] ?? null, $roster);
             $approved_at = $this->safeMaxDate($actedList);
         }
 
+        // 8) created_by info (giữ như trước)
+        $createdById = isset($task['created_by']) ? (int)$task['created_by'] : null;
+        $createdByName = null;
+        if ($createdById) {
+            $db = db_connect();
+            $row = $db->table('users')->select('id, name')->where('id', $createdById)->get()->getRowArray();
+            if ($row && isset($row['name'])) $createdByName = $row['name'];
+        }
+
         return $this->respond([
-            'roster'         => $this->addHumanDatesToRoster($roster),
-            'progress'       => $progress,
-            'all_approved'   => $allApproved,
-            'approved_at'    => $approved_at,
-            'approved_at_vi' => $approved_at ? date('H:i d/m/Y', strtotime($approved_at)) : null,
+            'roster'            => $this->addHumanDatesToRoster($roster),
+            'roster_total'      => $total,
+            'approved_count'    => $approvedCount,
+            'approved_percent'  => $approvedPercent,
+            // progress hiện tại: percent theo roster (client nên ưu tiên dùng trường này)
+            'progress'          => $progress,
+            // giữ giá trị cũ cho backward compatibility nếu có client đang phụ thuộc
+            'progress_legacy'   => $progress_legacy,
+            'all_approved'      => $allApproved,
+            'approved_at'       => $approved_at,
+            'approved_at_vi'    => $approved_at ? date('H:i d/m/Y', strtotime($approved_at)) : null,
+            'created_by'        => $createdById,
+            'created_by_name'   => $createdByName,
         ]);
     }
+
 
 
     /** POST /tasks/{id}/roster/merge: body: mentions(json|form) */

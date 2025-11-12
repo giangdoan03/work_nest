@@ -298,6 +298,20 @@
                     :title="filterPendingOnly ? 'Chỉ hiện đang chờ' : 'Hiện tất cả'"
                 />
             </template>
+
+            <div class="drawer-toolbar">
+                <div class="creator-info">
+                    Người tạo: <strong>{{ rosterCreatedByName || 'Không rõ' }}</strong>
+                    <small v-if="rosterCreatedBy" style="margin-left:8px; color:#6b7280">({{ rosterCreatedBy }})</small>
+                </div>
+
+                <!-- tuỳ chọn: nếu bạn có biến progress/all_approved từ API, hiển thị ở đây -->
+                <div class="drawer-stats">
+                    <span v-if="typeof rosterProgress !== 'undefined'">Tiến độ: {{ rosterProgress }}%</span>
+                    <span v-if="typeof rosterAllApproved !== 'undefined' && rosterAllApproved" class="approved-tag">• Đã duyệt xong</span>
+                </div>
+            </div>
+
             <!-- Empty state -->
             <div v-if="finalDrawerMentions.length === 0" class="drawer-empty">
                 <div class="empty-icon">😶‍🌫️</div>
@@ -315,6 +329,7 @@
                     handle=".chip-card"
                     ghost-class="chip-ghost"
                     animation="200"
+                    :disabled="!canModifyRoster || filterPendingOnly || drawerSearch"
                     @end="handleReorder"
                 >
                     <template v-slot:item="{ element: m, index }">
@@ -323,16 +338,23 @@
                             class="drawer-chip"
                         >
                             <!-- Tooltip hướng dẫn kéo thả; đặt trên chip-card để người dùng thấy khi hover -->
-                            <a-tooltip title="Kéo thả để thay đổi thứ tự duyệt" placement="top">
+                            <a-tooltip
+                                :title="filterPendingOnly || drawerSearch
+    ? 'Tắt bộ lọc hoặc tìm kiếm để sắp xếp lại thứ tự duyệt'
+    : canModifyRoster
+      ? 'Kéo thả để thay đổi thứ tự duyệt'
+      : 'Chỉ người tạo task mới được sắp xếp thứ tự duyệt'"
+                                placement="top"
+                            >
                                 <div
                                     class="chip-card"
                                     role="button"
                                     tabindex="0"
                                     :class="{
-                                      'is-approved': m.status === 'approved',
-                                      'is-pending': m.status === 'pending' || m.status === 'processing',
-                                      'is-rejected': m.status === 'rejected',
-                                    }"
+      'is-approved': m.status === 'approved',
+      'is-pending': m.status === 'pending' || m.status === 'processing',
+      'is-rejected': m.status === 'rejected',
+    }"
                                 >
                                     <!-- Avatar -->
                                     <div class="chip-avatar" aria-hidden="true">
@@ -379,7 +401,13 @@
                                                 </a-tag>
                                             </template>
 
-                                            <a-button size="small" type="text" class="chip-close" @click="removeMention(m.user_id)">×</a-button>
+                                            <a-button
+                                                v-if="canModifyRoster"
+                                                size="small"
+                                                type="text"
+                                                class="chip-close"
+                                                @click="removeMention(m.user_id)"
+                                            >×</a-button>
                                         </div>
                                     </div>
                                 </div>
@@ -450,21 +478,19 @@ import Draggable from 'vuedraggable'
 // finalDrawerMentions: mảng các mention
 // bạn có thể lắng nghe sự kiện @update để cập nhật lại thứ tự
 const handleReorder = async (evt) => {
-    // dragList hiện đã chứa order mới
-    console.log('drag end, new order', dragList.value)
+    if (!canModifyRoster.value) {
+        message.warning('Chỉ người tạo task mới được thay đổi thứ tự người duyệt')
+        // restore dragList từ mentionsSelected nếu cần
+        dragList.value = Array.isArray(finalDrawerMentions.value) ? finalDrawerMentions.value.map(x => ({ ...x })) : []
+        return
+    }
 
-    // cập nhật mentionsSelected (nguồn truth)
+    // tiếp tục logic hiện có...
+    console.log('drag end, new order', dragList.value)
     mentionsSelected.value = dragList.value.map(m => ({ ...m }))
 
-    // nếu muốn persist lên server: chuẩn hoá payload và gọi API
     try {
-        const payload = mentionsSelected.value.map((m, idx) => ({
-            user_id: Number(m.user_id),
-            order: idx + 1
-        }))
-        // giả sử backend có endpoint mergeTaskRosterAPI(taskId, payload, 'replace')
-        await persistRoster('replace') // nếu backend xử lý vị trí theo thứ tự list
-        // hoặc gọi API riêng: await axios.post(`/tasks/${taskId.value}/reorder-mentions`, { order: payload })
+        await persistRoster('replace')
         message.success('Đã lưu thứ tự người duyệt')
     } catch (e) {
         console.error('save reorder failed', e)
@@ -591,6 +617,52 @@ const visiblePinnedFiles = computed(() =>
 const hiddenPinnedCount = computed(() =>
     Math.max(0, (pinnedFiles.value?.length || 0) - MAX_FILES_COLLAPSED)
 )
+
+// store id/name người tạo task trả từ API /tasks/{id}/roster
+const rosterCreatedBy = ref(null)
+const rosterCreatedByName = ref(null)
+const canModifyRoster = computed(() => {
+    if (rosterCreatedBy.value == null) return false
+    return String(rosterCreatedBy.value) === String(currentUserId.value)
+})
+const rosterProgress = ref(0)
+const rosterAllApproved = ref(false)
+
+// role code của current user — lấy từ store.currentUser.role_code hoặc session fallback
+const currentRoleCode = computed(() => {
+    // nếu store.currentUser có role_code thì dùng luôn
+    const r = store?.currentUser?.role_code ?? store?.currentUser?.role
+    return r ? String(r) : null
+})
+
+// helper: mapping role_code -> rank (số càng lớn = quyền càng cao)
+function normalizeRoleCode(c='') {
+    return String(c||'').toLowerCase().replace(/\s+/g,'_') // 'super admin' -> 'super_admin'
+}
+function roleRank(code='') {
+    switch (normalizeRoleCode(code)) {
+        case 'super_admin': return 3
+        case 'admin': return 2
+        case 'user': return 1
+        default: return 0
+    }
+}
+
+function applyPartialReorderToFull(filteredNewOrder) {
+    const full = mentionsSelected.value.slice()
+    // map user_id -> position in filteredNewOrder
+    const pos = new Map(filteredNewOrder.map((x,i)=>[String(x.user_id), i]))
+    // stable sort full: items in pos keep their new relative order (pos), others keep original relative order
+    full.sort((a,b)=>{
+        const pa = pos.has(String(a.user_id)) ? pos.get(String(a.user_id)) : Number.MAX_SAFE_INTEGER
+        const pb = pos.has(String(b.user_id)) ? pos.get(String(b.user_id)) : Number.MAX_SAFE_INTEGER
+        if (pa === pb) return 0
+        return pa - pb
+    })
+    mentionsSelected.value = full
+}
+
+
 
 /* ===== task file helpers ===== */
 function getTaskFileId(f = {}) {
@@ -835,26 +907,108 @@ const pinTooltip = (f) => {
 }
 
 
+
+
 /* ===== Roster actions (Drawer) ===== */
 async function handleApproveAction(m, status) {
+    // status phải là 'approved' hoặc 'rejected'
+    if (!['approved', 'rejected'].includes(status)) return
+
+    // quyền client check
     if (!canActOnChip(m)) {
-        message.warning('Đây là lượt của người khác');
+        message.warning('Bạn không có quyền thực hiện hành động này (chia lượt duyệt)');
         return;
     }
+
+    // note / optional
+    const note = null
+
     try {
-        if (status === 'approved') await approveRosterAPI(taskId.value, { note: null });
-        else await rejectRosterAPI(taskId.value, { note: null });
-        await syncRosterFromServer();
-        message.success(
-            status === 'approved'
-                ? `${m.name} đã ${m.role === 'sign' ? 'ký' : 'duyệt'}`
-                : `${m.name} đã từ chối`
-        );
+        // --- Step A: if this is a simple self-approve & not admin, call rosterApprove API (server will update single entry).
+        const myRank = roleRank(currentRoleCode.value)
+        const targetUser = getUserById(Number(m.user_id)) || {}
+        const targetRoleCode = targetUser.role_code || targetUser.role || (m.role === 'sign' ? 'user' : 'user')
+        const targetRank = roleRank(targetRoleCode)
+
+        // build new local roster state (optimistic update)
+        const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
+        const newRoster = (mentionsSelected.value || []).map(r => ({ ...r }))
+
+        // Find index of target
+        const idx = newRoster.findIndex(x => String(x.user_id) === String(m.user_id))
+        if (idx === -1) {
+            message.error('Không tìm thấy thành viên trong danh sách')
+            return
+        }
+
+        // If approver is normal user approving themselves -> we can call server rosterApprove endpoint
+        // But to support cascade when admin/super_admin approves, we will compute replacement payload and call merge API.
+
+        // Update target
+        newRoster[idx].status = status
+        newRoster[idx].acted_at = now
+        if (!newRoster[idx].note) newRoster[idx].note = null
+
+        // Cascade rules: if approver is admin/super_admin and action is approve -> mark all lower-rank pending as approved
+        if (status === 'approved' && myRank >= roleRank('admin')) {
+            for (let i = 0; i < newRoster.length; i++) {
+                const it = newRoster[i]
+                if ((it.status || '').toLowerCase() === 'pending') {
+                    const u = getUserById(Number(it.user_id)) || {}
+                    const rcode = u.role_code || u.role || (it.role === 'sign' ? 'user' : 'user')
+                    const rr = roleRank(rcode)
+                    // only change those with rank < = approver's rank but not higher
+                    if (rr <= myRank) {
+                        // do not change those with rank > myRank (already handled by check)
+                        it.status = 'approved'
+                        it.acted_at = now
+                    }
+                }
+            }
+        }
+
+        // If approver is normal user approving themselves -> no cascade
+        // If status === 'rejected', do not cascade
+
+        // Persist full roster (replace) to server
+        // Normalize payload for merge API: list of { user_id, name, role, status }
+        const payload = newRoster.map(x => ({
+            user_id: Number(x.user_id),
+            name: x.name,
+            role: x.role,
+            status: x.status,
+            acted_at: x.acted_at || null,
+            note: x.note || null,
+        }))
+
+        // call mergeTaskRosterAPI(taskId, payload, 'replace') — use your existing wrapper
+        // If you don't have this wrapper, use axios.post(`/api/tasks/${taskId.value}/roster/merge`, { mentions: payload, mode: 'replace' })
+        await persistRosterWithPayload(payload) // implement wrapper below
+
+        // optimistic update local UI
+        mentionsSelected.value = newRoster.map(x => ({ ...x }))
+        // refresh server state
+        await syncRosterFromServer()
+        message.success(status === 'approved' ? 'Đã duyệt' : 'Đã từ chối')
     } catch (e) {
-        console.error(e);
-        message.error('Xử lý không thành công');
+        console.error('handleApproveAction error', e)
+        message.error('Xử lý không thành công')
     }
 }
+
+// wrapper: persist roster by replace (calls mergeTaskRosterAPI or direct axios)
+async function persistRosterWithPayload(payload) {
+    try {
+        // if you already have mergeTaskRosterAPI defined: mergeTaskRosterAPI(taskId, payload, 'replace')
+        await mergeTaskRosterAPI(taskId.value, payload, 'replace')
+        // optionally call syncRosterFromServer after
+    } catch (e) {
+        console.error('persistRosterWithPayload failed', e)
+        throw e
+    }
+}
+
+
 /* users & mentions add/remove */
 const getUserById = (id) => listUser.value.find((u) => u.id === id) || {}
 const userOptions = computed(() => (listUser.value || []).map((u) => ({value: String(u.id), label: u.name})))
@@ -875,22 +1029,51 @@ const addMention = async () => {
     const user = listUser.value.find((u) => String(u.id) === String(uid))
     const displayName = user?.name || `#${uid}`
 
-    if (!mentionsSelected.value.some((m) => String(m.user_id) === String(uid))) {
-        mentionsSelected.value.push({
-            user_id: String(uid),
-            name: displayName,
-            role: mentionForm.value.role,
-            status: 'pending',
-        })
-    } else {
+    // bảo vệ: nếu đã có thì thông báo
+    if (mentionsSelected.value.some((m) => String(m.user_id) === String(uid))) {
         message.info('Người này đã có trong danh sách')
+        // vẫn insert mention text vào composer nếu cần
+        insertMention(displayName)
+        addMentionOpen.value = false
+        await nextTick()
+        const ta = document.querySelector('.tg-input textarea.ant-input')
+        if (ta && typeof ta.focus === 'function') ta.focus()
+        return
     }
+
+    // thêm local (optimistic)
+    mentionsSelected.value.push({
+        user_id: String(uid),
+        name: displayName,
+        role: mentionForm.value.role,
+        status: 'pending',
+        added_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
+    })
+
+    // cập nhật composer text + đóng pop
     insertMention(displayName)
     addMentionOpen.value = false
+
+    // persist lên server bằng mode 'merge' (thêm vào, không ghi đè toàn bộ)
+    try {
+        // gọn: persistRoster(mode) đã có trong file — dùng mode 'merge'
+        await persistRoster('merge')
+        // đồng bộ state từ server để chắc chắn cấu trúc/field đúng
+        await syncRosterFromServer()
+        message.success('Đã thêm người duyệt')
+    } catch (err) {
+        console.error('addMention persist failed', err)
+        message.error('Không thể thêm người duyệt — thử lại')
+        // rollback đơn giản: xóa item vừa push nếu muốn
+        mentionsSelected.value = mentionsSelected.value.filter(m => String(m.user_id) !== String(uid))
+    }
+
+    // focus composer
     await nextTick()
     const ta = document.querySelector('.tg-input textarea.ant-input')
     if (ta && typeof ta.focus === 'function') ta.focus()
 }
+
 
 function closeMentionPopover() {
     addMentionOpen.value = false
@@ -909,6 +1092,10 @@ function insertMention(displayName) {
 }
 
 function removeMention(uid) {
+    if (!canModifyRoster.value) {
+        message.warning('Chỉ người tạo task mới được xóa người duyệt')
+        return
+    }
     mentionsSelected.value = mentionsSelected.value.filter((m) => String(m.user_id) !== String(uid))
     void persistRoster('replace')
 }
@@ -1292,9 +1479,17 @@ async function loadPinnedFiles() {
 
 async function syncRosterFromServer() {
     try {
-        const {data} = await getTaskRosterAPI(taskId.value)
+        const { data } = await getTaskRosterAPI(taskId.value)
         const roster = data?.roster || data || []
-        mentionsSelected.value = roster.map((r) => ({
+
+        rosterCreatedBy.value = data?.created_by ?? null
+        rosterCreatedByName.value = data?.created_by_name ?? null
+
+        // 👉 thêm 2 dòng này
+        rosterProgress.value = data?.progress ?? 0
+        rosterAllApproved.value = data?.all_approved ?? false
+
+        mentionsSelected.value = (Array.isArray(roster) ? roster : []).map((r) => ({
             user_id: String(r.user_id),
             name: r.name,
             role: r.role,
@@ -1304,8 +1499,8 @@ async function syncRosterFromServer() {
             added_at: r.added_at || null,
             added_at_vi: r.added_at_vi || null,
         }))
-    } catch {
-        /* silent */
+    } catch (e) {
+        console.error('syncRosterFromServer failed', e)
     }
 }
 
@@ -1350,9 +1545,42 @@ function isPinnable(f) {
 
 
 
-const canActOnChip = (m) =>
-    String(m.user_id) === String(currentUserId.value) &&
-    (m.status === 'pending' || m.status === 'processing')
+function canActOnChip(m) {
+    // 1️⃣ Không có m hoặc không pending thì không thao tác
+    if (!m || (m.status || '').toLowerCase() !== 'pending') return false
+
+    const curUid = String(currentUserId.value)
+    const targetUid = String(m.user_id)
+
+    // 2️⃣ Lấy lượt đầu tiên đang chờ duyệt
+    const rosterArr = Array.isArray(mentionsSelected.value) ? mentionsSelected.value : []
+    const firstPending = rosterArr.find(r => (r.status || '').toLowerCase() === 'pending')
+
+    // 3️⃣ Nếu chính chủ (người của chip)
+    if (curUid === targetUid) {
+        // chỉ được duyệt khi là người đầu tiên đang chờ
+        return !!firstPending && String(firstPending.user_id) === targetUid
+    }
+
+    // 4️⃣ Nếu không phải chính chủ → chỉ cho admin/super_admin override
+    const myRank = roleRank(currentRoleCode.value)
+    if (myRank >= roleRank('admin')) {
+        // Lấy thông tin người target (nếu có)
+        const targetUser = getUserById(Number(m.user_id)) || {}
+        const targetRoleCode = targetUser.role_code || targetUser.role || 'user'
+        const targetRank = roleRank(targetRoleCode)
+
+        // admin/super_admin không được duyệt người có cấp cao hơn
+        if (targetRank > myRank) return false
+
+        // admin/super_admin được phép duyệt người cùng cấp hoặc thấp hơn
+        return true
+    }
+
+    // 5️⃣ Còn lại (user thường): không được duyệt chéo, chỉ duyệt lượt của mình
+    return false
+}
+
 
 
 async function handleUpdateCommentInline() {
@@ -2248,6 +2476,18 @@ onBeforeUnmount(() => {
     text-overflow: ellipsis;
     max-width: 140px;
 }
+.drawer-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #eef1f3;
+    margin-bottom: 8px;
+}
+.creator-info { color: #374151; font-size: 14px; }
+.drawer-stats { color: #6b7280; font-size: 13px; font-weight: 500; }
+.approved-tag { color: #16a34a; margin-left: 8px; }
 
 
 

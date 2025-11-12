@@ -1,9 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Nov 11, 2025 at 05:53 PM
+-- Generation Time: Nov 12, 2025 at 09:39 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -1207,7 +1207,7 @@ CREATE TABLE `documents` (
   `id` int NOT NULL,
   `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `file_path` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `signed_pdf_url` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `signed_pdf_url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `signed_by` int UNSIGNED DEFAULT NULL,
   `signed_at` datetime DEFAULT NULL,
   `department_id` int DEFAULT NULL,
@@ -1523,6 +1523,7 @@ INSERT INTO `persons` (`id`, `user_id`, `first_name`, `last_name`, `name`, `avat
 CREATE TABLE `roles` (
   `id` int NOT NULL,
   `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -1532,10 +1533,10 @@ CREATE TABLE `roles` (
 -- Dumping data for table `roles`
 --
 
-INSERT INTO `roles` (`id`, `name`, `description`, `created_at`, `updated_at`) VALUES
-(1, 'super admin', 'Super Admin', '2025-04-21 00:06:00', '2025-08-04 13:18:13'),
-(2, 'admin', 'Trưởng phòng', '2025-04-21 00:06:00', '2025-08-04 13:16:10'),
-(3, 'user', 'Nhân viên', '2025-04-21 00:06:00', '2025-08-04 13:16:21');
+INSERT INTO `roles` (`id`, `name`, `code`, `description`, `created_at`, `updated_at`) VALUES
+(1, 'super admin', 'super_admin', 'Super Admin', '2025-04-21 00:06:00', '2025-11-12 15:56:43'),
+(2, 'admin', 'admin', 'Trưởng phòng', '2025-04-21 00:06:00', '2025-11-12 15:56:43'),
+(3, 'user', 'user', 'Nhân viên', '2025-04-21 00:06:00', '2025-11-12 15:56:43');
 
 -- --------------------------------------------------------
 
@@ -1938,7 +1939,7 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (274, 248, 'việc chắt mới', '3423424242', 19, NULL, NULL, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', NULL, 'bidding', 40, 1, 363, 3, 'low', 0, '2025-09-07 07:39:40', '2025-09-07 07:39:40', 1, NULL, 0, 1, 2, 0, NULL, '[]'),
 (275, 248, '3424234', '3424224', 5, NULL, NULL, 5, '2025-09-07', '2025-10-31', 'doing', 'pending', NULL, 'bidding', 40, 7, 369, 3, 'low', 0, '2025-09-07 09:24:03', '2025-09-07 09:24:03', 1, NULL, 0, 1, 2, 0, NULL, '[]'),
 (276, 275, '4324324324', '4324324324', 5, NULL, NULL, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', NULL, 'bidding', 40, 7, 369, 3, 'low', 0, '2025-09-07 09:24:36', '2025-09-07 09:24:36', 1, NULL, 0, 1, 2, 0, NULL, '[]'),
-(277, NULL, '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', 5, 3, 8, 4, '2025-09-01', '2025-09-01', 'done', 'approved', '2025-10-26 22:00:49', 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:12:22', '2025-11-11 17:52:46', 1, '[3, 5]', 1, 1, 3, 100, NULL, '[{\"name\": \"Phạm Xuân Tuân\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 6, \"acted_at\": null, \"added_at\": \"2025-10-31 23:29:47\"}, {\"name\": \"Hoàng Văn Dũng\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 8, \"acted_at\": null, \"added_at\": \"2025-10-28 22:46:49\"}, {\"name\": \"Nguyễn Cảnh Hợp\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 1, \"acted_at\": null, \"added_at\": \"2025-10-28 22:44:22\"}, {\"name\": \"Nguyễn Văn Chiểu\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 5, \"acted_at\": null, \"added_at\": \"2025-10-31 23:36:38\"}, {\"name\": \"Đinh Văn Vịnh\", \"note\": \"{\\\"note\\\":null}\", \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 3, \"acted_at\": \"2025-10-26 12:42:25\", \"added_at\": \"2025-10-26 12:42:20\"}]'),
+(277, NULL, '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', 5, 3, 8, 4, '2025-09-01', '2025-09-01', 'done', 'approved', '2025-11-12 15:41:08', 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:12:22', '2025-11-12 09:39:45', 1, '[3, 5]', 1, 1, 3, 100, NULL, '[{\"name\": \"Nguyễn Cảnh Hợp\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 1, \"acted_at\": \"2025-11-12 09:29:35\", \"added_at\": \"2025-11-12 16:22:06\"}, {\"name\": \"Nhạc Quang Huy\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 7, \"acted_at\": \"2025-11-12 09:39:45\", \"added_at\": \"2025-11-12 16:22:16\"}, {\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-11-12 16:22:33\"}, {\"name\": \"Nguyễn Thị Ngọc Anh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 12, \"acted_at\": null, \"added_at\": \"2025-11-12 16:22:39\"}, {\"name\": \"Nguyễn Danh Vương Bình\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 9, \"acted_at\": null, \"added_at\": \"2025-11-12 16:35:29\"}]'),
 (278, NULL, '2. Lấy kế hoạch SCL', '2. Lấy kế hoạch SCL', 5, NULL, NULL, 4, '2025-09-02', '2025-09-02', 'request_approval', 'pending', NULL, 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:13:44', '2025-10-26 15:11:29', 1, '[4, 5, 6]', 1, 1, 3, 0, NULL, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-10-26 22:10:48\"}, {\"name\": \"Nguyễn Thị Ngọc Anh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 12, \"acted_at\": null, \"added_at\": \"2025-10-26 22:11:29\"}]'),
 (279, 277, '1.1. Lấy kế hoạch SXKD lần 1', '1.1. Lấy kế hoạch SXKD lần 1', 5, NULL, NULL, 4, '2025-09-02', '2025-09-03', 'request_approval', 'pending', NULL, 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:15:48', '2025-10-26 15:09:07', 1, '[1]', 1, 1, 3, 75, NULL, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-10-26 22:08:29\"}, {\"name\": \"Nguyễn Cảnh Hợp\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 1, \"acted_at\": null, \"added_at\": \"2025-10-26 22:09:07\"}]'),
 (280, 277, '1.2. Lấy kế hoạch SXKD lần 2', '1.2. Lấy kế hoạch SXKD lần 2', 5, NULL, NULL, 4, '2025-09-04', '2025-09-04', '', 'pending', NULL, 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:20:54', '2025-10-26 15:10:33', 1, '[4, 5]', 1, 1, 3, 0, NULL, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-10-26 22:09:26\"}, {\"name\": \"Tạ Quý Thọ\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 4, \"acted_at\": null, \"added_at\": \"2025-10-26 22:10:33\"}]'),
@@ -2091,7 +2092,17 @@ INSERT INTO `task_comments` (`id`, `task_id`, `user_id`, `comment_id`, `content`
 (12, 277, 3, NULL, '', '2025-11-11 15:54:43', '2025-11-11 15:54:43', 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-4.pdf', NULL, NULL, NULL, NULL, NULL, NULL),
 (13, 277, 3, NULL, '', '2025-11-11 17:13:55', '2025-11-11 17:13:55', 'CHUYÊN  ĐỀ 1.docx', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/CHUYEN-DE-1.docx', NULL, NULL, NULL, NULL, NULL, NULL),
 (14, 277, 3, NULL, '', '2025-11-11 17:15:50', '2025-11-11 17:15:50', 'maudonphuc_khao.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao-1.pdf', NULL, NULL, NULL, NULL, NULL, NULL),
-(15, 277, 3, NULL, 'hehe', '2025-11-11 17:21:12', '2025-11-11 17:21:12', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+(15, 277, 3, NULL, 'hehe', '2025-11-11 17:21:12', '2025-11-11 17:21:12', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(16, 277, 3, NULL, 'https://vnexpress.net/', '2025-11-12 07:42:52', '2025-11-12 07:42:52', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(17, 277, 3, NULL, 'ok, chào', '2025-11-12 07:48:58', '2025-11-12 07:48:58', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(18, 277, 3, NULL, 'chào', '2025-11-12 07:49:07', '2025-11-12 07:49:07', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(19, 277, 3, NULL, 'ok nhé', '2025-11-12 07:49:23', '2025-11-12 07:49:23', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(20, 277, 3, NULL, 'https://dantri.com.vn/', '2025-11-12 07:56:01', '2025-11-12 07:56:01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(21, 277, 3, NULL, '@Đinh Văn Vịnh', '2025-11-12 09:16:32', '2025-11-12 09:16:32', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(22, 277, 3, NULL, '@Nguyễn Cảnh Hợp', '2025-11-12 09:16:40', '2025-11-12 09:16:40', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(23, 277, 3, NULL, '@Tạ Quý Thọ', '2025-11-12 09:16:45', '2025-11-12 09:16:45', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(24, 277, 3, NULL, '@Nguyễn Cảnh Hợp', '2025-11-12 09:17:39', '2025-11-12 09:17:39', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(25, 277, 3, NULL, '@Phạm Xuân Tuân', '2025-11-12 09:17:47', '2025-11-12 09:17:47', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2220,11 +2231,7 @@ CREATE TABLE `task_roster` (
 --
 
 INSERT INTO `task_roster` (`id`, `task_id`, `user_id`, `role`, `status`, `name`, `created_at`, `updated_at`) VALUES
-(1, 277, 3, 'approve', 'processing', 'Đinh Văn Vịnh', '2025-11-10 21:24:21', '2025-11-12 00:21:12'),
-(2, 277, 1, 'approve', 'processing', 'Nguyễn Cảnh Hợp', '2025-11-10 21:24:21', '2025-11-12 00:21:12'),
-(3, 277, 8, 'approve', 'processing', 'Hoàng Văn Dũng', '2025-11-10 21:24:21', '2025-11-12 00:21:12'),
-(4, 277, 6, 'approve', 'processing', 'Phạm Xuân Tuân', '2025-11-10 21:24:21', '2025-11-12 00:21:12'),
-(5, 277, 5, 'approve', 'processing', 'Nguyễn Văn Chiểu', '2025-11-10 21:24:21', '2025-11-12 00:21:12');
+(106, 277, 6, 'approve', 'processing', 'Phạm Xuân Tuân', '2025-11-12 16:17:47', '2025-11-12 16:17:47');
 
 -- --------------------------------------------------------
 
@@ -2243,7 +2250,7 @@ CREATE TABLE `users` (
   `avatar` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `signature_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `signature_wp_id` int DEFAULT NULL,
-  `preferred_marker` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `preferred_marker` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `role` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'user',
   `department_id` int DEFAULT NULL,
   `role_id` int DEFAULT NULL
@@ -2259,13 +2266,13 @@ INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `nam
 (4, 'nguyenvana@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-05-26 04:33:21', '2025-11-06 23:39:13', 'Tạ Quý Thọ', '0909123456', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/photo_2025-10-17_10-09-07-1.jpg', NULL, 'taquytho', 'Nhân viên', 3, 2),
 (5, 'a@worknest.vn', '$2y$10$fPUyT/hhSHhPknmvWgPtxelsaQfNLRiOVZ3Wayj2tbcNo4lApUFEW', '2025-06-04 09:10:50', '2025-11-06 23:39:22', 'Nguyễn Văn Chiểu', '0911111111', 'uploads/avatars/1757035675_b1a8dfcbbebca0a39cb1.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-04-1.jpg', NULL, 'nguyenvanchieu', 'user', 3, 3),
 (6, 'b@worknest.vn', '$2y$10$ZKKb/DZ/dk0eFQW/xfG3Ne8Ozrdt1TcQcR1alq4KP5biJpmUm2Uuy', '2025-06-04 09:11:21', '2025-11-06 23:39:39', 'Phạm Xuân Tuân', '0911111112', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/z7010742803776_61e4e0e6d2380894deeebfd1b1d5d8c0.jpg', NULL, 'phamxuantuan', 'user', 3, 2),
-(7, 'c@worknest.vn', '$2y$10$jgPXJb32zl6WxQb5B805dulKanOyUl4jsb.HQRp.ZzXc7BBZ/.OKO', '2025-06-04 09:11:44', '2025-11-09 17:25:19', 'Nhạc Quang Huy', '0911111113', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10.jpg', NULL, 'nhacquanghuy', 'user', 3, 1),
+(7, 'c@worknest.vn', '$2y$10$jh.Bqbz9rG5INlFCnuvo9uiL/.5Whd75mlamj14ZST9BCosMxt02a', '2025-06-04 09:11:44', '2025-11-12 16:39:14', 'Nhạc Quang Huy', '0911111113', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10.jpg', NULL, 'nhacquanghuy', 'user', 3, 1),
 (8, 'd@worknest.vn', '$2y$10$UfmfTcnJd1Hc1wcH0Utaz.w9IFmXwNCzoFUQdahizBIri0BTfsDp2', '2025-06-04 09:12:07', '2025-11-06 23:40:02', 'Hoàng Văn Dũng', '0911111114', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07.jpg', NULL, 'hoangvandung', 'user', 3, 3),
 (9, 't@worknest.vn', '$2y$10$hGqQg.IGey/1/3a6Dt/3rOQKKdPgz2U787lWDghxeDqCmCk30v7SW', '2025-06-04 09:12:52', '2025-11-06 23:40:12', 'Nguyễn Danh Vương Bình', '0911111115', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-04.jpg', NULL, 'nguyendanhvuong', 'user', 3, 3),
 (10, 'l@worknest.vn', '$2y$10$In9Y8TToyh9hICfylJG.Iesgd1mvrE4L./GTSwgcuXX8zXe.tGqM2', '2025-06-04 09:13:10', '2025-11-06 23:40:24', 'Vũ Thị Thuỷ', '0911111116', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-08-52.jpg', NULL, 'vuthithuy', 'user', 2, 3),
 (11, 'h@worknest.vn', '$2y$10$HVsxejThJCOYfidLz.xreOCpRGZp8QI001kHhekDGq9tVFW0TWv0K', '2025-06-04 09:13:37', '2025-11-06 23:40:33', 'Đinh Thị Tú', '0911111117', NULL, NULL, NULL, 'dinhthitu', 'user', 2, 3),
-(12, 'hq@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-11-06 23:40:52', 'Nguyễn Thị Ngọc Anh', '0911111118', NULL, NULL, NULL, 'nguyenthingocanh', 'user', 4, 3),
-(13, 'bich@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-11-06 23:41:04', 'Hoàng Thị Lan Anh', '0911111119', NULL, NULL, NULL, 'hoangthilananh', 'user', 4, 3),
+(12, 'hq@worknest.vn', '$2y$10$eqebovRoFs2X3pAu5WRwWuQf6JF1t/72sSqOwcQsd8yR7yHA47Pa.', '2025-06-04 16:15:57', '2025-11-12 16:37:42', 'Nguyễn Thị Ngọc Anh', '0911111118', NULL, NULL, NULL, 'nguyenthingocanh', 'user', 4, 3),
+(13, 'bich@worknest.vn', '$2y$10$QLmkrq1e97eFm2g59f06V.b1jy50AavfEWK8rJZBNYII1Dcd2nzKK', '2025-06-04 16:15:57', '2025-11-12 16:23:43', 'Hoàng Thị Lan Anh', '0911111119', NULL, NULL, NULL, 'hoangthilananh', 'user', 4, 3),
 (14, 'tuan@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-11-06 23:41:13', 'Nguyễn Thị Hạnh', '0911111120', NULL, NULL, NULL, 'nguyenthihanh', 'user', 4, 3),
 (15, 'phuc@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-11-06 23:41:21', 'Trần Thị Hiền', '0911111121', NULL, NULL, NULL, 'tranthihien', 'user', 1, 3);
 
@@ -2727,7 +2734,7 @@ ALTER TABLE `task_approval_logs`
 -- AUTO_INCREMENT for table `task_comments`
 --
 ALTER TABLE `task_comments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `task_extensions`
@@ -2745,7 +2752,7 @@ ALTER TABLE `task_files`
 -- AUTO_INCREMENT for table `task_roster`
 --
 ALTER TABLE `task_roster`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=107;
 
 --
 -- AUTO_INCREMENT for table `users`
