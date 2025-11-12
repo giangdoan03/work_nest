@@ -136,8 +136,11 @@
                             <div class="author" v-if="String(item.user_id) !== String(currentUserId)">
                                 {{ getUserById(item.user_id)?.name || 'Không rõ' }}
                             </div>
-                            {{ item.content }}
+
+                            <!-- nội dung có thể chứa link -->
+                            <div class="msg-content" v-html="formatMessage(item.content)"></div>
                         </div>
+
 
                         <!-- Attachments trong bubble -->
                         <div v-if="item.files && item.files.length" class="tg-attachments">
@@ -1144,32 +1147,93 @@ async function createNewComment({ keepMentions = false } = {}) {
 }
 
 
+// helper: sắp xếp mảng comment theo created_at tăng dần (cũ -> mới)
+function sortCommentsAsc(comments = []) {
+    return (comments || []).slice().sort((a, b) => {
+        const ta = a?.created_at ? new Date(a.created_at).getTime() : 0
+        const tb = b?.created_at ? new Date(b.created_at).getTime() : 0
+        return ta - tb
+    })
+}
+
 
 /* ===== list (paging) ===== */
 async function getListComment(page = 1) {
     loadingComment.value = true
     try {
-        const res = await getComments(taskId.value, {page})
-        const comments = res?.data?.comments ?? []
+        const res = await getComments(taskId.value, { page })
+        // change here depending on API shape:
+        const rawComments = res?.data?.comments ?? []
+        // ensure comments are sorted oldest -> newest
+        const sorted = sortCommentsAsc(Array.isArray(rawComments) ? rawComments : [])
+
+        const el = listEl.value
+
         if (page === 1) {
-            listComment.value = comments
+            // page 1: replace whole list and scroll to bottom so newest visible
+            listComment.value = sorted
             await nextTick()
             measureFooter()
             scrollToBottom()
         } else {
-            const el = listEl.value
-            const prevScrollBottom = el ? el.scrollHeight - el.scrollTop : 0
-            listComment.value = [...listComment.value, ...comments]
+            // page > 1: assume API returned older messages for this page.
+            // We want to prepend older messages to the top and keep scroll position stable.
+            const prevScrollHeight = el ? el.scrollHeight : 0
+
+            // prepend older items
+            listComment.value = [...sorted, ...(listComment.value || [])]
+
             await nextTick()
             measureFooter()
-            if (el) el.scrollTop = el.scrollHeight - prevScrollBottom
+            if (el) {
+                // keep viewport at the same visual message:
+                el.scrollTop = (el.scrollTop || 0) + (el.scrollHeight - prevScrollHeight)
+            }
         }
+
+        // update paging info (unchanged)
         totalPage.value = Number(res?.data?.pagination?.totalPages ?? 1)
         currentPage.value = page
     } catch (e) {
         console.error(e)
     } finally {
         loadingComment.value = false
+    }
+}
+
+// Hàm nhận diện link & chèn HTML có thẻ <a>
+function formatMessage(content = '') {
+    if (!content) return ''
+    const text = String(content)
+    // regex nhận link: bắt https:// hoặc www.
+    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi
+    return text.replace(urlRegex, (url) => {
+        const href = url.startsWith('http') ? url : `https://${url}`
+        const host = getHost(href)
+        return `
+      <a href="${href}" target="_blank" rel="noopener noreferrer" class="msg-link">
+        <img src="${faviconOf(href)}" alt="" class="msg-link-favicon"/>
+        <span class="msg-link-text">${host}</span>
+      </a>
+    `
+    })
+}
+
+function getHost(u = '') {
+    try {
+        const url = new URL(u)
+        return url.host.replace(/^www\./, '')
+    } catch {
+        return u
+    }
+}
+
+function faviconOf(u = '') {
+    try {
+        const host = new URL(u).host
+        return `https://icons.duckduckgo.com/ip3/${host}.ico`
+    } catch {
+        return 'https://icons.duckduckgo.com/ip3/example.com.ico'
     }
 }
 
@@ -2144,6 +2208,47 @@ onBeforeUnmount(() => {
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
     transition: all 0.2s ease-in-out;
 }
+
+.msg-content {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    line-height: 1.5;
+    color: var(--txt-main);
+}
+
+/* style link đẹp */
+.msg-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    color: #1677ff;
+    font-weight: 500;
+    background: #f0f6ff;
+    border: 1px solid #cfe3ff;
+    border-radius: 999px;
+    padding: 2px 8px 2px 4px;
+    transition: background-color 0.2s, transform 0.05s;
+}
+
+.msg-link:hover {
+    background: #e6f0ff;
+    transform: translateY(-1px);
+}
+
+.msg-link-favicon {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+}
+
+.msg-link-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
 
 
 
