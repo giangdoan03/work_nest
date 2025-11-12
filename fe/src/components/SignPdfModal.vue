@@ -56,27 +56,18 @@
             </div>
         </div>
         <template #footer>
-            <a-button
-                :disabled="saving"
-                @click="$emit('update:open', false)"
-            >
+            <a-button :disabled="saving" @click="$emit('update:open', false)">
                 Hủy
             </a-button>
 
-            <a-button
-                v-if="signedBlobUrl"
-                :disabled="saving"
-                @click="downloadSigned"
-            >
+            <a-button :disabled="!signedBlobUrl || saving" @click="downloadSigned">
                 Tải bản đã ký
             </a-button>
 
-            <a-button
-                type="primary"
-                :loading="saving"
-                :disabled="!isPdfReady || saving"
-                @click="handleSave"
-            >
+            <a-button :disabled="saving" @click="downloadOriginal">
+                Tải bản gốc
+            </a-button>
+            <a-button type="primary" :loading="saving" :disabled="!isPdfReady || saving" @click="handleSave">
                 Lưu bản đã ký
             </a-button>
         </template>
@@ -184,6 +175,18 @@ function downloadSigned() {
     a.click()
     document.body.removeChild(a)
 }
+
+function downloadOriginal() {
+    if (!props.pdfUrl) return message.warning('Không có file gốc.')
+    const a = document.createElement('a')
+    a.href = props.pdfUrl
+    // nếu bạn muốn force download filename
+    a.download = 'original.pdf'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+}
+
 
 const myMarkers = ref(normalizeMarkers(props.markers))
 
@@ -738,11 +741,51 @@ async function handleSave() {
             }
         }
 
+        // --- sau khi đã tính xPdf, yPdf, wPdf, hPdf, rotateDeg ---
         page.drawImage(img, {
             x: xPdf, y: yPdf, width: wPdf, height: hPdf,
             opacity: opacity.value / 100,
             rotate: rotateDeg ? degrees(rotateDeg) : undefined
         })
+
+// --- thêm: chèn thời gian ký nhỏ, bên dưới ảnh ---
+        try {
+            // nhúng font tiêu chuẩn
+            const helv = await pdfDocW.embedFont(PDFLib.StandardFonts.Helvetica)
+            // định dạng thời gian (bạn có thể thay đổi locale / format)
+            const now = new Date()
+            // ví dụ: "11/12/2025 14:35" — dùng locale của người dùng nếu cần
+            const timeText = now.toLocaleString() // hoặc toISOString() / custom format
+
+            // kích thước chữ (px trên hệ PDF units)
+            const fontSize = Math.max(8, Math.min(12, (wPdf / 20))) // auto nhỏ, hoặc hardcode 10
+            const textWidth = helv.widthOfTextAtSize(timeText, fontSize)
+            const textHeight = helv.heightAtSize(fontSize) || fontSize // heightAtSize fallback
+
+            // căn giữa theo ngang của ảnh
+            let textX = xPdf + (wPdf - textWidth) / 2
+            // đặt dưới ảnh: một khoảng gap nhỏ (ví dụ 4 units)
+            let textY = yPdf - textHeight - 4
+
+            // nếu textY âm (ra ngoài trang), fallback đặt phía trên ảnh
+            if (textY < 0) {
+                textY = yPdf + hPdf + 4
+            }
+
+            // drawText hỗ trợ rotate tương tự drawImage — áp dụng cùng rotateDeg
+            page.drawText(timeText, {
+                x: textX,
+                y: textY,
+                size: fontSize,
+                font: helv,
+                opacity: 1, // có thể giảm nếu muốn mờ hơn
+                rotate: rotateDeg ? degrees(rotateDeg) : undefined
+            })
+        } catch (err) {
+            // nếu không chèn được text thì bỏ qua (không block save)
+            console.warn('Không chèn được thời gian ký:', err)
+        }
+
 
         const out = await pdfDocW.save({ useObjectStreams: false })
         const signedBlob = new Blob([out], { type: 'application/pdf' })
