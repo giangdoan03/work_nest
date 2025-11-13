@@ -759,39 +759,77 @@ async function handleSave() {
 
         // --- thêm: chèn thời gian ký nhỏ, bên dưới ảnh ---
         try {
-            // nhúng font tiêu chuẩn
-            const helv = await pdfDocW.embedFont(PDFLib.StandardFonts.Helvetica)
-            // định dạng thời gian (bạn có thể thay đổi locale / format)
-            const now = new Date()
-            // ví dụ: "11/12/2025 14:35" — dùng locale của người dùng nếu cần
-            const timeText = now.toLocaleString() // hoặc toISOString() / custom format
-
-            // kích thước chữ (px trên hệ PDF units)
-            const fontSize = Math.max(6, Math.min(12, (wPdf / 20))) // auto nhỏ, hoặc hardcode 10
-            const textWidth = helv.widthOfTextAtSize(timeText, fontSize)
-            const textHeight = helv.heightAtSize(fontSize) || fontSize // heightAtSize fallback
-
-            // căn giữa theo ngang của ảnh
-            let textX = xPdf + (wPdf - textWidth) / 2
-            // đặt dưới ảnh: một khoảng gap nhỏ (ví dụ 4 units)
-            let textY = yPdf - textHeight - 4
-
-            // nếu textY âm (ra ngoài trang), fallback đặt phía trên ảnh
-            if (textY < 0) {
-                textY = yPdf + hPdf + 4
+            // cố gắng register fontkit (cần để embed custom TTF)
+            try {
+                const fontkitMod = await import('@pdf-lib/fontkit')
+                const fontkit = fontkitMod?.default || fontkitMod
+                pdfDocW.registerFontkit(fontkit)
+            } catch (e) {
+                console.warn('Không load được @pdf-lib/fontkit, sẽ fallback nếu cần:', e)
             }
 
-            // drawText hỗ trợ rotate tương tự drawImage — áp dụng cùng rotateDeg
+            // đường dẫn font Unicode trong public
+            const fontUrl = '/fonts/NotoSans-Regular.ttf'
+            let usedFont = null
+            let fontSize = Math.max(5, Math.min(12, (wPdf / 20))) // cài theo bạn
+            let timeText = ''
+            try {
+                // build time string: Date dd/mm/yyyy HH:MM:SS
+                const now = new Date()
+                const day = String(now.getDate()).padStart(2, '0')
+                const month = String(now.getMonth() + 1).padStart(2, '0')
+                const year = now.getFullYear()
+                const hours = String(now.getHours()).padStart(2, '0')
+                const minutes = String(now.getMinutes()).padStart(2, '0')
+                const seconds = String(now.getSeconds()).padStart(2, '0')
+                timeText = `Date: ${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
+
+                // thử load font unicode
+                const fResp = await fetch(fontUrl)
+                if (fResp.ok) {
+                    const fBytes = await fResp.arrayBuffer()
+                    usedFont = await pdfDocW.embedFont(fBytes)
+                } else {
+                    console.warn('Không load được TTF Unicode, status=', fResp.status)
+                }
+            } catch (e) {
+                console.warn('Lỗi khi load/embed font Unicode:', e)
+            }
+
+            // helper sanitize nếu phải fallback sang WinAnsi
+            const sanitizeToAscii = (s) => {
+                try {
+                    const nd = s.normalize('NFD').replace(/\p{Diacritic}/gu, '')
+                    return nd.replace(/Đ/g, 'D').replace(/đ/g, 'd')
+                } catch {
+                    return s.replace(/[Đđ]/g, c => c === 'Đ' ? 'D' : 'd').replace(/[^\x00-\x7F]/g, '')
+                }
+            }
+
+            if (!usedFont) {
+                // fallback: embed Helvetica (WinAnsi) and sanitize text to avoid WinAnsi error
+                usedFont = await pdfDocW.embedFont(PDFLib.StandardFonts.Helvetica)
+                timeText = sanitizeToAscii(timeText)
+            }
+
+            // tính kích thước / vị trí như cũ
+            const textWidth = usedFont.widthOfTextAtSize(timeText, fontSize)
+            const textHeight = (typeof usedFont.heightAtSize === 'function') ? usedFont.heightAtSize(fontSize) : fontSize
+
+            let textX = xPdf + (wPdf - textWidth) / 2
+            let textY = yPdf - textHeight - 4
+            if (textY < 0) textY = yPdf + hPdf + 4
+
+            // draw text (rotate giữ nguyên)
             page.drawText(timeText, {
                 x: textX,
                 y: textY,
                 size: fontSize,
-                font: helv,
-                opacity: 1, // có thể giảm nếu muốn mờ hơn
+                font: usedFont,
+                opacity: 1,
                 rotate: rotateDeg ? degrees(rotateDeg) : undefined
             })
         } catch (err) {
-            // nếu không chèn được text thì bỏ qua (không block save)
             console.warn('Không chèn được thời gian ký:', err)
         }
 
@@ -799,7 +837,7 @@ async function handleSave() {
         const out = await pdfDocW.save({ useObjectStreams: false })
         const signedBlob = new Blob([out], { type: 'application/pdf' })
 
-// 🔹 cập nhật URL cho nút "Tải bản đã ký"
+        // 🔹 cập nhật URL cho nút "Tải bản đã ký"
         if (signedBlobUrl.value) {
             URL.revokeObjectURL(signedBlobUrl.value)
         }
@@ -881,14 +919,22 @@ async function handleApproveDuyet() {
         // lấy tên đã sanitize (viết liền, không dấu)
         const approverDisplay = sanitizeToAscii(rawApprover);
 
-        // format thời gian
         const now = new Date();
-        const pad = (n) => String(n).padStart(2, '0');
-        const datePart = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
-        const timePart = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
-        // kết hợp text: tên (không dấu, viết liền) — Date: dd/mm/yyyy hh:mm
-        const timeText = `${approverDisplay} — Date: ${datePart} ${timePart}`;
+        const day = now.getDate().toString().padStart(2, "0");
+        const month = (now.getMonth() + 1).toString().padStart(2, "0");
+        const year = now.getFullYear();
+
+        const hours = now.getHours().toString().padStart(2, "0");
+        const minutes = now.getMinutes().toString().padStart(2, "0");
+        const seconds = now.getSeconds().toString().padStart(2, "0");
+
+        // DD/MM/YYYY, HH:MM:SS
+        const vnTime = `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
+
+        // Text hiển thị trong PDF
+        const timeText = `${approverDisplay} — Date: ${vnTime}`;
+
 
         // ---- EMBED FONT UNICODE (bắt buộc) ----
         const fontUrl = '/fonts/NotoSans-Regular.ttf';
