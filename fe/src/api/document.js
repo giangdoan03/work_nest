@@ -63,5 +63,18 @@ export const uploadSignedPdf = (formData) =>
 export const saveSignedDocument = (payload) =>
     instance.post('/documents/signed', payload)
 
+// Lưu thông tin duyệt (KHÔNG phải ký)
+// Upload bản PDF đã ký cho task_files (API mới)
+export const uploadTaskFileSigned = (formData) =>
+    instance.post('/task-files/upload-signed', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    })
+
+// Ghi nhận thông tin duyệt (approve) — lưu metadata vào DB
+export const approveDocument = (payload) =>
+    instance.post('/documents/approve', payload, {
+        headers: { 'Content-Type': 'application/json' }
+    });
+
 
 

@@ -94,7 +94,12 @@
 
                                 <a-tooltip v-if="item.kind === 'pdf' && mySignatureUrl" title="Ký tài liệu">
                                     <a-button size="large" shape="circle" type="dashed" @click="openSign(item)">
-                                        🖋
+                                        <img
+                                            :src="'/pen-icon.svg'"
+                                            class="icon-pen"
+                                            alt="pen"
+                                            style="width: 20px"
+                                        />
                                     </a-button>
                                 </a-tooltip>
                             </div>
@@ -110,8 +115,10 @@
             v-model:open="signOpen"
             :pdf-url="signTarget.pdfUrl"
             :signature-url="mySignatureUrl"
+            :sign-target="signTarget"
             @done="handleSignedBlob"
         />
+
     </a-card>
 </template>
 
@@ -129,7 +136,8 @@ import {
     FileWordOutlined,
     ReloadOutlined,
     SearchOutlined,
-    UserOutlined
+    UserOutlined,
+    HighlightOutlined
 } from '@ant-design/icons-vue'
 import {message} from 'ant-design-vue'
 
@@ -361,6 +369,24 @@ async function fetchData() {
         loading.value = false
     }
 }
+
+
+// async function fetchData() {
+//     loading.value = true
+//     try {
+//         const { data } = await getMyApprovalInboxFiles()
+//         const baseItems = data?.items ?? data?.data ?? []
+//
+//         rows.value = baseItems
+//         current.value = 1
+//
+//     } catch (e) {
+//         console.error(e)
+//         message.error(e?.response?.data?.message || 'Không tải được danh sách cần duyệt.')
+//     } finally {
+//         loading.value = false
+//     }
+// }
 
 const stepStatusLabel = (step) => {
     const s = String(step.status || step.step_status || '').toLowerCase()

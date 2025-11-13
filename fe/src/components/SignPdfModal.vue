@@ -87,6 +87,8 @@ import {ref, watch, nextTick, shallowRef, markRaw, computed, onBeforeUnmount} fr
 import {message} from 'ant-design-vue'
 import {checkSession} from '@/api/auth' // ⭐ dùng axios client chung
 
+import { uploadTaskFileSigned , approveDocument} from '@/api/document'
+
 // -------- pdf.js (legacy) + worker url --------
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf'
 import pdfWorker from 'pdfjs-dist/legacy/build/pdf.worker.min.js?url'
@@ -128,6 +130,8 @@ const props = defineProps({
 
     // Lưu xong có đóng modal không
     closeAfterSave: {type: Boolean, default: false},
+    // --- thêm prop signTarget ---
+    signTarget: { type: Object, default: null },
 })
 const emits = defineEmits(['update:open', 'done'])
 
@@ -867,29 +871,92 @@ async function handleSave() {
 }
 
 
+
+
+
 async function handleApproveDuyet() {
     if (!props.pdfUrl) return message.warning('Không có file PDF để duyệt.');
     if (!pdfDoc.value) return message.warning('Vui lòng chờ PDF tải xong.');
-    if (!PDFLib) await loadPdfLib();
+
+    const target = props.signTarget || (typeof signTarget !== 'undefined' ? signTarget.value : null);
+    if (!target) {
+        console.warn('No signTarget — payload sẽ không có task_file_id.');
+    }
+
+    // === 1) Chặn duyệt nếu FE biết là đã duyệt ===
+    // === 1) Chặn duyệt: verify trực tiếp từ server (an toàn hơn) ===
+    let alreadyApproved = false;
+
+    if (target) {
+        // 1. quick local check (fast UX)
+        const quick = (
+            String(target.status || '').toLowerCase() === 'approved' ||
+            String(target.approval?.status || '').toLowerCase() === 'approved' ||
+            String(target.document?.status || '').toLowerCase() === 'approved'
+        );
+        if (quick) {
+            alreadyApproved = true;
+        } else if (target.approval_id) {
+            // 2. nếu quick không khẳng định, gọi server để verify thật
+            try {
+                // getApprovalDetail là API bạn đang có trong code
+                const detRes = await getApprovalDetail(target.approval_id);
+                const det = detRes?.data || {};
+                const apv = det.approval || {};
+                const doc = det.document || {};
+                // kiểm tra các cờ trên server
+                const srvOk = (
+                    String(apv.status || '').toLowerCase() === 'approved' ||
+                    String(doc.status || '').toLowerCase() === 'approved'
+                );
+
+                // nếu server có signatures mới (file_signatures) mà status = approved -> xem là đã duyệt
+                const sigs = det.signatures || det.file_signatures || [];
+                const hasApprovedSig = Array.isArray(sigs) && sigs.some(s => String(s.status || '').toLowerCase() === 'approved');
+
+                alreadyApproved = srvOk || hasApprovedSig;
+
+                // nếu server trả thông tin bước và step hiện đã được approved bởi bạn/ai đó
+                const steps = det.steps || [];
+                if (!alreadyApproved && Array.isArray(steps)) {
+                    // nếu tất cả steps trước đó đều approved và current step không thuộc user => coi là đã qua
+                    const anyCurrent = steps.some(s => String(s.status || '').toLowerCase() === 'pending');
+                    // nếu không có pending step => đã hoàn tất
+                    if (!anyCurrent) {
+                        alreadyApproved = true;
+                    }
+                }
+            } catch (e) {
+                // Gọi server fail: không chặn (vì backend idempotent sẽ bảo vệ)
+                console.warn('Không thể verify trạng thái duyệt từ server, sẽ tiếp tục. ', e);
+                alreadyApproved = false;
+            }
+        }
+    }
+
+    if (alreadyApproved) {
+        return message.info('Tài liệu này đã được duyệt trước đó.');
+    }
 
     savingApprove.value = true;
+
     try {
-        // tải PDF gốc
+        // ============================
+        // (2) CHÈN TEXT DUYỆT LÊN PDF
+        // ============================
         const pdfRes = await fetch(props.pdfUrl);
         if (!pdfRes.ok) throw new Error('Không tải được file PDF');
         const pdfBytes = await pdfRes.arrayBuffer();
 
-        const { PDFDocument, rgb } = PDFLib;
+        const { PDFDocument, rgb, StandardFonts } = PDFLib;
         const pdfDocW = await PDFDocument.load(pdfBytes, { updateMetadata: false });
 
-        // CHÚ Ý: register fontkit trước khi embed custom TTF
+        // try load fontkit
         try {
             const fontkitMod = await import('@pdf-lib/fontkit');
-            const fontkit = fontkitMod?.default || fontkitMod;
-            pdfDocW.registerFontkit(fontkit);
+            pdfDocW.registerFontkit(fontkitMod.default || fontkitMod);
         } catch (e) {
-            console.warn('Không thể nạp @pdf-lib/fontkit. Hãy chắc chắn đã cài package @pdf-lib/fontkit', e);
-            throw new Error('Fontkit required to embed custom TTF fonts');
+            console.warn('Không thể load fontkit:', e);
         }
 
         // chọn trang cuối
@@ -897,90 +964,69 @@ async function handleApproveDuyet() {
         const page = pdfDocW.getPage(lastIndex);
         const pdfW = page.getWidth();
 
-        // lấy tên người duyệt (gốc)
+        // tên người duyệt
         const rawApprover =
             currentUser.value?.full_name ||
             currentUser.value?.name ||
             currentUser.value?.username ||
             'NguoiDuyet';
 
-        // Hàm sanitize: bỏ dấu + bỏ khoảng trắng (viết liền, không dấu)
+        // bỏ dấu + ký tự unicode nếu font không hỗ trợ
         const sanitizeToAscii = (s) => {
             try {
                 const nd = s.normalize('NFD').replace(/\p{Diacritic}/gu, '');
-                const noD = nd.replace(/Đ/g, 'D').replace(/đ/g, 'd');
-                return noD.replace(/[^\x00-\x7F ]/g, '');  // giữ khoảng trắng
-            } catch (e) {
-                return s
-                    .replace(/[Đđ]/g, c => (c === 'Đ' ? 'D' : 'd'))
-                    .replace(/[^\x00-\x7F ]/g, '');
+                return nd.replace(/Đ/g, 'D').replace(/đ/g, 'd').replace(/[^\x00-\x7F ]/g, '');
+            } catch {
+                return String(s).replace(/[Đđ]/g, c => c === 'Đ' ? 'D' : 'd').replace(/[^\x00-\x7F ]/g, '');
             }
         };
-        // lấy tên đã sanitize (viết liền, không dấu)
+
         const approverDisplay = sanitizeToAscii(rawApprover);
 
         const now = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        const vnTime = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}, ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
-        const day = now.getDate().toString().padStart(2, "0");
-        const month = (now.getMonth() + 1).toString().padStart(2, "0");
-        const year = now.getFullYear();
-
-        const hours = now.getHours().toString().padStart(2, "0");
-        const minutes = now.getMinutes().toString().padStart(2, "0");
-        const seconds = now.getSeconds().toString().padStart(2, "0");
-
-        // DD/MM/YYYY, HH:MM:SS
-        const vnTime = `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
-
-        // Text hiển thị trong PDF
         const timeText = `${approverDisplay} — Date: ${vnTime}`;
 
-
-        // ---- EMBED FONT UNICODE (bắt buộc) ----
-        const fontUrl = '/fonts/NotoSans-Regular.ttf';
-        const fontResp = await fetch(fontUrl);
-        if (!fontResp.ok) {
-            message.error('Không load được font Unicode, không thể hiển thị dấu tiếng Việt!');
-            throw new Error('Font not loaded');
+        // try unicode font
+        let usedFont = null;
+        try {
+            const f = await fetch('/fonts/NotoSans-Regular.ttf');
+            if (f.ok) {
+                const fBytes = await f.arrayBuffer();
+                usedFont = await pdfDocW.embedFont(fBytes);
+            }
+        } catch (e) {
+            console.warn('Unicode font fail, fallback Helvetica.');
         }
-        const fontBytes = await fontResp.arrayBuffer();
-        const unicodeFont = await pdfDocW.embedFont(fontBytes);
+        if (!usedFont) usedFont = await pdfDocW.embedFont(StandardFonts.Helvetica);
 
-        // ---- Tính vị trí vẽ ----
-        // bạn giảm fontSize rồi -> giữ như hiện tại hoặc thay đổi tuỳ ý
         const fontSize = 6;
-        const textWidth = unicodeFont.widthOfTextAtSize(timeText, fontSize);
-        const textHeight = typeof unicodeFont.heightAtSize === 'function' ? unicodeFont.heightAtSize(fontSize) : fontSize;
-
+        const textWidth = usedFont.widthOfTextAtSize(timeText, fontSize);
+        const textHeight = usedFont.heightAtSize ? usedFont.heightAtSize(fontSize) : fontSize;
         const margin = 20;
-        const textX = Math.max(margin, pdfW - margin - textWidth); // đặt ở phải, căn vừa với chiều rộng text
+
+        const textX = Math.max(margin, pdfW - margin - textWidth);
         const textY = margin;
 
-        // Gạch ngang: **vừa bằng nội dung chữ** (đặt ngay phía trên text)
-        const lineGap = 4; // khoảng cách nhẹ giữa chữ và đường
-        const lineHeight = 0.5; // mảnh
-        const lineX = textX;             // bắt đầu cùng X với chữ
-        const lineW = textWidth;         // độ dài = chiều rộng chữ
-        const lineY = textY + textHeight + lineGap;
-
         page.drawRectangle({
-            x: lineX,
-            y: lineY - (lineHeight / 2),
-            width: lineW,
-            height: lineHeight,
+            x: textX,
+            y: textY - 2,
+            width: textWidth,
+            height: 0.5,
             color: rgb(0, 0, 0)
         });
 
-        // ---- VẼ TEXT (tên đã sanitize viết liền, phần Date vẫn bình thường) ----
         page.drawText(timeText, {
             x: textX,
             y: textY,
             size: fontSize,
-            font: unicodeFont,
+            font: usedFont,
             color: rgb(0, 0, 0)
         });
 
-        // ---- Xuất PDF ----
+        // tạo blob để preview local
         const out = await pdfDocW.save({ useObjectStreams: false });
         const outBlob = new Blob([out], { type: 'application/pdf' });
 
@@ -988,19 +1034,82 @@ async function handleApproveDuyet() {
         signedBlobUrl.value = URL.createObjectURL(outBlob);
 
         emits('approved', outBlob);
-        message.success('Đã duyệt và chèn chữ thành công.');
+        message.success('Đã chèn thông tin duyệt vào file (local).');
 
-        // reload preview
+        // ============================
+        // (3) LƯU METADATA VÀO DB
+        // ============================
+        const payload = {
+            task_file_id: target?.id || target?.source_task_id || target?.file_id || null,
+            approval_id: target?.approval_id || null,
+            note: `Duyệt bởi ${approverDisplay} lúc ${vnTime}`,
+            signed_by: currentUser.value?.id || null,
+            signed_at: new Date().toISOString(),
+            status: 'approved',
+            approver_display: approverDisplay,
+            signed_file_name: target?.title || null,
+            signed_file_path: target?.signed_pdf_url || null,
+            signed_file_size: target?.file_size || null,
+            document_id: target?.document_id || target?.document?.id || null,
+        };
+
+        let res;
         try {
-            const buf = await fetch(signedBlobUrl.value).then((r) => r.arrayBuffer());
-            const task = pdfjsLib.getDocument({ data: buf });
-            const doc = await task.promise;
+            res = await approveDocument(payload);
+        } catch (e) {
+            const msg = e?.response?.data?.message || e.message;
+            return message.error(msg || 'Lỗi khi lưu thông tin duyệt.');
+        }
+
+        const serverData = res?.data || {};
+
+        // nếu server báo đã duyệt từ trước → xử lý idempotent
+        if (serverData?.message && /được duyệt trước/i.test(serverData.message)) {
+            message.info(serverData.message);
+
+            const existingSig = serverData?.data;
+            if (target) {
+                target.status = 'approved';
+                if (target.approval) target.approval.status = 'approved';
+                target.file_signature = existingSig;
+            }
+
+            emits('done');
+            if (typeof fetchData === 'function') {
+                try { await fetchData(); } catch {}
+            }
+
+            savingApprove.value = false;
+            return;
+        }
+
+        // tạo mới thành công
+        message.success(serverData?.message || 'Duyệt thành công.');
+
+        if (target) {
+            target.status = 'approved';
+            if (target.approval) target.approval.status = 'approved';
+            target.file_signature = serverData?.data || null;
+        }
+
+        emits('done');
+        if (typeof fetchData === 'function') {
+            try { await fetchData(); } catch {}
+        }
+
+        // ============================
+        // (4) reload UI preview
+        // ============================
+        try {
+            const buf = await fetch(signedBlobUrl.value).then(r => r.arrayBuffer());
+            const doc = await pdfjsLib.getDocument({ data: buf }).promise;
             pdfDoc.value = markRaw(doc);
             pageCount.value = doc.numPages;
             queueRender();
         } catch (e) {
-            console.warn('Không tải lại preview sau khi duyệt:', e);
+            console.warn('Không reload preview:', e);
         }
+
     } catch (err) {
         console.error(err);
         message.error('Duyệt thất bại.');
@@ -1008,6 +1117,8 @@ async function handleApproveDuyet() {
         savingApprove.value = false;
     }
 }
+
+
 
 
 

@@ -1,9 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Nov 13, 2025 at 09:39 AM
+-- Generation Time: Nov 13, 2025 at 05:26 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -1247,7 +1247,7 @@ INSERT INTO `documents` (`id`, `title`, `file_path`, `signed_pdf_url`, `signed_b
 (34, 'maudonphuc_khao.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao-1.pdf', NULL, NULL, NULL, 2, 3, 277, 'private', 'wp_media', 128166, '2025-11-12 00:15:50', '2025-11-12 00:15:50', 'task_upload', NULL, 0, NULL, NULL, ''),
 (35, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-5.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/signed-58.pdf', 4, '2025-11-13 11:03:59', 2, 3, 277, 'private', 'wp_media', 129360, '2025-11-13 10:46:57', '2025-11-13 11:03:59', 'task_upload', NULL, 0, NULL, NULL, 'pending'),
 (36, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-6.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/signed-61.pdf', 1, '2025-11-13 11:12:32', 3, 4, 277, 'private', 'wp_media', 129360, '2025-11-13 11:06:17', '2025-11-13 11:12:32', 'task_upload', NULL, 0, NULL, NULL, 'pending'),
-(37, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-7.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/signed-66.pdf', 5, '2025-11-13 15:10:53', 2, 3, 277, 'private', 'wp_media', 129360, '2025-11-13 11:15:22', '2025-11-13 15:10:53', 'task_upload', NULL, 0, NULL, NULL, 'pending');
+(37, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-7.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/signed-67.pdf', 4, '2025-11-13 22:54:49', 2, 3, 277, 'private', 'wp_media', 129360, '2025-11-13 11:15:22', '2025-11-13 22:54:49', 'task_upload', NULL, 0, NULL, NULL, 'pending');
 
 -- --------------------------------------------------------
 
@@ -1417,6 +1417,36 @@ INSERT INTO `document_settings` (`id`, `key`, `value`, `updated_at`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `file_signatures`
+--
+
+CREATE TABLE `file_signatures` (
+  `id` int UNSIGNED NOT NULL,
+  `task_file_id` int UNSIGNED NOT NULL,
+  `approval_id` int UNSIGNED DEFAULT NULL,
+  `document_id` int DEFAULT NULL,
+  `signed_file_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `signed_file_path` varchar(1024) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `signed_file_size` bigint DEFAULT NULL,
+  `signed_mime` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `signed_by` int UNSIGNED DEFAULT NULL,
+  `signed_at` datetime DEFAULT NULL,
+  `status` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'signed',
+  `note` text COLLATE utf8mb4_unicode_ci,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `file_signatures`
+--
+
+INSERT INTO `file_signatures` (`id`, `task_file_id`, `approval_id`, `document_id`, `signed_file_name`, `signed_file_path`, `signed_file_size`, `signed_mime`, `signed_by`, `signed_at`, `status`, `note`, `created_at`, `updated_at`) VALUES
+(9, 277, 23, 35, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/signed-58.pdf', NULL, NULL, 4, '2025-11-13 16:50:19', 'approved', 'Duyệt bởi Ta Quy Tho lúc 13/11/2025, 23:50:18', '2025-11-13 23:50:19', '2025-11-13 23:50:19');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `permissions`
 --
 
@@ -1545,7 +1575,7 @@ INSERT INTO `persons` (`id`, `user_id`, `first_name`, `last_name`, `name`, `avat
 CREATE TABLE `roles` (
   `id` int NOT NULL,
   `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -2238,7 +2268,9 @@ INSERT INTO `task_files` (`id`, `task_id`, `document_id`, `comment_id`, `file_na
 (42, 277, NULL, NULL, 'to_trinh_09_11_2025.pdf', 'to_trinh_09_11_2025.pdf', NULL, 4, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-6.pdf', '2025-11-13 04:06:17', '2025-11-13 11:06:17', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-13 11:06:17', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
 (43, 277, NULL, NULL, 'to_trinh_09_11_2025.pdf', 'to_trinh_09_11_2025.pdf', NULL, 4, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-6.pdf', '2025-11-13 04:06:30', '2025-11-13 11:06:30', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 4, '2025-11-13 11:06:30', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
 (44, 277, NULL, NULL, 'to_trinh_09_11_2025.pdf', 'to_trinh_09_11_2025.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-7.pdf', '2025-11-13 04:15:22', '2025-11-13 11:15:22', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-13 11:15:22', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
-(45, 277, NULL, NULL, 'to_trinh_09_11_2025.pdf', 'to_trinh_09_11_2025.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-7.pdf', '2025-11-13 04:15:26', '2025-11-13 11:15:26', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-13 11:15:26', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL);
+(45, 277, NULL, NULL, 'to_trinh_09_11_2025.pdf', 'to_trinh_09_11_2025.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-7.pdf', '2025-11-13 04:15:26', '2025-11-13 11:15:26', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-13 11:15:26', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(46, 277, NULL, NULL, 'maudonphuc_khao.pdf', 'maudonphuc_khao.pdf', NULL, 4, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao-1.pdf', '2025-11-13 16:58:15', '2025-11-13 23:58:15', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 4, '2025-11-13 23:58:15', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL),
+(47, 277, NULL, NULL, 'maudonphuc_khao.pdf', 'maudonphuc_khao.pdf', NULL, 4, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao-1.pdf', '2025-11-13 17:04:40', '2025-11-14 00:04:40', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 4, '2025-11-14 00:04:40', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL);
 
 -- --------------------------------------------------------
 
@@ -2480,6 +2512,15 @@ ALTER TABLE `document_settings`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `file_signatures`
+--
+ALTER TABLE `file_signatures`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `task_file_id` (`task_file_id`),
+  ADD KEY `approval_id` (`approval_id`),
+  ADD KEY `signed_by` (`signed_by`);
+
+--
 -- Indexes for table `permissions`
 --
 ALTER TABLE `permissions`
@@ -2712,6 +2753,12 @@ ALTER TABLE `document_settings`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
+-- AUTO_INCREMENT for table `file_signatures`
+--
+ALTER TABLE `file_signatures`
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
 -- AUTO_INCREMENT for table `permissions`
 --
 ALTER TABLE `permissions`
@@ -2781,7 +2828,7 @@ ALTER TABLE `task_extensions`
 -- AUTO_INCREMENT for table `task_files`
 --
 ALTER TABLE `task_files`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
 
 --
 -- AUTO_INCREMENT for table `task_roster`

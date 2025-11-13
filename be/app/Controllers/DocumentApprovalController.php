@@ -624,38 +624,42 @@ class DocumentApprovalController extends ResourceController
         $db = db_connect();
 
         $sql = "
-        SELECT
-            das.id                 AS step_id,
-            das.status             AS step_status,
-            das.sequence           AS step_sequence,
+    SELECT
+        das.id                 AS step_id,
+        das.status             AS step_status,
+        das.sequence           AS step_sequence,
 
-            da.id                  AS approval_id,
-            da.document_id,
-            da.source_type,
-            da.status              AS approval_status,
-            da.current_step_index,
+        da.id                  AS approval_id,
+        da.document_id,
+        da.source_type,
+        da.status              AS approval_status,
+        da.current_step_index,
 
-            d.title                AS title,
-            d.file_path            AS file_path,
-            d.uploaded_by,
-            u.name                 AS uploader_name,
-            d.created_at
+        d.title                AS title,
+        d.file_path            AS file_path,
+        d.source_task_id       AS source_task_id,
+        d.signed_pdf_url       AS signed_pdf_url,
+        d.signed_by       AS signed_by,
+        d.uploaded_by,
+        u.name                 AS uploader_name,
+        d.created_at
 
-        FROM document_approval_steps das
-        JOIN document_approvals da
-            ON da.id = das.approval_id
+    FROM document_approval_steps das
+    JOIN document_approvals da
+        ON da.id = das.approval_id
 
-        LEFT JOIN documents d
-            ON d.id = da.document_id
+    LEFT JOIN documents d
+        ON d.id = da.document_id
 
-        LEFT JOIN users u
-            ON u.id = d.uploaded_by
+    LEFT JOIN users u
+        ON u.id = d.uploaded_by
 
-        WHERE das.approver_id = ?
-          AND da.source_type = 'document'
+    WHERE das.approver_id = ?
+      AND da.source_type = 'document'
 
-        ORDER BY das.id DESC
-    ";
+    ORDER BY das.id DESC
+";
+
 
         $rows = $db->query($sql, [$userId])->getResultArray();
 
@@ -675,6 +679,7 @@ class DocumentApprovalController extends ResourceController
         $apvM   = new DocumentApprovalModel();
         $stepM  = new DocumentApprovalStepModel();
         $docM   = new DocumentModel();
+        $sigM   = new \App\Models\FileSignatureModel(); // <-- thêm model
 
         $approval = $apvM->find($id);
         if (!$approval) {
@@ -690,9 +695,9 @@ class DocumentApprovalController extends ResourceController
         $steps = $stepM
             ->select(
                 'document_approval_steps.*,
-             u.name            AS approver_name,
-             u.signature_url   AS approver_signature_url,
-             u.preferred_marker'
+         u.name            AS approver_name,
+         u.signature_url   AS approver_signature_url,
+         u.preferred_marker'
             )
             ->join('users u', 'u.id = document_approval_steps.approver_id', 'left')
             ->where('document_approval_steps.approval_id', $id)
@@ -718,20 +723,36 @@ class DocumentApprovalController extends ResourceController
             $s['is_pending']   = $status === 'pending';
             $s['is_current']   = ((int) $s['id'] === $currentStepId);
             $s['can_act']      = $s['is_current'] && ((int) $s['approver_id'] === $userId);
-
-            // Để FE scan chữ ký đúng người:
-            // preferred_marker lấy trực tiếp từ user (vd: "dinhvanvinh")
-            // signature_url của approver để so hoặc hiển thị nếu cần
         }
         unset($s);
 
+        // --- MỚI: Lấy thông tin file_signatures liên quan ---
+        // Lấy theo approval_id hoặc document_id (nếu có)
+        $signatures = $sigM
+            ->where('approval_id', $id)
+            ->orWhere('document_id', $doc['id'])
+            ->orderBy('signed_at', 'DESC')
+            ->findAll();
+
+        // Thêm download_url nếu có signed_file_path (giúp FE dễ dùng)
+        foreach ($signatures as &$sig) {
+            if (!empty($sig['signed_file_path'])) {
+                $sig['download_url'] = site_url("file-signatures/{$sig['id']}/download");
+            } else {
+                $sig['download_url'] = null;
+            }
+        }
+        unset($sig);
+
         return $this->respond([
-            'approval'       => $approval,
-            'document'       => $doc,
-            'steps'          => $steps,
-            'current_step_id'=> $currentStepId,
+            'approval'        => $approval,
+            'document'        => $doc,
+            'steps'           => $steps,
+            'current_step_id' => $currentStepId,
+            'signatures'      => $signatures, // <-- trả về thêm
         ]);
     }
+
 
 
 

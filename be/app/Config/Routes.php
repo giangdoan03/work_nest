@@ -269,5 +269,10 @@ $routes->group('api', function ($routes) {
     $routes->patch('wp-media/(:num)',  'WpMediaController::update/$1');
     $routes->delete('wp-media/(:num)', 'WpMediaController::delete/$1');
 
+    $routes->post('task-files/upload-signed', 'TaskFileController::uploadSignedPdf');
+    $routes->get('file-signatures/(:num)/download', 'TaskFileController::downloadSigned/$1');
+    $routes->post('documents/approve', 'TaskFileController::approveOnly');
+
+
 
 });

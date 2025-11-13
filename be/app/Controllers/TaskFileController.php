@@ -8,6 +8,7 @@ use CodeIgniter\HTTP\DownloadResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use App\Libraries\Uploader;
+use App\Models\FileSignatureModel;
 
 class TaskFileController extends ResourceController
 {
@@ -550,6 +551,250 @@ class TaskFileController extends ResourceController
             'message' => 'Đã cập nhật thứ tự',
             'data' => $rows
         ]);
+    }
+
+    public function approveOnly(): ResponseInterface
+    {
+        // Nhận JSON từ FE
+        $input = $this->request->getJSON(true);
+        if (!$input) {
+            return $this->failValidationErrors('Payload JSON không hợp lệ.');
+        }
+
+        // accept both string or int
+        $taskFileId   = isset($input['task_file_id']) ? (int)$input['task_file_id'] : 0;
+        $approvalId   = isset($input['approval_id']) ? (int)$input['approval_id'] : null;
+        $documentId   = isset($input['document_id']) ? (int)$input['document_id'] : null;
+        $note         = trim((string)($input['note'] ?? ''));
+        $signedBy     = isset($input['signed_by']) ? (int)$input['signed_by'] : null;
+        $signedAt     = isset($input['signed_at']) ? $input['signed_at'] : null;
+        $status       = $input['status'] ?? 'approved';
+
+        // optional file info from payload (FE có thể gửi nếu muốn)
+        $signedFileName = $input['signed_file_name'] ?? null;
+        $signedFilePath = $input['signed_file_path'] ?? null;
+        $signedFileSize = isset($input['signed_file_size']) ? $input['signed_file_size'] : null;
+        $signedMime     = $input['signed_mime'] ?? null;
+        $approverDisplay = $input['approver_display'] ?? null;
+
+        $db = \Config\Database::connect();
+
+        // nếu thiếu task_file_id nhưng có approval_id -> cố resolve task_file_id (source_task_id) và document_id
+        if ((!$taskFileId || !$documentId) && $approvalId) {
+            $row = $db->table('document_approvals da')
+                ->select('d.source_task_id, d.id AS document_id')
+                ->join('documents d', 'd.id = da.document_id', 'left')
+                ->where('da.id', $approvalId)
+                ->get()
+                ->getRowArray();
+            if (!empty($row['source_task_id']) && !$taskFileId) {
+                $taskFileId = (int)$row['source_task_id'];
+            }
+            if (!empty($row['document_id']) && !$documentId) {
+                $documentId = (int)$row['document_id'];
+            }
+        }
+
+        if (!$taskFileId) {
+            // vẫn trả lỗi nếu không có task_file_id sau cố resolve
+            return $this->failValidationErrors('Thiếu task_file_id.');
+        }
+
+        $user = $this->currentUser();
+        $userId = $user ? (int)$user['id'] : ($signedBy ?: null);
+
+        $now = date('Y-m-d H:i:s');
+
+        $db->transStart();
+        try {
+            $sigModel = new \App\Models\FileSignatureModel();
+
+            // ========== NEW: kiểm tra đã có signature approved trước đó ==========
+            $existing = null;
+            if ($approvalId) {
+                $existing = $sigModel
+                    ->where('approval_id', $approvalId)
+                    ->where('status', 'approved')
+                    ->orderBy('signed_at', 'DESC')
+                    ->first();
+            }
+            if (!$existing && $taskFileId) {
+                $existing = $sigModel
+                    ->where('task_file_id', $taskFileId)
+                    ->where('status', 'approved')
+                    ->orderBy('signed_at', 'DESC')
+                    ->first();
+            }
+
+            if ($existing) {
+                // đảm bảo task_files đã được mark approved (idempotent)
+                try {
+                    $taskFileModel = new \App\Models\TaskFileModel();
+                    $taskFileModel->update($taskFileId, [
+                        'status'      => 'approved',
+                        'approved_by' => $userId,
+                        'approved_at' => $now,
+                        'review_note' => $note ?: null,
+                    ]);
+                } catch (\Throwable $e) {
+                    log_message('error', 'Error ensuring task_files approved in idempotent path: ' . $e->getMessage());
+                }
+
+                $db->transComplete();
+                // Trả về thông tin hiện có (idempotent)
+                return $this->respond([
+                    'message' => 'Tài liệu đã được duyệt trước đó.',
+                    'file_signature_id' => $existing['id'],
+                    'data' => $existing
+                ]);
+            }
+
+            // Nếu chưa có -> insert mới
+            $dataInsert = [
+                'task_file_id'     => $taskFileId,
+                'approval_id'      => $approvalId,
+                'document_id'      => $documentId,
+                'signed_file_name' => $signedFileName,
+                'signed_file_path' => $signedFilePath,
+                'signed_file_size' => $signedFileSize,
+                'signed_mime'      => $signedMime,
+                'signed_by'        => $userId,
+                'signed_at'        => $signedAt ?: $now,
+                'status'           => $status,
+                'note'             => $note ?: null,
+            ];
+
+            $insertId = $sigModel->insert($dataInsert, true);
+
+            // Cập nhật bảng task_files: đảm bảo bạn dùng đúng model (TaskFileModel)
+            if (!isset($this->model) || get_class($this->model) !== \App\Models\TaskFileModel::class) {
+                $taskFileModel = new \App\Models\TaskFileModel();
+            } else {
+                $taskFileModel = $this->model;
+            }
+
+            // Cập nhật thông tin approved trên task_files
+            try {
+                $taskFileModel->update($taskFileId, [
+                    'status'      => 'approved',
+                    'approved_by' => $userId,
+                    'approved_at' => $now,
+                    'review_note' => $note ?: null,
+                ]);
+            } catch (\Throwable $e) {
+                // log nhưng không fail toàn bộ transaction
+                log_message('error', 'Error updating task_files after approveOnly: ' . $e->getMessage());
+            }
+
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                return $this->failServerError('Không thể lưu dữ liệu duyệt.');
+            }
+
+            $saved = $sigModel->find($insertId);
+            return $this->respondCreated([
+                'message' => 'Duyệt thành công (metadata).',
+                'file_signature_id' => $insertId,
+                'data' => $saved
+            ]);
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', 'approveOnly error: ' . $e->getMessage());
+            return $this->failServerError('Lỗi server khi duyệt.');
+        }
+    }
+
+
+
+
+    public function uploadSignedPdf(): ResponseInterface
+    {
+        // Lấy user từ session/fallback POST như currentUser()
+        $user = $this->currentUser();
+        $userId = $user ? (int)$user['id'] : (int)$this->request->getPost('user_id');
+
+        $taskFileId = (int)($this->request->getPost('task_file_id') ?? 0);
+        $approvalId = $this->request->getPost('approval_id') ? (int)$this->request->getPost('approval_id') : null;
+        $note       = trim((string)($this->request->getPost('note') ?? ''));
+
+        if (!$taskFileId) {
+            return $this->failValidationErrors('Thiếu task_file_id.');
+        }
+
+        $file = $this->request->getFile('file'); // có thể null
+
+        // Nếu có file và hợp lệ -> lưu file; nếu không có file -> bỏ qua phần lưu file
+        $upload = null;
+        if ($file && $file->isValid()) {
+            $upload = Uploader::saveFile($file, 'signed_files');
+            if (!$upload) {
+                return $this->fail('Lỗi khi lưu file đã ký.');
+            }
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        try {
+            $sigModel = new FileSignatureModel();
+
+            $dataInsert = [
+                'task_file_id'     => $taskFileId,
+                'approval_id'      => $approvalId,
+                'signed_by'        => $userId ?: null,
+                'signed_at'        => $now,
+                'status'           => 'approved',
+                'note'             => $note ?: null,
+            ];
+
+            if ($upload) {
+                $dataInsert['signed_file_name'] = $upload['file_name'] ?? $file->getClientName();
+                $dataInsert['signed_file_path'] = $upload['file_path'] ?? '';
+                $dataInsert['signed_file_size'] = $upload['file_size'] ?? null;
+                $dataInsert['signed_mime']      = $upload['mime_type'] ?? ($file->getClientMimeType() ?? null);
+            } else {
+                $dataInsert['signed_file_name'] = null;
+                $dataInsert['signed_file_path'] = null;
+                $dataInsert['signed_file_size'] = null;
+                $dataInsert['signed_mime']      = null;
+            }
+
+            $insertId = $sigModel->insert($dataInsert, true);
+
+            // Optionally update the original task_files record to mark approved
+            try {
+                $this->model->update($taskFileId, [
+                    'status'      => 'approved',
+                    'approved_by' => $userId ?: null,
+                    'approved_at' => $now,
+                    'review_note' => $note ?: null,
+                ]);
+            } catch (\Throwable $e) {
+                log_message('error', 'Error updating task_files after uploadSignedPdf: ' . $e->getMessage());
+            }
+
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                return $this->fail('Không thể lưu dữ liệu ký vào DB.');
+            }
+
+            $saved = $sigModel->find($insertId);
+            if (!empty($saved['signed_file_path'])) {
+                $saved['download_url'] = site_url("file-signatures/{$insertId}/download");
+            }
+
+            return $this->respondCreated([
+                'message' => 'Lưu bản đã ký thành công.',
+                'data' => $saved
+            ]);
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', 'uploadSignedPdf error: ' . $e->getMessage());
+            return $this->failServerError('Lỗi server khi lưu bản ký.');
+        }
     }
 
 
