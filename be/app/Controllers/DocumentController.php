@@ -1415,20 +1415,20 @@ class DocumentController extends ResourceController
             return $this->failNotFound('Không tìm thấy phiên duyệt.');
         }
 
-// ƯU TIÊN: cột document_id (nếu có)
+        // ƯU TIÊN: cột document_id (nếu có)
         $docId = 0;
         if (!empty($apv['document_id'])) {
             $docId = (int) $apv['document_id'];
         }
 
-// FALLBACK: nếu hệ approval dùng target_type/target_id
+        // FALLBACK: nếu hệ approval dùng target_type/target_id
         if ($docId <= 0 && !empty($apv['target_type']) && !empty($apv['target_id'])) {
             if ($apv['target_type'] === 'document') {
                 $docId = (int) $apv['target_id'];
             }
         }
 
-// Nếu vẫn không ra được docId -> cấu hình/bản ghi đang sai
+        // Nếu vẫn không ra được docId -> cấu hình/bản ghi đang sai
         if ($docId <= 0) {
             log_message('error', 'uploadSignedPdf: approval không gắn tài liệu hợp lệ', [
                 'approval_id' => $approvalId,
@@ -1453,7 +1453,7 @@ class DocumentController extends ResourceController
             'signed_at'      => date('Y-m-d H:i:s'),
         ];
 
-// Nếu vì lý do gì đó $dataUpdate trống -> chặn trước cho chắc
+        // Nếu vì lý do gì đó $dataUpdate trống -> chặn trước cho chắc
         if (empty(array_filter($dataUpdate, fn($v) => $v !== null && $v !== ''))) {
             return $this->failServerError('Không có dữ liệu để cập nhật document.');
         }

@@ -10,6 +10,7 @@ use App\Models\TaskFileModel;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use RuntimeException;
 use Throwable;
 use App\Traits\AuthTrait;
 use App\Traits\ApprovalContextTrait;
@@ -223,7 +224,7 @@ class DocumentApprovalController extends ResourceController
             ], true);
 
             if (!$apvId) {
-                throw new \RuntimeException('Không tạo được phiên duyệt.');
+                throw new RuntimeException('Không tạo được phiên duyệt.');
             }
 
             // 3.2) Tạo các bước duyệt
@@ -248,7 +249,7 @@ class DocumentApprovalController extends ResourceController
                 ->first();
 
             if (!$first) {
-                throw new \RuntimeException('Không có bước duyệt nào được tạo.');
+                throw new RuntimeException('Không có bước duyệt nào được tạo.');
             }
 
             $stepM->update($first['id'], ['status' => 'active']);

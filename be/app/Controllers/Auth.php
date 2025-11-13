@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\UserModel;
 use CodeIgniter\Controller;
+use CodeIgniter\Files\File;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
 use CodeIgniter\API\ResponseTrait;
@@ -233,7 +234,7 @@ class Auth extends Controller
 
         // 4) Đọc MIME/size từ file ĐÃ LƯU (tránh đụng tmp)
         $savedPath = $avatarDir . DIRECTORY_SEPARATOR . $newName;
-        $saved     = new \CodeIgniter\Files\File($savedPath);
+        $saved     = new File($savedPath);
         $mime      = $saved->getMimeType();
         $size      = $saved->getSize();
 
