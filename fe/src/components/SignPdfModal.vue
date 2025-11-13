@@ -67,6 +67,14 @@
             <a-button :disabled="saving" @click="downloadOriginal">
                 Tải bản gốc
             </a-button>
+            <a-button
+                :loading="savingApprove"
+                :disabled="saving || !isPdfReady"
+                @click="handleApproveDuyet"
+            >
+                Duyệt
+            </a-button>
+
             <a-button type="primary" :loading="saving" :disabled="!isPdfReady || saving" @click="handleSave">
                 Lưu bản đã ký
             </a-button>
@@ -141,6 +149,7 @@ const isPdfReady = ref(false)
 const currentUser = ref(null)
 
 const signedBlobUrl = ref('') // 🔹 URL tải bản đã ký
+const savingApprove = ref(false)
 
 
 
@@ -748,7 +757,7 @@ async function handleSave() {
             rotate: rotateDeg ? degrees(rotateDeg) : undefined
         })
 
-// --- thêm: chèn thời gian ký nhỏ, bên dưới ảnh ---
+        // --- thêm: chèn thời gian ký nhỏ, bên dưới ảnh ---
         try {
             // nhúng font tiêu chuẩn
             const helv = await pdfDocW.embedFont(PDFLib.StandardFonts.Helvetica)
@@ -758,7 +767,7 @@ async function handleSave() {
             const timeText = now.toLocaleString() // hoặc toISOString() / custom format
 
             // kích thước chữ (px trên hệ PDF units)
-            const fontSize = Math.max(8, Math.min(12, (wPdf / 20))) // auto nhỏ, hoặc hardcode 10
+            const fontSize = Math.max(6, Math.min(12, (wPdf / 20))) // auto nhỏ, hoặc hardcode 10
             const textWidth = helv.widthOfTextAtSize(timeText, fontSize)
             const textHeight = helv.heightAtSize(fontSize) || fontSize // heightAtSize fallback
 
@@ -818,6 +827,144 @@ async function handleSave() {
         saving.value = false
     }
 }
+
+
+async function handleApproveDuyet() {
+    if (!props.pdfUrl) return message.warning('Không có file PDF để duyệt.');
+    if (!pdfDoc.value) return message.warning('Vui lòng chờ PDF tải xong.');
+    if (!PDFLib) await loadPdfLib();
+
+    savingApprove.value = true;
+    try {
+        // tải PDF gốc
+        const pdfRes = await fetch(props.pdfUrl);
+        if (!pdfRes.ok) throw new Error('Không tải được file PDF');
+        const pdfBytes = await pdfRes.arrayBuffer();
+
+        const { PDFDocument, rgb } = PDFLib;
+        const pdfDocW = await PDFDocument.load(pdfBytes, { updateMetadata: false });
+
+        // CHÚ Ý: register fontkit trước khi embed custom TTF
+        try {
+            const fontkitMod = await import('@pdf-lib/fontkit');
+            const fontkit = fontkitMod?.default || fontkitMod;
+            pdfDocW.registerFontkit(fontkit);
+        } catch (e) {
+            console.warn('Không thể nạp @pdf-lib/fontkit. Hãy chắc chắn đã cài package @pdf-lib/fontkit', e);
+            throw new Error('Fontkit required to embed custom TTF fonts');
+        }
+
+        // chọn trang cuối
+        const lastIndex = Math.max(0, pdfDocW.getPageCount() - 1);
+        const page = pdfDocW.getPage(lastIndex);
+        const pdfW = page.getWidth();
+
+        // lấy tên người duyệt (gốc)
+        const rawApprover =
+            currentUser.value?.full_name ||
+            currentUser.value?.name ||
+            currentUser.value?.username ||
+            'NguoiDuyet';
+
+        // Hàm sanitize: bỏ dấu + bỏ khoảng trắng (viết liền, không dấu)
+        const sanitizeToAscii = (s) => {
+            try {
+                const nd = s.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+                const noD = nd.replace(/Đ/g, 'D').replace(/đ/g, 'd');
+                return noD.replace(/[^\x00-\x7F ]/g, '');  // giữ khoảng trắng
+            } catch (e) {
+                return s
+                    .replace(/[Đđ]/g, c => (c === 'Đ' ? 'D' : 'd'))
+                    .replace(/[^\x00-\x7F ]/g, '');
+            }
+        };
+        // lấy tên đã sanitize (viết liền, không dấu)
+        const approverDisplay = sanitizeToAscii(rawApprover);
+
+        // format thời gian
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        const datePart = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
+        const timePart = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+        // kết hợp text: tên (không dấu, viết liền) — Date: dd/mm/yyyy hh:mm
+        const timeText = `${approverDisplay} — Date: ${datePart} ${timePart}`;
+
+        // ---- EMBED FONT UNICODE (bắt buộc) ----
+        const fontUrl = '/fonts/NotoSans-Regular.ttf';
+        const fontResp = await fetch(fontUrl);
+        if (!fontResp.ok) {
+            message.error('Không load được font Unicode, không thể hiển thị dấu tiếng Việt!');
+            throw new Error('Font not loaded');
+        }
+        const fontBytes = await fontResp.arrayBuffer();
+        const unicodeFont = await pdfDocW.embedFont(fontBytes);
+
+        // ---- Tính vị trí vẽ ----
+        // bạn giảm fontSize rồi -> giữ như hiện tại hoặc thay đổi tuỳ ý
+        const fontSize = 6;
+        const textWidth = unicodeFont.widthOfTextAtSize(timeText, fontSize);
+        const textHeight = typeof unicodeFont.heightAtSize === 'function' ? unicodeFont.heightAtSize(fontSize) : fontSize;
+
+        const margin = 20;
+        const textX = Math.max(margin, pdfW - margin - textWidth); // đặt ở phải, căn vừa với chiều rộng text
+        const textY = margin;
+
+        // Gạch ngang: **vừa bằng nội dung chữ** (đặt ngay phía trên text)
+        const lineGap = 4; // khoảng cách nhẹ giữa chữ và đường
+        const lineHeight = 0.5; // mảnh
+        const lineX = textX;             // bắt đầu cùng X với chữ
+        const lineW = textWidth;         // độ dài = chiều rộng chữ
+        const lineY = textY + textHeight + lineGap;
+
+        page.drawRectangle({
+            x: lineX,
+            y: lineY - (lineHeight / 2),
+            width: lineW,
+            height: lineHeight,
+            color: rgb(0, 0, 0)
+        });
+
+        // ---- VẼ TEXT (tên đã sanitize viết liền, phần Date vẫn bình thường) ----
+        page.drawText(timeText, {
+            x: textX,
+            y: textY,
+            size: fontSize,
+            font: unicodeFont,
+            color: rgb(0, 0, 0)
+        });
+
+        // ---- Xuất PDF ----
+        const out = await pdfDocW.save({ useObjectStreams: false });
+        const outBlob = new Blob([out], { type: 'application/pdf' });
+
+        if (signedBlobUrl.value) URL.revokeObjectURL(signedBlobUrl.value);
+        signedBlobUrl.value = URL.createObjectURL(outBlob);
+
+        emits('approved', outBlob);
+        message.success('Đã duyệt và chèn chữ thành công.');
+
+        // reload preview
+        try {
+            const buf = await fetch(signedBlobUrl.value).then((r) => r.arrayBuffer());
+            const task = pdfjsLib.getDocument({ data: buf });
+            const doc = await task.promise;
+            pdfDoc.value = markRaw(doc);
+            pageCount.value = doc.numPages;
+            queueRender();
+        } catch (e) {
+            console.warn('Không tải lại preview sau khi duyệt:', e);
+        }
+    } catch (err) {
+        console.error(err);
+        message.error('Duyệt thất bại.');
+    } finally {
+        savingApprove.value = false;
+    }
+}
+
+
+
 </script>
 
 <style scoped>
