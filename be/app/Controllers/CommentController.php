@@ -508,8 +508,6 @@ class CommentController extends ResourceController
     }
 
 
-
-    // ✅ Cập nhật comment
     public function update($id = null)
     {
         $data = [
@@ -523,7 +521,6 @@ class CommentController extends ResourceController
         return $this->respond(['message' => 'Comment updated']);
     }
 
-    // ✅ Xoá comment
     public function delete($id = null)
     {
         $this->model->delete($id);

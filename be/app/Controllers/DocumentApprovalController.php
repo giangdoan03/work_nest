@@ -6,6 +6,7 @@ use App\Models\DocumentApprovalLogModel;
 use App\Models\DocumentModel;
 use App\Models\DocumentApprovalModel;
 use App\Models\DocumentApprovalStepModel;
+use App\Models\FileSignatureModel;
 use App\Models\TaskFileModel;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -679,7 +680,7 @@ class DocumentApprovalController extends ResourceController
         $apvM   = new DocumentApprovalModel();
         $stepM  = new DocumentApprovalStepModel();
         $docM   = new DocumentModel();
-        $sigM   = new \App\Models\FileSignatureModel(); // <-- thêm model
+        $sigM   = new FileSignatureModel();
 
         $approval = $apvM->find($id);
         if (!$approval) {
@@ -691,7 +692,6 @@ class DocumentApprovalController extends ResourceController
             return $this->failNotFound('Không tìm thấy tài liệu gốc.');
         }
 
-        // Lấy steps + info user: tên, chữ ký, preferred_marker
         $steps = $stepM
             ->select(
                 'document_approval_steps.*,
@@ -704,7 +704,6 @@ class DocumentApprovalController extends ResourceController
             ->orderBy('document_approval_steps.sequence', 'ASC')
             ->findAll();
 
-        // Xác định step hiện tại (first pending sau tất cả approved)
         $currentStepId = null;
         foreach ($steps as $s) {
             if ($s['status'] === 'pending') {
@@ -749,13 +748,9 @@ class DocumentApprovalController extends ResourceController
             'document'        => $doc,
             'steps'           => $steps,
             'current_step_id' => $currentStepId,
-            'signatures'      => $signatures, // <-- trả về thêm
+            'signatures'      => $signatures,
         ]);
     }
-
-
-
-
 
 
     public function resolvedByMe(): ResponseInterface
@@ -773,14 +768,12 @@ class DocumentApprovalController extends ResourceController
 
         $db = db_connect();
 
-        // --- TOTAL: step của tôi đã hành động ---
         $total = $db->table('document_approval_steps das')
             ->join('document_approvals da', 'da.id = das.approval_id', 'inner')
             ->where('das.approver_id', $uid)
             ->where('das.acted_at IS NOT NULL', null, false)
             ->countAllResults();
 
-        // --- PAGE DATA ---
         $rows = $db->table('document_approval_steps das')
             ->select("
             das.id  AS step_id,
@@ -833,12 +826,12 @@ class DocumentApprovalController extends ResourceController
                 'approval_id' => (int)$r['approval_id'],
                 'step_id'     => (int)$r['step_id'],
                 'document_id' => (int)$r['document_id'],
-                'source_type' => $r['source_type'],                 // 'task_file' | 'comment'
+                'source_type' => $r['source_type'],
                 'name'        => $r['file_name'] ?: '(Không tên)',
                 'url'         => $abs,
                 'created_at'  => $r['file_created_at'] ?: $r['acted_at'],
                 'sender_name' => $r['sender_name'] ?: null,
-                'status'      => $finalStatus,                      // approved | rejected | …
+                'status'      => $finalStatus,
                 'step_info'   => [
                     'sequence'      => (int)$r['sequence'],
                     'status'        => $r['step_status'],
