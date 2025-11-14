@@ -240,6 +240,14 @@
                     <span class="name">{{ selectedFile.name }}</span>
                     <span class="x" @click="handleRemoveFile()">×</span>
                 </div>
+
+                <!-- NEW: chọn loại văn bản -->
+                <div class="tg-file-meta">
+                    <a-radio-group v-model:value="selectedDocType" size="small">
+                        <a-radio-button value="internal">Nội bộ</a-radio-button>
+                        <a-radio-button value="external">Không nội bộ</a-radio-button>
+                    </a-radio-group>
+                </div>
             </div>
 
             <!-- Mention pop -->
@@ -519,6 +527,7 @@ function formatVi(dt) {
 /* ===== state ===== */
 const store = useUserStore()
 const route = useRoute()
+const selectedDocType = ref('internal') // mặc định 'internal'
 
 const taskId = computed(() => Number(route.params.taskId || route.params.id))
 const currentUserId = computed(() => store.currentUser?.id ?? null)
@@ -1239,6 +1248,8 @@ async function createNewComment({ keepMentions = false } = {}) {
         form.append('user_id', String(store.currentUser.id));
         form.append('content', String(inputValue.value || ''));
         form.append('mentions', JSON.stringify(mentionsPayload));
+        // Gửi loại văn bản (nếu có attachment)
+        form.append('doc_type', String(selectedDocType.value || 'internal'));
 
         // Nếu có file local được chọn thì append vào form (AntD beforeUpload trả file)
         if (selectedFile.value) {

@@ -7,39 +7,15 @@ const instance = axios.create({
 
 export const getDocuments = (params) => instance.get('/documents', {params})
 export const deleteDocument = (id) => instance.delete(`/documents/${id}`)
-export const getDocumentsByDepartment = (departmentId) =>
-    instance.get('/documents/by-department', {
-        params: {department_id: departmentId}
-    });
-
-export const getSharedDocuments = () =>
-    instance.get('/documents/shared/me')
-export const uploadDocument = (formData) =>
-    instance.post('/documents/upload', formData, {
-        headers: {'Content-Type': 'multipart/form-data'}
-    })
-export const shareDocument = (permissions) =>
-    instance.post('/documents/share', {permissions})
-export const updateDocument = (id, data) =>
-    instance.put(`/documents/${id}`, data, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-
-export const uploadDocumentToWP = (formData, onUploadProgress) =>
-    instance.post('/documents/upload-to-wp', formData, {
-        headers: {'Content-Type': 'multipart/form-data'}, onUploadProgress
-    })
-
-export const uploadRemoteToWP = (payload) =>
-    instance.post('/documents/upload-remote-to-wp', payload, {
-        headers: {'Content-Type': 'application/json'}
-    })
-
-export const uploadDocumentLink = (payload) =>
-    instance.post('/documents/upload-link', payload)
-
+export const getDocumentsByDepartment = (departmentId) => instance.get('/documents/by-department', {params: {department_id: departmentId}});
+export const getSharedDocuments = () => instance.get('/documents/shared/me')
+export const uploadDocument = (formData) => instance.post('/documents/upload', formData, {headers: {'Content-Type': 'multipart/form-data'}})
+export const shareDocument = (permissions) => instance.post('/documents/share', {permissions})
+export const updateDocument = (id, data) => instance.put(`/documents/${id}`, data, {headers: {'Content-Type': 'application/json'}})
+export const uploadDocumentToWP = (formData, onUploadProgress) => instance.post('/documents/upload-to-wp', formData,
+    {headers: {'Content-Type': 'multipart/form-data'}, onUploadProgress})
+export const uploadRemoteToWP = (payload) => instance.post('/documents/upload-remote-to-wp', payload, {headers: {'Content-Type': 'application/json'}})
+export const uploadDocumentLink = (payload) => instance.post('/documents/upload-link', payload)
 export const getDocumentById = async (id) => {
     try {
         const res = await instance.get(`/documents/${id}`)
@@ -50,31 +26,12 @@ export const getDocumentById = async (id) => {
     }
 }
 
-export function getMyApprovalInboxFiles() {
-    return instance.get('/approvals/inbox-files')
-}
-
+export function getMyApprovalInboxFiles() {return instance.get('/approvals/inbox-files')}
 export const getDocumentDetail = (id) => instance.get(`/documents/${id}`)
-
-export const uploadSignedPdf = (formData) =>
-    instance.post('/documents/upload-signed', formData)
-
-// api/document.js
-export const saveSignedDocument = (payload) =>
-    instance.post('/documents/signed', payload)
-
-// Lưu thông tin duyệt (KHÔNG phải ký)
-// Upload bản PDF đã ký cho task_files (API mới)
-export const uploadTaskFileSigned = (formData) =>
-    instance.post('/task-files/upload-signed', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    })
-
-// Ghi nhận thông tin duyệt (approve) — lưu metadata vào DB
-export const approveDocument = (payload) =>
-    instance.post('/documents/approve', payload, {
-        headers: { 'Content-Type': 'application/json' }
-    });
+export const uploadSignedPdf = (formData) => instance.post('/documents/upload-signed', formData)
+export const saveSignedDocument = (payload) => instance.post('/documents/signed', payload)
+export const uploadTaskFileSigned = (formData) => instance.post('/task-files/upload-signed', formData, {headers: { 'Content-Type': 'multipart/form-data' }})
+export const approveDocument = (payload) => instance.post('/documents/approve', payload, {headers: { 'Content-Type': 'application/json' }});
 
 
 

@@ -29,9 +29,7 @@ class CommentController extends ResourceController
     // cấu hình upload cơ bản
     protected int $maxUploadKB = 8192; // 8MB
     protected array $allowedMimes = [
-        // image
         'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-        // pdf, office
         'application/pdf',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -40,7 +38,6 @@ class CommentController extends ResourceController
         'text/csv',
         'application/vnd.ms-powerpoint',
         'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        // fallback thỉnh thoảng gặp
         'application/zip',
         'application/octet-stream',
     ];
@@ -133,13 +130,10 @@ class CommentController extends ResourceController
             d.uploaded_by,
             u.name AS uploader_name,
             d.created_at,
-            d.approval_status,
-            d.approval_sent_by,
-            d.approval_sent_at
+            d.approval_status
         FROM documents d
         LEFT JOIN users u ON u.id = d.uploaded_by
         WHERE d.source_task_id = ?
-          AND d.tags = 'task_upload'
         ORDER BY d.created_at DESC
     ";
 
@@ -439,6 +433,10 @@ class CommentController extends ResourceController
         $deptId   = $this->resolveDepartmentId($userId);
         $sizeByte = (int)($file->getSize() ?: 0);
 
+        // --- luôn đọc doc_type từ request ---
+        $docTypeRaw = (string) ($this->request->getPost('doc_type') ?? '');
+        $docType = in_array($docTypeRaw, ['internal', 'external'], true) ? $docTypeRaw : 'internal';
+
         $exist = $docM->where('file_path', $wpUrl)
             ->where('uploaded_by', $userId)
             ->first();
@@ -446,11 +444,19 @@ class CommentController extends ResourceController
         if ($exist) {
             $docId = (int)$exist['id'];
             $doc = $exist;
+
+            // Nếu muốn cập nhật loại văn bản khi đã tồn tại:
+            if (($exist['doc_type'] ?? '') !== $docType) {
+                $docM->update($docId, ['doc_type' => $docType]);
+                $doc = $docM->find($docId);
+            }
+
         } else {
             $docId = $docM->insert([
                 'title'           => $clientName,
                 'file_path'       => $wpUrl,
                 'file_type'       => 'wp_media',
+                'doc_type'        => $docType,
                 'file_size'       => $sizeByte,
                 'department_id'   => $deptId,
                 'uploaded_by'     => $userId,
@@ -493,6 +499,7 @@ class CommentController extends ResourceController
         $createdComment['files'] = [[
             'file_name' => $doc['title'] ?? $clientName,
             'file_path' => $doc['file_path'] ?? $wpUrl,
+            'doc_type'  => $doc['doc_type'] ?? $docType, // trả về loại
         ]];
 
         return $this->respondCreated([
@@ -535,7 +542,6 @@ class CommentController extends ResourceController
         $db = db_connect();
 
         try {
-            // ⚠️ Nếu bạn đã có cột proposed_by, thêm `OR t.proposed_by = ?` + bind thêm $uid
             $sql = "
             SELECT
               c.id,
@@ -655,7 +661,7 @@ class CommentController extends ResourceController
                 'comment_id' => (int)$id,
                 'read_at' => date('Y-m-d H:i:s')
             ], false);
-        } catch (Throwable) { /* ignore duplicate */
+        } catch (Throwable) {
         }
 
         return $this->respond(['ok' => true]);

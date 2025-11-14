@@ -212,25 +212,63 @@ async function openSign(item) {
     }
 }
 
-async function handleSignedBlob(blob) {
-    const it = signTarget.value
-    if (!it?.approval_id) return
+async function handleSignedBlob(blobOrUrl) {
+    const it = signTarget.value;
+    if (!it?.approval_id) return;
 
     try {
-        const form = new FormData()
-        form.append('file', blob, it.name || 'signed.pdf')
-        form.append('approval_id', it.approval_id)
+        // --- normalize incoming blob/url ---
+        let fileBlob = null;
 
-        await uploadSignedPdf(form)                    // lưu bản PDF đã ký
-        await approveDocumentApproval(it.approval_id)  // gọi đúng DocumentApproval
+        // case: nothing passed
+        if (!blobOrUrl) {
+            console.warn('handleSignedBlob: no blob received', blobOrUrl);
+            return message.error('Không có file đã ký để tải lên.');
+        }
 
-        message.success('Đã ký và duyệt thành công.')
-        await fetchData()
+        // case: already a Blob or File
+        if (blobOrUrl instanceof Blob || (typeof File !== 'undefined' && blobOrUrl instanceof File)) {
+            fileBlob = blobOrUrl;
+        } else if (typeof blobOrUrl === 'string') {
+            // likely an objectURL or remote URL: fetch it
+            try {
+                const resp = await fetch(blobOrUrl);
+                if (!resp.ok) throw new Error('Không tải được URL của file đã ký.');
+                fileBlob = await resp.blob();
+            } catch (e) {
+                console.error('Không fetch được URL thành Blob:', e);
+                return message.error('Không tải được file đã ký từ URL.');
+            }
+        } else if (typeof blobOrUrl === 'object' && blobOrUrl.data) {
+            // defensive: maybe caller sent { data: ArrayBuffer } etc.
+            try {
+                fileBlob = new Blob([blobOrUrl.data], { type: 'application/pdf' });
+            } catch (e) { /* fallthrough */ }
+        }
+
+        if (!fileBlob || !(fileBlob instanceof Blob)) {
+            console.warn('handleSignedBlob: invalid blob', blobOrUrl);
+            return message.error('Dữ liệu chữ ký không hợp lệ (không phải file).');
+        }
+
+        // prepare formdata
+        const form = new FormData();
+        // filename: ưu tiên tên nguồn, fallback sang signed.pdf
+        const filename = it.name || it.title || 'signed.pdf';
+        form.append('file', fileBlob, filename);
+        form.append('approval_id', it.approval_id);
+
+        await uploadSignedPdf(form);
+        await approveDocumentApproval(it.approval_id);
+
+        message.success('Đã ký và duyệt thành công.');
+        await fetchData();
     } catch (e) {
-        console.error('Upload signed PDF error:', e)
-        message.error(e?.response?.data?.message || 'Lỗi khi ký hoặc duyệt.')
+        console.error('Upload signed PDF error:', e);
+        message.error(e?.response?.data?.message || 'Lỗi khi ký hoặc duyệt.');
     }
 }
+
 
 
 /* ---------------- helpers ---------------- */

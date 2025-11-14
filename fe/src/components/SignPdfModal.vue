@@ -1074,7 +1074,7 @@ async function handleApproveDuyet() {
                 target.file_signature = existingSig;
             }
 
-            emits('done');
+            emits('done', outBlob);
             if (typeof fetchData === 'function') {
                 try { await fetchData(); } catch {}
             }
@@ -1092,7 +1092,7 @@ async function handleApproveDuyet() {
             target.file_signature = serverData?.data || null;
         }
 
-        emits('done');
+        emits('done', outBlob);
         if (typeof fetchData === 'function') {
             try { await fetchData(); } catch {}
         }
