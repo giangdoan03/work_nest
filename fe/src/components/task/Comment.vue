@@ -61,7 +61,13 @@
                         </a-tooltip>
 
                         <a-tooltip title="Bỏ ghim">
-                            <button class="pill-x" type="button" @click="togglePin(f)">×</button>
+                            <button
+                                class="pill-x"
+                                type="button"
+                                @click.stop.prevent="unpinOnly(f)"
+                                :disabled="!canUnpinFile(f)"
+                                :title="canUnpinFile(f) ? 'Bỏ ghim' : 'Bạn không có quyền bỏ ghim'"
+                            >×</button>
                         </a-tooltip>
                     </div>
 
@@ -196,6 +202,22 @@
                 <a-button size="small" @click="getListComment(currentPage + 1)">Tải thêm</a-button>
             </div>
 
+            <div class="tg-file-strip" v-if="selectedFile">
+                <div class="tg-file-pill">
+                    <PaperClipOutlined/>
+                    <span class="name">{{ selectedFile.name }}</span>
+                    <span class="x" @click.stop.prevent="handleRemoveFile()">×</span>
+                </div>
+
+                <!-- NEW: chọn loại văn bản -->
+                <div class="tg-file-meta">
+                    <a-radio-group v-model:value="selectedDocType" size="small">
+                        <a-radio-button value="internal">Văn bản nội bộ</a-radio-button>
+                        <a-radio-button value="external">Văn bản ban hành</a-radio-button>
+                    </a-radio-group>
+                </div>
+            </div>
+
             <div class="tg-composer">
                 <!-- Attach -->
                 <a-upload :show-upload-list="false" :multiple="false" :max-count="1" :before-upload="handleBeforeUpload">
@@ -234,21 +256,21 @@
             </div>
 
             <!-- file chip preview -->
-            <div class="tg-file-strip" v-if="selectedFile">
-                <div class="tg-file-pill">
-                    <PaperClipOutlined/>
-                    <span class="name">{{ selectedFile.name }}</span>
-                    <span class="x" @click="handleRemoveFile()">×</span>
-                </div>
+<!--            <div class="tg-file-strip" v-if="selectedFile">-->
+<!--                <div class="tg-file-pill">-->
+<!--                    <PaperClipOutlined/>-->
+<!--                    <span class="name">{{ selectedFile.name }}</span>-->
+<!--                    <span class="x" @click.stop.prevent="handleRemoveFile()">×</span>-->
+<!--                </div>-->
 
-                <!-- NEW: chọn loại văn bản -->
-                <div class="tg-file-meta">
-                    <a-radio-group v-model:value="selectedDocType" size="small">
-                        <a-radio-button value="internal">Nội bộ</a-radio-button>
-                        <a-radio-button value="external">Không nội bộ</a-radio-button>
-                    </a-radio-group>
-                </div>
-            </div>
+<!--                &lt;!&ndash; NEW: chọn loại văn bản &ndash;&gt;-->
+<!--                <div class="tg-file-meta">-->
+<!--                    <a-radio-group v-model:value="selectedDocType" size="small">-->
+<!--                        <a-radio-button value="internal">Văn bản nội bộ</a-radio-button>-->
+<!--                        <a-radio-button value="external">Văn bản ban hành</a-radio-button>-->
+<!--                    </a-radio-group>-->
+<!--                </div>-->
+<!--            </div>-->
 
             <!-- Mention pop -->
             <div class="mention-row">
@@ -566,6 +588,64 @@ function canUnpinFile(f) {
     return String(currentUserRole.value) === 'super admin' || Number(f.pinned_by) === Number(currentUserId.value)
 }
 
+async function unpinOnly(file) {
+    if (!file) return;
+
+    const userId = Number(currentUserId.value);
+    const userRole = currentUserRole.value;
+    let tfId = getTaskFileId(file);
+    const pathKey = normalizePath(file.file_path || file.link_url || '');
+
+    if (!tfId) {
+        const byPath = taskFileByPath.value[pathKey];
+        tfId = byPath?.id ? Number(byPath.id) : null;
+    }
+
+    if (!tfId) {
+        message.error('Không tìm thấy ID để bỏ ghim');
+        return;
+    }
+
+    if (!canUnpinFile(file)) {
+        message.warning('Bạn không có quyền bỏ ghim file này');
+        return;
+    }
+
+    const lockKey = `unpin:${tfId}`
+    if (pendingPinOps.has(lockKey)) return
+    pendingPinOps.add(lockKey)
+
+    // ===== optimistic remove from UI =====
+    const prevPinned = (pinnedFiles.value || []).slice()
+    pinnedFiles.value = (pinnedFiles.value || []).filter(p => {
+        const pid = Number(p.id || p.task_file_id || 0)
+        const sameId = pid && pid === Number(tfId)
+        const samePath = normalizePath(p.file_path || p.link_url || '') === pathKey
+        return !(sameId || samePath)
+    })
+
+    try {
+        const res = await unpinTaskFileAPI(tfId, { user_id: userId, user_role: userRole })
+        // success: keep optimistic removal, optionally show message from server
+        message.success(res?.data?.message || 'Đã bỏ ghim')
+        // don't immediately call loadPinnedFiles() — avoid re-adding during backend delay
+    } catch (e) {
+        console.error('unpin failed', e)
+        // rollback: restore previous pinned list (or reload from server)
+        pinnedFiles.value = prevPinned
+        // if server returned 403/permission -> show nice msg
+        const status = e?.response?.status
+        if (status === 403) {
+            message.warning(e.response?.data?.messages?.error || 'Bạn không có quyền')
+        } else {
+            message.error('Không thể bỏ ghim — thử lại')
+        }
+    } finally {
+        pendingPinOps.delete(lockKey)
+    }
+}
+
+
 function getLocalUser() {
     // ưu tiên store nếu bạn đã có pin/store pattern
     if (store && store.currentUser) return store.currentUser
@@ -761,44 +841,75 @@ function isPinned(file) {
     return list.some((p) => normalizePath(p.file_path || p.link_url || '') === path)
 }
 
-async function togglePin(file) {
-    const tfId = await ensureTaskFileId(file)
-    if (!tfId) return
-
-    const localUser = getLocalUser() || {}
-    const userId = Number(localUser.id || store.currentUser?.id || 0)
-    const userRole = String(localUser.role || store.currentUser?.role || '')
-
-    try {
-        const already = isPinned({...file, task_file_id: tfId})
-
-        if (already) {
-            // client-side check: nếu không có quyền thì đừng gọi API
-            if (!(userRole === 'super admin' || Number(file.pinned_by) === Number(userId))) {
-                message.warning('Bạn không có quyền bỏ ghim file này')
-                return
-            }
-            // gửi user_id & user_role kèm POST (server nếu chấp nhận sẽ dùng)
-            await unpinTaskFileAPI(tfId, { user_id: userId, user_role: userRole })
-        } else {
-            await pinTaskFileAPI(tfId, { user_id: userId, user_role: userRole })
-        }
-
-        await loadPinnedFiles()
-        message.success(already ? 'Đã bỏ ghim' : 'Đã ghim')
-    } catch (e) {
-        const status = e?.response?.status
-        if (status === 403) {
-            // show nhẹ, đừng log to console
-            message.warning(e.response?.data?.messages?.error || 'Không có quyền')
-        } else {
-            console.error('pin/unpin error', e?.response?.data || e)
-            message.error('Không thao tác được ghim/bỏ ghim')
-        }
+function isPinnedNow(file) {
+    if (!file) return false;
+    // try by task_file id
+    const tfId = getTaskFileId(file);
+    if (tfId) {
+        return (pinnedFiles.value || []).some(p => Number(p.id) === Number(tfId));
     }
+    // fallback: compare normalized path
+    const path = normalizePath(hrefOf(file) || file.file_path || file.link_url || '');
+    if (!path) return false;
+    return (pinnedFiles.value || []).some(p => normalizePath(p.file_path || p.link_url || '') === path);
 }
 
+function isPinnedFlag(file) {
+    // nếu object server trả về có flag rõ ràng -> dùng luôn
+    if (!file) return false;
+    if (typeof file.is_pinned !== 'undefined') {
+        // backend có thể trả '1' hoặc true
+        return Number(file.is_pinned) === 1 || file.is_pinned === true;
+    }
+    // nếu có explicit pinned_by thì gần như chắc là pinned
+    if (typeof file.pinned_by !== 'undefined' && file.pinned_by !== null && file.pinned_by !== '') {
+        return true;
+    }
+    return false;
+}
 
+const pendingPinOps = new Set()
+
+
+async function togglePin(file) {
+    if (!file) return;
+
+    let tfId = getTaskFileId(file);
+    const pathKey = normalizePath(hrefOf(file) || file.file_path || file.link_url || '');
+    const lockKey = tfId ? `id:${tfId}` : `path:${pathKey}`;
+
+    if (pendingPinOps.has(lockKey)) {
+        console.warn('togglePin already in progress for', lockKey);
+        return;
+    }
+    pendingPinOps.add(lockKey);
+
+    try {
+        // REPLACE previous "already" logic with robust check:
+        // 1) If file object has is_pinned / pinned_by -> use that.
+        // 2) Else fallback to isPinnedNow(file) (compare pinnedFiles array).
+        let already = false;
+        if (isPinnedFlag(file)) {
+            already = true;
+        } else {
+            already = isPinnedNow(file);
+        }
+
+        console.log('togglePin starting', { lockKey, tfId, pathKey, already, file });
+
+        if (already) {
+            // UNPIN branch ...
+            // (rest of your existing unpin logic)
+        } else {
+            // PIN branch ...
+            // (rest of your existing pin logic)
+        }
+    } catch (e) {
+        // ...
+    } finally {
+        pendingPinOps.delete(lockKey);
+    }
+}
 
 /* ===== file kind helpers ===== */
 const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'])

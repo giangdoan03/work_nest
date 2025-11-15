@@ -32,6 +32,18 @@
                                     <a-tag v-else-if="approvalStateOf(item).approved" color="green">Đã duyệt</a-tag>
                                     <a-tag v-else-if="approvalStateOf(item).rejected" color="red">Từ chối</a-tag>
                                 </template>
+                                <!-- Delete button -->
+<!--                                <a-tooltip title="Xoá tài liệu">-->
+<!--                                    <a-button-->
+<!--                                        size="small"-->
+<!--                                        type="text"-->
+<!--                                        danger-->
+<!--                                        @click="onClickDelete(item)"-->
+<!--                                        :loading="deleting[item._key]"-->
+<!--                                    >-->
+<!--                                        <DeleteOutlined />-->
+<!--                                    </a-button>-->
+<!--                                </a-tooltip>-->
                             </template>
 
                             <!-- Thumb -->
@@ -108,6 +120,17 @@
                                         <DownloadOutlined/>
                                     </a-button>
                                 </a-tooltip>
+                                <a-tooltip title="Xoá tài liệu">
+                                    <a-button
+                                        size="small"
+                                        type="text"
+                                        danger
+                                        @click="onClickDelete(item)"
+                                        :loading="deleting[item._key]"
+                                    >
+                                        <DeleteOutlined />
+                                    </a-button>
+                                </a-tooltip>
 
                                 <!-- Gửi duyệt -->
                                 <a-tooltip :title="sendBtnTooltip(item)">
@@ -158,11 +181,11 @@
 
 <script setup>
 import {
-    LinkOutlined, EyeOutlined, DownloadOutlined, SendOutlined,
+    LinkOutlined, EyeOutlined, DownloadOutlined, SendOutlined,DeleteOutlined,
     FilePdfOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined, FileTextOutlined, UserOutlined, ReloadOutlined
 } from '@ant-design/icons-vue'
 import { computed, onMounted, ref, watch, reactive, nextTick, onBeforeUnmount } from 'vue'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/vi'
 
@@ -173,7 +196,9 @@ import {
     adoptTaskFileFromPathAPI,
     uploadTaskFileLinkAPI,
     getCommentFilesByTask,
-    sendCommentApproval
+    sendCommentApproval,
+    deleteTaskFile,
+    deleteDocumentAPI, deleteTaskFileAPI, deleteCommentAPI
 } from '@/api/taskFiles'
 import { useUserStore } from '@/stores/user'
 
@@ -213,6 +238,8 @@ const PPT_EXTS   = new Set(['ppt', 'pptx'])
 const OFFICE_EXTS= new Set(['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'])
 
 const aborter = { controller: null }
+const deleting = reactive({}) // per-item loading
+const { confirm } = Modal
 
 const formatDateOnly = dt => dayjs(dt).isValid() ? dayjs(dt).format('DD/MM/YYYY') : ''
 const formatTime     = dt => dayjs(dt).isValid() ? dayjs(dt).format('HH:mm') : ''
@@ -568,6 +595,76 @@ const refresh = async () => {
         loading.value = false
     }
 }
+
+async function deleteAttachment(item) {
+    // Nếu nguồn là comment (file thuộc comment) — tùy FE/BE có endpoint khác; hiện giả sử only document/task_file.
+    const fileId = Number(item.task_file_id || item.id || 0)
+    if (!fileId) {
+        message.error('Không xác định được id tài liệu.');
+        return;
+    }
+
+    // tránh bấm liên tiếp
+    deleting[item._key] = true
+
+    try {
+        const resp = await deleteTaskFile(fileId)
+        // axios trả data trong resp.data; nhưng chúng ta chỉ cần success
+        // Remove item khỏi danh sách (optimistic)
+        taskFileItems.value = taskFileItems.value.filter(i => (i._key !== item._key && (i.task_file_id ? i.task_file_id !== item.task_file_id : true)))
+
+        message.success((resp?.data?.message) || 'Đã xóa tài liệu.')
+    } catch (e) {
+        const status = e?.response?.status
+        const data = e?.response?.data
+        if (status === 403) {
+            message.error(data?.message || 'Không thể xóa: tài liệu đã duyệt hoặc bạn không có quyền.')
+        } else if (status === 404) {
+            message.error('Tài liệu không tồn tại (đã bị xóa).')
+            // đồng bộ UI
+            taskFileItems.value = taskFileItems.value.filter(i => i._key !== item._key)
+        } else {
+            message.error(data?.message || 'Lỗi khi xóa tài liệu.')
+        }
+    } finally {
+        deleting[item._key] = false
+    }
+}
+
+
+
+async function onClickDelete(item) {
+    Modal.confirm({
+        title: 'Xác nhận xoá',
+        content: 'Bạn có chắc muốn xoá tài liệu này? Hành động không thể hoàn tác.',
+        okText: 'Xoá',
+        okType: 'danger',
+        cancelText: 'Hủy',
+        async onOk() {
+            deleting[item._key] = true
+            try {
+
+                if (item.source === 'document' || item._source === 'document') {
+                    await deleteDocumentAPI(Number(item.id))
+                } else if (item._source === 'task_file' || item.task_file_id) {
+                    await deleteTaskFileAPI(Number(item.task_file_id || item.id))
+                } else if (item._source === 'comment') {
+                    await deleteCommentAPI(Number(item.id))
+                }
+
+                message.success('Đã xoá')
+                await refresh()
+
+            } catch (e) {
+                message.error(e?.response?.data?.message || 'Không thể xoá')
+            } finally {
+                deleting[item._key] = false
+            }
+        }
+    })
+}
+
+
 
 defineExpose({ refresh }) // nếu bạn muốn parent gọi được
 

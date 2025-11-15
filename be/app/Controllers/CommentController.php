@@ -461,7 +461,6 @@ class CommentController extends ResourceController
                 'department_id'   => $deptId,
                 'uploaded_by'     => $userId,
                 'visibility'      => 'private',
-                'tags'            => 'task_upload',
                 'approval_status' => 'waiting',
                 'source_task_id'  => $task_id ? (int)$task_id : null,
                 'created_at'      => date('Y-m-d H:i:s'),

@@ -914,14 +914,29 @@ class DocumentController extends ResourceController
 
 
 
-    public function delete($id = null)
+
+    public function delete($id = null): ResponseInterface
     {
-        if (!$this->model->find($id)) {
-            return $this->failNotFound('Tài liệu không tồn tại.');
+        $id = (int)$id;
+        if ($id <= 0) {
+            return $this->failValidationErrors('Invalid document id.');
         }
 
+        $doc = $this->model->find($id);
+        if (!$doc) {
+            return $this->failNotFound('Document không tồn tại.');
+        }
+
+        // TODO: kiểm tra quyền (owner / admin). Ví dụ:
+        // $user = session()->get('user_id') ?: (int)$this->request->getPost('user_id');
+        // if (! $this->canDeleteDocument($user, $doc)) return $this->failForbidden('Không có quyền.');
+
+        // Nếu muốn xóa media trên WP hoặc file vật lý, làm ở đây (tùy flow của bạn).
+        // Ví dụ: nếu file_path là URL WP media và bạn muốn xóa bên WP, gọi API WP trước.
+
         $this->model->delete($id);
-        return $this->respondDeleted(['status' => 'deleted']);
+
+        return $this->respondDeleted(['message' => 'Đã xoá document.']);
     }
 
     public function byDepartment(): ResponseInterface

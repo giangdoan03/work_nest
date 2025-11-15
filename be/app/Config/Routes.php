@@ -163,6 +163,7 @@ $routes->group('api', function ($routes) {
     $routes->post('document-settings', 'DocumentController::saveSetting');
     $routes->put('document-settings/(:num)', 'DocumentController::updateSetting/$1');
     $routes->delete('document-settings/(:num)', 'DocumentController::deleteSetting/$1');
+    $routes->delete('documents/(:num)', 'DocumentController::delete/$1');
 
     // Settings CRUD
     $routes->get('settings', 'SettingController::index');

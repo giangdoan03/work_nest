@@ -14,7 +14,7 @@ class TaskFileModel extends Model
         'wp_media_id','source',
         'uploaded_by','comment_id',
         'link_url','is_link',
-        'department_id','visibility','tags',
+        'department_id','visibility',
         'status','approved_by','approved_at','review_note',
         'approvals_json',
         'is_pinned','pinned_rank','pinned_by','pinned_at',

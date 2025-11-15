@@ -123,6 +123,19 @@ export const actOnApprovalAPI = (approvalId, payload) =>
         // có thể thêm pos_row, pos_index, order_index nếu BE cần
     })
 
+
+// DELETE document (bảng documents)
+export const deleteDocumentAPI = (documentId) =>
+    instance.delete(`/documents/${documentId}`)
+
+// DELETE task file (bảng task_files) — bạn đã có deleteTaskFile, alias:
+export const deleteTaskFileAPI = (fileId) =>
+    instance.delete(`/task-files/${fileId}`)
+
+// DELETE comment (bảng task_comments)
+export const deleteCommentAPI = (commentId) =>
+    instance.delete(`/comments/${commentId}`)
+
 export default {
     // list & upload
     getTaskFiles,

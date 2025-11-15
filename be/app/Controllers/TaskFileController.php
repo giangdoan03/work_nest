@@ -104,7 +104,6 @@ class TaskFileController extends ResourceController
             'uploaded_by' => $user_id,
             'is_link'     => 0,
             'status'      => 'uploaded',
-            // auto-pin on upload
             'is_pinned'   => 1,
             'pinned_at'   => $now,
             'pinned_by'   => $user_id,
@@ -342,9 +341,27 @@ class TaskFileController extends ResourceController
 
     public function pinnedByTask($taskId): ResponseInterface
     {
-        $rows = $this->model
+        // allow client to pass ?exclude=1,2,3 to hide transient ids (helpful for optimistic UI)
+        $excludeRaw = $this->request->getGet('exclude') ?? $this->request->getVar('exclude');
+        $excludeIds = [];
+        if (!empty($excludeRaw)) {
+            // accept "1,2,3" or array
+            if (is_array($excludeRaw)) {
+                $excludeIds = array_map('intval', $excludeRaw);
+            } else {
+                $excludeIds = array_filter(array_map('intval', explode(',', (string)$excludeRaw)));
+            }
+        }
+
+        $builder = $this->model
             ->where('task_id', (int)$taskId)
-            ->where('is_pinned', 1)
+            ->where('is_pinned', 1);
+
+        if (!empty($excludeIds)) {
+            $builder = $builder->whereNotIn('id', $excludeIds);
+        }
+
+        $rows = $builder
             ->orderBy('pinned_at', 'DESC')
             ->findAll();
 
@@ -352,8 +369,11 @@ class TaskFileController extends ResourceController
             return $this->respond([]);
         }
 
-        // ✅ Map ID -> tên user (chỉ query 1 lần)
-        $userIds = array_unique(array_filter(array_column($rows, 'uploaded_by')));
+        // Map ID -> tên user (chỉ query 1 lần). Prefer pinned_by; fallback to uploaded_by
+        $userIds = array_unique(array_filter(array_merge(
+            array_column($rows, 'pinned_by'),
+            array_column($rows, 'uploaded_by')
+        )));
         $userNames = [];
         if (!empty($userIds)) {
             $users = (new UserModel())
@@ -365,9 +385,17 @@ class TaskFileController extends ResourceController
             }
         }
 
-        // ✅ Gắn thêm tên vào mỗi record
+        // Gắn thêm tên vào mỗi record; chuẩn hoá fields trả về
         foreach ($rows as &$r) {
-            $r['pinned_by_name'] = $userNames[(int)$r['uploaded_by']] ?? null;
+            // prefer pinned_by; fallback to uploaded_by
+            $pinnedBy = (int)($r['pinned_by'] ?? 0);
+            $uploadedBy = (int)($r['uploaded_by'] ?? 0);
+            $r['pinned_by_name'] = $userNames[$pinnedBy] ?? $userNames[$uploadedBy] ?? null;
+
+            // Optional: expose canonical id field and normalized file_path/title
+            $r['task_file_id'] = $r['id'];
+            $r['file_path'] = $r['file_path'] ?? ($r['link_url'] ?? '');
+            $r['title'] = $r['title'] ?? ($r['file_name'] ?? '');
         }
 
         return $this->respond($rows);
