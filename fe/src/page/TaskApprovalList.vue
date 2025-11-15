@@ -1,5 +1,11 @@
 <template>
     <a-card :bordered="false" class="inbox-files">
+        <!-- PAGE TITLE -->
+        <a-page-header
+            :ghost="false"
+            title="Danh sách văn bản cần duyệt / ký"
+            sub-title="Các tài liệu bạn cần xem xét, ký hoặc phê duyệt"
+        />
         <!-- Toolbar -->
         <div class="toolbar">
             <a-input-search
@@ -717,5 +723,8 @@ onMounted(() => {
     font-size: 10px;
     color: #888;
 }
-
+:deep(.ant-page-header) {
+    margin-bottom: 16px;
+    border-radius: 8px;
+}
 </style>

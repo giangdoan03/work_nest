@@ -109,18 +109,18 @@
                     <span class="menu-text">Công việc cá nhân</span>
                 </div>
 
-                <!-- 6. Duyệt nhiệm vụ -->
-                <a-tooltip placement="right" title="Duyệt nhiệm vụ" v-if="collapsed">
+                <!-- 6. Duyệt công văn -->
+                <a-tooltip placement="right" title="Duyệt công văn" v-if="collapsed">
                     <div class="menu-item" :class="{ active: currentRoute === '/task-approvals' }"
                          @click="navigateTo('/task-approvals')">
                         <CheckCircleOutlined/>
-                        <div class="menu-text-collapsed">Duyệt nhiệm vụ</div>
+                        <div class="menu-text-collapsed">Duyệt công văn</div>
                     </div>
                 </a-tooltip>
                 <div v-else class="menu-item" :class="{ active: currentRoute === '/task-approvals' }"
                      @click="navigateTo('/task-approvals')">
                     <CheckCircleOutlined/>
-                    <span class="menu-text">Duyệt nhiệm vụ</span>
+                    <span class="menu-text">Duyệt công văn</span>
                 </div>
 
                 <!-- 8. Tài liệu (submenu) -->

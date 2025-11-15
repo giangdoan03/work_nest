@@ -261,7 +261,7 @@ const routes = [
                 path: '/task-approvals',
                 name: 'task-approvals',
                 component: () => import('../page/TaskApprovalList.vue'),
-                meta: {breadcrumb: 'Duyệt nhiệm vụ'}
+                meta: {breadcrumb: 'Duyệt công văn'}
             },
 
             // Charts
