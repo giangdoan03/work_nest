@@ -1,38 +1,49 @@
 <template>
-    <a-card :bordered="false" class="inbox-files">
-        <!-- PAGE TITLE -->
+    <a-card :bordered="false" class="inbox-files-card">
+        <!-- PAGE HEADER -->
         <a-page-header
             :ghost="false"
             title="Danh sách văn bản cần duyệt / ký"
             sub-title="Các tài liệu bạn cần xem xét, ký hoặc phê duyệt"
+            class="page-header"
         />
+
         <!-- Toolbar -->
         <div class="toolbar">
-            <a-input-search
-                v-model:value="keyword"
-                :placeholder="'Tìm theo tên tệp, người gửi…'"
-                allow-clear
-                @search="onSearch"
-                style="max-width: 440px"
-            >
-                <template #enterButton>
-                    <a-button type="primary">
-                        <template #icon>
-                            <SearchOutlined/>
-                        </template>
-                        Tìm
-                    </a-button>
-                </template>
-            </a-input-search>
-
-            <a-space>
-                <a-button @click="fetchData" :loading="loading">
-                    <template #icon>
-                        <ReloadOutlined/>
+            <div class="toolbar-left">
+                <a-input-search
+                    v-model:value="keyword"
+                    :placeholder="'Tìm theo tên tệp, người gửi…'"
+                    allow-clear
+                    @search="onSearch"
+                    class="search-input"
+                >
+                    <template #enterButton>
+                        <a-button type="primary" class="search-btn">
+                            <template #icon>
+                                <SearchOutlined />
+                            </template>
+                            Tìm
+                        </a-button>
                     </template>
-                    Làm mới
-                </a-button>
-            </a-space>
+                </a-input-search>
+
+                <a-space class="toolbar-actions">
+                    <a-button @click="fetchData" :loading="loading" class="btn-ghost">
+                        <template #icon>
+                            <ReloadOutlined />
+                        </template>
+                        Làm mới
+                    </a-button>
+                </a-space>
+            </div>
+
+            <div class="toolbar-right">
+                <div class="stats" v-if="total">
+                    <span class="stat-number">{{ total }}</span>
+                    <span class="stat-label">tài liệu</span>
+                </div>
+            </div>
         </div>
 
         <!-- List -->
@@ -42,30 +53,31 @@
             :locale="{ emptyText: 'Không có tài liệu nào cần bạn duyệt.' }"
             item-layout="horizontal"
             :pagination="paginationCfg"
-            class="mt-3"
+            class="files-list"
         >
             <template #renderItem="{ item }">
-                <a-list-item :key="item.approval_id">
+                <a-list-item :key="item.approval_id" class="list-item">
                     <a-card class="file-card" :hoverable="true">
-                        <div class="row">
-                            <div class="thumb">
-                                <component :is="item.icon" class="thumb-icon" v-if="item.kind !== 'image'"/>
-                                <a-image v-else :src="item.url" :height="64"/>
+                        <div class="file-row">
+                            <div class="file-thumb">
+                                <component :is="item.icon" class="thumb-icon" v-if="item.kind !== 'image'" />
+                                <a-image v-else :src="item.url" :height="64" />
                             </div>
 
-                            <div class="meta">
-                                <div class="title" :title="item.title || item.name">
+                            <div class="file-meta">
+                                <div class="file-title" :title="item.title || item.name">
                                     {{ item.title || item.name }}
                                 </div>
 
-                                <div class="sub">
-                                    <UserOutlined/>
-                                    {{ item.uploader_name || '—' }}
-                                    · {{ formatDate(item.created_at) }}
+                                <div class="file-sub">
+                                    <UserOutlined />
+                                    <span class="uploader">{{ item.uploader_name || '—' }}</span>
+                                    <span class="dot">·</span>
+                                    <span class="time">{{ formatDate(item.created_at) }}</span>
                                 </div>
 
-                                <div class="url" v-if="item.url">
-                                    <a-button type="link" @click="openFile(item)">
+                                <div class="file-links" v-if="item.url">
+                                    <a-button type="link" @click="openFile(item)" class="link-btn">
                                         <template #icon>
                                             <LinkOutlined />
                                         </template>
@@ -73,46 +85,41 @@
                                     </a-button>
                                 </div>
 
-                                <div class="status">
-                                    <a-tag color="blue">Bước #{{item.current_step_index || item.sequence || 1}}</a-tag>
-                                    <a-tag :color="statusColor(item.status)">{{ labelStatus(item.status) }}</a-tag>
+                                <div class="file-status">
+                                    <a-tag color="blue" class="step-tag">Bước #{{item.current_step_index || item.sequence || 1}}</a-tag>
+                                    <a-tag :color="statusColor(item.status)" class="status-tag">{{ labelStatus(item.status) }}</a-tag>
                                 </div>
+
                                 <div class="steps-line" v-if="stepsOf(item).length">
                                     <span class="steps-label">Chuỗi ký:</span>
                                     <template v-for="(s, idx) in stepsOf(item)" :key="s.id || s.step_id || idx">
-                                        <a-tag :class="pillClass(s)" style="font-size: 11px; padding: 0 6px; border-radius: 12px; line-height: 18px;">
+                                        <a-tag :class="pillClass(s)" class="step-pill">
                                             {{ s.approver_name || ('#' + (s.approver_id || s.id || idx)) }}
-                                            <span class="att-approval-pill-status">
-                                                ({{ shortStepStatus(s) }})
-                                            </span>
+                                            <span class="att-approval-pill-status">({{ shortStepStatus(s) }})</span>
                                         </a-tag>
                                     </template>
                                 </div>
                             </div>
 
-                            <div class="actions">
+                            <div class="file-actions">
                                 <a-tooltip title="Xem trước">
                                     <a-button size="large" shape="circle" @click="openFile(item)">
-                                        <EyeOutlined/>
+                                        <EyeOutlined />
                                     </a-button>
                                 </a-tooltip>
 
                                 <a-tooltip title="Tải / mở">
                                     <a-button size="large" shape="circle" @click="download(item)">
-                                        <DownloadOutlined/>
+                                        <DownloadOutlined />
                                     </a-button>
                                 </a-tooltip>
 
                                 <a-tooltip v-if="item.kind === 'pdf' && mySignatureUrl" title="Ký tài liệu">
                                     <a-button size="large" shape="circle" type="dashed" @click="openSign(item)">
-                                        <img
-                                            :src="'/pen-icon.svg'"
-                                            class="icon-pen"
-                                            alt="pen"
-                                            style="width: 20px"
-                                        />
+                                        <img :src="'/pen-icon.svg'" class="icon-pen" alt="pen" />
                                     </a-button>
                                 </a-tooltip>
+
                                 <a-tooltip title="Xóa tài liệu">
                                     <a-button
                                         size="large"
@@ -140,11 +147,11 @@
             :sign-target="signTarget"
             @done="handleSignedBlob"
         />
-
     </a-card>
 </template>
 
 <script setup>
+// (Script nội dung giữ nguyên logic như file gốc của bạn)
 import {computed, onMounted, reactive, ref} from 'vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/vi'
@@ -437,7 +444,6 @@ async function fetchData() {
 }
 
 
-
 // async function fetchData() {
 //     loading.value = true
 //     try {
@@ -575,156 +581,221 @@ async function onClickDelete(item) {
 
 
 
-
 onMounted(() => {
     fetchSignature()
     fetchData()
 })
-
-
 </script>
 
 <style scoped>
-.inbox-files {
-    background: transparent;
+/* Container */
+.inbox-files-card {
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
 }
 
+.page-header {
+    margin-bottom: 18px;
+    border-radius: 8px;
+    padding-left: 0;
+    padding-top: 0;
+}
+
+/* Toolbar */
 .toolbar {
     display: flex;
-    gap: 12px;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
     flex-wrap: wrap;
 }
 
-.mt-3 {
-    margin-top: 12px;
+.toolbar-left {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.search-input {
+    min-width: 320px;
+    max-width: 520px;
+}
+
+.search-btn {
+    height: 32px;
+}
+
+.toolbar-actions .btn-ghost {
+    height: 32px;
+}
+
+.toolbar-right .stats {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    color: #445;
+}
+.stat-number {
+    font-weight: 700;
+    font-size: 16px;
+}
+.stat-label {
+    color: #7a869a;
+    font-size: 13px;
+}
+
+/* List */
+.files-list {
+    width: 100%;
+}
+.list-item {
+    padding: 0;
 }
 
 .file-card {
     width: 100%;
+    border-radius: 10px;
 }
 
-.row {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
+.file-row {
+    display: grid;
+    grid-template-columns: 76px 1fr auto;
+    gap: 16px;
+    align-items: center;
 }
 
-.thumb {
-    width: 72px;
+.file-thumb {
+    width: 76px;
+    height: 76px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #fafafa;
-    border-radius: 8px;
-    height: 72px;
+    background: linear-gradient(180deg, #fbfdff 0%, #f7f9fb 100%);
+    border-radius: 10px;
     overflow: hidden;
+    box-shadow: 0 1px 0 rgba(16,24,40,0.04) inset;
 }
 
 .thumb-icon {
-    font-size: 28px;
-    opacity: .85;
+    font-size: 30px;
+    opacity: .9;
 }
 
-.meta {
-    flex: 1;
+.file-meta {
     min-width: 0;
 }
 
-.title {
+.file-title {
     font-weight: 600;
-    font-size: 14px;
+    font-size: 15px;
+    color: #0f1724;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.sub {
-    color: #667;
-    font-size: 12px;
-    margin-top: 2px;
+.file-sub {
+    margin-top: 6px;
+    color: #6b7280;
+    font-size: 13px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.file-sub .uploader { font-weight: 500 }
+.file-sub .dot { color: #cbd5e1 }
+
+.file-links {
+    margin-top: 8px;
 }
 
-.url {
+.file-status {
+    margin-top: 10px;
     display: flex;
     gap: 8px;
     align-items: center;
     flex-wrap: wrap;
-    margin-top: 4px;
 }
 
-.status {
-    margin-top: 6px;
-    display: flex;
+.step-tag, .status-tag {
+    font-size: 12px;
+    padding: 0 8px;
+    height: 26px;
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
 }
 
-.actions {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-}
 .steps-line {
-    margin-top: 4px;
+    margin-top: 8px;
     display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
     align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 .steps-label {
-    color: #888;
+    color: #8892a6;
+    font-size: 12px;
 }
-.att-approval {
-    margin-top: 3px;
+.step-pill {
+    font-size: 11px;
+    padding: 0 8px;
+    border-radius: 14px;
+    line-height: 20px;
+}
+.att-approval-pill-status { margin-left: 6px; color: #6b7280; font-weight: 500 }
+
+/* Action buttons */
+.file-actions {
     display: flex;
-    flex-wrap: wrap;
-    gap: 3px;
+    gap: 8px;
     align-items: center;
-    line-height: 1.2;
+}
+.icon-pen {
+    width: 18px;
+    height: 18px;
 }
 
-.att-approval-label {
-    color: #999;
-    margin-right: 3px;
-}
-
-.att-approval-pill {
-    border: 1px solid transparent;
-}
-
-
-/* màu sắc giữ nguyên nhưng dịu hơn */
+/* pill colors */
 .att-approval-pill--approved {
     background: #f6ffed;
-    color: #52c41a;
-    border-color: #b7eb8f;
+    color: #389e0d;
+    border: 1px solid #bae7bd;
 }
-
 .att-approval-pill--pending {
     background: #fffbe6;
     color: #d48806;
-    border-color: #ffe58f;
+    border: 1px solid #ffe58f;
 }
-
 .att-approval-pill--rejected {
     background: #fff1f0;
-    color: #cf1322;
-    border-color: #ffa39e;
+    color: #a61d24;
+    border: 1px solid #ffccc7;
+}
+.att-approval-pill--idle {
+    background: #fbfbfb;
+    color: #6b7280;
+    border: 1px solid #e6eaf0;
+}
+ul.ant-list-items li {
+    margin-bottom: 10px;
+}
+.ant-card-body {
+    padding-top: 0 !important;
+}
+/* Responsive tweaks */
+@media (max-width: 880px) {
+    .file-row {
+        grid-template-columns: 64px 1fr;
+    }
+    .file-actions { margin-top: 8px }
 }
 
-.att-approval-pill--idle {
-    background: #fafafa;
-    color: #999;
-}
-.att-approval-more {
-    font-size: 10px;
-    color: #888;
-}
-:deep(.ant-page-header) {
-    margin-bottom: 16px;
-    border-radius: 8px;
+@media (max-width: 520px) {
+    .search-input { min-width: 180px }
+    .file-row { grid-template-columns: 56px 1fr }
+    .file-thumb { width: 56px; height: 56px }
+    .file-title { font-size: 14px }
 }
 </style>
