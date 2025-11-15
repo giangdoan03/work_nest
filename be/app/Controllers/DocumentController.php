@@ -915,30 +915,50 @@ class DocumentController extends ResourceController
 
 
 
-    public function delete($id = null): ResponseInterface
+    public function delete($id = null)
     {
-        $id = (int)$id;
+        $id = (int) $id;
         if ($id <= 0) {
-            return $this->failValidationErrors('Invalid document id.');
+            return $this->failValidationErrors('document_id không hợp lệ.');
         }
+
+        $userId = (int) (session()->get('user_id') ?? 0);
+        $isAdmin = (bool) session()->get('is_admin');
 
         $doc = $this->model->find($id);
         if (!$doc) {
-            return $this->failNotFound('Document không tồn tại.');
+            return $this->failNotFound('Không tìm thấy tài liệu.');
         }
 
-        // TODO: kiểm tra quyền (owner / admin). Ví dụ:
-        // $user = session()->get('user_id') ?: (int)$this->request->getPost('user_id');
-        // if (! $this->canDeleteDocument($user, $doc)) return $this->failForbidden('Không có quyền.');
+        // Chỉ người upload hoặc admin mới được xoá
+        if (!$isAdmin && (int)$doc['uploaded_by'] !== $userId) {
+            return $this->failForbidden('Bạn không có quyền xoá tài liệu này.');
+        }
 
-        // Nếu muốn xóa media trên WP hoặc file vật lý, làm ở đây (tùy flow của bạn).
-        // Ví dụ: nếu file_path là URL WP media và bạn muốn xóa bên WP, gọi API WP trước.
+        // Không cho xóa nếu đang có phiên duyệt pending
+        $apvM = new DocumentApprovalModel();
+        $pending = $apvM
+            ->where('document_id', $id)
+            ->where('status', 'pending')
+            ->first();
 
+        if ($pending) {
+            return $this->failValidationErrors('Tài liệu đang trong phiên duyệt pending — không thể xoá.');
+        }
+
+        // Xóa file trên disk nếu file_path nằm ở local
+        if (!empty($doc['file_path']) && file_exists(FCPATH . $doc['file_path'])) {
+            @unlink(FCPATH . $doc['file_path']);
+        }
+
+        // Xóa record document
         $this->model->delete($id);
 
-        return $this->respondDeleted(['message' => 'Đã xoá document.']);
+        return $this->respondDeleted([
+            'message' => 'Đã xoá tài liệu thành công.',
+            'id'      => $id
+        ]);
     }
-
     public function byDepartment(): ResponseInterface
     {
         $departmentId = $this->request->getGet('department_id'); // optional filter

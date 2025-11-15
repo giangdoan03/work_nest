@@ -613,7 +613,6 @@ class DocumentApprovalController extends ResourceController
             'steps' => $apv['steps'],
         ]]);
     }
-
     public function inboxFiles(): ResponseInterface
     {
         $s = session();
@@ -622,53 +621,195 @@ class DocumentApprovalController extends ResourceController
             return $this->failUnauthorized('Chưa đăng nhập.');
         }
 
+        // safe GET handling
+        $page = max(1, (int) ($this->request->getGet('page') ?? 1));
+        $pageSize = min(100, max(5, (int) ($this->request->getGet('pageSize') ?? 20)));
+        $offset = ($page - 1) * $pageSize;
+        $q = trim((string) ($this->request->getGet('q') ?? ''));
+
         $db = db_connect();
 
-        $sql = "
-    SELECT
-        das.id                 AS step_id,
-        das.status             AS step_status,
-        das.sequence           AS step_sequence,
+        // chuẩn bị biến LIKE cho search (dùng LOWER để đảm bảo case-insensitive)
+        $useSearch = ($q !== '');
+        $like = '%' . mb_strtolower($q) . '%';
 
-        da.id                  AS approval_id,
-        da.document_id,
-        da.source_type,
-        da.status              AS approval_status,
-        da.current_step_index,
+        // -------------------------
+        // 1) Tạo subquery lấy DISTINCT approval ids (group by da.id)
+        //    -> sẽ compile làm nguồn để COUNT(*) an toàn
+        // -------------------------
+        $subBuilder = $db->table('document_approval_steps das')
+            ->select('da.id AS approval_id', false)
+            ->join('document_approvals da', 'da.id = das.approval_id')
+            ->join('documents d', 'd.id = da.document_id', 'left')
+            ->join('users u', 'u.id = d.uploaded_by', 'left')
+            ->where('das.approver_id', $userId)
+            ->where('da.source_type', 'document');
 
-        d.title                AS title,
-        d.file_path            AS file_path,
-        d.source_task_id       AS source_task_id,
-        d.signed_pdf_url       AS signed_pdf_url,
-        d.signed_by       AS signed_by,
-        d.uploaded_by,
-        u.name                 AS uploader_name,
-        d.created_at
+        if ($useSearch) {
+            // LOWER(d.title) LIKE ? OR LOWER(u.name) LIKE ?
+            // getCompiledSelect sẽ chứa placeholder ?, nên ta giữ $subSqlParams
+            $subBuilder->where("(LOWER(d.title) LIKE {$db->escape($like)} OR LOWER(u.name) LIKE {$db->escape($like)})", null, false);
+        }
 
-    FROM document_approval_steps das
-    JOIN document_approvals da
-        ON da.id = das.approval_id
+        $subBuilder->groupBy('da.id');
+        $subSql = $subBuilder->getCompiledSelect();
 
-    LEFT JOIN documents d
-        ON d.id = da.document_id
+        // -------------------------
+        // 2) Count tổng số approval (dựa trên subquery)
+        // -------------------------
+        $cntSql = "SELECT COUNT(*) AS cnt FROM ({$subSql}) t";
+        $cntRow = $db->query($cntSql)->getRowArray();
+        $total = (int) ($cntRow['cnt'] ?? 0);
 
-    LEFT JOIN users u
-        ON u.id = d.uploaded_by
+        if ($total === 0) {
+            return $this->respond([
+                'items' => [],
+                'total' => 0,
+                'page' => $page,
+                'pageSize' => $pageSize,
+            ]);
+        }
 
-    WHERE das.approver_id = ?
-      AND da.source_type = 'document'
+        // -------------------------
+        // 3) Lấy approval_id theo thứ tự latest step (MAX(das.id)) với paging
+        //    (dùng Query Builder trực tiếp để binding LIMIT/OFFSET)
+        // -------------------------
+        $idsBuilder = $db->table('document_approval_steps das')
+            ->select('da.id AS approval_id, MAX(das.id) AS last_step_id', false)
+            ->join('document_approvals da', 'da.id = das.approval_id')
+            ->join('documents d', 'd.id = da.document_id', 'left')
+            ->join('users u', 'u.id = d.uploaded_by', 'left')
+            ->where('das.approver_id', $userId)
+            ->where('da.source_type', 'document');
 
-    ORDER BY das.id DESC
-";
+        if ($useSearch) {
+            $idsBuilder->where("(LOWER(d.title) LIKE {$db->escape($like)} OR LOWER(u.name) LIKE {$db->escape($like)})", null, false);
+        }
 
+        $idRows = $idsBuilder
+            ->groupBy('da.id')
+            ->orderBy('last_step_id', 'DESC')
+            ->limit($pageSize, $offset)
+            ->get()
+            ->getResultArray();
 
-        $rows = $db->query($sql, [$userId])->getResultArray();
+        if (empty($idRows)) {
+            return $this->respond([
+                'items' => [],
+                'total' => $total,
+                'page' => $page,
+                'pageSize' => $pageSize,
+            ]);
+        }
+
+        $approvalIds = array_map(fn($r) => (int)$r['approval_id'], $idRows);
+
+        // -------------------------
+        // 4) Lấy chi tiết approvals + documents cho approvalIds (1 query)
+        // -------------------------
+        $detailBuilder = $db->table('document_approvals da')
+            ->select('
+            da.id AS approval_id,
+            da.document_id,
+            da.status AS approval_status,
+            da.current_step_index,
+            d.title,
+            d.file_path,
+            d.signed_pdf_url,
+            d.uploaded_by,
+            u.name AS uploader_name,
+            d.created_at
+        ', false)
+            ->join('documents d', 'd.id = da.document_id', 'left')
+            ->join('users u', 'u.id = d.uploaded_by', 'left')
+            ->whereIn('da.id', $approvalIds);
+
+        $detailRows = $detailBuilder->get()->getResultArray();
+        $detailsById = [];
+        foreach ($detailRows as $dr) {
+            $detailsById[(int)$dr['approval_id']] = $dr;
+        }
+
+        // -------------------------
+        // 5) Lấy tất cả steps cho các approvalIds (1 query)
+        // -------------------------
+        $stepM = new DocumentApprovalStepModel();
+        $stepRows = $stepM
+            ->select('document_approval_steps.*, u.name AS approver_name, u.signature_url AS approver_signature_url', false)
+            ->join('users u', 'u.id = document_approval_steps.approver_id', 'left')
+            ->whereIn('approval_id', $approvalIds)
+            ->orderBy('approval_id', 'ASC')
+            ->orderBy('sequence', 'ASC')
+            ->findAll();
+
+        $stepsByApv = [];
+        foreach ($stepRows as $s) {
+            $aid = (int)$s['approval_id'];
+            if (!isset($stepsByApv[$aid])) $stepsByApv[$aid] = [];
+            $stepsByApv[$aid][] = $s;
+        }
+
+        // -------------------------
+        // 6) Build items giữ nguyên thứ tự approvalIds (để paging giữ đúng order)
+        // -------------------------
+        $items = [];
+        foreach ($approvalIds as $aid) {
+            $r = $detailsById[$aid] ?? null;
+            $doc = [
+                'id' => $r && isset($r['document_id']) ? (int)$r['document_id'] : null,
+                'title' => $r['title'] ?? null,
+                'file_path' => $r['file_path'] ?? null,
+                'signed_pdf_url' => $r['signed_pdf_url'] ?? null,
+                'uploaded_by' => $r && isset($r['uploaded_by']) ? (int)$r['uploaded_by'] : null,
+                'uploader_name' => $r['uploader_name'] ?? null,
+                'created_at' => $r['created_at'] ?? null,
+            ];
+
+            $rawSteps = $stepsByApv[$aid] ?? [];
+
+            // find current step (first active/pending)
+            $currentStepId = null;
+            foreach ($rawSteps as $s) {
+                if (in_array(strtolower($s['status']), ['active','pending'], true)) {
+                    $currentStepId = (int)$s['id'];
+                    break;
+                }
+            }
+
+            $steps = [];
+            foreach ($rawSteps as $s) {
+                $isCurrent = ((int)$s['id'] === $currentStepId);
+                $steps[] = [
+                    'id' => (int)$s['id'],
+                    'sequence' => (int)$s['sequence'],
+                    'approver_id' => (int)$s['approver_id'],
+                    'approver_name' => $s['approver_name'] ?? null,
+                    'status' => $s['status'],
+                    'is_current' => $isCurrent,
+                    'can_act' => $isCurrent && ((int)$s['approver_id'] === $userId),
+                    'signature_url' => $s['signature_url'] ?? $s['approver_signature_url'] ?? null,
+                ];
+            }
+
+            $items[] = [
+                'approval' => [
+                    'id' => $aid,
+                    'status' => $r['approval_status'] ?? null,
+                    'current_step_index' => isset($r['current_step_index']) ? (int)$r['current_step_index'] : null,
+                ],
+                'document' => $doc,
+                'steps' => $steps,
+            ];
+        }
 
         return $this->respond([
-            'data'  => $rows,
-            'count' => count($rows),
+            'items' => $items,
+            'total' => $total,
+            'page' => $page,
+            'pageSize' => $pageSize,
         ]);
     }
+
 
     public function detail($id): ResponseInterface
     {
@@ -750,6 +891,117 @@ class DocumentApprovalController extends ResourceController
             'current_step_id' => $currentStepId,
             'signatures'      => $signatures,
         ]);
+    }
+
+
+    public function deleteDocument($docId = null): ResponseInterface
+    {
+        $userId = (int) (session()->get('user_id') ?? 0);
+        if ($userId <= 0) {
+            return $this->failUnauthorized('Chưa đăng nhập');
+        }
+
+        $docId = (int) $docId;
+        if ($docId <= 0) {
+            return $this->failValidationErrors('document_id không hợp lệ');
+        }
+
+        $docM  = new DocumentModel();
+        $apvM  = new DocumentApprovalModel();
+        $stepM = new DocumentApprovalStepModel();
+        $logM  = new DocumentApprovalLogModel();
+        $sigM  = new FileSignatureModel();
+
+        // Tìm tất cả phiên approval liên quan tới document_id (có thể rỗng)
+        $approvals = $apvM->where('document_id', $docId)->findAll();
+
+        // Nếu không tìm thấy approval nào, vẫn trả 'not found' hay 'ok' tuỳ UX.
+        // Ở đây mình trả 404 nếu không có approval nào *và* document cũng không tồn tại.
+        $doc = $docM->find($docId);
+        if (empty($approvals) && !$doc) {
+            return $this->failNotFound('Không tìm thấy tài liệu hoặc phiên duyệt liên quan.');
+        }
+
+        // Quyền: kiểm tra per-approval owner hoặc admin.
+        // Nếu document tồn tại, bạn có thể dùng uploaded_by làm kiểm tra thay thế nếu muốn.
+        $isAdmin = (bool) session()->get('is_admin');
+
+        foreach ($approvals as $a) {
+            $isOwnerApproval = ((int)$a['created_by'] === $userId);
+            if (!($isOwnerApproval || $isAdmin)) {
+                return $this->failForbidden('Bạn không có quyền xóa một hoặc nhiều phiên duyệt này.');
+            }
+        }
+
+        // Nếu không có approval nhưng document có và bạn là owner/admin -> cho phép xóa document row.
+        if (empty($approvals) && $doc) {
+            // Quyền xóa document (uploaded_by hoặc admin)
+            $isOwnerDoc = ((int)$doc['uploaded_by'] === $userId);
+            if (!($isOwnerDoc || $isAdmin)) {
+                return $this->failForbidden('Bạn không có quyền xóa tài liệu này.');
+            }
+
+            try {
+                // (Tùy chọn) xóa file vật lý nếu cần
+                if (!empty($doc['file_path']) && !str_starts_with($doc['file_path'], 'http')) {
+                    $full = WRITEPATH . 'uploads/' . ltrim($doc['file_path'], '/');
+                    if (is_file($full)) @unlink($full);
+                }
+                $docM->delete($docId);
+                return $this->respondDeleted(['message' => 'Đã xóa tài liệu (không có phiên duyệt).']);
+            } catch (\Throwable $e) {
+                return $this->failServerError('Lỗi khi xóa document: ' . $e->getMessage());
+            }
+        }
+
+        // Nếu có approvals -> kiểm tra step đã action chưa (block nếu đã có approved/rejected)
+        foreach ($approvals as $a) {
+            $acted = $stepM
+                ->where('approval_id', (int)$a['id'])
+                ->whereIn('status', [self::S_APPROVED, self::S_REJECTED])
+                ->first();
+            if ($acted) {
+                return $this->failValidationErrors('Không thể xoá: một số phiên đã có người hành động. Không cho phép xóa các phiên đã xử lý.');
+            }
+        }
+
+        // Xóa trong transaction: steps, logs, file_signatures, approvals.
+        $apvIds = array_map(fn($x) => (int)$x['id'], $approvals);
+        $db = $apvM->db;
+        $db->transBegin();
+        try {
+            if (!empty($apvIds)) {
+                $stepM->whereIn('approval_id', $apvIds)->delete();
+                $logM->whereIn('approval_id', $apvIds)->delete();
+                $sigM->whereIn('approval_id', $apvIds)->delete();
+                $apvM->whereIn('id', $apvIds)->delete();
+            }
+
+            // Nếu bạn muốn xóa cả file_signatures lưu theo document_id:
+            $sigM->where('document_id', $docId)->delete();
+
+            // (Tùy chọn) nếu document row tồn tại và bạn muốn xóa luôn document:
+            if ($doc) {
+                // kiểm quyền theo uploaded_by hoặc admin (đã kiểm ở trên nếu approvals rỗng)
+                $isOwnerDoc = ((int)$doc['uploaded_by'] === $userId);
+                if ($isOwnerDoc || $isAdmin) {
+                    if (!empty($doc['file_path']) && !str_starts_with($doc['file_path'], 'http')) {
+                        $full = WRITEPATH . 'uploads/' . ltrim($doc['file_path'], '/');
+                        if (is_file($full)) @unlink($full);
+                    }
+                    $docM->delete($docId);
+                }
+            }
+
+            $db->transCommit();
+            return $this->respondDeleted([
+                'message' => 'Đã xóa phiên duyệt và dữ liệu liên quan.',
+                'deleted_approvals' => $apvIds,
+            ]);
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            return $this->failServerError('Lỗi xoá: ' . $e->getMessage());
+        }
     }
 
 

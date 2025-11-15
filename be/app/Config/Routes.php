@@ -260,8 +260,10 @@ $routes->group('api', function ($routes) {
     $routes->post('document-approvals/(:num)/reject', 'DocumentApprovalController::reject/$1'); // từ chối
     $routes->post('document-approvals/(:num)/update-steps', 'DocumentApprovalController::updateSteps/$1'); // hoặc PATCH
     $routes->delete('document-approvals/(:num)', 'DocumentApprovalController::delete/$1');
+    $routes->delete('document-approvals/document/(:num)', 'DocumentApprovalController::deleteDocument/$1');
     // Kế hoạch ký cho 1 phiên duyệt (KHÔNG có tọa độ)
     $routes->get('document-approvals/(:num)/signature-plan', 'DocumentApprovalController::signaturePlan/$1');
+
 
 
     // ✅ WordPress Media Proxy

@@ -59,7 +59,12 @@
                                 </div>
 
                                 <div class="url" v-if="item.url">
-                                    <a-typography-text type="secondary" copyable>{{ item.url }}</a-typography-text>
+                                    <a-button type="link" @click="openFile(item)">
+                                        <template #icon>
+                                            <LinkOutlined />
+                                        </template>
+                                        Mở tài liệu
+                                    </a-button>
                                 </div>
 
                                 <div class="status">
@@ -102,6 +107,17 @@
                                         />
                                     </a-button>
                                 </a-tooltip>
+                                <a-tooltip title="Xóa tài liệu">
+                                    <a-button
+                                        size="large"
+                                        shape="circle"
+                                        type="text"
+                                        :loading="deleting[itemKey(item)]"
+                                        @click="onClickDelete(item)"
+                                    >
+                                        <DeleteOutlined />
+                                    </a-button>
+                                </a-tooltip>
                             </div>
                         </div>
                     </a-card>
@@ -123,10 +139,11 @@
 </template>
 
 <script setup>
-import {computed, onMounted, ref} from 'vue'
+import {computed, onMounted, reactive, ref} from 'vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/vi'
 import {
+    DeleteOutlined,
     DownloadOutlined,
     EyeOutlined,
     FileExcelOutlined,
@@ -137,12 +154,13 @@ import {
     ReloadOutlined,
     SearchOutlined,
     UserOutlined,
-    HighlightOutlined
+    LinkOutlined
 } from '@ant-design/icons-vue'
-import {message} from 'ant-design-vue'
+import {message, Modal} from 'ant-design-vue'
 
 // 📦 API
-import {getMyApprovalInboxFiles, uploadSignedPdf} from '@/api/document'
+import {deleteDocumentAPI, getMyApprovalInboxFiles, uploadSignedPdf} from '@/api/document'
+import {deleteCommentAPI, deleteTaskFile as deleteTaskFileAPI} from '@/api/taskFiles'
 import {approveDocumentApproval, getApprovalDetail} from '@/api/approvals'
 
 
@@ -163,6 +181,8 @@ const pageSize = ref(10)
 const signOpen = ref(false)
 const signTarget = ref(null)
 const mySignatureUrl = ref('')
+const { confirm } = Modal
+const deleting = reactive({}) // map: key -> boolean
 
 
 async function fetchSignature() {
@@ -375,38 +395,41 @@ function download(it) {
 
 /* ---------------- fetch ---------------- */
 async function fetchData() {
-    loading.value = true
+    loading.value = true;
     try {
-        const { data } = await getMyApprovalInboxFiles()
-        const baseItems = data?.items ?? data?.data ?? data?.data ?? []
+        const res = await getMyApprovalInboxFiles();
+        const payload = res.data ?? {};
 
-        // Lấy thêm chi tiết bước ký cho từng approval
-        rows.value = await Promise.all(
-            baseItems.map(async (r) => {
-                try {
-                    if (!r.approval_id) return r
-                    const detailRes = await getApprovalDetail(r.approval_id)
-                    const detail = detailRes.data || {}
-                    return {
-                        ...r,
-                        steps: detail.steps || [],
-                        approval: detail.approval || null,
-                        document: detail.document || null,
-                    }
-                } catch (e) {
-                    console.error('getApprovalDetail error for', r.approval_id, e)
-                    return r
+        // modern API: { items: [ { approval: {...}, document: {...}, steps: [...] }, ... ] }
+        const items = payload.items ?? payload.data ?? payload?.rows ?? [];
+
+        // If items already contain approval/document/steps, use them directly.
+        rows.value = items.map(it => {
+            // normalize shape — keep FE expectations from previous shaped computed
+            // possible keys: approval, document, steps OR approval_id, document_id, title, file_path, ...
+            if (it.approval || it.document || Array.isArray(it.steps)) {
+                return {
+                    ...it,
+                    // keep older keys for backwards compatibility
+                    approval_id: it.approval?.id ?? it.approval_id ?? it.approval_id,
+                    document_id: it.document?.id ?? it.document_id ?? it.document_id,
+                    title: it.document?.title ?? it.title ?? it.name ?? null,
+                    file_path: it.document?.file_path ?? it.file_path ?? it.url ?? null,
                 }
-            })
-        )
-        current.value = 1
+            }
+
+            // fallback: return raw item (FE will still render basic fields)
+            return it;
+        });
+        current.value = 1;
     } catch (e) {
-        console.error(e)
-        message.error(e?.response?.data?.message || 'Không tải được danh sách cần duyệt.')
+        console.error('fetchData error', e);
+        message.error(e?.response?.data?.message || 'Không tải được danh sách cần duyệt.');
     } finally {
-        loading.value = false
+        loading.value = false;
     }
 }
+
 
 
 // async function fetchData() {
@@ -490,6 +513,60 @@ function pillClass(step) {
         return 'att-approval-pill--pending'
     return 'att-approval-pill--idle'
 }
+
+/* ----- helper key (unique per item) ----- */
+function itemKey(it) {
+    // ưu tiên task_file_id / approval_id / id / url
+    return String(it.task_file_id || it.approval_id || it.id || (it.url || it.file_path) || Math.random())
+}
+
+/* ----- hàm xoá chung ----- */
+async function onClickDelete(item) {
+    const key = itemKey(item);
+
+    confirm({
+        title: 'Xác nhận xóa',
+        content: 'Bạn có chắc chắn muốn xóa tài liệu này?',
+        okText: 'Xóa',
+        okType: 'danger',
+        cancelText: 'Hủy',
+        async onOk() {
+            deleting[key] = true;
+            try {
+                // chọn id ưu tiên: document_id / id / approval_id / task_file_id
+                const rawId = item.id ?? item.document_id ?? item.approval_id ?? item.task_file_id;
+                const id = Number(rawId);
+                console.log('Deleting item rawId=', rawId, '-> id=', id, 'item=', item);
+
+                if (!Number.isFinite(id) || id <= 0) {
+                    message.error('Thiếu id hợp lệ để xóa.');
+                    return;
+                }
+
+                if (item.source === 'document' || item._source === 'document') {
+                    await deleteDocumentAPI(id); // wrapper axios của bạn
+                } else if (item.task_file_id) {
+                    await deleteTaskFileAPI(Number(item.task_file_id));
+                } else if (item.source === 'comment' || item._source === 'comment') {
+                    await deleteCommentAPI(id); // nếu bạn thêm API này
+                } else {
+                    // fallback: thử document delete
+                    await deleteDocumentAPI(id);
+                }
+
+                message.success('Đã xóa tài liệu.');
+                await fetchData();
+            } catch (e) {
+                console.error('delete error', e);
+                const msg = e?.response?.data?.message || e?.message || 'Không thể xóa tài liệu.';
+                message.error(msg);
+            } finally {
+                deleting[key] = false;
+            }
+        }
+    });
+}
+
 
 
 
