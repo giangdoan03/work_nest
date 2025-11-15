@@ -111,7 +111,7 @@
                                     <a-button
                                         size="large"
                                         shape="circle"
-                                        type="text"
+                                        type="dashed"
                                         :loading="deleting[itemKey(item)]"
                                         @click="onClickDelete(item)"
                                     >
