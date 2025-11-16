@@ -9,6 +9,8 @@ use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use App\Libraries\Uploader;
 use App\Models\FileSignatureModel;
+use Config\Database;
+use Throwable;
 
 class TaskFileController extends ResourceController
 {
@@ -549,7 +551,7 @@ class TaskFileController extends ResourceController
             return $this->failForbidden('Không có quyền sắp xếp danh sách này.');
         }
 
-        $db = \Config\Database::connect();
+        $db = Database::connect();
         $trans = $db->transStart();
 
         // Chuẩn hoá và cập nhật từng record (tìm theo task_id + user_id)
@@ -605,7 +607,7 @@ class TaskFileController extends ResourceController
         $signedMime     = $input['signed_mime'] ?? null;
         $approverDisplay = $input['approver_display'] ?? null;
 
-        $db = \Config\Database::connect();
+        $db = Database::connect();
 
         // nếu thiếu task_file_id nhưng có approval_id -> cố resolve task_file_id (source_task_id) và document_id
         if ((!$taskFileId || !$documentId) && $approvalId) {
@@ -635,7 +637,7 @@ class TaskFileController extends ResourceController
 
         $db->transStart();
         try {
-            $sigModel = new \App\Models\FileSignatureModel();
+            $sigModel = new FileSignatureModel();
 
             // ========== NEW: kiểm tra đã có signature approved trước đó ==========
             $existing = null;
@@ -646,7 +648,7 @@ class TaskFileController extends ResourceController
                     ->orderBy('signed_at', 'DESC')
                     ->first();
             }
-            if (!$existing && $taskFileId) {
+            if (!$existing) {
                 $existing = $sigModel
                     ->where('task_file_id', $taskFileId)
                     ->where('status', 'approved')
@@ -657,14 +659,14 @@ class TaskFileController extends ResourceController
             if ($existing) {
                 // đảm bảo task_files đã được mark approved (idempotent)
                 try {
-                    $taskFileModel = new \App\Models\TaskFileModel();
+                    $taskFileModel = new TaskFileModel();
                     $taskFileModel->update($taskFileId, [
                         'status'      => 'approved',
                         'approved_by' => $userId,
                         'approved_at' => $now,
                         'review_note' => $note ?: null,
                     ]);
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     log_message('error', 'Error ensuring task_files approved in idempotent path: ' . $e->getMessage());
                 }
 
@@ -695,8 +697,8 @@ class TaskFileController extends ResourceController
             $insertId = $sigModel->insert($dataInsert, true);
 
             // Cập nhật bảng task_files: đảm bảo bạn dùng đúng model (TaskFileModel)
-            if (!isset($this->model) || get_class($this->model) !== \App\Models\TaskFileModel::class) {
-                $taskFileModel = new \App\Models\TaskFileModel();
+            if (!isset($this->model) || get_class($this->model) !== TaskFileModel::class) {
+                $taskFileModel = new TaskFileModel();
             } else {
                 $taskFileModel = $this->model;
             }
@@ -709,7 +711,7 @@ class TaskFileController extends ResourceController
                     'approved_at' => $now,
                     'review_note' => $note ?: null,
                 ]);
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // log nhưng không fail toàn bộ transaction
                 log_message('error', 'Error updating task_files after approveOnly: ' . $e->getMessage());
             }
@@ -726,7 +728,7 @@ class TaskFileController extends ResourceController
                 'file_signature_id' => $insertId,
                 'data' => $saved
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $db->transRollback();
             log_message('error', 'approveOnly error: ' . $e->getMessage());
             return $this->failServerError('Lỗi server khi duyệt.');
@@ -762,7 +764,7 @@ class TaskFileController extends ResourceController
         }
 
         $now = date('Y-m-d H:i:s');
-        $db = \Config\Database::connect();
+        $db = Database::connect();
         $db->transStart();
 
         try {
@@ -799,7 +801,7 @@ class TaskFileController extends ResourceController
                     'approved_at' => $now,
                     'review_note' => $note ?: null,
                 ]);
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 log_message('error', 'Error updating task_files after uploadSignedPdf: ' . $e->getMessage());
             }
 
@@ -818,7 +820,7 @@ class TaskFileController extends ResourceController
                 'message' => 'Lưu bản đã ký thành công.',
                 'data' => $saved
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $db->transRollback();
             log_message('error', 'uploadSignedPdf error: ' . $e->getMessage());
             return $this->failServerError('Lỗi server khi lưu bản ký.');

@@ -708,18 +708,19 @@ class DocumentApprovalController extends ResourceController
         // 4) Lấy chi tiết approvals + documents cho approvalIds (1 query)
         // -------------------------
         $detailBuilder = $db->table('document_approvals da')
-            ->select('
-            da.id AS approval_id,
-            da.document_id,
-            da.status AS approval_status,
-            da.current_step_index,
-            d.title,
-            d.file_path,
-            d.signed_pdf_url,
-            d.uploaded_by,
-            u.name AS uploader_name,
-            d.created_at
-        ', false)
+            ->select("
+        da.id AS approval_id,
+        da.document_id,
+        da.status AS approval_status,
+        da.current_step_index,
+        d.title,
+        d.file_path,
+        d.signed_pdf_url,
+        d.uploaded_by,
+        u.name AS uploader_name,
+        d.created_at AS document_created_at,
+        d.updated_at AS document_updated_at
+    ", false)
             ->join('documents d', 'd.id = da.document_id', 'left')
             ->join('users u', 'u.id = d.uploaded_by', 'left')
             ->whereIn('da.id', $approvalIds);
@@ -727,8 +728,19 @@ class DocumentApprovalController extends ResourceController
         $detailRows = $detailBuilder->get()->getResultArray();
         $detailsById = [];
         foreach ($detailRows as $dr) {
-            $detailsById[(int)$dr['approval_id']] = $dr;
+            // Normalize created_at: use created_at, fallback to updated_at, else null
+            $created = $dr['document_created_at'] ?? $dr['document_updated_at'] ?? null;
+
+            // If driver returned DateTime object, convert to string
+            if ($created instanceof \DateTimeInterface) {
+                $created = $created->format('Y-m-d H:i:s');
+            }
+
+            $detailsById[(int)$dr['approval_id']] = array_merge($dr, [
+                'created_at' => $created,
+            ]);
         }
+
 
         // -------------------------
         // 5) Lấy tất cả steps cho các approvalIds (1 query)
@@ -866,7 +878,6 @@ class DocumentApprovalController extends ResourceController
         }
         unset($s);
 
-        // --- MỚI: Lấy thông tin file_signatures liên quan ---
         // Lấy theo approval_id hoặc document_id (nếu có)
         $signatures = $sigM
             ->where('approval_id', $id)

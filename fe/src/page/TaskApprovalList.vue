@@ -71,9 +71,13 @@
 
                                 <div class="file-sub">
                                     <UserOutlined />
-                                    <span class="uploader">{{ item.uploader_name || '—' }}</span>
+                                    <span class="uploader">
+                                        {{ (item.document?.uploader_name) || item.uploader_name || '—' }}
+                                    </span>
                                     <span class="dot">·</span>
-                                    <span class="time">{{ formatDate(item.created_at) }}</span>
+                                    <span class="time">
+                                        {{ formatDate(item.document?.created_at || item.created_at) }}
+                                    </span>
                                 </div>
 
                                 <div class="file-links" v-if="item.url">
@@ -146,6 +150,7 @@
             :signature-url="mySignatureUrl"
             :sign-target="signTarget"
             @done="handleSignedBlob"
+            @refresh="fetchData"
         />
     </a-card>
 </template>
@@ -418,20 +423,21 @@ async function fetchData() {
 
         // If items already contain approval/document/steps, use them directly.
         rows.value = items.map(it => {
-            // normalize shape — keep FE expectations from previous shaped computed
-            // possible keys: approval, document, steps OR approval_id, document_id, title, file_path, ...
             if (it.approval || it.document || Array.isArray(it.steps)) {
+                const doc = it.document || {};
                 return {
                     ...it,
-                    // keep older keys for backwards compatibility
                     approval_id: it.approval?.id ?? it.approval_id ?? it.approval_id,
-                    document_id: it.document?.id ?? it.document_id ?? it.document_id,
-                    title: it.document?.title ?? it.title ?? it.name ?? null,
-                    file_path: it.document?.file_path ?? it.file_path ?? it.url ?? null,
+                    document_id: doc.id ?? it.document_id ?? it.document_id,
+                    title: doc.title ?? it.title ?? it.name ?? null,
+                    file_path: doc.file_path ?? it.file_path ?? it.url ?? null,
+                    // new: flatten uploader/created_at so template can use item.uploader_name / item.created_at
+                    uploader_name: doc.uploader_name ?? it.uploader_name ?? null,
+                    uploaded_by: doc.uploaded_by ?? it.uploaded_by ?? null,
+                    created_at: doc.created_at ?? it.created_at ?? null,
+                    signed_pdf_url: doc.signed_pdf_url ?? it.signed_pdf_url ?? null,
                 }
             }
-
-            // fallback: return raw item (FE will still render basic fields)
             return it;
         });
         current.value = 1;

@@ -92,6 +92,7 @@ import { uploadTaskFileSigned , approveDocument} from '@/api/document'
 // -------- pdf.js (legacy) + worker url --------
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf'
 import pdfWorker from 'pdfjs-dist/legacy/build/pdf.worker.min.js?url'
+import {getApprovalDetail} from "@/api/approvals.js";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
 
@@ -133,7 +134,7 @@ const props = defineProps({
     // --- thêm prop signTarget ---
     signTarget: { type: Object, default: null },
 })
-const emits = defineEmits(['update:open', 'done'])
+const emits = defineEmits(['update:open', 'done', 'refresh'])
 
 // -------- state --------
 const canvasRef = ref()
@@ -879,99 +880,102 @@ async function handleApproveDuyet() {
     if (!pdfDoc.value) return message.warning('Vui lòng chờ PDF tải xong.');
 
     const target = props.signTarget || (typeof signTarget !== 'undefined' ? signTarget.value : null);
+    console.log('[handleApproveDuyet] target:', target);
     if (!target) {
-        console.warn('No signTarget — payload sẽ không có task_file_id.');
+        console.warn('[handleApproveDuyet] No signTarget — payload sẽ không có task_file_id.');
     }
 
-    // === 1) Chặn duyệt nếu FE biết là đã duyệt ===
-    // === 1) Chặn duyệt: verify trực tiếp từ server (an toàn hơn) ===
+    const normalizeStatus = (v) => {
+        try {
+            if (v === null || typeof v === 'undefined') return '';
+            return String(v).trim().toLowerCase();
+        } catch {
+            return '';
+        }
+    };
+
+    // ===== 1) Kiểm tra đã duyệt hay chưa (local quick + server verify) =====
     let alreadyApproved = false;
 
     if (target) {
-        // 1. quick local check (fast UX)
-        const quick = (
-            String(target.status || '').toLowerCase() === 'approved' ||
-            String(target.approval?.status || '').toLowerCase() === 'approved' ||
-            String(target.document?.status || '').toLowerCase() === 'approved'
-        );
+        const s1 = normalizeStatus(target.status);
+        const s2 = normalizeStatus(target.approval?.status);
+        const s3 = normalizeStatus(target.document?.status);
+
+        const quick = (s1 === 'approved' || s2 === 'approved' || s3 === 'approved');
+        console.log('[handleApproveDuyet] quick statuses:', { s1, s2, s3, quick });
+
         if (quick) {
             alreadyApproved = true;
         } else if (target.approval_id) {
-            // 2. nếu quick không khẳng định, gọi server để verify thật
+            console.log('[handleApproveDuyet] calling getApprovalDetail for approval_id=', target.approval_id);
             try {
-                // getApprovalDetail là API bạn đang có trong code
                 const detRes = await getApprovalDetail(target.approval_id);
                 const det = detRes?.data || {};
-                const apv = det.approval || {};
-                const doc = det.document || {};
-                // kiểm tra các cờ trên server
-                const srvOk = (
-                    String(apv.status || '').toLowerCase() === 'approved' ||
-                    String(doc.status || '').toLowerCase() === 'approved'
-                );
+                console.log('[handleApproveDuyet] getApprovalDetail result:', det);
 
-                // nếu server có signatures mới (file_signatures) mà status = approved -> xem là đã duyệt
-                const sigs = det.signatures || det.file_signatures || [];
-                const hasApprovedSig = Array.isArray(sigs) && sigs.some(s => String(s.status || '').toLowerCase() === 'approved');
+                const apvStatus = normalizeStatus(det.approval?.status);
+                const docStatus = normalizeStatus(det.document?.status);
 
-                alreadyApproved = srvOk || hasApprovedSig;
+                let sigs = det.signatures || det.file_signatures || det.file_signature || [];
+                if (sigs && !Array.isArray(sigs) && typeof sigs === 'object') sigs = Object.values(sigs);
+                sigs = Array.isArray(sigs) ? sigs : [];
+                const hasApprovedSig = sigs.some(s => normalizeStatus(s?.status || s?.state || s) === 'approved');
 
-                // nếu server trả thông tin bước và step hiện đã được approved bởi bạn/ai đó
-                const steps = det.steps || [];
-                if (!alreadyApproved && Array.isArray(steps)) {
-                    // nếu tất cả steps trước đó đều approved và current step không thuộc user => coi là đã qua
-                    const anyCurrent = steps.some(s => String(s.status || '').toLowerCase() === 'pending');
-                    // nếu không có pending step => đã hoàn tất
-                    if (!anyCurrent) {
-                        alreadyApproved = true;
-                    }
+                alreadyApproved = (apvStatus === 'approved') || (docStatus === 'approved') || hasApprovedSig;
+
+                const steps = Array.isArray(det.steps) ? det.steps : [];
+                let anyUnfinished = false;
+                if (!alreadyApproved && steps.length) {
+                    const unfinished = new Set(['active', 'pending', 'waiting', 'in_progress', 'todo', 'running']);
+                    anyUnfinished = steps.some(s => {
+                        const st = normalizeStatus(s?.status || s?.step_status || s?.state || '');
+                        return unfinished.has(st);
+                    });
+                    if (!anyUnfinished) alreadyApproved = true;
                 }
+
+                console.log('[handleApproveDuyet] server-derived alreadyApproved:', alreadyApproved, { apvStatus, docStatus, hasApprovedSig, anyUnfinished });
             } catch (e) {
-                // Gọi server fail: không chặn (vì backend idempotent sẽ bảo vệ)
-                console.warn('Không thể verify trạng thái duyệt từ server, sẽ tiếp tục. ', e);
+                console.warn('[handleApproveDuyet] getApprovalDetail failed, continuing:', e);
                 alreadyApproved = false;
             }
         }
     }
 
     if (alreadyApproved) {
+        console.log('[handleApproveDuyet] already approved -> abort.');
         return message.info('Tài liệu này đã được duyệt trước đó.');
     }
 
     savingApprove.value = true;
 
     try {
-        // ============================
-        // (2) CHÈN TEXT DUYỆT LÊN PDF
-        // ============================
+        // ===== 2) Tải PDF, chèn "text duyệt" + gạch (không chèn ảnh) =====
         const pdfRes = await fetch(props.pdfUrl);
         if (!pdfRes.ok) throw new Error('Không tải được file PDF');
         const pdfBytes = await pdfRes.arrayBuffer();
 
+        if (!PDFLib) await loadPdfLib();
         const { PDFDocument, rgb, StandardFonts } = PDFLib;
         const pdfDocW = await PDFDocument.load(pdfBytes, { updateMetadata: false });
 
-        // try load fontkit
+        // try to register fontkit (best-effort)
         try {
             const fontkitMod = await import('@pdf-lib/fontkit');
             pdfDocW.registerFontkit(fontkitMod.default || fontkitMod);
         } catch (e) {
-            console.warn('Không thể load fontkit:', e);
+            console.warn('[handleApproveDuyet] fontkit not available:', e);
         }
 
-        // chọn trang cuối
+        // chọn trang cuối (mặc định)
         const lastIndex = Math.max(0, pdfDocW.getPageCount() - 1);
         const page = pdfDocW.getPage(lastIndex);
         const pdfW = page.getWidth();
+        const pdfH = page.getHeight();
 
-        // tên người duyệt
-        const rawApprover =
-            currentUser.value?.full_name ||
-            currentUser.value?.name ||
-            currentUser.value?.username ||
-            'NguoiDuyet';
-
-        // bỏ dấu + ký tự unicode nếu font không hỗ trợ
+        // build approver/time text
+        const rawApprover = currentUser.value?.full_name || currentUser.value?.name || currentUser.value?.username || 'NguoiDuyet';
         const sanitizeToAscii = (s) => {
             try {
                 const nd = s.normalize('NFD').replace(/\p{Diacritic}/gu, '');
@@ -980,16 +984,14 @@ async function handleApproveDuyet() {
                 return String(s).replace(/[Đđ]/g, c => c === 'Đ' ? 'D' : 'd').replace(/[^\x00-\x7F ]/g, '');
             }
         };
-
         const approverDisplay = sanitizeToAscii(rawApprover);
 
         const now = new Date();
         const pad = (n) => String(n).padStart(2, '0');
         const vnTime = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}, ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-
         const timeText = `${approverDisplay} — Date: ${vnTime}`;
 
-        // try unicode font
+        // embed font (try unicode -> fallback)
         let usedFont = null;
         try {
             const f = await fetch('/fonts/NotoSans-Regular.ttf');
@@ -998,26 +1000,31 @@ async function handleApproveDuyet() {
                 usedFont = await pdfDocW.embedFont(fBytes);
             }
         } catch (e) {
-            console.warn('Unicode font fail, fallback Helvetica.');
+            console.warn('[handleApproveDuyet] unicode font load fail, fallback to Helvetica:', e);
         }
         if (!usedFont) usedFont = await pdfDocW.embedFont(StandardFonts.Helvetica);
 
+        // layout metrics for small timeText
         const fontSize = 6;
         const textWidth = usedFont.widthOfTextAtSize(timeText, fontSize);
-        const textHeight = usedFont.heightAtSize ? usedFont.heightAtSize(fontSize) : fontSize;
+        const textHeight = typeof usedFont.heightAtSize === 'function' ? usedFont.heightAtSize(fontSize) : fontSize;
         const margin = 20;
 
+        // LAYOUT: from bottom -> text (bottom) -> underline (just above text)
         const textX = Math.max(margin, pdfW - margin - textWidth);
-        const textY = margin;
+        const textY = margin; // margin from bottom
+        const lineY = textY + textHeight + 2;
 
+        // draw underline (above text)
         page.drawRectangle({
             x: textX,
-            y: textY - 2,
+            y: lineY,
             width: textWidth,
-            height: 0.5,
+            height: 0.7,
             color: rgb(0, 0, 0)
         });
 
+        // draw timeText (below the line)
         page.drawText(timeText, {
             x: textX,
             y: textY,
@@ -1026,19 +1033,37 @@ async function handleApproveDuyet() {
             color: rgb(0, 0, 0)
         });
 
-        // tạo blob để preview local
-        const out = await pdfDocW.save({ useObjectStreams: false });
+        // save PDF bytes and create blob/url
+        const out = await pdfDocW.save({ useObjectStreams: false }); // Uint8Array
         const outBlob = new Blob([out], { type: 'application/pdf' });
 
-        if (signedBlobUrl.value) URL.revokeObjectURL(signedBlobUrl.value);
+        if (signedBlobUrl.value) {
+            try { URL.revokeObjectURL(signedBlobUrl.value); } catch {}
+        }
         signedBlobUrl.value = URL.createObjectURL(outBlob);
 
-        emits('approved', outBlob);
+        // ngay lập tức reload preview bằng bytes (không cần fetch objectURL)
+        try {
+            const doc = await pdfjsLib.getDocument({ data: out }).promise;
+            // allow DOM/layout settle
+            await nextTick();
+            await new Promise(r => requestAnimationFrame(r));
+            pdfDoc.value = markRaw(doc);
+            pageCount.value = doc.numPages;
+            pageNum.value = Math.max(1, Math.min(pageNum.value || 1, doc.numPages));
+            await new Promise(r => requestAnimationFrame(r));
+            queueRender();
+        } catch (e) {
+            console.warn('[handleApproveDuyet] reload preview from bytes failed:', e);
+        }
+
+        // emit events + UX
+        emits('done', outBlob);
+        // nếu parent lắng nghe refresh thì dùng để reload list
+        emits('refresh');
         message.success('Đã chèn thông tin duyệt vào file (local).');
 
-        // ============================
-        // (3) LƯU METADATA VÀO DB
-        // ============================
+        // ===== 3) Lưu metadata lên server =====
         const payload = {
             task_file_id: target?.id || target?.source_task_id || target?.file_id || null,
             approval_id: target?.approval_id || null,
@@ -1063,60 +1088,38 @@ async function handleApproveDuyet() {
 
         const serverData = res?.data || {};
 
-        // nếu server báo đã duyệt từ trước → xử lý idempotent
-        if (serverData?.message && /được duyệt trước/i.test(serverData.message)) {
+        // xử lý idempotent (server có thể trả "đã duyệt trước")
+        if (serverData?.message && /được duyệt trước/i.test(String(serverData.message))) {
             message.info(serverData.message);
-
             const existingSig = serverData?.data;
             if (target) {
                 target.status = 'approved';
                 if (target.approval) target.approval.status = 'approved';
                 target.file_signature = existingSig;
             }
-
-            emits('done', outBlob);
-            if (typeof fetchData === 'function') {
-                try { await fetchData(); } catch {}
-            }
-
             savingApprove.value = false;
             return;
         }
 
-        // tạo mới thành công
+        // thành công
         message.success(serverData?.message || 'Duyệt thành công.');
-
         if (target) {
             target.status = 'approved';
             if (target.approval) target.approval.status = 'approved';
             target.file_signature = serverData?.data || null;
         }
 
-        emits('done', outBlob);
-        if (typeof fetchData === 'function') {
-            try { await fetchData(); } catch {}
-        }
-
-        // ============================
-        // (4) reload UI preview
-        // ============================
-        try {
-            const buf = await fetch(signedBlobUrl.value).then(r => r.arrayBuffer());
-            const doc = await pdfjsLib.getDocument({ data: buf }).promise;
-            pdfDoc.value = markRaw(doc);
-            pageCount.value = doc.numPages;
-            queueRender();
-        } catch (e) {
-            console.warn('Không reload preview:', e);
-        }
+        // (tùy chọn) đảm bảo preview vẫn chính xác — đã reload từ out bytes ở trên
 
     } catch (err) {
-        console.error(err);
+        console.error('[handleApproveDuyet] error:', err);
         message.error('Duyệt thất bại.');
     } finally {
         savingApprove.value = false;
     }
 }
+
+
 
 
 
