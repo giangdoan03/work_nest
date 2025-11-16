@@ -717,6 +717,7 @@ class DocumentApprovalController extends ResourceController
         d.file_path,
         d.signed_pdf_url,
         d.uploaded_by,
+        d.doc_type,
         u.name AS uploader_name,
         d.created_at AS document_created_at,
         d.updated_at AS document_updated_at
@@ -775,6 +776,7 @@ class DocumentApprovalController extends ResourceController
                 'uploaded_by' => $r && isset($r['uploaded_by']) ? (int)$r['uploaded_by'] : null,
                 'uploader_name' => $r['uploader_name'] ?? null,
                 'created_at' => $r['created_at'] ?? null,
+                'doc_type' => $r['doc_type'] ?? null,
             ];
 
             $rawSteps = $stepsByApv[$aid] ?? [];

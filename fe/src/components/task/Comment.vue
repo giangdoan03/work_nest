@@ -209,13 +209,28 @@
                     <span class="x" @click.stop.prevent="handleRemoveFile()">×</span>
                 </div>
 
-                <!-- NEW: chọn loại văn bản -->
-                <div class="tg-file-meta">
-                    <a-radio-group v-model:value="selectedDocType" size="small">
-                        <a-radio-button value="internal">Văn bản nội bộ</a-radio-button>
-                        <a-radio-button value="external">Văn bản ban hành</a-radio-button>
-                    </a-radio-group>
+                <div class="doc-type-note">
+                    <InfoCircleOutlined class="icon" />
+                    Hãy chọn loại văn bản để hệ thống xử lý đúng luồng duyệt:
+                    <strong>Nội bộ</strong> hoặc <strong>Phát hành</strong>.
                 </div>
+                <!-- NEW: chọn loại văn bản -->
+                <div class="tg-file-meta doc-type-selector">
+                    <a-tag
+                        :class="['doc-type-pill', selectedDocType === 'internal' ? 'active-internal' : '']"
+                        @click="selectedDocType = 'internal'"
+                    >
+                        Nội bộ
+                    </a-tag>
+
+                    <a-tag
+                        :class="['doc-type-pill', selectedDocType === 'external' ? 'active-external' : '']"
+                        @click="selectedDocType = 'external'"
+                    >
+                        Phát hành
+                    </a-tag>
+                </div>
+
             </div>
 
             <div class="tg-composer">
@@ -470,6 +485,7 @@ import {
     CaretDownOutlined,
     CaretUpOutlined,
     TeamOutlined,
+    InfoCircleOutlined
 } from '@ant-design/icons-vue'
 
 import {
@@ -2093,6 +2109,7 @@ onBeforeUnmount(() => {
     gap: 6px;
     padding: 6px 4px 0;
     flex-wrap: wrap;
+    margin-bottom: 10px;
 }
 
 .tg-file-pill {
@@ -2611,7 +2628,58 @@ onBeforeUnmount(() => {
 .drawer-stats { color: #6b7280; font-size: 13px; font-weight: 500; }
 .approved-tag { color: #16a34a; margin-left: 8px; }
 
+.doc-type-selector {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+}
 
+.doc-type-pill {
+    cursor: pointer;
+    padding: 6px 14px;
+    border-radius: 16px;
+    transition: all 0.2s;
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+    font-size: 13px;
+    user-select: none;
+    margin-right: 0;
+}
+
+/* Hover */
+.doc-type-pill:hover {
+    background: #e2e8f0;
+}
+
+/* Active styles */
+.active-internal {
+    background: #e0e7ff;
+    border-color: #6366f1;
+    color: #3730a3;
+    font-weight: 600;
+}
+
+.active-external {
+    background: #cffafe;
+    border-color: #06b6d4;
+    color: #0e7490;
+    font-weight: 600;
+}
+
+.doc-type-note {
+    font-size: 13px;
+    color: #334155;
+    background: #f1f5f9;
+    padding: 8px 12px;
+    border-radius: 6px;
+    align-items: center;
+    gap: 6px;
+}
+
+.doc-type-note .icon {
+    color: #2563eb;
+}
 
 
 /* Responsive */
