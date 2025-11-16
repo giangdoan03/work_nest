@@ -387,44 +387,103 @@ async function openSign(item) {
     }
 }
 
+// parent: handleSignedBlob (thay thế nguyên hàm cũ)
 async function handleSignedBlob(blobOrUrl) {
-    const it = signTarget.value
-    if (!it?.approval_id) return
+    const it = signTarget.value;
+    if (!it?.approval_id) {
+        console.warn('handleSignedBlob: missing approval_id, skip');
+        return;
+    }
 
     try {
-        let fileBlob = null
-
-        if (!blobOrUrl) return message.error('Không có file đã ký để tải lên.')
+        // 1) normalize to Blob
+        let fileBlob = null;
+        if (!blobOrUrl) return message.error('Không có file đã ký để tải lên.');
 
         if (blobOrUrl instanceof Blob || (typeof File !== 'undefined' && blobOrUrl instanceof File)) {
-            fileBlob = blobOrUrl
+            fileBlob = blobOrUrl;
         } else if (typeof blobOrUrl === 'string') {
-            const resp = await fetch(blobOrUrl)
-            if (!resp.ok) throw new Error('Không tải được URL của file đã ký.')
-            fileBlob = await resp.blob()
+            const resp = await fetch(blobOrUrl);
+            if (!resp.ok) throw new Error('Không tải được URL của file đã ký.');
+            fileBlob = await resp.blob();
         } else if (typeof blobOrUrl === 'object' && blobOrUrl.data) {
-            fileBlob = new Blob([blobOrUrl.data], { type: 'application/pdf' })
+            fileBlob = new Blob([blobOrUrl.data], { type: 'application/pdf' });
         }
 
         if (!fileBlob || !(fileBlob instanceof Blob)) {
-            return message.error('Dữ liệu chữ ký không hợp lệ (không phải file).')
+            return message.error('Dữ liệu chữ ký không hợp lệ (không phải file).');
         }
 
-        const form = new FormData()
-        const filename = it.name || it.title || 'signed.pdf'
-        form.append('file', fileBlob, filename)
-        form.append('approval_id', it.approval_id)
+        // 2) optional: check server state to avoid duplicate work
+        let alreadyApproved = false;
+        try {
+            const detRes = await getApprovalDetail(it.approval_id);
+            const det = detRes?.data || {};
+            const s1 = String(det.approval?.status || '').toLowerCase();
+            const s2 = String(det.document?.status || '').toLowerCase();
+            let sigs = det.signatures || det.file_signatures || det.file_signature || [];
+            if (sigs && !Array.isArray(sigs) && typeof sigs === 'object') sigs = Object.values(sigs);
+            sigs = Array.isArray(sigs) ? sigs : [];
+            const hasApprovedSig = sigs.some(s => String(s?.status || s?.state || '').toLowerCase() === 'approved');
 
-        await uploadSignedPdf(form)
-        await approveDocumentApproval(it.approval_id)
+            if (s1 === 'approved' || s2 === 'approved' || hasApprovedSig) {
+                alreadyApproved = true;
+            }
+        } catch (e) {
+            console.warn('getApprovalDetail trước upload thất bại — tiếp tục xử lý upload:', e);
+        }
 
-        message.success('Đã ký và duyệt thành công.')
-        await fetchData()
+        if (alreadyApproved) {
+            message.info('Tài liệu đã được duyệt trên server — bỏ qua upload/duyệt.');
+            await fetchData();
+            return;
+        }
+
+        // 3) upload signed file (thường cần, bất kể doc_type)
+        const form = new FormData();
+        const filename = it.name || it.title || 'signed.pdf';
+        form.append('file', fileBlob, filename);
+        form.append('approval_id', it.approval_id);
+
+        await uploadSignedPdf(form);
+
+        // 4) Nếu document là external -> dừng ở đây (không gọi approve)
+        const docType = String(it.document?.doc_type || it.doc_type || '').toLowerCase();
+        if (docType === 'external') {
+            // external: sau khi upload là xong; không gọi approve để tránh 403
+            message.success('Đã ký (external) — file đã được tải lên. Không cần duyệt thêm.');
+            await fetchData();
+            return;
+        }
+
+        // 5) normal flow: call approveDocumentApproval and handle 403 gracefully
+        try {
+            await approveDocumentApproval(it.approval_id);
+        } catch (e) {
+            const status = e?.response?.status || null;
+            const serverMsg =
+                e?.response?.data?.messages?.error ||
+                e?.response?.data?.message ||
+                e?.message;
+
+            if (status === 403) {
+                // quyền: không phải người duyệt ở bước hiện tại
+                message.info(serverMsg || 'Bạn không phải người duyệt ở bước hiện tại; file đã được tải lên.');
+                await fetchData();
+                return;
+            }
+            throw e;
+        }
+
+        message.success('Đã ký và duyệt thành công.');
+        await fetchData();
+
     } catch (e) {
-        console.error('handleSignedBlob error', e)
-        message.error(e?.response?.data?.message || 'Lỗi khi ký hoặc duyệt.')
+        console.error('handleSignedBlob error', e);
+        message.error(e?.response?.data?.message || e?.message || 'Lỗi khi ký hoặc duyệt.');
     }
 }
+
 
 /* ---------- delete flow (confirm + call appropriate API) ---------- */
 async function onClickDelete(item) {

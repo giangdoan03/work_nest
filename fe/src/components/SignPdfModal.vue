@@ -76,8 +76,8 @@
 
             <a-button
                 :loading="savingApprove"
-                :disabled="saving || !isPdfReady || disableApproveByDocType"
-                @click="handleApproveDuyet"
+                :disabled="approveDisabled"
+                @click="finalizeApproval"
                 title="Nếu document là internal thì không thể duyệt"
             >
                 <template #icon><CheckCircleOutlined class="icon-btn" /></template>
@@ -783,8 +783,34 @@ async function handleSave() {
     }
 }
 
-/* handleApproveDuyet: logic preserved, code structured */
-async function handleApproveDuyet() {
+function normalizeStatus(v) {
+    try {
+        if (v === null || typeof v === 'undefined') return ''
+        return String(v).trim().toLowerCase()
+    } catch {
+        return ''
+    }
+}
+
+const approveDisabled = computed(() => {
+    // nếu parent truyền signTarget prop, ưu tiên dùng props.signTarget; else dùng local computed targetForDoc
+    const t = props.signTarget || targetForDoc.value || null
+
+    // trạng thái đã duyệt ở nhiều chỗ: item.status | approval.status | document.status
+    const s = normalizeStatus(t?.status || t?.approval?.status || t?.document?.status)
+
+    // disable nếu đang lưu, đang duyệt, pdf chưa sẵn, doc type cấm duyệt, hoặc đã duyệt rồi
+    return Boolean(
+        saving.value ||
+        savingApprove.value ||
+        !isPdfReady.value ||
+        disableApproveByDocType.value ||
+        s === 'approved'
+    )
+})
+
+/* finalizeApproval: logic preserved, code structured */
+async function finalizeApproval() {
     if (!props.pdfUrl) return message.warning('Không có file PDF để duyệt.')
     if (!pdfDoc.value) return message.warning('Vui lòng chờ PDF tải xong.')
 
@@ -929,7 +955,7 @@ async function handleApproveDuyet() {
             target.file_signature = serverData?.data || null
         }
     } catch (err) {
-        console.error('[handleApproveDuyet] error:', err)
+        console.error('[finalizeApproval] error:', err)
         message.error('Duyệt thất bại.')
     } finally {
         savingApprove.value = false

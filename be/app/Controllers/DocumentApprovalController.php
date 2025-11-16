@@ -356,7 +356,6 @@ class DocumentApprovalController extends ResourceController
             }
 
             // 3) Ghi log hành động (ai/bao giờ/chữ ký/link pdf đã ký)
-            //    - Không ràng buộc bắt buộc phải có signature_url, signed_pdf_url: nếu FE không gửi thì để null
             $logM = new DocumentApprovalLogModel();
             $logM->insert([
                 'approval_id'   => (int)$apv['id'],
