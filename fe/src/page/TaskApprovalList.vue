@@ -107,11 +107,21 @@
                                     <a-button size="large" shape="circle" @click="download(item)"><DownloadOutlined /></a-button>
                                 </a-tooltip>
 
-                                <a-tooltip v-if="item.kind === 'pdf' && mySignatureUrl" title="Ký tài liệu">
-                                    <a-button size="large" shape="circle" type="dashed" @click="openSign(item)">
+                                <a-tooltip
+                                    v-if="item.kind === 'pdf' && mySignatureUrl"
+                                    :title="signTooltip(item)"
+                                >
+                                    <a-button
+                                        size="large"
+                                        shape="circle"
+                                        type="dashed"
+                                        :disabled="!canSign(item)"
+                                        @click="openSign(item)"
+                                    >
                                         <img :src="'/pen-icon.svg'" class="icon-pen" alt="pen" />
                                     </a-button>
                                 </a-tooltip>
+
 
                                 <a-tooltip title="Xóa tài liệu">
                                     <a-button
@@ -185,6 +195,10 @@ const pageSize = ref(10)
 const signOpen = ref(false)
 const signTarget = ref(null)
 const mySignatureUrl = ref('')
+const isAdmin = ref(false)
+const isSuper = ref(false)
+const currentUserId = ref(null)
+const currentUserName = ref('')
 const deleting = reactive({})
 
 const { confirm } = Modal
@@ -241,6 +255,36 @@ const docTypeColor = (t) => {
     const v = String(t).toLowerCase()
     return v === 'internal' ? 'purple' : 'cyan'
 }
+
+function findCurrentStep(item) {
+    const s = stepsOf(item).find(st => st.is_current || String(st.status).toLowerCase() === 'active')
+    return s || null
+}
+
+function canSign(item) {
+    // admin/super được ký bất cứ lúc (nếu bạn muốn)
+    if (isAdmin.value || isSuper.value) return true
+
+    const cur = findCurrentStep(item)
+    if (!cur) return false
+
+    // API có thể đã set can_act, dùng nếu có
+    if (typeof cur.can_act !== 'undefined') {
+        return Boolean(cur.can_act)
+    }
+
+    // fallback: chỉ cho ký nếu current step approver === current user id
+    // nhưng FE không có user_id; chúng ta dựa vào can_act từ API tốt hơn.
+    return false
+}
+
+function signTooltip(item) {
+    if (canSign(item)) return 'Ký tài liệu'
+    const cur = findCurrentStep(item)
+    if (!cur) return 'Không có bước hiện tại'
+    return `Chưa tới lượt: Bước #${cur.sequence} — ${cur.approver_name || 'người duyệt'}`
+}
+
 
 /* step helpers preserved */
 const stepStatusLabel = (step) => {
@@ -325,11 +369,29 @@ const paginationCfg = computed(() => ({
 const onSearch = () => { current.value = 1 }
 
 /* ---------- API interactions (preserve behavior) ---------- */
+
 async function fetchSignature() {
     try {
         const res = await checkSession()
-        const user = res.data?.user || res.data || {}
+        // API trả { status: ..., user: { ... } } theo ví dụ của bạn
+        const user = res.data?.user ?? res.data ?? {}
+
+        // basic profile
         mySignatureUrl.value = user.signature_url || ''
+        currentUserId.value = user.id ? Number(user.id) : null
+        currentUserName.value = user.name || user.full_name || user.username || ''
+
+        // normalize role checks (tolerant to different fields/formats)
+        const roleRaw = String(user.role || user.role_name || user.role_code || '').toLowerCase().trim()
+        const roleCode = String(user.role_code || '').toLowerCase().trim()
+
+        // set flags
+        isSuper.value = roleRaw.includes('super') || roleCode === 'super_admin' || roleRaw === 'super_admin'
+        isAdmin.value = isSuper.value || roleRaw === 'admin' || roleCode === 'admin' || roleRaw === 'administrator'
+
+        // fallback: if you have role_id mapping, you can also check user.role_id
+        // e.g. isSuper.value = isSuper.value || Number(user.role_id) === 1
+
     } catch (e) {
         console.error('fetchSignature error', e)
     }
@@ -372,6 +434,10 @@ function download(it) { if (!it.url) return; window.open(it.url, '_blank', 'noop
 
 /* ---------- sign flow (open modal + handle signed blob) ---------- */
 async function openSign(item) {
+    if (!canSign(item)) {
+        // optional: show info nếu admin/super không mà vẫn bị chặn bởi server
+        return message.info('Bạn chưa có quyền ký tài liệu này.')
+    }
     const fallbackUrl = item?.url || item?.file_path
     if (!fallbackUrl) return message.warning('Không có file PDF để ký.')
     try {
