@@ -179,6 +179,8 @@ const localSignatureUrl = ref('')
 /* helpers */
 const effectiveSignatureUrl = computed(() => props.signatureUrl || localSignatureUrl.value)
 
+console.log('effectiveSignatureUrl', effectiveSignatureUrl.value)
+
 function normalizeMarkers(input) {
     if (Array.isArray(input)) return input.map(String).map(s => s.trim()).filter(Boolean)
     return String(input || '').split(',').map(s => s.trim()).filter(Boolean)
@@ -338,6 +340,8 @@ function fitWidth() {
 function resetView() { scale.value = 1; sigX.value = 40; sigY.value = 40; sigW.value = 200 }
 
 /* Auto-place logic left intact but structured */
+const AUTO_SHRINK = 0.5 // 0.5 = 50% (bạn có thể đổi thành 0.4, 0.3,...)
+
 async function tryAutoPlaceSignature() {
     if (!pdfDoc.value) return false
 
@@ -364,7 +368,13 @@ async function tryAutoPlaceSignature() {
 
                 pageNum.value = p
                 const ratio = handleRatio()
-                sigW.value = Math.max(60, Math.min(wCanvas * 0.8, 400))
+
+                // original suggested width (clamped)
+                let suggestedW = Math.max(60, Math.min(wCanvas * 0.8, 400))
+                // apply shrink
+                suggestedW = Math.max(10, Math.round(suggestedW * AUTO_SHRINK))
+
+                sigW.value = suggestedW
                 sigX.value = Math.max(8, xCanvas + (wCanvas - sigW.value) / 2)
                 const sigH = sigW.value * ratio
                 sigY.value = Math.max(8, yCanvas + (hCanvas - sigH) / 2)
@@ -506,7 +516,9 @@ async function tryAutoPlaceSignature() {
     const vpView = rawPage.getViewport({ scale: scale.value, rotation: 0 })
 
     const wpct = Math.max(5, Math.min(80, Number(props.markerWidthPct || 25)))
-    const targetCanvasW = vpView.width * (wpct / 100)
+    let targetCanvasW = vpView.width * (wpct / 100)
+    // apply shrink to marker-based target
+    targetCanvasW = Math.max(10, Math.round(targetCanvasW * AUTO_SHRINK))
     const ratio = handleRatio()
     const targetCanvasH = targetCanvasW * ratio
 
@@ -528,6 +540,7 @@ async function tryAutoPlaceSignature() {
     sigY.value = y
     return true
 }
+
 
 /* load PDF with abort support */
 let pdfLoadAbort = null
