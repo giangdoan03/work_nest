@@ -32,18 +32,6 @@
                                     <a-tag v-else-if="approvalStateOf(item).approved" color="green">Đã duyệt</a-tag>
                                     <a-tag v-else-if="approvalStateOf(item).rejected" color="red">Từ chối</a-tag>
                                 </template>
-                                <!-- Delete button -->
-<!--                                <a-tooltip title="Xoá tài liệu">-->
-<!--                                    <a-button-->
-<!--                                        size="small"-->
-<!--                                        type="text"-->
-<!--                                        danger-->
-<!--                                        @click="onClickDelete(item)"-->
-<!--                                        :loading="deleting[item._key]"-->
-<!--                                    >-->
-<!--                                        <DeleteOutlined />-->
-<!--                                    </a-button>-->
-<!--                                </a-tooltip>-->
                             </template>
 
                             <!-- Thumb -->
@@ -573,14 +561,28 @@ function clearSendApproval () {
 
 // ---------- actions ----------
 function openAttachment (it) {
-    const ext = (it.ext || '').toLowerCase()
-    if (OFFICE_EXTS.has(ext)) {
-        const url = encodeURIComponent(it.url)
-        window.open(`https://view.officeapps.live.com/op/view.aspx?src=${url}`, '_blank', 'noopener')
-        return
+    const raw = it.url || it.file_path
+    if (!raw) return
+
+    let previewUrl = raw
+
+    // 1) Nếu là dạng Doc.aspx → ép action=embedview
+    if (previewUrl.includes('/_layouts/15/Doc.aspx')) {
+        if (previewUrl.includes('action=')) {
+            previewUrl = previewUrl.replace(/action=[^&]+/, 'action=embedview')
+        } else {
+            previewUrl += (previewUrl.includes('?') ? '&' : '?') + 'action=embedview'
+        }
     }
-    window.open(it.url, '_blank', 'noopener')
+
+    // 2) Nếu là dạng modern /:x:/g/... → thêm action=embedview
+    if (previewUrl.match(/\/:.\//)) {
+        previewUrl += (previewUrl.includes('?') ? '&' : '?') + 'action=embedview'
+    }
+
+    window.open(previewUrl, '_blank', 'noopener')
 }
+
 const downloadAttachment = (it) => window.open(it.url, '_blank', 'noopener')
 
 const refresh = async () => {
@@ -803,7 +805,6 @@ onBeforeUnmount(() => {
 
 .att-actions :deep(.ant-btn) {
     width: 22px;
-    height: 22px;
     padding: 0;
 }
 
@@ -970,7 +971,6 @@ onBeforeUnmount(() => {
 }
 .att-actions :deep(.ant-btn) {
     width: 22px;
-    height: 22px;
     padding: 0;
     font-size: 12px;
 }

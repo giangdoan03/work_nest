@@ -427,19 +427,34 @@ class CommentController extends ResourceController
         }
 
         // Upload lên SharePoint
+        // Upload lên SharePoint + tạo link CHỈ XEM
         try {
             $sp = new SharepointUploader();
             $upload = $sp->uploadFile($file->getTempName(), $file->getClientName());
-            $fileUrl = $upload['url'] ?? null;
-            $spName = $upload['file_name'] ?? $file->getClientName();
 
-            if (!$fileUrl) {
-                throw new RuntimeException('Thiếu URL SharePoint trả về.');
+            $driveId = $upload['driveId'] ?? null;
+            $itemId  = $upload['itemId'] ?? null;
+
+            if (!$driveId || !$itemId) {
+                throw new RuntimeException('Thiếu driveId hoặc itemId SharePoint.');
             }
+
+            // Link chỉ xem cho tất cả mọi người (giống Anyone + View Only)
+            // nếu muốn chỉ nội bộ: đổi 'anonymous' -> 'organization'
+            $viewOnlyUrl = $sp->createViewOnlyLink($driveId, $itemId, 'anonymous');
+
+            if (!$viewOnlyUrl) {
+                throw new RuntimeException('Không tạo được link chỉ xem.');
+            }
+
+            $fileUrl = $viewOnlyUrl;
+            $spName  = $upload['file_name'] ?? $file->getClientName();
+
         } catch (Throwable $e) {
             log_message('error', 'SharePoint upload failed: ' . $e->getMessage());
             return $this->failServerError('Không upload được file lên SharePoint.');
         }
+
 
         // Insert vào documents
         $docM = new DocumentModel();
@@ -512,7 +527,8 @@ class CommentController extends ResourceController
 
         $createdComment['files'] = [[
             'file_name' => $doc['title'] ?? $spName,
-            'file_path' => $doc['file_path'] ?? $fileUrl,
+            'file_path' => $doc['file_path'] ?? $fileUrl,   // link gốc
+            'public_url' => $fileUrl,                       // link view only
             'doc_type' => $doc['doc_type'] ?? $docType,
         ]];
 

@@ -243,7 +243,6 @@ $routes->group('api', function ($routes) {
     $routes->get('approvals/active-by-target', 'ApprovalController::activeByTarget');
 
      $routes->post('document-approvals/send', 'DocumentApprovalController::send');
-    // 👇 thêm 2 route hộp thư duyệt
     // đúng theo FE đang gọi
     $routes->get('approvals/inbox-files', 'DocumentApprovalController::inboxFiles');
     $routes->get('document-approvals/resolved-files-by-me', 'DocumentApprovalController::resolvedByMe');

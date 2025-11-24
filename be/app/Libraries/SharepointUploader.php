@@ -24,7 +24,7 @@ class SharepointUploader
     }
 
     /* ==========================================================
-       GET ACCESS TOKEN — using CI HTTP Client
+       GET ACCESS TOKEN
     ========================================================== */
     /**
      * @throws Exception
@@ -33,7 +33,7 @@ class SharepointUploader
     {
         $client = Services::curlrequest([
             'http_errors' => false,
-            'timeout' => 30
+            'timeout' => 30,
         ]);
 
         $response = $client->post($this->tokenUrl, [
@@ -41,8 +41,8 @@ class SharepointUploader
                 'client_id'     => $this->clientId,
                 'client_secret' => $this->clientSecret,
                 'scope'         => 'https://graph.microsoft.com/.default',
-                'grant_type'    => 'client_credentials'
-            ]
+                'grant_type'    => 'client_credentials',
+            ],
         ]);
 
         $json = json_decode($response->getBody(), true);
@@ -55,23 +55,22 @@ class SharepointUploader
     }
 
     /* ==========================================================
-       HTTP WRAPPER for Graph API — No curl_*
+       HTTP WRAPPER for Graph API
     ========================================================== */
     private function graph(string $method, string $url, string $token, $body = null, array $headers = []): array
     {
         $client = Services::curlrequest([
-            'http_errors' => false,
-            'timeout' => 60,
-            'allow_redirects' => true
+            'http_errors'     => false,
+            'timeout'         => 60,
+            'allow_redirects' => true,
         ]);
 
         $opts = [
             'headers' => array_merge([
-                'Authorization' => "Bearer {$token}"
-            ], $headers)
+                'Authorization' => "Bearer {$token}",
+            ], $headers),
         ];
 
-        // Body for PUT/POST
         if ($body !== null) {
             $opts['body'] = $body;
         }
@@ -81,12 +80,12 @@ class SharepointUploader
         return [
             'http' => $response->getStatusCode(),
             'body' => $response->getBody(),
-            'json' => json_decode($response->getBody(), true)
+            'json' => json_decode($response->getBody(), true),
         ];
     }
 
     /* ==========================================================
-       GET SITE ID
+       GET SITE ID (root)
     ========================================================== */
     /**
      * @throws Exception
@@ -126,17 +125,56 @@ class SharepointUploader
     }
 
     /* ==========================================================
-       UPLOAD FILE + AUTO PDF CONVERT
+       CREATE VIEW-ONLY LINK FOR EVERYONE
+       (muốn ngoài tổ chức cũng xem được -> scope=anonymous,
+        chỉ nội bộ -> scope=organization)
     ========================================================== */
     /**
      * @throws Exception
      */
+    public function createViewOnlyLink(string $driveId, string $itemId, string $scope = 'anonymous'): ?string
+    {
+        $token = $this->getToken();
+
+        // dùng type = 'view' cho link đọc-only.
+        // Nếu bạn muốn thử chặn download mạnh hơn, có thể test type='blocksDownload'
+        // trên endpoint beta, nhưng ở đây mình dùng v1.0 cho ổn định.
+        $body = json_encode([
+            'type'  => 'view',
+            'scope' => $scope, // 'anonymous' | 'organization' | 'users'
+        ]);
+
+        $res = $this->graph(
+            'POST',
+            "{$this->graph}/drives/{$driveId}/items/{$itemId}/createLink",
+            $token,
+            $body,
+            ['Content-Type' => 'application/json']
+        );
+
+        if ($res['http'] >= 300) {
+            throw new Exception("createLink failed: " . json_encode($res));
+        }
+
+        return $res['json']['link']['webUrl'] ?? null;
+    }
+
+    /* ==========================================================
+       UPLOAD FILE + (OPTIONAL) AUTO PDF CONVERT
+    ========================================================== */
+    /**
+     * Upload file lên thư viện Documents của site root.
+     * Trả về: file_name, url (webUrl gốc của item), driveId, itemId, type
+     *
+     * @throws Exception
+     */
     public function uploadFile(string $tempPath, string $originalName): array
     {
-        $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+        $ext      = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
         $nameBase = pathinfo($originalName, PATHINFO_FILENAME);
-        $uniqueName = $nameBase . "_" . time() . "." . $ext;
+        $stamp    = time();
 
+        $uniqueName = $nameBase . "_" . $stamp . "." . $ext;
         $fileContent = file_get_contents($tempPath);
 
         $token  = $this->getToken();
@@ -149,7 +187,7 @@ class SharepointUploader
             "{$this->graph}/drives/{$driveId}/root:/" . rawurlencode($uniqueName) . ":/content",
             $token,
             $fileContent,
-            [ 'Content-Type' => 'application/octet-stream' ]
+            ['Content-Type' => 'application/octet-stream']
         );
 
         if ($upload['http'] >= 300 || empty($upload['json']['id'])) {
@@ -157,9 +195,10 @@ class SharepointUploader
         }
 
         $itemId = $upload['json']['id'];
+        $webUrl = $upload['json']['webUrl'] ?? null;
 
         /* ========= AUTO PDF CONVERT (Word/Excel/PPT) ========= */
-        if (in_array($ext, ['doc','docx','xls','xlsx','ppt','pptx'])) {
+        if (in_array($ext, ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'], true)) {
 
             $pdf = $this->graph(
                 "GET",
@@ -167,37 +206,39 @@ class SharepointUploader
                 $token
             );
 
-            if ($pdf['http'] !== 200) {
-                // Return original file if conversion fails
-                return [
-                    'file_name' => $uniqueName,
-                    'url'       => $upload['json']['webUrl'] ?? null,
-                    'type'      => 'original'
-                ];
+            if ($pdf['http'] === 200) {
+                $pdfName = "{$nameBase}_{$stamp}.pdf";
+
+                $pdfSave = $this->graph(
+                    "PUT",
+                    "{$this->graph}/drives/{$driveId}/root:/" . rawurlencode($pdfName) . ":/content",
+                    $token,
+                    $pdf['body'],
+                    ['Content-Type' => 'application/pdf']
+                );
+
+                if ($pdfSave['http'] < 300 && !empty($pdfSave['json']['id'])) {
+                    // Nếu cần dùng file PDF làm bản ký/duyệt thì trả về nó
+                    return [
+                        'file_name' => $pdfName,
+                        'url'       => $pdfSave['json']['webUrl'] ?? null,
+                        'driveId'   => $driveId,
+                        'itemId'    => $pdfSave['json']['id'],
+                        'type'      => 'pdf',
+                    ];
+                }
             }
 
-            $pdfName = "{$nameBase}_" . time() . ".pdf";
-
-            $pdfSave = $this->graph(
-                "PUT",
-                "{$this->graph}/drives/{$driveId}/root:/" . rawurlencode($pdfName) . ":/content",
-                $token,
-                $pdf['body'],
-                [ 'Content-Type' => 'application/pdf' ]
-            );
-
-            return [
-                'file_name' => $pdfName,
-                'url'       => $pdfSave['json']['webUrl'] ?? null,
-                'type'      => 'pdf'
-            ];
+            // nếu convert fail, fallback bản gốc
         }
 
-        /* ========= NON-OFFICE FILE RETURN ========= */
+        /* ========= NON-OFFICE / FALLBACK ========= */
         return [
             'file_name' => $uniqueName,
-            'url'       => $upload['json']['webUrl'] ?? null,
-            'type'      => 'original'
+            'url'       => $webUrl,
+            'driveId'   => $driveId,
+            'itemId'    => $itemId,
+            'type'      => 'original',
         ];
     }
 }
