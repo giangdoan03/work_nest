@@ -434,7 +434,6 @@ class TaskFileController extends ResourceController
         $uid  = $this->currentUserId();
         $role = $this->currentUserRole();
 
-        dd($role);
 
         // Dù có uid hay không, nếu role rỗng -> dùng fallback từ POST
         $postUid  = (int)($this->request->getPost('user_id') ?? 0);
@@ -465,11 +464,6 @@ class TaskFileController extends ResourceController
 
         return $this->respond(['message' => 'Đã bỏ ghim']);
     }
-
-
-
-
-
 
     // adopt từ file_path trên server — auto-pin; nếu đã tồn tại record thì trả về và ensure pinned
     public function adoptFromPath($task_id = null): ResponseInterface
