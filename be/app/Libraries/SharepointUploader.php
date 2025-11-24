@@ -54,6 +54,46 @@ class SharepointUploader
         return $json['access_token'];
     }
 
+
+    /**
+     * Gán quyền cho 1 user trên 1 file/item SharePoint.
+     *
+     * @param string $driveId
+     * @param string $itemId
+     * @param string $email
+     * @param string $role 'read' | 'write'
+     * @return bool
+     * @throws Exception
+     */
+    public function grantPermission(string $driveId, string $itemId, string $email, string $role = 'read'): bool
+    {
+        $token = $this->getToken();
+
+        $body = json_encode([
+            "roles" => [$role],  // read | write
+            "grantee" => [
+                "user" => [
+                    "email" => $email
+                ]
+            ]
+        ]);
+
+        $res = $this->graph(
+            "POST",
+            "{$this->graph}/drives/{$driveId}/items/{$itemId}/permissions",
+            $token,
+            $body,
+            ['Content-Type' => 'application/json']
+        );
+
+        if ($res['http'] >= 300 || empty($res['json']['id'])) {
+            throw new Exception("Grant permission failed: " . json_encode($res));
+        }
+
+        return true;
+    }
+
+
     /* ==========================================================
        HTTP WRAPPER for Graph API
     ========================================================== */

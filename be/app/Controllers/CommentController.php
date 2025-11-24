@@ -426,34 +426,46 @@ class CommentController extends ResourceController
             return $this->failValidationErrors(['attachment' => 'Định dạng không được hỗ trợ.']);
         }
 
-        // Upload lên SharePoint
-        // Upload lên SharePoint + tạo link CHỈ XEM
         try {
             $sp = new SharepointUploader();
             $upload = $sp->uploadFile($file->getTempName(), $file->getClientName());
 
-            $driveId = $upload['driveId'] ?? null;
-            $itemId  = $upload['itemId'] ?? null;
+            $driveId = $upload['driveId'];
+            $itemId  = $upload['itemId'];
 
-            if (!$driveId || !$itemId) {
-                throw new RuntimeException('Thiếu driveId hoặc itemId SharePoint.');
+            // ============================
+            // GÁN QUYỀN
+            // ============================
+
+            // 1) Người upload → chỉ xem
+            $userModel = new UserModel();
+            $userInfo  = $userModel->find($userId);
+
+            if (!empty($userInfo['email'])) {
+                $sp->grantPermission($driveId, $itemId, $userInfo['email'], "read");
             }
 
-            // Link chỉ xem cho tất cả mọi người (giống Anyone + View Only)
-            // nếu muốn chỉ nội bộ: đổi 'anonymous' -> 'organization'
-            $viewOnlyUrl = $sp->createViewOnlyLink($driveId, $itemId, 'anonymous');
+            // 2) Admin → được sửa
+            $adminEmail = "hieu.le@ttid.vn";  // bạn đổi thành email thật
+            $sp->grantPermission($driveId, $itemId, $adminEmail, "write");
+
+            // ============================
+            // Tạo link view-only
+            // ============================
+            $viewOnlyUrl = $sp->createViewOnlyLink($driveId, $itemId, 'organization');
 
             if (!$viewOnlyUrl) {
                 throw new RuntimeException('Không tạo được link chỉ xem.');
             }
 
             $fileUrl = $viewOnlyUrl;
-            $spName  = $upload['file_name'] ?? $file->getClientName();
+            $spName = $upload['file_name'];
 
         } catch (Throwable $e) {
             log_message('error', 'SharePoint upload failed: ' . $e->getMessage());
             return $this->failServerError('Không upload được file lên SharePoint.');
         }
+
 
 
         // Insert vào documents
