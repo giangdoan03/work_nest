@@ -182,9 +182,11 @@ class SharepointUploader
         $driveId = $this->getDocumentsDrive($token, $siteId);
 
         /* ========= UPLOAD ORIGINAL FILE ========= */
+        $folder = rawurlencode('Shared Documents');
+
         $upload = $this->graph(
             "PUT",
-            "{$this->graph}/drives/{$driveId}/root:/" . rawurlencode($uniqueName) . ":/content",
+            "{$this->graph}/drives/{$driveId}/root:/{$folder}/" . rawurlencode($uniqueName) . ":/content",
             $token,
             $fileContent,
             ['Content-Type' => 'application/octet-stream']

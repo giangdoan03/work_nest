@@ -16,7 +16,7 @@
                     >
                         <span class="sticky-title">Tài liệu ghim</span>
                         <span class="sticky-count">({{ pinnedTotal }} file)</span>
-                        <component :is="isStickyExpanded ? CaretUpOutlined : CaretDownOutlined" class="arrow"/>
+                        <component :is="arrowIcon" class="arrow"/>
                     </button>
                 </div>
 
@@ -36,45 +36,54 @@
             <div id="pinned-files-region"></div>
 
             <!-- Pinned files -->
-            <div v-if="visiblePinnedFiles.length" class="pinned-files">
-                <div class="pinned-line">
-                    <div
-                        v-for="f in visiblePinnedFiles"
-                        :key="f.id || f.file_path"
-                        class="pinned-pill"
-                        :title="titleOf(f)"
-                    >
-                        <!-- Tooltip giàu nội dung -->
-                        <a-tooltip :title="pinTooltip(f)" placement="top">
-                            <a
-                                :href="displayHrefOf(f)"
-                                target="_blank"
-                                rel="noopener"
-                                class="pill-link"
-                            >
-                                <PaperClipOutlined class="pill-icon"/>
-                                <span class="pill-text">{{ titleOf(f) }}</span>
-                            </a>
-                        </a-tooltip>
+            <div v-if="pinnedGroupedByComment.length" class="pinned-files">
 
-                        <a-tooltip title="Bỏ ghim">
-                            <button
-                                class="pill-x"
-                                type="button"
-                                @click.stop.prevent="unpinOnly(f)"
-                                :disabled="!canUnpinFile(f)"
-                                :title="canUnpinFile(f) ? 'Bỏ ghim' : 'Bạn không có quyền bỏ ghim'"
-                            >×
-                            </button>
-                        </a-tooltip>
+                <div
+                    v-for="group in visiblePinnedGroups"
+                    :key="group.comment_id"
+                    class="pinned-batch"
+                >
+                    <!-- HEADER của batch -->
+                    <div class="batch-title">
+                        <span>Lần {{ group.batch }}: {{ group.files.length }} file</span>
+                        <small>{{ formatVi(group.created_at) }}</small>
                     </div>
 
-                    <!-- +N file (khi đang thu gọn) -->
-                    <a-tag v-if="!isStickyExpanded && hasPinnedOverflow" color="blue" class="more-pill more-pill--file" @click.stop="expandSticky">
-                        +{{ hiddenPinnedCount }} file
-                    </a-tag>
+                    <!-- FILES trong batch -->
+                    <div class="pinned-line">
+                        <div
+                            v-for="f in group.files"
+                            :key="f.id || f.file_path"
+                            class="pinned-pill"
+                            :title="titleOf(f)"
+                        >
+                            <a-tooltip :title="pinTooltip(f)" placement="top">
+                                <a
+                                    :href="displayHrefOf(f)"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="pill-link"
+                                >
+                                    <PaperClipOutlined class="pill-icon"/>
+                                    <span class="pill-text">{{ titleOf(f) }}</span>
+                                </a>
+                            </a-tooltip>
+
+                            <a-tooltip title="Bỏ ghim">
+                                <button
+                                    class="pill-x"
+                                    type="button"
+                                    @click.stop.prevent="unpinOnly(f)"
+                                    :disabled="!canUnpinFile(f)"
+                                >×</button>
+                            </a-tooltip>
+                        </div>
+                    </div>
                 </div>
+
             </div>
+
+
         </div>
 
         <!-- LIST COMMENT (bubbles) -->
@@ -139,41 +148,56 @@
 
         <!-- FOOTER: composer -->
         <div class="footer-fixed tg-footer" ref="footerEl">
+            <a-spin :spinning="uploading" tip="Đang tải lên...">
             <div class="load-more" v-if="currentPage < totalPage && !loadingComment">
                 <a-button size="small" @click="getListComment(currentPage + 1)">Tải thêm</a-button>
             </div>
 
-            <div class="tg-file-strip" v-if="selectedFile">
-                <div class="tg-file-pill">
-                    <PaperClipOutlined/>
-                    <span class="name">{{ selectedFile.name }}</span>
-                    <span class="x" @click.stop.prevent="handleRemoveFile()">×</span>
+            <div class="tg-file-strip" v-if="selectedFiles.length">
+                <div
+                    v-for="(f, idx) in selectedFiles"
+                    :key="idx"
+                    class="tg-file-pill"
+                >
+                    <PaperClipOutlined />
+                    <span class="name">{{ f.name }}</span>
+                    <span class="x" @click.stop.prevent="removeFile(idx)">×</span>
                 </div>
 
                 <div class="doc-type-note">
-                    <InfoCircleOutlined class="icon"/>
+                    <InfoCircleOutlined class="icon" />
                     Hãy chọn loại văn bản để hệ thống xử lý đúng luồng duyệt:
                     <strong>Nội bộ</strong> hoặc <strong>Phát hành</strong>.
                 </div>
-                <!-- NEW: chọn loại văn bản -->
+
                 <div class="tg-file-meta doc-type-selector">
-                    <a-tag :class="['doc-type-pill', selectedDocType === 'internal' ? 'active-internal' : '']" @click="selectedDocType = 'internal'">
+                    <a-tag
+                        :class="['doc-type-pill', selectedDocType === 'internal' ? 'active-internal' : '']"
+                        @click="selectedDocType = 'internal'"
+                    >
                         Nội bộ
                     </a-tag>
 
-                    <a-tag :class="['doc-type-pill', selectedDocType === 'external' ? 'active-external' : '']" @click="selectedDocType = 'external'">
+                    <a-tag
+                        :class="['doc-type-pill', selectedDocType === 'external' ? 'active-external' : '']"
+                        @click="selectedDocType = 'external'"
+                    >
                         Phát hành
                     </a-tag>
                 </div>
-
             </div>
+
 
             <div class="tg-composer">
                 <!-- Attach -->
-                <a-upload :show-upload-list="false" :multiple="false" :max-count="1"
-                          :before-upload="handleBeforeUpload">
-                    <a-button type="text" class="tg-attach-btn" :title="'Đính kèm'">
-                        <PaperClipOutlined/>
+                <a-upload
+                    :show-upload-list="false"
+                    :multiple="true"
+                    :max-count="3"
+                    :before-upload="handleBeforeUpload"
+                >
+                    <a-button type="text" class="tg-attach-btn" title="Đính kèm">
+                        <PaperClipOutlined />
                     </a-button>
                 </a-upload>
 
@@ -193,9 +217,9 @@
                     class="tg-send-btn"
                     :class="{ 'is-active': canSend }"
                     shape="circle"
-                    :disabled="!canSend"
-                    @click="onSubmit()"
-                    :title="isEditing ? 'Lưu chỉnh sửa' : 'Gửi'"
+                    :disabled="!canSend || uploading"
+                    :loading="uploading"
+                @click="onSubmit()"
                 >
                     <template v-if="isEditing">
                         <CheckOutlined/>
@@ -240,6 +264,7 @@
                     </template>
                 </a-popover>
             </div>
+            </a-spin>
         </div>
 
         <!-- Drawer người duyệt -->
@@ -378,36 +403,26 @@
 </template>
 
 <script setup>
-import {ref, reactive, computed, nextTick, onMounted, onBeforeUnmount, watch, watchEffect} from 'vue'
+import {computed, nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue'
+import _ from "lodash";
 import {
+    CaretDownOutlined,
+    CaretUpOutlined,
     CheckOutlined,
     CloseOutlined,
-    EllipsisOutlined,
     FileExcelOutlined,
     FilePdfOutlined,
     FilePptOutlined,
     FileTextOutlined,
     FileWordOutlined,
+    InfoCircleOutlined,
     LinkOutlined,
     PaperClipOutlined,
-    PushpinOutlined,
     SendOutlined,
-    CaretDownOutlined,
-    CaretUpOutlined,
-    TeamOutlined,
-    InfoCircleOutlined
+    TeamOutlined
 } from '@ant-design/icons-vue'
 
-import {
-    approveRosterAPI,
-    createComment,
-    deleteComment,
-    getComments,
-    getTaskRosterAPI,
-    mergeTaskRosterAPI,
-    rejectRosterAPI,
-    updateComment,
-} from '@/api/task'
+import {createComment, getComments, getTaskRosterAPI, mergeTaskRosterAPI, updateComment,} from '@/api/task'
 
 import {
     adoptTaskFileFromPathAPI,
@@ -426,11 +441,11 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/vi'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import BaseAvatar from '@/components/common/BaseAvatar.vue'
+import Draggable from 'vuedraggable'
 
 dayjs.extend(relativeTime)
 dayjs.locale('vi')
 
-import Draggable from 'vuedraggable'
 // bạn có thể lắng nghe sự kiện @update để cập nhật lại thứ tự
 const handleReorder = async (evt) => {
     if (!canModifyRoster.value) {
@@ -481,17 +496,43 @@ const currentUserId = computed(() => store.currentUser?.id ?? null)
 const canEditOrDelete = (item) =>
     String(item.user_id) === String(currentUserId.value) || !!store.currentUser?.is_admin
 
+
+const pinnedGroupedByComment = computed(() => {
+    if (!Array.isArray(pinnedFiles.value)) return [];
+
+    // group theo batch (null batch tách riêng)
+    const grouped = _.groupBy(pinnedFiles.value, f => {
+        return f.upload_batch != null ? Number(f.upload_batch) : -1;
+    });
+
+    return Object.entries(grouped)
+        .map(([batch, files]) => {
+            const createdAt = _.minBy(files, f => new Date(f.created_at).getTime())?.created_at;
+            return {
+                batch: Number(batch),
+                created_at: createdAt,
+                files
+            };
+        })
+        .filter(g => g.batch !== -1)   // bỏ group rác
+        .sort((a, b) => a.batch - b.batch);
+});
+
+
+
+
 const inputValue = ref('')
 const listComment = ref([])
 const listUser = ref([])
 
-const selectedFile = ref(null)
+const selectedFiles = ref([])
 
 const loadingComment = ref(false)
 const loadingUpdate = ref(false)
 
 const totalPage = ref(1)
 const currentPage = ref(1)
+const uploading = ref(false)
 
 /* ===== sticky + scroll helpers ===== */
 const listEl = ref(null)
@@ -602,24 +643,24 @@ const MAX_FILES_COLLAPSED = 1
 const pinnedFiles = ref([])
 
 const hasPinnedOverflow = computed(() => (pinnedFiles.value?.length || 0) > MAX_FILES_COLLAPSED)
-const expandSticky = () => {
-    isStickyExpanded.value = true
-}
-const collapseSticky = () => {
-    isStickyExpanded.value = false
-}
+
 const toggleSticky = () => {
     if (!hasPinnedOverflow.value) return
     isStickyExpanded.value = !isStickyExpanded.value
 }
 const pinnedTotal = computed(() => pinnedFiles.value?.length || 0)
-const visiblePinnedFiles = computed(() =>
-    isStickyExpanded.value ? pinnedFiles.value || [] : (pinnedFiles.value || []).slice(0, MAX_FILES_COLLAPSED)
-)
-const hiddenPinnedCount = computed(() =>
-    Math.max(0, (pinnedFiles.value?.length || 0) - MAX_FILES_COLLAPSED)
-)
 
+const visiblePinnedGroups = computed(() => {
+    if (isStickyExpanded.value) {
+        return pinnedGroupedByComment.value;
+    }
+    // collapsed → chỉ hiển thị batch mới nhất
+    return pinnedGroupedByComment.value.slice(-1);
+});
+
+const arrowIcon = computed(() =>
+    isStickyExpanded.value ? CaretUpOutlined : CaretDownOutlined
+)
 // store id/name người tạo task trả từ API /tasks/{id}/roster
 const rosterCreatedBy = ref(null)
 const rosterCreatedByName = ref(null)
@@ -1079,23 +1120,27 @@ function onInputDetectMention(e) {
 
 /* ===== upload handlers (single file) ===== */
 async function handleBeforeUpload(file) {
-    // file là instance của File/Blob do AntD truyền vào
-    console.log('handleBeforeUpload got file:', file);
-    selectedFile.value = file; // LƯU lại để append vào FormData khi submit
-    // return false để AntD không tự upload và cho phép you control upload manually
-    return false;
+    if (selectedFiles.value.length >= 3) {
+        message.warning("Chỉ được đính kèm tối đa 3 file");
+        return false;
+    }
+
+    selectedFiles.value.push(file);
+    return false; // giữ chế độ upload thủ công
 }
 
-
-function handleRemoveFile() {
-    selectedFile.value = null
+function removeFile(index) {
+    selectedFiles.value.splice(index, 1);
 }
 
 /* gửi comment */
-const canSend = computed(
-    () => !!inputValue.value.trim() || !!selectedFile.value || (mentionsSelected.value?.length > 0)
-)
-
+const canSend = computed(() => {
+    return (
+        !!inputValue.value.trim() ||
+        selectedFiles.value.length > 0 ||
+        (mentionsSelected.value?.length > 0)
+    );
+});
 function vnNorm(s = '') {
     return (s == null ? '' : String(s)).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
 }
@@ -1137,124 +1182,109 @@ function dedupeMentions(arr = []) {
     return res
 }
 
-async function createNewComment({keepMentions = false} = {}) {
-    if (!canSend.value) return;
+async function createNewComment({ keepMentions = false } = {}) {
+    if (!canSend.value || uploading.value) return;
+
+    uploading.value = true;
 
     try {
-        // --- Ghép mentions từ UI + text ---
+        // ==== 1) Gom mentions trong UI + mentions lấy từ text ====
         const textMentions = extractMentionsFromInput(inputValue.value);
         const mergedMentions = dedupeMentions([
             ...(mentionsSelected.value || []),
-            ...textMentions
+            ...textMentions,
         ]);
 
         const mentionsPayload = mergedMentions.map(m => ({
             user_id: Number(m.user_id),
             name: m.name,
             role: m.role,
-            status: m.status || 'pending'
+            status: m.status || "pending",
         }));
 
-        // --- Build FormData ---
+        // ==== 2) Build FormData ====
         const form = new FormData();
-        form.append('user_id', String(store.currentUser.id));
-        form.append('content', String(inputValue.value || ''));
-        form.append('mentions', JSON.stringify(mentionsPayload));
-        // Gửi loại văn bản (nếu có attachment)
-        form.append('doc_type', String(selectedDocType.value || 'internal'));
+        form.append("user_id", store.currentUser.id);
+        form.append("content", inputValue.value || "");
+        form.append("mentions", JSON.stringify(mentionsPayload));
+        form.append("doc_type", selectedDocType.value || "internal");
 
-        // Nếu có file local được chọn thì append vào form (AntD beforeUpload trả file)
-        if (selectedFile.value) {
-            form.append('attachment', selectedFile.value, selectedFile.value.name || 'attachment');
-            console.log('Appending attachment:', selectedFile.value.name || selectedFile.value);
+        // ==== 3) Multi-file upload ====
+        if (selectedFiles.value.length) {
+            for (const f of selectedFiles.value) {
+                form.append("attachments[]", f, f.name);
+            }
         }
 
-        // --- Gửi request tạo comment ---
+        // ==== 4) Gửi comment ====
         const res = await createComment(taskId.value, form);
 
-        // --- Nếu server trả lỗi/validation thì ném để catch bắt ---
-        // (giữ flow bình thường; response handled below)
-
-        // --- Thử auto-pin attachments nếu server trả thông tin file ---
-        // Lưu ý: cấu trúc response khác nhau giữa backend; thử đoán ở vài chỗ phổ biến
+        // ==== 5) Auto-pin file backend trả về ====
         try {
-            const data = res?.data || {};
-            // Các nơi có thể chứa attachments/files:
-            const attachments =
-                data?.attachments ||
-                data?.files ||
-                data?.comment?.attachments ||
-                data?.comment?.files ||
-                data?.data?.attachments ||
-                data?.data?.files ||
-                [];
+            const commentData = res?.data?.comment || res?.data || {};
 
-            if (Array.isArray(attachments) && attachments.length) {
-                for (const att of attachments) {
+            const files = Array.isArray(commentData?.files)
+                ? commentData.files
+                : [];
+
+            if (files.length) {
+                for (const f of files) {
                     try {
-                        // att có thể chứa id, file_path, link_url, v.v.
-                        await ensureTaskFileId(att, {autoPin: true});
+                        await ensureTaskFileId(
+                            {
+                                file_name: f.file_name,
+                                file_path: f.file_path,
+                                link_url: f.public_url || f.file_path,
+                            },
+                            { autoPin: true }
+                        );
                     } catch (e) {
-                        console.warn('Auto-pin per attachment failed for', att, e);
+                        console.warn("Auto-pin file failed:", f, e);
                     }
                 }
-                // refresh pinned files list after attempts
+
                 await loadPinnedFiles();
-            } else {
-                // Fallback: server có thể trả về single file info (không trong mảng)
-                const maybeFile = data?.file || data?.comment?.file || data?.data?.file || null;
-                if (maybeFile) {
-                    try {
-                        await ensureTaskFileId(maybeFile, {autoPin: true});
-                        await loadPinnedFiles();
-                    } catch (e) {
-                        console.warn('Auto-pin fallback failed', e);
-                    }
-                } else {
-                    // Nếu chúng ta vừa gửi một local File (selectedFile) và backend không trả file info,
-                    // thì không thể map local->remote để ghim. Để pin tự động hoạt động trong trường hợp này,
-                    // backend cần trả thông tin file đã lưu (id/file_path) trong response createComment.
-                    if (selectedFile.value) {
-                        console.info('No attachment info returned by server to auto-pin the uploaded file.');
-                    }
-                }
             }
         } catch (e) {
-            console.warn('Auto-pin stage failed', e);
+            console.warn("Auto-pin stage failed:", e);
         }
 
-        // --- Reset UI state ---
-        inputValue.value = '';
-        selectedFile.value = null;
+        // ==== 6) Reset UI ====
+        inputValue.value = "";
+        selectedFiles.value = [];
         mentionsSelected.value = keepMentions ? mergedMentions : [];
 
-        // --- Refresh UI data ---
+        // ==== 7) Refresh UI ====
         await getListComment(1);
         await syncRosterFromServer();
-        await loadPinnedFiles(); // reload pinned list just in case
+        await loadPinnedFiles();
+
         await nextTick();
         scrollToBottom();
 
-        message.success('Đã gửi bình luận');
+        message.success("Đã gửi bình luận");
 
         return res;
     } catch (err) {
-        console.error('createNewComment error', err);
-        // Try to show useful server messages when có
-        if (err?.response?.data) {
-            console.error('Server response:', err.response.data);
-            const msg =
-                err.response.data?.messages?.attachment ||
-                err.response.data?.message ||
-                err.response.data?.errors ||
-                'Không gửi được bình luận';
-            message.error(typeof msg === 'string' ? msg : 'Không gửi được bình luận');
-        } else {
-            message.error('Không gửi được bình luận');
-        }
-        throw err; // rethrow in case caller wants to handle further
+        console.error("createNewComment error", err);
+
+        const msg =
+            err?.response?.data?.messages?.attachment ||
+            err?.response?.data?.message ||
+            err?.response?.data?.errors ||
+            "Không gửi được bình luận";
+
+        message.error(
+            typeof msg === "string" ? msg : "Không gửi được bình luận"
+        );
+
+        throw err;
+    } finally {
+        uploading.value = false;
     }
 }
+
+
 
 
 // helper: sắp xếp mảng comment theo created_at tăng dần (cũ -> mới)
@@ -2491,6 +2521,24 @@ onBeforeUnmount(() => {
 .doc-type-note .icon {
     color: #2563eb;
 }
+
+.pinned-batch {
+    margin-bottom: 12px;
+    padding: 8px 10px;
+    border: 1px solid #e6ebf0;
+    border-radius: 8px;
+    background: #fafcff;
+}
+
+.batch-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+}
+
 
 
 /* Responsive */

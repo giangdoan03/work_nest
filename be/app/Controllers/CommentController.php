@@ -7,6 +7,7 @@ use App\Models\DocumentApprovalModel;
 use App\Models\DocumentApprovalStepModel;
 use App\Models\DocumentModel;
 use App\Models\TaskCommentModel;
+use App\Models\TaskFileModel;
 use App\Models\TaskModel;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\Files\UploadedFile;
@@ -21,104 +22,76 @@ use Throwable;
 class CommentController extends ResourceController
 {
     protected $modelName = TaskCommentModel::class;
-    protected $format = 'json';
+    protected $format    = 'json';
 
-    // cấu hình upload cơ bản
-    protected int $maxUploadKB = 8192; // 8MB
-    protected array $allowedMimes = [
-        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/csv',
-        'application/vnd.ms-powerpoint',
-        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'application/zip',
-        'application/octet-stream',
-    ];
-
-    private function extToMime(string $ext): ?string
-    {
-        $map = [
-            'jpg' => 'image/jpeg',
-            'jpeg' => 'image/jpeg',
-            'png' => 'image/png',
-            'gif' => 'image/gif',
-            'webp' => 'image/webp',
-
-            'pdf' => 'application/pdf',
-            'doc' => 'application/msword',
-            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'xls' => 'application/vnd.ms-excel',
-            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'csv' => 'text/csv',
-            'ppt' => 'application/vnd.ms-powerpoint',
-            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            'zip' => 'application/zip',
-        ];
-
-        return $map[strtolower($ext)] ?? null;
-    }
-
-    private function guessContentType(UploadedFile $file): string
-    {
-        $ctype = $file->getMimeType() ?: 'application/octet-stream';
-
-        if ($ctype === 'application/octet-stream') {
-            $ext = $file->getClientExtension() ?: pathinfo($file->getClientName(), PATHINFO_EXTENSION);
-            $guess = $this->extToMime($ext);
-            if ($guess) {
-                $ctype = $guess;
-            }
-        }
-
-        return $ctype;
-    }
-
-    // ✅ Danh sách comment theo task
+    // ============================
+    // COMMENT LIST THEO TASK
+    // ============================
     public function byTask($task_id): ResponseInterface
     {
-        $page = (int)$this->request->getGet('page') ?: 1;
+        $page  = (int)($this->request->getGet('page') ?? 1);
         $limit = 5;
+        $offset = ($page - 1) * $limit;
 
-        /** @var TaskCommentModel $model */
-        $model = $this->model;
+        $db = \Config\Database::connect();
 
-        // Lấy comment có phân trang (mới nhất lên đầu)
-        $comments = $model
-            ->select('task_comments.*, users.name as user_name')
-            ->join('users', 'users.id = task_comments.user_id', 'left')
-            ->where('task_comments.task_id', $task_id)
-            ->orderBy('task_comments.created_at', 'DESC')
-            ->paginate($limit, 'default', $page);
+        // 1) Subquery: files theo comment
+        $sub = $db->table('documents')
+            ->select("
+            comment_id,
+            JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    'file_name', title,
+                    'file_path', file_path,
+                    'public_url', file_path,
+                    'doc_type', doc_type,
+                    'upload_batch', upload_batch
+                )
+            ) AS files_json
+        ", false)
+            ->where('comment_id IS NOT NULL', null, false)
+            ->groupBy('comment_id');
 
-        $pager = $model->pager ?? Services::pager();
+        $subQuery = $sub->getCompiledSelect();
 
-        // Gắn mảng files nếu comment có file
-        foreach ($comments as &$comment) {
-            if (!empty($comment['file_path']) && !empty($comment['file_name'])) {
-                $comment['files'] = [[
-                    'file_name' => $comment['file_name'],
-                    'file_path' => $comment['file_path'],
-                ]];
-            } else {
-                $comment['files'] = [];
-            }
+        // 2) Query comments
+        $builder = $db->table('task_comments c');
+        $builder->select("
+        c.*,
+        u.name AS user_name,
+        COALESCE(f.files_json, '[]') AS files_json
+    ", false);
+
+        $builder->join('users u', 'u.id = c.user_id', 'left');
+        $builder->join("($subQuery) f", 'f.comment_id = c.id', 'left');
+
+        $builder->where('c.task_id', $task_id);
+        $builder->orderBy('c.created_at', 'DESC');
+        $builder->limit($limit, $offset);
+
+        $rows = $builder->get()->getResultArray();
+
+        foreach ($rows as &$c) {
+            $c['files'] = json_decode($c['files_json'], true) ?: [];
+            unset($c['files_json']);
         }
-        unset($comment);
+
+        // 3) Pagination
+        $total = $db->table('task_comments')
+            ->where('task_id', $task_id)
+            ->countAllResults();
 
         return $this->respond([
-            'comments' => $comments,
+            'comments' => $rows,
             'pagination' => [
-                'currentPage' => $pager->getCurrentPage(),
-                'totalPages' => $pager->getPageCount(),
-                'totalItems' => $pager->getTotal(),
-                'perPage' => $limit,
+                'currentPage' => $page,
+                'totalPages'  => ceil($total / $limit),
+                'totalItems'  => $total,
+                'perPage'     => $limit,
             ],
         ]);
     }
+
 
     /**
      * Danh sách file theo task + phiên duyệt + chuỗi ký
@@ -157,8 +130,8 @@ class CommentController extends ResourceController
         if (empty($rows)) {
             return $this->respond([
                 'task_id' => $task_id,
-                'files' => [],
-                'count' => 0,
+                'files'   => [],
+                'count'   => 0,
             ]);
         }
 
@@ -167,7 +140,7 @@ class CommentController extends ResourceController
 
         // 2. Lấy phiên duyệt mới nhất cho từng document (source_type=document)
         $approvalsByDoc = [];
-        $approvalIds = [];
+        $approvalIds    = [];
 
         if (!empty($docIds)) {
             $sub = $db->table('document_approvals')
@@ -186,9 +159,9 @@ class CommentController extends ResourceController
             $approvalRows = $builderApv->get()->getResultArray();
 
             foreach ($approvalRows as $a) {
-                $docId = (int)$a['document_id'];
-                $approvalsByDoc[$docId] = $a;
-                $approvalIds[] = (int)$a['id'];
+                $docId                    = (int)$a['document_id'];
+                $approvalsByDoc[$docId]   = $a;
+                $approvalIds[]            = (int)$a['id'];
             }
         }
 
@@ -211,7 +184,7 @@ class CommentController extends ResourceController
             $stepRows = $builderSteps->get()->getResultArray();
 
             foreach ($stepRows as $s) {
-                $aid = (int)$s['approval_id'];
+                $aid                     = (int)$s['approval_id'];
                 $stepsByApproval[$aid][] = $s;
             }
         }
@@ -219,46 +192,45 @@ class CommentController extends ResourceController
         // 4. Gộp vào response
         $files = [];
         foreach ($rows as $r) {
-            $docId = (int)$r['id'];
-
+            $docId     = (int)$r['id'];
             $rawStatus = isset($r['approval_status']) ? trim((string)$r['approval_status']) : '';
-            $status = $rawStatus !== '' ? $rawStatus : 'not_sent';
+            $status    = $rawStatus !== '' ? $rawStatus : 'not_sent';
 
             $approval = $approvalsByDoc[$docId] ?? null;
-            $steps = $approval
+            $steps    = $approval
                 ? ($stepsByApproval[(int)$approval['id']] ?? [])
                 : [];
 
             $fileName = $r['title'];
             if (!$fileName) {
-                $path = $r['file_path'] ?? '';
+                $path     = $r['file_path'] ?? '';
                 $basename = basename(parse_url($path, PHP_URL_PATH) ?: '');
                 $fileName = $basename ?: null;
             }
 
             $files[] = [
-                'id' => $docId,
-                'task_id' => $task_id,
-                'file_name' => $fileName,
-                'file_path' => $r['file_path'],
-                'uploaded_by' => (int)$r['uploaded_by'],
+                'id'            => $docId,
+                'task_id'       => $task_id,
+                'file_name'     => $fileName,
+                'file_path'     => $r['file_path'],
+                'uploaded_by'   => (int)$r['uploaded_by'],
                 'uploader_name' => $r['uploader_name'] ?? null,
-                'created_at' => $r['created_at'],
-                'source' => 'document',
+                'created_at'    => $r['created_at'],
+                'source'        => 'document',
 
-                'status' => $status,
+                'status'           => $status,
                 'approval_sent_by' => $r['approval_sent_by'] ?? null,
                 'approval_sent_at' => $r['approval_sent_at'] ?? null,
 
                 'approval' => $approval,
-                'steps' => $steps,
+                'steps'    => $steps,
             ];
         }
 
         return $this->respond([
             'task_id' => $task_id,
-            'files' => $files,
-            'count' => count($files),
+            'files'   => $files,
+            'count'   => count($files),
         ]);
     }
 
@@ -268,8 +240,8 @@ class CommentController extends ResourceController
      */
     public function sendApprovalForComment($id = null): ResponseInterface
     {
-        $payload = $this->request->getJSON(true) ?? [];
-        $userId = (int)($payload['user_id'] ?? 0);
+        $payload   = $this->request->getJSON(true) ?? [];
+        $userId    = (int)($payload['user_id'] ?? 0);
         $approvers = array_values(
             array_unique(
                 array_filter(
@@ -288,7 +260,7 @@ class CommentController extends ResourceController
             return $this->failNotFound('Comment không hợp lệ hoặc không có file.');
         }
 
-        $apvM = new DocumentApprovalModel();
+        $apvM  = new DocumentApprovalModel();
         $stepM = new DocumentApprovalStepModel();
 
         $db = $apvM->db;
@@ -297,23 +269,23 @@ class CommentController extends ResourceController
         try {
             // 1) Tạo phiên duyệt
             $apvId = $apvM->insert([
-                'document_id' => (int)$id,
-                'status' => 'pending',
-                'created_by' => $userId,
+                'document_id'        => (int)$id,
+                'status'             => 'pending',
+                'created_by'         => $userId,
                 'current_step_index' => 0,
-                'note' => $note ?: 'Gửi duyệt file trong comment',
-                'source_type' => 'comment',
+                'note'               => $note ?: 'Gửi duyệt file trong comment',
+                'source_type'        => 'comment',
             ], true);
 
             // 2) Tạo các bước ký
-            $seq = 1;
+            $seq   = 1;
             $batch = [];
             foreach ($approvers as $uid) {
                 $batch[] = [
                     'approval_id' => $apvId,
                     'approver_id' => $uid,
-                    'sequence' => $seq++,
-                    'status' => 'waiting',
+                    'sequence'    => $seq++,
+                    'status'      => 'waiting',
                 ];
             }
             if ($batch) {
@@ -333,16 +305,16 @@ class CommentController extends ResourceController
 
             // 4) Cập nhật trạng thái comment
             $this->model->update((int)$id, [
-                'approval_status' => 'pending',
-                'approval_sent_by' => $userId,
-                'approval_sent_at' => date('Y-m-d H:i:s'),
+                'approval_status'   => 'pending',
+                'approval_sent_by'  => $userId,
+                'approval_sent_at'  => date('Y-m-d H:i:s'),
             ]);
 
             $db->transCommit();
 
             return $this->respond([
-                'ok' => true,
-                'message' => 'Đã gửi duyệt file comment.',
+                'ok'          => true,
+                'message'     => 'Đã gửi duyệt file comment.',
                 'approval_id' => (int)$apvId,
             ]);
         } catch (Throwable $e) {
@@ -360,7 +332,7 @@ class CommentController extends ResourceController
             return $dept > 0 ? $dept : null;
         }
 
-        $u = (new UserModel())->select('department_id')->find($userId);
+        $u    = (new UserModel())->select('department_id')->find($userId);
         $dept = (int)($u['department_id'] ?? 0);
 
         return $dept > 0 ? $dept : null;
@@ -369,173 +341,140 @@ class CommentController extends ResourceController
     /**
      * Tạo comment (text + optional file upload lên SharePoint)
      * @throws ReflectionException
+     * @throws \Exception
      */
     public function create($task_id = null): ResponseInterface
     {
         $task_id = $task_id ? (int)$task_id : null;
-        $userId = (int)($this->request->getPost('user_id') ?? 0);
+        $userId  = (int)($this->request->getPost('user_id') ?? 0);
 
         if ($userId <= 0) {
             return $this->failValidationErrors(['user_id' => 'Thiếu user_id.']);
         }
 
-        $content = trim((string)($this->request->getPost('content') ?? ''));
+        $content      = trim((string)($this->request->getPost('content') ?? ''));
         $mentionsJson = $this->request->getPost('mentions') ?? null;
 
-        /** @var UploadedFile|null $file */
-        $file = $this->request->getFile('attachment') ?: $this->request->getFile('file');
+        /** @var UploadedFile[] $files */
+        $files = $this->request->getFileMultiple('attachments');
+        if (!$files) {
+            $single = $this->request->getFile('attachment');
+            $files = ($single && $single->isValid()) ? [$single] : [];
+        }
 
-        // Nếu không có file -> comment text-only
-        if (!$file || !$file->isValid() || $file->hasMoved()) {
-            $commentData = [
-                'task_id' => $task_id,
-                'user_id' => $userId,
-                'content' => $content,
-                'created_at' => date('Y-m-d H:i:s'),
-            ];
+        $taskCommentModel = new TaskCommentModel();
 
-            if ($mentionsJson) {
-                $commentData['mentions'] = $mentionsJson;
-            }
+        // 1) Tạo comment trước
+        $commentId = $taskCommentModel->insert([
+            'task_id'    => $task_id,
+            'user_id'    => $userId,
+            'content'    => $content,
+            'mentions'   => $mentionsJson,
+            'created_at' => date('Y-m-d H:i:s'),
+        ], true);
 
-            $taskCommentModel = new TaskCommentModel();
-            $inserted = $taskCommentModel->insert($commentData, true);
+        if (!$commentId) {
+            return $this->failServerError("Không tạo được comment.");
+        }
 
-            if (!$inserted) {
-                return $this->failServerError('Không tạo được comment.');
-            }
+        $uploadedFiles = [];
 
-            $commentId = is_int($inserted) ? $inserted : $taskCommentModel->getInsertID();
+        // Nếu không có file → chỉ text
+        if (empty($files)) {
             $created = $taskCommentModel->find($commentId);
+            $created['files'] = [];
 
             $this->mergeMentionsIntoTaskRoster((int)$task_id, $mentionsJson);
-
-            return $this->respondCreated([
-                'comment' => $created,
-            ]);
+            return $this->respondCreated(['comment' => $created]);
         }
 
-        // Nếu có file -> validate size/mime
-        $sizeKB = (int)ceil(($file->getSize() ?: 0) / 1024);
-        if ($sizeKB > $this->maxUploadKB) {
-            return $this->failValidationErrors(['attachment' => 'Kích thước vượt giới hạn.']);
-        }
+        // ⭐ 2) Tính batch upload (đúng chuẩn)
+        $db = \Config\Database::connect();
+        $lastBatchRow = $db->table('documents')
+            ->where('source_task_id', $task_id)
+            ->selectMax('upload_batch')
+            ->get()
+            ->getRow();
 
-        $ctype = $this->guessContentType($file);
-        if (!in_array($ctype, $this->allowedMimes, true)) {
-            return $this->failValidationErrors(['attachment' => 'Định dạng không được hỗ trợ.']);
-        }
+        $uploadBatch = (int)($lastBatchRow->upload_batch ?? 0) + 1;
 
-        // Upload lên SharePoint
-        // Upload lên SharePoint + tạo link CHỈ XEM
-        try {
+        // 3) Upload files → insert documents
+        $docM   = new DocumentModel();
+        $deptId = $this->resolveDepartmentId($userId);
+        $docType = $this->request->getPost('doc_type') === 'external' ? 'external' : 'internal';
+
+        foreach ($files as $file) {
+            if (!$file->isValid() || $file->hasMoved()) continue;
+
             $sp = new SharepointUploader();
             $upload = $sp->uploadFile($file->getTempName(), $file->getClientName());
 
             $driveId = $upload['driveId'] ?? null;
             $itemId  = $upload['itemId'] ?? null;
 
-            if (!$driveId || !$itemId) {
-                throw new RuntimeException('Thiếu driveId hoặc itemId SharePoint.');
-            }
+            if (!$driveId || !$itemId) continue;
 
-            // Link chỉ xem cho tất cả mọi người (giống Anyone + View Only)
-            // nếu muốn chỉ nội bộ: đổi 'anonymous' -> 'organization'
             $viewOnlyUrl = $sp->createViewOnlyLink($driveId, $itemId, 'anonymous');
+            $fileUrl     = $viewOnlyUrl;
+            $spName      = $upload['file_name'] ?? $file->getClientName();
 
-            if (!$viewOnlyUrl) {
-                throw new RuntimeException('Không tạo được link chỉ xem.');
-            }
-
-            $fileUrl = $viewOnlyUrl;
-            $spName  = $upload['file_name'] ?? $file->getClientName();
-
-        } catch (Throwable $e) {
-            log_message('error', 'SharePoint upload failed: ' . $e->getMessage());
-            return $this->failServerError('Không upload được file lên SharePoint.');
-        }
-
-
-        // Insert vào documents
-        $docM = new DocumentModel();
-        $deptId = $this->resolveDepartmentId($userId);
-        $sizeByte = (int)($file->getSize() ?: 0);
-
-        // đọc doc_type từ request (internal|external)
-        $docTypeRaw = (string)($this->request->getPost('doc_type') ?? '');
-        $docType = in_array($docTypeRaw, ['internal', 'external'], true) ? $docTypeRaw : 'internal';
-
-        $exist = $docM
-            ->where('file_path', $fileUrl)
-            ->where('uploaded_by', $userId)
-            ->first();
-
-        if ($exist) {
-            $docId = (int)$exist['id'];
-            $doc = $exist;
-
-            if (($exist['doc_type'] ?? '') !== $docType) {
-                $docM->update($docId, ['doc_type' => $docType]);
-                $doc = $docM->find($docId);
-            }
-        } else {
+            // === Insert document ===
             $docId = $docM->insert([
-                'title' => $spName,
-                'file_path' => $fileUrl,
-                'file_type' => 'sharepoint',
-                'doc_type' => $docType,
-                'file_size' => $sizeByte,
+                'title'         => $spName,
+                'file_path'     => $fileUrl,
+                'file_type'     => 'sharepoint',
+                'doc_type'      => $docType,
+                'file_size'     => $file->getSize(),
                 'department_id' => $deptId,
-                'uploaded_by' => $userId,
-                'visibility' => 'private',
+                'uploaded_by'   => $userId,
+                'visibility'    => 'private',
                 'approval_status' => 'waiting',
-                'source_task_id' => $task_id ? (int)$task_id : null,
-                'created_at' => date('Y-m-d H:i:s'),
+                'source_task_id'  => $task_id,
+                'comment_id'      => $commentId,
+                'upload_batch'    => $uploadBatch,
+                'created_at'      => date('Y-m-d H:i:s'),
             ], true);
 
-            if (!$docId) {
-                $docId = $docM->getInsertID();
-            }
+            // === Insert task_files (để FE pinned files xử lý giống nhau) ===
+            $taskFileM = new TaskFileModel();
+            $taskFileM->insert([
+                'task_id'      => $task_id,
+                'document_id'  => $docId,
+                'comment_id'   => $commentId,
+                'file_name'    => $spName,
+                'title'        => $spName,
+                'file_path'    => $fileUrl,
+                'uploaded_by'  => $userId,
+                'is_link'      => 0,
+                'status'       => 'uploaded',
+                'is_pinned'    => 1,
+                'pinned_by'    => $userId,
+                'pinned_at'    => date('Y-m-d H:i:s'),
+                'file_type'    => 'sharepoint',
+                'file_size'    => $file->getSize(),
+                'upload_batch' => $uploadBatch, // ⭐ batch consistent
+                'created_at'   => date('Y-m-d H:i:s'),
+            ]);
 
-            $doc = $docM->find($docId);
+            $uploadedFiles[] = [
+                'file_name'    => $spName,
+                'file_path'    => $fileUrl,
+                'public_url'   => $fileUrl,
+                'doc_type'     => $docType,
+                'upload_batch' => $uploadBatch
+            ];
         }
 
-        // Tạo comment kèm file
-        $taskCommentModel = new TaskCommentModel();
-        $commentData = [
-            'task_id' => $task_id,
-            'user_id' => $userId,
-            'content' => $content,
-            'file_name' => $spName,
-            'file_path' => $fileUrl,
-            'created_at' => date('Y-m-d H:i:s'),
-        ];
-        if ($mentionsJson) {
-            $commentData['mentions'] = $mentionsJson;
-        }
 
-        $inserted = $taskCommentModel->insert($commentData, true);
-        if (!$inserted) {
-            log_message('error', 'Insert task_comment failed: ' . json_encode($taskCommentModel->errors()));
-            return $this->failServerError('Không tạo được comment kèm file.');
-        }
-
-        $commentId = is_int($inserted) ? $inserted : $taskCommentModel->getInsertID();
+        // 4) Trả về comment
         $createdComment = $taskCommentModel->find($commentId);
+        $createdComment['files'] = $uploadedFiles;
 
         $this->mergeMentionsIntoTaskRoster((int)$task_id, $mentionsJson);
 
-        $createdComment['files'] = [[
-            'file_name' => $doc['title'] ?? $spName,
-            'file_path' => $doc['file_path'] ?? $fileUrl,   // link gốc
-            'public_url' => $fileUrl,                       // link view only
-            'doc_type' => $doc['doc_type'] ?? $docType,
-        ]];
-
-        return $this->respondCreated([
-            'comment' => $createdComment,
-        ]);
+        return $this->respondCreated(['comment' => $createdComment]);
     }
+
 
 
     public function update($id = null): ResponseInterface
@@ -564,14 +503,13 @@ class CommentController extends ResourceController
             return $this->fail('Missing user_id', 400);
         }
 
-        $page = max(1, (int)($this->request->getGet('page') ?: 1));
-        $limit = min(50, (int)($this->request->getGet('limit') ?: 10));
+        $page   = max(1, (int)($this->request->getGet('page') ?? 1));
+        $limit  = min(50, (int)($this->request->getGet('limit') ?? 10));
         $offset = ($page - 1) * $limit;
 
         $db = db_connect();
 
         try {
-            // Lấy danh sách comment liên quan user
             $builder = $db->table('task_comments c');
             $builder
                 ->select(
@@ -614,15 +552,15 @@ class CommentController extends ResourceController
                 ->groupEnd();
 
             $totalRow = $countBuilder->get()->getRow();
-            $total = (int)($totalRow->cnt ?? 0);
+            $total    = (int)($totalRow->cnt ?? 0);
 
             return $this->respond([
-                'comments' => $rows,
+                'comments'   => $rows,
                 'pagination' => [
                     'currentPage' => $page,
-                    'totalPages' => (int)ceil($total / $limit),
-                    'totalItems' => $total,
-                    'perPage' => $limit,
+                    'totalPages'  => (int)ceil($total / $limit),
+                    'totalItems'  => $total,
+                    'perPage'     => $limit,
                 ],
             ]);
         } catch (Throwable $e) {
@@ -684,12 +622,12 @@ class CommentController extends ResourceController
         }
 
         $readModel = new CommentReadModel();
-        $now = date('Y-m-d H:i:s');
+        $now       = date('Y-m-d H:i:s');
 
         $rows = array_map(static fn($cid) => [
-            'user_id' => $uid,
+            'user_id'    => $uid,
             'comment_id' => (int)$cid,
-            'read_at' => $now,
+            'read_at'    => $now,
         ], $ids);
 
         foreach ($rows as $r) {
@@ -717,9 +655,9 @@ class CommentController extends ResourceController
 
         try {
             $readModel->insert([
-                'user_id' => $uid,
+                'user_id'    => $uid,
                 'comment_id' => (int)$id,
-                'read_at' => date('Y-m-d H:i:s'),
+                'read_at'    => date('Y-m-d H:i:s'),
             ], false);
         } catch (Throwable) {
             // ignore duplicate
@@ -747,8 +685,8 @@ class CommentController extends ResourceController
 
             $norm[] = [
                 'user_id' => (int)$m['user_id'],
-                'name' => $m['name'] ?? ('#' . $m['user_id']),
-                'role' => in_array($m['role'] ?? 'approve', ['approve', 'sign'], true)
+                'name'    => $m['name'] ?? ('#' . $m['user_id']),
+                'role'    => in_array($m['role'] ?? 'approve', ['approve', 'sign'], true)
                     ? $m['role']
                     : 'approve',
             ];
@@ -761,6 +699,4 @@ class CommentController extends ResourceController
         $taskModel = new TaskModel();
         $taskModel->upsertRosterMembers($taskId, $norm);
     }
-
-
 }
