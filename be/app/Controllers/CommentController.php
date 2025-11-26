@@ -14,6 +14,7 @@ use CodeIgniter\HTTP\Files\UploadedFile;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use App\Libraries\SharepointUploader;
+use Config\Database;
 use Config\Services;
 use ReflectionException;
 use RuntimeException;
@@ -22,18 +23,18 @@ use Throwable;
 class CommentController extends ResourceController
 {
     protected $modelName = TaskCommentModel::class;
-    protected $format    = 'json';
+    protected $format = 'json';
 
     // ============================
     // COMMENT LIST THEO TASK
     // ============================
     public function byTask($task_id): ResponseInterface
     {
-        $page  = (int)($this->request->getGet('page') ?? 1);
+        $page = (int)($this->request->getGet('page') ?? 1);
         $limit = 5;
         $offset = ($page - 1) * $limit;
 
-        $db = \Config\Database::connect();
+        $db = Database::connect();
 
         // 1) Subquery: files theo comment
         $sub = $db->table('documents')
@@ -85,9 +86,9 @@ class CommentController extends ResourceController
             'comments' => $rows,
             'pagination' => [
                 'currentPage' => $page,
-                'totalPages'  => ceil($total / $limit),
-                'totalItems'  => $total,
-                'perPage'     => $limit,
+                'totalPages' => ceil($total / $limit),
+                'totalItems' => $total,
+                'perPage' => $limit,
             ],
         ]);
     }
@@ -130,8 +131,8 @@ class CommentController extends ResourceController
         if (empty($rows)) {
             return $this->respond([
                 'task_id' => $task_id,
-                'files'   => [],
-                'count'   => 0,
+                'files' => [],
+                'count' => 0,
             ]);
         }
 
@@ -140,7 +141,7 @@ class CommentController extends ResourceController
 
         // 2. Lấy phiên duyệt mới nhất cho từng document (source_type=document)
         $approvalsByDoc = [];
-        $approvalIds    = [];
+        $approvalIds = [];
 
         if (!empty($docIds)) {
             $sub = $db->table('document_approvals')
@@ -159,9 +160,9 @@ class CommentController extends ResourceController
             $approvalRows = $builderApv->get()->getResultArray();
 
             foreach ($approvalRows as $a) {
-                $docId                    = (int)$a['document_id'];
-                $approvalsByDoc[$docId]   = $a;
-                $approvalIds[]            = (int)$a['id'];
+                $docId = (int)$a['document_id'];
+                $approvalsByDoc[$docId] = $a;
+                $approvalIds[] = (int)$a['id'];
             }
         }
 
@@ -184,7 +185,7 @@ class CommentController extends ResourceController
             $stepRows = $builderSteps->get()->getResultArray();
 
             foreach ($stepRows as $s) {
-                $aid                     = (int)$s['approval_id'];
+                $aid = (int)$s['approval_id'];
                 $stepsByApproval[$aid][] = $s;
             }
         }
@@ -192,45 +193,45 @@ class CommentController extends ResourceController
         // 4. Gộp vào response
         $files = [];
         foreach ($rows as $r) {
-            $docId     = (int)$r['id'];
+            $docId = (int)$r['id'];
             $rawStatus = isset($r['approval_status']) ? trim((string)$r['approval_status']) : '';
-            $status    = $rawStatus !== '' ? $rawStatus : 'not_sent';
+            $status = $rawStatus !== '' ? $rawStatus : 'not_sent';
 
             $approval = $approvalsByDoc[$docId] ?? null;
-            $steps    = $approval
+            $steps = $approval
                 ? ($stepsByApproval[(int)$approval['id']] ?? [])
                 : [];
 
             $fileName = $r['title'];
             if (!$fileName) {
-                $path     = $r['file_path'] ?? '';
+                $path = $r['file_path'] ?? '';
                 $basename = basename(parse_url($path, PHP_URL_PATH) ?: '');
                 $fileName = $basename ?: null;
             }
 
             $files[] = [
-                'id'            => $docId,
-                'task_id'       => $task_id,
-                'file_name'     => $fileName,
-                'file_path'     => $r['file_path'],
-                'uploaded_by'   => (int)$r['uploaded_by'],
+                'id' => $docId,
+                'task_id' => $task_id,
+                'file_name' => $fileName,
+                'file_path' => $r['file_path'],
+                'uploaded_by' => (int)$r['uploaded_by'],
                 'uploader_name' => $r['uploader_name'] ?? null,
-                'created_at'    => $r['created_at'],
-                'source'        => 'document',
+                'created_at' => $r['created_at'],
+                'source' => 'document',
 
-                'status'           => $status,
+                'status' => $status,
                 'approval_sent_by' => $r['approval_sent_by'] ?? null,
                 'approval_sent_at' => $r['approval_sent_at'] ?? null,
 
                 'approval' => $approval,
-                'steps'    => $steps,
+                'steps' => $steps,
             ];
         }
 
         return $this->respond([
             'task_id' => $task_id,
-            'files'   => $files,
-            'count'   => count($files),
+            'files' => $files,
+            'count' => count($files),
         ]);
     }
 
@@ -240,8 +241,8 @@ class CommentController extends ResourceController
      */
     public function sendApprovalForComment($id = null): ResponseInterface
     {
-        $payload   = $this->request->getJSON(true) ?? [];
-        $userId    = (int)($payload['user_id'] ?? 0);
+        $payload = $this->request->getJSON(true) ?? [];
+        $userId = (int)($payload['user_id'] ?? 0);
         $approvers = array_values(
             array_unique(
                 array_filter(
@@ -260,7 +261,7 @@ class CommentController extends ResourceController
             return $this->failNotFound('Comment không hợp lệ hoặc không có file.');
         }
 
-        $apvM  = new DocumentApprovalModel();
+        $apvM = new DocumentApprovalModel();
         $stepM = new DocumentApprovalStepModel();
 
         $db = $apvM->db;
@@ -269,23 +270,23 @@ class CommentController extends ResourceController
         try {
             // 1) Tạo phiên duyệt
             $apvId = $apvM->insert([
-                'document_id'        => (int)$id,
-                'status'             => 'pending',
-                'created_by'         => $userId,
+                'document_id' => (int)$id,
+                'status' => 'pending',
+                'created_by' => $userId,
                 'current_step_index' => 0,
-                'note'               => $note ?: 'Gửi duyệt file trong comment',
-                'source_type'        => 'comment',
+                'note' => $note ?: 'Gửi duyệt file trong comment',
+                'source_type' => 'comment',
             ], true);
 
             // 2) Tạo các bước ký
-            $seq   = 1;
+            $seq = 1;
             $batch = [];
             foreach ($approvers as $uid) {
                 $batch[] = [
                     'approval_id' => $apvId,
                     'approver_id' => $uid,
-                    'sequence'    => $seq++,
-                    'status'      => 'waiting',
+                    'sequence' => $seq++,
+                    'status' => 'waiting',
                 ];
             }
             if ($batch) {
@@ -305,16 +306,16 @@ class CommentController extends ResourceController
 
             // 4) Cập nhật trạng thái comment
             $this->model->update((int)$id, [
-                'approval_status'   => 'pending',
-                'approval_sent_by'  => $userId,
-                'approval_sent_at'  => date('Y-m-d H:i:s'),
+                'approval_status' => 'pending',
+                'approval_sent_by' => $userId,
+                'approval_sent_at' => date('Y-m-d H:i:s'),
             ]);
 
             $db->transCommit();
 
             return $this->respond([
-                'ok'          => true,
-                'message'     => 'Đã gửi duyệt file comment.',
+                'ok' => true,
+                'message' => 'Đã gửi duyệt file comment.',
                 'approval_id' => (int)$apvId,
             ]);
         } catch (Throwable $e) {
@@ -332,7 +333,7 @@ class CommentController extends ResourceController
             return $dept > 0 ? $dept : null;
         }
 
-        $u    = (new UserModel())->select('department_id')->find($userId);
+        $u = (new UserModel())->select('department_id')->find($userId);
         $dept = (int)($u['department_id'] ?? 0);
 
         return $dept > 0 ? $dept : null;
@@ -346,13 +347,13 @@ class CommentController extends ResourceController
     public function create($task_id = null): ResponseInterface
     {
         $task_id = $task_id ? (int)$task_id : null;
-        $userId  = (int)($this->request->getPost('user_id') ?? 0);
+        $userId = (int)($this->request->getPost('user_id') ?? 0);
 
         if ($userId <= 0) {
             return $this->failValidationErrors(['user_id' => 'Thiếu user_id.']);
         }
 
-        $content      = trim((string)($this->request->getPost('content') ?? ''));
+        $content = trim((string)($this->request->getPost('content') ?? ''));
         $mentionsJson = $this->request->getPost('mentions') ?? null;
 
         /** @var UploadedFile[] $files */
@@ -366,10 +367,10 @@ class CommentController extends ResourceController
 
         // 1) Tạo comment trước
         $commentId = $taskCommentModel->insert([
-            'task_id'    => $task_id,
-            'user_id'    => $userId,
-            'content'    => $content,
-            'mentions'   => $mentionsJson,
+            'task_id' => $task_id,
+            'user_id' => $userId,
+            'content' => $content,
+            'mentions' => $mentionsJson,
             'created_at' => date('Y-m-d H:i:s'),
         ], true);
 
@@ -389,7 +390,7 @@ class CommentController extends ResourceController
         }
 
         // ⭐ 2) Tính batch upload (đúng chuẩn)
-        $db = \Config\Database::connect();
+        $db = Database::connect();
         $lastBatchRow = $db->table('documents')
             ->where('source_task_id', $task_id)
             ->selectMax('upload_batch')
@@ -399,7 +400,7 @@ class CommentController extends ResourceController
         $uploadBatch = (int)($lastBatchRow->upload_batch ?? 0) + 1;
 
         // 3) Upload files → insert documents
-        $docM   = new DocumentModel();
+        $docM = new DocumentModel();
         $deptId = $this->resolveDepartmentId($userId);
         $docType = $this->request->getPost('doc_type') === 'external' ? 'external' : 'internal';
 
@@ -410,57 +411,57 @@ class CommentController extends ResourceController
             $upload = $sp->uploadFile($file->getTempName(), $file->getClientName());
 
             $driveId = $upload['driveId'] ?? null;
-            $itemId  = $upload['itemId'] ?? null;
+            $itemId = $upload['itemId'] ?? null;
 
             if (!$driveId || !$itemId) continue;
 
             $viewOnlyUrl = $sp->createViewOnlyLink($driveId, $itemId, 'anonymous');
-            $fileUrl     = $viewOnlyUrl;
-            $spName      = $upload['file_name'] ?? $file->getClientName();
+            $fileUrl = $viewOnlyUrl;
+            $spName = $upload['file_name'] ?? $file->getClientName();
 
             // === Insert document ===
             $docId = $docM->insert([
-                'title'         => $spName,
-                'file_path'     => $fileUrl,
-                'file_type'     => 'sharepoint',
-                'doc_type'      => $docType,
-                'file_size'     => $file->getSize(),
+                'title' => $spName,
+                'file_path' => $fileUrl,
+                'file_type' => 'sharepoint',
+                'doc_type' => $docType,
+                'file_size' => $file->getSize(),
                 'department_id' => $deptId,
-                'uploaded_by'   => $userId,
-                'visibility'    => 'private',
+                'uploaded_by' => $userId,
+                'visibility' => 'private',
                 'approval_status' => 'waiting',
-                'source_task_id'  => $task_id,
-                'comment_id'      => $commentId,
-                'upload_batch'    => $uploadBatch,
-                'created_at'      => date('Y-m-d H:i:s'),
+                'source_task_id' => $task_id,
+                'comment_id' => $commentId,
+                'upload_batch' => $uploadBatch,
+                'created_at' => date('Y-m-d H:i:s'),
             ], true);
 
             // === Insert task_files (để FE pinned files xử lý giống nhau) ===
             $taskFileM = new TaskFileModel();
             $taskFileM->insert([
-                'task_id'      => $task_id,
-                'document_id'  => $docId,
-                'comment_id'   => $commentId,
-                'file_name'    => $spName,
-                'title'        => $spName,
-                'file_path'    => $fileUrl,
-                'uploaded_by'  => $userId,
-                'is_link'      => 0,
-                'status'       => 'uploaded',
-                'is_pinned'    => 1,
-                'pinned_by'    => $userId,
-                'pinned_at'    => date('Y-m-d H:i:s'),
-                'file_type'    => 'sharepoint',
-                'file_size'    => $file->getSize(),
+                'task_id' => $task_id,
+                'document_id' => $docId,
+                'comment_id' => $commentId,
+                'file_name' => $spName,
+                'title' => $spName,
+                'file_path' => $fileUrl,
+                'uploaded_by' => $userId,
+                'is_link' => 0,
+                'status' => 'uploaded',
+                'is_pinned' => 1,
+                'pinned_by' => $userId,
+                'pinned_at' => date('Y-m-d H:i:s'),
+                'file_type' => 'sharepoint',
+                'file_size' => $file->getSize(),
                 'upload_batch' => $uploadBatch, // ⭐ batch consistent
-                'created_at'   => date('Y-m-d H:i:s'),
+                'created_at' => date('Y-m-d H:i:s'),
             ]);
 
             $uploadedFiles[] = [
-                'file_name'    => $spName,
-                'file_path'    => $fileUrl,
-                'public_url'   => $fileUrl,
-                'doc_type'     => $docType,
+                'file_name' => $spName,
+                'file_path' => $fileUrl,
+                'public_url' => $fileUrl,
+                'doc_type' => $docType,
                 'upload_batch' => $uploadBatch
             ];
         }
@@ -474,7 +475,6 @@ class CommentController extends ResourceController
 
         return $this->respondCreated(['comment' => $createdComment]);
     }
-
 
 
     public function update($id = null): ResponseInterface
@@ -503,8 +503,8 @@ class CommentController extends ResourceController
             return $this->fail('Missing user_id', 400);
         }
 
-        $page   = max(1, (int)($this->request->getGet('page') ?? 1));
-        $limit  = min(50, (int)($this->request->getGet('limit') ?? 10));
+        $page = max(1, (int)($this->request->getGet('page') ?? 1));
+        $limit = min(50, (int)($this->request->getGet('limit') ?? 10));
         $offset = ($page - 1) * $limit;
 
         $db = db_connect();
@@ -552,15 +552,15 @@ class CommentController extends ResourceController
                 ->groupEnd();
 
             $totalRow = $countBuilder->get()->getRow();
-            $total    = (int)($totalRow->cnt ?? 0);
+            $total = (int)($totalRow->cnt ?? 0);
 
             return $this->respond([
-                'comments'   => $rows,
+                'comments' => $rows,
                 'pagination' => [
                     'currentPage' => $page,
-                    'totalPages'  => (int)ceil($total / $limit),
-                    'totalItems'  => $total,
-                    'perPage'     => $limit,
+                    'totalPages' => (int)ceil($total / $limit),
+                    'totalItems' => $total,
+                    'perPage' => $limit,
                 ],
             ]);
         } catch (Throwable $e) {
@@ -622,12 +622,12 @@ class CommentController extends ResourceController
         }
 
         $readModel = new CommentReadModel();
-        $now       = date('Y-m-d H:i:s');
+        $now = date('Y-m-d H:i:s');
 
         $rows = array_map(static fn($cid) => [
-            'user_id'    => $uid,
+            'user_id' => $uid,
             'comment_id' => (int)$cid,
-            'read_at'    => $now,
+            'read_at' => $now,
         ], $ids);
 
         foreach ($rows as $r) {
@@ -655,9 +655,9 @@ class CommentController extends ResourceController
 
         try {
             $readModel->insert([
-                'user_id'    => $uid,
+                'user_id' => $uid,
                 'comment_id' => (int)$id,
-                'read_at'    => date('Y-m-d H:i:s'),
+                'read_at' => date('Y-m-d H:i:s'),
             ], false);
         } catch (Throwable) {
             // ignore duplicate
@@ -685,8 +685,8 @@ class CommentController extends ResourceController
 
             $norm[] = [
                 'user_id' => (int)$m['user_id'],
-                'name'    => $m['name'] ?? ('#' . $m['user_id']),
-                'role'    => in_array($m['role'] ?? 'approve', ['approve', 'sign'], true)
+                'name' => $m['name'] ?? ('#' . $m['user_id']),
+                'role' => in_array($m['role'] ?? 'approve', ['approve', 'sign'], true)
                     ? $m['role']
                     : 'approve',
             ];

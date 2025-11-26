@@ -587,46 +587,70 @@ class TaskApprovalController extends ResourceController
         $task   = $this->getTaskRow($taskId);
         if (!$task) return $this->failNotFound('Task not found');
 
+        $db = db_connect();
+
+        /** ===========================
+         * Lấy ROSTER như cũ
+         * =========================== */
         $roster = $this->readRoster($task) ?: [];
 
-        // 1) Tổng số người trong roster (không lọc gì thêm)
         $total = count($roster);
-
-        // 2) Số người đã approved (case-insensitive)
         $approvedCount = 0;
+
         foreach ($roster as $r) {
             if (strtolower((string)($r['status'] ?? '')) === 'approved') {
                 $approvedCount++;
             }
         }
 
-        // 3) Tính approved percent (rõ ràng)
         $approvedPercent = $total > 0 ? (int) round(($approvedCount / $total) * 100) : 0;
-
-        // 4) progress_legacy: giữ behavior cũ (dựa vào task.approval_status) để backward-compat
         $progress_legacy = $this->computeRosterProgress($roster, (string)($task['approval_status'] ?? 'pending'));
+        $progress        = $approvedPercent;
+        $hasRoster       = $total > 0;
+        $allApproved     = $hasRoster && ($approvedCount === $total);
 
-        // 5) progress: bây giờ là percent theo roster (approvedPercent)
-        $progress = $approvedPercent;
-
-        // 6) all_approved (tất cả đều approved)
-        $hasRoster = $total > 0;
-        $allApproved = $hasRoster && ($approvedCount === $total);
-
-        // 7) approved_at only when allApproved
         $approved_at = null;
         if ($allApproved) {
             $actedList = array_map(fn($r) => $r['acted_at'] ?? null, $roster);
             $approved_at = $this->safeMaxDate($actedList);
         }
 
-        // 8) created_by info (giữ như trước)
-        $createdById = isset($task['created_by']) ? (int)$task['created_by'] : null;
+        /** ===========================
+         * NEW: Lấy upload_batch mới nhất
+         * =========================== */
+        $latestBatchRow = $db->table('documents')
+            ->select('upload_batch')
+            ->where('source_task_id', $taskId)
+            ->orderBy('upload_batch', 'DESC')
+            ->limit(1)
+            ->get()
+            ->getRowArray();
+
+        $latestBatch = $latestBatchRow['upload_batch'] ?? null;
+
+        /** ===========================
+         * NEW: Lấy danh sách file của batch mới nhất
+         * =========================== */
+        $latestFiles = [];
+        if ($latestBatch !== null) {
+            $latestFiles = $db->table('documents')
+                ->select('id, title AS file_name, file_path, doc_type, upload_batch, file_size, comment_id, uploaded_by, created_at')
+                ->where('source_task_id', $taskId)
+                ->where('upload_batch', $latestBatch)
+                ->orderBy('id', 'ASC')
+                ->get()
+                ->getResultArray();
+        }
+
+        /** ===========================
+         * Created by info
+         * =========================== */
+        $createdById   = isset($task['created_by']) ? (int)$task['created_by'] : null;
         $createdByName = null;
+
         if ($createdById) {
-            $db = db_connect();
-            $row = $db->table('users')->select('id, name')->where('id', $createdById)->get()->getRowArray();
-            if ($row && isset($row['name'])) $createdByName = $row['name'];
+            $row = $db->table('users')->select('name')->where('id', $createdById)->get()->getRowArray();
+            $createdByName = $row['name'] ?? null;
         }
 
         return $this->respond([
@@ -634,18 +658,19 @@ class TaskApprovalController extends ResourceController
             'roster_total'      => $total,
             'approved_count'    => $approvedCount,
             'approved_percent'  => $approvedPercent,
-            // progress hiện tại: percent theo roster (client nên ưu tiên dùng trường này)
             'progress'          => $progress,
-            // giữ giá trị cũ cho backward compatibility nếu có client đang phụ thuộc
             'progress_legacy'   => $progress_legacy,
             'all_approved'      => $allApproved,
             'approved_at'       => $approved_at,
             'approved_at_vi'    => $approved_at ? date('H:i d/m/Y', strtotime($approved_at)) : null,
             'created_by'        => $createdById,
             'created_by_name'   => $createdByName,
+
+            /** ⭐ THÊM 2 TRƯỜNG MỚI ⭐ */
+            'latest_upload_batch' => $latestBatch,
+            'latest_files'        => $latestFiles,
         ]);
     }
-
 
 
     /** POST /tasks/{id}/roster/merge: body: mentions(json|form) */

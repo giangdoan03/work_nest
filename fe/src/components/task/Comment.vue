@@ -1,7 +1,8 @@
 <template>
     <div class="comment">
         <!-- STICKY: Tài liệu ghim (trái) + Drawer người duyệt (phải) -->
-        <div class="mention-chips sticky-mentions" v-if="(pinnedFiles && pinnedFiles.length) || (mentionsSelected && mentionsSelected.length)">
+        <div class="mention-chips sticky-mentions"
+             v-if="(pinnedFiles && pinnedFiles.length) || (mentionsSelected && mentionsSelected.length)">
             <div class="sticky-head">
                 <!-- LEFT: tổng số file ghim + arrow toggle -->
                 <div class="sticky-left">
@@ -75,7 +76,8 @@
                                     type="button"
                                     @click.stop.prevent="unpinOnly(f)"
                                     :disabled="!canUnpinFile(f)"
-                                >×</button>
+                                >×
+                                </button>
                             </a-tooltip>
                         </div>
                     </div>
@@ -118,24 +120,44 @@
 
                         <!-- Attachments trong bubble -->
                         <div v-if="item.files && item.files.length" class="tg-attachments">
-                            <div v-for="f in item.files" :key="f.id || f.file_path || f.link_url" class="tg-att-item">
-                                <!-- Image -->
-                                <a-image v-if="kindOfCommentFile(f) === 'image'" :src="srcWithBustIfImage(f)" :height="72" :preview="true" class="cm-att__thumb"/>
-                                <!-- Non-image -->
-                                <div v-else class="cm-att__icon">
-                                    <component :is="pickIcon(kindOfCommentFile(f))" class="cm-att__icon-i"/>
+
+                            <a-tooltip
+                                v-for="f in item.files"
+                                :key="f.id || f.file_path || f.link_url"
+                                placement="top"
+                            >
+                                <template #title>
+                                    {{ f.file_name || prettyUrl(hrefOf(f)) }}
+                                </template>
+
+                                <div class="tg-att-item">
+                                    <!-- Image -->
+                                    <a-image
+                                        v-if="kindOfCommentFile(f) === 'image'"
+                                        :src="srcWithBustIfImage(f)"
+                                        :height="72"
+                                        :preview="true"
+                                        class="cm-att__thumb"
+                                    />
+
+                                    <!-- Non-image -->
+                                    <div v-else class="cm-att__icon">
+                                        <component :is="pickIcon(kindOfCommentFile(f))" class="cm-att__icon-i"/>
+                                    </div>
+
+                                    <!-- File name -->
+                                    <div class="cm-att__line">
+                                        <a class="tg-file-link"
+                                           :href="displayHrefOf(f)"
+                                           target="_blank"
+                                           rel="noopener"
+                                        >
+                                            {{ f.file_name || prettyUrl(hrefOf(f)) }}
+                                        </a>
+                                    </div>
                                 </div>
 
-                                <div class="cm-att__line">
-                                    <a class="tg-file-link"
-                                       :href="displayHrefOf(f)"
-                                       target="_blank"
-                                       rel="noopener"
-                                       :title="f.file_name || prettyUrl(hrefOf(f))">
-                                        {{ f.file_name || prettyUrl(hrefOf(f)) }}
-                                    </a>
-                                </div>
-                            </div>
+                            </a-tooltip>
                         </div>
 
                         <div class="meta">
@@ -149,121 +171,122 @@
         <!-- FOOTER: composer -->
         <div class="footer-fixed tg-footer" ref="footerEl">
             <a-spin :spinning="uploading" tip="Đang tải lên...">
-            <div class="load-more" v-if="currentPage < totalPage && !loadingComment">
-                <a-button size="small" @click="getListComment(currentPage + 1)">Tải thêm</a-button>
-            </div>
-
-            <div class="tg-file-strip" v-if="selectedFiles.length">
-                <div
-                    v-for="(f, idx) in selectedFiles"
-                    :key="idx"
-                    class="tg-file-pill"
-                >
-                    <PaperClipOutlined />
-                    <span class="name">{{ f.name }}</span>
-                    <span class="x" @click.stop.prevent="removeFile(idx)">×</span>
+                <div class="load-more" v-if="currentPage < totalPage && !loadingComment">
+                    <a-button size="small" @click="getListComment(currentPage + 1)">Tải thêm</a-button>
                 </div>
 
-                <div class="doc-type-note">
-                    <InfoCircleOutlined class="icon" />
-                    Hãy chọn loại văn bản để hệ thống xử lý đúng luồng duyệt:
-                    <strong>Nội bộ</strong> hoặc <strong>Phát hành</strong>.
-                </div>
-
-                <div class="tg-file-meta doc-type-selector">
-                    <a-tag
-                        :class="['doc-type-pill', selectedDocType === 'internal' ? 'active-internal' : '']"
-                        @click="selectedDocType = 'internal'"
+                <div class="tg-file-strip" v-if="selectedFiles.length">
+                    <div
+                        v-for="(f, idx) in selectedFiles"
+                        :key="idx"
+                        class="tg-file-pill"
                     >
-                        Nội bộ
-                    </a-tag>
+                        <PaperClipOutlined/>
+                        <span class="name">{{ f.name }}</span>
+                        <span class="x" @click.stop.prevent="removeFile(idx)">×</span>
+                    </div>
 
-                    <a-tag
-                        :class="['doc-type-pill', selectedDocType === 'external' ? 'active-external' : '']"
-                        @click="selectedDocType = 'external'"
-                    >
-                        Phát hành
-                    </a-tag>
+                    <div class="doc-type-note">
+                        <InfoCircleOutlined class="icon"/>
+                        Hãy chọn loại văn bản để hệ thống xử lý đúng luồng duyệt:
+                        <strong>Nội bộ</strong> hoặc <strong>Phát hành</strong>.
+                    </div>
+
+                    <div class="tg-file-meta doc-type-selector">
+                        <a-tag
+                            :class="['doc-type-pill', selectedDocType === 'internal' ? 'active-internal' : '']"
+                            @click="selectedDocType = 'internal'"
+                        >
+                            Nội bộ
+                        </a-tag>
+
+                        <a-tag
+                            :class="['doc-type-pill', selectedDocType === 'external' ? 'active-external' : '']"
+                            @click="selectedDocType = 'external'"
+                        >
+                            Phát hành
+                        </a-tag>
+                    </div>
                 </div>
-            </div>
 
 
-            <div class="tg-composer">
-                <!-- Attach -->
-                <a-upload
-                    :show-upload-list="false"
-                    :multiple="true"
-                    :max-count="3"
-                    :before-upload="handleBeforeUpload"
-                >
-                    <a-button type="text" class="tg-attach-btn" title="Đính kèm">
-                        <PaperClipOutlined />
+                <div class="tg-composer">
+                    <!-- Attach -->
+                    <a-upload
+                        :show-upload-list="false"
+                        :multiple="true"
+                        :max-count="3"
+                        :before-upload="handleBeforeUpload"
+                    >
+                        <a-button type="text" class="tg-attach-btn" title="Đính kèm">
+                            <PaperClipOutlined/>
+                        </a-button>
+                    </a-upload>
+
+                    <!-- Ô nhập -->
+                    <a-textarea
+                        v-model:value="inputValue"
+                        class="tg-input"
+                        :bordered="false"
+                        :auto-size="{ minRows: 1, maxRows: 6 }"
+                        :placeholder="isEditing ? 'Sửa bình luận… (Enter để lưu, Esc để hủy)' : 'Viết lời nhắn… (Enter để gửi, Shift+Enter để xuống dòng, gõ @ để thêm người duyệt)'"
+                        @keydown="onComposerKeydown"
+                        @input="onInputDetectMention"
+                    />
+
+                    <!-- Nút gửi / lưu -->
+                    <a-button
+                        class="tg-send-btn"
+                        :class="{ 'is-active': canSend }"
+                        shape="circle"
+                        :disabled="!canSend || uploading"
+                        :loading="uploading"
+                        @click="onSubmit()"
+                    >
+                        <template v-if="isEditing">
+                            <CheckOutlined/>
+                        </template>
+                        <template v-else>
+                            <SendOutlined/>
+                        </template>
                     </a-button>
-                </a-upload>
+                </div>
 
-                <!-- Ô nhập -->
-                <a-textarea
-                    v-model:value="inputValue"
-                    class="tg-input"
-                    :bordered="false"
-                    :auto-size="{ minRows: 1, maxRows: 6 }"
-                    :placeholder="isEditing ? 'Sửa bình luận… (Enter để lưu, Esc để hủy)' : 'Viết lời nhắn… (Enter để gửi, Shift+Enter để xuống dòng, gõ @ để thêm người duyệt)'"
-                    @keydown="onComposerKeydown"
-                    @input="onInputDetectMention"
-                />
-
-                <!-- Nút gửi / lưu -->
-                <a-button
-                    class="tg-send-btn"
-                    :class="{ 'is-active': canSend }"
-                    shape="circle"
-                    :disabled="!canSend || uploading"
-                    :loading="uploading"
-                @click="onSubmit()"
-                >
-                    <template v-if="isEditing">
-                        <CheckOutlined/>
-                    </template>
-                    <template v-else>
-                        <SendOutlined/>
-                    </template>
-                </a-button>
-            </div>
-
-            <!-- Mention pop -->
-            <div class="mention-row">
-                <a-popover
-                    trigger="click"
-                    :open="addMentionOpen"
-                    @update:open="(v) => (addMentionOpen = v)"
-                    placement="topLeft"
-                    :getPopupContainer="(t) => t.parentNode"
-                >
-                    <template #content>
-                        <div class="mention-pop">
-                            <div class="row">
-                                <span class="lbl">Người:</span>
-                                <a-select
-                                    v-model:value="mentionForm.userId"
-                                    :options="userOptions"
-                                    show-search
-                                    :filterOption="filterUser"
-                                    style="min-width: 220px"
-                                    placeholder="Chọn người"
-                                />
+                <!-- Mention pop -->
+                <div class="mention-row">
+                    <a-popover
+                        trigger="click"
+                        :open="addMentionOpen"
+                        @update:open="(v) => (addMentionOpen = v)"
+                        placement="topLeft"
+                        :getPopupContainer="(t) => t.parentNode"
+                    >
+                        <template #content>
+                            <div class="mention-pop">
+                                <div class="row">
+                                    <span class="lbl">Người:</span>
+                                    <a-select
+                                        v-model:value="mentionForm.userId"
+                                        :options="userOptions"
+                                        show-search
+                                        :filterOption="filterUser"
+                                        style="min-width: 220px"
+                                        placeholder="Chọn người"
+                                    />
+                                </div>
+                                <div class="row">
+                                    <span class="lbl">Vai trò:</span>
+                                    <a-segmented v-model:value="mentionForm.role"
+                                                 :options="[{ label: 'Duyệt', value: 'approve' }]"/>
+                                </div>
+                                <div class="row" style="justify-content: flex-end; gap: 8px">
+                                    <a-button size="small" @click="resetMentionForm">Hủy</a-button>
+                                    <a-button size="small" type="primary" @click="addMention">Thêm</a-button>
+                                </div>
                             </div>
-                            <div class="row">
-                                <span class="lbl">Vai trò:</span>
-                                <a-segmented v-model:value="mentionForm.role" :options="[{ label: 'Duyệt', value: 'approve' }]"/>
-                            </div>
-                            <div class="row" style="justify-content: flex-end; gap: 8px">
-                                <a-button size="small" @click="resetMentionForm">Hủy</a-button>
-                                <a-button size="small" type="primary" @click="addMention">Thêm</a-button>
-                            </div>
-                        </div>
-                    </template>
-                </a-popover>
-            </div>
+                        </template>
+                    </a-popover>
+                </div>
             </a-spin>
         </div>
 
@@ -300,6 +323,54 @@
                 </div>
             </div>
 
+            <!-- NEW: Thông tin lượt upload mới nhất -->
+            <div
+                v-if="latestBatch && latestFiles && latestFiles.length"
+                class="latest-batch-box"
+            >
+                <div class="lb-header">
+                    <div class="lb-title">
+                        <strong>Lượt upload #{{ latestBatch }}</strong>
+                    </div>
+                    <div class="lb-meta">
+                        <span class="lb-time">{{ latestBatchMeta?.created_at_vi }}</span>
+                    </div>
+                </div>
+
+                <div class="lb-file" v-for="f in latestFiles" :key="f.id">
+                    <div class="lb-file-icon">
+                        <component :is="pickIcon(kindOfCommentFile(f))"/>
+                    </div>
+
+                    <div class="lb-file-info">
+                        <div class="lb-file-name">
+                            <a-tooltip placement="top">
+                                <template #title>
+                                    {{ f.file_name }}
+                                </template>
+
+                                <a
+                                    :href="displayHrefOf(f)"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="lb-file-name-text lb-file-link"
+                                >
+                                    {{ f.file_name }}
+                                </a>
+                            </a-tooltip>
+                        </div>
+
+                        <div class="lb-file-sub">
+                            <span>{{ prettySize(f.file_size) }}</span>
+                            <span class="lb-dot">•</span>
+                            <span>{{ formatVi(f.created_at) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+
             <!-- Empty state -->
             <div v-if="finalDrawerMentions.length === 0" class="drawer-empty">
                 <div class="empty-icon">😶‍🌫️</div>
@@ -321,7 +392,9 @@
                     @end="handleReorder"
                 >
                     <template v-slot:item="{ element: m, index }">
-                        <div :key="m.user_id + '-' + (m.status || '') + '-' + (m.acted_at || '') + '-' + (m.added_at || '')" class="drawer-chip">
+                        <div
+                            :key="m.user_id + '-' + (m.status || '') + '-' + (m.acted_at || '') + '-' + (m.added_at || '')"
+                            class="drawer-chip">
                             <!-- Tooltip hướng dẫn kéo thả; đặt trên chip-card để người dùng thấy khi hover -->
                             <a-tooltip
                                 :title="filterPendingOnly || drawerSearch ? 'Tắt bộ lọc hoặc tìm kiếm để sắp xếp lại thứ tự duyệt' : canModifyRoster  ? 'Kéo thả để thay đổi thứ tự duyệt' : 'Chỉ người tạo task mới được sắp xếp thứ tự duyệt'"
@@ -352,7 +425,9 @@
                                         <div class="meta-row">
                                             <span class="dot" :class="statusDotClass(m.status)"></span>
                                             <span class="chip-state">
-                                              {{ m.status === 'approved' ? 'Đã duyệt' : m.status === 'rejected' ? 'Đã từ chối' : 'Chờ duyệt' }}
+                                              {{
+                                                    m.status === 'approved' ? 'Đã duyệt' : m.status === 'rejected' ? 'Đã từ chối' : 'Chờ duyệt'
+                                                }}
                                             </span>
                                             <span class="meta-sep">•</span>
                                             <span class="chip-time">{{ metaTime(m) }}</span>
@@ -360,13 +435,15 @@
 
                                         <div class="actions-row">
                                             <template v-if="canActOnChip(m)">
-                                                <a-button size="small" type="primary" @click="handleApproveAction(m, 'approved')">
+                                                <a-button size="small" type="primary"
+                                                          @click="handleApproveAction(m, 'approved')">
                                                     <template #icon>
                                                         <CheckOutlined/>
                                                     </template>
                                                     Đồng ý
                                                 </a-button>
-                                                <a-button size="small" danger @click="handleApproveAction(m, 'rejected')">
+                                                <a-button size="small" danger
+                                                          @click="handleApproveAction(m, 'rejected')">
                                                     <template #icon>
                                                         <CloseOutlined/>
                                                     </template>
@@ -375,7 +452,8 @@
                                             </template>
 
                                             <template v-else>
-                                                <a-tag v-if="m.status === 'pending' || m.status === 'processing'" color="blue" style="border-radius:12px">
+                                                <a-tag v-if="m.status === 'pending' || m.status === 'processing'"
+                                                       color="blue" style="border-radius:12px">
                                                     Lượt của @{{ m.name }}
                                                 </a-tag>
                                             </template>
@@ -445,6 +523,11 @@ import Draggable from 'vuedraggable'
 
 dayjs.extend(relativeTime)
 dayjs.locale('vi')
+
+
+const latestBatch = ref(null)
+const latestFiles = ref([])
+const latestBatchMeta = ref(null)
 
 // bạn có thể lắng nghe sự kiện @update để cập nhật lại thứ tự
 const handleReorder = async (evt) => {
@@ -517,8 +600,6 @@ const pinnedGroupedByComment = computed(() => {
         .filter(g => g.batch !== -1)   // bỏ group rác
         .sort((a, b) => a.batch - b.batch);
 });
-
-
 
 
 const inputValue = ref('')
@@ -1141,6 +1222,7 @@ const canSend = computed(() => {
         (mentionsSelected.value?.length > 0)
     );
 });
+
 function vnNorm(s = '') {
     return (s == null ? '' : String(s)).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
 }
@@ -1182,7 +1264,7 @@ function dedupeMentions(arr = []) {
     return res
 }
 
-async function createNewComment({ keepMentions = false } = {}) {
+async function createNewComment({keepMentions = false} = {}) {
     if (!canSend.value || uploading.value) return;
 
     uploading.value = true;
@@ -1236,7 +1318,7 @@ async function createNewComment({ keepMentions = false } = {}) {
                                 file_path: f.file_path,
                                 link_url: f.public_url || f.file_path,
                             },
-                            { autoPin: true }
+                            {autoPin: true}
                         );
                     } catch (e) {
                         console.warn("Auto-pin file failed:", f, e);
@@ -1283,8 +1365,6 @@ async function createNewComment({ keepMentions = false } = {}) {
         uploading.value = false;
     }
 }
-
-
 
 
 // helper: sắp xếp mảng comment theo created_at tăng dần (cũ -> mới)
@@ -1430,6 +1510,13 @@ async function loadPinnedFiles() {
     }
 }
 
+function prettySize(bytes) {
+    if (!bytes) return '0 KB'
+    const kb = bytes / 1024
+    if (kb < 1024) return kb.toFixed(1) + ' KB'
+    return (kb / 1024).toFixed(1) + ' MB'
+}
+
 async function syncRosterFromServer() {
     try {
         const {data} = await getTaskRosterAPI(taskId.value)
@@ -1437,6 +1524,10 @@ async function syncRosterFromServer() {
 
         rosterCreatedBy.value = data?.created_by ?? null
         rosterCreatedByName.value = data?.created_by_name ?? null
+
+        latestBatch.value = data.latest_upload_batch || null
+        latestFiles.value = data.latest_files || []
+        latestBatchMeta.value = data.latest_batch_meta || null
 
         // 👉 thêm 2 dòng này
         rosterProgress.value = data?.progress ?? 0
@@ -1478,6 +1569,7 @@ function cancelEdit() {
     editingCommentId.value = null
     inputValue.value = ''
 }
+
 function canActOnChip(m) {
     // 1️⃣ Không có m hoặc không pending thì không thao tác
     if (!m || (m.status || '').toLowerCase() !== 'pending') return false
@@ -1798,13 +1890,27 @@ onBeforeUnmount(() => {
 }
 
 .cm-att__icon-i {
-    font-size: 22px;
+    font-size: 40px;
     opacity: 0.9;
 }
 
 .tg-file-link {
     font-size: 13px;
     color: #1677ff;
+
+}
+
+.tg-file-link {
+    max-width: 240px;
+}
+
+.tg-file-link {
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
 }
 
 .cm-att__line {
@@ -2539,7 +2645,100 @@ onBeforeUnmount(() => {
     justify-content: space-between;
 }
 
+/* ============================
+   Latest Upload Batch Box
+   ============================ */
+.latest-batch-box {
+    border: 1px solid #e6ebf0;
+    background: #f9fbff;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+}
 
+.lb-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.lb-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 15px;
+    color: #1e293b;
+}
+
+.lb-icon {
+    font-size: 18px;
+}
+
+.lb-meta .lb-time {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.lb-files {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.lb-file {
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 10px;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    transition: 0.18s ease;
+    margin-bottom: 10px;
+}
+
+.lb-file:hover {
+    border-color: #cfe3ff;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+
+.lb-file-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    opacity: .85;
+}
+
+.lb-file-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.lb-file-name {
+    color: #1d4ed8;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.lb-file-name:hover {
+    text-decoration: underline;
+}
+
+.lb-file-sub {
+    font-size: 12px;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lb-dot {
+    font-size: 6px;
+    color: #94a3b8;
+}
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -2555,4 +2754,20 @@ onBeforeUnmount(() => {
         max-width: 140px;
     }
 }
+</style>
+<style>
+.lb-file-name {
+    max-width: 240px; /* tuỳ chỉnh theo layout */
+}
+
+.lb-file-name-text {
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap; /* Không xuống dòng */
+    overflow: hidden; /* Giấu phần thừa */
+    text-overflow: ellipsis; /* Hiện dấu ... */
+    vertical-align: bottom;
+}
+
+
 </style>

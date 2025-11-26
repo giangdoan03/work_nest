@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Nov 25, 2025 at 08:48 AM
+-- Generation Time: Nov 26, 2025 at 06:14 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -1238,54 +1238,12 @@ INSERT INTO `documents` (`id`, `title`, `file_path`, `signed_pdf_url`, `signed_b
 (35, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-5.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-10.pdf', 3, '2025-11-14 11:17:09', 2, 3, 277, NULL, 1, 'private', 'wp_media', 'internal', 129360, '2025-11-13 10:46:57', '2025-11-14 11:17:09', 'pending', NULL, NULL),
 (36, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-6.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-11.pdf', 3, '2025-11-14 11:17:40', 3, 4, 277, NULL, 1, 'private', 'wp_media', 'internal', 129360, '2025-11-13 11:06:17', '2025-11-14 11:17:40', 'pending', NULL, NULL),
 (37, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-7.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-12.pdf', 3, '2025-11-14 11:53:54', 2, 3, 277, NULL, 1, 'private', 'wp_media', 'internal', 129360, '2025-11-13 11:15:22', '2025-11-14 11:53:54', 'pending', NULL, NULL),
-(45, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764054392.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQBjlNyC4KuyQYyKukQdRcphAVnCMWu8oobeqd2s1ueFX9w', NULL, NULL, NULL, 2, 3, 277, NULL, 1, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 14:06:39', '2025-11-25 14:06:39', '', NULL, NULL),
-(46, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764054543.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQCy7OLIdPeyQZZXhqZiLgYLAW3qnFbKolX6K5hF-k53xT0', NULL, NULL, NULL, 2, 3, 277, NULL, 1, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 14:09:09', '2025-11-25 14:09:09', '', NULL, NULL),
-(47, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764054713.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQCIHzQSYCpCTaiv6zXhp4nNAYdwqySfrjo6YAp04oDmd6U', NULL, NULL, NULL, 2, 3, 277, NULL, 1, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 14:11:59', '2025-11-25 14:11:59', '', NULL, NULL),
-(48, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764054719.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQBwIp83ufArQqbMMHh8QihgAVJe8vlgF8gqFs-SRbg0JnY', NULL, NULL, NULL, 2, 3, 277, NULL, 1, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 14:12:05', '2025-11-25 14:12:05', '', NULL, NULL),
-(49, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764055237.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQBC9JB8cr9cSIYG5phK9dScAWz9YLWUYvvnhY5nvOvG118', NULL, NULL, NULL, 2, 3, 277, NULL, 1, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 14:20:44', '2025-11-25 14:20:44', '', NULL, NULL),
-(50, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764055244.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQA50TnHWhAFRZaRkzBBD_htAfYFkcE3_ml9xzENtVTrIho', NULL, NULL, NULL, 2, 3, 277, NULL, 1, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 14:20:50', '2025-11-25 14:20:50', '', NULL, NULL),
-(51, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764056002.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQCuQt9EZoXvQoEedbAZV7U0ARfZWD4E44rv_4rCZlkXniI', NULL, NULL, NULL, 2, 3, 277, 43, 1, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 14:33:29', '2025-11-25 14:33:29', '', NULL, NULL),
-(52, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764056009.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQD-yIvW1T91T7nzReTQYbifAX8JMcGOXSdcWGKj3o91qdo', NULL, NULL, NULL, 2, 3, 277, 43, 1, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 14:33:35', '2025-11-25 14:33:35', '', NULL, NULL),
-(53, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764056140.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQA2LzqyJuSlR7iE9Zdma5GTAV134USzfkHCZeuc9TGTY5Y', NULL, NULL, NULL, 2, 3, 277, 44, 1, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 14:35:46', '2025-11-25 14:35:46', '', NULL, NULL),
-(54, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764056146.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQDNlVbJFQZXTbcRsaup_0hxAdjoxBGlxn5IxSQKp4Wa0TU', NULL, NULL, NULL, 2, 3, 277, 44, 1, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 14:35:52', '2025-11-25 14:35:52', '', NULL, NULL),
-(55, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764056298.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQCRYfpBcna-RIajhG9fA5JWAa5HU7ZVsR21mmoyqbJFCe4', NULL, NULL, NULL, 2, 3, 277, 45, 1, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 14:38:25', '2025-11-25 14:38:25', '', NULL, NULL),
-(56, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764056305.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQAsrZLZpzKiSo3KfT3qC4wtASrcuCAPG4RYbNUgZapiy00', NULL, NULL, NULL, 2, 3, 277, 45, 1, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 14:38:31', '2025-11-25 14:38:31', '', NULL, NULL),
-(57, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764056560.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQC4JD7rLsuvRK1m6-53EXWtAfrML5ndXWmHG41YD2zn_NE', NULL, NULL, NULL, 2, 3, 277, 46, 1, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 14:42:47', '2025-11-25 14:42:47', '', NULL, NULL),
-(58, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764056567.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQCYa4amqm7pQa-deMQpIeqZAenCaXJvowrOJWZFCtGJUR8', NULL, NULL, NULL, 2, 3, 277, 46, 1, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 14:42:53', '2025-11-25 14:42:53', '', NULL, NULL),
-(59, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764056878.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQDAASgXcSHyTKklbdHtQWdzAbsyuxRgIPRw3lkn40uylF4', NULL, NULL, NULL, 2, 3, 277, 47, 1, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 14:48:05', '2025-11-25 14:48:05', '', NULL, NULL),
-(60, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764056885.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQC6P5qmp74KRbLOoQot_fhrAeWotP1o0OokrXRMXzHYGc4', NULL, NULL, NULL, 2, 3, 277, 47, 1, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 14:48:11', '2025-11-25 14:48:11', '', NULL, NULL),
-(61, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764056952.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQBvXvmlNdZPTpswMr_ATVv4AY6P7csBPsqo5Z95WYtohQQ', NULL, NULL, NULL, 2, 3, 277, 48, 1, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 14:49:18', '2025-11-25 14:49:18', '', NULL, NULL),
-(62, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764056958.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQCHU49TVIpTTZrI5pdparZ3AUS8O8ynnegpuaQMdNcLlZY', NULL, NULL, NULL, 2, 3, 277, 48, 1, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 14:49:24', '2025-11-25 14:49:24', '', NULL, NULL),
-(63, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764057396.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQA9zu3O0pgSQJ_YPBO3b0TjAS-GZlYUlLHzqKUfUmA81QY', NULL, NULL, NULL, 2, 3, 277, 49, 1, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 14:56:43', '2025-11-25 14:56:43', '', NULL, NULL),
-(64, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764057403.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQBSoWkHRzv2QqE7R9-88v5SAU1BpfPVf_6xHnIsXwN-HAE', NULL, NULL, NULL, 2, 3, 277, 49, 1, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 14:56:48', '2025-11-25 14:56:48', '', NULL, NULL),
-(65, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764057452.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQBvcO9OJusJToUNLmEJQihTAclP-H6TeC16Qw_gmImJGbI', NULL, NULL, NULL, 2, 3, 277, 50, 1, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 14:57:38', '2025-11-25 14:57:38', '', NULL, NULL),
-(66, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764057458.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQAqvbx3SovuTYZJEL-gfSAXAQM80_FiYwepS8Q09o6jxGE', NULL, NULL, NULL, 2, 3, 277, 50, 1, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 14:57:44', '2025-11-25 14:57:44', '', NULL, NULL),
-(67, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764057742.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQC2uoG1nd02Rou-HAqchQRaAQMZ6Siz5IcXgzMJEEE7t_0', NULL, NULL, NULL, 2, 3, 277, 51, 1, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:02:28', '2025-11-25 15:02:28', '', NULL, NULL),
-(68, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764057748.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQDlLQdWvQ9kSp4zSRLVFV7RAXPexOx7DUbpob89A4mx1DA', NULL, NULL, NULL, 2, 3, 277, 51, 1, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:02:34', '2025-11-25 15:02:34', '', NULL, NULL),
-(69, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764057788.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQAHvnV1anbfSra147tVTkumARvv5iX-mfTn223VWcuSgcE', NULL, NULL, NULL, 2, 3, 277, 52, 1, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:03:15', '2025-11-25 15:03:15', '', NULL, NULL),
-(70, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764057795.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQAyibbLrLgXS5LLA7z9kph8Ac1KJDNl1-Snz7Gx-z2k_V0', NULL, NULL, NULL, 2, 3, 277, 52, 1, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:03:21', '2025-11-25 15:03:21', '', NULL, NULL),
-(71, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764057947.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQDWN5OigUmIS4FqUfsMVaqvARa5XGN_DXa6qfrlF9YCTCo', NULL, NULL, NULL, 2, 3, 277, 53, 2, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:05:54', '2025-11-25 15:05:54', '', NULL, NULL),
-(72, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764057954.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQBsyaQ9ZQTmR6Lyg07mHYrlAVkShdYQTMePUgvMJgikIvc', NULL, NULL, NULL, 2, 3, 277, 53, 2, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:06:00', '2025-11-25 15:06:00', '', NULL, NULL),
-(73, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764058017.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQA9_C7Av9zTQ4Hbap-kstGSAWmxovKIZEv9jzIaBpMiYf4', NULL, NULL, NULL, 2, 3, 277, 54, 3, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:07:03', '2025-11-25 15:07:03', '', NULL, NULL),
-(74, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764058023.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQD04hbNWCtPS7OGgDtSXLtoAeTlXSPKYUdpgXQu3uSZw_A', NULL, NULL, NULL, 2, 3, 277, 54, 3, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:07:09', '2025-11-25 15:07:09', '', NULL, NULL),
-(75, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764058126.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQAyUlusWFrZSZBOs0w4SgaRAW4EpcYTMqIcY4avpoiSwMA', NULL, NULL, NULL, 2, 3, 277, 55, 4, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:08:52', '2025-11-25 15:08:52', '', NULL, NULL),
-(76, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764058463.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQDxXMjj6vT3SaUisdhapz8_ASSnBH3n_akB9DqPja4PGJU', NULL, NULL, NULL, 2, 3, 277, 56, 5, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:14:29', '2025-11-25 15:14:29', '', NULL, NULL),
-(77, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764058469.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQC-KMfRNfPoRJF8Jx_RnM0bATtCqzmOEkIeyV0cSOwRDvs', NULL, NULL, NULL, 2, 3, 277, 56, 5, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:14:35', '2025-11-25 15:14:35', '', NULL, NULL),
-(78, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764058486.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQCPUxWMV2mpR5P_L7jTd9htAbdi9Pohrob5izQxyZDudlI', NULL, NULL, NULL, 2, 3, 277, 57, 6, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:14:52', '2025-11-25 15:14:52', '', NULL, NULL),
-(79, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764059241.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQDxmfsJ1Cp2QrggUVod1nfjATLUGWFjI5Z0Dwk6OvIPtec', NULL, NULL, NULL, 2, 3, 277, 58, 7, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:27:27', '2025-11-25 15:27:27', '', NULL, NULL),
-(80, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764059247.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQCkkE82dEAxQacxR3znNqxiASchmeAXkiJI3uqw_NS_Mro', NULL, NULL, NULL, 2, 3, 277, 58, 7, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:27:34', '2025-11-25 15:27:34', '', NULL, NULL),
-(81, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764059265.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQDei9sx8FCeQIsyugJ48dP1AWYnv4mfrxo67Djvkd4ifp4', NULL, NULL, NULL, 2, 3, 277, 59, 8, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:27:51', '2025-11-25 15:27:51', '', NULL, NULL),
-(82, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764059464.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQDF4AHtj6nsS4vD6gacxPZaAaSrckHNWBd5sekzqgi5J0o', NULL, NULL, NULL, 2, 3, 277, 60, 9, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:31:10', '2025-11-25 15:31:10', '', NULL, NULL),
-(83, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764059682.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQBdc0dduhY5TrBV5zig10FhAT4NQG5ZfyOk9R4Lx4TpKcw', NULL, NULL, NULL, 2, 3, 277, 61, 10, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:34:49', '2025-11-25 15:34:49', '', NULL, NULL),
-(84, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764059756.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQDJVuEnn_D0RacBeEsHmhz-AfQmB0XEw5h9kl61rKhxEso', NULL, NULL, NULL, 2, 3, 277, 62, 11, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:36:03', '2025-11-25 15:36:03', '', NULL, NULL),
-(85, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764059780.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQCtjYWREYpcTJq-gPitmSjeAb5ATFJs4qp4CS_GL3fmhZY', NULL, NULL, NULL, 2, 3, 277, 63, 12, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:36:27', '2025-11-25 15:36:27', '', NULL, NULL),
-(86, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764059787.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQB5SUXOPrxgSYtLcE2HTVK9AeuUb7pE0vOOVfjtYi4JoJI', NULL, NULL, NULL, 2, 3, 277, 63, 12, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:36:33', '2025-11-25 15:36:33', '', NULL, NULL),
-(87, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060074.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQDa0GRtZZvrSpTzDbnbzK6SAXB4_oMfhCVOFlJ9weHqUXM', NULL, NULL, NULL, 2, 3, 277, 64, 13, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:41:20', '2025-11-25 15:41:20', '', NULL, NULL),
-(88, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764060104.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQDYxjXHlCflQb93E56OKYT2AY9nx74w5od5UiSbTzFJOz0', NULL, NULL, NULL, 2, 3, 277, 65, 14, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:41:51', '2025-11-25 15:41:51', '', NULL, NULL),
-(89, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764060134.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQAwxHK94LqCRY1HR8oVsz_MAS2bzwWczotrBfHo91RKg84', NULL, NULL, NULL, 2, 3, 277, 66, 15, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:42:21', '2025-11-25 15:42:21', '', NULL, NULL),
 (90, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060141.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQALnsvxm63cS4JMNiIBP-E1AcXEFMZHzlCchIFCnKwlAVI', NULL, NULL, NULL, 2, 3, 277, 66, 15, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:42:27', '2025-11-25 15:42:27', '', NULL, NULL),
 (91, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764060267.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQD5eI9pGXACSL_IolTvanSXAQIXXxvt__4VkX4F6FzTtRQ', NULL, NULL, NULL, 2, 3, 277, 67, 16, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:44:34', '2025-11-25 15:44:34', '', NULL, NULL),
-(92, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060274.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQA_EFx2Ae8NSLMgp20gztypAaUpHaEU39fAOuw1hWT0r04', NULL, NULL, NULL, 2, 3, 277, 67, 16, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:44:39', '2025-11-25 15:44:39', '', NULL, NULL);
+(92, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060274.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQA_EFx2Ae8NSLMgp20gztypAaUpHaEU39fAOuw1hWT0r04', NULL, NULL, NULL, 2, 3, 277, 67, 16, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:44:39', '2025-11-25 15:44:39', '', NULL, NULL),
+(93, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060585.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQCrQIdyg5w8QL-PtqQMlQm0Ab_aBWn5haFz9U8am2aL6_g', NULL, NULL, NULL, 2, 3, 277, 68, 17, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:49:51', '2025-11-25 15:49:51', '', NULL, NULL),
+(94, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764131590.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQAtAvvAuuErRLBuvv26RsObAYveLV21brXDDTxfwPnnqNQ', NULL, NULL, NULL, 2, 3, 277, 69, 18, 'private', 'sharepoint', 'internal', 315365, '2025-11-26 11:33:18', '2025-11-26 11:33:18', '', NULL, NULL),
+(95, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764131598.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQDLcpejPqerR7rdZ0SRxjIXAeNHetIE_OHiFuReaEZqp_c', NULL, NULL, NULL, 2, 3, 277, 69, 18, 'private', 'sharepoint', 'internal', 45663, '2025-11-26 11:33:24', '2025-11-26 11:33:24', '', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2238,7 +2196,11 @@ INSERT INTO `task_comments` (`id`, `task_id`, `user_id`, `comment_id`, `content`
 (64, 277, 3, NULL, '', '2025-11-25 08:41:14', '2025-11-25 08:41:14', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (65, 277, 3, NULL, '', '2025-11-25 08:41:44', '2025-11-25 08:41:44', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (66, 277, 3, NULL, '', '2025-11-25 08:42:14', '2025-11-25 08:42:14', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(67, 277, 3, NULL, '', '2025-11-25 08:44:27', '2025-11-25 08:44:27', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+(67, 277, 3, NULL, '', '2025-11-25 08:44:27', '2025-11-25 08:44:27', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(68, 277, 3, NULL, '', '2025-11-25 08:49:44', '2025-11-25 08:49:44', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(69, 277, 3, NULL, '', '2025-11-26 04:33:10', '2025-11-26 04:33:10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(70, 277, 3, NULL, 'alo', '2025-11-26 06:07:13', '2025-11-26 06:07:13', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(71, 277, 3, NULL, 'test comment', '2025-11-26 06:07:24', '2025-11-26 06:07:24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2416,7 +2378,14 @@ INSERT INTO `task_files` (`id`, `task_id`, `document_id`, `comment_id`, `file_na
 (108, 277, NULL, 67, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764060267.xlsx', '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764060267.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQD5eI9pGXACSL_IolTvanSXAQIXXxvt__4VkX4F6FzTtRQ', 3, NULL, '2025-11-25 08:44:34', '2025-11-25 15:44:34', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-25 15:44:34', 'sharepoint', 315365, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 16),
 (109, 277, NULL, 67, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060274.docx', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060274.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQA_EFx2Ae8NSLMgp20gztypAaUpHaEU39fAOuw1hWT0r04', 3, NULL, '2025-11-25 08:44:39', '2025-11-25 15:44:39', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-25 15:44:39', 'sharepoint', 45663, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 16),
 (110, 277, NULL, NULL, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764060267.xlsx', '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764060267.xlsx', NULL, 3, 'https://netorg15468115.sharepoint.com/:x:/g/IQD5eI9pGXACSL_IolTvanSXAQIXXxvt__4VkX4F6FzTtRQ', '2025-11-25 08:44:39', '2025-11-25 15:44:40', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-25 15:44:40', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL),
-(111, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060274.docx', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060274.docx', NULL, 3, 'https://netorg15468115.sharepoint.com/:w:/g/IQA_EFx2Ae8NSLMgp20gztypAaUpHaEU39fAOuw1hWT0r04', '2025-11-25 08:44:40', '2025-11-25 15:44:40', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-25 15:44:40', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL);
+(111, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060274.docx', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060274.docx', NULL, 3, 'https://netorg15468115.sharepoint.com/:w:/g/IQA_EFx2Ae8NSLMgp20gztypAaUpHaEU39fAOuw1hWT0r04', '2025-11-25 08:44:40', '2025-11-25 15:44:40', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-25 15:44:40', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL),
+(112, 277, NULL, 68, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060585.docx', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060585.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQCrQIdyg5w8QL-PtqQMlQm0Ab_aBWn5haFz9U8am2aL6_g', 3, NULL, '2025-11-25 08:49:51', '2025-11-25 15:49:51', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-25 15:49:51', 'sharepoint', 45663, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 17),
+(113, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060585.docx', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060585.docx', NULL, 3, 'https://netorg15468115.sharepoint.com/:w:/g/IQCrQIdyg5w8QL-PtqQMlQm0Ab_aBWn5haFz9U8am2aL6_g', '2025-11-25 08:49:51', '2025-11-25 15:49:51', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-25 15:49:51', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL),
+(114, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060585.docx', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060585.docx', NULL, 3, 'https://netorg15468115.sharepoint.com/:w:/g/IQCrQIdyg5w8QL-PtqQMlQm0Ab_aBWn5haFz9U8am2aL6_g', '2025-11-26 03:26:29', '2025-11-26 10:26:29', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-26 10:26:29', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL),
+(115, 277, NULL, 69, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764131590.xlsx', '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764131590.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQAtAvvAuuErRLBuvv26RsObAYveLV21brXDDTxfwPnnqNQ', 3, NULL, '2025-11-26 04:33:18', '2025-11-26 11:33:18', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-26 11:33:18', 'sharepoint', 315365, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 18),
+(116, 277, NULL, 69, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764131598.docx', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764131598.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQDLcpejPqerR7rdZ0SRxjIXAeNHetIE_OHiFuReaEZqp_c', 3, NULL, '2025-11-26 04:33:24', '2025-11-26 11:33:24', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-26 11:33:24', 'sharepoint', 45663, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 18),
+(117, 277, NULL, NULL, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764131590.xlsx', '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764131590.xlsx', NULL, 3, 'https://netorg15468115.sharepoint.com/:x:/g/IQAtAvvAuuErRLBuvv26RsObAYveLV21brXDDTxfwPnnqNQ', '2025-11-26 04:33:24', '2025-11-26 11:33:24', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-26 11:33:24', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL),
+(118, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764131598.docx', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764131598.docx', NULL, 3, 'https://netorg15468115.sharepoint.com/:w:/g/IQDLcpejPqerR7rdZ0SRxjIXAeNHetIE_OHiFuReaEZqp_c', '2025-11-26 04:33:25', '2025-11-26 11:33:25', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-26 11:33:25', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2440,11 +2409,11 @@ CREATE TABLE `task_roster` (
 --
 
 INSERT INTO `task_roster` (`id`, `task_id`, `user_id`, `role`, `status`, `name`, `created_at`, `updated_at`) VALUES
-(107, 277, 1, 'approve', 'processing', 'Nguyễn Cảnh Hợp', '2025-11-13 10:46:57', '2025-11-25 15:44:39'),
-(108, 277, 7, 'approve', 'processing', 'Nhạc Quang Huy', '2025-11-13 10:46:57', '2025-11-25 15:44:39'),
-(109, 277, 3, 'approve', 'processing', 'Đinh Văn Vịnh', '2025-11-13 10:46:57', '2025-11-25 15:44:39'),
-(110, 277, 12, 'approve', 'processing', 'Nguyễn Thị Ngọc Anh', '2025-11-13 10:46:57', '2025-11-25 15:44:39'),
-(111, 277, 9, 'approve', 'processing', 'Nguyễn Danh Vương Bình', '2025-11-13 10:46:57', '2025-11-25 15:44:39');
+(107, 277, 1, 'approve', 'processing', 'Nguyễn Cảnh Hợp', '2025-11-13 10:46:57', '2025-11-26 13:07:24'),
+(108, 277, 7, 'approve', 'processing', 'Nhạc Quang Huy', '2025-11-13 10:46:57', '2025-11-26 13:07:24'),
+(109, 277, 3, 'approve', 'processing', 'Đinh Văn Vịnh', '2025-11-13 10:46:57', '2025-11-26 13:07:24'),
+(110, 277, 12, 'approve', 'processing', 'Nguyễn Thị Ngọc Anh', '2025-11-13 10:46:57', '2025-11-26 13:07:24'),
+(111, 277, 9, 'approve', 'processing', 'Nguyễn Danh Vương Bình', '2025-11-13 10:46:57', '2025-11-26 13:07:24');
 
 -- --------------------------------------------------------
 
@@ -2864,7 +2833,7 @@ ALTER TABLE `departments`
 -- AUTO_INCREMENT for table `documents`
 --
 ALTER TABLE `documents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=93;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=96;
 
 --
 -- AUTO_INCREMENT for table `document_approvals`
@@ -2960,7 +2929,7 @@ ALTER TABLE `task_approval_logs`
 -- AUTO_INCREMENT for table `task_comments`
 --
 ALTER TABLE `task_comments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
 
 --
 -- AUTO_INCREMENT for table `task_extensions`
@@ -2972,13 +2941,13 @@ ALTER TABLE `task_extensions`
 -- AUTO_INCREMENT for table `task_files`
 --
 ALTER TABLE `task_files`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=112;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=119;
 
 --
 -- AUTO_INCREMENT for table `task_roster`
 --
 ALTER TABLE `task_roster`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=317;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=337;
 
 --
 -- AUTO_INCREMENT for table `users`
