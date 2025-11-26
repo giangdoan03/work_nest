@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Nov 26, 2025 at 06:14 AM
+-- Generation Time: Nov 26, 2025 at 09:37 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -1215,6 +1215,8 @@ CREATE TABLE `documents` (
   `source_task_id` int DEFAULT NULL,
   `comment_id` int DEFAULT NULL,
   `upload_batch` int DEFAULT '1',
+  `drive_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `item_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `visibility` enum('private','public','department','custom') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'private',
   `file_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `doc_type` enum('internal','external') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'internal',
@@ -1230,20 +1232,22 @@ CREATE TABLE `documents` (
 -- Dumping data for table `documents`
 --
 
-INSERT INTO `documents` (`id`, `title`, `file_path`, `signed_pdf_url`, `signed_by`, `signed_at`, `department_id`, `uploaded_by`, `source_task_id`, `comment_id`, `upload_batch`, `visibility`, `file_type`, `doc_type`, `file_size`, `created_at`, `updated_at`, `approval_status`, `approval_sent_by`, `approval_sent_at`) VALUES
-(21, '2022104_TTr-HCNS_Dexuatgiahanphanmem1office.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/2022104_TTr-HCNS_Dexuatgiahanphanmem1office-3.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/2022104_TTr-HCNS_Dexuatgiahanphanmem1office-5.pdf', 3, '2025-11-14 11:18:48', 3, 1, 277, NULL, 1, 'private', 'wp_media', 'internal', 518522, '2025-11-09 11:19:02', '2025-11-14 11:18:48', 'pending', NULL, NULL),
-(22, 'maudonphuc_khao123.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao123-7.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao123-9.pdf', 3, '2025-11-14 11:17:00', 3, 1, 277, NULL, 1, 'private', 'wp_media', 'internal', 128195, '2025-11-09 11:38:39', '2025-11-14 11:17:00', '', NULL, NULL),
-(23, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/signed-51.pdf', 3, '2025-11-13 10:46:01', 2, 3, 277, NULL, 1, 'private', 'wp_media', 'internal', 129360, '2025-11-09 15:52:15', '2025-11-13 10:46:01', 'pending', NULL, NULL),
-(26, 'maudonphuc_khao.doc', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao.doc', NULL, NULL, NULL, 2, 3, 277, NULL, 1, 'private', 'wp_media', 'internal', 33280, '2025-11-10 21:25:35', '2025-11-10 23:12:44', 'pending', NULL, NULL),
-(35, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-5.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-10.pdf', 3, '2025-11-14 11:17:09', 2, 3, 277, NULL, 1, 'private', 'wp_media', 'internal', 129360, '2025-11-13 10:46:57', '2025-11-14 11:17:09', 'pending', NULL, NULL),
-(36, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-6.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-11.pdf', 3, '2025-11-14 11:17:40', 3, 4, 277, NULL, 1, 'private', 'wp_media', 'internal', 129360, '2025-11-13 11:06:17', '2025-11-14 11:17:40', 'pending', NULL, NULL),
-(37, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-7.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-12.pdf', 3, '2025-11-14 11:53:54', 2, 3, 277, NULL, 1, 'private', 'wp_media', 'internal', 129360, '2025-11-13 11:15:22', '2025-11-14 11:53:54', 'pending', NULL, NULL),
-(90, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060141.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQALnsvxm63cS4JMNiIBP-E1AcXEFMZHzlCchIFCnKwlAVI', NULL, NULL, NULL, 2, 3, 277, 66, 15, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:42:27', '2025-11-25 15:42:27', '', NULL, NULL),
-(91, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764060267.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQD5eI9pGXACSL_IolTvanSXAQIXXxvt__4VkX4F6FzTtRQ', NULL, NULL, NULL, 2, 3, 277, 67, 16, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:44:34', '2025-11-25 15:44:34', '', NULL, NULL),
-(92, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060274.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQA_EFx2Ae8NSLMgp20gztypAaUpHaEU39fAOuw1hWT0r04', NULL, NULL, NULL, 2, 3, 277, 67, 16, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:44:39', '2025-11-25 15:44:39', '', NULL, NULL),
-(93, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060585.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQCrQIdyg5w8QL-PtqQMlQm0Ab_aBWn5haFz9U8am2aL6_g', NULL, NULL, NULL, 2, 3, 277, 68, 17, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:49:51', '2025-11-25 15:49:51', '', NULL, NULL),
-(94, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764131590.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQAtAvvAuuErRLBuvv26RsObAYveLV21brXDDTxfwPnnqNQ', NULL, NULL, NULL, 2, 3, 277, 69, 18, 'private', 'sharepoint', 'internal', 315365, '2025-11-26 11:33:18', '2025-11-26 11:33:18', '', NULL, NULL),
-(95, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764131598.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQDLcpejPqerR7rdZ0SRxjIXAeNHetIE_OHiFuReaEZqp_c', NULL, NULL, NULL, 2, 3, 277, 69, 18, 'private', 'sharepoint', 'internal', 45663, '2025-11-26 11:33:24', '2025-11-26 11:33:24', '', NULL, NULL);
+INSERT INTO `documents` (`id`, `title`, `file_path`, `signed_pdf_url`, `signed_by`, `signed_at`, `department_id`, `uploaded_by`, `source_task_id`, `comment_id`, `upload_batch`, `drive_id`, `item_id`, `visibility`, `file_type`, `doc_type`, `file_size`, `created_at`, `updated_at`, `approval_status`, `approval_sent_by`, `approval_sent_at`) VALUES
+(21, '2022104_TTr-HCNS_Dexuatgiahanphanmem1office.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/2022104_TTr-HCNS_Dexuatgiahanphanmem1office-3.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/2022104_TTr-HCNS_Dexuatgiahanphanmem1office-5.pdf', 3, '2025-11-14 11:18:48', 3, 1, 277, NULL, 1, NULL, NULL, 'private', 'wp_media', 'internal', 518522, '2025-11-09 11:19:02', '2025-11-14 11:18:48', 'pending', NULL, NULL),
+(22, 'maudonphuc_khao123.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao123-7.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao123-9.pdf', 3, '2025-11-14 11:17:00', 3, 1, 277, NULL, 1, NULL, NULL, 'private', 'wp_media', 'internal', 128195, '2025-11-09 11:38:39', '2025-11-14 11:17:00', '', NULL, NULL),
+(23, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/signed-51.pdf', 3, '2025-11-13 10:46:01', 2, 3, 277, NULL, 1, NULL, NULL, 'private', 'wp_media', 'internal', 129360, '2025-11-09 15:52:15', '2025-11-13 10:46:01', 'pending', NULL, NULL),
+(26, 'maudonphuc_khao.doc', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao.doc', NULL, NULL, NULL, 2, 3, 277, NULL, 1, NULL, NULL, 'private', 'wp_media', 'internal', 33280, '2025-11-10 21:25:35', '2025-11-10 23:12:44', 'pending', NULL, NULL),
+(35, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-5.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-10.pdf', 3, '2025-11-14 11:17:09', 2, 3, 277, NULL, 1, NULL, NULL, 'private', 'wp_media', 'internal', 129360, '2025-11-13 10:46:57', '2025-11-14 11:17:09', 'pending', NULL, NULL),
+(36, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-6.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-11.pdf', 3, '2025-11-14 11:17:40', 3, 4, 277, NULL, 1, NULL, NULL, 'private', 'wp_media', 'internal', 129360, '2025-11-13 11:06:17', '2025-11-14 11:17:40', 'pending', NULL, NULL),
+(37, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-7.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-12.pdf', 3, '2025-11-14 11:53:54', 2, 3, 277, NULL, 1, NULL, NULL, 'private', 'wp_media', 'internal', 129360, '2025-11-13 11:15:22', '2025-11-14 11:53:54', 'pending', NULL, NULL),
+(90, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060141.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQALnsvxm63cS4JMNiIBP-E1AcXEFMZHzlCchIFCnKwlAVI', NULL, NULL, NULL, 2, 3, 277, 66, 15, NULL, NULL, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:42:27', '2025-11-25 15:42:27', '', NULL, NULL),
+(91, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764060267.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQD5eI9pGXACSL_IolTvanSXAQIXXxvt__4VkX4F6FzTtRQ', NULL, NULL, NULL, 2, 3, 277, 67, 16, NULL, NULL, 'private', 'sharepoint', 'internal', 315365, '2025-11-25 15:44:34', '2025-11-25 15:44:34', '', NULL, NULL),
+(92, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060274.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQA_EFx2Ae8NSLMgp20gztypAaUpHaEU39fAOuw1hWT0r04', NULL, NULL, NULL, 2, 3, 277, 67, 16, NULL, NULL, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:44:39', '2025-11-25 15:44:39', '', NULL, NULL),
+(93, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764060585.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQCrQIdyg5w8QL-PtqQMlQm0Ab_aBWn5haFz9U8am2aL6_g', NULL, NULL, NULL, 2, 3, 277, 68, 17, NULL, NULL, 'private', 'sharepoint', 'internal', 45663, '2025-11-25 15:49:51', '2025-11-25 15:49:51', '', NULL, NULL),
+(94, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764131590.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQAtAvvAuuErRLBuvv26RsObAYveLV21brXDDTxfwPnnqNQ', NULL, NULL, NULL, 2, 3, 277, 69, 18, NULL, NULL, 'private', 'sharepoint', 'internal', 315365, '2025-11-26 11:33:18', '2025-11-26 11:33:18', '', NULL, NULL),
+(95, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764131598.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQDLcpejPqerR7rdZ0SRxjIXAeNHetIE_OHiFuReaEZqp_c', NULL, NULL, NULL, 2, 3, 277, 69, 18, NULL, NULL, 'private', 'sharepoint', 'internal', 45663, '2025-11-26 11:33:24', '2025-11-26 11:33:24', '', NULL, NULL),
+(96, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764144519.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQDp6HgKQtQBSrPEOvXgkJpyAc4WbY2xzThkmXKhDqkFHUg', NULL, NULL, NULL, 2, 3, 277, 72, 19, 'b!ZYvE-i_T6ECw7_kIxRecZuCZgCuw8XJJlYjySf0rnV7ga4wXHsjOQIBqEJ-5bKs-', '01WRUHV5XJ5B4AUQWUAFFLHRB26XQJBGTS', 'private', 'sharepoint', 'internal', 45663, '2025-11-26 15:08:45', '2025-11-26 15:08:45', '', NULL, NULL),
+(97, 'maudonphuc_khao123_1764146067.pdf', 'https://netorg15468115.sharepoint.com/:b:/g/IQCA_NIudFlBT75OqlViNwdoAVUjVLFhD50R-6Z5FVsdhjk', NULL, NULL, NULL, 2, 3, 277, 73, 20, 'b!ZYvE-i_T6ECw7_kIxRecZuCZgCuw8XJJlYjySf0rnV7ga4wXHsjOQIBqEJ-5bKs-', '01WRUHV5UA7TJC45CZIFH34TVKKVRDOB3I', 'private', 'sharepoint', 'internal', 128195, '2025-11-26 15:34:32', '2025-11-26 15:34:32', '', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1991,7 +1995,7 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (274, 248, 'việc chắt mới', '3423424242', 19, NULL, NULL, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', NULL, 'bidding', 40, 1, 363, 3, 'low', 0, '2025-09-07 07:39:40', '2025-09-07 07:39:40', 1, NULL, 0, 1, 2, 0, NULL, '[]'),
 (275, 248, '3424234', '3424224', 5, NULL, NULL, 5, '2025-09-07', '2025-10-31', 'doing', 'pending', NULL, 'bidding', 40, 7, 369, 3, 'low', 0, '2025-09-07 09:24:03', '2025-09-07 09:24:03', 1, NULL, 0, 1, 2, 0, NULL, '[]'),
 (276, 275, '4324324324', '4324324324', 5, NULL, NULL, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', NULL, 'bidding', 40, 7, 369, 3, 'low', 0, '2025-09-07 09:24:36', '2025-09-07 09:24:36', 1, NULL, 0, 1, 2, 0, NULL, '[]'),
-(277, NULL, '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', 5, 3, 8, 4, '2025-09-01', '2025-09-01', 'done', 'approved', '2025-11-12 15:41:08', 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:12:22', '2025-11-12 09:39:45', 1, '[3, 5]', 1, 1, 3, 100, NULL, '[{\"name\": \"Nguyễn Cảnh Hợp\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 1, \"acted_at\": \"2025-11-12 09:29:35\", \"added_at\": \"2025-11-12 16:22:06\"}, {\"name\": \"Nhạc Quang Huy\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 7, \"acted_at\": \"2025-11-12 09:39:45\", \"added_at\": \"2025-11-12 16:22:16\"}, {\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-11-12 16:22:33\"}, {\"name\": \"Nguyễn Thị Ngọc Anh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 12, \"acted_at\": null, \"added_at\": \"2025-11-12 16:22:39\"}, {\"name\": \"Nguyễn Danh Vương Bình\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 9, \"acted_at\": null, \"added_at\": \"2025-11-12 16:35:29\"}]'),
+(277, NULL, '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', 5, 3, 8, 4, '2025-09-01', '2025-09-01', 'done', 'approved', '2025-11-12 15:41:08', 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:12:22', '2025-11-26 08:04:13', 1, '[3, 5]', 1, 1, 3, 100, NULL, '[{\"name\": \"Nhạc Quang Huy\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 7, \"acted_at\": \"2025-11-26 08:02:51\", \"added_at\": \"2025-11-26 15:02:46\"}, {\"name\": \"Nguyễn Danh Vương Bình\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 9, \"acted_at\": null, \"added_at\": \"2025-11-26 15:04:13\"}]'),
 (278, NULL, '2. Lấy kế hoạch SCL', '2. Lấy kế hoạch SCL', 5, NULL, NULL, 4, '2025-09-02', '2025-09-02', 'request_approval', 'pending', NULL, 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:13:44', '2025-10-26 15:11:29', 1, '[4, 5, 6]', 1, 1, 3, 0, NULL, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-10-26 22:10:48\"}, {\"name\": \"Nguyễn Thị Ngọc Anh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 12, \"acted_at\": null, \"added_at\": \"2025-10-26 22:11:29\"}]'),
 (279, 277, '1.1. Lấy kế hoạch SXKD lần 1', '1.1. Lấy kế hoạch SXKD lần 1', 5, NULL, NULL, 4, '2025-09-02', '2025-09-03', 'request_approval', 'pending', NULL, 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:15:48', '2025-10-26 15:09:07', 1, '[1]', 1, 1, 3, 75, NULL, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-10-26 22:08:29\"}, {\"name\": \"Nguyễn Cảnh Hợp\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 1, \"acted_at\": null, \"added_at\": \"2025-10-26 22:09:07\"}]'),
 (280, 277, '1.2. Lấy kế hoạch SXKD lần 2', '1.2. Lấy kế hoạch SXKD lần 2', 5, NULL, NULL, 4, '2025-09-04', '2025-09-04', '', 'pending', NULL, 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:20:54', '2025-10-26 15:10:33', 1, '[4, 5]', 1, 1, 3, 0, NULL, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-10-26 22:09:26\"}, {\"name\": \"Tạ Quý Thọ\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 4, \"acted_at\": null, \"added_at\": \"2025-10-26 22:10:33\"}]'),
@@ -2200,7 +2204,9 @@ INSERT INTO `task_comments` (`id`, `task_id`, `user_id`, `comment_id`, `content`
 (68, 277, 3, NULL, '', '2025-11-25 08:49:44', '2025-11-25 08:49:44', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (69, 277, 3, NULL, '', '2025-11-26 04:33:10', '2025-11-26 04:33:10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (70, 277, 3, NULL, 'alo', '2025-11-26 06:07:13', '2025-11-26 06:07:13', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(71, 277, 3, NULL, 'test comment', '2025-11-26 06:07:24', '2025-11-26 06:07:24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+(71, 277, 3, NULL, 'test comment', '2025-11-26 06:07:24', '2025-11-26 06:07:24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(72, 277, 3, NULL, '@Nguyễn Danh Vương Bình', '2025-11-26 08:08:39', '2025-11-26 08:08:39', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(73, 277, 3, NULL, '', '2025-11-26 08:34:27', '2025-11-26 08:34:27', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2385,7 +2391,11 @@ INSERT INTO `task_files` (`id`, `task_id`, `document_id`, `comment_id`, `file_na
 (115, 277, NULL, 69, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764131590.xlsx', '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764131590.xlsx', 'https://netorg15468115.sharepoint.com/:x:/g/IQAtAvvAuuErRLBuvv26RsObAYveLV21brXDDTxfwPnnqNQ', 3, NULL, '2025-11-26 04:33:18', '2025-11-26 11:33:18', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-26 11:33:18', 'sharepoint', 315365, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 18),
 (116, 277, NULL, 69, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764131598.docx', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764131598.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQDLcpejPqerR7rdZ0SRxjIXAeNHetIE_OHiFuReaEZqp_c', 3, NULL, '2025-11-26 04:33:24', '2025-11-26 11:33:24', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-26 11:33:24', 'sharepoint', 45663, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 18),
 (117, 277, NULL, NULL, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764131590.xlsx', '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01_1764131590.xlsx', NULL, 3, 'https://netorg15468115.sharepoint.com/:x:/g/IQAtAvvAuuErRLBuvv26RsObAYveLV21brXDDTxfwPnnqNQ', '2025-11-26 04:33:24', '2025-11-26 11:33:24', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-26 11:33:24', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL),
-(118, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764131598.docx', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764131598.docx', NULL, 3, 'https://netorg15468115.sharepoint.com/:w:/g/IQDLcpejPqerR7rdZ0SRxjIXAeNHetIE_OHiFuReaEZqp_c', '2025-11-26 04:33:25', '2025-11-26 11:33:25', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-26 11:33:25', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL);
+(118, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764131598.docx', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764131598.docx', NULL, 3, 'https://netorg15468115.sharepoint.com/:w:/g/IQDLcpejPqerR7rdZ0SRxjIXAeNHetIE_OHiFuReaEZqp_c', '2025-11-26 04:33:25', '2025-11-26 11:33:25', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-26 11:33:25', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL),
+(119, 277, NULL, 72, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764144519.docx', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764144519.docx', 'https://netorg15468115.sharepoint.com/:w:/g/IQDp6HgKQtQBSrPEOvXgkJpyAc4WbY2xzThkmXKhDqkFHUg', 3, NULL, '2025-11-26 08:08:45', '2025-11-26 15:08:45', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-26 15:08:45', 'sharepoint', 45663, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 19),
+(120, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764144519.docx', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01_1764144519.docx', NULL, 3, 'https://netorg15468115.sharepoint.com/:w:/g/IQDp6HgKQtQBSrPEOvXgkJpyAc4WbY2xzThkmXKhDqkFHUg', '2025-11-26 08:08:46', '2025-11-26 15:08:46', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-26 15:08:46', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL),
+(121, 277, NULL, 73, 'maudonphuc_khao123_1764146067.pdf', 'maudonphuc_khao123_1764146067.pdf', 'https://netorg15468115.sharepoint.com/:b:/g/IQCA_NIudFlBT75OqlViNwdoAVUjVLFhD50R-6Z5FVsdhjk', 3, NULL, '2025-11-26 08:34:32', '2025-11-26 15:34:32', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-26 15:34:32', 'sharepoint', 128195, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 20),
+(122, 277, NULL, NULL, 'maudonphuc_khao123_1764146067.pdf', 'maudonphuc_khao123_1764146067.pdf', NULL, 3, 'https://netorg15468115.sharepoint.com/:b:/g/IQCA_NIudFlBT75OqlViNwdoAVUjVLFhD50R-6Z5FVsdhjk', '2025-11-26 08:34:32', '2025-11-26 15:34:33', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-26 15:34:33', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2409,11 +2419,8 @@ CREATE TABLE `task_roster` (
 --
 
 INSERT INTO `task_roster` (`id`, `task_id`, `user_id`, `role`, `status`, `name`, `created_at`, `updated_at`) VALUES
-(107, 277, 1, 'approve', 'processing', 'Nguyễn Cảnh Hợp', '2025-11-13 10:46:57', '2025-11-26 13:07:24'),
-(108, 277, 7, 'approve', 'processing', 'Nhạc Quang Huy', '2025-11-13 10:46:57', '2025-11-26 13:07:24'),
-(109, 277, 3, 'approve', 'processing', 'Đinh Văn Vịnh', '2025-11-13 10:46:57', '2025-11-26 13:07:24'),
-(110, 277, 12, 'approve', 'processing', 'Nguyễn Thị Ngọc Anh', '2025-11-13 10:46:57', '2025-11-26 13:07:24'),
-(111, 277, 9, 'approve', 'processing', 'Nguyễn Danh Vương Bình', '2025-11-13 10:46:57', '2025-11-26 13:07:24');
+(108, 277, 7, 'approve', 'processing', 'Nhạc Quang Huy', '2025-11-13 10:46:57', '2025-11-26 15:34:32'),
+(111, 277, 9, 'approve', 'processing', 'Nguyễn Danh Vương Bình', '2025-11-13 10:46:57', '2025-11-26 15:34:32');
 
 -- --------------------------------------------------------
 
@@ -2833,7 +2840,7 @@ ALTER TABLE `departments`
 -- AUTO_INCREMENT for table `documents`
 --
 ALTER TABLE `documents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=96;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=98;
 
 --
 -- AUTO_INCREMENT for table `document_approvals`
@@ -2929,7 +2936,7 @@ ALTER TABLE `task_approval_logs`
 -- AUTO_INCREMENT for table `task_comments`
 --
 ALTER TABLE `task_comments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
 
 --
 -- AUTO_INCREMENT for table `task_extensions`
@@ -2941,13 +2948,13 @@ ALTER TABLE `task_extensions`
 -- AUTO_INCREMENT for table `task_files`
 --
 ALTER TABLE `task_files`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=119;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=123;
 
 --
 -- AUTO_INCREMENT for table `task_roster`
 --
 ALTER TABLE `task_roster`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=337;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=341;
 
 --
 -- AUTO_INCREMENT for table `users`

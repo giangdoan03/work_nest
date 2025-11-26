@@ -16,6 +16,7 @@ use CodeIgniter\RESTful\ResourceController;
 use App\Libraries\SharepointUploader;
 use Config\Database;
 use Config\Services;
+use Exception;
 use ReflectionException;
 use RuntimeException;
 use Throwable;
@@ -342,7 +343,7 @@ class CommentController extends ResourceController
     /**
      * Tạo comment (text + optional file upload lên SharePoint)
      * @throws ReflectionException
-     * @throws \Exception
+     * @throws Exception
      */
     public function create($task_id = null): ResponseInterface
     {
@@ -433,6 +434,8 @@ class CommentController extends ResourceController
                 'source_task_id' => $task_id,
                 'comment_id' => $commentId,
                 'upload_batch' => $uploadBatch,
+                'drive_id' => $upload['driveId'],
+                'item_id'  => $upload['itemId'],
                 'created_at' => date('Y-m-d H:i:s'),
             ], true);
 
