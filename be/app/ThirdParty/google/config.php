@@ -1,6 +1,5 @@
 <?php
-require 'vendor/autoload.php';
-session_start();
+require_once __DIR__ . '/../../../vendor/autoload.php';
 
 /**
  * @throws \Google\Exception
@@ -8,9 +7,12 @@ session_start();
 function getClient(): Google_Client
 {
     $client = new Google_Client();
-    $client->setAuthConfig(__DIR__ . '/client_secret_...json');
 
-    $client->setRedirectUri('http://localhost/upload_drive/oauth_callback.php');
+    // client_secret.json
+    $client->setAuthConfig(__DIR__ . '/client_secret_1017504240479-khuf6h4dedtdf2s0n7q8lac979th42jq.apps.googleusercontent.com.json');
+
+    // Redirect cho lần login đầu tiên
+    $client->setRedirectUri(base_url('oauth_callback.php'));
 
     $client->setScopes([
         Google_Service_Drive::DRIVE,
@@ -21,8 +23,11 @@ function getClient(): Google_Client
     $client->setAccessType('offline');
     $client->setPrompt('consent');
 
-    if (isset($_SESSION['access_token'])) {
-        $client->setAccessToken($_SESSION['access_token']);
+    // DÙNG TOKEN.JSON – KHÔNG DÙNG SESSION
+    $tokenFile = __DIR__ . '/token.json';
+
+    if (file_exists($tokenFile)) {
+        $client->setAccessToken(json_decode(file_get_contents($tokenFile), true));
     }
 
     return $client;

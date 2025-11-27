@@ -17,10 +17,14 @@ class GoogleDriveUploader
 
     private string $folderId;
 
+    /**
+     * @throws \Google\Exception
+     * @throws Exception
+     */
     public function __construct()
     {
         // Load Google Client giống y code bạn gửi
-        require_once FCPATH . "config.php";
+        require_once APPPATH . "ThirdParty/google/config.php";
 
         $client = getClient();   // LẤY CLIENT CÓ TOKEN TỪ SESSION
 
@@ -39,6 +43,9 @@ class GoogleDriveUploader
     }
 
 
+    /**
+     * @throws \Google\Service\Exception
+     */
     public function uploadFile(string $tempPath, string $originalName): array
     {
         $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
@@ -146,4 +153,27 @@ class GoogleDriveUploader
             'type'      => $type,
         ];
     }
+
+    /**
+     * Tạo link xem-only giống SharePoint createViewOnlyLink()
+     */
+    public function createViewOnlyLink(string $driveId, string $fileId, string $scope = 'anonymous'): ?string
+    {
+        // Google Drive không dùng driveId, chỉ cần fileId
+        try {
+            // Set permission anyone can view
+            $this->drive->permissions->create($fileId, new \Google_Service_Drive_Permission([
+                'type' => 'anyone',       // anonymous
+                'role' => 'reader'        // view only
+            ]));
+
+            // Trả URL view-only
+            return "https://drive.google.com/file/d/{$fileId}/view?usp=sharing";
+
+        } catch (\Exception $e) {
+            log_message('error', "Create view link error: " . $e->getMessage());
+            return null;
+        }
+    }
+
 }
