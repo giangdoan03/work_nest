@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\GoogleDriveUploader;
 use App\Models\CommentReadModel;
 use App\Models\DocumentApprovalModel;
 use App\Models\DocumentApprovalStepModel;
@@ -219,11 +220,9 @@ class CommentController extends ResourceController
                 'uploader_name' => $r['uploader_name'] ?? null,
                 'created_at' => $r['created_at'],
                 'source' => 'document',
-
                 'status' => $status,
                 'approval_sent_by' => $r['approval_sent_by'] ?? null,
                 'approval_sent_at' => $r['approval_sent_at'] ?? null,
-
                 'approval' => $approval,
                 'steps' => $steps,
             ];
@@ -408,7 +407,7 @@ class CommentController extends ResourceController
         foreach ($files as $file) {
             if (!$file->isValid() || $file->hasMoved()) continue;
 
-            $sp = new SharepointUploader();
+            $sp = new GoogleDriveUploader();
             $upload = $sp->uploadFile($file->getTempName(), $file->getClientName());
 
             $driveId = $upload['driveId'] ?? null;
@@ -456,7 +455,7 @@ class CommentController extends ResourceController
                 'pinned_at' => date('Y-m-d H:i:s'),
                 'file_type' => 'sharepoint',
                 'file_size' => $file->getSize(),
-                'upload_batch' => $uploadBatch, // ⭐ batch consistent
+                'upload_batch' => $uploadBatch,
                 'created_at' => date('Y-m-d H:i:s'),
             ]);
 
