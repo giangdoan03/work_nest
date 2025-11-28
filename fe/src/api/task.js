@@ -171,6 +171,8 @@ export const pinTaskFileAPI = (fileId, payload = {}) =>
 export const unpinTaskFileAPI = (fileId, payload = {}) =>
     instance.post(`/task-files/${fileId}/unpin`, payload)
 
+export const getGoogleAuthUrl = () => instance.get('/google-auth');
+
 
 
 

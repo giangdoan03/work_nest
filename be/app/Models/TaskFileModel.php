@@ -18,7 +18,7 @@ class TaskFileModel extends Model
         'status','approved_by','approved_at','review_note',
         'approvals_json',
         'is_pinned','pinned_rank','pinned_by','pinned_at',
-        'upload_batch'
+        'upload_batch', 'google_file_id'
     ];
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';

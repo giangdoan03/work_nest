@@ -8,6 +8,15 @@ use CodeIgniter\Router\RouteCollection;
 
 
 $routes->group('api', function ($routes) {
+
+    // ⭐ Google OAuth
+    $routes->get('google/url', 'GoogleAuth::getUrl');
+    $routes->get('google-auth', 'GoogleAuth::redirect');
+    $routes->get('google-callback', 'GoogleAuth::callback');
+    $routes->get('documents/convert/pdf', 'DocumentController::convertToPdf');
+    // ⭐ Replace marker trong Google Docs/Sheets khi user approve
+    $routes->post('marker/replace', 'TaskApprovalController::checkAndReplaceMarker');
+
     $routes->post('login', 'Auth::login');
     $routes->get('logout', 'Auth::logout');
     $routes->get('check', 'Auth::check');

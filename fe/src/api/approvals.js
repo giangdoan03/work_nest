@@ -129,6 +129,14 @@ export const fetchActiveInstanceId = async (documentId) => {
     }
 }
 
+// 🔥 Convert file Google Drive → PDF
+export function replaceMarkerInTaskFile(taskId, userId) {
+    return instance.post(`/marker/replace`, {
+        task_id: taskId,   // ✔ Gửi task_id
+        user_id: userId    // ✔ Gửi user_id
+    });
+}
+
 
 
 
@@ -154,5 +162,6 @@ export default {
     getActiveDocumentApproval,
     uploadSignedPdf,
     getApprovalDetail,
-    getApprovalsByDocument
+    getApprovalsByDocument,
+    convertDriveToPdfAPI
 }

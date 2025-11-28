@@ -2,7 +2,6 @@
 
 namespace App\Controllers;
 
-use App\Libraries\GoogleDriveUploader;
 use App\Models\CommentReadModel;
 use App\Models\DocumentApprovalModel;
 use App\Models\DocumentApprovalStepModel;
@@ -11,6 +10,7 @@ use App\Models\TaskCommentModel;
 use App\Models\TaskFileModel;
 use App\Models\TaskModel;
 use App\Models\UserModel;
+use App\Libraries\GoogleDriveService;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
@@ -122,7 +122,8 @@ class CommentController extends ResourceController
                  d.approval_status,
                  d.approval_sent_by,
                  d.approval_sent_at,
-                 u.name AS uploader_name'
+                 d.drive_id,
+                 u.name AS uploader_name',
             )
             ->join('users u', 'u.id = d.uploaded_by', 'left')
             ->where('d.source_task_id', $task_id)
@@ -221,6 +222,7 @@ class CommentController extends ResourceController
                 'created_at' => $r['created_at'],
                 'source' => 'document',
                 'status' => $status,
+                'drive_id' => $r['drive_id'] ?? null,
                 'approval_sent_by' => $r['approval_sent_by'] ?? null,
                 'approval_sent_at' => $r['approval_sent_at'] ?? null,
                 'approval' => $approval,
@@ -347,14 +349,16 @@ class CommentController extends ResourceController
     public function create($task_id = null): ResponseInterface
     {
         $task_id = $task_id ? (int)$task_id : null;
-        $userId = (int)($this->request->getPost('user_id') ?? 0);
 
+        // ===== Validate user =====
+        $userId = (int)($this->request->getPost('user_id') ?? 0);
         if ($userId <= 0) {
             return $this->failValidationErrors(['user_id' => 'Thiếu user_id.']);
         }
 
-        $content = trim((string)($this->request->getPost('content') ?? ''));
+        $content      = trim((string)($this->request->getPost('content') ?? ''));
         $mentionsJson = $this->request->getPost('mentions') ?? null;
+        $docType      = $this->request->getPost('doc_type') === 'external' ? 'external' : 'internal';
 
         /** @var UploadedFile[] $files */
         $files = $this->request->getFileMultiple('attachments');
@@ -363,9 +367,8 @@ class CommentController extends ResourceController
             $files = ($single && $single->isValid()) ? [$single] : [];
         }
 
+        // ===== Tạo comment trước =====
         $taskCommentModel = new TaskCommentModel();
-
-        // 1) Tạo comment trước
         $commentId = $taskCommentModel->insert([
             'task_id' => $task_id,
             'user_id' => $userId,
@@ -378,18 +381,15 @@ class CommentController extends ResourceController
             return $this->failServerError("Không tạo được comment.");
         }
 
-        $uploadedFiles = [];
-
-        // Nếu không có file → chỉ text
+        // ===== Nếu không có file =====
         if (empty($files)) {
             $created = $taskCommentModel->find($commentId);
             $created['files'] = [];
-
             $this->mergeMentionsIntoTaskRoster((int)$task_id, $mentionsJson);
             return $this->respondCreated(['comment' => $created]);
         }
 
-        // ⭐ 2) Tính batch upload (đúng chuẩn)
+        // ===== Chuẩn bị upload batch =====
         $db = Database::connect();
         $lastBatchRow = $db->table('documents')
             ->where('source_task_id', $task_id)
@@ -397,79 +397,103 @@ class CommentController extends ResourceController
             ->get()
             ->getRow();
 
-        $uploadBatch = (int)($lastBatchRow->upload_batch ?? 0) + 1;
+        $uploadBatch = ((int)($lastBatchRow->upload_batch ?? 0)) + 1;
 
-        // 3) Upload files → insert documents
-        $docM = new DocumentModel();
-        $deptId = $this->resolveDepartmentId($userId);
-        $docType = $this->request->getPost('doc_type') === 'external' ? 'external' : 'internal';
+        $docM      = new DocumentModel();
+        $taskFileM = new TaskFileModel();
+        $deptId    = $this->resolveDepartmentId($userId);
 
+        $uploadedFiles = [];
+
+        // ======================================================
+        // ============   Xử lý từng file upload   ==============
+        // ======================================================
         foreach ($files as $file) {
             if (!$file->isValid() || $file->hasMoved()) continue;
 
-            $sp = new GoogleDriveUploader();
-            $upload = $sp->uploadFile($file->getTempName(), $file->getClientName());
+            // Chặn PDF
+            $ext = strtolower(pathinfo($file->getClientName(), PATHINFO_EXTENSION));
+            if ($ext === 'pdf') {
+                return $this->failValidationErrors([
+                    'attachment' => 'Không được phép upload file PDF.'
+                ]);
+            }
 
-            $driveId = $upload['driveId'] ?? null;
-            $itemId = $upload['itemId'] ?? null;
+            $originalName = $file->getClientName();
 
-            if (!$driveId || !$itemId) continue;
+            // ===== Move file tạm =====
+            $tmpName = 'tmp_' . uniqid() . '_' . $originalName;
+            $tempPath = WRITEPATH . 'uploads/' . $tmpName;
+            $file->move(WRITEPATH . 'uploads', $tmpName);
 
-            $viewOnlyUrl = $sp->createViewOnlyLink($driveId, $itemId, 'anonymous');
-            $fileUrl = $viewOnlyUrl;
-            $spName = $upload['file_name'] ?? $file->getClientName();
+            // ===== Upload Google Drive =====
+            $google = new GoogleDriveService();
+            $driveInfo = $google->uploadAndConvert($tempPath, $originalName);
 
-            // === Insert document ===
+            @unlink($tempPath);
+
+            if (!$driveInfo || !isset($driveInfo['drive_id'])) {
+                continue;
+            }
+
+            $fileUrl = $driveInfo['view'];
+            $driveId = $driveInfo['drive_id'];
+
+            // ===== Insert Document =====
             $docId = $docM->insert([
-                'title' => $spName,
-                'file_path' => $fileUrl,
-                'file_type' => 'sharepoint',
-                'doc_type' => $docType,
-                'file_size' => $file->getSize(),
-                'department_id' => $deptId,
-                'uploaded_by' => $userId,
-                'visibility' => 'private',
-                'approval_status' => 'waiting',
+                'title'          => $originalName,
+                'file_path'      => $fileUrl,
+                'file_type'      => 'google_drive',
+                'doc_type'       => $docType,
+                'file_size'      => $file->getSize(),
+                'department_id'  => $deptId,
+                'uploaded_by'    => $userId,
+                'visibility'     => 'private',
+                'approval_status'=> 'waiting',
                 'source_task_id' => $task_id,
-                'comment_id' => $commentId,
-                'upload_batch' => $uploadBatch,
-                'drive_id' => $upload['driveId'],
-                'item_id'  => $upload['itemId'],
-                'created_at' => date('Y-m-d H:i:s'),
+                'comment_id'     => $commentId,
+                'upload_batch'   => $uploadBatch,
+                'drive_id'        => $driveInfo['drive_id'],
+                'google_file_id'  => $driveInfo['google_file_id'],
+                'created_at'     => date('Y-m-d H:i:s'),
             ], true);
 
-            // === Insert task_files (để FE pinned files xử lý giống nhau) ===
-            $taskFileM = new TaskFileModel();
+            // ===== Insert task_files =====
             $taskFileM->insert([
-                'task_id' => $task_id,
-                'document_id' => $docId,
-                'comment_id' => $commentId,
-                'file_name' => $spName,
-                'title' => $spName,
-                'file_path' => $fileUrl,
-                'uploaded_by' => $userId,
-                'is_link' => 0,
-                'status' => 'uploaded',
-                'is_pinned' => 1,
-                'pinned_by' => $userId,
-                'pinned_at' => date('Y-m-d H:i:s'),
-                'file_type' => 'sharepoint',
-                'file_size' => $file->getSize(),
+                'task_id'      => $task_id,
+                'document_id'  => $docId,
+                'comment_id'   => $commentId,
+                'file_name'    => $originalName,
+                'title'        => $originalName,
+                'file_path'    => $fileUrl,
+                'uploaded_by'  => $userId,
+                'is_link'      => 0,
+                'status'       => 'uploaded',
+                'is_pinned'    => 1,
+                'pinned_by'    => $userId,
+                'pinned_at'    => date('Y-m-d H:i:s'),
+                'file_type'    => 'google_drive',
+                'file_size'    => $file->getSize(),
                 'upload_batch' => $uploadBatch,
-                'created_at' => date('Y-m-d H:i:s'),
+                // 🔥 LƯU GOOGLE FILE ID VÀO TASK_FILES
+                'drive_id'        => $driveInfo['drive_id'],
+                'google_file_id'  => $driveInfo['google_file_id'],
+                'created_at'   => date('Y-m-d H:i:s'),
             ]);
 
+            // ===== Trả về FE =====
             $uploadedFiles[] = [
-                'file_name' => $spName,
-                'file_path' => $fileUrl,
-                'public_url' => $fileUrl,
-                'doc_type' => $docType,
-                'upload_batch' => $uploadBatch
+                'file_name'    => $originalName,
+                'file_path'    => $fileUrl,
+                'public_url'   => $fileUrl,
+                'doc_type'     => $docType,
+                'upload_batch' => $uploadBatch,
+                'drive_id'         => $driveInfo['drive_id'],
+                'google_file_id'   => $driveInfo['google_file_id'],
             ];
         }
 
-
-        // 4) Trả về comment
+        // ===== Final trả về FE =====
         $createdComment = $taskCommentModel->find($commentId);
         $createdComment['files'] = $uploadedFiles;
 

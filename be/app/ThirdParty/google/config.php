@@ -1,5 +1,6 @@
 <?php
-require_once __DIR__ . '/../../../vendor/autoload.php';
+
+require_once ROOTPATH . 'vendor/autoload.php';
 
 /**
  * @throws \Google\Exception
@@ -8,11 +9,8 @@ function getClient(): Google_Client
 {
     $client = new Google_Client();
 
-    // client_secret.json
-    $client->setAuthConfig(__DIR__ . '/client_secret_1017504240479-khuf6h4dedtdf2s0n7q8lac979th42jq.apps.googleusercontent.com.json');
-
-    // Redirect cho lần login đầu tiên
-    $client->setRedirectUri(base_url('oauth_callback.php'));
+    $client->setAuthConfig(APPPATH . 'ThirdParty/google/client_secret_1017504240479-khuf6h4dedtdf2s0n7q8lac979th42jq.apps.googleusercontent.com.json');
+    $client->setRedirectUri('http://localhost/work_nest/be/public/oauth_callback.php');
 
     $client->setScopes([
         Google_Service_Drive::DRIVE,
@@ -21,13 +19,17 @@ function getClient(): Google_Client
     ]);
 
     $client->setAccessType('offline');
-    $client->setPrompt('consent');
+    $client->setIncludeGrantedScopes(true);
 
-    // DÙNG TOKEN.JSON – KHÔNG DÙNG SESSION
-    $tokenFile = __DIR__ . '/token.json';
+    $tokenFile = APPPATH . 'ThirdParty/google/token.json';
 
     if (file_exists($tokenFile)) {
         $client->setAccessToken(json_decode(file_get_contents($tokenFile), true));
+
+        if ($client->isAccessTokenExpired() && $client->getRefreshToken()) {
+            $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+            file_put_contents($tokenFile, json_encode($client->getAccessToken()));
+        }
     }
 
     return $client;

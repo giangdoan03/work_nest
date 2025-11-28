@@ -1,14 +1,20 @@
 <?php
-require_once __DIR__ . '/../vendor/autoload.php';
 
-session_start();
+// Tự định nghĩa ROOTPATH khi chạy ngoài CI4
+if (!defined('ROOTPATH')) {
+    define('ROOTPATH', dirname(__DIR__) . DIRECTORY_SEPARATOR);
+}
 
-// Load config
-require_once __DIR__ . '/../app/ThirdParty/google/config.php';
+// Tự định nghĩa APPPATH
+if (!defined('APPPATH')) {
+    define('APPPATH', ROOTPATH . 'app' . DIRECTORY_SEPARATOR);
+}
+
+require_once ROOTPATH . 'vendor/autoload.php';
+require_once APPPATH . 'ThirdParty/google/config.php';
 
 $client = getClient();
 
-// Google trả về code
 if (!isset($_GET['code'])) {
     exit("Missing Google OAuth code");
 }
@@ -16,15 +22,10 @@ if (!isset($_GET['code'])) {
 $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
 
 if (isset($token['error'])) {
-    exit("Google OAuth error: " . $token['error_description']);
+    exit("OAuth Error: " . $token['error_description']);
 }
 
-// Lưu token.json
-file_put_contents(
-    __DIR__ . '/../app/ThirdParty/google/token.json',
-    json_encode($token)
-);
+// Lưu token
+file_put_contents(APPPATH . 'ThirdParty/google/token.json', json_encode($token));
 
-// OK
-echo "<h2>Google connected successfully!</h2>";
-echo "<p>Token saved. You can close this tab.</p>";
+echo "Google Connected Successfully! Token saved.";

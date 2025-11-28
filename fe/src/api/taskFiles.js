@@ -136,6 +136,16 @@ export const deleteTaskFileAPI = (fileId) =>
 export const deleteCommentAPI = (commentId) =>
     instance.delete(`/comments/${commentId}`)
 
+// xử lý preferred_marker trong file Google Docs/Sheets
+export function replaceMarkerInTaskFile(taskId, userId) {
+    return instance.post(`/marker/replace`, {
+        task_id: taskId,
+        user_id: userId
+    });
+}
+
+
+
 export default {
     // list & upload
     getTaskFiles,
@@ -168,5 +178,6 @@ export default {
     adoptTaskFileFromPathAPI,
 
     getMyPendingFilesAPI,
-    getMyResolvedFilesAPI
+    getMyResolvedFilesAPI,
+    replaceMarkerInTaskFile
 }

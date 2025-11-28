@@ -17,135 +17,148 @@
             </a-tooltip>
         </div>
         <a-spin :spinning="loading" tip="Đang tải tài liệu...">
-            <a-list
+
+
+            <a-table
                 v-if="displayCards.length"
-                class="att-grid"
-                :grid="{ gutter: 8, xs: 1, sm: 2, md: 3, lg: 4, xl: 4 }"
                 :data-source="displayCards"
+                :columns="columns"
+                :loading="loading"
+                row-key="_key"
+                size="small"
+                bordered
             >
-                <template #renderItem="{ item }">
-                    <a-list-item>
-                        <a-card hoverable class="att-card att-card--sm header_card" :bodyStyle="{ padding: '10px 10px 8px' }">
-                            <template #extra>
-                                <template v-if="approvalStateOf(item).status">
-                                    <a-tag v-if="approvalStateOf(item).pending" color="gold">Chờ duyệt</a-tag>
-                                    <a-tag v-else-if="approvalStateOf(item).approved" color="green">Đã duyệt</a-tag>
-                                    <a-tag v-else-if="approvalStateOf(item).rejected" color="red">Từ chối</a-tag>
-                                </template>
-                            </template>
+                <template #bodyCell="{ column, record }">
 
-                            <!-- Thumb -->
-                            <template v-if="item.kind === 'image'">
-                                <a-image :src="item.url" :height="thumbH" :alt="item.name"/>
-                            </template>
-                            <template v-else-if="item.kind === 'link'">
-                                <div class="att-link-thumb">
-                                    <img :src="favicon(item.url)" class="att-favicon" referrerpolicy="no-referrer"
-                                         @error="hideBrokenFavicon" alt=""/>
-                                    <LinkOutlined class="att-link-icon"/>
-                                </div>
-                            </template>
-                            <template v-else>
-                                <div class="att-icon-wrap">
-                                    <component :is="item.icon" class="att-icon"/>
-                                </div>
-                            </template>
+                    <!-- Tên tài liệu -->
+                    <template v-if="column.dataIndex === 'title'">
+                        <div class="file-title">
+                            <component :is="record.icon" class="file-icon" />
+                            <span>{{ record.title || record.name }}</span>
+                        </div>
+                    </template>
 
-                            <!-- Meta -->
-                            <div class="att-meta">
-                                <div class="att-title" :title="item.title || item.name">
-                                    {{ item.title || item.name }}
-                                </div>
+                    <!-- Kiểu file -->
+                    <template v-else-if="column.dataIndex === 'ext'">
+                        <a-tag color="blue">{{ record.ext?.toUpperCase() }}</a-tag>
+                    </template>
 
-                                <div class="att-sub" v-if="item.is_link"></div>
-                                <div class="att-sub" v-else :title="item.name">{{ item.name }}</div>
+                    <!-- Người upload -->
+                    <template v-else-if="column.dataIndex === 'uploader'">
+                        {{ record.uploader_name || nameOfUploader(record.uploaded_by) }}
+                    </template>
 
-                                <!-- Uploader line -->
-                                <div
-                                    class="att-uploader"
-                                    v-if="item.uploader_name || item.uploaded_by || item.created_at"
+                    <!-- Ngày upload -->
+                    <template v-else-if="column.dataIndex === 'created_at'">
+                        {{ formatTime(record.created_at) }} — {{ formatDateOnly(record.created_at) }}
+                    </template>
+
+                    <!-- Hành động -->
+                    <template v-else-if="column.dataIndex === 'actions'">
+                        <a-space>
+
+                            <!-- Xem -->
+                            <a-tooltip title="Xem">
+                                <a-button size="small" @click="openAttachment(record)">
+                                    <EyeOutlined/>
+                                </a-button>
+                            </a-tooltip>
+
+                            <!-- Convert PDF -->
+<!--                            <a-tooltip :title="isPdf(record) ? 'File đã là PDF' : 'Chuyển sang PDF'">-->
+<!--                                <a-button-->
+<!--                                    size="small"-->
+<!--                                    :disabled="!canConvert(record)"-->
+<!--                                    :loading="converting[record._key]"-->
+<!--                                    @click="convertToPdf(record)"-->
+<!--                                >-->
+<!--                                    <FilePdfOutlined />-->
+<!--                                </a-button>-->
+<!--                            </a-tooltip>-->
+
+                            <!-- Xóa -->
+                            <a-tooltip title="Xoá">
+                                <a-button
+                                    size="small"
+                                    danger
+                                    @click="onClickDelete(record)"
+                                    :loading="deleting[record._key]"
                                 >
-                                    <div class="att-uploader-left">
-                                        <UserOutlined class="att-uploader-ico" />
-                                        <a-tooltip :title="item.uploader_name || nameOfUploader(item.uploaded_by)">
-                                            <span class="att-uploader-name">
-                                                {{ item.uploader_name || nameOfUploader(item.uploaded_by) }}
-                                            </span>
-                                        </a-tooltip>
-                                    </div>
-                                    <div class="att-uploader-time" v-if="item.created_at">
-                                        {{ formatTime(item.created_at) }} — {{ formatDateOnly(item.created_at) }}
-                                    </div>
-                                </div>
+                                    <DeleteOutlined/>
+                                </a-button>
+                            </a-tooltip>
 
-                                <!-- ✅ Chuỗi ký duyệt: ai đã ký / đang chờ / chưa ký -->
-                                <div v-if="stepsOf(item).length" class="att-approval">
-                                    <span class="att-approval-label">Ký duyệt:</span>
-                                    <span
-                                        v-for="s in stepsOf(item)"
-                                        :key="s.id"
-                                        class="att-approval-pill"
-                                        :class="pillClass(s)"
-                                    >
-                                    {{ s.approver_name || nameOfUploader(s.approver_id) || ('#' + s.approver_id) }}
-                                    <span class="att-approval-pill-status">
-                                      ({{ shortStepStatus(s) }})
-                                    </span>
-                                  </span>
-                                </div>
-                            </div>
+                            <!-- Trình ký -->
+                            <a-tooltip :title="canSign(record) ? 'Trình ký tài liệu' : 'Chỉ ký khi file là PDF'">
+                                <a-button
+                                    size="small"
+                                    type="primary"
+                                    :disabled="!canSign(record)"
+                                    :loading="ensuring[record._key]"
+                                    @click="openSendApproval(record)"
+                                >
+                                    <SendOutlined/>
+                                </a-button>
+                            </a-tooltip>
 
-                            <!-- Actions -->
-                            <div class="att-actions">
-                                <a-tooltip title="Xem trước">
-                                    <a-button size="small" shape="circle" @click="openAttachment(item)">
-                                        <EyeOutlined/>
-                                    </a-button>
-                                </a-tooltip>
+                        </a-space>
+                    </template>
 
-                                <a-tooltip v-if="!item.is_link" title="Tải xuống / mở">
-                                    <a-button size="small" shape="circle" @click="downloadAttachment(item)">
-                                        <DownloadOutlined/>
-                                    </a-button>
-                                </a-tooltip>
-                                <a-tooltip title="Xoá tài liệu">
-                                    <a-button
-                                        size="small"
-                                        type="text"
-                                        danger
-                                        @click="onClickDelete(item)"
-                                        :loading="deleting[item._key]"
-                                    >
-                                        <DeleteOutlined />
-                                    </a-button>
-                                </a-tooltip>
-
-                                <!-- Gửi duyệt -->
-                                <a-tooltip :title="sendBtnTooltip(item)">
-                                    <a-button
-                                        size="small"
-                                        shape="circle"
-                                        type="primary"
-                                        :loading="ensuring[item._key]"
-                                        :disabled="!canSendApproval(item)"
-                                        @click="openSendApproval(item)"
-                                    >
-                                        <SendOutlined/>
-                                    </a-button>
-                                </a-tooltip>
-
-
-                            </div>
-
-                            <span v-if="item.ext" class="att-ext">{{ item.ext }}</span>
-                        </a-card>
-                    </a-list-item>
                 </template>
-            </a-list>
+            </a-table>
 
             <a-empty v-else>
                 <template #description>Chưa có tài liệu của công việc</template>
             </a-empty>
+
+            <!-- Modal XEM TRƯỚC -->
+            <a-modal
+                v-model:open="preview.open"
+                :title="preview.title"
+                width="80%"
+                style="top: 20px"
+                footer=""
+            >
+                <div style="height: 80vh;">
+                    <!-- Ảnh -->
+                    <img
+                        v-if="preview.kind === 'image'"
+                        :src="preview.url"
+                        style="max-width:100%; max-height:100%; display:block; margin:auto;"
+                    />
+
+                    <!-- PDF -->
+                    <iframe
+                        v-else-if="preview.kind === 'pdf'"
+                        :src="preview.url"
+                        style="width:100%; height:100%; border:none;"
+                    />
+
+                    <!-- Office (Word, Excel, PowerPoint) dùng Office Viewer -->
+                    <iframe
+                        v-else-if="preview.kind === 'office'"
+                        :src="officeViewer(preview.url)"
+                        style="width:100%; height:100%; border:none;"
+                    />
+
+                    <!-- Link -->
+                    <iframe
+                        v-else-if="preview.kind === 'link'"
+                        :src="preview.url"
+                        style="width:100%; height:100%; border:none;"
+                    />
+
+                    <!-- File khác -->
+                    <div v-else style="padding: 20px;">
+                        <a-alert
+                            type="warning"
+                            message="Không thể xem trước loại file này"
+                            description="Bạn có thể nhấn tải xuống để mở file bằng ứng dụng tương ứng."
+                            show-icon
+                        />
+                    </div>
+                </div>
+            </a-modal>
         </a-spin>
 
         <!-- Modal gửi duyệt -->
@@ -179,7 +192,7 @@ import 'dayjs/locale/vi'
 
 // API
 import { getUsers } from '@/api/user'
-import { sendDocumentApproval, getActiveDocumentApproval } from '@/api/approvals.js'
+import { sendDocumentApproval, getActiveDocumentApproval, convertDriveToPdfAPI } from '@/api/approvals.js'
 import {
     adoptTaskFileFromPathAPI,
     uploadTaskFileLinkAPI,
@@ -217,6 +230,12 @@ const sending = ref(false)
 const sendingItem = ref(null)
 const sendForm = reactive({ approver_ids: [], note: '' })
 
+const isPdf = r => (r.ext || '').toLowerCase() === 'pdf'
+
+const canConvert = r => !isPdf(r)
+
+const canSign = r => isPdf(r) && canSendApproval(r)
+
 // ---------- consts & helpers ----------
 const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'])
 const PDF_EXTS   = new Set(['pdf'])
@@ -224,6 +243,14 @@ const WORD_EXTS  = new Set(['doc', 'docx'])
 const EXCEL_EXTS = new Set(['xls', 'xlsx', 'csv'])
 const PPT_EXTS   = new Set(['ppt', 'pptx'])
 const OFFICE_EXTS= new Set(['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'])
+
+const columns = [
+    { title: "Tên tài liệu", dataIndex: "title", key: "title" },
+    { title: "Kiểu file", dataIndex: "ext", key: "ext", width: 100, align: "center" },
+    { title: "Người upload", dataIndex: "uploader", key: "uploader", width: 150 },
+    { title: "Thời gian", dataIndex: "created_at", key: "created_at", width: 180 },
+    { title: "Hành động", dataIndex: "actions", key: "actions", width: 220, align: "center" },
+];
 
 const aborter = { controller: null }
 const deleting = reactive({}) // per-item loading
@@ -255,8 +282,59 @@ const pickIcon = (kind) => ({
     link: LinkOutlined
 }[kind] || FileTextOutlined)
 
-const favicon = () => 'https://assets.develop.io.vn/wp-content/uploads/2025/10/favicon.png'
-const hideBrokenFavicon = e => { if (e?.target) e.target.style.opacity = 0 }
+const preview = reactive({
+    open: false,
+    url: "",
+    title: "",
+    kind: "",
+});
+
+const previewKind = (record) => {
+    const ext = (record.ext || "").toLowerCase();
+
+    if (["jpg", "jpeg", "png", "gif", "webp", "bmp"].includes(ext)) return "image";
+    if (ext === "pdf") return "pdf";
+    if (["doc", "docx", "xls", "xlsx", "ppt", "pptx"].includes(ext)) return "office";
+    if (record.is_link) return "link";
+
+    return "other";
+};
+
+const officeViewer = (url) =>
+    `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
+
+const converting = reactive({});
+
+
+async function convertToPdf(item) {
+    if (!item?.drive_id) {
+        return message.error("Không có drive_id để chuyển đổi.");
+    }
+
+    converting[item._key] = true;
+
+    try {
+        const { data } = await convertDriveToPdfAPI(item.drive_id);
+
+        if (data?.url) {
+            message.success("Đã chuyển sang PDF");
+            window.open(data.url, "_blank");   // mở PDF mới
+        } else {
+            message.error("Không tạo được PDF");
+        }
+
+    } catch (e) {
+        message.error(
+            e?.response?.data?.message || "Lỗi khi convert PDF"
+        );
+    } finally {
+        converting[item._key] = false;
+        await refresh();
+    }
+}
+
+
+
 const normalizeKey = (url = '') => String(url || '').split('?')[0]
 
 // ---------- users ----------
@@ -302,7 +380,7 @@ async function fetchTaskFiles () {
 
             const it = {
                 _key: key,
-                id: r.id,                                // id nguồn (task_files.id hoặc comment.id)
+                id: r.id,
                 task_file_id: r.source === 'task_file' ? r.id : (r.task_file_id ?? null),
                 name,
                 title: r.title || name,
@@ -315,9 +393,10 @@ async function fetchTaskFiles () {
                 updated_at: r.updated_at || null,
                 uploaded_by: r.uploaded_by || null,
                 uploader_name: r.uploader_name || null,
-                _source: r.source,                        // 'task_file' | 'comment'
-                status: r.status || null,                 // BE có thể đổ sẵn
-                full: r
+                _source: r.source,
+                status: r.status || null,
+                full: r,
+                drive_id: r.drive_id || null,
             }
 
             // seed trạng thái duyệt ngay nếu BE trả sẵn
@@ -330,7 +409,7 @@ async function fetchTaskFiles () {
         }
 
         taskFileItems.value = items
-        await refreshApprovalStates()                 // lấy active state cho task_file_ids
+        await refreshApprovalStates()
     } catch (e) {
         message.error((e?.response?.data?.message) || 'Không tải được tài liệu của task.')
     } finally {
@@ -338,18 +417,6 @@ async function fetchTaskFiles () {
     }
 }
 
-// ---------- approvals helpers ----------
-function approvalStateOf (item) {
-    const key = item.task_file_id || item.id
-    // ưu tiên map, fallback item.status nếu có
-    const st = approvalMap.value[key] || (item.status ? { status: item.status } : {})
-    return {
-        status: st.status || null,
-        pending: st.status === 'pending',
-        approved: st.status === 'approved',
-        rejected: st.status === 'rejected'
-    }
-}
 
 const canSendApproval = (item) => item.status === 'not_sent'
 
@@ -411,7 +478,6 @@ async function refreshApprovalStates () {
                     const a = await getActiveDocumentApproval(id)
                     const status = a?.status ?? null
                     const instanceId = a?.instanceId ?? null
-// 👇 thêm steps (tùy BE: steps / approval_steps / data.steps)
                     const steps = a?.steps || a?.approval_steps || []
                     approvalMap.value[id] = { status, instanceId, steps }
                 } catch {
@@ -506,51 +572,6 @@ async function submitSendApproval () {
     }
 }
 
-// Lấy danh sách bước ký cho 1 item
-function stepsOf(item) {
-    return item.steps || item.full?.steps || [];
-}
-
-// Trạng thái rút gọn cho từng bước
-function shortStepStatus(step) {
-    const s =
-        String(
-            step.status
-            || (step.is_approved && 'approved')
-            || (step.is_rejected && 'rejected')
-            || (step.is_pending && 'pending')
-            || (step.is_current && 'current')
-            || ''
-        ).toLowerCase()
-
-    if (s === 'approved') return 'đã ký'
-    if (s === 'rejected') return 'từ chối'
-    if (s === 'current')  return 'đang chờ'
-    if (s === 'waiting' || s === 'pending') return 'chờ ký'
-    return 'chưa ký'
-}
-
-// CSS class màu theo trạng thái bước
-function pillClass(step) {
-    const s =
-        String(
-            step.status
-            || (step.is_approved && 'approved')
-            || (step.is_rejected && 'rejected')
-            || (step.is_pending && 'pending')
-            || (step.is_current && 'current')
-            || ''
-        ).toLowerCase()
-
-    if (s === 'approved') return 'att-approval-pill--approved'
-    if (s === 'rejected') return 'att-approval-pill--rejected'
-    if (s === 'current' || s === 'waiting' || s === 'pending')
-        return 'att-approval-pill--pending'
-    return 'att-approval-pill--idle'
-}
-
-
-
 
 function clearSendApproval () {
     showSend.value = false
@@ -598,43 +619,6 @@ const refresh = async () => {
     }
 }
 
-async function deleteAttachment(item) {
-    // Nếu nguồn là comment (file thuộc comment) — tùy FE/BE có endpoint khác; hiện giả sử only document/task_file.
-    const fileId = Number(item.task_file_id || item.id || 0)
-    if (!fileId) {
-        message.error('Không xác định được id tài liệu.');
-        return;
-    }
-
-    // tránh bấm liên tiếp
-    deleting[item._key] = true
-
-    try {
-        const resp = await deleteTaskFile(fileId)
-        // axios trả data trong resp.data; nhưng chúng ta chỉ cần success
-        // Remove item khỏi danh sách (optimistic)
-        taskFileItems.value = taskFileItems.value.filter(i => (i._key !== item._key && (i.task_file_id ? i.task_file_id !== item.task_file_id : true)))
-
-        message.success((resp?.data?.message) || 'Đã xóa tài liệu.')
-    } catch (e) {
-        const status = e?.response?.status
-        const data = e?.response?.data
-        if (status === 403) {
-            message.error(data?.message || 'Không thể xóa: tài liệu đã duyệt hoặc bạn không có quyền.')
-        } else if (status === 404) {
-            message.error('Tài liệu không tồn tại (đã bị xóa).')
-            // đồng bộ UI
-            taskFileItems.value = taskFileItems.value.filter(i => i._key !== item._key)
-        } else {
-            message.error(data?.message || 'Lỗi khi xóa tài liệu.')
-        }
-    } finally {
-        deleting[item._key] = false
-    }
-}
-
-
-
 async function onClickDelete(item) {
     Modal.confirm({
         title: 'Xác nhận xoá',
@@ -679,214 +663,6 @@ onBeforeUnmount(() => {
     aborter.controller?.abort?.()
 })
 </script>
-
-
-<style scoped>
-/* Grid */
-.att-grid {
-    margin-top: 8px;
-}
-
-/* Card */
-.att-card {
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.att-card--sm {
-    --att-thumb-h: 96px;
-    --att-icon-size: 30px;
-    --att-pad-x: 8px;
-    --att-pad-y: 6px;
-}
-
-/* Thumbs */
-.att-icon-wrap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: var(--att-thumb-h);
-    background: #fafafa;
-}
-
-.att-icon {
-    font-size: var(--att-icon-size);
-    opacity: .9;
-}
-
-/* Link thumb */
-.att-link-thumb {
-    height: var(--att-thumb-h);
-    background: #fafafa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.att-favicon {
-    width: 22px;
-    height: 23px;
-    border-radius: 6px;
-    position: absolute;
-    left: 8px;
-    top: 8px;
-}
-
-.att-link-icon {
-    font-size: var(--att-icon-size);
-    opacity: .9;
-}
-
-/* Meta */
-.att-meta {
-    padding: 6px var(--att-pad-x) 0;
-}
-
-.att-title {
-    font-weight: 600;
-    font-size: 13px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.att-sub {
-    color: #889;
-    font-size: 11px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Uploader row (1 dòng, co giãn hợp lý) */
-.att-uploader {
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-    margin-top: 2px;
-    font-size: 11px;
-    color: #666;
-    white-space: nowrap;
-}
-
-.att-uploader-left {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    overflow: hidden;
-}
-
-.att-uploader-ico {
-    font-size: 12px;
-}
-
-.att-uploader-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.att-uploader-time {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    color: #999;
-}
-
-/* Actions */
-.att-actions {
-    display: flex;
-    gap: 6px;
-    padding: 6px var(--att-pad-x) 8px;
-    justify-content: flex-end;
-}
-
-.att-actions :deep(.ant-btn) {
-    width: 22px;
-    padding: 0;
-}
-
-/* Badges */
-.att-ext {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    font-size: 10px;
-    padding: 0 6px;
-    background: #f0f1f5;
-    border-radius: 999px;
-    text-transform: uppercase;
-    color: #555;
-}
-
-.header_card .ant-card-extra {
-    margin-left: 0 !important;
-}
-
-.att-approval {
-    margin-top: 4px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    align-items: center;
-    font-size: 10px;
-    line-height: 1.4;
-}
-
-.att-approval-label {
-    color: #999;
-    margin-right: 2px;
-}
-
-.att-approval-pill {
-    padding: 0 6px;
-    border-radius: 999px;
-    background: #f5f5f5;
-    color: #555;
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    border: 1px solid transparent;
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.att-approval-pill-status {
-    opacity: .9;
-}
-
-/* Đã ký */
-.att-approval-pill--approved {
-    background: #f6ffed;
-    color: #389e0d;
-    border-color: #b7eb8f;
-}
-
-/* Đang/Chờ ký */
-.att-approval-pill--pending {
-    background: #fffbe6;
-    color: #d48806;
-    border-color: #ffe58f;
-}
-
-/* Từ chối */
-.att-approval-pill--rejected {
-    background: #fff1f0;
-    color: #cf1322;
-    border-color: #ffa39e;
-}
-
-/* Chưa tới lượt / chưa đụng */
-.att-approval-pill--idle {
-    background: #fafafa;
-    color: #999;
-}
-
-</style>
 
 <style>
 .ant-list-item {
@@ -1027,24 +803,46 @@ onBeforeUnmount(() => {
     animation: spin 0.9s linear infinite;
 }
 
+.att-list-vertical .ant-list-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.att-list-item {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.att-card {
+    width: 100%;
+}
+
+.att-card--sm {
+    --att-thumb-h: 50px;
+    --att-icon-size: 20px;
+}
+
+.file-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.file-icon {
+    font-size: 18px;
+    color: #1677ff;
+}
+
+.ant-table {
+    margin-top: 10px;
+}
+
+
 @keyframes spin {
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
 }
 
-
-/* ========== Media queries: mobile / tablet ========== */
-@media (max-width: 920px) {
-    .att-list { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-    .att-card { max-width: 100%; }
-    .att-card--sm { --att-thumb-h: 60px; --att-icon-size: 20px; }
-}
-
-@media (max-width: 600px) {
-    .att-list { grid-template-columns: 1fr; padding: 6px; gap: 10px; }
-    .att-card--sm { --att-thumb-h: 56px; --att-icon-size: 18px; --att-pad-x: 6px; }
-    .att-title { font-size: 13px; }
-    .att-sub, .att-uploader { font-size: 11px; }
-}
 
 </style>

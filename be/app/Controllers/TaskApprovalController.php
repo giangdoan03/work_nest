@@ -3,11 +3,19 @@
 namespace App\Controllers;
 
 use App\Enums\TaskStatus;
+use App\Libraries\GoogleDriveService;
 use App\Models\TaskApprovalLogModel;
 use App\Models\TaskApprovalModel;
 use App\Models\TaskModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use Google\Client;
+use Google\Service\Exception;
+use Google_Service_Docs;
+use Google_Service_Docs_BatchUpdateDocumentRequest;
+use Google_Service_Drive;
+use Google_Service_Sheets;
+use Google_Service_Sheets_BatchUpdateValuesRequest;
 use ReflectionException;
 
 class TaskApprovalController extends ResourceController
@@ -887,5 +895,197 @@ class TaskApprovalController extends ResourceController
     {
         return $this->actOnRoster((int)$taskId, 'rejected');
     }
+
+
+    private function extractDriveId(string $value): ?string
+    {
+        $value = trim($value);
+        if ($value === '') return null;
+
+        // Nếu là pure ID (không chứa dấu /)
+        if (!str_contains($value, '/')) {
+            return $value;
+        }
+
+        // Dạng: https://drive.google.com/file/d/ID/view
+        if (preg_match('/\/d\/([^\/]+)/', $value, $m)) {
+            return $m[1];
+        }
+
+        // Dạng: ...?id=ID
+        if (preg_match('/id=([A-Za-z0-9_\-]+)/', $value, $m)) {
+            return $m[1];
+        }
+
+        return null;
+    }
+
+
+
+    /**
+     * @throws Exception
+     */
+    public function checkAndReplaceMarker(): ResponseInterface
+    {
+        $body = $this->getJsonBody();
+        $taskId = (int) ($body['task_id'] ?? 0);
+        $userId = (int) ($body['user_id'] ?? 0);
+
+        if (!$taskId || !$userId)
+            return $this->fail('Missing task_id or user_id');
+
+        // 1) Lấy user
+        $db = db_connect();
+        $user = $db->table('users')->where('id', $userId)->get()->getRowArray();
+        if (!$user) return $this->failNotFound("User not found");
+
+        $marker = trim($user['preferred_marker'] ?? '');
+        if ($marker === '')
+            return $this->respond(['message' => 'No marker']);
+
+        // 2) Lấy document mới nhất của task
+        $file = $db->table('documents')
+            ->where('source_task_id', $taskId)
+            ->orderBy('id', 'DESC')
+            ->get()
+            ->getRowArray();
+
+        if (!$file) return $this->failNotFound('No document for this task');
+
+        // ---- Lấy đúng Google File ID ----
+        $fileId = $file['google_file_id'] ?? null;
+
+        if (!$fileId)
+            return $this->fail('Document missing google_file_id');
+
+        // 3) Replace marker
+        $this->googleReplaceMarker($fileId, $marker);
+
+        return $this->respond(['message' => "Marker '$marker' replaced"]);
+    }
+
+
+
+    private function googleClient(): Client
+    {
+        $g = new GoogleDriveService();
+        return $g->getClient();
+    }
+    /**
+     * @throws Exception
+     */
+    private function googleReplaceMarker(string $fileId, string $marker): void
+    {
+        $client = (new GoogleDriveService())->getClient();
+
+        $drive  = new Google_Service_Drive($client);
+        $docs   = new Google_Service_Docs($client);
+        $sheets = new Google_Service_Sheets($client);
+
+        $file = $drive->files->get($fileId, ['fields' => 'mimeType']);
+        $mime = $file->mimeType;
+
+        if ($mime === "application/vnd.google-apps.document") {
+            $this->replaceInDocs($docs, $fileId, $marker);
+            return;
+        }
+
+        if ($mime === "application/vnd.google-apps.spreadsheet") {
+            $this->replaceInSheets($sheets, $fileId, $marker);
+            return;
+        }
+
+    }
+
+
+    private function replaceInDocs($docs, $fileId, $marker): void
+    {
+        $requests = [
+            [
+                "replaceAllText" => [
+                    "containsText" => [
+                        "text" => $marker,
+                        "matchCase" => true
+                    ],
+                    "replaceText" => "✓"
+                ]
+            ],
+            [
+                "updateTextStyle" => [
+                    "range" => [
+                        "startIndex" => 1,
+                        "endIndex" => 999999
+                    ],
+                    "textStyle" => [
+                        "bold" => true,
+                        "foregroundColor" => [
+                            "color" => ["rgbColor" => ["red" => 1, "green" => 0.85, "blue" => 0]]
+                        ]
+                    ],
+                    "fields" => "bold,foregroundColor"
+                ]
+            ]
+        ];
+
+        $docs->documents->batchUpdate($fileId,
+            new Google_Service_Docs_BatchUpdateDocumentRequest([
+                "requests" => $requests
+            ])
+        );
+    }
+
+    private function col(int $c): string {
+        $letter = "";
+        while ($c > 0) {
+            $mod = ($c - 1) % 26;
+            $letter = chr(65 + $mod) . $letter;
+            $c = intdiv($c - $mod, 26);
+        }
+        return $letter;
+    }
+
+    private function replaceInSheets($sheets, $fileId, $marker): void
+    {
+        $resp = $sheets->spreadsheets->get($fileId);
+        $sheetsList = $resp->getSheets();
+
+        foreach ($sheetsList as $sh) {
+            $title = $sh->properties->title;
+
+            $range = "'$title'!A1:Z999";
+            $values = $sheets->spreadsheets_values->get($fileId, $range)->getValues() ?? [];
+
+            $updates = [];
+            $formats = [];
+
+            foreach ($values as $r => $row) {
+                foreach ($row as $c => $val) {
+                    if ($val === $marker) {
+
+                        $a1 = "'$title'!" . $this->col($c+1) . ($r+1);
+
+                        $updates[] = [
+                            "range" => $a1,
+                            "values" => [["✓"]]
+                        ];
+                    }
+                }
+            }
+
+            if ($updates) {
+                $sheets->spreadsheets_values->batchUpdate(
+                    $fileId,
+                    new Google_Service_Sheets_BatchUpdateValuesRequest([
+                        "valueInputOption" => "RAW",
+                        "data" => $updates
+                    ])
+                );
+            }
+        }
+    }
+
+
+
+
 
 }

@@ -11,6 +11,9 @@ use App\Models\DocumentModel;
 use App\Models\DocumentPermissionModel;
 use App\Helpers\UploadHelper;
 use Exception;
+use App\Libraries\GoogleDriveService;
+use Google\Service\Drive as Google_Service_Drive;
+use Google\Service\Drive\DriveFile as Google_Service_Drive_DriveFile;
 use ReflectionException;
 use stdClass;
 
@@ -1502,14 +1505,97 @@ class DocumentController extends ResourceController
             'signed_url'   => $wpUrl,
         ]);
 
-
-
     }
 
+    /**
+     * @throws \Google\Exception
+     * @throws \Google\Service\Exception
+     */
+    public function convertToPdf(): ResponseInterface
+    {
+        $driveId = $this->request->getGet('drive_id');
+        if (!$driveId) return $this->failValidationErrors("Thiếu drive_id");
 
+        $google = new GoogleDriveService();
+        $client = $google->getClient();
+        $drive  = new Google_Service_Drive($client);
 
+        try {
+            // 1) Lấy metadata
+            $file = $drive->files->get($driveId, ['fields' => 'id,name,mimeType,parents']);
+            $mime = $file->mimeType;
+            $name = pathinfo($file->name, PATHINFO_FILENAME);
 
+            // 2) Nếu không phải Google Docs/Sheets/Slides → convert sang Google dạng trước
+            $googleDocTypes = [
+                "application/vnd.google-apps.document",
+                "application/vnd.google-apps.spreadsheet",
+                "application/vnd.google-apps.presentation"
+            ];
 
+            if (!in_array($mime, $googleDocTypes)) {
+
+                // Tải file gốc
+                $resp = $drive->files->get($driveId, ["alt" => "media"]);
+                $binary = $resp->getBody()->getContents();
+
+                // Xác định convert sang loại nào
+                $convertMime = match(true) {
+                    str_contains($mime, 'word') => "application/vnd.google-apps.document",
+                    str_contains($mime, 'spreadsheet') => "application/vnd.google-apps.spreadsheet",
+                    str_contains($mime, 'presentation') => "application/vnd.google-apps.presentation",
+                    default => null
+                };
+
+                if (!$convertMime) {
+                    return $this->failValidationErrors("File này không thể convert sang Google Doc để xuất PDF.");
+                }
+
+                // Upload lại dạng Google Docs
+                $new = new Google_Service_Drive_DriveFile([
+                    'name' => $name,
+                    'mimeType' => $convertMime
+                ]);
+
+                $googleConverted = $drive->files->create(
+                    $new,
+                    [
+                        "data" => $binary,
+                        "mimeType" => "application/octet-stream",
+                        "uploadType" => "media"
+                    ]
+                );
+
+                $driveId = $googleConverted->id;
+            }
+
+            // 3) Export thành PDF
+            $pdf = $drive->files->export($driveId, "application/pdf", ["alt" => "media"]);
+            $pdfBinary = $pdf->getBody()->getContents();
+
+            // 4) Upload PDF lên Drive
+            $pdfFile = new Google_Service_Drive_DriveFile([
+                "name" => $name . ".pdf"
+            ]);
+
+            $uploaded = $drive->files->create(
+                $pdfFile,
+                [
+                    "data" => $pdfBinary,
+                    "mimeType" => "application/pdf",
+                    "uploadType" => "media"
+                ]
+            );
+
+            return $this->respond([
+                'url' => "https://drive.google.com/file/d/{$uploaded->id}/view",
+                'pdf_id' => $uploaded->id
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->failServerError($e->getMessage());
+        }
+    }
 
 
 }

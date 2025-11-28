@@ -293,7 +293,7 @@
         <!-- Drawer người duyệt -->
         <a-drawer
             v-model:open="openApproverDrawer"
-            title="Người duyệt & ký"
+            title="Danh sách người duyệt"
             placement="right"
             width="420"
             :get-container="false"
@@ -425,9 +425,7 @@
                                         <div class="meta-row">
                                             <span class="dot" :class="statusDotClass(m.status)"></span>
                                             <span class="chip-state">
-                                              {{
-                                                    m.status === 'approved' ? 'Đã duyệt' : m.status === 'rejected' ? 'Đã từ chối' : 'Chờ duyệt'
-                                                }}
+                                              {{m.status === 'approved' ? 'Đã duyệt' : m.status === 'rejected' ? 'Đã từ chối' : 'Chờ duyệt' }}
                                             </span>
                                             <span class="meta-sep">•</span>
                                             <span class="chip-time">{{ metaTime(m) }}</span>
@@ -506,7 +504,7 @@ import {
     adoptTaskFileFromPathAPI,
     getPinnedFilesAPI,
     getTaskFilesAPI,
-    pinTaskFileAPI,
+    pinTaskFileAPI, replaceMarkerInTaskFile,
     unpinTaskFileAPI,
     uploadTaskFileLinkAPI,
 } from '@/api/taskFiles'
@@ -1054,6 +1052,14 @@ async function handleApproveAction(m, status) {
         // If you don't have this wrapper, use axios.post(`/api/tasks/${taskId.value}/roster/merge`, { mentions: payload, mode: 'replace' })
         await persistRosterWithPayload(payload) // implement wrapper below
 
+
+        // 👉 NEW: gọi API xử lý marker trong Google Docs / Sheets
+        try {
+            await replaceMarkerInTaskFile(taskId.value, Number(m.user_id))
+        } catch (err) {
+            console.warn("marker replace failed", err)
+        }
+
         // optimistic update local UI
         mentionsSelected.value = newRoster.map(x => ({...x}))
         // refresh server state
@@ -1293,10 +1299,23 @@ async function createNewComment({keepMentions = false} = {}) {
 
         // ==== 3) Multi-file upload ====
         if (selectedFiles.value.length) {
+
+            // 🚫 CHẶN FILE PDF
+            for (const f of selectedFiles.value) {
+                const ext = f.name.split('.').pop().toLowerCase();
+                if (ext === "pdf") {
+                    uploading.value = false;
+                    message.error("Không được phép upload file PDF.");
+                    return;
+                }
+            }
+
+            // → Nếu hợp lệ thì append
             for (const f of selectedFiles.value) {
                 form.append("attachments[]", f, f.name);
             }
         }
+
 
         // ==== 4) Gửi comment ====
         const res = await createComment(taskId.value, form);

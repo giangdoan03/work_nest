@@ -2,6 +2,7 @@
 
 namespace App\Libraries;
 use App\Models\TaskFileModel;
+use ReflectionException;
 
 class Uploader
 {
@@ -43,6 +44,7 @@ class Uploader
 
     /**
      * Upload file và lưu vào bảng task_files
+     * @throws ReflectionException
      */
     public static function saveTaskAttachment($file, int $taskId, int $userId): bool
     {
