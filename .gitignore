@@ -45,3 +45,4 @@ be/app/Config/Database.php
 *.sln
 *.sw?
 *.tsbuildinfo
+/be/app/ThirdParty/google/token.json
