@@ -62,6 +62,16 @@ $routes->group('api', function ($routes) {
     $routes->post('tasks/(:num)/roster/approve', 'TaskApprovalController::rosterApprove/$1');
     $routes->post('tasks/(:num)/roster/reject',  'TaskApprovalController::rosterReject/$1');
 
+    // Task Signing
+    $routes->post('tasks/sign',               'TaskSignController::sign');
+    $routes->post('tasks/(:num)/sign',        'TaskSignController::signByTask/$1');
+    $routes->get('tasks/(:num)/sign-status',  'TaskSignController::status/$1');
+    $routes->get('tasks/(:num)/sign-history', 'TaskSignController::logs/$1');
+    $routes->post('tasks/(:num)/sign/upload', 'TaskSignController::uploadSigned/$1');
+    $routes->get('tasks/(:num)/sign/download','TaskSignController::downloadSigned/$1');
+
+
+
     $routes->get('tasks/(:num)/pinned-files',    'TaskFileController::pinnedByTask/$1');
     $routes->post('task-files/(:num)/pin',       'TaskFileController::pin/$1');
     $routes->post('task-files/(:num)/unpin',     'TaskFileController::unpin/$1');

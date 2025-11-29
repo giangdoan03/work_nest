@@ -24,13 +24,13 @@ class DocumentApprovalController extends ResourceController
     protected $format = 'json';
 
     /** Approval (session) status */
-    private const A_PENDING  = 'pending';
+    private const A_PENDING = 'pending';
     private const A_APPROVED = 'approved';
     private const A_REJECTED = 'rejected';
 
     /** Step status */
-    private const S_WAITING  = 'waiting';
-    private const S_ACTIVE   = 'active';
+    private const S_WAITING = 'waiting';
+    private const S_ACTIVE = 'active';
     private const S_APPROVED = 'approved';
     private const S_REJECTED = 'rejected';
 
@@ -39,7 +39,7 @@ class DocumentApprovalController extends ResourceController
     /** Kiểm tra có step nào đã hành động (approved/rejected) trong phiên chưa */
     private function hasAnyAction(DocumentApprovalStepModel $stepM, int $approvalId): bool
     {
-        return (bool) $stepM
+        return (bool)$stepM
             ->where('approval_id', $approvalId)
             ->whereIn('status', [self::S_APPROVED, self::S_REJECTED])
             ->first();
@@ -49,7 +49,7 @@ class DocumentApprovalController extends ResourceController
     private function assertOwnerOrAdmin(array $apv, int $userId): ?ResponseInterface
     {
         $isOwner = ((int)$apv['created_by'] === $userId);
-        $isAdmin = (bool) session()->get('is_admin');
+        $isAdmin = (bool)session()->get('is_admin');
         if (!($isOwner || $isAdmin)) {
             return $this->failForbidden('Bạn không có quyền thao tác trên phiên duyệt này.');
         }
@@ -72,10 +72,10 @@ class DocumentApprovalController extends ResourceController
         $userIds = [];
         foreach ($steps as $s) {
             if (!empty($s['approver_id'])) {
-                $userIds[] = (int) $s['approver_id'];
+                $userIds[] = (int)$s['approver_id'];
             }
             if (!empty($s['acted_by'])) {
-                $userIds[] = (int) $s['acted_by'];
+                $userIds[] = (int)$s['acted_by'];
             }
         }
         $userIds = array_values(array_unique(array_filter($userIds)));
@@ -91,15 +91,15 @@ class DocumentApprovalController extends ResourceController
         }
 
         foreach ($steps as &$s) {
-            $uid = (int) ($s['approver_id'] ?? 0);
-            $u   = $map[$uid] ?? null;
-            $s['_approver_name']           = $u['name']          ?? null;
-            $s['_approver_signature_url']  = $u['signature_url'] ?? null;
+            $uid = (int)($s['approver_id'] ?? 0);
+            $u = $map[$uid] ?? null;
+            $s['_approver_name'] = $u['name'] ?? null;
+            $s['_approver_signature_url'] = $u['signature_url'] ?? null;
 
             // (tuỳ chọn) meta người đã hành động
-            $actedId = (int) ($s['acted_by'] ?? 0);
+            $actedId = (int)($s['acted_by'] ?? 0);
             if ($actedId && isset($map[$actedId])) {
-                $s['_acted_by_name']          = $map[$actedId]['name']          ?? null;
+                $s['_acted_by_name'] = $map[$actedId]['name'] ?? null;
                 $s['_acted_by_signature_url'] = $map[$actedId]['signature_url'] ?? null;
             }
         }
@@ -113,7 +113,7 @@ class DocumentApprovalController extends ResourceController
     /** ============ GET /api/document-approvals ============ */
     public function index(): ResponseInterface
     {
-        $docId = (int) ($this->request->getGet('document_id') ?? 0);
+        $docId = (int)($this->request->getGet('document_id') ?? 0);
 
         $approvalM = new DocumentApprovalModel();
         $builder = $approvalM->orderBy('id', 'DESC');
@@ -122,7 +122,7 @@ class DocumentApprovalController extends ResourceController
         $rows = $builder->findAll();
 
         if (!empty($rows)) {
-            $ids   = array_column($rows, 'id');
+            $ids = array_column($rows, 'id');
             $stepM = new DocumentApprovalStepModel();
             $steps = $stepM->whereIn('approval_id', $ids)
                 ->orderBy('sequence', 'ASC')
@@ -147,7 +147,7 @@ class DocumentApprovalController extends ResourceController
     public function show($id = null): ResponseInterface
     {
         $approvalM = new DocumentApprovalModel();
-        $stepM     = new DocumentApprovalStepModel();
+        $stepM = new DocumentApprovalStepModel();
 
         $apv = $approvalM->find((int)$id);
         if (!$apv) return $this->failNotFound('Không tìm thấy phiên duyệt');
@@ -164,15 +164,15 @@ class DocumentApprovalController extends ResourceController
     /** ============ POST /api/document-approvals/send ============ */
     public function send(): ResponseInterface
     {
-        $userId = (int) (session()->get('user_id') ?? 0);
+        $userId = (int)(session()->get('user_id') ?? 0);
         if ($userId <= 0) {
             return $this->failUnauthorized('Chưa đăng nhập');
         }
 
-        $payload     = $this->request->getJSON(true) ?? [];
-        $documentId  = (int) ($payload['document_id'] ?? 0);
+        $payload = $this->request->getJSON(true) ?? [];
+        $documentId = (int)($payload['document_id'] ?? 0);
         $approverIds = array_values(array_unique(array_filter(array_map('intval', $payload['approver_ids'] ?? []))));
-        $note        = trim((string)($payload['note'] ?? ''));
+        $note = trim((string)($payload['note'] ?? ''));
 
         if ($documentId <= 0) {
             return $this->failValidationErrors('Thiếu document_id');
@@ -216,12 +216,12 @@ class DocumentApprovalController extends ResourceController
         try {
             // 3.1) Tạo phiên duyệt
             $apvId = $apvM->insert([
-                'document_id'        => $documentId,
-                'status'             => 'pending',
-                'created_by'         => $userId,
+                'document_id' => $documentId,
+                'status' => 'pending',
+                'created_by' => $userId,
                 'current_step_index' => 0,
-                'note'               => ($note !== '' ? $note : null),
-                'source_type'        => 'document',
+                'note' => ($note !== '' ? $note : null),
+                'source_type' => 'document',
             ], true);
 
             if (!$apvId) {
@@ -229,14 +229,14 @@ class DocumentApprovalController extends ResourceController
             }
 
             // 3.2) Tạo các bước duyệt
-            $seq   = 1;
+            $seq = 1;
             $batch = [];
             foreach ($approverIds as $uid) {
                 $batch[] = [
                     'approval_id' => $apvId,
                     'approver_id' => $uid,
-                    'sequence'    => $seq++,
-                    'status'      => 'waiting',
+                    'sequence' => $seq++,
+                    'status' => 'waiting',
                 ];
             }
             if ($batch) {
@@ -262,17 +262,17 @@ class DocumentApprovalController extends ResourceController
 
             // 4) Đồng bộ trạng thái tài liệu nguồn
             $docM->update($documentId, [
-                'approval_status'   => 'pending',
-                'approval_sent_by'  => $userId,
-                'approval_sent_at'  => date('Y-m-d H:i:s'),
+                'approval_status' => 'pending',
+                'approval_sent_by' => $userId,
+                'approval_sent_at' => date('Y-m-d H:i:s'),
             ]);
 
             // 5) Trả về
             return $this->respondCreated([
-                'id'           => (int)$apvId,
-                'document_id'  => $documentId,
-                'source_type'  => 'document',
-                'status'       => 'pending',
+                'id' => (int)$apvId,
+                'document_id' => $documentId,
+                'source_type' => 'document',
+                'status' => 'pending',
             ]);
 
         } catch (Throwable $e) {
@@ -309,23 +309,23 @@ class DocumentApprovalController extends ResourceController
         }
 
         // ===== NHẬN THÊM DỮ LIỆU TỪ FE =====
-        $payload       = $this->request->getJSON(true) ?? [];
-        $comment       = (string)($payload['comment'] ?? '');
-        $signatureUrl  = isset($payload['signature_url'])   ? (string)$payload['signature_url']   : null;
-        $signedPdfUrl  = isset($payload['signed_pdf_url'])  ? (string)$payload['signed_pdf_url']  : null;
-        $signerName    = (string) (session()->get('user_name') ?? session()->get('name') ?? ''); // tuỳ bạn set session
+        $payload = $this->request->getJSON(true) ?? [];
+        $comment = (string)($payload['comment'] ?? '');
+        $signatureUrl = isset($payload['signature_url']) ? (string)$payload['signature_url'] : null;
+        $signedPdfUrl = isset($payload['signed_pdf_url']) ? (string)$payload['signed_pdf_url'] : null;
+        $signerName = (string)(session()->get('user_name') ?? session()->get('name') ?? ''); // tuỳ bạn set session
 
         $db = $apvM->db;
         $db->transBegin();
         try {
             // 1) Mark step APPROVED
             $stepM->update($step['id'], [
-                'status'         => self::S_APPROVED,
-                'acted_by'       => $userId,
-                'acted_at'       => date('Y-m-d H:i:s'),
-                'comment'        => $comment,
-                'signature_url'  => $signatureUrl,          // ảnh chữ ký FE gửi lên
-                'signed_at'      => date('Y-m-d H:i:s'),    // thời điểm ký
+                'status' => self::S_APPROVED,
+                'acted_by' => $userId,
+                'acted_at' => date('Y-m-d H:i:s'),
+                'comment' => $comment,
+                'signature_url' => $signatureUrl,          // ảnh chữ ký FE gửi lên
+                'signed_at' => date('Y-m-d H:i:s'),    // thời điểm ký
             ]);
 
 
@@ -340,15 +340,15 @@ class DocumentApprovalController extends ResourceController
                 $apvM->update($apv['id'], ['current_step_index' => (int)$next['sequence']]);
             } else {
                 $apvM->update($apv['id'], [
-                    'status'             => self::A_APPROVED,
+                    'status' => self::A_APPROVED,
                     'current_step_index' => (int)$step['sequence'],
-                    'finished_at'        => date('Y-m-d H:i:s'),
+                    'finished_at' => date('Y-m-d H:i:s'),
                 ]);
 
                 // 🔗 Sync status to task_files: chuyển 'approved'
                 $tf = new TaskFileModel();
                 $tf->update((int)$apv['document_id'], [
-                    'status'      => 'approved',
+                    'status' => 'approved',
                     'approved_by' => $userId,                 // hoặc để null và ghi người cuối trong log
                     'approved_at' => date('Y-m-d H:i:s'),
                     // 'review_note' giữ nguyên
@@ -358,15 +358,15 @@ class DocumentApprovalController extends ResourceController
             // 3) Ghi log hành động (ai/bao giờ/chữ ký/link pdf đã ký)
             $logM = new DocumentApprovalLogModel();
             $logM->insert([
-                'approval_id'   => (int)$apv['id'],
-                'document_id'   => (int)$apv['document_id'],
-                'action'        => 'approved',
-                'acted_by'      => $userId,
-                'acted_at'      => date('Y-m-d H:i:s'),
-                'signer_name'   => $signerName ?: null,
+                'approval_id' => (int)$apv['id'],
+                'document_id' => (int)$apv['document_id'],
+                'action' => 'approved',
+                'acted_by' => $userId,
+                'acted_at' => date('Y-m-d H:i:s'),
+                'signer_name' => $signerName ?: null,
                 'signature_url' => $signatureUrl,
-                'signed_pdf_url'=> $signedPdfUrl,
-                'comment'       => $comment,
+                'signed_pdf_url' => $signedPdfUrl,
+                'comment' => $comment,
             ]);
 
             if (!empty($signedPdfUrl)) {
@@ -376,8 +376,8 @@ class DocumentApprovalController extends ResourceController
             $db->transCommit();
 
             // trả về chi tiết mới nhất
-            $apv          = $apvM->find((int)$id);
-            $rawSteps     = $stepM->where('approval_id', (int)$id)->orderBy('sequence', 'ASC')->findAll();
+            $apv = $apvM->find((int)$id);
+            $rawSteps = $stepM->where('approval_id', (int)$id)->orderBy('sequence', 'ASC')->findAll();
             // Nếu bạn có hydrateSteps:
             $apv['steps'] = method_exists($this, 'hydrateSteps') ? $this->hydrateSteps($rawSteps) : $rawSteps;
 
@@ -392,10 +392,10 @@ class DocumentApprovalController extends ResourceController
     /** ============ POST /api/document-approvals/{id}/reject ============ */
     public function reject($id = null): ResponseInterface
     {
-        $userId = (int) session()->get('user_id');
+        $userId = (int)session()->get('user_id');
         if (!$userId) return $this->failUnauthorized('Chưa đăng nhập');
 
-        $apvM  = new DocumentApprovalModel();
+        $apvM = new DocumentApprovalModel();
         $stepM = new DocumentApprovalStepModel();
 
         $apv = $apvM->find((int)$id);
@@ -414,8 +414,8 @@ class DocumentApprovalController extends ResourceController
         }
 
         // ---- Lấy dữ liệu từ FE ----
-        $payload      = $this->request->getJSON(true) ?? [];
-        $comment      = (string)($payload['comment'] ?? '');
+        $payload = $this->request->getJSON(true) ?? [];
+        $comment = (string)($payload['comment'] ?? '');
         $signatureUrl = isset($payload['signature_url']) ? (string)$payload['signature_url'] : null;
 
         $db = $apvM->db;
@@ -423,24 +423,24 @@ class DocumentApprovalController extends ResourceController
         try {
             // 1) Cập nhật step bị từ chối
             $stepM->update($step['id'], [
-                'status'        => self::S_REJECTED,
-                'acted_by'      => $userId,
-                'acted_at'      => date('Y-m-d H:i:s'),
-                'comment'       => $comment,
+                'status' => self::S_REJECTED,
+                'acted_by' => $userId,
+                'acted_at' => date('Y-m-d H:i:s'),
+                'comment' => $comment,
                 'signature_url' => $signatureUrl,
-                'signed_at'     => date('Y-m-d H:i:s'),
+                'signed_at' => date('Y-m-d H:i:s'),
             ]);
 
             // 2) Đánh dấu phiên duyệt là bị từ chối
             $apvM->update($apv['id'], [
-                'status'             => self::A_REJECTED,
+                'status' => self::A_REJECTED,
                 'current_step_index' => (int)$step['sequence'],
-                'finished_at'        => date('Y-m-d H:i:s'),
+                'finished_at' => date('Y-m-d H:i:s'),
             ]);
 
             $tf = new TaskFileModel();
             $tf->update((int)$apv['document_id'], [
-                'status'      => 'rejected',
+                'status' => 'rejected',
                 'approved_by' => null,
                 'approved_at' => null,
                 'review_note' => $comment ?: null,
@@ -450,20 +450,20 @@ class DocumentApprovalController extends ResourceController
             // 3) Ghi log hành động (tùy chọn)
             $logM = new DocumentApprovalLogModel();
             $logM->insert([
-                'approval_id'   => (int)$apv['id'],
-                'document_id'   => (int)$apv['document_id'],
-                'action'        => 'rejected',
-                'acted_by'      => $userId,
-                'acted_at'      => date('Y-m-d H:i:s'),
+                'approval_id' => (int)$apv['id'],
+                'document_id' => (int)$apv['document_id'],
+                'action' => 'rejected',
+                'acted_by' => $userId,
+                'acted_at' => date('Y-m-d H:i:s'),
                 'signature_url' => $signatureUrl,
-                'comment'       => $comment,
+                'comment' => $comment,
             ]);
 
             $db->transCommit();
 
             // 4) Trả lại dữ liệu mới nhất
-            $apv          = $apvM->find((int)$id);
-            $rawSteps     = $stepM->where('approval_id', (int)$id)->orderBy('sequence', 'ASC')->findAll();
+            $apv = $apvM->find((int)$id);
+            $rawSteps = $stepM->where('approval_id', (int)$id)->orderBy('sequence', 'ASC')->findAll();
             $apv['steps'] = $this->hydrateSteps($rawSteps);
             return $this->respond($apv);
         } catch (Throwable $e) {
@@ -476,10 +476,10 @@ class DocumentApprovalController extends ResourceController
     /** ============ POST /api/document-approvals/{id}/update-steps ============ */
     public function updateSteps($id = null): ResponseInterface
     {
-        $userId = (int) session()->get('user_id');
+        $userId = (int)session()->get('user_id');
         if (!$userId) return $this->failUnauthorized('Chưa đăng nhập');
 
-        $apvM  = new DocumentApprovalModel();
+        $apvM = new DocumentApprovalModel();
         $stepM = new DocumentApprovalStepModel();
 
         $apv = $apvM->find((int)$id);
@@ -496,9 +496,9 @@ class DocumentApprovalController extends ResourceController
             return $this->failValidationErrors('Không thể cập nhật tuyến duyệt vì đã có người hành động.');
         }
 
-        $body        = $this->request->getJSON(true) ?? [];
+        $body = $this->request->getJSON(true) ?? [];
         $approverIds = $this->normalizeApprovers($body['approver_ids'] ?? []);
-        $note        = trim((string)($body['note'] ?? ''));
+        $note = trim((string)($body['note'] ?? ''));
 
         if (empty($approverIds)) return $this->failValidationErrors('Thiếu approver_ids');
 
@@ -507,17 +507,17 @@ class DocumentApprovalController extends ResourceController
         try {
             $stepM->where('approval_id', $apv['id'])->delete();
 
-            $seq   = 1;
+            $seq = 1;
             $batch = [];
             foreach ($approverIds as $uid) {
                 $batch[] = [
                     'approval_id' => (int)$apv['id'],
                     'approver_id' => (int)$uid,
-                    'sequence'    => $seq++,
-                    'status'      => self::S_WAITING,
-                    'acted_by'    => null,
-                    'acted_at'    => null,
-                    'comment'     => null,
+                    'sequence' => $seq++,
+                    'status' => self::S_WAITING,
+                    'acted_by' => null,
+                    'acted_at' => null,
+                    'comment' => null,
                 ];
             }
             $stepM->insertBatch($batch);
@@ -529,14 +529,14 @@ class DocumentApprovalController extends ResourceController
                 $stepM->update($first['id'], ['status' => self::S_ACTIVE]);
                 $apvM->update($apv['id'], [
                     'current_step_index' => (int)$first['sequence'],
-                    'note'               => ($note !== '' ? $note : $apv['note']),
+                    'note' => ($note !== '' ? $note : $apv['note']),
                 ]);
             }
 
             $db->transCommit();
 
-            $apv          = $apvM->find((int)$id);
-            $rawSteps     = $stepM->where('approval_id', (int)$id)->orderBy('sequence', 'ASC')->findAll();
+            $apv = $apvM->find((int)$id);
+            $rawSteps = $stepM->where('approval_id', (int)$id)->orderBy('sequence', 'ASC')->findAll();
             $apv['steps'] = $this->hydrateSteps($rawSteps);
             return $this->respond($apv);
         } catch (Throwable $e) {
@@ -548,10 +548,10 @@ class DocumentApprovalController extends ResourceController
     /** ============ DELETE /api/document-approvals/{id} ============ */
     public function delete($id = null)
     {
-        $userId = (int) session()->get('user_id');
+        $userId = (int)session()->get('user_id');
         if (!$userId) return $this->failUnauthorized('Chưa đăng nhập');
 
-        $apvM  = new DocumentApprovalModel();
+        $apvM = new DocumentApprovalModel();
         $stepM = new DocumentApprovalStepModel();
 
         $apv = $apvM->find((int)$id);
@@ -582,7 +582,7 @@ class DocumentApprovalController extends ResourceController
     // ============ GET /api/document-approvals/active-by-document?document_id=123 ============
     public function activeByDocument(): ResponseInterface
     {
-        $docId = (int) ($this->request->getGet('document_id') ?? 0);
+        $docId = (int)($this->request->getGet('document_id') ?? 0);
         if ($docId <= 0) return $this->failValidationErrors('Thiếu document_id');
 
         $apvM = new DocumentApprovalModel();
@@ -612,19 +612,20 @@ class DocumentApprovalController extends ResourceController
             'steps' => $apv['steps'],
         ]]);
     }
+
     public function inboxFiles(): ResponseInterface
     {
         $s = session();
-        $userId = (int) ($s->get('user_id') ?? 0);
+        $userId = (int)($s->get('user_id') ?? 0);
         if ($userId <= 0) {
             return $this->failUnauthorized('Chưa đăng nhập.');
         }
 
         // safe GET handling
-        $page = max(1, (int) ($this->request->getGet('page') ?? 1));
-        $pageSize = min(100, max(5, (int) ($this->request->getGet('pageSize') ?? 20)));
+        $page = max(1, (int)($this->request->getGet('page') ?? 1));
+        $pageSize = min(100, max(5, (int)($this->request->getGet('pageSize') ?? 20)));
         $offset = ($page - 1) * $pageSize;
-        $q = trim((string) ($this->request->getGet('q') ?? ''));
+        $q = trim((string)($this->request->getGet('q') ?? ''));
 
         $db = db_connect();
 
@@ -658,7 +659,7 @@ class DocumentApprovalController extends ResourceController
         // -------------------------
         $cntSql = "SELECT COUNT(*) AS cnt FROM ({$subSql}) t";
         $cntRow = $db->query($cntSql)->getRowArray();
-        $total = (int) ($cntRow['cnt'] ?? 0);
+        $total = (int)($cntRow['cnt'] ?? 0);
 
         if ($total === 0) {
             return $this->respond([
@@ -716,7 +717,6 @@ class DocumentApprovalController extends ResourceController
         d.file_path,
         d.signed_pdf_url,
         d.uploaded_by,
-        d.doc_type,
         u.name AS uploader_name,
         d.created_at AS document_created_at,
         d.updated_at AS document_updated_at
@@ -774,8 +774,7 @@ class DocumentApprovalController extends ResourceController
                 'signed_pdf_url' => $r['signed_pdf_url'] ?? null,
                 'uploaded_by' => $r && isset($r['uploaded_by']) ? (int)$r['uploaded_by'] : null,
                 'uploader_name' => $r['uploader_name'] ?? null,
-                'created_at' => $r['created_at'] ?? null,
-                'doc_type' => $r['doc_type'] ?? null,
+                'created_at' => $r['created_at'] ?? null
             ];
 
             $rawSteps = $stepsByApv[$aid] ?? [];
@@ -783,7 +782,7 @@ class DocumentApprovalController extends ResourceController
             // find current step (first active/pending)
             $currentStepId = null;
             foreach ($rawSteps as $s) {
-                if (in_array(strtolower($s['status']), ['active','pending'], true)) {
+                if (in_array(strtolower($s['status']), ['active', 'pending'], true)) {
                     $currentStepId = (int)$s['id'];
                     break;
                 }
@@ -826,15 +825,15 @@ class DocumentApprovalController extends ResourceController
 
     public function detail($id): ResponseInterface
     {
-        $userId = (int) (session()->get('user_id') ?? 0);
+        $userId = (int)(session()->get('user_id') ?? 0);
         if (!$userId) {
             return $this->failUnauthorized('Chưa đăng nhập.');
         }
 
-        $apvM   = new DocumentApprovalModel();
-        $stepM  = new DocumentApprovalStepModel();
-        $docM   = new DocumentModel();
-        $sigM   = new FileSignatureModel();
+        $apvM = new DocumentApprovalModel();
+        $stepM = new DocumentApprovalStepModel();
+        $docM = new DocumentModel();
+        $sigM = new FileSignatureModel();
 
         $approval = $apvM->find($id);
         if (!$approval) {
@@ -849,10 +848,9 @@ class DocumentApprovalController extends ResourceController
         $steps = $stepM
             ->select(
                 'document_approval_steps.*,
-         u.name            AS approver_name,
-         u.signature_url   AS approver_signature_url,
-         u.preferred_marker'
-            )
+                         u.name            AS approver_name,
+                         u.signature_url   AS approver_signature_url,
+                         u.preferred_marker')
             ->join('users u', 'u.id = document_approval_steps.approver_id', 'left')
             ->where('document_approval_steps.approval_id', $id)
             ->orderBy('document_approval_steps.sequence', 'ASC')
@@ -861,21 +859,20 @@ class DocumentApprovalController extends ResourceController
         $currentStepId = null;
         foreach ($steps as $s) {
             if ($s['status'] === 'pending') {
-                $currentStepId = (int) $s['id'];
+                $currentStepId = (int)$s['id'];
                 break;
             }
         }
 
         // Gắn thêm meta cho FE: is_approved, is_rejected, is_pending, is_current, can_act
         foreach ($steps as &$s) {
-            $status = strtolower((string) $s['status']);
-
-            $s['sequence']     = (int) $s['sequence'];
-            $s['is_approved']  = $status === 'approved';
-            $s['is_rejected']  = $status === 'rejected';
-            $s['is_pending']   = $status === 'pending';
-            $s['is_current']   = ((int) $s['id'] === $currentStepId);
-            $s['can_act']      = $s['is_current'] && ((int) $s['approver_id'] === $userId);
+            $status = strtolower((string)$s['status']);
+            $s['sequence'] = (int)$s['sequence'];
+            $s['is_approved'] = $status === 'approved';
+            $s['is_rejected'] = $status === 'rejected';
+            $s['is_pending'] = $status === 'pending';
+            $s['is_current'] = ((int)$s['id'] === $currentStepId);
+            $s['can_act'] = $s['is_current'] && ((int)$s['approver_id'] === $userId);
         }
         unset($s);
 
@@ -897,32 +894,32 @@ class DocumentApprovalController extends ResourceController
         unset($sig);
 
         return $this->respond([
-            'approval'        => $approval,
-            'document'        => $doc,
-            'steps'           => $steps,
+            'approval' => $approval,
+            'document' => $doc,
+            'steps' => $steps,
             'current_step_id' => $currentStepId,
-            'signatures'      => $signatures,
+            'signatures' => $signatures,
         ]);
     }
 
 
     public function deleteDocument($docId = null): ResponseInterface
     {
-        $userId = (int) (session()->get('user_id') ?? 0);
+        $userId = (int)(session()->get('user_id') ?? 0);
         if ($userId <= 0) {
             return $this->failUnauthorized('Chưa đăng nhập');
         }
 
-        $docId = (int) $docId;
+        $docId = (int)$docId;
         if ($docId <= 0) {
             return $this->failValidationErrors('document_id không hợp lệ');
         }
 
-        $docM  = new DocumentModel();
-        $apvM  = new DocumentApprovalModel();
+        $docM = new DocumentModel();
+        $apvM = new DocumentApprovalModel();
         $stepM = new DocumentApprovalStepModel();
-        $logM  = new DocumentApprovalLogModel();
-        $sigM  = new FileSignatureModel();
+        $logM = new DocumentApprovalLogModel();
+        $sigM = new FileSignatureModel();
 
         // Tìm tất cả phiên approval liên quan tới document_id (có thể rỗng)
         $approvals = $apvM->where('document_id', $docId)->findAll();
@@ -936,7 +933,7 @@ class DocumentApprovalController extends ResourceController
 
         // Quyền: kiểm tra per-approval owner hoặc admin.
         // Nếu document tồn tại, bạn có thể dùng uploaded_by làm kiểm tra thay thế nếu muốn.
-        $isAdmin = (bool) session()->get('is_admin');
+        $isAdmin = (bool)session()->get('is_admin');
 
         foreach ($approvals as $a) {
             $isOwnerApproval = ((int)$a['created_by'] === $userId);
@@ -1020,14 +1017,14 @@ class DocumentApprovalController extends ResourceController
     public function resolvedByMe(): ResponseInterface
     {
         // --- Auth ---
-        $uid = (int) (session()->get('user_id') ?? 0);
-        if (!$uid && function_exists('auth')) $uid = (int) (auth()->id() ?? 0);
-        $uid = $uid ?: (int) $this->request->getGet('user_id');
+        $uid = (int)(session()->get('user_id') ?? 0);
+        if (!$uid && function_exists('auth')) $uid = (int)(auth()->id() ?? 0);
+        $uid = $uid ?: (int)$this->request->getGet('user_id');
         if (!$uid) return $this->failUnauthorized('Chưa đăng nhập');
 
         // --- Paging ---
-        $page   = max(1, (int)$this->request->getGet('page'));
-        $ps     = min(100, max(1, (int)$this->request->getGet('pageSize')));
+        $page = max(1, (int)$this->request->getGet('page'));
+        $ps = min(100, max(1, (int)$this->request->getGet('pageSize')));
         $offset = ($page - 1) * $ps;
 
         $db = db_connect();
@@ -1066,12 +1063,10 @@ class DocumentApprovalController extends ResourceController
             ->join('document_approvals da', 'da.id = das.approval_id', 'inner')
             ->join('task_files tf', 'tf.id = da.document_id AND da.source_type="task_file"', 'left')
             ->join('task_comments c', 'c.id = da.document_id AND da.source_type="comment"', 'left')
-
             ->join('users u_sender_tf', 'u_sender_tf.id = tf.uploaded_by', 'left')
-            ->join('users u_sender_c',  'u_sender_c.id  = c.uploaded_by',  'left')
-            ->join('users u_approver',  'u_approver.id  = das.approver_id','left')
+            ->join('users u_sender_c', 'u_sender_c.id  = c.uploaded_by', 'left')
+            ->join('users u_approver', 'u_approver.id  = das.approver_id', 'left')
             ->join('users u_comment_author', 'u_comment_author.id = c.user_id', 'left')
-
             ->where('das.approver_id', $uid)
             ->where('das.acted_at IS NOT NULL', null, false)
             ->orderBy('das.acted_at', 'DESC')
@@ -1079,7 +1074,7 @@ class DocumentApprovalController extends ResourceController
             ->get()->getResultArray();
 
         $base = base_url();
-        $items = array_map(static function(array $r) use ($base) {
+        $items = array_map(static function (array $r) use ($base) {
             $url = $r['file_path'] ?? null;
             $abs = $url ? (str_starts_with($url, 'http') ? $url : $base . ltrim($url, '/')) : null;
 
@@ -1088,28 +1083,28 @@ class DocumentApprovalController extends ResourceController
 
             return [
                 'approval_id' => (int)$r['approval_id'],
-                'step_id'     => (int)$r['step_id'],
+                'step_id' => (int)$r['step_id'],
                 'document_id' => (int)$r['document_id'],
                 'source_type' => $r['source_type'],
-                'name'        => $r['file_name'] ?: '(Không tên)',
-                'url'         => $abs,
-                'created_at'  => $r['file_created_at'] ?: $r['acted_at'],
+                'name' => $r['file_name'] ?: '(Không tên)',
+                'url' => $abs,
+                'created_at' => $r['file_created_at'] ?: $r['acted_at'],
                 'sender_name' => $r['sender_name'] ?: null,
-                'status'      => $finalStatus,
-                'step_info'   => [
-                    'sequence'      => (int)$r['sequence'],
-                    'status'        => $r['step_status'],
+                'status' => $finalStatus,
+                'step_info' => [
+                    'sequence' => (int)$r['sequence'],
+                    'status' => $r['step_status'],
                     'approver_name' => $r['approver_name'] ?? null,
-                    'acted_at'      => $r['acted_at'],
-                    'comment'       => $r['step_comment'],
+                    'acted_at' => $r['acted_at'],
+                    'comment' => $r['step_comment'],
                 ],
             ];
         }, $rows);
 
         return $this->respond([
-            'items'    => $items,
-            'total'    => (int)$total,
-            'page'     => $page,
+            'items' => $items,
+            'total' => (int)$total,
+            'page' => $page,
             'pageSize' => $ps,
         ]);
     }
@@ -1119,7 +1114,7 @@ class DocumentApprovalController extends ResourceController
         // Gộp payload từ mọi kiểu gửi
         $json = (array)($this->request->getJSON(true) ?? []);
         $post = (array)$this->request->getPost();
-        $get  = (array)$this->request->getGet();
+        $get = (array)$this->request->getGet();
         $payload = array_merge($get, $post, $json);
 
         // Lấy approval_id và action
@@ -1140,7 +1135,6 @@ class DocumentApprovalController extends ResourceController
         }
         return $this->reject($approvalId);
     }
-
 
 
 }

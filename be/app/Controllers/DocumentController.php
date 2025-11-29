@@ -1308,7 +1308,7 @@ class DocumentController extends ResourceController
         // Đọc JSON an toàn, fallback POST
         try {
             $data = $this->request->getJSON(true);
-        } catch (\Throwable $e) {
+        } catch (Throwable) {
             $data = $this->request->getPost();
         }
 

@@ -137,7 +137,9 @@ export function replaceMarkerInTaskFile(taskId, userId) {
     });
 }
 
-
+export const convertDriveToPdfAPI = (driveId) => instance.get('/documents/convert/pdf', {
+    params: {drive_id: driveId}
+})
 
 
 // Export default gộp, tiện import *
@@ -153,7 +155,6 @@ export default {
     getApprovalInboxAPI,
     getApprovalUnreadCountAPI,
     markApprovalReadAPI,
-
     getDocumentsByDepartment,
     sendDocumentApproval,
     approveDocumentApproval,

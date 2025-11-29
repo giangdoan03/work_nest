@@ -15,8 +15,10 @@ use Google_Service_Docs;
 use Google_Service_Docs_BatchUpdateDocumentRequest;
 use Google_Service_Drive;
 use Google_Service_Sheets;
+use Google_Service_Sheets_BatchUpdateSpreadsheetRequest;
 use Google_Service_Sheets_BatchUpdateValuesRequest;
 use ReflectionException;
+use Throwable;
 
 class TaskApprovalController extends ResourceController
 {
@@ -642,7 +644,19 @@ class TaskApprovalController extends ResourceController
         $latestFiles = [];
         if ($latestBatch !== null) {
             $latestFiles = $db->table('documents')
-                ->select('id, title AS file_name, file_path, doc_type, upload_batch, file_size, comment_id, uploaded_by, created_at')
+                ->select('
+                    id,
+                    title AS file_name,
+                    file_path,
+                    upload_batch,
+                    comment_id,
+                    uploaded_by,
+                    created_at,
+                    google_file_id,
+                    signed_pdf_url,
+                    drive_id,
+                    file_size
+                ')
                 ->where('source_task_id', $taskId)
                 ->where('upload_batch', $latestBatch)
                 ->orderBy('id', 'ASC')
@@ -856,7 +870,7 @@ class TaskApprovalController extends ResourceController
             ];
         } else {
             $allApproved = !array_filter($roster, fn($r) => ($r['status'] ?? 'pending') !== 'approved');
-            $taskUpd['approved_at'] = date('Y-m-d H:i:s'); // thêm cột approved_at vào bảng tasks nếu thấy hữu ích
+            $taskUpd['approved_at'] = date('Y-m-d H:i:s');
             $taskUpd = [
                 'progress'     => $this->computeRosterProgress($roster, (string)($task['approval_status'] ?? 'pending')),
                 'approved_at'  => date('Y-m-d H:i:s'),
@@ -923,7 +937,6 @@ class TaskApprovalController extends ResourceController
 
 
     /**
-     * @throws Exception
      */
     public function checkAndReplaceMarker(): ResponseInterface
     {
@@ -934,35 +947,76 @@ class TaskApprovalController extends ResourceController
         if (!$taskId || !$userId)
             return $this->fail('Missing task_id or user_id');
 
-        // 1) Lấy user
         $db = db_connect();
+
+        // 1) Lấy user
         $user = $db->table('users')->where('id', $userId)->get()->getRowArray();
         if (!$user) return $this->failNotFound("User not found");
 
-        $marker = trim($user['preferred_marker'] ?? '');
+        $marker = trim($user['approval_marker'] ?? '');
         if ($marker === '')
             return $this->respond(['message' => 'No marker']);
 
-        // 2) Lấy document mới nhất của task
-        $file = $db->table('documents')
+        // 2) Lấy upload_batch mới nhất
+        $latestBatchRow = $db->table('documents')
+            ->select('upload_batch')
             ->where('source_task_id', $taskId)
-            ->orderBy('id', 'DESC')
+            ->orderBy('upload_batch', 'DESC')
+            ->limit(1)
             ->get()
             ->getRowArray();
 
-        if (!$file) return $this->failNotFound('No document for this task');
+        $latestBatch = $latestBatchRow['upload_batch'] ?? null;
+        if (!$latestBatch)
+            return $this->fail('No upload_batch found');
 
-        // ---- Lấy đúng Google File ID ----
-        $fileId = $file['google_file_id'] ?? null;
+        // 3) Lấy tất cả file trong batch đó
+        $files = $db->table('documents')
+            ->where('source_task_id', $taskId)
+            ->where('upload_batch', $latestBatch)
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->getResultArray();
 
-        if (!$fileId)
-            return $this->fail('Document missing google_file_id');
+        if (empty($files))
+            return $this->failNotFound('No document found in latest batch');
 
-        // 3) Replace marker
-        $this->googleReplaceMarker($fileId, $marker);
+        // 4) Replace marker cho từng file
+        $results = [];
+        foreach ($files as $file) {
+            $fileId = $file['google_file_id'] ?? null;
+            if (!$fileId) {
+                $results[] = [
+                    'file_name' => $file['title'],
+                    'status' => 'skip_no_google_id'
+                ];
+                continue;
+            }
 
-        return $this->respond(['message' => "Marker '$marker' replaced"]);
+            try {
+                $this->googleReplaceMarker($fileId, $marker);
+
+                $results[] = [
+                    'file_name' => $file['title'],
+                    'google_file_id' => $fileId,
+                    'status' => 'replaced'
+                ];
+            } catch (Throwable $e) {
+                $results[] = [
+                    'file_name' => $file['title'],
+                    'google_file_id' => $fileId,
+                    'status' => 'error',
+                    'error' => $e->getMessage()
+                ];
+            }
+        }
+
+        return $this->respond([
+            'message' => "Marker '$marker' replaced for batch $latestBatch",
+            'results' => $results
+        ]);
     }
+
 
 
 
@@ -992,7 +1046,6 @@ class TaskApprovalController extends ResourceController
 
         if ($mime === "application/vnd.google-apps.spreadsheet") {
             $this->replaceInSheets($sheets, $fileId, $marker);
-            return;
         }
 
     }
@@ -1000,21 +1053,35 @@ class TaskApprovalController extends ResourceController
 
     private function replaceInDocs($docs, $fileId, $marker): void
     {
-        $requests = [
-            [
-                "replaceAllText" => [
-                    "containsText" => [
-                        "text" => $marker,
-                        "matchCase" => true
-                    ],
-                    "replaceText" => "✓"
+        // 1) Replace marker -> "✓"
+        $docs->documents->batchUpdate($fileId, new Google_Service_Docs_BatchUpdateDocumentRequest([
+            "requests" => [
+                [
+                    "replaceAllText" => [
+                        "containsText" => [
+                            "text" => $marker,
+                            "matchCase" => true
+                        ],
+                        "replaceText" => "✓"
+                    ]
                 ]
-            ],
-            [
+            ]
+        ]));
+
+        // 2) Lấy lại document để tìm vị trí
+        $document = $docs->documents->get($fileId);
+        $locations = $this->findTextLocations($document);
+
+        if (!$locations) return;
+
+        // 3) Update style đúng vị trí dấu ✓
+        $requests = [];
+        foreach ($locations as $loc) {
+            $requests[] = [
                 "updateTextStyle" => [
                     "range" => [
-                        "startIndex" => 1,
-                        "endIndex" => 999999
+                        "startIndex" => $loc['startIndex'],
+                        "endIndex"   => $loc['endIndex']
                     ],
                     "textStyle" => [
                         "bold" => true,
@@ -1024,15 +1091,42 @@ class TaskApprovalController extends ResourceController
                     ],
                     "fields" => "bold,foregroundColor"
                 ]
-            ]
-        ];
+            ];
+        }
 
-        $docs->documents->batchUpdate($fileId,
-            new Google_Service_Docs_BatchUpdateDocumentRequest([
-                "requests" => $requests
-            ])
+        $docs->documents->batchUpdate(
+            $fileId,
+            new Google_Service_Docs_BatchUpdateDocumentRequest(["requests" => $requests])
         );
     }
+
+
+    private function findTextLocations($document): array
+    {
+        $locations = [];
+        $content = $document->getBody()->getContent();
+
+        foreach ($content as $element) {
+            if (!isset($element['paragraph']['elements'])) continue;
+
+            foreach ($element['paragraph']['elements'] as $e) {
+                if (!isset($e['textRun']['content'])) continue;
+
+                $text = $e['textRun']['content'];
+                $startIndex = $e['startIndex'];
+
+                $offset = strpos($text, "✓");
+                if ($offset !== false) {
+                    $locations[] = [
+                        'startIndex' => $startIndex + $offset,
+                        'endIndex'   => $startIndex + $offset + strlen("✓")
+                    ];
+                }
+            }
+        }
+        return $locations;
+    }
+
 
     private function col(int $c): string {
         $letter = "";
@@ -1055,37 +1149,74 @@ class TaskApprovalController extends ResourceController
             $range = "'$title'!A1:Z999";
             $values = $sheets->spreadsheets_values->get($fileId, $range)->getValues() ?? [];
 
-            $updates = [];
-            $formats = [];
+            $valueUpdates = [];   // update ✓
+            $styleUpdates = [];   // apply bold + color
 
             foreach ($values as $r => $row) {
                 foreach ($row as $c => $val) {
-                    if ($val === $marker) {
+                    if (trim($val) === trim($marker)) {
 
-                        $a1 = "'$title'!" . $this->col($c+1) . ($r+1);
+                        // A1 notation
+                        $cell = $this->col($c + 1) . ($r + 1);
+                        $a1 = "'$title'!$cell";
 
-                        $updates[] = [
+                        // update ✓
+                        $valueUpdates[] = [
                             "range" => $a1,
                             "values" => [["✓"]]
+                        ];
+
+                        // style cho ô đó
+                        $styleUpdates[] = [
+                            "repeatCell" => [
+                                "range" => [
+                                    "sheetId" => $sh->properties->sheetId,
+                                    "startRowIndex" => $r,
+                                    "endRowIndex" => $r + 1,
+                                    "startColumnIndex" => $c,
+                                    "endColumnIndex" => $c + 1,
+                                ],
+                                "cell" => [
+                                    "userEnteredFormat" => [
+                                        "textFormat" => [
+                                            "bold" => true,
+                                            "foregroundColor" => [
+                                                "red" => 1,
+                                                "green" => 0.85,
+                                                "blue" => 0,
+                                            ]
+                                        ]
+                                    ]
+                                ],
+                                "fields" => "userEnteredFormat.textFormat"
+                            ]
                         ];
                     }
                 }
             }
 
-            if ($updates) {
+            // 1️⃣ Update value (✓)
+            if ($valueUpdates) {
                 $sheets->spreadsheets_values->batchUpdate(
                     $fileId,
                     new Google_Service_Sheets_BatchUpdateValuesRequest([
                         "valueInputOption" => "RAW",
-                        "data" => $updates
+                        "data" => $valueUpdates,
+                    ])
+                );
+            }
+
+            // 2️⃣ Update style
+            if ($styleUpdates) {
+                $sheets->spreadsheets->batchUpdate(
+                    $fileId,
+                    new Google_Service_Sheets_BatchUpdateSpreadsheetRequest([
+                        "requests" => $styleUpdates
                     ])
                 );
             }
         }
     }
-
-
-
 
 
 }

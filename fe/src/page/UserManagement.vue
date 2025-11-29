@@ -199,18 +199,19 @@
                             <!-- 👇 NEW -->
                             <a-col :span="12">
                                 <a-form-item
-                                    label="Marker ưu tiên để auto-ký"
-                                    name="preferred_marker"
-                                    extra="Ví dụ: chuky1, chuky2… (chỉ chữ/số, dấu . _ -)"
+                                    label="Marker duyệt tài liệu (Document Marker)"
+                                    name="approval_marker"
+                                    extra="Dùng cho ký duyệt file Google Docs/Sheets"
                                     has-feedback
                                 >
                                     <a-input
-                                        v-model:value="formData.preferred_marker"
-                                        placeholder="VD: chuky2"
+                                        v-model:value="formData.approval_marker"
+                                        placeholder="VD: approve1"
                                         allow-clear
                                     />
                                 </a-form-item>
                             </a-col>
+
                         </a-row>
                     </a-form>
                 </a-tab-pane>
@@ -354,7 +355,8 @@ const formData = ref({
     role_id: undefined,
     password: '',
     confirm_password: '',
-    preferred_marker: ''
+    preferred_marker: '',
+    approval_marker: ''
 })
 
 /* ===== Refs for master data ===== */
@@ -370,12 +372,13 @@ const departmentOptions = computed(() =>
 const columns = [
     { title: 'STT', dataIndex: 'stt', key: 'stt', width: 70, align: 'center', fixed: 'left' },
     { title: '', dataIndex: 'avatar', key: 'avatar', width: 56, align: 'center' },
-    { title: 'Tên người dùng', dataIndex: 'name', key: 'name', sorter: (a,b) => a.name.localeCompare(b.name) },
-    { title: 'Email', dataIndex: 'email', key: 'email', sorter: (a,b) => (a.email||'').localeCompare(b.email||'') },
+    { title: 'Tên người dùng', dataIndex: 'name', key: 'name',  width: 200, sorter: (a,b) => a.name.localeCompare(b.name) },
+    { title: 'Email', dataIndex: 'email', key: 'email', width: 200, sorter: (a,b) => (a.email||'').localeCompare(b.email||'') },
     { title: 'Số điện thoại', dataIndex: 'phone', key: 'phone', width: 140, sorter: (a,b) => (a.phone||'').localeCompare(b.phone||'') },
     { title: 'Phòng ban', dataIndex: 'department_id', key: 'department_id', width: 200 },
     { title: 'Quyền', dataIndex: 'role_id', key: 'role_id', width: 180 },
-    { title: 'Marker ưu tiên', dataIndex: 'preferred_marker', key: 'preferred_marker', width: 140 },
+    { title: 'Marker ký file', dataIndex: 'preferred_marker', key: 'preferred_marker', width: 140 },
+    { title: 'Marker duyệt file', dataIndex: 'approval_marker', key: 'approval_marker', width: 140 },
     { title: 'Chữ ký', dataIndex: 'signature_url', key: 'signature_url', width: 120, align: 'center' },
     { title: 'Hành động', dataIndex: 'action', key: 'action', width: 100, align:'center', fixed: 'right' },
 ]
@@ -441,7 +444,18 @@ const rules = computed(() => {
                     : Promise.reject('Chỉ cho phép chữ/số, dấu chấm, gạch dưới, gạch nối (tối đa 64 ký tự)')
             },
             trigger: ['blur','change']
+        }],
+        approval_marker: [{
+            required: false,
+            validator: (_r, v) => {
+                if (!v) return Promise.resolve()
+                return markerRe.test(v)
+                    ? Promise.resolve()
+                    : Promise.reject('Chỉ cho phép chữ/số, dấu chấm, gạch dưới, gạch nối (tối đa 64 ký tự)')
+            },
+            trigger: ['blur','change']
         }]
+
     }
     if (!selectedUser.value || changePassword.value) {
         base.password = [{
@@ -517,7 +531,8 @@ const showPopupDetail = async (record) => {
         password: '',
         confirm_password: '',
         signature_url: record.signature_url || null,
-        preferred_marker: record.preferred_marker || ''
+        preferred_marker: record.preferred_marker || '',
+        approval_marker: record.approval_marker || ''
     }
     openDrawer.value = true
 }

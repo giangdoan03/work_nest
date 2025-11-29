@@ -58,7 +58,11 @@
                             class="pinned-pill"
                             :title="titleOf(f)"
                         >
-                            <a-tooltip :title="pinTooltip(f)" placement="top">
+                            <a-tooltip placement="top">
+                                <template #title>
+                                    <div v-html="pinTooltip(f)"></div>
+                                </template>
+
                                 <a
                                     :href="displayHrefOf(f)"
                                     target="_blank"
@@ -69,6 +73,7 @@
                                     <span class="pill-text">{{ titleOf(f) }}</span>
                                 </a>
                             </a-tooltip>
+
 
                             <a-tooltip title="Bỏ ghim">
                                 <button
@@ -293,7 +298,7 @@
         <!-- Drawer người duyệt -->
         <a-drawer
             v-model:open="openApproverDrawer"
-            title="Danh sách người duyệt"
+            title="Danh sách người duyệt/ký"
             placement="right"
             width="420"
             :get-container="false"
@@ -401,9 +406,10 @@
                                 placement="top"
                             >
                                 <div class="chip-card" role="button" tabindex="0" :class="{
-                                  'is-approved': m.status === 'approved',
-                                  'is-pending': m.status === 'pending' || m.status === 'processing',
-                                  'is-rejected': m.status === 'rejected',
+                                    'is-approved': m.status === 'approved' && !m.signed,
+                                    'is-pending': m.status === 'pending' || m.status === 'processing',
+                                    'is-rejected': m.status === 'rejected',
+                                    'is-signed': m.signed === true
                                 }"
                                 >
                                     <!-- Avatar -->
@@ -432,39 +438,68 @@
                                         </div>
 
                                         <div class="actions-row">
+                                            <!-- 1️⃣ Các nút DUYỆT – TỪ CHỐI -->
                                             <template v-if="canActOnChip(m)">
-                                                <a-button size="small" type="primary"
-                                                          @click="handleApproveAction(m, 'approved')">
-                                                    <template #icon>
-                                                        <CheckOutlined/>
-                                                    </template>
+                                                <a-button
+                                                    size="small"
+                                                    type="primary"
+                                                    :loading="approveLoading[m.user_id]?.approved"
+                                                    @click="handleApproveAction(m, 'approved')"
+                                                >
+                                                    <template #icon><CheckOutlined /></template>
                                                     Đồng ý
                                                 </a-button>
-                                                <a-button size="small" danger
-                                                          @click="handleApproveAction(m, 'rejected')">
-                                                    <template #icon>
-                                                        <CloseOutlined/>
-                                                    </template>
+
+                                                <a-button
+                                                    size="small"
+                                                    danger
+                                                    :loading="approveLoading[m.user_id]?.rejected"
+                                                    @click="handleApproveAction(m, 'rejected')"
+                                                >
+                                                    <template #icon><CloseOutlined /></template>
                                                     Từ chối
                                                 </a-button>
                                             </template>
 
-                                            <template v-else>
-                                                <a-tag v-if="m.status === 'pending' || m.status === 'processing'"
-                                                       color="blue" style="border-radius:12px">
+                                            <!-- 2️⃣ Nút KÝ (hiện khi duyệt xong toàn bộ) -->
+                                            <a-button
+                                                v-if="rosterAllApproved && m.status === 'approved' && !m.signed && canSign(m)"
+                                                size="small"
+                                                type="primary"
+                                                ghost
+                                                :loading="signLoading[m.user_id]"
+                                                @click="handleSign(m)"
+                                            >
+                                                <template #icon><EditOutlined /></template>
+                                                Ký
+                                            </a-button>
+
+                                            <!-- 3️⃣ Đã ký -->
+                                            <a-tag
+                                                v-else-if="m.signed"
+                                                color="green"
+                                                style="border-radius:12px; font-weight:600"
+                                            >
+                                                ✓ Đã ký
+                                            </a-tag>
+
+                                            <!-- 4️⃣ Hiển thị “Lượt của ...” -->
+                                            <template v-if="!canActOnChip(m) && m.status === 'pending'">
+                                                <a-tag color="blue" style="border-radius:12px">
                                                     Lượt của @{{ m.name }}
                                                 </a-tag>
                                             </template>
 
+                                            <!-- 5️⃣ Nút X xoá -->
                                             <a-button
                                                 v-if="canModifyRoster"
                                                 size="small"
                                                 type="text"
                                                 class="chip-close"
                                                 @click="removeMention(m.user_id)"
-                                            >×
-                                            </a-button>
+                                            >×</a-button>
                                         </div>
+
                                     </div>
                                 </div>
                             </a-tooltip>
@@ -495,7 +530,8 @@ import {
     LinkOutlined,
     PaperClipOutlined,
     SendOutlined,
-    TeamOutlined
+    TeamOutlined,
+    EditOutlined
 } from '@ant-design/icons-vue'
 
 import {createComment, getComments, getTaskRosterAPI, mergeTaskRosterAPI, updateComment,} from '@/api/task'
@@ -526,7 +562,8 @@ dayjs.locale('vi')
 const latestBatch = ref(null)
 const latestFiles = ref([])
 const latestBatchMeta = ref(null)
-
+const approveLoading = ref({})
+const signLoading = ref({})
 // bạn có thể lắng nghe sự kiện @update để cập nhật lại thứ tự
 const handleReorder = async (evt) => {
     if (!canModifyRoster.value) {
@@ -976,100 +1013,90 @@ const pinTooltip = (f) => {
     if (!f) return ''
     const by = nameOfPinnedBy(f)
     const at = formatDate(f.pinned_at || f.updated_at || f.created_at)
-    // nếu muốn hiển thị thêm nguồn:
-    const source = f.source ? `Nguồn: ${f.source}` : ''
-    return `Ghim bởi: ${by}\nThời gian: ${at}${source ? '\n' + source : ''}`
+
+    return `
+        <div>
+            <strong>Ghim bởi:</strong> ${by}<br>
+            <strong>Thời gian:</strong> ${at}
+        </div>
+    `
 }
+
 
 
 /* ===== Roster actions (Drawer) ===== */
 async function handleApproveAction(m, status) {
-    // status phải là 'approved' hoặc 'rejected'
-    if (!['approved', 'rejected'].includes(status)) return
+    if (!['approved', 'rejected'].includes(status)) return;
 
-    // quyền client check
     if (!canActOnChip(m)) {
         message.warning('Bạn không có quyền thực hiện hành động này (chia lượt duyệt)');
         return;
     }
 
-    // note / optional
-    const note = null
+    const uid = m.user_id;
+    if (!approveLoading.value[uid]) approveLoading.value[uid] = {};
+    approveLoading.value[uid][status] = true;
 
     try {
-        // --- Step A: if this is a simple self-approve & not admin, call rosterApprove API (server will update single entry).
-        const myRank = roleRank(currentRoleCode.value)
-        const targetUser = getUserById(Number(m.user_id)) || {}
-        const targetRoleCode = targetUser.role_code || targetUser.role || (m.role === 'sign' ? 'user' : 'user')
+        const myRank = roleRank(currentRoleCode.value);
+        const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
-        // build new local roster state (optimistic update)
-        const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
-        const newRoster = (mentionsSelected.value || []).map(r => ({...r}))
+        // Clone roster
+        const roster = mentionsSelected.value.map(r => ({ ...r }));
 
-        // Find index of target
-        const idx = newRoster.findIndex(x => String(x.user_id) === String(m.user_id))
+        const idx = roster.findIndex(x => String(x.user_id) === String(uid));
         if (idx === -1) {
-            message.error('Không tìm thấy thành viên trong danh sách')
-            return
+            message.error('Không tìm thấy thành viên trong danh sách');
+            return;
         }
 
-        // If approver is normal user approving themselves -> we can call server rosterApprove endpoint
-        // But to support cascade when admin/super_admin approves, we will compute replacement payload and call merge API.
+        const target = roster[idx];
+        target.status = status;
+        target.acted_at = now;
 
-        // Update target
-        newRoster[idx].status = status
-        newRoster[idx].acted_at = now
-        if (!newRoster[idx].note) newRoster[idx].note = null
-
-        // Cascade rules: if approver is admin/super_admin and action is approve -> mark all lower-rank pending as approved
+        // Cascade cho admin
         if (status === 'approved' && myRank >= roleRank('admin')) {
-            for (let i = 0; i < newRoster.length; i++) {
-                const it = newRoster[i]
-                if ((it.status || '').toLowerCase() === 'pending') {
-                    const u = getUserById(Number(it.user_id)) || {}
-                    const rcode = u.role_code || u.role || (it.role === 'sign' ? 'user' : 'user')
-                    const rr = roleRank(rcode)
-                    // only change those with rank < = approver's rank but not higher
-                    if (rr <= myRank) {
-                        // do not change those with rank > myRank (already handled by check)
-                        it.status = 'approved'
-                        it.acted_at = now
-                    }
+            for (const item of roster) {
+                if ((item.status || '').toLowerCase() !== 'pending') continue;
+                const u = getUserById(Number(item.user_id)) || {};
+                const rcode = u.role_code || u.role || 'user';
+                if (roleRank(rcode) <= myRank) {
+                    item.status = 'approved';
+                    item.acted_at = now;
                 }
             }
         }
-        // Normalize payload for merge API: list of { user_id, name, role, status }
-        const payload = newRoster.map(x => ({
+
+        const payload = roster.map(x => ({
             user_id: Number(x.user_id),
             name: x.name,
             role: x.role,
             status: x.status,
             acted_at: x.acted_at || null,
             note: x.note || null,
-        }))
+        }));
 
-        // call mergeTaskRosterAPI(taskId, payload, 'replace') — use your existing wrapper
-        // If you don't have this wrapper, use axios.post(`/api/tasks/${taskId.value}/roster/merge`, { mentions: payload, mode: 'replace' })
-        await persistRosterWithPayload(payload) // implement wrapper below
+        await persistRosterWithPayload(payload);
 
-
-        // 👉 NEW: gọi API xử lý marker trong Google Docs / Sheets
         try {
-            await replaceMarkerInTaskFile(taskId.value, Number(m.user_id))
+            await replaceMarkerInTaskFile(taskId.value, Number(uid));
         } catch (err) {
-            console.warn("marker replace failed", err)
+            console.warn('marker replace failed', err);
         }
 
-        // optimistic update local UI
-        mentionsSelected.value = newRoster.map(x => ({...x}))
-        // refresh server state
-        await syncRosterFromServer()
-        message.success(status === 'approved' ? 'Đã duyệt' : 'Đã từ chối')
+        mentionsSelected.value = roster;
+        await syncRosterFromServer();
+
+        message.success(status === 'approved' ? 'Đã duyệt' : 'Đã từ chối');
     } catch (e) {
-        console.error('handleApproveAction error', e)
-        message.error('Xử lý không thành công')
+        console.error('handleApproveAction error', e);
+        message.error('Xử lý không thành công');
+    } finally {
+        approveLoading.value[uid][status] = false;
     }
 }
+
+
 
 // wrapper: persist roster by replace (calls mergeTaskRosterAPI or direct axios)
 async function persistRosterWithPayload(payload) {
@@ -1666,6 +1693,79 @@ function srcWithBustIfImage(f) {
         : u
 }
 
+const canFinalSign = computed(() => {
+    if (!rosterAllApproved.value) return false;
+
+    const myRank = roleRank(currentRoleCode.value);
+
+    // super_admin hoặc admin được ký
+    if (myRank >= roleRank("admin")) return true;
+
+    // Hoặc chính người cuối cùng trong danh sách được ký
+    const last = [...(mentionsSelected.value || [])].reverse().find(m => true);
+    if (!last) return false;
+
+    return String(last.user_id) === String(currentUserId.value);
+});
+
+function canSign(m) {
+    // chỉ cho ký khi đã duyệt xong toàn bộ
+    if (!rosterAllApproved.value) return false;
+
+    // user chỉ ký nếu họ là người cuối cùng
+    const isMe = String(m.user_id) === String(currentUserId.value);
+
+    // hoặc Admin/Super admin ký thay
+    const myRank = roleRank(currentRoleCode.value);
+    if (myRank >= roleRank("admin")) return true;
+
+    return isMe;
+}
+
+async function handleSign(m) {
+    try {
+        signLoading.value[m.user_id] = true;
+
+        await signTaskForUserAPI(taskId.value, m.user_id);
+
+        // update UI local
+        const item = mentionsSelected.value.find(x => x.user_id == m.user_id);
+        if (item) {
+            item.signed = true;
+            item.signed_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        }
+
+        await syncRosterFromServer();
+
+        message.success("Đã ký văn bản");
+    } catch (err) {
+        console.error(err);
+        message.error("Không ký được");
+    } finally {
+        signLoading.value[m.user_id] = false;
+    }
+}
+
+async function handleFinalSign() {
+    try {
+        signLoading.value["FINAL"] = true;
+
+        await signTaskForUserAPI(taskId.value, currentUserId.value);
+
+        // cập nhật signed toàn task
+        await syncRosterFromServer();
+
+        message.success("Đã ký văn bản thành công");
+    } catch (err) {
+        console.error(err);
+        message.error("Không thể ký văn bản");
+    } finally {
+        signLoading.value["FINAL"] = false;
+    }
+}
+
+
+
 /* ===== lifecycle ===== */
 onMounted(async () => {
     t = setInterval(() => (tick.value = Date.now()), 60_000)
@@ -1985,6 +2085,7 @@ onBeforeUnmount(() => {
 
 .tg-input {
     flex: 1;
+    padding-left: 0;
 }
 
 .tg-input .ant-input {
@@ -2573,7 +2674,7 @@ onBeforeUnmount(() => {
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    padding: 8px 12px;
+    padding: 8px 0;
     border-bottom: 1px solid #eef1f3;
     margin-bottom: 8px;
 }
@@ -2757,6 +2858,14 @@ onBeforeUnmount(() => {
 .lb-dot {
     font-size: 6px;
     color: #94a3b8;
+}
+.chip-card.is-signed {
+    background: #c6f6d5; /* xanh đậm hơn approved */
+    border-color: #38a169;
+}
+
+.dot.signed {
+    background: #2f855a;
 }
 
 /* Responsive */

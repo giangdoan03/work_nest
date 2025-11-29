@@ -39,7 +39,7 @@
         <div class="task-info">
             <a-row :gutter="16">
                 <!-- LEFT: 2/3 — Thông tin nhiệm vụ -->
-                <a-col :span="15" :xs="24" :lg="15" :xl="15">
+                <a-col :span="14" :xs="24" :lg="14" :xl="14">
                     <a-card title="Chi tiết nhiệm vụ" bordered>
                         <div>
                             <a-tabs v-model:activeKey="leftTab" class="task-left-tabs">
@@ -380,7 +380,7 @@
                     </a-card>
                 </a-col>
                 <!-- RIGHT: 1/3 — Subtasks + Thảo luận -->
-                <a-col :span="9" :xs="24" :lg="9" :xl="9" class="right-col">
+                <a-col :span="10" :xs="24" :lg="10" :xl="10" class="right-col">
                     <a-card title="Thảo luận & Phê duyệt" bordered class="discussion-card">
                         <a-row :gutter="[16, 8]">
                             <!-- Cột trái: Thảo luận -->

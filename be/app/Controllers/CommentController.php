@@ -41,19 +41,20 @@ class CommentController extends ResourceController
         // 1) Subquery: files theo comment
         $sub = $db->table('documents')
             ->select("
-            comment_id,
-            JSON_ARRAYAGG(
-                JSON_OBJECT(
-                    'file_name', title,
-                    'file_path', file_path,
-                    'public_url', file_path,
-                    'doc_type', doc_type,
-                    'upload_batch', upload_batch
-                )
-            ) AS files_json
-        ", false)
+                comment_id,
+                JSON_ARRAYAGG(
+                    JSON_OBJECT(
+                        'file_name', title,
+                        'file_path', file_path,
+                        'public_url', file_path,
+                        'upload_batch', upload_batch,
+                        'google_file_id', google_file_id
+                    )
+                ) AS files_json
+            ", false)
             ->where('comment_id IS NOT NULL', null, false)
             ->groupBy('comment_id');
+
 
         $subQuery = $sub->getCompiledSelect();
 
@@ -113,17 +114,14 @@ class CommentController extends ResourceController
         $builderDocs
             ->select(
                 'd.id,
-                 d.title,
-                 d.file_path,
-                 d.file_type,
-                 d.file_size,
-                 d.uploaded_by,
-                 d.created_at,
-                 d.approval_status,
-                 d.approval_sent_by,
-                 d.approval_sent_at,
-                 d.drive_id,
-                 u.name AS uploader_name',
+         d.title,
+         d.file_path,
+         d.file_size,
+         d.uploaded_by,
+         d.created_at,
+         d.approval_status,
+         d.drive_id,
+         u.name AS uploader_name'
             )
             ->join('users u', 'u.id = d.uploaded_by', 'left')
             ->where('d.source_task_id', $task_id)
@@ -217,17 +215,17 @@ class CommentController extends ResourceController
                 'task_id' => $task_id,
                 'file_name' => $fileName,
                 'file_path' => $r['file_path'],
+                'file_size' => $r['file_size'] ?? null,
                 'uploaded_by' => (int)$r['uploaded_by'],
                 'uploader_name' => $r['uploader_name'] ?? null,
                 'created_at' => $r['created_at'],
                 'source' => 'document',
                 'status' => $status,
                 'drive_id' => $r['drive_id'] ?? null,
-                'approval_sent_by' => $r['approval_sent_by'] ?? null,
-                'approval_sent_at' => $r['approval_sent_at'] ?? null,
                 'approval' => $approval,
                 'steps' => $steps,
             ];
+
         }
 
         return $this->respond([
@@ -356,9 +354,9 @@ class CommentController extends ResourceController
             return $this->failValidationErrors(['user_id' => 'Thiếu user_id.']);
         }
 
-        $content      = trim((string)($this->request->getPost('content') ?? ''));
+        $content = trim((string)($this->request->getPost('content') ?? ''));
         $mentionsJson = $this->request->getPost('mentions') ?? null;
-        $docType      = $this->request->getPost('doc_type') === 'external' ? 'external' : 'internal';
+        $docType = $this->request->getPost('doc_type') === 'external' ? 'external' : 'internal';
 
         /** @var UploadedFile[] $files */
         $files = $this->request->getFileMultiple('attachments');
@@ -399,9 +397,9 @@ class CommentController extends ResourceController
 
         $uploadBatch = ((int)($lastBatchRow->upload_batch ?? 0)) + 1;
 
-        $docM      = new DocumentModel();
+        $docM = new DocumentModel();
         $taskFileM = new TaskFileModel();
-        $deptId    = $this->resolveDepartmentId($userId);
+        $deptId = $this->resolveDepartmentId($userId);
 
         $uploadedFiles = [];
 
@@ -441,55 +439,54 @@ class CommentController extends ResourceController
 
             // ===== Insert Document =====
             $docId = $docM->insert([
-                'title'          => $originalName,
-                'file_path'      => $fileUrl,
-                'file_type'      => 'google_drive',
-                'doc_type'       => $docType,
-                'file_size'      => $file->getSize(),
-                'department_id'  => $deptId,
-                'uploaded_by'    => $userId,
-                'visibility'     => 'private',
-                'approval_status'=> 'waiting',
+                'title' => $originalName,
+                'file_path' => $fileUrl,
+                'file_type' => 'google_drive',
+                'doc_type' => $docType,
+                'file_size' => $file->getSize(),
+                'department_id' => $deptId,
+                'uploaded_by' => $userId,
+                'visibility' => 'private',
+                'approval_status' => 'waiting',
                 'source_task_id' => $task_id,
-                'comment_id'     => $commentId,
-                'upload_batch'   => $uploadBatch,
-                'drive_id'        => $driveInfo['drive_id'],
-                'google_file_id'  => $driveInfo['google_file_id'],
-                'created_at'     => date('Y-m-d H:i:s'),
+                'comment_id' => $commentId,
+                'upload_batch' => $uploadBatch,
+                'drive_id' => $driveInfo['drive_id'],
+                'google_file_id' => $driveInfo['google_file_id'],
+                'created_at' => date('Y-m-d H:i:s'),
             ], true);
 
             // ===== Insert task_files =====
             $taskFileM->insert([
-                'task_id'      => $task_id,
-                'document_id'  => $docId,
-                'comment_id'   => $commentId,
-                'file_name'    => $originalName,
-                'title'        => $originalName,
-                'file_path'    => $fileUrl,
-                'uploaded_by'  => $userId,
-                'is_link'      => 0,
-                'status'       => 'uploaded',
-                'is_pinned'    => 1,
-                'pinned_by'    => $userId,
-                'pinned_at'    => date('Y-m-d H:i:s'),
-                'file_type'    => 'google_drive',
-                'file_size'    => $file->getSize(),
+                'task_id' => $task_id,
+                'document_id' => $docId,
+                'comment_id' => $commentId,
+                'file_name' => $originalName,
+                'title' => $originalName,
+                'file_path' => $fileUrl,
+                'uploaded_by' => $userId,
+                'is_link' => 0,
+                'status' => 'uploaded',
+                'is_pinned' => 1,
+                'pinned_by' => $userId,
+                'pinned_at' => date('Y-m-d H:i:s'),
+                'file_type' => 'google_drive',
+                'file_size' => $file->getSize(),
                 'upload_batch' => $uploadBatch,
-                // 🔥 LƯU GOOGLE FILE ID VÀO TASK_FILES
-                'drive_id'        => $driveInfo['drive_id'],
-                'google_file_id'  => $driveInfo['google_file_id'],
-                'created_at'   => date('Y-m-d H:i:s'),
+                'drive_id' => $driveInfo['drive_id'],
+                'google_file_id' => $driveInfo['google_file_id'],
+                'created_at' => date('Y-m-d H:i:s'),
             ]);
 
             // ===== Trả về FE =====
             $uploadedFiles[] = [
-                'file_name'    => $originalName,
-                'file_path'    => $fileUrl,
-                'public_url'   => $fileUrl,
-                'doc_type'     => $docType,
+                'file_name' => $originalName,
+                'file_path' => $fileUrl,
+                'public_url' => $fileUrl,
+                'doc_type' => $docType,
                 'upload_batch' => $uploadBatch,
-                'drive_id'         => $driveInfo['drive_id'],
-                'google_file_id'   => $driveInfo['google_file_id'],
+                'drive_id' => $driveInfo['drive_id'],
+                'google_file_id' => $driveInfo['google_file_id'],
             ];
         }
 
