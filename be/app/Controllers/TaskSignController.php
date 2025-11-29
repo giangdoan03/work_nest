@@ -162,7 +162,7 @@ class TaskSignController extends ResourceController
     //  APPLY SIGNATURE (Docs / Sheets)
     // =====================================================================
 
-    private function applySignature(string $fileId, string $marker)
+    private function applySignature(string $fileId, string $marker): void
     {
         $client = (new GoogleDriveService())->getClient();
 
@@ -174,16 +174,17 @@ class TaskSignController extends ResourceController
         $mime = $file->mimeType;
 
         if ($mime === "application/vnd.google-apps.document") {
-            return $this->signDocs($docs, $fileId, $marker);
+            $this->signDocs($docs, $fileId, $marker);
+            return;
         }
 
         if ($mime === "application/vnd.google-apps.spreadsheet") {
-            return $this->signSheets($sheets, $fileId, $marker);
+            $this->signSheets($sheets, $fileId, $marker);
         }
     }
 
 
-    private function signDocs($docs, $fileId, string $marker)
+    private function signDocs($docs, $fileId, string $marker): void
     {
         // Replace marker → ✓
         $docs->documents->batchUpdate($fileId, new Google_Service_Docs_BatchUpdateDocumentRequest([
@@ -247,7 +248,7 @@ class TaskSignController extends ResourceController
     }
 
 
-    private function signSheets($sheets, $fileId, string $marker)
+    private function signSheets($sheets, $fileId, string $marker): void
     {
         $resp = $sheets->spreadsheets->get($fileId);
         $sheetsList = $resp->getSheets();
