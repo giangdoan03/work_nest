@@ -388,6 +388,9 @@ async function fetchConvertedPdfs() {
             id: f.id,
             title: f.title || 'Converted PDF',
             url: f.file_url,
+            drive_id: f.drive_id,
+            wp_id: f.wp_id,
+            file_url: f.file_url,
             mime: f.mime_type,
             created_at: f.wp_created_at || f.created_at,
         }));
@@ -450,9 +453,6 @@ async function convertToPdf(item) {
 }
 
 
-
-
-
 const normalizeKey = (url = '') => String(url || '').split('?')[0]
 
 // ---------- users ----------
@@ -473,9 +473,6 @@ const nameOfUploader = id => id ? (userMap.value[String(id)]?.name || `#${id}`) 
 const filterUser = (input, option) =>
     option?.label?.toLowerCase?.().includes?.(input.toLowerCase())
 
-// ---------- data compose ----------
-const displayCards = computed(() => taskFileItems.value)
-
 // ---------- fetch task files (comment files + task_files nếu BE đã gộp) ----------
 async function fetchTaskFiles () {
     if (!props.taskId) return
@@ -484,8 +481,6 @@ async function fetchTaskFiles () {
     try {
         const { data } = await getCommentFilesByTask(props.taskId)
         const rows = data?.files || []
-
-        console.log('rows', rows)
 
         const items = []
         for (const r of rows) {
@@ -529,9 +524,6 @@ async function fetchTaskFiles () {
         }
 
         taskFileItems.value = items
-
-        console.log('taskFileItems.value', taskFileItems.value)
-        await refreshApprovalStates()
     } catch (e) {
         message.error((e?.response?.data?.message) || 'Không tải được tài liệu của task.')
     } finally {
@@ -661,6 +653,8 @@ async function submitSendApproval () {
     if (!sendForm.approver_ids.length) {
         return message.error('Vui lòng chọn ít nhất 1 người duyệt.')
     }
+
+    console.log('sendingItem.value', sendingItem.value)
     const item = sendingItem.value
     if (!item) return
     sending.value = true
@@ -681,7 +675,7 @@ async function submitSendApproval () {
 
         // 2) Nguồn document (tài liệu trong tab Tài liệu)
         // comment-files đã trả id là document_id + source: 'document'
-        const docId = Number(item.id)
+        const docId = Number(item.wp_id)
         if (!docId) {
             message.error('Thiếu document_id hợp lệ.')
             return
@@ -908,26 +902,6 @@ async function signPdf(file) {
         signing[file.id] = false;
     }
 }
-
-
-async function getMarkerXY(pdfDoc, pageIndex, sigW, sigH) {
-    const page = await pdfDoc.getPage(pageIndex);
-    const text = await page.getTextContent();
-    const items = text.items || [];
-
-    let best = items.find(i => i.str.toLowerCase().includes("hcn"));
-
-    if (!best) {
-        best = items[0]; // fallback top-left
-    }
-
-    return {
-        x: best.transform[4],
-        y: best.transform[5] - sigH - 10
-    };
-}
-
-
 
 
 defineExpose({ refresh }) // nếu bạn muốn parent gọi được
