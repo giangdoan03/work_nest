@@ -827,7 +827,10 @@ async function finalizeApproval() {
     if (!props.pdfUrl) return message.warning('Không có file PDF để duyệt.')
     if (!pdfDoc.value) return message.warning('Vui lòng chờ PDF tải xong.')
 
+
+
     const target = props.signTarget || null
+    console.log('target', target)
     const normalizeStatus = (v) => {
         try { if (v === null || typeof v === 'undefined') return ''; return String(v).trim().toLowerCase() } catch { return '' }
     }

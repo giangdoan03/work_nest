@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\DocumentApprovalModel;
 use App\Models\DocumentConvertedModel;
 use App\Models\DocumentSettingModel;
+use App\Models\DocumentSignStatusModel;
 use App\Models\TaskFileModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
@@ -724,50 +725,43 @@ class DocumentController extends ResourceController
      */
     public function uploadSignedPdf(): ResponseInterface
     {
-        $userId = (int) (session()->get('user_id') ?? 0);
+        $userId = (int)(session()->get('user_id') ?? 0);
         if (!$userId) {
             return $this->failUnauthorized('Chưa đăng nhập.');
         }
 
         /** @var UploadedFile|null $file */
         $file = $this->request->getFile('file');
-        $approvalId = (int) $this->request->getPost('approval_id');
+        $convertedId = (int)$this->request->getPost('converted_id');
 
         if (!$file || !$file->isValid()) {
             return $this->failValidationErrors('Thiếu file hoặc file không hợp lệ.');
         }
-        if ($approvalId <= 0) {
-            return $this->failValidationErrors('Thiếu approval_id.');
+        if ($convertedId <= 0) {
+            return $this->failValidationErrors('Thiếu converted_id.');
         }
 
-        // Chỉ cho phép PDF (tuỳ bạn, có thể nới lỏng nếu cần)
+        // Only PDF
         $mime = $file->getMimeType() ?: 'application/octet-stream';
         if (!in_array($mime, ['application/pdf', 'application/octet-stream'], true)) {
             return $this->failValidationErrors('File ký phải là PDF.');
         }
 
-        // Cấu hình WP
-        $endpoint = (string) env('WP_MEDIA_ENDPOINT', '');
-        $wpUser   = (string) env('WP_USER', '');
-        $wpPass   = (string) env('WP_APP_PASSWORD', '');
-        if ($endpoint === '' || $wpUser === '' || $wpPass === '') {
-            return $this->failServerError('Thiếu cấu hình WP_MEDIA_ENDPOINT / WP_USER / WP_APP_PASSWORD.');
+        // WP config
+        $endpoint = env('WP_MEDIA_ENDPOINT', '');
+        $wpUser   = env('WP_USER', '');
+        $wpPass   = env('WP_APP_PASSWORD', '');
+
+        if (!$endpoint || !$wpUser || !$wpPass) {
+            return $this->failServerError('Thiếu cấu hình WordPress.');
         }
 
-        $auth = 'Basic ' . base64_encode($wpUser . ':' . $wpPass);
-
-        // Fix content-type nếu fileinfo detect không chuẩn
-        if ($mime === 'application/octet-stream') {
-            $ext = $file->getClientExtension() ?: pathinfo($file->getClientName(), PATHINFO_EXTENSION);
-            if (strtolower($ext) === 'pdf') {
-                $mime = 'application/pdf';
-            }
-        }
+        $auth = 'Basic ' . base64_encode("$wpUser:$wpPass");
 
         $client = Services::curlrequest([
-            'timeout'     => 60,
+            'timeout' => 60,
             'http_errors' => false,
-            'headers'     => [
+            'headers' => [
                 'Authorization' => $auth,
                 'Accept'        => 'application/json',
             ],
@@ -775,96 +769,66 @@ class DocumentController extends ResourceController
 
         $clientName = $file->getClientName() ?: ('signed_' . time() . '.pdf');
 
-        // Upload lên WP
+        // Upload file
         $resp = $client->post($endpoint, [
             'headers' => [
                 'Content-Type'        => $mime,
-                'Content-Disposition' => 'attachment; filename="' . basename($clientName) . '"',
+                'Content-Disposition' => 'attachment; filename="' . $clientName . '"',
             ],
             'body' => file_get_contents($file->getTempName()),
         ]);
 
-        $code = $resp->getStatusCode();
-        $body = (string) $resp->getBody();
-
-        if ($code !== 201) {
-            return $this->failServerError($body ?: ('WordPress trả mã ' . $code));
+        if ($resp->getStatusCode() !== 201) {
+            return $this->failServerError($resp->getBody() ?: 'Upload thất bại.');
         }
 
-        // Parse JSON từ WP
-        $json = json_decode($body, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return $this->failServerError('Decode WP JSON lỗi: ' . json_last_error_msg());
-        }
+        $json = json_decode((string)$resp->getBody(), true);
+        $signedUrl = $json['source_url'] ?? ($json['guid']['rendered'] ?? null);
 
-        $wpUrl = $json['source_url'] ?? ($json['guid']['rendered'] ?? null);
-        if (!$wpUrl) {
-            return $this->failServerError('Upload thành công nhưng thiếu URL media từ WordPress. Body: ' . $body);
+        if (!$signedUrl) {
+            return $this->failServerError('Upload OK nhưng thiếu URL.');
         }
 
         /**
-         * 2) Tìm document_id từ approval
+         * 2) Xác định bước ký của user trong tài liệu này
          */
-        $apvM = new DocumentApprovalModel();
-        $apv  = $apvM->find($approvalId);
+        $signM = new \App\Models\DocumentSignStatusModel();
 
-        if (!$apv) {
-            return $this->failNotFound('Không tìm thấy phiên duyệt.');
+        $step = $signM
+            ->where('converted_id', $convertedId)
+            ->where('user_id', $userId)
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$step) {
+            return $this->failValidationErrors('Bạn không có bước ký đang chờ hoặc đã ký rồi.');
         }
 
-        // ƯU TIÊN: cột document_id (nếu có)
-        $docId = 0;
-        if (!empty($apv['document_id'])) {
-            $docId = (int) $apv['document_id'];
-        }
-
-        // FALLBACK: nếu hệ approval dùng target_type/target_id
-        if ($docId <= 0 && !empty($apv['target_type']) && !empty($apv['target_id'])) {
-            if ($apv['target_type'] === 'document') {
-                $docId = (int) $apv['target_id'];
-            }
-        }
-
-        // Nếu vẫn không ra được docId -> cấu hình/bản ghi đang sai
-        if ($docId <= 0) {
-            log_message('error', 'uploadSignedPdf: approval không gắn tài liệu hợp lệ', [
-                'approval_id' => $approvalId,
-                'apv'         => $apv,
-            ]);
-            return $this->failServerError('Phiên duyệt không gắn với tài liệu hợp lệ.');
-        }
-
-        /**
-         * 3) Lấy document & cập nhật
-         */
-        $docM = new DocumentModel();
-        $doc  = $docM->find($docId);
-
-        if (!$doc) {
-            return $this->failNotFound('Không tìm thấy tài liệu để cập nhật bản ký.');
-        }
-
-        $dataUpdate = [
-            'signed_pdf_url' => $wpUrl,
-            'signed_by'      => $userId,
-            'signed_at'      => date('Y-m-d H:i:s'),
-        ];
-
-        // Nếu vì lý do gì đó $dataUpdate trống -> chặn trước cho chắc
-        if (empty(array_filter($dataUpdate, fn($v) => $v !== null && $v !== ''))) {
-            return $this->failServerError('Không có dữ liệu để cập nhật document.');
-        }
-
-        $docM->update($docId, $dataUpdate);
-
-        return $this->respondCreated([
-            'message'      => 'Đã upload & lưu bản PDF đã ký.',
-            'approval_id'  => $approvalId,
-            'document_id'  => $docId,
-            'signed_url'   => $wpUrl,
+        // Mark signed
+        $signM->update($step['id'], [
+            'status'    => 'signed',
+            'signed_at' => date('Y-m-d H:i:s'),
         ]);
 
+        // Check remaining pending
+        $remaining = $signM
+            ->where('converted_id', $convertedId)
+            ->where('status', 'pending')
+            ->first();
+
+        $isCompleted = !$remaining;
+
+        return $this->respond([
+            'message'      => 'Đã upload & cập nhật chữ ký.',
+            'signed_url'   => $signedUrl,
+            'converted_id' => $convertedId,
+            'step_id'      => $step['id'],
+            'completed'    => $isCompleted,
+        ]);
     }
+
+
+
 
     /**
      * @throws \Google\Exception

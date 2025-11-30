@@ -1,9 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Nov 28, 2025 at 09:31 AM
+-- Generation Time: Nov 30, 2025 at 04:32 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -1207,6 +1207,7 @@ CREATE TABLE `documents` (
   `id` int NOT NULL,
   `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `file_path` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_size` bigint DEFAULT NULL,
   `signed_pdf_url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `signed_by` int UNSIGNED DEFAULT NULL,
   `signed_at` datetime DEFAULT NULL,
@@ -1215,46 +1216,61 @@ CREATE TABLE `documents` (
   `source_task_id` int DEFAULT NULL,
   `comment_id` int DEFAULT NULL,
   `upload_batch` int DEFAULT '1',
-  `drive_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `item_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `visibility` enum('private','public','department','custom') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'private',
-  `file_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `doc_type` enum('internal','external') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'internal',
-  `file_size` int DEFAULT NULL,
+  `drive_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `approval_status` enum('not_sent','pending','approved','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
-  `approval_sent_by` int DEFAULT NULL,
-  `approval_sent_at` datetime DEFAULT NULL,
-  `google_file_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL
+  `google_file_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `documents`
 --
 
-INSERT INTO `documents` (`id`, `title`, `file_path`, `signed_pdf_url`, `signed_by`, `signed_at`, `department_id`, `uploaded_by`, `source_task_id`, `comment_id`, `upload_batch`, `drive_id`, `item_id`, `visibility`, `file_type`, `doc_type`, `file_size`, `created_at`, `updated_at`, `approval_status`, `approval_sent_by`, `approval_sent_at`, `google_file_id`) VALUES
-(21, '2022104_TTr-HCNS_Dexuatgiahanphanmem1office.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/2022104_TTr-HCNS_Dexuatgiahanphanmem1office-3.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/2022104_TTr-HCNS_Dexuatgiahanphanmem1office-5.pdf', 3, '2025-11-14 11:18:48', 3, 1, 277, NULL, 1, NULL, NULL, 'private', 'wp_media', 'internal', 518522, '2025-11-09 11:19:02', '2025-11-14 11:18:48', 'pending', NULL, NULL, NULL),
-(22, 'maudonphuc_khao123.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao123-7.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao123-9.pdf', 3, '2025-11-14 11:17:00', 3, 1, 277, NULL, 1, NULL, NULL, 'private', 'wp_media', 'internal', 128195, '2025-11-09 11:38:39', '2025-11-14 11:17:00', '', NULL, NULL, NULL),
-(23, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/signed-51.pdf', 3, '2025-11-13 10:46:01', 2, 3, 277, NULL, 1, NULL, NULL, 'private', 'wp_media', 'internal', 129360, '2025-11-09 15:52:15', '2025-11-13 10:46:01', 'pending', NULL, NULL, NULL),
-(26, 'maudonphuc_khao.doc', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao.doc', NULL, NULL, NULL, 2, 3, 277, NULL, 1, NULL, NULL, 'private', 'wp_media', 'internal', 33280, '2025-11-10 21:25:35', '2025-11-10 23:12:44', 'pending', NULL, NULL, NULL),
-(35, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-5.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-10.pdf', 3, '2025-11-14 11:17:09', 2, 3, 277, NULL, 1, NULL, NULL, 'private', 'wp_media', 'internal', 129360, '2025-11-13 10:46:57', '2025-11-14 11:17:09', 'pending', NULL, NULL, NULL),
-(36, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-6.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-11.pdf', 3, '2025-11-14 11:17:40', 3, 4, 277, NULL, 1, NULL, NULL, 'private', 'wp_media', 'internal', 129360, '2025-11-13 11:06:17', '2025-11-14 11:17:40', 'pending', NULL, NULL, NULL),
-(37, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-7.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-12.pdf', 3, '2025-11-14 11:53:54', 2, 3, 277, NULL, 1, NULL, NULL, 'private', 'wp_media', 'internal', 129360, '2025-11-13 11:15:22', '2025-11-14 11:53:54', 'pending', NULL, NULL, NULL),
-(108, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1SQOqylVdl3QIvLfzUqJzq3gxhbeQzcwz/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', NULL, NULL, NULL, 2, 3, 277, 108, 2, '1SQOqylVdl3QIvLfzUqJzq3gxhbeQzcwz', NULL, 'private', 'google_drive', 'internal', 318118, '2025-11-28 11:01:09', '2025-11-28 11:01:09', '', NULL, NULL, NULL),
-(109, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1y-lgBSw2TNO2BtF9akDiCXyuf3w_Mx58/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', NULL, NULL, NULL, 2, 3, 277, 109, 3, '1y-lgBSw2TNO2BtF9akDiCXyuf3w_Mx58', NULL, 'private', 'google_drive', 'internal', 95744, '2025-11-28 11:01:23', '2025-11-28 11:01:23', '', NULL, NULL, NULL),
-(110, 'maudonphuc_khao123.pdf', 'https://drive.google.com/file/d/1FZSglITfLnD0Jv8PFjZwANs7kUC79YY1/view?usp=drivesdk', NULL, NULL, NULL, 2, 3, 277, 110, 4, '1FZSglITfLnD0Jv8PFjZwANs7kUC79YY1', NULL, 'private', 'google_drive', 'internal', 128195, '2025-11-28 11:01:36', '2025-11-28 11:01:36', '', NULL, NULL, NULL),
-(111, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1dU-R1KjER-USokqaubDfPW9utx_CgGu5/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', NULL, NULL, NULL, 2, 3, 277, 111, 5, '1dU-R1KjER-USokqaubDfPW9utx_CgGu5', NULL, 'private', 'google_drive', 'internal', 318118, '2025-11-28 11:43:15', '2025-11-28 11:43:15', '', NULL, NULL, NULL),
-(112, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/14FjgoDkODtQ_T1o70YWHVoDw-UIUbFoW/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', NULL, NULL, NULL, 2, 3, 277, 111, 5, '14FjgoDkODtQ_T1o70YWHVoDw-UIUbFoW', NULL, 'private', 'google_drive', 'internal', 95744, '2025-11-28 11:43:17', '2025-11-28 11:43:17', '', NULL, NULL, NULL),
-(120, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1pqG74Ng-oZcF35yo04i3TQ13WBwnIt_hRfg-n5uxWVM/edit', NULL, NULL, NULL, 2, 3, 277, 119, 6, '1pqG74Ng-oZcF35yo04i3TQ13WBwnIt_hRfg-n5uxWVM', NULL, 'private', 'google_drive', 'internal', 318118, '2025-11-28 14:53:04', '2025-11-28 14:53:04', '', NULL, NULL, NULL),
-(121, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1BuKwxBkynCM7CdTBPtFQ-4-4Z16BN-1r-E54779vLT0/edit', NULL, NULL, NULL, 2, 3, 277, 119, 6, '1BuKwxBkynCM7CdTBPtFQ-4-4Z16BN-1r-E54779vLT0', NULL, 'private', 'google_drive', 'internal', 95744, '2025-11-28 14:53:12', '2025-11-28 14:53:12', '', NULL, NULL, NULL),
-(122, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1dsjNqFWoAKPkW31yapg1cFSnMcfjTkJ4FoUAWnn0gq0/edit', NULL, NULL, NULL, 2, 3, 277, 124, 7, '1dsjNqFWoAKPkW31yapg1cFSnMcfjTkJ4FoUAWnn0gq0', NULL, 'private', 'google_drive', 'internal', 95744, '2025-11-28 16:10:35', '2025-11-28 16:10:35', '', NULL, NULL, NULL),
-(123, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1wm6LZimG_uOWG4FEvF-wSVm5HAeywNPHKwONLzX3ZWk/edit', NULL, NULL, NULL, 2, 3, 277, 125, 8, '1wm6LZimG_uOWG4FEvF-wSVm5HAeywNPHKwONLzX3ZWk', NULL, 'private', 'google_drive', 'internal', 95744, '2025-11-28 16:13:19', '2025-11-28 16:13:19', '', NULL, NULL, NULL),
-(124, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1gl7dVyyvuSJIKtVOhIzHiaFUJtTVdFWVqwGL3O2TUaI/edit', NULL, NULL, NULL, 2, 3, 277, 125, 8, '1gl7dVyyvuSJIKtVOhIzHiaFUJtTVdFWVqwGL3O2TUaI', NULL, 'private', 'google_drive', 'internal', 318118, '2025-11-28 16:13:26', '2025-11-28 16:13:26', '', NULL, NULL, NULL),
-(125, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1_7nXjU4jqIzq0tOWwxcR6kgPuT0uw9KWZ2iW-ov7E_8/edit', NULL, NULL, NULL, 2, 3, 277, 126, 9, '1_7nXjU4jqIzq0tOWwxcR6kgPuT0uw9KWZ2iW-ov7E_8', NULL, 'private', 'google_drive', 'internal', 95744, '2025-11-28 16:18:46', '2025-11-28 16:18:46', '', NULL, NULL, NULL),
-(126, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1xUVDP0tkNZXrnZX9lZpA4-pcLh7eLf-7iSlnZ90gehI/edit', NULL, NULL, NULL, 2, 3, 277, 126, 9, '1xUVDP0tkNZXrnZX9lZpA4-pcLh7eLf-7iSlnZ90gehI', NULL, 'private', 'google_drive', 'internal', 318118, '2025-11-28 16:18:52', '2025-11-28 16:18:52', '', NULL, NULL, NULL),
-(127, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1XRvAm6suaG1iyzUzCO5ZLUW3FvGzdxxDP0LODQpSJW0/edit', NULL, NULL, NULL, 2, 3, 277, 127, 10, '1XRvAm6suaG1iyzUzCO5ZLUW3FvGzdxxDP0LODQpSJW0', NULL, 'private', 'google_drive', 'internal', 95744, '2025-11-28 16:23:41', '2025-11-28 16:23:41', '', NULL, NULL, '1XRvAm6suaG1iyzUzCO5ZLUW3FvGzdxxDP0LODQpSJW0'),
-(128, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1XTfUZ2fY6EE6fp2BpxmuSN4suFnftob2Miyxi_1ZmCc/edit', NULL, NULL, NULL, 2, 3, 277, 127, 10, '1XTfUZ2fY6EE6fp2BpxmuSN4suFnftob2Miyxi_1ZmCc', NULL, 'private', 'google_drive', 'internal', 318118, '2025-11-28 16:23:48', '2025-11-28 16:23:48', '', NULL, NULL, '1XTfUZ2fY6EE6fp2BpxmuSN4suFnftob2Miyxi_1ZmCc');
+INSERT INTO `documents` (`id`, `title`, `file_path`, `file_size`, `signed_pdf_url`, `signed_by`, `signed_at`, `department_id`, `uploaded_by`, `source_task_id`, `comment_id`, `upload_batch`, `drive_id`, `created_at`, `updated_at`, `approval_status`, `google_file_id`) VALUES
+(37, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-7.pdf', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/to_trinh_09_11_2025-16.pdf', 3, '2025-11-30 12:58:22', 2, 3, 277, NULL, 1, NULL, '2025-11-13 11:15:22', '2025-11-30 12:58:22', 'pending', NULL),
+(108, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1SQOqylVdl3QIvLfzUqJzq3gxhbeQzcwz/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', NULL, NULL, NULL, NULL, 2, 3, 277, 108, 2, '1SQOqylVdl3QIvLfzUqJzq3gxhbeQzcwz', '2025-11-28 11:01:09', '2025-11-28 11:01:09', '', NULL),
+(109, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1y-lgBSw2TNO2BtF9akDiCXyuf3w_Mx58/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', NULL, NULL, NULL, NULL, 2, 3, 277, 109, 3, '1y-lgBSw2TNO2BtF9akDiCXyuf3w_Mx58', '2025-11-28 11:01:23', '2025-11-28 11:01:23', '', NULL),
+(110, 'maudonphuc_khao123.pdf', 'https://drive.google.com/file/d/1FZSglITfLnD0Jv8PFjZwANs7kUC79YY1/view?usp=drivesdk', NULL, NULL, NULL, NULL, 2, 3, 277, 110, 4, '1FZSglITfLnD0Jv8PFjZwANs7kUC79YY1', '2025-11-28 11:01:36', '2025-11-29 09:09:24', 'pending', NULL),
+(177, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1sVv0dYAyx2HycaI7DxJ06HAgCUdtEBSCuQeqPkJCppc/edit', 316358, NULL, NULL, NULL, 2, 3, 277, 169, 5, '1sVv0dYAyx2HycaI7DxJ06HAgCUdtEBSCuQeqPkJCppc', '2025-11-30 11:41:06', '2025-11-30 11:41:06', '', '1sVv0dYAyx2HycaI7DxJ06HAgCUdtEBSCuQeqPkJCppc'),
+(178, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1EA2-yIQiwHvQVNKidVkOgdI9fbvXyx9SRFlUQIsSao4/edit', 315365, NULL, NULL, NULL, 2, 3, 277, 170, 6, '1EA2-yIQiwHvQVNKidVkOgdI9fbvXyx9SRFlUQIsSao4', '2025-11-30 11:41:53', '2025-11-30 11:41:53', '', '1EA2-yIQiwHvQVNKidVkOgdI9fbvXyx9SRFlUQIsSao4'),
+(179, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-1.pdf', 126127, NULL, NULL, NULL, 1, 3, 277, NULL, NULL, '1EA2-yIQiwHvQVNKidVkOgdI9fbvXyx9SRFlUQIsSao4', '2025-11-30 19:20:03', '2025-11-30 19:20:03', 'pending', NULL),
+(180, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1biar1qStbXNLBUfxcHpkYfPGfgNSIK3pwoeUWdKIezA/edit', 315365, NULL, NULL, NULL, 2, 3, 277, 171, 7, '1biar1qStbXNLBUfxcHpkYfPGfgNSIK3pwoeUWdKIezA', '2025-11-30 19:21:00', '2025-11-30 19:21:00', '', '1biar1qStbXNLBUfxcHpkYfPGfgNSIK3pwoeUWdKIezA');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `documents_converted`
+--
+
+CREATE TABLE `documents_converted` (
+  `id` int UNSIGNED NOT NULL,
+  `wp_id` int NOT NULL,
+  `file_url` varchar(500) NOT NULL,
+  `mime_type` varchar(100) DEFAULT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `size` int DEFAULT NULL,
+  `drive_id` varchar(255) DEFAULT NULL,
+  `task_file_id` int DEFAULT NULL,
+  `uploaded_by` int DEFAULT NULL,
+  `uploader_name` varchar(255) DEFAULT NULL,
+  `wp_created_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `documents_converted`
+--
+
+INSERT INTO `documents_converted` (`id`, `wp_id`, `file_url`, `mime_type`, `title`, `size`, `drive_id`, `task_file_id`, `uploaded_by`, `uploader_name`, `wp_created_at`, `created_at`, `updated_at`) VALUES
+(1, 372, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/converted_1764497869141.pdf', 'application/pdf', 'Converted PDF', 126127, '1EA2-yIQiwHvQVNKidVkOgdI9fbvXyx9SRFlUQIsSao4', 178, NULL, NULL, '2025-11-30 10:17:54', '2025-11-30 17:17:55', '2025-11-30 17:17:55'),
+(2, 373, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/converted_1764498202045.pdf', 'application/pdf', 'Converted PDF', 126127, '1EA2-yIQiwHvQVNKidVkOgdI9fbvXyx9SRFlUQIsSao4', 178, NULL, NULL, '2025-11-30 10:23:24', '2025-11-30 17:23:25', '2025-11-30 17:23:25'),
+(3, 374, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/converted_1764498313282.pdf', 'application/pdf', 'Converted PDF', 126127, '1EA2-yIQiwHvQVNKidVkOgdI9fbvXyx9SRFlUQIsSao4', 277, NULL, NULL, '2025-11-30 10:25:16', '2025-11-30 17:25:17', '2025-11-30 17:25:17'),
+(4, 375, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/converted_1764498547746.pdf', 'application/pdf', 'Converted PDF', 126127, '1EA2-yIQiwHvQVNKidVkOgdI9fbvXyx9SRFlUQIsSao4', 277, 3, 'Đinh Văn Vịnh', '2025-11-30 10:29:10', '2025-11-30 17:29:11', '2025-11-30 17:29:11'),
+(5, 376, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', 'application/pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 126127, '1EA2-yIQiwHvQVNKidVkOgdI9fbvXyx9SRFlUQIsSao4', 277, 3, 'Đinh Văn Vịnh', '2025-11-30 10:41:02', '2025-11-30 17:41:03', '2025-11-30 17:41:03'),
+(6, 377, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-1.pdf', 'application/pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 126127, '1EA2-yIQiwHvQVNKidVkOgdI9fbvXyx9SRFlUQIsSao4', 277, 3, 'Đinh Văn Vịnh', '2025-11-30 12:20:01', '2025-11-30 19:20:03', '2025-11-30 19:20:03'),
+(7, 378, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-2.pdf', 'application/pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 126127, '1biar1qStbXNLBUfxcHpkYfPGfgNSIK3pwoeUWdKIezA', 277, 3, 'Đinh Văn Vịnh', '2025-11-30 12:22:39', '2025-11-30 19:22:40', '2025-11-30 19:22:40');
 
 -- --------------------------------------------------------
 
@@ -1287,7 +1303,8 @@ INSERT INTO `document_approvals` (`id`, `document_id`, `source_type`, `status`, 
 (22, 26, 'document', 'pending', 3, 1, NULL, NULL, NULL, '2025-11-10 23:12:44', '2025-11-10 23:12:44'),
 (23, 35, 'document', 'pending', 3, 3, NULL, NULL, NULL, '2025-11-13 10:47:10', '2025-11-14 11:17:09'),
 (24, 36, 'document', 'pending', 4, 3, NULL, NULL, NULL, '2025-11-13 11:06:45', '2025-11-14 11:17:40'),
-(25, 37, 'document', 'pending', 3, 3, NULL, NULL, NULL, '2025-11-13 11:15:32', '2025-11-14 09:49:51');
+(25, 37, 'document', 'pending', 3, 3, NULL, NULL, NULL, '2025-11-13 11:15:32', '2025-11-14 09:49:51'),
+(26, 110, 'document', 'pending', 3, 1, NULL, NULL, NULL, '2025-11-29 09:09:24', '2025-11-29 09:09:24');
 
 -- --------------------------------------------------------
 
@@ -1380,7 +1397,10 @@ INSERT INTO `document_approval_steps` (`id`, `approval_id`, `approver_id`, `sequ
 (78, 25, 1, 1, 'approved', 1, '2025-11-13 13:49:11', '', NULL, '2025-11-13 13:49:11', NULL, NULL, NULL, '2025-11-13 11:15:32', '2025-11-13 13:49:11'),
 (79, 25, 3, 2, 'approved', 3, '2025-11-14 09:49:51', '', NULL, '2025-11-14 09:49:51', NULL, NULL, NULL, '2025-11-13 11:15:32', '2025-11-14 09:49:51'),
 (80, 25, 4, 3, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-13 11:15:32', '2025-11-14 09:49:51'),
-(81, 25, 5, 4, 'waiting', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-13 11:15:32', '2025-11-13 11:15:32');
+(81, 25, 5, 4, 'waiting', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-13 11:15:32', '2025-11-13 11:15:32'),
+(82, 26, 3, 1, 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-29 09:09:24', '2025-11-29 09:09:24'),
+(83, 26, 4, 2, 'waiting', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-29 09:09:24', '2025-11-29 09:09:24'),
+(84, 26, 5, 3, 'waiting', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-29 09:09:24', '2025-11-29 09:09:24');
 
 -- --------------------------------------------------------
 
@@ -1428,6 +1448,42 @@ INSERT INTO `document_settings` (`id`, `key`, `value`, `updated_at`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `document_sign_status`
+--
+
+CREATE TABLE `document_sign_status` (
+  `id` int NOT NULL,
+  `converted_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `user_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `order_index` int NOT NULL DEFAULT '1',
+  `status` enum('pending','signed') COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
+  `signed_at` datetime DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `document_sign_status`
+--
+
+INSERT INTO `document_sign_status` (`id`, `converted_id`, `user_id`, `user_name`, `order_index`, `status`, `signed_at`, `created_at`) VALUES
+(1, 378, 3, NULL, 1, 'pending', NULL, '2025-11-30 12:34:35'),
+(2, 378, 1, NULL, 1, 'pending', NULL, '2025-11-30 12:39:22'),
+(3, 378, 3, NULL, 2, 'pending', NULL, '2025-11-30 12:39:22'),
+(4, 378, 4, NULL, 3, 'pending', NULL, '2025-11-30 12:39:22'),
+(5, 378, 5, NULL, 4, 'pending', NULL, '2025-11-30 12:39:22'),
+(14, 6, 1, NULL, 1, 'pending', NULL, '2025-11-30 13:17:12'),
+(15, 6, 3, NULL, 2, '', NULL, '2025-11-30 13:17:12'),
+(16, 6, 4, NULL, 3, '', NULL, '2025-11-30 13:17:12'),
+(17, 5, 3, NULL, 1, 'signed', '2025-11-30 23:29:23', '2025-11-30 13:18:22'),
+(19, 7, 1, NULL, 1, 'pending', NULL, '2025-11-30 13:22:06'),
+(20, 7, 4, NULL, 2, '', NULL, '2025-11-30 13:22:06'),
+(21, 7, 5, NULL, 3, '', NULL, '2025-11-30 13:22:06'),
+(22, 7, 7, NULL, 4, '', NULL, '2025-11-30 13:22:06');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `file_signatures`
 --
 
@@ -1453,7 +1509,8 @@ CREATE TABLE `file_signatures` (
 --
 
 INSERT INTO `file_signatures` (`id`, `task_file_id`, `approval_id`, `document_id`, `signed_file_name`, `signed_file_path`, `signed_file_size`, `signed_mime`, `signed_by`, `signed_at`, `status`, `note`, `created_at`, `updated_at`) VALUES
-(9, 277, 23, 35, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/signed-58.pdf', NULL, NULL, 4, '2025-11-13 16:50:19', 'approved', 'Duyệt bởi Ta Quy Tho lúc 13/11/2025, 23:50:18', '2025-11-13 23:50:19', '2025-11-13 23:50:19');
+(9, 277, 23, 35, 'to_trinh_09_11_2025.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/signed-58.pdf', NULL, NULL, 4, '2025-11-13 16:50:19', 'approved', 'Duyệt bởi Ta Quy Tho lúc 13/11/2025, 23:50:18', '2025-11-13 23:50:19', '2025-11-13 23:50:19'),
+(10, 17, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, NULL, NULL, 3, '2025-11-30 14:54:26', 'approved', 'Duyệt bởi Dinh Van Vinh lúc 30/11/2025, 21:54:25', '2025-11-30 21:54:26', '2025-11-30 21:54:26');
 
 -- --------------------------------------------------------
 
@@ -2002,7 +2059,7 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (274, 248, 'việc chắt mới', '3423424242', 19, NULL, NULL, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', NULL, 'bidding', 40, 1, 363, 3, 'low', 0, '2025-09-07 07:39:40', '2025-09-07 07:39:40', 1, NULL, 0, 1, 2, 0, NULL, '[]'),
 (275, 248, '3424234', '3424224', 5, NULL, NULL, 5, '2025-09-07', '2025-10-31', 'doing', 'pending', NULL, 'bidding', 40, 7, 369, 3, 'low', 0, '2025-09-07 09:24:03', '2025-09-07 09:24:03', 1, NULL, 0, 1, 2, 0, NULL, '[]'),
 (276, 275, '4324324324', '4324324324', 5, NULL, NULL, 19, '2025-09-07', '2025-10-31', 'doing', 'pending', NULL, 'bidding', 40, 7, 369, 3, 'low', 0, '2025-09-07 09:24:36', '2025-09-07 09:24:36', 1, NULL, 0, 1, 2, 0, NULL, '[]'),
-(277, NULL, '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', 5, 3, 8, 4, '2025-09-01', '2025-09-01', 'done', 'approved', '2025-11-12 15:41:08', 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:12:22', '2025-11-28 09:27:53', 1, '[3, 5]', 1, 1, 3, 100, NULL, '[{\"name\": \"Trần Thị Hiền\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 15, \"acted_at\": \"2025-11-28 09:13:53\", \"added_at\": \"2025-11-28 16:10:10\"}, {\"name\": \"Nhạc Quang Huy\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 7, \"acted_at\": \"2025-11-28 09:24:41\", \"added_at\": \"2025-11-28 16:24:36\"}, {\"name\": \"Nguyễn Thị Hạnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 14, \"acted_at\": \"2025-11-28 09:27:17\", \"added_at\": \"2025-11-28 16:27:10\"}, {\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 3, \"acted_at\": \"2025-11-28 09:27:53\", \"added_at\": \"2025-11-28 16:27:49\"}]'),
+(277, NULL, '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', 5, 3, 8, 4, '2025-09-01', '2025-09-01', 'done', 'approved', '2025-11-12 15:41:08', 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:12:22', '2025-11-30 03:36:34', 1, '[3, 5]', 1, 1, 3, 100, NULL, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 3, \"acted_at\": \"2025-11-30 03:36:34\", \"added_at\": \"2025-11-30 10:36:20\"}]'),
 (278, NULL, '2. Lấy kế hoạch SCL', '2. Lấy kế hoạch SCL', 5, NULL, NULL, 4, '2025-09-02', '2025-09-02', 'request_approval', 'pending', NULL, 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:13:44', '2025-10-26 15:11:29', 1, '[4, 5, 6]', 1, 1, 3, 0, NULL, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-10-26 22:10:48\"}, {\"name\": \"Nguyễn Thị Ngọc Anh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 12, \"acted_at\": null, \"added_at\": \"2025-10-26 22:11:29\"}]'),
 (279, 277, '1.1. Lấy kế hoạch SXKD lần 1', '1.1. Lấy kế hoạch SXKD lần 1', 5, NULL, NULL, 4, '2025-09-02', '2025-09-03', 'request_approval', 'pending', NULL, 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:15:48', '2025-10-26 15:09:07', 1, '[1]', 1, 1, 3, 75, NULL, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-10-26 22:08:29\"}, {\"name\": \"Nguyễn Cảnh Hợp\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 1, \"acted_at\": null, \"added_at\": \"2025-10-26 22:09:07\"}]'),
 (280, 277, '1.2. Lấy kế hoạch SXKD lần 2', '1.2. Lấy kế hoạch SXKD lần 2', 5, NULL, NULL, 4, '2025-09-04', '2025-09-04', '', 'pending', NULL, 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-14 21:20:54', '2025-10-26 15:10:33', 1, '[4, 5]', 1, 1, 3, 0, NULL, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-10-26 22:09:26\"}, {\"name\": \"Tạ Quý Thọ\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 4, \"acted_at\": null, \"added_at\": \"2025-10-26 22:10:33\"}]'),
@@ -2267,7 +2324,51 @@ INSERT INTO `task_comments` (`id`, `task_id`, `user_id`, `comment_id`, `content`
 (124, 277, 3, NULL, '', '2025-11-28 09:10:25', '2025-11-28 09:10:25', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (125, 277, 3, NULL, '', '2025-11-28 09:13:12', '2025-11-28 09:13:12', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (126, 277, 3, NULL, '', '2025-11-28 09:18:38', '2025-11-28 09:18:38', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(127, 277, 3, NULL, '', '2025-11-28 09:23:34', '2025-11-28 09:23:34', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+(127, 277, 3, NULL, '', '2025-11-28 09:23:34', '2025-11-28 09:23:34', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(128, 277, 3, NULL, '', '2025-11-29 03:26:13', '2025-11-29 03:26:13', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(129, 277, 3, NULL, '', '2025-11-29 03:26:57', '2025-11-29 03:26:57', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(130, 277, 3, NULL, '', '2025-11-29 03:34:35', '2025-11-29 03:34:35', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(131, 277, 3, NULL, '', '2025-11-29 03:35:06', '2025-11-29 03:35:06', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(132, 277, 3, NULL, '', '2025-11-29 03:36:08', '2025-11-29 03:36:08', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(133, 277, 3, NULL, '', '2025-11-29 03:36:57', '2025-11-29 03:36:57', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(134, 277, 3, NULL, '', '2025-11-29 03:38:02', '2025-11-29 03:38:02', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(135, 277, 3, NULL, '', '2025-11-29 03:38:26', '2025-11-29 03:38:26', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(136, 277, 3, NULL, '', '2025-11-29 03:38:46', '2025-11-29 03:38:46', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(137, 277, 3, NULL, '', '2025-11-29 03:39:35', '2025-11-29 03:39:35', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(138, 277, 3, NULL, '', '2025-11-29 04:10:57', '2025-11-29 04:10:57', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(139, 277, 3, NULL, '@Đinh Văn Vịnh', '2025-11-29 04:11:36', '2025-11-29 04:11:36', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(140, 277, 3, NULL, '', '2025-11-29 04:41:13', '2025-11-29 04:41:13', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(141, 277, 3, NULL, '', '2025-11-29 07:02:06', '2025-11-29 07:02:06', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(142, 277, 3, NULL, '', '2025-11-29 07:05:14', '2025-11-29 07:05:14', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(143, 277, 3, NULL, '', '2025-11-29 07:13:08', '2025-11-29 07:13:08', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(144, 277, 3, NULL, '', '2025-11-29 07:14:05', '2025-11-29 07:14:05', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(145, 277, 3, NULL, '', '2025-11-29 07:18:04', '2025-11-29 07:18:04', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(146, 277, 3, NULL, '', '2025-11-29 07:20:36', '2025-11-29 07:20:36', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(147, 277, 3, NULL, '', '2025-11-29 07:21:48', '2025-11-29 07:21:48', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(148, 277, 3, NULL, '', '2025-11-29 07:28:37', '2025-11-29 07:28:37', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(149, 277, 3, NULL, '', '2025-11-29 07:38:55', '2025-11-29 07:38:55', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(150, 277, 3, NULL, '@Nguyễn Thị Hạnh', '2025-11-29 07:56:55', '2025-11-29 07:56:55', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(151, 277, 3, NULL, '@Đinh Văn Vịnh', '2025-11-29 08:18:12', '2025-11-29 08:18:12', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(152, 277, 3, NULL, '', '2025-11-29 09:15:56', '2025-11-29 09:15:56', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(153, 277, 3, NULL, '@Đinh Văn Vịnh', '2025-11-29 09:16:25', '2025-11-29 09:16:25', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(154, 277, 3, NULL, '', '2025-11-29 17:00:28', '2025-11-29 17:00:28', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(155, 277, 3, NULL, '', '2025-11-29 17:04:43', '2025-11-29 17:04:43', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(156, 277, 3, NULL, '', '2025-11-29 17:11:13', '2025-11-29 17:11:13', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(157, 277, 3, NULL, '', '2025-11-29 17:21:05', '2025-11-29 17:21:05', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(158, 277, 3, NULL, '', '2025-11-29 17:24:29', '2025-11-29 17:24:29', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(159, 277, 3, NULL, '', '2025-11-29 17:31:14', '2025-11-29 17:31:14', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(160, 277, 3, NULL, '', '2025-11-29 17:39:26', '2025-11-29 17:39:26', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(161, 277, 3, NULL, '', '2025-11-29 17:51:37', '2025-11-29 17:51:37', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(162, 277, 3, NULL, '', '2025-11-29 17:53:44', '2025-11-29 17:53:44', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(163, 277, 3, NULL, '', '2025-11-30 02:32:18', '2025-11-30 02:32:18', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(164, 277, 3, NULL, '', '2025-11-30 02:45:17', '2025-11-30 02:45:17', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(165, 277, 3, NULL, '', '2025-11-30 02:48:02', '2025-11-30 02:48:02', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(166, 277, 3, NULL, '', '2025-11-30 02:51:11', '2025-11-30 02:51:11', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(167, 277, 3, NULL, '', '2025-11-30 02:57:15', '2025-11-30 02:57:15', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(168, 277, 3, NULL, '', '2025-11-30 03:34:26', '2025-11-30 03:34:26', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(169, 277, 3, NULL, '', '2025-11-30 04:40:58', '2025-11-30 04:40:58', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(170, 277, 3, NULL, '', '2025-11-30 04:41:46', '2025-11-30 04:41:46', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(171, 277, 3, NULL, '', '2025-11-30 12:20:53', '2025-11-30 12:20:53', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2351,7 +2452,7 @@ CREATE TABLE `task_files` (
   `visibility` enum('private','public','department','custom') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'private',
   `tags` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `upload_batch` int DEFAULT NULL,
-  `google_file_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL
+  `google_file_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -2489,41 +2590,168 @@ INSERT INTO `task_files` (`id`, `task_id`, `document_id`, `comment_id`, `file_na
 (150, 277, NULL, NULL, 'maudonphuc_khao123.pdf', 'maudonphuc_khao123.pdf', NULL, 3, 'https://drive.google.com/file/d/1FZSglITfLnD0Jv8PFjZwANs7kUC79YY1/view?usp=drivesdk', '2025-11-28 04:01:36', '2025-11-28 11:01:36', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 11:01:36', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
 (151, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1y-lgBSw2TNO2BtF9akDiCXyuf3w_Mx58/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', '2025-11-28 04:17:55', '2025-11-28 11:17:55', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 11:17:55', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
 (152, 277, NULL, NULL, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1SQOqylVdl3QIvLfzUqJzq3gxhbeQzcwz/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', '2025-11-28 04:32:08', '2025-11-28 11:32:08', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 11:32:08', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
-(153, 277, NULL, 111, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1dU-R1KjER-USokqaubDfPW9utx_CgGu5/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', 3, NULL, '2025-11-28 04:43:15', '2025-11-28 11:43:15', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 11:43:15', 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 5, NULL),
-(154, 277, NULL, 111, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/14FjgoDkODtQ_T1o70YWHVoDw-UIUbFoW/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', 3, NULL, '2025-11-28 04:43:17', '2025-11-28 11:43:17', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 11:43:17', 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 5, NULL),
+(153, 277, NULL, 111, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1dU-R1KjER-USokqaubDfPW9utx_CgGu5/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', 3, NULL, '2025-11-28 04:43:15', '2025-11-29 10:37:49', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 5, NULL),
+(154, 277, NULL, 111, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/14FjgoDkODtQ_T1o70YWHVoDw-UIUbFoW/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', 3, NULL, '2025-11-28 04:43:17', '2025-11-29 10:37:51', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 5, NULL),
 (155, 277, NULL, NULL, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1dU-R1KjER-USokqaubDfPW9utx_CgGu5/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', '2025-11-28 04:43:18', '2025-11-28 11:43:18', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 11:43:18', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
 (156, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/14FjgoDkODtQ_T1o70YWHVoDw-UIUbFoW/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', '2025-11-28 04:43:18', '2025-11-28 11:43:19', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 11:43:19', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
-(157, 277, NULL, 112, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1m0CdNgBgf_Iy1DfvWYnTQtmhTOzssNXB/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', 3, NULL, '2025-11-28 04:48:36', '2025-11-28 11:48:36', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 11:48:36', 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 6, NULL),
-(158, 277, NULL, 112, 'server.docx', 'server.docx', 'https://docs.google.com/document/d/16OGN2ulcRX6LHkIBXpb1ELYMhpKtTmpW/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', 3, NULL, '2025-11-28 04:48:38', '2025-11-28 11:48:38', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 11:48:38', 'google_drive', 12958, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 6, NULL),
+(157, 277, NULL, 112, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1m0CdNgBgf_Iy1DfvWYnTQtmhTOzssNXB/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', 3, NULL, '2025-11-28 04:48:36', '2025-11-29 10:37:44', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 6, NULL),
+(158, 277, NULL, 112, 'server.docx', 'server.docx', 'https://docs.google.com/document/d/16OGN2ulcRX6LHkIBXpb1ELYMhpKtTmpW/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', 3, NULL, '2025-11-28 04:48:38', '2025-11-29 10:37:47', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 12958, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 6, NULL),
 (159, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1m0CdNgBgf_Iy1DfvWYnTQtmhTOzssNXB/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', '2025-11-28 04:48:38', '2025-11-28 11:48:39', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 11:48:39', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
 (160, 277, NULL, NULL, 'server.docx', 'server.docx', NULL, 3, 'https://docs.google.com/document/d/16OGN2ulcRX6LHkIBXpb1ELYMhpKtTmpW/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', '2025-11-28 04:48:39', '2025-11-28 11:48:39', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 11:48:39', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
-(161, 277, NULL, 113, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/16ZJMqvkoERQ1OWJNRIYtFW4ZkQ5XIfWx/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', 3, NULL, '2025-11-28 06:27:44', '2025-11-28 13:27:44', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 13:27:44', 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 7, NULL),
+(161, 277, NULL, 113, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/16ZJMqvkoERQ1OWJNRIYtFW4ZkQ5XIfWx/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', 3, NULL, '2025-11-28 06:27:44', '2025-11-29 10:37:42', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 7, NULL),
 (162, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/16ZJMqvkoERQ1OWJNRIYtFW4ZkQ5XIfWx/edit?usp=drivesdk&ouid=103803945556230726641&rtpof=true&sd=true', '2025-11-28 06:27:44', '2025-11-28 13:27:44', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 13:27:44', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
-(163, 277, NULL, 117, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1os8gy52_N4fCFE7AifcyPVyjs7ccvwXSlB-K8HDA3j8/edit', 3, NULL, '2025-11-28 07:08:14', '2025-11-28 14:08:14', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 14:08:14', 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 8, NULL),
-(164, 277, NULL, 117, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/12WJREZ8x6Y_DSyyyefxgjpamRsk3PaX13HAUosbstRY/edit', 3, NULL, '2025-11-28 07:08:25', '2025-11-28 14:08:25', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 14:08:25', 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 8, NULL),
+(163, 277, NULL, 117, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1os8gy52_N4fCFE7AifcyPVyjs7ccvwXSlB-K8HDA3j8/edit', 3, NULL, '2025-11-28 07:08:14', '2025-11-29 10:37:39', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 8, NULL),
+(164, 277, NULL, 117, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/12WJREZ8x6Y_DSyyyefxgjpamRsk3PaX13HAUosbstRY/edit', 3, NULL, '2025-11-28 07:08:25', '2025-11-29 10:37:40', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 8, NULL),
 (165, 277, NULL, NULL, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1os8gy52_N4fCFE7AifcyPVyjs7ccvwXSlB-K8HDA3j8/edit', '2025-11-28 07:08:25', '2025-11-28 14:08:25', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 14:08:25', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
 (166, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/12WJREZ8x6Y_DSyyyefxgjpamRsk3PaX13HAUosbstRY/edit', '2025-11-28 07:08:26', '2025-11-28 14:08:26', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 14:08:26', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
-(167, 277, NULL, 118, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1Nd-CK2J5sDnNejE1KQszRinXaKG_6Fy_QUvu0dtfmQI/edit', 3, NULL, '2025-11-28 07:09:42', '2025-11-28 14:09:42', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 14:09:42', 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 9, NULL),
-(168, 277, NULL, 118, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1a0RrfZEnI3lURK-X4OLMErQ8NcQ1AuxKAXOi7S7hUro/edit', 3, NULL, '2025-11-28 07:09:49', '2025-11-28 14:09:49', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 14:09:49', 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 9, NULL),
+(167, 277, NULL, 118, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1Nd-CK2J5sDnNejE1KQszRinXaKG_6Fy_QUvu0dtfmQI/edit', 3, NULL, '2025-11-28 07:09:42', '2025-11-29 10:37:36', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 9, NULL),
+(168, 277, NULL, 118, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1a0RrfZEnI3lURK-X4OLMErQ8NcQ1AuxKAXOi7S7hUro/edit', 3, NULL, '2025-11-28 07:09:49', '2025-11-29 10:37:37', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 9, NULL),
 (169, 277, NULL, NULL, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1Nd-CK2J5sDnNejE1KQszRinXaKG_6Fy_QUvu0dtfmQI/edit', '2025-11-28 07:09:49', '2025-11-28 14:09:49', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 14:09:49', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
 (170, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1a0RrfZEnI3lURK-X4OLMErQ8NcQ1AuxKAXOi7S7hUro/edit', '2025-11-28 07:09:50', '2025-11-28 14:09:50', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 14:09:50', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
-(171, 277, NULL, 119, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1pqG74Ng-oZcF35yo04i3TQ13WBwnIt_hRfg-n5uxWVM/edit', 3, NULL, '2025-11-28 07:53:04', '2025-11-28 14:53:04', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 14:53:04', 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 6, NULL),
-(172, 277, NULL, 119, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1BuKwxBkynCM7CdTBPtFQ-4-4Z16BN-1r-E54779vLT0/edit', 3, NULL, '2025-11-28 07:53:12', '2025-11-28 14:53:12', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 14:53:12', 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 6, NULL),
+(171, 277, NULL, 119, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1pqG74Ng-oZcF35yo04i3TQ13WBwnIt_hRfg-n5uxWVM/edit', 3, NULL, '2025-11-28 07:53:04', '2025-11-29 10:37:45', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 6, NULL),
+(172, 277, NULL, 119, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1BuKwxBkynCM7CdTBPtFQ-4-4Z16BN-1r-E54779vLT0/edit', 3, NULL, '2025-11-28 07:53:12', '2025-11-29 10:37:46', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 6, NULL),
 (173, 277, NULL, NULL, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1pqG74Ng-oZcF35yo04i3TQ13WBwnIt_hRfg-n5uxWVM/edit', '2025-11-28 07:53:12', '2025-11-28 14:53:12', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 14:53:12', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
 (174, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1BuKwxBkynCM7CdTBPtFQ-4-4Z16BN-1r-E54779vLT0/edit', '2025-11-28 07:53:13', '2025-11-28 14:53:13', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 14:53:13', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
-(175, 277, NULL, 124, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1dsjNqFWoAKPkW31yapg1cFSnMcfjTkJ4FoUAWnn0gq0/edit', 3, NULL, '2025-11-28 09:10:35', '2025-11-28 16:10:35', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 16:10:35', 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 7, NULL),
-(176, 277, NULL, 125, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1wm6LZimG_uOWG4FEvF-wSVm5HAeywNPHKwONLzX3ZWk/edit', 3, NULL, '2025-11-28 09:13:19', '2025-11-28 16:13:19', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 16:13:19', 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 8, NULL),
-(177, 277, NULL, 125, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1gl7dVyyvuSJIKtVOhIzHiaFUJtTVdFWVqwGL3O2TUaI/edit', 3, NULL, '2025-11-28 09:13:26', '2025-11-28 16:13:26', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 16:13:26', 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 8, NULL),
+(175, 277, NULL, 124, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1dsjNqFWoAKPkW31yapg1cFSnMcfjTkJ4FoUAWnn0gq0/edit', 3, NULL, '2025-11-28 09:10:35', '2025-11-29 10:37:43', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 7, NULL),
+(176, 277, NULL, 125, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1wm6LZimG_uOWG4FEvF-wSVm5HAeywNPHKwONLzX3ZWk/edit', 3, NULL, '2025-11-28 09:13:19', '2025-11-29 10:37:41', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 8, NULL),
+(177, 277, NULL, 125, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1gl7dVyyvuSJIKtVOhIzHiaFUJtTVdFWVqwGL3O2TUaI/edit', 3, NULL, '2025-11-28 09:13:26', '2025-11-29 10:37:41', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 8, NULL),
 (178, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1wm6LZimG_uOWG4FEvF-wSVm5HAeywNPHKwONLzX3ZWk/edit', '2025-11-28 09:13:26', '2025-11-28 16:13:26', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 16:13:26', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
 (179, 277, NULL, NULL, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1gl7dVyyvuSJIKtVOhIzHiaFUJtTVdFWVqwGL3O2TUaI/edit', '2025-11-28 09:13:27', '2025-11-28 16:13:27', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 16:13:27', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
-(180, 277, NULL, 126, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1_7nXjU4jqIzq0tOWwxcR6kgPuT0uw9KWZ2iW-ov7E_8/edit', 3, NULL, '2025-11-28 09:18:46', '2025-11-28 16:18:46', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 16:18:46', 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 9, NULL),
-(181, 277, NULL, 126, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1xUVDP0tkNZXrnZX9lZpA4-pcLh7eLf-7iSlnZ90gehI/edit', 3, NULL, '2025-11-28 09:18:52', '2025-11-28 16:18:52', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 16:18:52', 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 9, NULL),
+(180, 277, NULL, 126, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1_7nXjU4jqIzq0tOWwxcR6kgPuT0uw9KWZ2iW-ov7E_8/edit', 3, NULL, '2025-11-28 09:18:46', '2025-11-29 10:37:37', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 9, NULL),
+(181, 277, NULL, 126, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1xUVDP0tkNZXrnZX9lZpA4-pcLh7eLf-7iSlnZ90gehI/edit', 3, NULL, '2025-11-28 09:18:52', '2025-11-29 10:37:38', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 9, NULL),
 (182, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1_7nXjU4jqIzq0tOWwxcR6kgPuT0uw9KWZ2iW-ov7E_8/edit', '2025-11-28 09:18:52', '2025-11-28 16:18:52', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 16:18:52', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
 (183, 277, NULL, NULL, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1xUVDP0tkNZXrnZX9lZpA4-pcLh7eLf-7iSlnZ90gehI/edit', '2025-11-28 09:18:53', '2025-11-28 16:18:53', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 16:18:53', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
-(184, 277, NULL, 127, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1XRvAm6suaG1iyzUzCO5ZLUW3FvGzdxxDP0LODQpSJW0/edit', 3, NULL, '2025-11-28 09:23:41', '2025-11-28 16:23:41', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 16:23:41', 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 10, '1XRvAm6suaG1iyzUzCO5ZLUW3FvGzdxxDP0LODQpSJW0'),
-(185, 277, NULL, 127, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1XTfUZ2fY6EE6fp2BpxmuSN4suFnftob2Miyxi_1ZmCc/edit', 3, NULL, '2025-11-28 09:23:48', '2025-11-28 16:23:48', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-28 16:23:48', 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 10, '1XTfUZ2fY6EE6fp2BpxmuSN4suFnftob2Miyxi_1ZmCc'),
+(184, 277, NULL, 127, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1XRvAm6suaG1iyzUzCO5ZLUW3FvGzdxxDP0LODQpSJW0/edit', 3, NULL, '2025-11-28 09:23:41', '2025-11-29 10:37:34', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 10, '1XRvAm6suaG1iyzUzCO5ZLUW3FvGzdxxDP0LODQpSJW0'),
+(185, 277, NULL, 127, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1XTfUZ2fY6EE6fp2BpxmuSN4suFnftob2Miyxi_1ZmCc/edit', 3, NULL, '2025-11-28 09:23:48', '2025-11-29 10:37:35', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 10, '1XTfUZ2fY6EE6fp2BpxmuSN4suFnftob2Miyxi_1ZmCc'),
 (186, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1XRvAm6suaG1iyzUzCO5ZLUW3FvGzdxxDP0LODQpSJW0/edit', '2025-11-28 09:23:48', '2025-11-28 16:23:48', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 16:23:48', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
-(187, 277, NULL, NULL, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1XTfUZ2fY6EE6fp2BpxmuSN4suFnftob2Miyxi_1ZmCc/edit', '2025-11-28 09:23:49', '2025-11-28 16:23:49', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 16:23:49', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL);
+(187, 277, NULL, NULL, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1XTfUZ2fY6EE6fp2BpxmuSN4suFnftob2Miyxi_1ZmCc/edit', '2025-11-28 09:23:49', '2025-11-28 16:23:49', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-28 16:23:49', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(188, 277, NULL, NULL, 'maudonphuc_khao123.pdf', 'maudonphuc_khao123.pdf', NULL, 3, 'https://drive.google.com/file/d/1FZSglITfLnD0Jv8PFjZwANs7kUC79YY1/view?usp=drivesdk', '2025-11-29 02:09:11', '2025-11-29 09:09:11', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-29 09:09:11', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(189, 277, NULL, NULL, 'maudonphuc_khao123.pdf', 'maudonphuc_khao123.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/maudonphuc_khao123-7.pdf', '2025-11-29 02:55:17', '2025-11-29 09:55:17', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-29 09:55:17', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(190, 277, NULL, 129, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1EO_v-rC5pwwxCqD_qVLNzKXhoIIl3JjJoysIGnqqmZw/edit', 3, NULL, '2025-11-29 03:27:06', '2025-11-29 10:37:32', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 11, '1EO_v-rC5pwwxCqD_qVLNzKXhoIIl3JjJoysIGnqqmZw'),
+(191, 277, NULL, 129, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1OW6xtdafX8AYU-KQbhSMz1HqUiwJ3-XIv1OdhItdsu8/edit', 3, NULL, '2025-11-29 03:27:14', '2025-11-29 10:37:33', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 11, '1OW6xtdafX8AYU-KQbhSMz1HqUiwJ3-XIv1OdhItdsu8'),
+(192, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1EO_v-rC5pwwxCqD_qVLNzKXhoIIl3JjJoysIGnqqmZw/edit', '2025-11-29 03:27:15', '2025-11-29 10:27:15', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 10:27:15', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(193, 277, NULL, NULL, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1OW6xtdafX8AYU-KQbhSMz1HqUiwJ3-XIv1OdhItdsu8/edit', '2025-11-29 03:27:15', '2025-11-29 10:27:15', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 10:27:15', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(194, 277, NULL, 132, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1hqo_omx5pseDLqJx5ttSk6ErKbwbMGSqOE09B6mK__s/edit', 3, NULL, '2025-11-29 03:36:15', '2025-11-29 10:37:52', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 5, '1hqo_omx5pseDLqJx5ttSk6ErKbwbMGSqOE09B6mK__s'),
+(195, 277, NULL, 132, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1PGaW_7jiruFo0IXmd-OWxTR7M0skt8Q57z1EW-JgDoQ/edit', 3, NULL, '2025-11-29 03:36:22', '2025-11-29 10:37:52', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 5, '1PGaW_7jiruFo0IXmd-OWxTR7M0skt8Q57z1EW-JgDoQ'),
+(196, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1hqo_omx5pseDLqJx5ttSk6ErKbwbMGSqOE09B6mK__s/edit', '2025-11-29 03:36:22', '2025-11-29 10:36:22', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 10:36:22', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(197, 277, NULL, NULL, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1PGaW_7jiruFo0IXmd-OWxTR7M0skt8Q57z1EW-JgDoQ/edit', '2025-11-29 03:36:23', '2025-11-29 10:36:23', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 10:36:23', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(198, 277, NULL, 133, 'bao_gia_web_2025.xls', 'bao_gia_web_2025.xls', 'https://docs.google.com/spreadsheets/d/1FrkSh5pO0TRJf8pgG0SpFaWVdKuOyhawi6r6S8LDcZ0/edit', 3, NULL, '2025-11-29 03:37:05', '2025-11-29 10:37:48', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 35840, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 6, '1FrkSh5pO0TRJf8pgG0SpFaWVdKuOyhawi6r6S8LDcZ0'),
+(199, 277, NULL, NULL, 'bao_gia_web_2025.xls', 'bao_gia_web_2025.xls', NULL, 3, 'https://docs.google.com/spreadsheets/d/1FrkSh5pO0TRJf8pgG0SpFaWVdKuOyhawi6r6S8LDcZ0/edit', '2025-11-29 03:37:05', '2025-11-29 10:37:05', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 10:37:05', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(200, 277, NULL, 134, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1JPuNqsROiffVn1Btm_pzMSnq3rfyN8BUDtG7Dwx1yRU/edit', 3, NULL, '2025-11-29 03:38:09', '2025-11-30 10:33:11', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 7, '1JPuNqsROiffVn1Btm_pzMSnq3rfyN8BUDtG7Dwx1yRU'),
+(201, 277, NULL, 134, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1VhxlPxTeMyUPmcEzCeAKtfm3a5T9d5zD7wzUMQOKN-E/edit', 3, NULL, '2025-11-29 03:38:16', '2025-11-30 10:33:12', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 7, '1VhxlPxTeMyUPmcEzCeAKtfm3a5T9d5zD7wzUMQOKN-E'),
+(202, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1JPuNqsROiffVn1Btm_pzMSnq3rfyN8BUDtG7Dwx1yRU/edit', '2025-11-29 03:38:16', '2025-11-29 10:38:16', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 10:38:16', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(203, 277, NULL, NULL, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1VhxlPxTeMyUPmcEzCeAKtfm3a5T9d5zD7wzUMQOKN-E/edit', '2025-11-29 03:38:17', '2025-11-29 10:38:17', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 10:38:17', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(204, 277, NULL, 135, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1r9SWWq4ts-3p-INF1_0YHzzaS0gD6lCQzCTk8HRHB2U/edit', 3, NULL, '2025-11-29 03:38:32', '2025-11-30 10:33:10', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 8, '1r9SWWq4ts-3p-INF1_0YHzzaS0gD6lCQzCTk8HRHB2U'),
+(205, 277, NULL, NULL, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1r9SWWq4ts-3p-INF1_0YHzzaS0gD6lCQzCTk8HRHB2U/edit', '2025-11-29 03:38:32', '2025-11-29 10:38:33', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 10:38:33', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(206, 277, NULL, 136, 'bao_gia_web_2025.xls', 'bao_gia_web_2025.xls', 'https://docs.google.com/spreadsheets/d/1RATQy5Yt3UkbolVKczWFsO3Qcn-3GJs63XMRGzf5LFE/edit', 3, NULL, '2025-11-29 03:38:53', '2025-11-30 10:33:09', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 35840, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 9, '1RATQy5Yt3UkbolVKczWFsO3Qcn-3GJs63XMRGzf5LFE'),
+(207, 277, NULL, NULL, 'bao_gia_web_2025.xls', 'bao_gia_web_2025.xls', NULL, 3, 'https://docs.google.com/spreadsheets/d/1RATQy5Yt3UkbolVKczWFsO3Qcn-3GJs63XMRGzf5LFE/edit', '2025-11-29 03:38:53', '2025-11-29 10:38:53', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 10:38:53', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(208, 277, NULL, 137, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1Q8gc5bpQ3S-uzrMtRr3DmSzCq5uqKIerQjT2j6526cQ/edit', 3, NULL, '2025-11-29 03:39:44', '2025-11-30 10:33:08', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 10, '1Q8gc5bpQ3S-uzrMtRr3DmSzCq5uqKIerQjT2j6526cQ'),
+(209, 277, NULL, 137, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1BgLbej6cfxFQBJR2w07M1_i2gwuDWC2D1RM62S8TGaU/edit', 3, NULL, '2025-11-29 03:39:51', '2025-11-30 10:33:07', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 10, '1BgLbej6cfxFQBJR2w07M1_i2gwuDWC2D1RM62S8TGaU'),
+(210, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1Q8gc5bpQ3S-uzrMtRr3DmSzCq5uqKIerQjT2j6526cQ/edit', '2025-11-29 03:39:51', '2025-11-29 10:39:51', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 10:39:51', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(211, 277, NULL, NULL, '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1BgLbej6cfxFQBJR2w07M1_i2gwuDWC2D1RM62S8TGaU/edit', '2025-11-29 03:39:51', '2025-11-29 10:39:52', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 10:39:52', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(212, 277, NULL, 138, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1DT68_jQMjWU3mIzxX8ztLVLmHVcsFDe5kXvgP6CAR6A/edit', 3, NULL, '2025-11-29 04:11:03', '2025-11-30 10:33:07', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 11, '1DT68_jQMjWU3mIzxX8ztLVLmHVcsFDe5kXvgP6CAR6A'),
+(213, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1DT68_jQMjWU3mIzxX8ztLVLmHVcsFDe5kXvgP6CAR6A/edit', '2025-11-29 04:11:03', '2025-11-29 11:11:03', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 11:11:03', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(214, 277, NULL, 140, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/15lBQ9hkcOdUAVpngAs8l90SjexHAulnBULYDdrcs91I/edit', 3, NULL, '2025-11-29 04:41:20', '2025-11-30 10:33:07', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 12, '15lBQ9hkcOdUAVpngAs8l90SjexHAulnBULYDdrcs91I'),
+(215, 277, NULL, 140, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1nF6JRhAFdl80hS-sqZcGBxh3hJQI-btE-lHt_LQkEE0/edit', 3, NULL, '2025-11-29 04:41:27', '2025-11-30 10:33:07', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 12, '1nF6JRhAFdl80hS-sqZcGBxh3hJQI-btE-lHt_LQkEE0'),
+(216, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/15lBQ9hkcOdUAVpngAs8l90SjexHAulnBULYDdrcs91I/edit', '2025-11-29 04:41:27', '2025-11-29 11:41:28', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 11:41:28', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(217, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1nF6JRhAFdl80hS-sqZcGBxh3hJQI-btE-lHt_LQkEE0/edit', '2025-11-29 04:41:28', '2025-11-29 11:41:28', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 11:41:28', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(218, 277, NULL, 141, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/19ERgqCA77xpREc8nAQtYVOsq7ujHy8HRBOujFoKqZhY/edit', 3, NULL, '2025-11-29 07:02:14', '2025-11-30 10:33:07', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 13, '19ERgqCA77xpREc8nAQtYVOsq7ujHy8HRBOujFoKqZhY'),
+(219, 277, NULL, 141, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/10divOGSqdXZIH3COZlXkgE44X6Xa8Oc7scuJdyEnanE/edit', 3, NULL, '2025-11-29 07:02:21', '2025-11-30 10:33:06', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318118, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 13, '10divOGSqdXZIH3COZlXkgE44X6Xa8Oc7scuJdyEnanE'),
+(220, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/19ERgqCA77xpREc8nAQtYVOsq7ujHy8HRBOujFoKqZhY/edit', '2025-11-29 07:02:21', '2025-11-29 14:02:21', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 14:02:21', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(221, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/10divOGSqdXZIH3COZlXkgE44X6Xa8Oc7scuJdyEnanE/edit', '2025-11-29 07:02:22', '2025-11-29 14:02:22', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 14:02:22', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(222, 277, NULL, 142, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1zLbY4CbSP6WQgESFtq4pp8U2Bi4L73TOhHsXNUjDeSU/edit', 3, NULL, '2025-11-29 07:05:21', '2025-11-30 10:33:06', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 14, '1zLbY4CbSP6WQgESFtq4pp8U2Bi4L73TOhHsXNUjDeSU'),
+(223, 277, NULL, 142, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1RpiBil2a3sQvZeYxtywRoW7-RdpJJ4qh-JzT5_t5R6I/edit', 3, NULL, '2025-11-29 07:05:29', '2025-11-30 10:33:06', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318159, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 14, '1RpiBil2a3sQvZeYxtywRoW7-RdpJJ4qh-JzT5_t5R6I'),
+(224, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1zLbY4CbSP6WQgESFtq4pp8U2Bi4L73TOhHsXNUjDeSU/edit', '2025-11-29 07:05:29', '2025-11-29 14:05:30', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 14:05:30', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(225, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1RpiBil2a3sQvZeYxtywRoW7-RdpJJ4qh-JzT5_t5R6I/edit', '2025-11-29 07:05:30', '2025-11-29 14:05:30', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 14:05:30', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(226, 277, NULL, 143, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1p2V0xWBcvBmivfQgTfEguJCu-cnjbwNzr6CuAIK8JD8/edit', 3, NULL, '2025-11-29 07:13:15', '2025-11-30 10:33:06', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 15, '1p2V0xWBcvBmivfQgTfEguJCu-cnjbwNzr6CuAIK8JD8'),
+(227, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1p2V0xWBcvBmivfQgTfEguJCu-cnjbwNzr6CuAIK8JD8/edit', '2025-11-29 07:13:15', '2025-11-29 14:13:15', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 14:13:15', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(228, 277, NULL, 144, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1lWEEX04c0--RIpQSZimamW2ci-NT51fIkyeMfoujxj0/edit', 3, NULL, '2025-11-29 07:14:13', '2025-11-30 10:33:06', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318159, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 16, '1lWEEX04c0--RIpQSZimamW2ci-NT51fIkyeMfoujxj0'),
+(229, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1lWEEX04c0--RIpQSZimamW2ci-NT51fIkyeMfoujxj0/edit', '2025-11-29 07:14:13', '2025-11-29 14:14:14', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 14:14:14', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(230, 277, NULL, 145, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1aDU2QeVdjQdfo2LfMMNNdkrl7dVlY4zRQBI3JKwj2p8/edit', 3, NULL, '2025-11-29 07:18:12', '2025-11-30 10:33:06', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318120, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 17, '1aDU2QeVdjQdfo2LfMMNNdkrl7dVlY4zRQBI3JKwj2p8'),
+(231, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1aDU2QeVdjQdfo2LfMMNNdkrl7dVlY4zRQBI3JKwj2p8/edit', '2025-11-29 07:18:12', '2025-11-29 14:18:12', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 14:18:12', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(232, 277, NULL, 146, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1hKWEVNGmwWYVDeMxO-zGHGtdqFPb6d20h-gURayTqgQ/edit', 3, NULL, '2025-11-29 07:20:45', '2025-11-30 10:33:05', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318161, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 18, '1hKWEVNGmwWYVDeMxO-zGHGtdqFPb6d20h-gURayTqgQ'),
+(233, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1hKWEVNGmwWYVDeMxO-zGHGtdqFPb6d20h-gURayTqgQ/edit', '2025-11-29 07:20:45', '2025-11-29 14:20:46', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 14:20:46', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(234, 277, NULL, 147, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1ROdX4yEBnwNClsY1dv6nrWn3rwgKJm7TG8XjXsDNwdk/edit', 3, NULL, '2025-11-29 07:21:56', '2025-11-30 10:33:05', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318161, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 19, '1ROdX4yEBnwNClsY1dv6nrWn3rwgKJm7TG8XjXsDNwdk'),
+(235, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1ROdX4yEBnwNClsY1dv6nrWn3rwgKJm7TG8XjXsDNwdk/edit', '2025-11-29 07:21:56', '2025-11-29 14:21:56', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 14:21:56', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(236, 277, NULL, 148, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1YS_wLCkr6-oR3s92UtgsBCm5NazobnOF9yf9Z0YBm5k/edit', 3, NULL, '2025-11-29 07:28:44', '2025-11-30 10:33:05', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 20, '1YS_wLCkr6-oR3s92UtgsBCm5NazobnOF9yf9Z0YBm5k'),
+(237, 277, NULL, 148, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1TpS1o8k6qOvj85AW3fn_b3oALAXGkzi163Dmi7aEScs/edit', 3, NULL, '2025-11-29 07:28:52', '2025-11-30 10:33:05', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318161, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 20, '1TpS1o8k6qOvj85AW3fn_b3oALAXGkzi163Dmi7aEScs'),
+(238, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1YS_wLCkr6-oR3s92UtgsBCm5NazobnOF9yf9Z0YBm5k/edit', '2025-11-29 07:28:52', '2025-11-29 14:28:52', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 14:28:52', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(239, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1TpS1o8k6qOvj85AW3fn_b3oALAXGkzi163Dmi7aEScs/edit', '2025-11-29 07:28:53', '2025-11-29 14:28:53', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 14:28:53', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(240, 277, NULL, 149, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1osFYZqT7MmOds426gbjtGguerbSOdD16-0PnAsouSjQ/edit', 3, NULL, '2025-11-29 07:39:02', '2025-11-30 10:33:05', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 21, '1osFYZqT7MmOds426gbjtGguerbSOdD16-0PnAsouSjQ'),
+(241, 277, NULL, 149, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/179Kzje_SKbiFTwTpD5TmJnQerRAUZCVW-8EOxOLyIPg/edit', 3, NULL, '2025-11-29 07:39:09', '2025-11-30 10:33:04', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318161, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 21, '179Kzje_SKbiFTwTpD5TmJnQerRAUZCVW-8EOxOLyIPg'),
+(242, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1osFYZqT7MmOds426gbjtGguerbSOdD16-0PnAsouSjQ/edit', '2025-11-29 07:39:09', '2025-11-29 14:39:09', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 14:39:09', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(243, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/179Kzje_SKbiFTwTpD5TmJnQerRAUZCVW-8EOxOLyIPg/edit', '2025-11-29 07:39:10', '2025-11-29 14:39:10', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 14:39:10', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(244, 277, NULL, 152, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1qpuIaXVw2F0e4p-8mDzekVUpRexXxNgSWlyHTcG82Xc/edit', 3, NULL, '2025-11-29 09:16:03', '2025-11-30 10:33:04', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 95744, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 22, '1qpuIaXVw2F0e4p-8mDzekVUpRexXxNgSWlyHTcG82Xc'),
+(245, 277, NULL, 152, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1xI96iJtkE__BLX44hqYVy_dsf16YsxGEK6grrgYwJwc/edit', 3, NULL, '2025-11-29 09:16:13', '2025-11-30 10:33:04', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 318161, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 22, '1xI96iJtkE__BLX44hqYVy_dsf16YsxGEK6grrgYwJwc'),
+(246, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1qpuIaXVw2F0e4p-8mDzekVUpRexXxNgSWlyHTcG82Xc/edit', '2025-11-29 09:16:13', '2025-11-29 16:16:14', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 16:16:14', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(247, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1xI96iJtkE__BLX44hqYVy_dsf16YsxGEK6grrgYwJwc/edit', '2025-11-29 09:16:14', '2025-11-29 16:16:14', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-29 16:16:14', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(248, 277, NULL, 154, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1wlolxhu-exhf4X6J-RFtzE6hIASsKYAYdx5J1Uygee8/edit', 3, NULL, '2025-11-29 17:00:34', '2025-11-30 10:33:04', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 94208, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 23, '1wlolxhu-exhf4X6J-RFtzE6hIASsKYAYdx5J1Uygee8'),
+(249, 277, NULL, 154, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1iU5x9m3hr8CplM5n4PISWwaRExMYIwHtCbw164Rcvbo/edit', 3, NULL, '2025-11-29 17:00:42', '2025-11-30 10:33:04', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 316364, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 23, '1iU5x9m3hr8CplM5n4PISWwaRExMYIwHtCbw164Rcvbo'),
+(250, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1wlolxhu-exhf4X6J-RFtzE6hIASsKYAYdx5J1Uygee8/edit', '2025-11-29 17:00:43', '2025-11-30 00:00:43', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 00:00:43', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(251, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1iU5x9m3hr8CplM5n4PISWwaRExMYIwHtCbw164Rcvbo/edit', '2025-11-29 17:00:44', '2025-11-30 00:00:44', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 00:00:44', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(252, 277, NULL, 155, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1ugj7qDZ12gBjRvHXWMboMgBi44hCKgRadBlU4QO7oKo/edit', 3, NULL, '2025-11-29 17:04:49', '2025-11-30 10:33:03', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 94208, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 24, '1ugj7qDZ12gBjRvHXWMboMgBi44hCKgRadBlU4QO7oKo'),
+(253, 277, NULL, 155, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1BxzY3pRDnA1n07K3wDt-aNc9o0R_xLMy1ngHpInQp04/edit', 3, NULL, '2025-11-29 17:04:56', '2025-11-30 10:33:03', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 316364, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 24, '1BxzY3pRDnA1n07K3wDt-aNc9o0R_xLMy1ngHpInQp04'),
+(254, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1ugj7qDZ12gBjRvHXWMboMgBi44hCKgRadBlU4QO7oKo/edit', '2025-11-29 17:04:56', '2025-11-30 00:04:56', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 00:04:56', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(255, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1BxzY3pRDnA1n07K3wDt-aNc9o0R_xLMy1ngHpInQp04/edit', '2025-11-29 17:04:56', '2025-11-30 00:04:57', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 00:04:57', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL);
+INSERT INTO `task_files` (`id`, `task_id`, `document_id`, `comment_id`, `file_name`, `title`, `file_path`, `uploaded_by`, `link_url`, `created_at`, `updated_at`, `is_link`, `status`, `approved_by`, `approved_at`, `review_note`, `approvals_json`, `is_pinned`, `pinned_rank`, `pinned_by`, `pinned_at`, `file_type`, `file_size`, `mime_type`, `file_ext`, `wp_media_id`, `source`, `department_id`, `visibility`, `tags`, `upload_batch`, `google_file_id`) VALUES
+(256, 277, NULL, 156, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1RVwQzKv6PA8SAEA9jvFjuQhoZEM_28PdUgOwX1-FFLs/edit', 3, NULL, '2025-11-29 17:11:20', '2025-11-30 10:33:03', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 94208, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 25, '1RVwQzKv6PA8SAEA9jvFjuQhoZEM_28PdUgOwX1-FFLs'),
+(257, 277, NULL, 156, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1XxvSnG9KK7Alb7gzvstjf3-1NeEA5-8K5Mb8M-Tsg8Y/edit', 3, NULL, '2025-11-29 17:11:27', '2025-11-30 10:33:03', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 316364, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 25, '1XxvSnG9KK7Alb7gzvstjf3-1NeEA5-8K5Mb8M-Tsg8Y'),
+(258, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1RVwQzKv6PA8SAEA9jvFjuQhoZEM_28PdUgOwX1-FFLs/edit', '2025-11-29 17:11:27', '2025-11-30 00:11:27', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 00:11:27', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(259, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1XxvSnG9KK7Alb7gzvstjf3-1NeEA5-8K5Mb8M-Tsg8Y/edit', '2025-11-29 17:11:28', '2025-11-30 00:11:28', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 00:11:28', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(260, 277, NULL, 157, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1gp8xhdQZUo3t2kibxieiedN_BENj3xLDENKT30q8qso/edit', 3, NULL, '2025-11-29 17:21:12', '2025-11-30 10:33:02', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 94208, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 26, '1gp8xhdQZUo3t2kibxieiedN_BENj3xLDENKT30q8qso'),
+(261, 277, NULL, 157, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1qRwywIqXU9WdXG9hjJKVe5UoI5g57opYfDbrK9SCnnY/edit', 3, NULL, '2025-11-29 17:21:18', '2025-11-30 10:33:02', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 316364, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 26, '1qRwywIqXU9WdXG9hjJKVe5UoI5g57opYfDbrK9SCnnY'),
+(262, 277, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 3, 'https://docs.google.com/document/d/1gp8xhdQZUo3t2kibxieiedN_BENj3xLDENKT30q8qso/edit', '2025-11-29 17:21:18', '2025-11-30 00:21:18', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 00:21:18', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(263, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1qRwywIqXU9WdXG9hjJKVe5UoI5g57opYfDbrK9SCnnY/edit', '2025-11-29 17:21:19', '2025-11-30 00:21:19', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 00:21:19', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(264, 277, NULL, 158, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/13eyvv6Q6Sqyayenltk5AzekAl-YR8CmIrN6tWcz0yCo/edit', 3, NULL, '2025-11-29 17:24:35', '2025-11-30 10:33:01', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 316364, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 27, '13eyvv6Q6Sqyayenltk5AzekAl-YR8CmIrN6tWcz0yCo'),
+(265, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/13eyvv6Q6Sqyayenltk5AzekAl-YR8CmIrN6tWcz0yCo/edit', '2025-11-29 17:24:36', '2025-11-30 00:24:36', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 00:24:36', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(266, 277, NULL, 159, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1ibiiclr_rIMWRHJ8tGjO_OSjKADJgp4gcGV8jdajiCE/edit', 3, NULL, '2025-11-29 17:31:20', '2025-11-30 10:33:01', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 316364, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 28, '1ibiiclr_rIMWRHJ8tGjO_OSjKADJgp4gcGV8jdajiCE'),
+(267, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1ibiiclr_rIMWRHJ8tGjO_OSjKADJgp4gcGV8jdajiCE/edit', '2025-11-29 17:31:20', '2025-11-30 00:31:21', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 00:31:21', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(268, 277, NULL, 160, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1I5n7sh_IqBUxpDZkiC-Ph-8R6Szfn8SmT2z7DnamCNI/edit', 3, NULL, '2025-11-29 17:39:34', '2025-11-30 10:33:01', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 316364, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 29, '1I5n7sh_IqBUxpDZkiC-Ph-8R6Szfn8SmT2z7DnamCNI'),
+(269, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1I5n7sh_IqBUxpDZkiC-Ph-8R6Szfn8SmT2z7DnamCNI/edit', '2025-11-29 17:39:35', '2025-11-30 00:39:35', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 00:39:35', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(270, 277, NULL, 161, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1lpItOKm6PwUGvTf1XEC-MwWNjzhFurWcf92L8vN69kI/edit', 3, NULL, '2025-11-29 17:51:43', '2025-11-30 10:33:01', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 316364, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 30, '1lpItOKm6PwUGvTf1XEC-MwWNjzhFurWcf92L8vN69kI'),
+(271, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1lpItOKm6PwUGvTf1XEC-MwWNjzhFurWcf92L8vN69kI/edit', '2025-11-29 17:51:43', '2025-11-30 00:51:44', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 00:51:44', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(272, 277, NULL, 162, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1uV2F84GWVQvobRY5cjidjxOvwRDWcuoCewl-qb_SNYE/edit', 3, NULL, '2025-11-29 17:53:50', '2025-11-30 10:33:01', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 316364, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 31, '1uV2F84GWVQvobRY5cjidjxOvwRDWcuoCewl-qb_SNYE'),
+(273, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1uV2F84GWVQvobRY5cjidjxOvwRDWcuoCewl-qb_SNYE/edit', '2025-11-29 17:53:50', '2025-11-30 00:53:50', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 00:53:50', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(274, 277, NULL, 163, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1leWOrh81KcE2FinI7r2gURFGjJt2-7BHxt-hGPTYN3g/edit', 3, NULL, '2025-11-30 02:32:24', '2025-11-30 10:33:01', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 316364, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 32, '1leWOrh81KcE2FinI7r2gURFGjJt2-7BHxt-hGPTYN3g'),
+(275, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1leWOrh81KcE2FinI7r2gURFGjJt2-7BHxt-hGPTYN3g/edit', '2025-11-30 02:32:25', '2025-11-30 09:32:25', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 09:32:25', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(276, 277, NULL, 164, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1SRM6GazNBwgDHR6hqlHneANXR_QVAL8ahlctvX3IjA4/edit', 3, NULL, '2025-11-30 02:45:23', '2025-11-30 10:33:00', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 316364, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 33, '1SRM6GazNBwgDHR6hqlHneANXR_QVAL8ahlctvX3IjA4'),
+(277, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1SRM6GazNBwgDHR6hqlHneANXR_QVAL8ahlctvX3IjA4/edit', '2025-11-30 02:45:23', '2025-11-30 09:45:24', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 09:45:24', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(278, 277, NULL, 165, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/19IH5evi9RsXKwqs0u6fhjs9I1cm69zoqNwWzT7o5ieg/edit', 3, NULL, '2025-11-30 02:48:07', '2025-11-30 10:32:59', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 316364, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 34, '19IH5evi9RsXKwqs0u6fhjs9I1cm69zoqNwWzT7o5ieg'),
+(279, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/19IH5evi9RsXKwqs0u6fhjs9I1cm69zoqNwWzT7o5ieg/edit', '2025-11-30 02:48:08', '2025-11-30 09:48:08', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 09:48:08', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(280, 277, NULL, 166, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1EfTqjr1hSThFR9AV1CAcMQWm1S2-tbILlP3BKZTOQLo/edit', 3, NULL, '2025-11-30 02:51:18', '2025-11-30 10:32:58', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 316364, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 35, '1EfTqjr1hSThFR9AV1CAcMQWm1S2-tbILlP3BKZTOQLo'),
+(281, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1EfTqjr1hSThFR9AV1CAcMQWm1S2-tbILlP3BKZTOQLo/edit', '2025-11-30 02:51:18', '2025-11-30 09:51:19', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 09:51:19', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(282, 277, NULL, 167, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1uHtpcu7lbsnr-b-zVkjrwpJvuLoolex0NmkXG_h7coE/edit', 3, NULL, '2025-11-30 02:57:21', '2025-11-30 10:32:58', 0, '', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 'google_drive', 316364, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 36, '1uHtpcu7lbsnr-b-zVkjrwpJvuLoolex0NmkXG_h7coE'),
+(283, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1uHtpcu7lbsnr-b-zVkjrwpJvuLoolex0NmkXG_h7coE/edit', '2025-11-30 02:57:21', '2025-11-30 09:57:22', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 09:57:22', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(284, 277, NULL, 168, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/15ADsbwTV-75nLorBtYB_y8JMNfqtUcy7ZShFVcOXnRM/edit', 3, NULL, '2025-11-30 03:34:32', '2025-11-30 10:34:32', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 10:34:32', 'google_drive', 316364, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 5, '15ADsbwTV-75nLorBtYB_y8JMNfqtUcy7ZShFVcOXnRM'),
+(285, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/15ADsbwTV-75nLorBtYB_y8JMNfqtUcy7ZShFVcOXnRM/edit', '2025-11-30 03:34:32', '2025-11-30 10:34:33', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 10:34:33', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(286, 277, NULL, 169, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1sVv0dYAyx2HycaI7DxJ06HAgCUdtEBSCuQeqPkJCppc/edit', 3, NULL, '2025-11-30 04:41:06', '2025-11-30 11:41:06', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 11:41:06', 'google_drive', 316358, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 5, '1sVv0dYAyx2HycaI7DxJ06HAgCUdtEBSCuQeqPkJCppc'),
+(287, 277, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1sVv0dYAyx2HycaI7DxJ06HAgCUdtEBSCuQeqPkJCppc/edit', '2025-11-30 04:41:07', '2025-11-30 11:41:07', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 11:41:07', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(288, 277, NULL, 170, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1EA2-yIQiwHvQVNKidVkOgdI9fbvXyx9SRFlUQIsSao4/edit', 3, NULL, '2025-11-30 04:41:53', '2025-11-30 11:41:53', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 11:41:53', 'google_drive', 315365, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 6, '1EA2-yIQiwHvQVNKidVkOgdI9fbvXyx9SRFlUQIsSao4'),
+(289, 277, NULL, NULL, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1EA2-yIQiwHvQVNKidVkOgdI9fbvXyx9SRFlUQIsSao4/edit', '2025-11-30 04:41:53', '2025-11-30 11:41:54', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 11:41:54', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(290, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', '2025-11-30 11:22:45', '2025-11-30 18:22:45', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 18:22:45', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(291, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', '2025-11-30 11:29:10', '2025-11-30 18:29:10', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 18:29:10', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(292, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', '2025-11-30 11:52:04', '2025-11-30 18:52:04', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 18:52:04', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(293, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', '2025-11-30 11:53:45', '2025-11-30 18:53:45', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 18:53:45', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(294, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', '2025-11-30 11:55:55', '2025-11-30 18:55:55', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 18:55:55', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(295, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', '2025-11-30 11:57:36', '2025-11-30 18:57:36', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 18:57:36', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(296, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', '2025-11-30 11:58:54', '2025-11-30 18:58:54', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 18:58:54', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(297, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', '2025-11-30 12:00:24', '2025-11-30 19:00:24', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 19:00:24', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(298, 277, NULL, NULL, 'Converted PDF', 'Converted PDF', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/converted_1764498547746.pdf', '2025-11-30 12:01:07', '2025-11-30 19:01:07', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 19:01:07', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(299, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', '2025-11-30 12:02:54', '2025-11-30 19:02:54', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 19:02:54', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(300, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', '2025-11-30 12:10:49', '2025-11-30 19:10:49', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 19:10:49', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(301, 277, NULL, 171, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1biar1qStbXNLBUfxcHpkYfPGfgNSIK3pwoeUWdKIezA/edit', 3, NULL, '2025-11-30 12:21:00', '2025-11-30 19:21:00', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 19:21:00', 'google_drive', 315365, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 7, '1biar1qStbXNLBUfxcHpkYfPGfgNSIK3pwoeUWdKIezA'),
+(302, 277, NULL, NULL, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1biar1qStbXNLBUfxcHpkYfPGfgNSIK3pwoeUWdKIezA/edit', '2025-11-30 12:21:00', '2025-11-30 19:21:01', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-11-30 19:21:01', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(303, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-1.pdf', '2025-11-30 12:22:21', '2025-11-30 19:22:21', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 19:22:21', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(304, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-2.pdf', '2025-11-30 12:22:48', '2025-11-30 19:22:48', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 19:22:48', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(305, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-2.pdf', '2025-11-30 12:25:24', '2025-11-30 19:25:24', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 19:25:24', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(306, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-2.pdf', '2025-11-30 12:27:19', '2025-11-30 19:27:19', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 19:27:19', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(307, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-2.pdf', '2025-11-30 12:31:49', '2025-11-30 19:31:49', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 19:31:49', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(308, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-2.pdf', '2025-11-30 12:32:35', '2025-11-30 19:32:35', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 19:32:35', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(309, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-2.pdf', '2025-11-30 12:34:32', '2025-11-30 19:34:32', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 19:34:32', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(310, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-2.pdf', '2025-11-30 13:07:42', '2025-11-30 20:07:42', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 20:07:42', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(311, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-2.pdf', '2025-11-30 13:11:15', '2025-11-30 20:11:15', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 20:11:15', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(312, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-2.pdf', '2025-11-30 13:12:59', '2025-11-30 20:12:59', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 20:12:59', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(313, 277, NULL, NULL, 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'Converted_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', NULL, 3, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/Converted_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-2.pdf', '2025-11-30 13:13:29', '2025-11-30 20:13:29', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-11-30 20:13:29', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2547,7 +2775,43 @@ CREATE TABLE `task_roster` (
 --
 
 INSERT INTO `task_roster` (`id`, `task_id`, `user_id`, `role`, `status`, `name`, `created_at`, `updated_at`) VALUES
-(396, 277, 15, 'approve', 'processing', 'Trần Thị Hiền', '2025-11-28 16:10:11', '2025-11-28 16:23:48');
+(420, 277, 3, 'approve', 'processing', 'Đinh Văn Vịnh', '2025-11-29 14:14:13', '2025-11-30 19:21:00');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `task_sign_logs`
+--
+
+CREATE TABLE `task_sign_logs` (
+  `id` int UNSIGNED NOT NULL,
+  `task_id` int UNSIGNED NOT NULL,
+  `user_id` int UNSIGNED NOT NULL,
+  `file_id` int UNSIGNED NOT NULL,
+  `google_file_id` varchar(255) DEFAULT NULL,
+  `signed_at` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `task_sign_logs`
+--
+
+INSERT INTO `task_sign_logs` (`id`, `task_id`, `user_id`, `file_id`, `google_file_id`, `signed_at`) VALUES
+(1, 277, 3, 156, '1qpuIaXVw2F0e4p-8mDzekVUpRexXxNgSWlyHTcG82Xc', '2025-11-29 23:58:19'),
+(2, 277, 3, 157, '1xI96iJtkE__BLX44hqYVy_dsf16YsxGEK6grrgYwJwc', '2025-11-29 23:58:21'),
+(3, 277, 3, 158, '1wlolxhu-exhf4X6J-RFtzE6hIASsKYAYdx5J1Uygee8', '2025-11-30 00:01:55'),
+(4, 277, 3, 160, '1ugj7qDZ12gBjRvHXWMboMgBi44hCKgRadBlU4QO7oKo', '2025-11-30 00:07:57'),
+(5, 277, 3, 162, '1RVwQzKv6PA8SAEA9jvFjuQhoZEM_28PdUgOwX1-FFLs', '2025-11-30 00:12:46'),
+(6, 277, 3, 163, '1XxvSnG9KK7Alb7gzvstjf3-1NeEA5-8K5Mb8M-Tsg8Y', '2025-11-30 00:14:17'),
+(7, 277, 3, 164, '1gp8xhdQZUo3t2kibxieiedN_BENj3xLDENKT30q8qso', '2025-11-30 00:22:58'),
+(8, 277, 3, 165, '1qRwywIqXU9WdXG9hjJKVe5UoI5g57opYfDbrK9SCnnY', '2025-11-30 00:23:01'),
+(9, 277, 3, 166, '13eyvv6Q6Sqyayenltk5AzekAl-YR8CmIrN6tWcz0yCo', '2025-11-30 00:25:52'),
+(10, 277, 3, 168, '1I5n7sh_IqBUxpDZkiC-Ph-8R6Szfn8SmT2z7DnamCNI', '2025-11-30 00:41:48'),
+(11, 277, 3, 169, '1lpItOKm6PwUGvTf1XEC-MwWNjzhFurWcf92L8vN69kI', '2025-11-30 00:52:49'),
+(12, 277, 3, 170, '1uV2F84GWVQvobRY5cjidjxOvwRDWcuoCewl-qb_SNYE', '2025-11-30 00:54:33'),
+(13, 277, 3, 171, '1leWOrh81KcE2FinI7r2gURFGjJt2-7BHxt-hGPTYN3g', '2025-11-30 09:33:56'),
+(14, 277, 3, 173, '19IH5evi9RsXKwqs0u6fhjs9I1cm69zoqNwWzT7o5ieg', '2025-11-30 09:48:50'),
+(15, 277, 3, 175, '1uHtpcu7lbsnr-b-zVkjrwpJvuLoolex0NmkXG_h7coE', '2025-11-30 09:57:47');
 
 -- --------------------------------------------------------
 
@@ -2565,8 +2829,8 @@ CREATE TABLE `users` (
   `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `avatar` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `signature_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `signature_wp_id` int DEFAULT NULL,
   `preferred_marker` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `approval_marker` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `role` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'user',
   `department_id` int DEFAULT NULL,
   `role_id` int DEFAULT NULL
@@ -2576,21 +2840,21 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `name`, `phone`, `avatar`, `signature_url`, `signature_wp_id`, `preferred_marker`, `role`, `department_id`, `role_id`) VALUES
-(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-11-06 23:38:52', 'Nguyễn Cảnh Hợp', '0988888888', 'uploads/avatars/1757146085_458ff2a7be53bff1a4a8.png', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', NULL, 'nguyencanhhop', 'Trưởng phòng', 3, 2),
-(3, 'superadmin@example.com', '$2y$10$duTynUTzT2E8r/XfWDEAv.zruGL1CwtgiFyHoBybvwd8valutSCTW', '2025-04-20 14:02:38', '2025-11-06 23:39:03', 'Đinh Văn Vịnh', '0988888888', 'uploads/avatars/1757035611_0019d985edb37c35aaa9.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/photo_2025-10-17_10-08-52.jpg', NULL, 'dinhvanvinh', 'super admin', 2, 1),
-(4, 'nguyenvana@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-05-26 04:33:21', '2025-11-06 23:39:13', 'Tạ Quý Thọ', '0909123456', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/photo_2025-10-17_10-09-07-1.jpg', NULL, 'taquytho', 'Nhân viên', 3, 2),
-(5, 'a@worknest.vn', '$2y$10$MBmxJ.v7/6kO6HaPIDcRE.dsGApBjLkWGyF655SlW5gCBMeaCHrNe', '2025-06-04 09:10:50', '2025-11-13 10:29:07', 'Nguyễn Văn Chiểu', '0911111111', 'uploads/avatars/1757035675_b1a8dfcbbebca0a39cb1.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-04-1.jpg', NULL, 'nguyenvanchieu', 'user', 3, 2),
-(6, 'b@worknest.vn', '$2y$10$ZKKb/DZ/dk0eFQW/xfG3Ne8Ozrdt1TcQcR1alq4KP5biJpmUm2Uuy', '2025-06-04 09:11:21', '2025-11-06 23:39:39', 'Phạm Xuân Tuân', '0911111112', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/z7010742803776_61e4e0e6d2380894deeebfd1b1d5d8c0.jpg', NULL, 'phamxuantuan', 'user', 3, 2),
-(7, 'c@worknest.vn', '$2y$10$jh.Bqbz9rG5INlFCnuvo9uiL/.5Whd75mlamj14ZST9BCosMxt02a', '2025-06-04 09:11:44', '2025-11-12 16:39:14', 'Nhạc Quang Huy', '0911111113', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10.jpg', NULL, 'nhacquanghuy', 'user', 3, 1),
-(8, 'd@worknest.vn', '$2y$10$UfmfTcnJd1Hc1wcH0Utaz.w9IFmXwNCzoFUQdahizBIri0BTfsDp2', '2025-06-04 09:12:07', '2025-11-06 23:40:02', 'Hoàng Văn Dũng', '0911111114', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07.jpg', NULL, 'hoangvandung', 'user', 3, 3),
-(9, 't@worknest.vn', '$2y$10$hGqQg.IGey/1/3a6Dt/3rOQKKdPgz2U787lWDghxeDqCmCk30v7SW', '2025-06-04 09:12:52', '2025-11-06 23:40:12', 'Nguyễn Danh Vương Bình', '0911111115', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-04.jpg', NULL, 'nguyendanhvuong', 'user', 3, 3),
-(10, 'l@worknest.vn', '$2y$10$In9Y8TToyh9hICfylJG.Iesgd1mvrE4L./GTSwgcuXX8zXe.tGqM2', '2025-06-04 09:13:10', '2025-11-06 23:40:24', 'Vũ Thị Thuỷ', '0911111116', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-08-52.jpg', NULL, 'vuthithuy', 'user', 2, 3),
-(11, 'h@worknest.vn', '$2y$10$HVsxejThJCOYfidLz.xreOCpRGZp8QI001kHhekDGq9tVFW0TWv0K', '2025-06-04 09:13:37', '2025-11-06 23:40:33', 'Đinh Thị Tú', '0911111117', NULL, NULL, NULL, 'dinhthitu', 'user', 2, 3),
-(12, 'hq@worknest.vn', '$2y$10$eqebovRoFs2X3pAu5WRwWuQf6JF1t/72sSqOwcQsd8yR7yHA47Pa.', '2025-06-04 16:15:57', '2025-11-12 16:37:42', 'Nguyễn Thị Ngọc Anh', '0911111118', NULL, NULL, NULL, 'nguyenthingocanh', 'user', 4, 3),
-(13, 'bich@worknest.vn', '$2y$10$QLmkrq1e97eFm2g59f06V.b1jy50AavfEWK8rJZBNYII1Dcd2nzKK', '2025-06-04 16:15:57', '2025-11-12 16:23:43', 'Hoàng Thị Lan Anh', '0911111119', NULL, NULL, NULL, 'hoangthilananh', 'user', 4, 3),
-(14, 'tuan@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-11-06 23:41:13', 'Nguyễn Thị Hạnh', '0911111120', NULL, NULL, NULL, 'nguyenthihanh', 'user', 4, 3),
-(15, 'phuc@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-11-06 23:41:21', 'Trần Thị Hiền', '0911111121', NULL, NULL, NULL, 'tranthihien', 'user', 1, 3);
+INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `name`, `phone`, `avatar`, `signature_url`, `preferred_marker`, `approval_marker`, `role`, `department_id`, `role_id`) VALUES
+(1, 'demo@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-04-07 18:49:01', '2025-11-30 00:58:18', 'Nguyễn Cảnh Hợp', '0988888888', 'uploads/avatars/1757146085_458ff2a7be53bff1a4a8.png', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', 'nguyencanhhop', 'nguyen_canh_hop', 'Trưởng phòng', 3, 2),
+(3, 'superadmin@example.com', '$2y$10$duTynUTzT2E8r/XfWDEAv.zruGL1CwtgiFyHoBybvwd8valutSCTW', '2025-04-20 14:02:38', '2025-11-30 00:58:15', 'Đinh Văn Vịnh', '0988888888', 'uploads/avatars/1757035611_0019d985edb37c35aaa9.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', 'dinhvanvinh', 'dinh_van_vinh', 'super admin', 2, 1),
+(4, 'nguyenvana@example.com', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-05-26 04:33:21', '2025-11-29 13:33:31', 'Tạ Quý Thọ', '0909123456', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/11/photo_2025-10-17_10-09-07-1.jpg', 'taquytho', 'ta_quy_tho', 'Nhân viên', 3, 2),
+(5, 'a@worknest.vn', '$2y$10$MBmxJ.v7/6kO6HaPIDcRE.dsGApBjLkWGyF655SlW5gCBMeaCHrNe', '2025-06-04 09:10:50', '2025-11-29 13:33:43', 'Nguyễn Văn Chiểu', '0911111111', 'uploads/avatars/1757035675_b1a8dfcbbebca0a39cb1.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-04-1.jpg', 'nguyenvanchieu', 'nguyen_van_chieu', 'user', 3, 2),
+(6, 'b@worknest.vn', '$2y$10$ZKKb/DZ/dk0eFQW/xfG3Ne8Ozrdt1TcQcR1alq4KP5biJpmUm2Uuy', '2025-06-04 09:11:21', '2025-11-29 13:33:58', 'Phạm Xuân Tuân', '0911111112', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/z7010742803776_61e4e0e6d2380894deeebfd1b1d5d8c0.jpg', 'phamxuantuan', 'pham_xuan_tuan', 'user', 3, 2),
+(7, 'c@worknest.vn', '$2y$10$jh.Bqbz9rG5INlFCnuvo9uiL/.5Whd75mlamj14ZST9BCosMxt02a', '2025-06-04 09:11:44', '2025-11-29 13:34:11', 'Nhạc Quang Huy', '0911111113', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10.jpg', 'nhacquanghuy', 'nhac_quang_huy', 'user', 3, 1),
+(8, 'd@worknest.vn', '$2y$10$UfmfTcnJd1Hc1wcH0Utaz.w9IFmXwNCzoFUQdahizBIri0BTfsDp2', '2025-06-04 09:12:07', '2025-11-29 13:34:24', 'Hoàng Văn Dũng', '0911111114', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07.jpg', 'hoangvandung', 'hoang_van_dung', 'user', 3, 3),
+(9, 't@worknest.vn', '$2y$10$hGqQg.IGey/1/3a6Dt/3rOQKKdPgz2U787lWDghxeDqCmCk30v7SW', '2025-06-04 09:12:52', '2025-11-29 13:34:37', 'Nguyễn Danh Vương Bình', '0911111115', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-04.jpg', 'nguyendanhvuong', 'nguyen_danh_vuong', 'user', 3, 3),
+(10, 'l@worknest.vn', '$2y$10$In9Y8TToyh9hICfylJG.Iesgd1mvrE4L./GTSwgcuXX8zXe.tGqM2', '2025-06-04 09:13:10', '2025-11-29 13:34:46', 'Vũ Thị Thuỷ', '0911111116', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-08-52.jpg', 'vuthithuy', 'vu_thi_thuy', 'user', 2, 3),
+(11, 'h@worknest.vn', '$2y$10$HVsxejThJCOYfidLz.xreOCpRGZp8QI001kHhekDGq9tVFW0TWv0K', '2025-06-04 09:13:37', '2025-11-29 13:34:56', 'Đinh Thị Tú', '0911111117', NULL, NULL, 'dinhthitu', 'dinh_thi_tu', 'user', 2, 3),
+(12, 'hq@worknest.vn', '$2y$10$eqebovRoFs2X3pAu5WRwWuQf6JF1t/72sSqOwcQsd8yR7yHA47Pa.', '2025-06-04 16:15:57', '2025-11-12 16:37:42', 'Nguyễn Thị Ngọc Anh', '0911111118', NULL, NULL, 'nguyenthingocanh', NULL, 'user', 4, 3),
+(13, 'bich@worknest.vn', '$2y$10$QLmkrq1e97eFm2g59f06V.b1jy50AavfEWK8rJZBNYII1Dcd2nzKK', '2025-06-04 16:15:57', '2025-11-12 16:23:43', 'Hoàng Thị Lan Anh', '0911111119', NULL, NULL, 'hoangthilananh', NULL, 'user', 4, 3),
+(14, 'tuan@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-11-06 23:41:13', 'Nguyễn Thị Hạnh', '0911111120', NULL, NULL, 'nguyenthihanh', NULL, 'user', 4, 3),
+(15, 'phuc@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-11-06 23:41:21', 'Trần Thị Hiền', '0911111121', NULL, NULL, 'tranthihien', NULL, 'user', 1, 3);
 
 --
 -- Indexes for dumped tables
@@ -2722,6 +2986,12 @@ ALTER TABLE `documents`
   ADD KEY `idx_documents_approval_status` (`approval_status`);
 
 --
+-- Indexes for table `documents_converted`
+--
+ALTER TABLE `documents_converted`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `document_approvals`
 --
 ALTER TABLE `document_approvals`
@@ -2756,6 +3026,12 @@ ALTER TABLE `document_permissions`
 -- Indexes for table `document_settings`
 --
 ALTER TABLE `document_settings`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `document_sign_status`
+--
+ALTER TABLE `document_sign_status`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -2849,6 +3125,12 @@ ALTER TABLE `task_files`
 ALTER TABLE `task_roster`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_task_user` (`task_id`,`user_id`);
+
+--
+-- Indexes for table `task_sign_logs`
+--
+ALTER TABLE `task_sign_logs`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `users`
@@ -2967,13 +3249,19 @@ ALTER TABLE `departments`
 -- AUTO_INCREMENT for table `documents`
 --
 ALTER TABLE `documents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=129;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=181;
+
+--
+-- AUTO_INCREMENT for table `documents_converted`
+--
+ALTER TABLE `documents_converted`
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `document_approvals`
 --
 ALTER TABLE `document_approvals`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `document_approval_logs`
@@ -2985,7 +3273,7 @@ ALTER TABLE `document_approval_logs`
 -- AUTO_INCREMENT for table `document_approval_steps`
 --
 ALTER TABLE `document_approval_steps`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=85;
 
 --
 -- AUTO_INCREMENT for table `document_permissions`
@@ -3000,10 +3288,16 @@ ALTER TABLE `document_settings`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
+-- AUTO_INCREMENT for table `document_sign_status`
+--
+ALTER TABLE `document_sign_status`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+
+--
 -- AUTO_INCREMENT for table `file_signatures`
 --
 ALTER TABLE `file_signatures`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `permissions`
@@ -3063,7 +3357,7 @@ ALTER TABLE `task_approval_logs`
 -- AUTO_INCREMENT for table `task_comments`
 --
 ALTER TABLE `task_comments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=172;
 
 --
 -- AUTO_INCREMENT for table `task_extensions`
@@ -3075,13 +3369,19 @@ ALTER TABLE `task_extensions`
 -- AUTO_INCREMENT for table `task_files`
 --
 ALTER TABLE `task_files`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=188;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=314;
 
 --
 -- AUTO_INCREMENT for table `task_roster`
 --
 ALTER TABLE `task_roster`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=400;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=437;
+
+--
+-- AUTO_INCREMENT for table `task_sign_logs`
+--
+ALTER TABLE `task_sign_logs`
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `users`

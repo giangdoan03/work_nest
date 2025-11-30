@@ -3,14 +3,17 @@
 namespace App\Controllers;
 
 use App\Models\DocumentApprovalLogModel;
+use App\Models\DocumentConvertedModel;
 use App\Models\DocumentModel;
 use App\Models\DocumentApprovalModel;
 use App\Models\DocumentApprovalStepModel;
+use App\Models\DocumentSignStatusModel;
 use App\Models\FileSignatureModel;
 use App\Models\TaskFileModel;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use ReflectionException;
 use RuntimeException;
 use Throwable;
 use App\Traits\AuthTrait;
@@ -161,7 +164,9 @@ class DocumentApprovalController extends ResourceController
         return $this->respond($apv);
     }
 
-    /** ============ POST /api/document-approvals/send ============ */
+    /** ============ POST /api/document-approvals/send ============
+     * @throws ReflectionException
+     */
     public function send(): ResponseInterface
     {
         $userId = (int)(session()->get('user_id') ?? 0);
@@ -170,116 +175,54 @@ class DocumentApprovalController extends ResourceController
         }
 
         $payload = $this->request->getJSON(true) ?? [];
-        $documentId = (int)($payload['document_id'] ?? 0);
+        $convertedId = (int)($payload['document_id'] ?? 0);
         $approverIds = array_values(array_unique(array_filter(array_map('intval', $payload['approver_ids'] ?? []))));
-        $note = trim((string)($payload['note'] ?? ''));
 
-        if ($documentId <= 0) {
+        if ($convertedId <= 0) {
             return $this->failValidationErrors('Thiếu document_id');
         }
         if (empty($approverIds)) {
-            return $this->failValidationErrors('Thiếu approver_ids');
+            return $this->failValidationErrors('Thiếu danh sách approver_ids');
         }
 
-        $docM = new DocumentModel();
-        $apvM = new DocumentApprovalModel();
-        $stepM = new DocumentApprovalStepModel();
+        $convertedM = new DocumentConvertedModel();
+        $signM = new DocumentSignStatusModel();
 
-        // 1) Kiểm tra tài liệu tồn tại
-        $doc = $docM->find($documentId);
+        // Kiểm tra tài liệu convert tồn tại
+        $doc = $convertedM->where('wp_id', $convertedId)->first();
         if (!$doc) {
-            return $this->failNotFound('Tài liệu không tồn tại.');
+            return $this->failNotFound('Tài liệu convert không tồn tại.');
         }
 
-        if (empty($doc['file_path'])) {
-            return $this->failValidationErrors('Tài liệu chưa có file_path hợp lệ.');
+        // Xóa phiên cũ nếu muốn reset trước khi gửi lại
+        // $signM->where('converted_id', $convertedId)->delete();
+
+        // Tạo các bước ký
+        $batch = [];
+        $order = 1;
+
+        foreach ($approverIds as $uid) {
+            $batch[] = [
+                'converted_id' => $convertedId,
+                'user_id'      => $uid,
+                'user_name'    => null,
+                'order_index'  => $order++,
+                'status'       => 'pending',
+                'signed_at'    => null
+            ];
         }
 
-        // 2) Chặn trùng phiên pending cho cùng document (nguồn: document)
-        $existing = $apvM
-            ->where('document_id', $documentId)
-            ->where('source_type', 'document')
-            ->where('status', 'pending')
-            ->first();
-
-        if ($existing) {
-            return $this->failValidationErrors(
-                'Tài liệu này đã được gửi duyệt và đang ở trạng thái PENDING (approval_id='
-                . (int)$existing['id'] . ').'
-            );
+        if (!empty($batch)) {
+            $signM->insertBatch($batch);
         }
 
-        // 3) Tạo phiên + các bước trong transaction
-        $db = $apvM->db;
-        $db->transBegin();
-
-        try {
-            // 3.1) Tạo phiên duyệt
-            $apvId = $apvM->insert([
-                'document_id' => $documentId,
-                'status' => 'pending',
-                'created_by' => $userId,
-                'current_step_index' => 0,
-                'note' => ($note !== '' ? $note : null),
-                'source_type' => 'document',
-            ], true);
-
-            if (!$apvId) {
-                throw new RuntimeException('Không tạo được phiên duyệt.');
-            }
-
-            // 3.2) Tạo các bước duyệt
-            $seq = 1;
-            $batch = [];
-            foreach ($approverIds as $uid) {
-                $batch[] = [
-                    'approval_id' => $apvId,
-                    'approver_id' => $uid,
-                    'sequence' => $seq++,
-                    'status' => 'waiting',
-                ];
-            }
-            if ($batch) {
-                $stepM->insertBatch($batch);
-            }
-
-            // 3.3) Kích hoạt bước đầu tiên
-            $first = $stepM
-                ->where('approval_id', $apvId)
-                ->orderBy('sequence', 'ASC')
-                ->first();
-
-            if (!$first) {
-                throw new RuntimeException('Không có bước duyệt nào được tạo.');
-            }
-
-            $stepM->update($first['id'], ['status' => 'active']);
-            $apvM->update($apvId, [
-                'current_step_index' => (int)$first['sequence'],
-            ]);
-
-            $db->transCommit();
-
-            // 4) Đồng bộ trạng thái tài liệu nguồn
-            $docM->update($documentId, [
-                'approval_status' => 'pending',
-                'approval_sent_by' => $userId,
-                'approval_sent_at' => date('Y-m-d H:i:s'),
-            ]);
-
-            // 5) Trả về
-            return $this->respondCreated([
-                'id' => (int)$apvId,
-                'document_id' => $documentId,
-                'source_type' => 'document',
-                'status' => 'pending',
-            ]);
-
-        } catch (Throwable $e) {
-            $db->transRollback();
-            return $this->failServerError('Khởi tạo duyệt thất bại: ' . $e->getMessage());
-        }
+        return $this->respondCreated([
+            'message' => 'Gửi ký thành công',
+            'converted_id' => $convertedId,
+            'total_approvers' => count($batch)
+        ]);
     }
+
 
 
     /** ============ POST /api/document-approvals/{id}/approve ============ */

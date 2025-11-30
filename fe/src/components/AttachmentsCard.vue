@@ -108,13 +108,7 @@
                 <template #bodyCell="{ column, record }">
                     <template v-if="column.dataIndex === 'actions'">
                         <a-space>
-                            <a-button size="small" type="primary"
-                                      :loading="signing[record.id]"
-                                      @click="signPdf(record)">
-                                <EditOutlined /> Ký
-                            </a-button>
-                            <!-- Trình ký -->
-                            <a-tooltip :title="canSign(record) ? 'Trình ký tài liệu' : 'Chỉ ký khi file là PDF'">
+                            <a-tooltip :title="'Trình ký tài liệu'">
                                 <a-button
                                     size="small"
                                     type="primary"
@@ -232,6 +226,7 @@ import {
     saveConvertedDocument,
     getConvertedPdfList
 } from "@/api/document.js";
+import {sendDocumentToSign} from "@/api/documentSign.js";
 
 const signing = reactive({});
 
@@ -598,116 +593,76 @@ async function ensureTaskFileId (item) {
 }
 
 // nạp trạng thái active cho các task_file_id (comment-id không có API này)
-async function refreshApprovalStates () {
-    const ids = (taskFileItems.value || [])
-        .map(i => i.task_file_id)
-        .filter(Boolean)
-    if (!ids.length) return
-
-    approvalLoading.value = true
-    try {
-        const chunk = 6
-        for (let i = 0; i < ids.length; i += chunk) {
-            await Promise.all(ids.slice(i, i + chunk).map(async id => {
-                try {
-                    const a = await getActiveDocumentApproval(id)
-                    const status = a?.status ?? null
-                    const instanceId = a?.instanceId ?? null
-                    const steps = a?.steps || a?.approval_steps || []
-                    approvalMap.value[id] = { status, instanceId, steps }
-                } catch {
-                    if (!approvalMap.value[id]) approvalMap.value[id] = { status: null, instanceId: null }
-                }
-            }))
-        }
-    } finally {
-        approvalLoading.value = false
-    }
-}
 
 // ---------- modal ----------
-async function openSendApproval (item) {
-    // Nếu là comment: mở modal ngay, KHÔNG ensure
-    if (item._source === 'comment') {
-        sendingItem.value = item
-        sendForm.approver_ids = []
-        sendForm.note = ''
-        showSend.value = true
-        return
+async function openSendApproval(item) {
+    // Lấy converted_id (tuỳ item trong list của bạn)
+    const convertedId =
+        Number(item.converted_id) ||
+        Number(item.id) ||
+        Number(item.wp_id) ||
+        null
+
+    if (!convertedId) {
+        return message.error('Không tìm thấy converted_id hợp lệ để gửi ký.')
     }
 
-    // Nếu là task_file → ensure + preload trạng thái
-    const tfId = await ensureTaskFileId(item)
-    if (!tfId) return
-    try {
-        const a = await getActiveDocumentApproval(tfId)
-        approvalMap.value[tfId] = { status: a?.status ?? null, instanceId: a?.instanceId ?? null }
-    } catch {}
-    sendingItem.value = item
+    // Lưu đối tượng đang chuẩn bị gửi ký
+    sendingItem.value = {
+        ...item,
+        converted_id: convertedId
+    }
+
+    // Reset form
     sendForm.approver_ids = []
-    sendForm.note = ''
     showSend.value = true
 }
 
-async function submitSendApproval () {
+
+async function submitSendApproval() {
     if (!sendForm.approver_ids.length) {
-        return message.error('Vui lòng chọn ít nhất 1 người duyệt.')
+        return message.error('Vui lòng chọn ít nhất 1 người ký.')
     }
 
-    console.log('sendingItem.value', sendingItem.value)
     const item = sendingItem.value
     if (!item) return
+
     sending.value = true
 
     try {
-        // 1) Nguồn comment -> giữ nguyên như bạn đã làm
-        if (item._source === 'comment') {
-            const { data } = await sendCommentApproval(item.id, {
-                user_id: Number(store.currentUser.id),
-                approver_ids: sendForm.approver_ids.map(Number),
-                note: sendForm.note || ''
-            })
-            message.success(data?.message || 'Đã gửi duyệt file trong comment.')
-            item.status = 'pending'
-            clearSendApproval()
-            return
-        }
+        // Lấy converted_id từ item hiện tại
+        const convertedId =
+            Number(item.converted_id) ||
+            Number(item.id) ||
+            Number(item.wp_id) ||
+            null
 
-        // 2) Nguồn document (tài liệu trong tab Tài liệu)
-        // comment-files đã trả id là document_id + source: 'document'
-        const docId = Number(item.wp_id)
-        if (!docId) {
-            message.error('Thiếu document_id hợp lệ.')
+        if (!convertedId) {
+            message.error('Không tìm thấy converted_id hợp lệ.')
             return
         }
 
         const payload = {
-            document_id: docId,
-            approver_ids: sendForm.approver_ids.map(Number),
-            note: sendForm.note || '',
-            source_type: 'document', // optional, cho chắc khớp BE
+            converted_id: convertedId,
+            approver_ids: sendForm.approver_ids.map(Number)
         }
 
-        const { ok, status, data } = await sendDocumentApproval(payload)
+        const res = await sendDocumentToSign(payload)
 
-        if (ok) {
-            item.status = 'pending'
-            message.success('Đã gửi ký duyệt tài liệu.')
-            clearSendApproval()
-        } else if (status === 409) {
-            item.status = 'pending'
-            message.warning(data?.message || 'Đối tượng đang chờ duyệt.')
-            clearSendApproval()
-        } else {
-            message.error(data?.message || 'Không thể gửi duyệt.')
-        }
+        message.success(res.data?.message || 'Đã gửi tài liệu đi ký.')
+
+        // cập nhật trạng thái FE
+        item.status = 'pending'
+        clearSendApproval()
 
     } catch (e) {
-        message.error(e?.response?.data?.message || e.message || 'Lỗi máy chủ.')
+        console.error('submitSendApproval error:', e)
+        message.error(e?.response?.data?.message || 'Không thể gửi duyệt.')
     } finally {
         sending.value = false
     }
 }
+
 
 
 function clearSendApproval () {
@@ -834,73 +789,6 @@ async function autoFindMarker(pdfJsDoc, markers = []) {
     }
 
     return null;
-}
-
-
-async function signPdf(file) {
-    signing[file.id] = true;
-
-    try {
-        // 🔥 1) Tải PDF từ backend đúng cách
-        const pdfRes = await fetch(getPdfUrl(file.id));
-        if (!pdfRes.ok) throw new Error("Không tải được PDF từ server.");
-
-        const pdfBytes = await pdfRes.arrayBuffer();
-
-        // 🔥 2) Tải chữ ký
-        const sigUrl = store.currentUser?.signature_url;
-        if (!sigUrl) throw new Error("User chưa có chữ ký");
-
-        const sigBytes = await fetch(sigUrl).then(r => r.arrayBuffer());
-
-        // 🔥 3) Load bằng pdf-lib để chèn ảnh
-        const pdfDoc = await PDFDocument.load(pdfBytes, { updateMetadata: false });
-
-        // 🔥 4) Load PDF bằng pdfjs để detect marker
-        const pdfJs = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
-        const marker = await autoFindMarker(pdfJs, ["HCNS", "chuky1", "chuky2"]);
-
-        if (!marker) {
-            return message.error("Không tìm thấy vị trí ký.");
-        }
-
-        // 🔥 5) Chèn signature tại marker
-        const page = pdfDoc.getPage(marker.pageIndex - 1);
-
-        let img;
-        try {
-            img = await pdfDoc.embedPng(sigBytes);
-        } catch {
-            img = await pdfDoc.embedJpg(sigBytes);
-        }
-
-        const sigW = 120;
-        const sigH = sigW * 0.35;
-
-        page.drawImage(img, {
-            x: marker.x,
-            y: marker.y - sigH - 8,
-            width: sigW,
-            height: sigH,
-        });
-
-        const newPdf = await pdfDoc.save();
-
-        // 🔥 6) Upload file PDF đã ký
-        const formData = new FormData();
-        formData.append("file", new Blob([newPdf], { type: "application/pdf" }));
-        formData.append("document_id", file.id);
-
-        await uploadTaskFileSigned(formData);
-
-        message.success("Đã ký thành công!");
-        await refresh();
-    } catch (err) {
-        console.error(err);
-        message.error("Ký thất bại.");
-    } finally {
-        signing[file.id] = false;
-    }
 }
 
 

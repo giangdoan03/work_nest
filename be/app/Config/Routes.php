@@ -264,27 +264,26 @@ $routes->group('api', function ($routes) {
     $routes->post('tasks/(:num)/reject',  'TaskApprovalController::rejectByTask/$1');
     $routes->get('documents/(:num)', 'DocumentController::show/$1');
     $routes->get('approvals/active-by-target', 'ApprovalController::activeByTarget');
-
-     $routes->post('document-approvals/send', 'DocumentApprovalController::send');
-    // đúng theo FE đang gọi
-    $routes->get('approvals/inbox-files', 'DocumentApprovalController::inboxFiles');
-    $routes->get('document-approvals/resolved-files-by-me', 'DocumentApprovalController::resolvedByMe');
-    $routes->post('document-approvals/(:num)/act', 'DocumentApprovalController::act/$1');
-    $routes->get('document-approvals/(:num)', 'DocumentApprovalController::detail/$1');
     $routes->post('documents/signed', 'DocumentController::signed');
 
-    // Duyệt/Từ chối tuần tự
-    $routes->get('document-approvals', 'DocumentApprovalController::index');
-    $routes->get('document-approvals/(:num)', 'DocumentApprovalController::show/$1');
-    $routes->get('document-approvals/active-by-document', 'DocumentApprovalController::activeByDocument');
-    $routes->post('document-approvals/request', 'DocumentApprovalController::send');    // gửi duyệt
-    $routes->post('document-approvals/(:num)/sign', 'DocumentApprovalController::approve/$1'); // ký duyệt
-    $routes->post('document-approvals/(:num)/reject', 'DocumentApprovalController::reject/$1'); // từ chối
-    $routes->post('document-approvals/(:num)/update-steps', 'DocumentApprovalController::updateSteps/$1'); // hoặc PATCH
-    $routes->delete('document-approvals/(:num)', 'DocumentApprovalController::delete/$1');
-    $routes->delete('document-approvals/document/(:num)', 'DocumentApprovalController::deleteDocument/$1');
-    // Kế hoạch ký cho 1 phiên duyệt (KHÔNG có tọa độ)
-    $routes->get('document-approvals/(:num)/signature-plan', 'DocumentApprovalController::signaturePlan/$1');
+    $routes->group('document-sign', function($routes) {
+
+        // Gửi tài liệu đi cho nhiều người ký (tạo các bước)
+        $routes->post('send', 'DocumentSignController::send');
+
+        // Danh sách tài liệu người dùng cần ký
+        $routes->get('inbox', 'DocumentSignController::inbox');
+
+        // Ký (approve)
+        $routes->post('sign', 'DocumentSignController::sign');
+
+        // Từ chối
+        $routes->post('reject', 'DocumentSignController::reject');
+
+        // Detail chuỗi ký của một tài liệu
+        $routes->get('detail/(:num)', 'DocumentSignController::detail/$1');
+
+    });
 
 
 
