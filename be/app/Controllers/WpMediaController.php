@@ -12,7 +12,7 @@ class WpMediaController extends ResourceController
     protected $format = 'json';
 
     /** Build a Guzzle-like client via CI Services with Basic Auth headers */
-    private function wpClient()
+    private function wpClient(): array
     {
         $user = (string) env('WP_USER', '');
         $pass = (string) env('WP_APP_PASSWORD', '');

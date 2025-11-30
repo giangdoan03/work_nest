@@ -1,4 +1,5 @@
 import axios from 'axios'
+import {message} from "ant-design-vue";
 
 const instance = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
@@ -37,6 +38,44 @@ export const deleteDocumentAPI = (documentId, opts = {}) =>
 
 
 export const deleteCommentAPI = (id) => instance.delete(`/comments/${id}`);
+
+export async function uploadPdfToWordPress(pdfUrl, filename) {
+    try {
+        const res = await instance.post(
+            "/wp-media/url",
+            {
+                url: pdfUrl,
+                filename,               // ⚡ tên file truyền từ FE
+                title: filename,
+                alt_text: filename,
+            },
+            {
+                headers: { "Content-Type": "application/json" }
+            }
+        );
+
+        return res.data;
+
+    } catch (e) {
+        console.error("Upload WordPress error:", e.response?.data || e);
+        message.error("Không upload PDF lên WordPress");
+        return null;
+    }
+}
+
+
+export const saveConvertedDocument = (payload) =>
+    instance.post('/documents/converted', payload, {
+        headers: { 'Content-Type': 'application/json' }
+    });
+
+export const getConvertedPdfList = (taskId) =>
+    instance.get('/documents/converted', {
+        params: { task_id: taskId }
+    });
+
+
+
 
 
 

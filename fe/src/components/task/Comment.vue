@@ -317,8 +317,13 @@
 
             <div class="drawer-toolbar">
                 <div class="creator-info">
-                    Người tạo: <strong>{{ rosterCreatedByName || 'Không rõ' }}</strong>
-                    <small v-if="rosterCreatedBy" style="margin-left:8px; color:#6b7280">({{ rosterCreatedBy }})</small>
+                    <div>
+                        Người tạo:
+                    </div>
+                    <div>
+                        <strong>{{ rosterCreatedByName || 'Không rõ' }}</strong>
+                        <small v-if="rosterCreatedBy" style="margin-left:8px; color:#6b7280">({{ rosterCreatedBy }})</small>
+                    </div>
                 </div>
 
                 <!-- tuỳ chọn: nếu bạn có biến progress/all_approved từ API, hiển thị ở đây -->
@@ -460,29 +465,6 @@
                                                     Từ chối
                                                 </a-button>
                                             </template>
-
-                                            <!-- 2️⃣ Nút KÝ (hiện khi duyệt xong toàn bộ) -->
-                                            <a-button
-                                                v-if="rosterAllApproved && m.status === 'approved' && !m.signed && canSign(m)"
-                                                size="small"
-                                                type="primary"
-                                                ghost
-                                                :loading="signLoading[m.user_id]"
-                                                @click="handleSign(m)"
-                                            >
-                                                <template #icon><EditOutlined /></template>
-                                                Ký
-                                            </a-button>
-
-                                            <!-- 3️⃣ Đã ký -->
-                                            <a-tag
-                                                v-else-if="m.signed"
-                                                color="green"
-                                                style="border-radius:12px; font-weight:600"
-                                            >
-                                                ✓ Đã ký
-                                            </a-tag>
-
                                             <!-- 4️⃣ Hiển thị “Lượt của ...” -->
                                             <template v-if="!canActOnChip(m) && m.status === 'pending'">
                                                 <a-tag color="blue" style="border-radius:12px">
@@ -535,6 +517,7 @@ import {
 } from '@ant-design/icons-vue'
 
 import {createComment, getComments, getTaskRosterAPI, mergeTaskRosterAPI, updateComment,} from '@/api/task'
+import { signTaskForUserAPI } from "@/api/taskSign";
 
 import {
     adoptTaskFileFromPathAPI,
@@ -1722,50 +1705,6 @@ function canSign(m) {
     return isMe;
 }
 
-async function handleSign(m) {
-    try {
-        signLoading.value[m.user_id] = true;
-
-        await signTaskForUserAPI(taskId.value, m.user_id);
-
-        // update UI local
-        const item = mentionsSelected.value.find(x => x.user_id == m.user_id);
-        if (item) {
-            item.signed = true;
-            item.signed_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-        }
-
-        await syncRosterFromServer();
-
-        message.success("Đã ký văn bản");
-    } catch (err) {
-        console.error(err);
-        message.error("Không ký được");
-    } finally {
-        signLoading.value[m.user_id] = false;
-    }
-}
-
-async function handleFinalSign() {
-    try {
-        signLoading.value["FINAL"] = true;
-
-        await signTaskForUserAPI(taskId.value, currentUserId.value);
-
-        // cập nhật signed toàn task
-        await syncRosterFromServer();
-
-        message.success("Đã ký văn bản thành công");
-    } catch (err) {
-        console.error(err);
-        message.error("Không thể ký văn bản");
-    } finally {
-        signLoading.value["FINAL"] = false;
-    }
-}
-
-
-
 /* ===== lifecycle ===== */
 onMounted(async () => {
     t = setInterval(() => (tick.value = Date.now()), 60_000)
@@ -2670,9 +2609,6 @@ onBeforeUnmount(() => {
 }
 
 .drawer-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     gap: 12px;
     padding: 8px 0;
     border-bottom: 1px solid #eef1f3;
@@ -2891,9 +2827,9 @@ onBeforeUnmount(() => {
 .lb-file-name-text {
     display: inline-block;
     max-width: 100%;
-    white-space: nowrap; /* Không xuống dòng */
-    overflow: hidden; /* Giấu phần thừa */
-    text-overflow: ellipsis; /* Hiện dấu ... */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     vertical-align: bottom;
 }
 

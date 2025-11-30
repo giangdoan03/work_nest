@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\DocumentApprovalModel;
+use App\Models\DocumentConvertedModel;
 use App\Models\DocumentSettingModel;
 use App\Models\TaskFileModel;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -1520,6 +1521,9 @@ class DocumentController extends ResourceController
         $client = $google->getClient();
         $drive  = new Google_Service_Drive($client);
 
+        // 🔥 Folder đích để lưu PDF
+        $targetFolder = "18z1HuZZgqiCIuVGnAEl-PJOFOGtayGmF";
+
         try {
             // 1) Lấy metadata
             $file = $drive->files->get($driveId, ['fields' => 'id,name,mimeType,parents']);
@@ -1539,29 +1543,32 @@ class DocumentController extends ResourceController
                 $resp = $drive->files->get($driveId, ["alt" => "media"]);
                 $binary = $resp->getBody()->getContents();
 
-                // Xác định convert sang loại nào
+                // Xác định loại chuyển sang Google Docs
                 $convertMime = match(true) {
-                    str_contains($mime, 'word') => "application/vnd.google-apps.document",
-                    str_contains($mime, 'spreadsheet') => "application/vnd.google-apps.spreadsheet",
-                    str_contains($mime, 'presentation') => "application/vnd.google-apps.presentation",
+                    str_contains($mime, 'word')        => "application/vnd.google-apps.document",
+                    str_contains($mime, 'sheet'),
+                    str_contains($mime, 'excel'),
+                    str_contains($mime, 'spread')      => "application/vnd.google-apps.spreadsheet",
+                    str_contains($mime, 'presentation'),
+                    str_contains($mime, 'powerpoint')  => "application/vnd.google-apps.presentation",
                     default => null
                 };
 
                 if (!$convertMime) {
-                    return $this->failValidationErrors("File này không thể convert sang Google Doc để xuất PDF.");
+                    return $this->failValidationErrors("Không thể chuyển file này sang Google Doc để xuất PDF.");
                 }
 
-                // Upload lại dạng Google Docs
+                // Upload dạng Google Docs
                 $new = new Google_Service_Drive_DriveFile([
-                    'name' => $name,
+                    'name'     => $name,
                     'mimeType' => $convertMime
                 ]);
 
                 $googleConverted = $drive->files->create(
                     $new,
                     [
-                        "data" => $binary,
-                        "mimeType" => "application/octet-stream",
+                        "data"       => $binary,
+                        "mimeType"   => "application/octet-stream",
                         "uploadType" => "media"
                     ]
                 );
@@ -1573,29 +1580,174 @@ class DocumentController extends ResourceController
             $pdf = $drive->files->export($driveId, "application/pdf", ["alt" => "media"]);
             $pdfBinary = $pdf->getBody()->getContents();
 
-            // 4) Upload PDF lên Drive
+            // 4) Upload PDF lên đúng folder **targetFolder**
             $pdfFile = new Google_Service_Drive_DriveFile([
-                "name" => $name . ".pdf"
+                "name"    => $name . ".pdf",
+                "parents" => [$targetFolder]   // 🔥 LƯU VÀO ĐÚNG FOLDER
             ]);
 
             $uploaded = $drive->files->create(
                 $pdfFile,
                 [
-                    "data" => $pdfBinary,
-                    "mimeType" => "application/pdf",
+                    "data"       => $pdfBinary,
+                    "mimeType"   => "application/pdf",
                     "uploadType" => "media"
                 ]
             );
 
             return $this->respond([
-                'url' => "https://drive.google.com/file/d/{$uploaded->id}/view",
-                'pdf_id' => $uploaded->id
+                'url'    => "https://drive.google.com/file/d/{$uploaded->id}/view",
+                'pdf_id' => $uploaded->id,
+                'folder' => $targetFolder
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->failServerError($e->getMessage());
         }
     }
+
+
+    public function listPdfFromDrive(): ResponseInterface
+    {
+        $folderId = "18z1HuZZgqiCIuVGnAEl-PJOFOGtayGmF";
+
+        try {
+            $google = new GoogleDriveService();
+            $client = $google->getClient();
+            $drive = new Google_Service_Drive($client);
+
+            $query = "'{$folderId}' in parents and mimeType='application/pdf' and trashed=false";
+
+            $files = $drive->files->listFiles([
+                'q' => $query,
+                'fields' => 'files(id,name,mimeType,size,createdTime)'
+            ]);
+
+            // Dọn dữ liệu chỉ giữ field cần thiết
+            $clean = array_map(function ($f) {
+                return [
+                    "id"          => $f->id,
+                    "name"        => $f->name,
+                    "mimeType"    => $f->mimeType,
+                    "size"        => $f->size,
+                    "createdTime" => $f->createdTime,
+                    "url"         => "https://drive.google.com/file/d/{$f->id}/view"
+                ];
+            }, $files->files ?? []);
+
+            return $this->respond([
+                "folder" => $folderId,
+                "files"  => $clean
+            ]);
+
+        } catch (Exception $e) {
+            return $this->failServerError($e->getMessage());
+        }
+    }
+
+
+    public function pdfDownload(): ResponseInterface
+    {
+        $fileId = $this->request->getGet('file_id');
+        if (!$fileId) {
+            return $this->fail("Missing file_id");
+        }
+
+        try {
+            $google = new GoogleDriveService();
+            $client = $google->getClient();
+            $drive = new Google_Service_Drive($client);
+
+            // Lấy file PDF thật
+            $response = $drive->files->get($fileId, ['alt' => 'media']);
+            $stream = $response->getBody();
+            $pdfData = $stream->getContents();
+
+            // Kiểm tra PDF có header hay không
+            if (!str_starts_with($pdfData, "%PDF")) {
+                return $this->failServerError("Invalid PDF (missing %PDF header)");
+            }
+
+            return $this->response
+                ->setHeader("Content-Type", "application/pdf")
+                ->setHeader("Content-Disposition", "inline; filename=\"file.pdf\"")
+                ->setBody($pdfData);
+
+        } catch (Exception $e) {
+            return $this->failServerError($e->getMessage());
+        }
+    }
+
+
+    public function listConverted(): ResponseInterface
+    {
+        $taskId = $this->request->getGet('task_id');
+
+        if (!$taskId) {
+            return $this->failValidationErrors("Thiếu task_id");
+        }
+
+        $db = db_connect();
+
+        $rows = $db->table('documents_converted')
+            ->where('task_file_id', $taskId)
+            ->orderBy('id', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        return $this->respond([
+            'status' => 'success',
+            'files'  => $rows
+        ]);
+    }
+
+
+
+    public function saveConverted(): ResponseInterface
+    {
+        try {
+            $data = $this->request->getJSON(true);
+
+            if (!$data) {
+                return $this->failValidationErrors("Invalid JSON payload");
+            }
+
+            $model = new DocumentConvertedModel();
+
+            $insertData = [
+                'wp_id'        => $data['wp_id']        ?? null,
+                'file_url'     => $data['file_url']     ?? null,
+                'mime_type'    => $data['mime_type']    ?? null,
+                'title'        => $data['title']        ?? null,
+                'size'         => $data['size']         ?? null,
+                'drive_id'     => $data['drive_id']     ?? null,
+                'task_file_id' => $data['task_file_id'] ?? null,
+                'uploaded_by' => $data['uploaded_by'] ?? null,
+                'uploader_name' => $data['uploader_name'] ?? null,
+                'wp_created_at'=> $data['wp_created_at'] ?? null,
+            ];
+
+            // Validate
+            if (!$insertData['wp_id'] || !$insertData['file_url']) {
+                return $this->failValidationErrors("Missing wp_id or file_url");
+            }
+
+            $id = $model->insert($insertData);
+
+            return $this->respondCreated([
+                'id'      => $id,
+                'message' => 'Converted PDF saved successfully'
+            ]);
+
+        } catch (Throwable $e) {
+            return $this->failServerError($e->getMessage());
+        }
+    }
+
+
+
+
+
 
 
 }

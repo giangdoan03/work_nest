@@ -20,6 +20,14 @@ export const signTaskByIdAPI = (taskId, data = {}) =>
     instance.post(`/tasks/${taskId}/sign`, data)
 
 /**
+ * Ký thay cho người trong roster
+ * (Admin/super_admin ký thay user)
+ * POST /tasks/{taskId}/sign/user/{userId}
+ */
+export const signTaskForUserAPI = (taskId, userId, data = {}) =>
+    instance.post(`/tasks/${taskId}/sign/user/${userId}`, data)
+
+/**
  * Lấy trạng thái ký của task
  */
 export const getTaskSignStatusAPI = (taskId) =>

@@ -141,6 +141,9 @@ export const convertDriveToPdfAPI = (driveId) => instance.get('/documents/conver
     params: {drive_id: driveId}
 })
 
+export const listDrivePdfAPI = () =>
+    instance.get('/documents/drive-pdf-list');
+
 
 // Export default gộp, tiện import *
 export default {
@@ -164,5 +167,6 @@ export default {
     uploadSignedPdf,
     getApprovalDetail,
     getApprovalsByDocument,
-    convertDriveToPdfAPI
+    convertDriveToPdfAPI,
+    listDrivePdfAPI
 }

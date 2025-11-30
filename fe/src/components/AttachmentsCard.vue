@@ -18,22 +18,23 @@
         </div>
         <a-spin :spinning="loading" tip="Đang tải tài liệu...">
 
-
+            <a-tabs v-model:activeKey="activeTab">
+                <a-tab-pane key="office" tab="Tài liệu Word/Excel/Office" />
+                <a-tab-pane key="pdf" tab="Tài liệu PDF" />
+            </a-tabs>
             <a-table
-                v-if="displayCards.length"
-                :data-source="displayCards"
+                v-if="activeTab === 'office'"
+                :data-source="officeFiles"
                 :columns="columns"
-                :loading="loading"
                 row-key="_key"
-                size="small"
                 bordered
+                size="small"
             >
                 <template #bodyCell="{ column, record }">
 
                     <!-- Tên tài liệu -->
                     <template v-if="column.dataIndex === 'title'">
                         <div class="file-title">
-                            <component :is="record.icon" class="file-icon" />
                             <span>{{ record.title || record.name }}</span>
                         </div>
                     </template>
@@ -65,16 +66,16 @@
                             </a-tooltip>
 
                             <!-- Convert PDF -->
-<!--                            <a-tooltip :title="isPdf(record) ? 'File đã là PDF' : 'Chuyển sang PDF'">-->
-<!--                                <a-button-->
-<!--                                    size="small"-->
-<!--                                    :disabled="!canConvert(record)"-->
-<!--                                    :loading="converting[record._key]"-->
-<!--                                    @click="convertToPdf(record)"-->
-<!--                                >-->
-<!--                                    <FilePdfOutlined />-->
-<!--                                </a-button>-->
-<!--                            </a-tooltip>-->
+                            <a-tooltip :title="isPdf(record) ? 'File đã là PDF' : 'Chuyển sang PDF'">
+                                <a-button
+                                    size="small"
+                                    :disabled="!canConvert(record)"
+                                    :loading="converting[record._key]"
+                                    @click="convertToPdf(record)"
+                                >
+                                    <FilePdfOutlined />
+                                </a-button>
+                            </a-tooltip>
 
                             <!-- Xóa -->
                             <a-tooltip title="Xoá">
@@ -88,18 +89,7 @@
                                 </a-button>
                             </a-tooltip>
 
-                            <!-- Trình ký -->
-                            <a-tooltip :title="canSign(record) ? 'Trình ký tài liệu' : 'Chỉ ký khi file là PDF'">
-                                <a-button
-                                    size="small"
-                                    type="primary"
-                                    :disabled="!canSign(record)"
-                                    :loading="ensuring[record._key]"
-                                    @click="openSendApproval(record)"
-                                >
-                                    <SendOutlined/>
-                                </a-button>
-                            </a-tooltip>
+
 
                         </a-space>
                     </template>
@@ -107,9 +97,40 @@
                 </template>
             </a-table>
 
-            <a-empty v-else>
-                <template #description>Chưa có tài liệu của công việc</template>
-            </a-empty>
+            <a-table
+                v-else-if="activeTab === 'pdf'"
+                :data-source="convertedPdfs"
+                :columns="pdfColumns"
+                row-key="_key"
+                bordered
+                size="small"
+            >
+                <template #bodyCell="{ column, record }">
+                    <template v-if="column.dataIndex === 'actions'">
+                        <a-space>
+                            <a-button size="small" type="primary"
+                                      :loading="signing[record.id]"
+                                      @click="signPdf(record)">
+                                <EditOutlined /> Ký
+                            </a-button>
+                            <!-- Trình ký -->
+                            <a-tooltip :title="canSign(record) ? 'Trình ký tài liệu' : 'Chỉ ký khi file là PDF'">
+                                <a-button
+                                    size="small"
+                                    type="primary"
+                                    @click="openSendApproval(record)"
+                                >
+                                    <SendOutlined/>
+                                </a-button>
+                            </a-tooltip>
+                        </a-space>
+                    </template>
+                </template>
+            </a-table>
+
+
+            <a-empty v-else description="Không có tài liệu trong tab này" />
+
 
             <!-- Modal XEM TRƯỚC -->
             <a-modal
@@ -125,7 +146,7 @@
                         v-if="preview.kind === 'image'"
                         :src="preview.url"
                         style="max-width:100%; max-height:100%; display:block; margin:auto;"
-                    />
+                     alt=""/>
 
                     <!-- PDF -->
                     <iframe
@@ -183,7 +204,7 @@
 <script setup>
 import {
     LinkOutlined, EyeOutlined, DownloadOutlined, SendOutlined,DeleteOutlined,
-    FilePdfOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined, FileTextOutlined, UserOutlined, ReloadOutlined
+    FilePdfOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined, FileTextOutlined, UserOutlined, ReloadOutlined, EditOutlined
 } from '@ant-design/icons-vue'
 import { computed, onMounted, ref, watch, reactive, nextTick, onBeforeUnmount } from 'vue'
 import { message, Modal } from 'ant-design-vue'
@@ -192,7 +213,7 @@ import 'dayjs/locale/vi'
 
 // API
 import { getUsers } from '@/api/user'
-import { sendDocumentApproval, getActiveDocumentApproval, convertDriveToPdfAPI } from '@/api/approvals.js'
+import { sendDocumentApproval, getActiveDocumentApproval, convertDriveToPdfAPI, listDrivePdfAPI } from '@/api/approvals.js'
 import {
     adoptTaskFileFromPathAPI,
     uploadTaskFileLinkAPI,
@@ -202,6 +223,17 @@ import {
     deleteDocumentAPI, deleteTaskFileAPI, deleteCommentAPI
 } from '@/api/taskFiles'
 import { useUserStore } from '@/stores/user'
+
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
+import { PDFDocument, degrees } from "pdf-lib";
+import {
+    uploadPdfToWordPress,
+    uploadTaskFileSigned,
+    saveConvertedDocument,
+    getConvertedPdfList
+} from "@/api/document.js";
+
+const signing = reactive({});
 
 // ---------- setup ----------
 dayjs.locale('vi')
@@ -216,10 +248,10 @@ const props = defineProps({
 const thumbH = 96
 const loading = ref(false)
 const approvalLoading = ref(false)
-const ensuring = reactive({})                   // per-item loading khi ensure id
+const ensuring = reactive({})
 const userMap = ref(Object.create(null))
 const approverOptions = ref([])
-const taskFileItems = ref([])                   // danh sách item hiển thị
+const taskFileItems = ref([])
 
 // Trạng thái duyệt: Map id (task_file_id hoặc comment id) -> {status, instanceId}
 const approvalMap = ref({})
@@ -229,8 +261,22 @@ const showSend = ref(false)
 const sending = ref(false)
 const sendingItem = ref(null)
 const sendForm = reactive({ approver_ids: [], note: '' })
+const activeTab = ref("office")
+const drivePdfs = ref([]);
+const convertedPdfs = ref([]);
 
 const isPdf = r => (r.ext || '').toLowerCase() === 'pdf'
+
+// File Office = word, excel, ppt
+const officeExts = new Set(['doc','docx','xls','xlsx','ppt','pptx'])
+
+const officeFiles = computed(() =>
+    taskFileItems.value.filter(f => officeExts.has(f.ext))
+)
+
+const pdfFiles = computed(() =>
+    taskFileItems.value.filter(f => f.ext === 'pdf')
+)
 
 const canConvert = r => !isPdf(r)
 
@@ -245,12 +291,39 @@ const PPT_EXTS   = new Set(['ppt', 'pptx'])
 const OFFICE_EXTS= new Set(['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'])
 
 const columns = [
-    { title: "Tên tài liệu", dataIndex: "title", key: "title" },
+    { title: "Tên tài liệu", dataIndex: "title", key: "title", width: 100 },
     { title: "Kiểu file", dataIndex: "ext", key: "ext", width: 100, align: "center" },
     { title: "Người upload", dataIndex: "uploader", key: "uploader", width: 150 },
     { title: "Thời gian", dataIndex: "created_at", key: "created_at", width: 180 },
     { title: "Hành động", dataIndex: "actions", key: "actions", width: 220, align: "center" },
 ];
+
+const pdfColumns = [
+    {
+        title: "Tên PDF",
+        dataIndex: "title",
+        key: "title",
+    },
+    {
+        title: "Thời gian",
+        dataIndex: "created_at",
+        key: "created_at",
+        width: 150,
+        customRender: ({ record }) => {
+            const dt = dayjs(record.created_at);
+            if (!dt.isValid()) return "—";
+
+            return dt.format("HH:mm — DD/MM/YYYY");
+        }
+    },
+    {
+        title: "Hành động",
+        dataIndex: "actions",
+        key: "actions",
+        width: 120,
+    }
+];
+
 
 const aborter = { controller: null }
 const deleting = reactive({}) // per-item loading
@@ -306,32 +379,77 @@ const officeViewer = (url) =>
 const converting = reactive({});
 
 
-async function convertToPdf(item) {
-    if (!item?.drive_id) {
-        return message.error("Không có drive_id để chuyển đổi.");
+async function fetchConvertedPdfs() {
+    try {
+        const { data } = await getConvertedPdfList(props.taskId);
+
+        convertedPdfs.value = (data.files || []).map(f => ({
+            _key: String(f.id),
+            id: f.id,
+            title: f.title || 'Converted PDF',
+            url: f.file_url,
+            mime: f.mime_type,
+            created_at: f.wp_created_at || f.created_at,
+        }));
+    } catch (e) {
+        console.error(e);
+        message.error("Không lấy được PDF đã convert");
     }
+}
+
+
+
+async function convertToPdf(item) {
 
     converting[item._key] = true;
 
     try {
         const { data } = await convertDriveToPdfAPI(item.drive_id);
 
-        if (data?.url) {
-            message.success("Đã chuyển sang PDF");
-            window.open(data.url, "_blank");   // mở PDF mới
-        } else {
-            message.error("Không tạo được PDF");
+        if (!data?.pdf_id) {
+            return message.error("Chuyển PDF thất bại.");
         }
 
+        // --- Tên file PDF sau convert ---
+        const original = item.name.replace(/\.[^.]+$/, "");  // bỏ .doc/.docx
+        const pdfFilename = `Converted_${original}.pdf`;      // giữ nguyên tên
+
+        // URL tải PDF trực tiếp từ Google Drive
+        const realPdfUrl = `https://drive.google.com/uc?export=download&id=${data.pdf_id}`;
+
+        // Upload lên WordPress (⚡ truyền filename)
+        const wpUploaded = await uploadPdfToWordPress(realPdfUrl, pdfFilename);
+
+        if (!wpUploaded) {
+            return message.error("Upload WordPress thất bại!");
+        }
+
+        // Lưu DB
+        await saveConvertedDocument({
+            wp_id: wpUploaded.id,
+            file_url: wpUploaded.source_url,
+            mime_type: wpUploaded.mime_type,
+            title: pdfFilename,
+            size: wpUploaded.raw?.media_details?.filesize ?? null,
+            drive_id: item.drive_id,
+            task_file_id: item.task_file_id,
+            uploaded_by: item.uploaded_by,
+            uploader_name: item.uploader_name,
+            wp_created_at: wpUploaded.raw?.date_gmt,
+        });
+
+        message.success("Đã chuyển & lưu PDF!");
+
     } catch (e) {
-        message.error(
-            e?.response?.data?.message || "Lỗi khi convert PDF"
-        );
+        console.error("convertToPdf error:", e);
+        message.error("Lỗi chuyển hoặc upload PDF.");
     } finally {
         converting[item._key] = false;
         await refresh();
     }
 }
+
+
 
 
 
@@ -367,6 +485,8 @@ async function fetchTaskFiles () {
         const { data } = await getCommentFilesByTask(props.taskId)
         const rows = data?.files || []
 
+        console.log('rows', rows)
+
         const items = []
         for (const r of rows) {
             const url   = r.file_path || ''
@@ -381,7 +501,7 @@ async function fetchTaskFiles () {
             const it = {
                 _key: key,
                 id: r.id,
-                task_file_id: r.source === 'task_file' ? r.id : (r.task_file_id ?? null),
+                task_file_id: r.task_id || null,
                 name,
                 title: r.title || name,
                 url,
@@ -409,6 +529,8 @@ async function fetchTaskFiles () {
         }
 
         taskFileItems.value = items
+
+        console.log('taskFileItems.value', taskFileItems.value)
         await refreshApprovalStates()
     } catch (e) {
         message.error((e?.response?.data?.message) || 'Không tải được tài liệu của task.')
@@ -416,6 +538,27 @@ async function fetchTaskFiles () {
         loading.value = false
     }
 }
+
+async function fetchDrivePdfs() {
+    try {
+        const { data } = await listDrivePdfAPI();
+        drivePdfs.value = (data.files || []).map(f => ({
+            _key: f.id,
+            id: f.id,
+            title: f.name,
+            name: f.name,
+            ext: "pdf",
+            created_at: f.createdTime,
+            // ↓↓↓ URL để xem
+            url: getPdfUrl(f.id)
+        }));
+    } catch (e) {
+        console.error(e);
+        message.error("Không tải được danh sách PDF từ Google Drive");
+    }
+}
+
+
 
 
 const canSendApproval = (item) => item.status === 'not_sent'
@@ -650,6 +793,141 @@ async function onClickDelete(item) {
     })
 }
 
+function getPdfUrl(driveId) {
+    return `${import.meta.env.VITE_API_BASE}/documents/pdf-download?file_id=${driveId}`;
+}
+
+async function autoFindMarker(pdfJsDoc, markers = []) {
+    const total = pdfJsDoc.numPages;
+
+    const escapeRegex = s =>
+        s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const lowerMarkers = markers.map(m => escapeRegex(m.toLowerCase()));
+
+    for (let pageIndex = 1; pageIndex <= total; pageIndex++) {
+
+        const page = await pdfJsDoc.getPage(pageIndex);
+        const textContent = await page.getTextContent();
+
+        const items = textContent.items || [];
+
+        for (const item of items) {
+            const txt = (item.str || "").trim().toLowerCase();
+            if (!txt) continue;
+
+            for (const m of lowerMarkers) {
+                if (txt.includes(m)) {
+
+                    // tọa độ trong PDF (transform array)
+                    // transform = [a,b,c,d,x,y]
+                    const [a, b, c, d, x, y] = item.transform;
+
+                    const fontHeight = Math.abs(d);
+                    const textWidth = (item.width || (txt.length * fontHeight)) || 50;
+
+                    return {
+                        pageIndex,
+                        x,
+                        y,
+                        w: textWidth,
+                        h: fontHeight,
+                        marker: item.str
+                    };
+                }
+            }
+        }
+    }
+
+    return null;
+}
+
+
+async function signPdf(file) {
+    signing[file.id] = true;
+
+    try {
+        // 🔥 1) Tải PDF từ backend đúng cách
+        const pdfRes = await fetch(getPdfUrl(file.id));
+        if (!pdfRes.ok) throw new Error("Không tải được PDF từ server.");
+
+        const pdfBytes = await pdfRes.arrayBuffer();
+
+        // 🔥 2) Tải chữ ký
+        const sigUrl = store.currentUser?.signature_url;
+        if (!sigUrl) throw new Error("User chưa có chữ ký");
+
+        const sigBytes = await fetch(sigUrl).then(r => r.arrayBuffer());
+
+        // 🔥 3) Load bằng pdf-lib để chèn ảnh
+        const pdfDoc = await PDFDocument.load(pdfBytes, { updateMetadata: false });
+
+        // 🔥 4) Load PDF bằng pdfjs để detect marker
+        const pdfJs = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+        const marker = await autoFindMarker(pdfJs, ["HCNS", "chuky1", "chuky2"]);
+
+        if (!marker) {
+            return message.error("Không tìm thấy vị trí ký.");
+        }
+
+        // 🔥 5) Chèn signature tại marker
+        const page = pdfDoc.getPage(marker.pageIndex - 1);
+
+        let img;
+        try {
+            img = await pdfDoc.embedPng(sigBytes);
+        } catch {
+            img = await pdfDoc.embedJpg(sigBytes);
+        }
+
+        const sigW = 120;
+        const sigH = sigW * 0.35;
+
+        page.drawImage(img, {
+            x: marker.x,
+            y: marker.y - sigH - 8,
+            width: sigW,
+            height: sigH,
+        });
+
+        const newPdf = await pdfDoc.save();
+
+        // 🔥 6) Upload file PDF đã ký
+        const formData = new FormData();
+        formData.append("file", new Blob([newPdf], { type: "application/pdf" }));
+        formData.append("document_id", file.id);
+
+        await uploadTaskFileSigned(formData);
+
+        message.success("Đã ký thành công!");
+        await refresh();
+    } catch (err) {
+        console.error(err);
+        message.error("Ký thất bại.");
+    } finally {
+        signing[file.id] = false;
+    }
+}
+
+
+async function getMarkerXY(pdfDoc, pageIndex, sigW, sigH) {
+    const page = await pdfDoc.getPage(pageIndex);
+    const text = await page.getTextContent();
+    const items = text.items || [];
+
+    let best = items.find(i => i.str.toLowerCase().includes("hcn"));
+
+    if (!best) {
+        best = items[0]; // fallback top-left
+    }
+
+    return {
+        x: best.transform[4],
+        y: best.transform[5] - sigH - 10
+    };
+}
+
+
 
 
 defineExpose({ refresh }) // nếu bạn muốn parent gọi được
@@ -659,6 +937,12 @@ onMounted(async () => {
     await Promise.all([loadUsers(), fetchTaskFiles()])
 })
 watch(() => props.taskId, () => fetchTaskFiles())
+watch(activeTab, async (val) => {
+    if (val === "pdf") {
+        await fetchConvertedPdfs();
+    }
+});
+
 onBeforeUnmount(() => {
     aborter.controller?.abort?.()
 })

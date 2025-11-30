@@ -16,6 +16,10 @@ $routes->group('api', function ($routes) {
     $routes->get('documents/convert/pdf', 'DocumentController::convertToPdf');
     // ⭐ Replace marker trong Google Docs/Sheets khi user approve
     $routes->post('marker/replace', 'TaskApprovalController::checkAndReplaceMarker');
+    $routes->get('documents/drive-pdf-list', 'DocumentController::listPdfFromDrive');
+    $routes->post('documents/converted', 'DocumentController::saveConverted');
+    $routes->get('documents/converted', 'DocumentController::listConverted');
+
 
     $routes->post('login', 'Auth::login');
     $routes->get('logout', 'Auth::logout');
@@ -63,13 +67,13 @@ $routes->group('api', function ($routes) {
     $routes->post('tasks/(:num)/roster/reject',  'TaskApprovalController::rosterReject/$1');
 
     // Task Signing
-    $routes->post('tasks/sign',               'TaskSignController::sign');
-    $routes->post('tasks/(:num)/sign',        'TaskSignController::signByTask/$1');
-    $routes->get('tasks/(:num)/sign-status',  'TaskSignController::status/$1');
-    $routes->get('tasks/(:num)/sign-history', 'TaskSignController::logs/$1');
-    $routes->post('tasks/(:num)/sign/upload', 'TaskSignController::uploadSigned/$1');
-    $routes->get('tasks/(:num)/sign/download','TaskSignController::downloadSigned/$1');
-
+    $routes->post('tasks/sign',                     'TaskSignController::sign');              // auto detect user in session
+    $routes->post('tasks/(:num)/sign',              'TaskSignController::signByTask/$1');     // sign by taskId
+    $routes->post('tasks/(:num)/sign/user/(:num)',  'TaskSignController::signForUser/$1/$2'); // sign for specific user (FE needs this)
+    $routes->get('tasks/(:num)/sign-status',        'TaskSignController::status/$1');
+    $routes->get('tasks/(:num)/sign-history',       'TaskSignController::logs/$1');
+    $routes->post('tasks/(:num)/sign/upload',       'TaskSignController::uploadSigned/$1');
+    $routes->get('tasks/(:num)/sign/download',      'TaskSignController::downloadSigned/$1');
 
 
     $routes->get('tasks/(:num)/pinned-files',    'TaskFileController::pinnedByTask/$1');

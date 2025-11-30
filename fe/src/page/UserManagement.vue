@@ -37,10 +37,10 @@
                     <a-segmented
                         v-model:value="density"
                         :options="[
-              { label: 'Gọn', value: 'small' },
-              { label: 'Vừa', value: 'middle' },
-              { label: 'Rộng', value: 'large' }
-            ]"
+                          { label: 'Gọn', value: 'small' },
+                          { label: 'Vừa', value: 'middle' },
+                          { label: 'Rộng', value: 'large' }
+                        ]"
                     />
 
                     <a-tooltip title="Làm mới">
