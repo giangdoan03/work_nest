@@ -29,6 +29,7 @@ class DocumentSignController extends ResourceController
 
         $payload = $this->request->getJSON(true);
         $convertedId = (int)($payload['converted_id'] ?? 0);
+        $taskFileId   = (int)($payload['task_file_id'] ?? 0);   // 🔥 LẤY TỪ FE
         $approvers   = array_values(array_unique(array_filter(array_map('intval', $payload['approver_ids'] ?? []))));
 
         if ($convertedId <= 0) return $this->failValidationErrors('Thiếu converted_id');
@@ -36,37 +37,53 @@ class DocumentSignController extends ResourceController
 
         $convertedM = new DocumentConvertedModel();
         $signM = new DocumentSignStatusModel();
+        $userM = new UserModel();
 
         // Check document exists
         $doc = $convertedM->find($convertedId);
         if (!$doc) return $this->failNotFound('Tài liệu convert không tồn tại');
 
-        // Optional: clear old signing chain
+        // Xóa chuỗi ký cũ nếu có
         $signM->where('converted_id', $convertedId)->delete();
 
-        // Create signing steps
+        // Tạo danh sách bước ký mới
         $batch = [];
         $index = 1;
 
         foreach ($approvers as $uid) {
+
+            // lấy tên để lưu vào approver_name
+            $u = $userM->find($uid);
+            $approverName = $u['name'] ?? null;
+
             $batch[] = [
-                'converted_id' => $convertedId,
-                'user_id'      => $uid,
-                'user_name'    => null,
-                'order_index'  => $index++,
-                'status'       => $index === 2 ? 'pending' : 'waiting',
-                'signed_at'    => null
+                'converted_id'   => $convertedId,
+                'approver_id'    => $uid,
+                'approver_name'  => $approverName,
+                'signed_by_id'   => null,
+                'signed_by_name' => null,
+                'order_index'    => $index,
+                'status'         => ($index === 1 ? 'pending' : 'waiting'),
+                'signed_at'      => null,
+                'signed_pdf_url' => null,
+                'signature_url'  => null,
+                'task_file_id'   => $taskFileId > 0 ? $taskFileId : null,  // 🔥 UPDATE
+                'created_at'     => date('Y-m-d H:i:s'),
             ];
+
+            $index++;
         }
 
         $signM->insertBatch($batch);
 
         return $this->respondCreated([
-            'message' => 'Gửi ký thành công',
+            'message'      => 'Gửi ký thành công',
             'converted_id' => $convertedId,
-            'total_steps' => count($batch)
+            'total_steps'  => count($batch),
         ]);
     }
+
+
 
     /* ====================================================
        2. FETCH INBOX (FILE USER NEEDS TO SIGN)
@@ -81,56 +98,65 @@ class DocumentSignController extends ResourceController
         $convertedM = new DocumentConvertedModel();
         $db = db_connect();
 
-        // 1) Lấy step pending của user đang login
-        $rows = $signM->where('user_id', $uid)
-            ->where('status', 'pending')
+        // Lấy bước ký của user (pending + signed)
+        $rows = $signM
+            ->where('approver_id', $uid)   // 🔥 đổi từ user_id → approver_id
+            ->whereIn('status', ['pending', 'signed'])
             ->orderBy('order_index', 'ASC')
             ->findAll();
 
         $result = [];
 
         foreach ($rows as $s) {
+
             $doc = $convertedM->find($s['converted_id']);
             if (!$doc) continue;
 
-            // 2) JOIN lấy full chain + user name
+            // JOIN chain ký
             $chain = $db->table('document_sign_status ds')
                 ->select('
                 ds.id,
                 ds.converted_id,
-                ds.user_id,
+                ds.approver_id,
                 u.name AS approver_name,
                 ds.order_index,
                 ds.status,
-                ds.signed_at
+                ds.signed_at,
+                ds.signed_pdf_url
             ')
-                ->join('users u', 'u.id = ds.user_id', 'left')
+                ->join('users u', 'u.id = ds.approver_id', 'left')   // 🔥 đổi user_id → approver_id
                 ->where('ds.converted_id', $s['converted_id'])
                 ->orderBy('ds.order_index', 'ASC')
                 ->get()->getResultArray();
 
-            // 3) Mapping theo định dạng FE yêu cầu
             $steps = array_map(fn($x) => [
-                'id' => $x['id'],
-                'sequence' => $x['order_index'],
-                'approver_id' => $x['user_id'],
+                'id'            => $x['id'],
+                'sequence'      => $x['order_index'],
+                'approver_id'   => $x['approver_id'],
                 'approver_name' => $x['approver_name'] ?? '—',
-                'status' => $x['status'],
-                'is_current' => $x['status'] === 'pending',
-                'is_approved' => $x['status'] === 'signed',
+                'status'        => $x['status'],
+                'signed_pdf_url'=> $x['signed_pdf_url'],
+                'is_current'    => $x['status'] === 'pending',
+                'is_approved'   => $x['status'] === 'signed',
             ], $chain);
 
-            // 4) Push vào kết quả trả về FE
+            // Nếu user đã ký thì hiển thị file đã ký
+            $signedUrl = $s['signed_pdf_url'] ?? null;
+            $fileUrl = $signedUrl ?: $doc['file_url'];
+
             $result[] = [
-                'id' => $s['id'],
-                'converted_id' => $s['converted_id'],
-                'title' => $doc['title'],
-                'url' => $doc['file_url'],
+                'id'            => $s['id'],
+                'converted_id'  => $s['converted_id'],
+                'title'         => $doc['title'],
+                'url'           => $fileUrl,
+                'original_url'  => $doc['file_url'],
+                'signed_url'    => $signedUrl,
+                'task_file_id'  => $s['task_file_id'] ?? null,    // 🔥 lấy từ bước ký
                 'uploader_name' => $doc['uploader_name'],
-                'created_at' => $doc['wp_created_at'],
-                'sequence' => $s['order_index'],
-                'status' => $s['status'],
-                'steps' => $steps
+                'created_at'    => $doc['wp_created_at'],
+                'sequence'      => $s['order_index'],
+                'status'        => $s['status'],
+                'steps'         => $steps,
             ];
         }
 
@@ -138,10 +164,14 @@ class DocumentSignController extends ResourceController
     }
 
 
+
     /* ====================================================
        3. SIGN DOCUMENT (STEP-BY-STEP)
        POST /api/document-sign/sign
        ==================================================== */
+    /**
+     * @throws ReflectionException
+     */
     public function sign(): ResponseInterface
     {
         $uid = (int)(session()->get('user_id') ?? 0);
@@ -244,6 +274,27 @@ class DocumentSignController extends ResourceController
             'steps' => $chain
         ]);
     }
+
+    public function delete($id = null)
+    {
+        if (!$id) {
+            return $this->failValidationErrors('Thiếu ID');
+        }
+
+        $signM = new DocumentSignStatusModel();
+
+        $step = $signM->find($id);
+        if (!$step) {
+            return $this->failNotFound('Step ký không tồn tại');
+        }
+
+        $signM->delete($id);
+
+        return $this->respondDeleted([
+            'message' => 'Xoá bước ký thành công'
+        ]);
+    }
+
 
 
 }

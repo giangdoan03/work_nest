@@ -228,7 +228,6 @@ import {
 } from "@/api/document.js";
 import {sendDocumentToSign} from "@/api/documentSign.js";
 
-const signing = reactive({});
 
 // ---------- setup ----------
 dayjs.locale('vi')
@@ -242,8 +241,6 @@ const props = defineProps({
 // ---------- state ----------
 const thumbH = 96
 const loading = ref(false)
-const approvalLoading = ref(false)
-const ensuring = reactive({})
 const userMap = ref(Object.create(null))
 const approverOptions = ref([])
 const taskFileItems = ref([])
@@ -257,7 +254,6 @@ const sending = ref(false)
 const sendingItem = ref(null)
 const sendForm = reactive({ approver_ids: [], note: '' })
 const activeTab = ref("office")
-const drivePdfs = ref([]);
 const convertedPdfs = ref([]);
 
 const isPdf = r => (r.ext || '').toLowerCase() === 'pdf'
@@ -269,13 +265,8 @@ const officeFiles = computed(() =>
     taskFileItems.value.filter(f => officeExts.has(f.ext))
 )
 
-const pdfFiles = computed(() =>
-    taskFileItems.value.filter(f => f.ext === 'pdf')
-)
-
 const canConvert = r => !isPdf(r)
 
-const canSign = r => isPdf(r) && canSendApproval(r)
 
 // ---------- consts & helpers ----------
 const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'])
@@ -283,7 +274,6 @@ const PDF_EXTS   = new Set(['pdf'])
 const WORD_EXTS  = new Set(['doc', 'docx'])
 const EXCEL_EXTS = new Set(['xls', 'xlsx', 'csv'])
 const PPT_EXTS   = new Set(['ppt', 'pptx'])
-const OFFICE_EXTS= new Set(['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'])
 
 const columns = [
     { title: "Tên tài liệu", dataIndex: "title", key: "title", width: 100 },
@@ -321,8 +311,7 @@ const pdfColumns = [
 
 
 const aborter = { controller: null }
-const deleting = reactive({}) // per-item loading
-const { confirm } = Modal
+const deleting = reactive({})
 
 const formatDateOnly = dt => dayjs(dt).isValid() ? dayjs(dt).format('DD/MM/YYYY') : ''
 const formatTime     = dt => dayjs(dt).isValid() ? dayjs(dt).format('HH:mm') : ''
@@ -357,19 +346,7 @@ const preview = reactive({
     kind: "",
 });
 
-const previewKind = (record) => {
-    const ext = (record.ext || "").toLowerCase();
-
-    if (["jpg", "jpeg", "png", "gif", "webp", "bmp"].includes(ext)) return "image";
-    if (ext === "pdf") return "pdf";
-    if (["doc", "docx", "xls", "xlsx", "ppt", "pptx"].includes(ext)) return "office";
-    if (record.is_link) return "link";
-
-    return "other";
-};
-
-const officeViewer = (url) =>
-    `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
+const officeViewer = (url) => `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
 
 const converting = reactive({});
 
@@ -377,7 +354,7 @@ const converting = reactive({});
 async function fetchConvertedPdfs() {
     try {
         const { data } = await getConvertedPdfList(props.taskId);
-
+        console.log(data)
         convertedPdfs.value = (data.files || []).map(f => ({
             _key: String(f.id),
             id: f.id,
@@ -387,6 +364,7 @@ async function fetchConvertedPdfs() {
             wp_id: f.wp_id,
             file_url: f.file_url,
             mime: f.mime_type,
+            task_file_id: f.task_file_id,
             created_at: f.wp_created_at || f.created_at,
         }));
     } catch (e) {
@@ -410,7 +388,7 @@ async function convertToPdf(item) {
 
         // --- Tên file PDF sau convert ---
         const original = item.name.replace(/\.[^.]+$/, "");  // bỏ .doc/.docx
-        const pdfFilename = `Converted_${original}.pdf`;      // giữ nguyên tên
+        const pdfFilename = `origin_${original}.pdf`;      // giữ nguyên tên
 
         // URL tải PDF trực tiếp từ Google Drive
         const realPdfUrl = `https://drive.google.com/uc?export=download&id=${data.pdf_id}`;
@@ -526,76 +504,14 @@ async function fetchTaskFiles () {
     }
 }
 
-async function fetchDrivePdfs() {
-    try {
-        const { data } = await listDrivePdfAPI();
-        drivePdfs.value = (data.files || []).map(f => ({
-            _key: f.id,
-            id: f.id,
-            title: f.name,
-            name: f.name,
-            ext: "pdf",
-            created_at: f.createdTime,
-            // ↓↓↓ URL để xem
-            url: getPdfUrl(f.id)
-        }));
-    } catch (e) {
-        console.error(e);
-        message.error("Không tải được danh sách PDF từ Google Drive");
-    }
-}
-
-
-
 
 const canSendApproval = (item) => item.status === 'not_sent'
-
-const sendBtnTooltip = (item) => {
-    if (item.status === 'pending') return 'Đã gửi duyệt, đang chờ xử lý';
-    if (item.status === 'approved') return 'Tài liệu đã được duyệt';
-    if (item.status === 'rejected') return 'Tài liệu đã bị từ chối, hãy cập nhật rồi gửi lại';
-    return 'Gửi tài liệu này vào quy trình duyệt';
-};
-
-// đảm bảo có task_file_id (chỉ dùng cho nguồn task_file hoặc khi thực sự muốn adopt/link)
-async function ensureTaskFileId (item) {
-    if (item.task_file_id || item._source === 'task_file') {
-        return (item.task_file_id ||= item.id)
-    }
-    ensuring[item._key] = true
-    try {
-        const isHttp = /^https?:\/\//i.test(item.url)
-        if (isHttp) {
-            const { data } = await uploadTaskFileLinkAPI(props.taskId, {
-                title: item.title || item.name || '',
-                url: item.url,
-                user_id: Number(store.currentUser?.id)
-            })
-            const created = Array.isArray(data) ? data[0] : (data?.data || data)
-            item.task_file_id = Number(created?.id)
-        } else {
-            const { data } = await adoptTaskFileFromPathAPI(props.taskId, {
-                task_id: Number(props.taskId),
-                user_id: Number(store.currentUser?.id),
-                file_path: item.url,
-                file_name: item.name || ''
-            })
-            const created = data?.data || data
-            item.task_file_id = Number(created?.id)
-        }
-        return item.task_file_id
-    } catch (e) {
-        message.error(e?.response?.data?.messages?.error || 'Không tạo được tài liệu để gửi duyệt.')
-        return null
-    } finally {
-        ensuring[item._key] = false
-    }
-}
 
 // nạp trạng thái active cho các task_file_id (comment-id không có API này)
 
 // ---------- modal ----------
 async function openSendApproval(item) {
+    console.log('item', item)
     // Lấy converted_id (tuỳ item trong list của bạn)
     const convertedId =
         Number(item.converted_id) ||
@@ -625,17 +541,14 @@ async function submitSendApproval() {
     }
 
     const item = sendingItem.value
+
     if (!item) return
 
     sending.value = true
 
     try {
         // Lấy converted_id từ item hiện tại
-        const convertedId =
-            Number(item.converted_id) ||
-            Number(item.id) ||
-            Number(item.wp_id) ||
-            null
+        const convertedId = Number(item.converted_id) || Number(item.id) || Number(item.wp_id) || null
 
         if (!convertedId) {
             message.error('Không tìm thấy converted_id hợp lệ.')
@@ -644,7 +557,8 @@ async function submitSendApproval() {
 
         const payload = {
             converted_id: convertedId,
-            approver_ids: sendForm.approver_ids.map(Number)
+            approver_ids: sendForm.approver_ids.map(Number),
+            task_file_id: item.task_file_id || null
         }
 
         const res = await sendDocumentToSign(payload)

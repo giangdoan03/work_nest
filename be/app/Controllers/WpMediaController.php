@@ -167,34 +167,81 @@ class WpMediaController extends ResourceController
 
         $json = $this->request->getJSON(true) ?: [];
         $url  = $json['url'] ?? null;
+
         if (!$url || !filter_var($url, FILTER_VALIDATE_URL)) {
             return $this->failValidationErrors('URL không hợp lệ.');
         }
 
-        try {
-            $binary = file_get_contents($url);
-        } catch (Throwable) {
-            return $this->fail('Không thể tải URL nguồn.');
+        /**
+         * ========================================================
+         * 1) TẢI FILE BẰNG CURL THAY CHO file_get_contents()
+         * ========================================================
+         */
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true, // WP hay redirect
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_TIMEOUT => 25,
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        ]);
+        $binary = curl_exec($ch);
+        $curlError = curl_error($ch);
+        $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($binary === false || strlen($binary) === 0) {
+            return $this->failValidationErrors(
+                'Không thể tải URL nguồn. CURL lỗi: ' . ($curlError ?: 'Không xác định')
+            );
         }
 
-        // detect mime via finfo
+        if ($httpCode >= 400) {
+            return $this->failValidationErrors("Không thể tải URL nguồn. HTTP code: $httpCode");
+        }
+
+        /**
+         * ========================================================
+         * 2) Detect MIME từ binary
+         * ========================================================
+         */
         $tmp = tempnam(sys_get_temp_dir(), 'wp_');
         file_put_contents($tmp, $binary);
+
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mime  = finfo_file($finfo, $tmp) ?: 'application/octet-stream';
         finfo_close($finfo);
 
         $sizeKB = (int) ceil(filesize($tmp) / 1024);
         @unlink($tmp);
+
         if ($sizeKB > $this->maxUploadKB()) {
             return $this->failValidationErrors('Kích thước vượt giới hạn.');
         }
 
+        /**
+         * ========================================================
+         * 3) UPLOAD LÊN WORDPRESS MEDIA
+         * ========================================================
+         */
         $filename = $json['filename'] ?? basename(parse_url($url, PHP_URL_PATH)) ?: ('remote_' . time());
-        [$media, $e] = $this->postToWordPress($client, $endpoint, $filename, $mime, $binary);
+
+        [$media, $e] = $this->postToWordPress(
+            $client,
+            $endpoint,
+            $filename,
+            $mime,
+            $binary
+        );
+
         if ($e) return $this->failServerError($e);
 
-        // optional: set meta (title/alt/caption)
+        /**
+         * ========================================================
+         * 4) SET META (optional)
+         * ========================================================
+         */
         $meta = array_filter([
             'title'    => $json['title'] ?? null,
             'alt_text' => $json['alt_text'] ?? null,
@@ -203,13 +250,16 @@ class WpMediaController extends ResourceController
 
         if (!empty($meta) && isset($media['id'])) {
             [$upd, $e2] = $this->patchWpMedia($client, $endpoint, (int) $media['id'], $meta);
-            if ($e2) {
-                // non-fatal; still return uploaded
-            } else {
+            if (!$e2 && is_array($upd)) {
                 $media = $upd;
             }
         }
 
+        /**
+         * ========================================================
+         * 5) TRẢ VỀ KẾT QUẢ
+         * ========================================================
+         */
         return $this->respondCreated([
             'id'         => $media['id'] ?? null,
             'source_url' => $media['source_url'] ?? ($media['guid']['rendered'] ?? null),
@@ -218,6 +268,7 @@ class WpMediaController extends ResourceController
             'raw'        => $media,
         ]);
     }
+
 
     /** ========= PATCH /api/wp-media/{id}  (JSON: {title?, alt_text?, caption?}) ========= */
     public function update($id = null)

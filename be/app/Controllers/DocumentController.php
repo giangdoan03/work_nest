@@ -725,78 +725,37 @@ class DocumentController extends ResourceController
      */
     public function uploadSignedPdf(): ResponseInterface
     {
-        $userId = (int)(session()->get('user_id') ?? 0);
+        $userId   = (int)(session()->get('user_id') ?? 0);
+        $userName = session()->get('user_name') ?? null;
+
         if (!$userId) {
             return $this->failUnauthorized('Chưa đăng nhập.');
         }
 
         /** @var UploadedFile|null $file */
-        $file = $this->request->getFile('file');
-        $convertedId = (int)$this->request->getPost('converted_id');
+        $file = $this->request->getFile('file'); // vẫn lấy nhưng không upload WP nữa
 
-        if (!$file || !$file->isValid()) {
-            return $this->failValidationErrors('Thiếu file hoặc file không hợp lệ.');
-        }
+        $convertedId = (int)$this->request->getPost('converted_id');
+        $taskFileId  = (int)($this->request->getPost('task_file_id') ?? 0);
+        $signatureUrl = $this->request->getPost('signature_url');
+
         if ($convertedId <= 0) {
             return $this->failValidationErrors('Thiếu converted_id.');
         }
 
-        // Only PDF
-        $mime = $file->getMimeType() ?: 'application/octet-stream';
-        if (!in_array($mime, ['application/pdf', 'application/octet-stream'], true)) {
-            return $this->failValidationErrors('File ký phải là PDF.');
-        }
-
-        // WP config
-        $endpoint = env('WP_MEDIA_ENDPOINT', '');
-        $wpUser   = env('WP_USER', '');
-        $wpPass   = env('WP_APP_PASSWORD', '');
-
-        if (!$endpoint || !$wpUser || !$wpPass) {
-            return $this->failServerError('Thiếu cấu hình WordPress.');
-        }
-
-        $auth = 'Basic ' . base64_encode("$wpUser:$wpPass");
-
-        $client = Services::curlrequest([
-            'timeout' => 60,
-            'http_errors' => false,
-            'headers' => [
-                'Authorization' => $auth,
-                'Accept'        => 'application/json',
-            ],
-        ]);
-
-        $clientName = $file->getClientName() ?: ('signed_' . time() . '.pdf');
-
-        // Upload file
-        $resp = $client->post($endpoint, [
-            'headers' => [
-                'Content-Type'        => $mime,
-                'Content-Disposition' => 'attachment; filename="' . $clientName . '"',
-            ],
-            'body' => file_get_contents($file->getTempName()),
-        ]);
-
-        if ($resp->getStatusCode() !== 201) {
-            return $this->failServerError($resp->getBody() ?: 'Upload thất bại.');
-        }
-
-        $json = json_decode((string)$resp->getBody(), true);
-        $signedUrl = $json['source_url'] ?? ($json['guid']['rendered'] ?? null);
-
-        if (!$signedUrl) {
-            return $this->failServerError('Upload OK nhưng thiếu URL.');
-        }
+        // Nếu bạn muốn bắt buộc có file upload:
+        // if (!$file || !$file->isValid()) {
+        //     return $this->failValidationErrors('Thiếu file hoặc file không hợp lệ.');
+        // }
 
         /**
-         * 2) Xác định bước ký của user trong tài liệu này
+         * Lấy bước ký hiện tại
          */
-        $signM = new \App\Models\DocumentSignStatusModel();
+        $signM = new DocumentSignStatusModel();
 
         $step = $signM
             ->where('converted_id', $convertedId)
-            ->where('user_id', $userId)
+            ->where('approver_id', $userId)
             ->where('status', 'pending')
             ->first();
 
@@ -804,28 +763,62 @@ class DocumentController extends ResourceController
             return $this->failValidationErrors('Bạn không có bước ký đang chờ hoặc đã ký rồi.');
         }
 
-        // Mark signed
+        /**
+         * Tính version mới
+         */
+        $maxVersionRow = $signM
+            ->where('converted_id', $convertedId)
+            ->selectMax('version')
+            ->first();
+
+        $newVersion = (int)($maxVersionRow['version'] ?? 0) + 1;
+
+        /**
+         * Cập nhật trạng thái ký — KHÔNG tạo file, KHÔNG upload WP
+         */
         $signM->update($step['id'], [
-            'status'    => 'signed',
-            'signed_at' => date('Y-m-d H:i:s'),
+            'status'          => 'signed',
+            'signed_at'       => date('Y-m-d H:i:s'),
+            'signature_url'   => $signatureUrl,
+            'task_file_id'    => $taskFileId ?: null,
+            'signed_by_id'    => $userId,
+            'signed_by_name'  => $userName,
+            'version'         => $newVersion,  // chỉ lưu version, không dùng cho file
+            // signed_pdf_url giữ nguyên, KHÔNG thay đổi!
         ]);
 
-        // Check remaining pending
+        /**
+         * Mở bước tiếp theo
+         */
+        $next = $signM
+            ->where('converted_id', $convertedId)
+            ->where('order_index >', $step['order_index'])
+            ->orderBy('order_index', 'ASC')
+            ->first();
+
+        if ($next) {
+            $signM->update($next['id'], ['status' => 'pending']);
+        }
+
+        /**
+         * Kiểm tra còn bước chưa ký
+         */
         $remaining = $signM
             ->where('converted_id', $convertedId)
             ->where('status', 'pending')
             ->first();
 
-        $isCompleted = !$remaining;
-
         return $this->respond([
-            'message'      => 'Đã upload & cập nhật chữ ký.',
-            'signed_url'   => $signedUrl,
+            'message'      => 'Đã ký thành công (không upload file).',
+            'version'      => $newVersion,
             'converted_id' => $convertedId,
             'step_id'      => $step['id'],
-            'completed'    => $isCompleted,
+            'completed'    => !$remaining,
         ]);
     }
+
+
+
 
 
 

@@ -41,4 +41,7 @@ export const rejectDocument = (data) =>
 export const getDocumentSignDetail = (convertedId) =>
     api.get(`/document-sign/detail/${convertedId}`)
 
+export const deleteSignStep = (id) =>
+    api.delete(`/document-sign/delete/${id}`)
+
 

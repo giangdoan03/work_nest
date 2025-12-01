@@ -283,6 +283,8 @@ $routes->group('api', function ($routes) {
         // Detail chuỗi ký của một tài liệu
         $routes->get('detail/(:num)', 'DocumentSignController::detail/$1');
 
+        $routes->delete('delete/(:num)', 'DocumentSignController::delete/$1');
+
     });
 
 

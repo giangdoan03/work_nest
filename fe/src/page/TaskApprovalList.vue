@@ -166,7 +166,7 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from 'vue'
+import {computed, onMounted, reactive, ref} from 'vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/vi'
 import {
@@ -178,24 +178,19 @@ import {
     FilePptOutlined,
     FileTextOutlined,
     FileWordOutlined,
+    LinkOutlined,
     ReloadOutlined,
     SearchOutlined,
-    UserOutlined,
-    LinkOutlined
+    UserOutlined
 } from '@ant-design/icons-vue'
-import { message, Modal } from 'ant-design-vue'
+import {message, Modal} from 'ant-design-vue'
 
 import SignPdfModal from '../components/SignPdfModal.vue'
-import { checkSession } from '@/api/auth.js'
-import { deleteDocumentAPI, uploadSignedPdf } from '@/api/document'
-import { deleteCommentAPI, deleteTaskFile as deleteTaskFileAPI } from '@/api/taskFiles'
+import {checkSession} from '@/api/auth.js'
+import {uploadSignedPdf} from '@/api/document'
 
 // 🔥 API mới cho quy trình ký
-import {
-    getMySignInbox,
-    signDocument,
-    getDocumentSignDetail, // nếu muốn dùng detail sau này
-} from '@/api/documentSign'
+import {deleteSignStep, getMySignInbox, getDocumentSignDetail} from '@/api/documentSign'
 
 dayjs.locale('vi')
 
@@ -415,8 +410,7 @@ async function fetchData() {
     try {
         const res = await getMySignInbox()
         const payload = res.data ?? {}
-        const items = payload.items ?? payload.data ?? payload.rows ?? []
-        rows.value = items
+        rows.value = payload.items ?? payload.data ?? payload.rows ?? []
         current.value = 1
     } catch (e) {
         console.error('fetchData error', e)
@@ -427,130 +421,161 @@ async function fetchData() {
 }
 
 /* open/download */
-function openFile(it) { if (!it.url) return; window.open(it.url, '_blank', 'noopener') }
+function openFile(it) {
+    const url = it.signed_url || it.url || it.original_url
+    if (!url) return message.warning('Không có file để mở.')
+    window.open(url, '_blank', 'noopener')
+}
 function download(it) { if (!it.url) return; window.open(it.url, '_blank', 'noopener') }
 
 /* ---------- sign flow (open modal + handle signed blob) ---------- */
+
 async function openSign(item) {
     if (!canSign(item) && !(isAdmin.value || isSuper.value)) {
         return message.info('Bạn chưa có quyền ký tài liệu này.')
     }
+
     const pdfUrl = item?.url || item?.file_path
     if (!pdfUrl) return message.warning('Không có file PDF để ký.')
 
-    // Nếu sau này bạn muốn lấy detail chain đầy đủ:
-    // const res = await getDocumentSignDetail(item.converted_id)
-    // const detail = res.data || {}
+    try {
+        loading.value = true
 
-    signTarget.value = {
-        ...item,
-        pdfUrl,
-        // steps: detail.steps || item.steps || []
+        // 🟢 Gọi API detail
+        const res = await getDocumentSignDetail(item.converted_id)
+        const detail = res.data || {}
+
+        console.log("🔍 DETAIL:", detail)
+
+        // danh sách người đã ký
+        const signedSteps = (detail.steps || []).filter(s => s.status === 'signed')
+
+        signTarget.value = {
+            ...item,
+            pdfUrl,
+            steps: detail.steps || [],
+            signedSteps,     // 🟢 Lưu riêng danh sách bước đã ký
+            detail
+        }
+
+        console.log("🔵 SIGN TARGET:", signTarget.value)
+
+        signOpen.value = true
+
+    } catch (e) {
+        console.error('openSign error', e)
+        message.error('Không lấy được thông tin chuỗi ký')
+    } finally {
+        loading.value = false
     }
-    signOpen.value = true
 }
+
+
 
 // Nhận blob từ modal, upload lên WP, rồi gọi API signDocument
 async function handleSignedBlob(blobOrUrl) {
-
-    console.log('signTarget.value',signTarget.value)
     const it = signTarget.value
     if (!it?.converted_id) {
-        console.warn('handleSignedBlob: missing converted_id, skip')
-        return
+        return message.error('Thiếu converted_id.')
     }
 
     try {
-        // 1) normalize to Blob
+        // 1) Convert blob or URL thành Blob thật
         let fileBlob = null
-        if (!blobOrUrl) return message.error('Không có file đã ký để tải lên.')
-
-        if (blobOrUrl instanceof Blob || (typeof File !== 'undefined' && blobOrUrl instanceof File)) {
+        if (blobOrUrl instanceof Blob) {
             fileBlob = blobOrUrl
         } else if (typeof blobOrUrl === 'string') {
             const resp = await fetch(blobOrUrl)
-            if (!resp.ok) throw new Error('Không tải được URL của file đã ký.')
+            if (!resp.ok) throw new Error('Không tải được file đã ký.')
             fileBlob = await resp.blob()
-        } else if (typeof blobOrUrl === 'object' && blobOrUrl.data) {
+        } else if (blobOrUrl?.data) {
             fileBlob = new Blob([blobOrUrl.data], { type: 'application/pdf' })
         }
 
-        if (!fileBlob || !(fileBlob instanceof Blob)) {
-            return message.error('Dữ liệu chữ ký không hợp lệ (không phải file).')
+        if (!fileBlob) {
+            return message.error('Dữ liệu ký không hợp lệ.')
         }
 
-        // 2) Upload file đã ký lên WordPress/backend
+        // 2) Upload file ký lên backend/WordPress
         const form = new FormData()
-        const filename = it.name || it.title || 'signed.pdf'
-        form.append('file', fileBlob, filename)
-        form.append('converted_id', it.converted_id)   // 🔥 BẮT BUỘC PHẢI CÓ
+        const filename = it.title || it.name || 'signed.pdf'
 
-        const uploadRes = await uploadSignedPdf(form)
-        const upData = uploadRes?.data || {}
-        const signedUrl = upData.signed_url || upData.url || upData.file_url || upData.signed_pdf_url
+        form.append('file', fileBlob, filename)
+        form.append('converted_id', it.converted_id)
+
+        if (mySignatureUrl.value)
+            form.append('signature_url', mySignatureUrl.value)
+
+        if (it.task_file_id)
+            form.append('task_file_id', it.task_file_id)
+
+        const res = await uploadSignedPdf(form)
+        const data = res.data || {}
+        const signedUrl = data.signed_url
 
         if (!signedUrl) {
-            return message.error('Không nhận được URL file đã ký từ server.')
+            return message.error('Server không trả về URL file đã ký.')
         }
 
-        // 3) Gọi API ký (signDocument) với converted_id + signed_pdf_url
-        await signDocument({
-            converted_id: it.converted_id,
-            signed_pdf_url: signedUrl,
-            signature_url: mySignatureUrl.value || null,
-            comment: ''
-        })
+        // 3) Update UI local
+        message.success('Đã ký tài liệu.')
 
-
-        message.success('Đã ký tài liệu thành công.')
         signOpen.value = false
-        await fetchData()
+
+        if (signTarget.value) {
+            signTarget.value.status = 'signed'
+
+            // update đúng step
+            const step = signTarget.value.steps?.find(
+                s => s.approver_id === currentUserId && s.status === 'pending'
+            )
+            if (step) {
+                step.status = 'signed'
+                step.is_current = false
+            }
+        }
+
     } catch (e) {
         console.error('handleSignedBlob error', e)
-        message.error(e?.response?.data?.message || e?.message || 'Lỗi khi ký tài liệu.')
+        message.error(e?.response?.data?.message || e.message || 'Lỗi ký.')
     }
 }
+
 
 /* ---------- delete flow ---------- */
 async function onClickDelete(item) {
     const key = itemKey(item)
     confirm({
         title: 'Xác nhận xóa',
-        content: 'Bạn có chắc chắn muốn xóa tài liệu này?',
+        content: 'Bạn có chắc chắn muốn xóa bước ký này?',
         okText: 'Xóa',
         okType: 'danger',
         cancelText: 'Hủy',
         async onOk() {
             deleting[key] = true
             try {
-                const rawId = item.id ?? item.document_id ?? item.task_file_id
-                const id = Number(rawId)
+                const id = Number(item.id)
                 if (!Number.isFinite(id) || id <= 0) {
-                    message.error('Thiếu id hợp lệ để xóa.')
+                    message.error('Thiếu id bước ký.')
                     return
                 }
 
-                // Phần này bạn có thể tuỳ chỉnh theo business,
-                // hiện tạm giữ logic cũ cho task_file/comment.
-                if (item.task_file_id) {
-                    await deleteTaskFileAPI(Number(item.task_file_id))
-                } else if (item.source === 'comment' || item._source === 'comment') {
-                    await deleteCommentAPI(id)
-                } else {
-                    await deleteDocumentAPI(id)
-                }
+                // 🟢 API mới để xoá step ký
+                await deleteSignStep(id)
 
-                message.success('Đã xóa tài liệu.')
+                message.success('Đã xóa bước ký.')
                 await fetchData()
+
             } catch (e) {
                 console.error('delete error', e)
-                message.error(e?.response?.data?.message || 'Không thể xóa tài liệu.')
+                message.error(e?.response?.data?.message || 'Không thể xóa bước ký.')
             } finally {
                 deleting[key] = false
             }
         }
     })
 }
+
 
 /* ---------- lifecycle ---------- */
 onMounted(() => {

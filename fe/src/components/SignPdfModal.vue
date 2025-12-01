@@ -64,7 +64,7 @@
                 Hủy
             </a-button>
 
-            <a-button :disabled="!signedBlobUrl || saving" @click="downloadSigned">
+            <a-button @click="downloadSigned">
                 <template #icon><DownloadOutlined class="icon-btn" /></template>
                 Tải bản đã ký
             </a-button>
@@ -136,7 +136,7 @@ const props = defineProps({
     signatureUrl: { type: String, default: '' },
 
     autoPlace: { type: Boolean, default: true },
-    markers: { type: [String, Array], default: () => ['HCNS', 'chuky1', 'chuky2', 'chuky3'] },
+    markers: { type: [String, Array], default: () => ['dinhvanvinh', 'nguyencanhhop', 'taquytho', 'chuky3'] },
     markerWidthPct: { type: Number, default: 25 },
     yOffsetPct: { type: Number, default: -18 },
     centerOnMarker: { type: Boolean, default: true },
@@ -175,6 +175,7 @@ const currentUser = ref(null)
 
 const signedBlobUrl = ref('')
 const localSignatureUrl = ref('')
+const existingPositions = ref([])
 
 /* helpers */
 const effectiveSignatureUrl = computed(() => props.signatureUrl || localSignatureUrl.value)
@@ -314,9 +315,60 @@ async function renderPage() {
 
     const task = page.render({ canvasContext: ctx, viewport: renderViewport })
     currentRenderTask = task
-    try { await task.promise } catch (e) { if (e?.name !== 'RenderingCancelledException') throw e }
+    try {
+        await task.promise
+        await drawSignedStamps()
+    } catch (e) { if (e?.name !== 'RenderingCancelledException') throw e }
     finally { if (currentRenderTask === task) currentRenderTask = null }
 }
+
+
+async function drawSignedStamps() {
+    const canvas = canvasRef.value
+    if (!canvas || !pdfDoc.value) return
+
+    const ctx = canvas.getContext("2d")
+
+    const pageIndex = pageNum.value
+    const page = await pdfDoc.value.getPage(pageIndex)
+
+    // --- Lấy kích thước PDF từ PDF.js ---
+    const pdfW = page.view[2] - page.view[0]
+    const pdfH = page.view[3] - page.view[1]
+
+    // --- Mapping PDF → Canvas ---
+    const scaleX = canvas.width / pdfW
+    const scaleY = canvas.height / pdfH
+
+    for (const sig of existingPositions.value) {
+
+        if (sig.pageIndex !== pageIndex) continue
+
+        const img = await loadImage(sig.signature_url)
+
+        // đúng công thức PDF.js
+        const xCanvas = sig.xPdf * scaleX
+        const yCanvas = (pdfH - sig.yPdf - sig.hPdf) * scaleY
+        const wCanvas = sig.wPdf * scaleX
+        const hCanvas = sig.hPdf * scaleY
+
+        ctx.drawImage(img, xCanvas, yCanvas, wCanvas, hCanvas)
+    }
+}
+
+
+
+
+
+function loadImage(url) {
+    return new Promise((resolve) => {
+        const img = new Image()
+        img.crossOrigin = "anonymous"
+        img.onload = () => resolve(img)
+        img.src = url
+    })
+}
+
 
 /* utility: get base page size (cached) */
 async function getBaseSize(pIndex) {
@@ -580,6 +632,150 @@ async function loadPdf() {
     }
 }
 
+
+async function findSignatureMarkersSimple(markerText) {
+    if (!pdfDoc.value) return []
+
+    const results = []
+    const totalPages = pdfDoc.value.numPages
+
+    // regex marker
+    const regex = buildRegex(markerText, props.caseInsensitive, props.wholeWord)
+
+    for (let pageIndex = 1; pageIndex <= totalPages; pageIndex++) {
+        const page = await pdfDoc.value.getPage(pageIndex)
+        const content = await page.getTextContent()
+
+        for (const item of content.items) {
+            if (!item?.str) continue
+
+            const text = String(item.str).trim()
+            if (!text) continue
+
+            if (!regex.test(text)) continue   // không match
+
+            // PDF transform matrix → position
+            const [a, , , d, x, y] = item.transform
+
+            const width = item.width || Math.abs(a)
+            const height = Math.abs(d) || 10
+
+            results.push({
+                pageIndex,
+                xPdf: x,
+                yPdf: y - height,
+                wPdf: width,
+                hPdf: height,
+                textFound: text
+            })
+        }
+    }
+
+    return results
+}
+
+
+async function tryAutoPlaceSignatureForSignature() {
+    const markers = myMarkers.value
+
+    for (const m of markers) {
+        const hits = await findSignatureMarkersSimple(m)
+        if (hits.length) return hits[0] // lấy kết quả đầu tiên
+    }
+
+    return null
+}
+
+function normalizeName(name) {
+    if (!name) return ''
+    return name
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+        .replace(/\s+/g, '')
+        .toLowerCase()
+}
+
+async function findNameInPdf(name) {
+    const key = normalizeName(name);
+    const regex = new RegExp(key, 'i');
+
+    const results = [];
+    const total = pdfDoc.value.numPages;
+
+    for (let pageIndex = 1; pageIndex <= total; pageIndex++) {
+        const page = await pdfDoc.value.getPage(pageIndex);
+        const content = await page.getTextContent();
+
+        for (const item of content.items) {
+            if (!item.str) continue;
+
+            const raw = normalizeName(item.str);
+            if (!regex.test(raw)) continue;
+
+            const [a, , , d, x, y] = item.transform;
+            const width = item.width || Math.abs(a);
+            const height = Math.abs(d) || 10;
+
+            results.push({
+                pageIndex,
+                xPdf: x,
+                yPdf: y - height,
+                wPdf: width,
+                hPdf: height
+            });
+        }
+    }
+    return results;
+}
+
+
+
+
+
+
+async function autoPlaceExistingSignatures() {
+    existingPositions.value = [];
+
+    const steps = props.signTarget?.signedSteps || [];
+    if (!steps.length) return;
+
+    for (const step of steps) {
+        if (!step.signature_url || !step.approver_name) continue;
+
+        const hits = await findNameInPdf(step.approver_name);
+        if (!hits.length) continue;
+
+        const h = hits[0]; // vị trí tên tìm thấy
+
+        // kích thước ảnh chữ ký (PDF unit)
+        const sigWidth = h.wPdf * 1.4;       // rộng hơn text 1 chút
+        const sigHeight = sigWidth * 0.35;   // tỉ lệ ảnh
+
+        // tâm text
+        const centerX = h.xPdf + h.wPdf / 2;
+        const centerY = h.yPdf + h.hPdf / 2;
+
+        // vị trí ảnh = căn giữa perfect center
+        const sigX = centerX - sigWidth / 2;
+        const sigY = centerY - sigHeight / 2;
+
+        existingPositions.value.push({
+            pageIndex: h.pageIndex,
+            signature_url: step.signature_url,
+            xPdf: sigX,
+            yPdf: sigY,
+            wPdf: sigWidth,
+            hPdf: sigHeight
+        });
+    }
+
+    queueRender();
+}
+
+
+
+
 /* lifecycle: when open changes, load libraries + pdf + user session */
 watch(() => props.open, async (v) => {
     if (v) {
@@ -607,6 +803,8 @@ watch(() => props.open, async (v) => {
         }
 
         await loadPdf()
+        await autoPlaceExistingSignatures()
+        queueRender()
     } else {
         destroyed = true
         if (currentRenderTask) { try { currentRenderTask.cancel() } catch {} currentRenderTask = null }
@@ -625,15 +823,107 @@ onBeforeUnmount(() => {
 })
 
 /* Download helpers (create temporary anchor) */
-function downloadSigned() {
-    if (!signedBlobUrl.value) return
-    const a = document.createElement('a')
-    a.href = signedBlobUrl.value
-    a.download = 'signed.pdf'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
+async function downloadSigned() {
+    try {
+        if (!pdfDoc.value) return message.error("PDF chưa sẵn sàng!");
+
+        await loadPdfLib();
+        const { PDFDocument } = PDFLib;
+
+        // --- 1) Tải PDF gốc ---
+        const pdfRes = await fetch(props.pdfUrl);
+        if (!pdfRes.ok) throw new Error("Không tải được file PDF");
+        const pdfBytes = await pdfRes.arrayBuffer();
+
+        const pdfDocW = await PDFDocument.load(pdfBytes);
+
+        // ======================================================
+        // 2) NHÚNG CHỮ KÝ CỦA CÁC STEP ĐÃ KÝ TRƯỚC (existingPositions)
+        // ======================================================
+        for (let pIndex = 0; pIndex < pdfDocW.getPageCount(); pIndex++) {
+
+            const page = pdfDocW.getPage(pIndex);
+            const saved = existingPositions.value.filter(x => x.pageIndex === pIndex + 1);
+
+            for (const s of saved) {
+                const imgBytes = await fetch(s.signature_url).then(r => r.arrayBuffer());
+                let img;
+                try { img = await pdfDocW.embedPng(imgBytes); }
+                catch { img = await pdfDocW.embedJpg(imgBytes); }
+
+                page.drawImage(img, {
+                    x: s.xPdf,
+                    y: s.yPdf,
+                    width: s.wPdf,
+                    height: s.hPdf
+                });
+            }
+        }
+
+        // ======================================================
+        // 3) NHÚNG CHỮ KÝ NGƯỜI ĐANG KÝ TRÊN CANVAS
+        // ======================================================
+        if (effectiveSignatureUrl.value) {
+
+            const imgBytes = await fetch(effectiveSignatureUrl.value).then(r => r.arrayBuffer());
+            let img;
+            try { img = await pdfDocW.embedPng(imgBytes); }
+            catch { img = await pdfDocW.embedJpg(imgBytes); }
+
+            const pageIndex = pageNum.value - 1;
+            const page = pdfDocW.getPage(pageIndex);
+
+            const pdfW = page.getWidth();
+            const pdfH = page.getHeight();
+
+            // Lấy viewport PDF.js để mapping canvas → PDF
+            const rawPage = await pdfDoc.value.getPage(pageNum.value);
+            const vp = rawPage.getViewport({ scale: scale.value });
+
+            const sigCanvasW = sigW.value;
+            const sigCanvasH = sigCanvasW * handleRatio();
+
+            // Canvas → PDF conversion
+            const scaleX = pdfW / vp.width;
+            const scaleY = pdfH / vp.height;
+
+            const xPdf = sigX.value * scaleX;
+            const yPdf = (vp.height - (sigY.value + sigCanvasH)) * scaleY;
+
+            const wPdf = sigCanvasW * scaleX;
+            const hPdf = sigCanvasH * scaleY;
+
+            page.drawImage(img, {
+                x: xPdf,
+                y: yPdf,
+                width: wPdf,
+                height: hPdf
+            });
+        }
+
+        // ======================================================
+        // 4) XUẤT FILE CUỐI
+        // ======================================================
+
+        const finalBytes = await pdfDocW.save();
+        const blob = new Blob([finalBytes], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "signed.pdf";
+        a.click();
+
+        URL.revokeObjectURL(url);
+
+        message.success("Đã tải PDF đã ký!");
+
+    } catch (err) {
+        console.error(err);
+        message.error("Lỗi tạo PDF đã ký.");
+    }
 }
+
 function downloadOriginal() {
     if (!props.pdfUrl) return message.warning('Không có file gốc.')
     const a = document.createElement('a')
@@ -826,7 +1116,6 @@ const approveDisabled = computed(() => {
 async function finalizeApproval() {
     if (!props.pdfUrl) return message.warning('Không có file PDF để duyệt.')
     if (!pdfDoc.value) return message.warning('Vui lòng chờ PDF tải xong.')
-
 
 
     const target = props.signTarget || null

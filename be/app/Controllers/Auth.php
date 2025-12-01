@@ -154,8 +154,7 @@ class Auth extends Controller
                 'user_id'    => (int)$user['id'],
                 'user_email' => $user['email'],
                 'logged_in'  => true,
-
-                // 👇 thêm các field quyền
+                'user_name'    => $user['name'],
                 'role_id'    => $roleId,
                 'role'       => $user['role'] ?? null,
                 'is_admin'   => $isAdmin,
