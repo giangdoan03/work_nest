@@ -591,13 +591,13 @@ class TaskFileController extends ResourceController
         $documentId   = isset($input['document_id']) ? (int)$input['document_id'] : null;
         $note         = trim((string)($input['note'] ?? ''));
         $signedBy     = isset($input['signed_by']) ? (int)$input['signed_by'] : null;
-        $signedAt     = isset($input['signed_at']) ? $input['signed_at'] : null;
+        $signedAt     = $input['signed_at'] ?? null;
         $status       = $input['status'] ?? 'approved';
 
         // optional file info from payload (FE có thể gửi nếu muốn)
         $signedFileName = $input['signed_file_name'] ?? null;
         $signedFilePath = $input['signed_file_path'] ?? null;
-        $signedFileSize = isset($input['signed_file_size']) ? $input['signed_file_size'] : null;
+        $signedFileSize = $input['signed_file_size'] ?? null;
         $signedMime     = $input['signed_mime'] ?? null;
         $approverDisplay = $input['approver_display'] ?? null;
 

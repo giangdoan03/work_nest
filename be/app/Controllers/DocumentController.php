@@ -818,11 +818,6 @@ class DocumentController extends ResourceController
     }
 
 
-
-
-
-
-
     /**
      * @throws \Google\Exception
      * @throws \Google\Service\Exception
@@ -1028,7 +1023,6 @@ class DocumentController extends ResourceController
             }
 
             $model = new DocumentConvertedModel();
-
             $insertData = [
                 'wp_id'        => $data['wp_id']        ?? null,
                 'file_url'     => $data['file_url']     ?? null,
@@ -1058,11 +1052,6 @@ class DocumentController extends ResourceController
             return $this->failServerError($e->getMessage());
         }
     }
-
-
-
-
-
 
 
 }

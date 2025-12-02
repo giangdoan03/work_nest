@@ -18,9 +18,7 @@
                     <a-select v-model:value="pageNum" style="width: 120px">
                         <a-select-option v-for="p in pageCount" :key="p" :value="p">Trang {{ p }}</a-select-option>
                     </a-select>
-
                     <a-input-number v-model:value="scale" :min="0.5" :max="3" :step="0.1" />
-
                     <a-button @click="fitWidth">Fit width</a-button>
                     <a-button @click="resetView">Reset</a-button>
                 </div>
@@ -62,11 +60,7 @@
 
         <template #footer>
             <a-tooltip title="Dành cho văn bản phát hành">
-                <a-button
-                    :loading="savingApprove"
-                    :disabled="approveDisabled"
-                    @click="finalizeApproval"
-                >
+                <a-button :loading="savingApprove" :disabled="approveDisabled" @click="finalizeApproval">
                     <template #icon><CheckCircleOutlined class="icon-btn" /></template>
                     Duyệt văn bản
                 </a-button>
@@ -825,7 +819,7 @@ async function downloadSigned() {
         if (!pdfDoc.value) return message.error("PDF chưa sẵn sàng!");
 
         await loadPdfLib();
-        const { PDFDocument } = PDFLib;
+        const { PDFDocument, StandardFonts, rgb } = PDFLib;
 
         // --- 1) Tải PDF gốc ---
         const pdfRes = await fetch(props.pdfUrl);
@@ -834,9 +828,7 @@ async function downloadSigned() {
 
         const pdfDocW = await PDFDocument.load(pdfBytes);
 
-        // ======================================================
-        // 2) NHÚNG CHỮ KÝ CỦA CÁC STEP ĐÃ KÝ TRƯỚC (existingPositions)
-        // ======================================================
+        // --- 2) Chèn chữ ký của các bước đã ký ---
         for (let pIndex = 0; pIndex < pdfDocW.getPageCount(); pIndex++) {
 
             const page = pdfDocW.getPage(pIndex);
@@ -857,9 +849,7 @@ async function downloadSigned() {
             }
         }
 
-        // ======================================================
-        // 3) NHÚNG CHỮ KÝ NGƯỜI ĐANG KÝ TRÊN CANVAS
-        // ======================================================
+        // --- 3) Chèn chữ ký hàng động trên canvas ---
         if (effectiveSignatureUrl.value) {
 
             const imgBytes = await fetch(effectiveSignatureUrl.value).then(r => r.arrayBuffer());
@@ -873,14 +863,12 @@ async function downloadSigned() {
             const pdfW = page.getWidth();
             const pdfH = page.getHeight();
 
-            // Lấy viewport PDF.js để mapping canvas → PDF
             const rawPage = await pdfDoc.value.getPage(pageNum.value);
             const vp = rawPage.getViewport({ scale: scale.value });
 
             const sigCanvasW = sigW.value;
             const sigCanvasH = sigCanvasW * handleRatio();
 
-            // Canvas → PDF conversion
             const scaleX = pdfW / vp.width;
             const scaleY = pdfH / vp.height;
 
@@ -898,8 +886,81 @@ async function downloadSigned() {
             });
         }
 
+
+        // ------------------------------------------------------------------
+        // 🟦 4) BỔ SUNG PHẦN: Chèn text duyệt vào TẤT CẢ CÁC TRANG (như finalizeApproval)
+        // ------------------------------------------------------------------
+
+        const rawApprover =
+            currentUser.value?.full_name ||
+            currentUser.value?.name ||
+            currentUser.value?.username ||
+            "NguoiDuyet";
+
+        const sanitizeToAscii = s => {
+            try {
+                const nd = s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
+                return nd
+                    .replace(/Đ/g, "D")
+                    .replace(/đ/g, "d")
+                    .replace(/[^\x00-\x7F ]/g, "");
+            } catch {
+                return String(s)
+                    .replace(/[Đđ]/g, c => (c === "Đ" ? "D" : "d"))
+                    .replace(/[^\x00-\x7F ]/g, "");
+            }
+        };
+
+        const approverDisplay = sanitizeToAscii(rawApprover);
+
+        const now = new Date();
+        const pad = n => String(n).padStart(2, "0");
+        const vnTime =
+            `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}, ` +
+            `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+        const timeText = `${approverDisplay} — Date: ${vnTime}`;
+
+        let usedFont = await loadFontIfAvailable(pdfDocW);
+        if (!usedFont) usedFont = await pdfDocW.embedFont(StandardFonts.Helvetica);
+
+        const totalPages = pdfDocW.getPageCount();
+
+        for (let p = 0; p < totalPages; p++) {
+            const page = pdfDocW.getPage(p);
+            const pdfW = page.getWidth();
+
+            const fontSize = 6;
+            const margin = 20;
+
+            const textWidth = usedFont.widthOfTextAtSize(timeText, fontSize);
+            const textHeight = (typeof usedFont.heightAtSize === "function")
+                ? usedFont.heightAtSize(fontSize)
+                : fontSize;
+
+            const textX = Math.max(margin, pdfW - margin - textWidth);
+            const textY = margin;
+            const lineY = textY + textHeight + 2;
+
+            page.drawRectangle({
+                x: textX,
+                y: lineY,
+                width: textWidth,
+                height: 0.7,
+                color: rgb(0, 0, 0)
+            });
+
+            page.drawText(timeText, {
+                x: textX,
+                y: textY,
+                size: fontSize,
+                font: usedFont,
+                color: rgb(0, 0, 0)
+            });
+        }
+
+
         // ======================================================
-        // 4) XUẤT FILE CUỐI
+        // 5) Xuất file hoàn chỉnh
         // ======================================================
 
         const finalBytes = await pdfDocW.save();
@@ -920,6 +981,7 @@ async function downloadSigned() {
         message.error("Lỗi tạo PDF đã ký.");
     }
 }
+
 
 /* helper: load font and return usedFont or null (for pdf-lib) */
 async function loadFontIfAvailable(pdfDocW) {
@@ -1158,36 +1220,76 @@ async function finalizeApproval() {
             pdfDocW.registerFontkit(fontkitMod.default || fontkitMod)
         } catch (e) { console.warn('fontkit not available:', e) }
 
-        const lastIndex = Math.max(0, pdfDocW.getPageCount() - 1)
-        const page = pdfDocW.getPage(lastIndex)
-        const pdfW = page.getWidth()
+        const rawApprover =
+            currentUser.value?.full_name ||
+            currentUser.value?.name ||
+            currentUser.value?.username ||
+            'NguoiDuyet'
 
-        const rawApprover = currentUser.value?.full_name || currentUser.value?.name || currentUser.value?.username || 'NguoiDuyet'
         const sanitizeToAscii = s => {
             try {
                 const nd = s.normalize('NFD').replace(/\p{Diacritic}/gu, '')
-                return nd.replace(/Đ/g, 'D').replace(/đ/g, 'd').replace(/[^\x00-\x7F ]/g, '')
-            } catch { return String(s).replace(/[Đđ]/g, c => c === 'Đ' ? 'D' : 'd').replace(/[^\x00-\x7F ]/g, '') }
+                return nd.replace(/Đ/g, 'D')
+                    .replace(/đ/g, 'd')
+                    .replace(/[^\x00-\x7F ]/g, '')
+            } catch {
+                return String(s)
+                    .replace(/[Đđ]/g, c => c === 'Đ' ? 'D' : 'd')
+                    .replace(/[^\x00-\x7F ]/g, '')
+            }
         }
+
         const approverDisplay = sanitizeToAscii(rawApprover)
+
         const now = new Date()
         const pad = n => String(n).padStart(2, '0')
-        const vnTime = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}, ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
+
+        const vnTime =
+            `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}, ` +
+            `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
+
         const timeText = `${approverDisplay} — Date: ${vnTime}`
 
+        // ❗ Load font trước khi vẽ
         let usedFont = await loadFontIfAvailable(pdfDocW)
         if (!usedFont) usedFont = await pdfDocW.embedFont(StandardFonts.Helvetica)
 
-        const fontSize = 6
-        const textWidth = usedFont.widthOfTextAtSize(timeText, fontSize)
-        const textHeight = typeof usedFont.heightAtSize === 'function' ? usedFont.heightAtSize(fontSize) : fontSize
-        const margin = 20
-        const textX = Math.max(margin, pdfW - margin - textWidth)
-        const textY = margin
-        const lineY = textY + textHeight + 2
 
-        page.drawRectangle({ x: textX, y: lineY, width: textWidth, height: 0.7, color: rgb(0, 0, 0) })
-        page.drawText(timeText, { x: textX, y: textY, size: fontSize, font: usedFont, color: rgb(0,0,0) })
+        // 🟢 Chèn vào tất cả các trang
+        const pageCount = pdfDocW.getPageCount()
+
+        for (let i = 0; i < pageCount; i++) {
+            const page = pdfDocW.getPage(i)
+            const pdfW = page.getWidth()
+
+            const fontSize = 6
+            const textWidth = usedFont.widthOfTextAtSize(timeText, fontSize)
+            const textHeight = typeof usedFont.heightAtSize === 'function'
+                ? usedFont.heightAtSize(fontSize)
+                : fontSize
+
+            const margin = 20
+            const textX = Math.max(margin, pdfW - margin - textWidth)
+            const textY = margin
+            const lineY = textY + textHeight + 2
+
+            page.drawRectangle({
+                x: textX,
+                y: lineY,
+                width: textWidth,
+                height: 0.7,
+                color: rgb(0, 0, 0)
+            })
+
+            page.drawText(timeText, {
+                x: textX,
+                y: textY,
+                size: fontSize,
+                font: usedFont,
+                color: rgb(0, 0, 0)
+            })
+        }
+
 
         const out = await pdfDocW.save({ useObjectStreams: false })
         const outBlob = new Blob([out], { type: 'application/pdf' })
