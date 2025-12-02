@@ -1,14 +1,14 @@
 <template>
+<!--    :maskClosable="false"-->
     <a-modal
         :open="open"
-        title="Ký tài liệu"
+        title="Ký/Duyệt tài liệu"
         width="820px"
         ok-text="Lưu bản đã ký"
         cancel-text="Hủy"
         :confirm-loading="saving"
         :ok-button-props="{ disabled: !isPdfReady || saving }"
         centered
-        :maskClosable="false"
         @cancel="$emit('update:open', false)"
         @ok="handleSave"
     >
@@ -43,6 +43,7 @@
                     Duyệt văn bản
                 </a-button>
             </a-tooltip>
+
             <a-tooltip title="Dành cho văn bản nội bộ">
                 <a-button
                     type="primary"
@@ -59,6 +60,7 @@
                 <template #icon><DownloadOutlined class="icon-btn" /></template>
                 Tải xuống
             </a-button>
+
             <a-button :disabled="saving" @click="$emit('update:open', false)">
                 <template #icon><CloseOutlined class="icon-btn" /></template>
                 Đóng
@@ -904,64 +906,64 @@ async function downloadSigned() {
         // --------------------------------------------------------------
         // ⭐ 4) Chèn footer duyệt (approver info)
         // --------------------------------------------------------------
-        const rawApprover =
-            currentUser.value?.full_name ||
-            currentUser.value?.name ||
-            currentUser.value?.username ||
-            "NguoiDuyet";
 
-        const sanitizeToAscii = s => {
-            try {
-                const nd = s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
-                return nd.replace(/Đ/g, "D").replace(/đ/g, "d").replace(/[^\x00-\x7F ]/g, "");
-            } catch {
-                return s.replace(/[Đđ]/g, c => c === "Đ" ? "D" : "d")
-                    .replace(/[^\x00-\x7F ]/g, "");
+        if (docType.value !== 'internal') {
+            const rawApprover = currentUser.value?.full_name || currentUser.value?.name || currentUser.value?.username || "NguoiDuyet";
+
+            const sanitizeToAscii = s => {
+                try {
+                    const nd = s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
+                    return nd.replace(/Đ/g, "D").replace(/đ/g, "d").replace(/[^\x00-\x7F ]/g, "");
+                } catch {
+                    return s.replace(/[Đđ]/g, c => c === "Đ" ? "D" : "d")
+                        .replace(/[^\x00-\x7F ]/g, "");
+                }
+            };
+
+            const approverDisplay = sanitizeToAscii(rawApprover);
+
+            const now = new Date();
+            const pad = n => String(n).padStart(2, "0");
+            const vnTime =
+                `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}, ` +
+                `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+            const timeText = `${approverDisplay} — Date: ${vnTime}`;
+
+            let usedFont = await loadFontIfAvailable(pdfDocW);
+            if (!usedFont) usedFont = await pdfDocW.embedFont(StandardFonts.Helvetica);
+
+            const totalPages = pdfDocW.getPageCount();
+            for (let p = 0; p < totalPages; p++) {
+                const page = pdfDocW.getPage(p);
+                const pdfW = page.getWidth();
+
+                const fontSize = 6;
+                const margin = 20;
+
+                const tw = usedFont.widthOfTextAtSize(timeText, fontSize);
+                const th = typeof usedFont.heightAtSize === "function"
+                    ? usedFont.heightAtSize(fontSize)
+                    : fontSize;
+
+                const textX = Math.max(margin, pdfW - margin - tw);
+                const textY = margin;
+                const lineY = textY + th + 2;
+
+                page.drawRectangle({
+                    x: textX, y: lineY,
+                    width: tw, height: 0.7,
+                    color: rgb(0, 0, 0)
+                });
+
+                page.drawText(timeText, {
+                    x: textX, y: textY,
+                    size: fontSize,
+                    font: usedFont,
+                    color: rgb(0, 0, 0)
+                });
             }
-        };
 
-        const approverDisplay = sanitizeToAscii(rawApprover);
-
-        const now = new Date();
-        const pad = n => String(n).padStart(2, "0");
-        const vnTime =
-            `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}, ` +
-            `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-
-        const timeText = `${approverDisplay} — Date: ${vnTime}`;
-
-        let usedFont = await loadFontIfAvailable(pdfDocW);
-        if (!usedFont) usedFont = await pdfDocW.embedFont(StandardFonts.Helvetica);
-
-        const totalPages = pdfDocW.getPageCount();
-        for (let p = 0; p < totalPages; p++) {
-            const page = pdfDocW.getPage(p);
-            const pdfW = page.getWidth();
-
-            const fontSize = 6;
-            const margin = 20;
-
-            const tw = usedFont.widthOfTextAtSize(timeText, fontSize);
-            const th = typeof usedFont.heightAtSize === "function"
-                ? usedFont.heightAtSize(fontSize)
-                : fontSize;
-
-            const textX = Math.max(margin, pdfW - margin - tw);
-            const textY = margin;
-            const lineY = textY + th + 2;
-
-            page.drawRectangle({
-                x: textX, y: lineY,
-                width: tw, height: 0.7,
-                color: rgb(0, 0, 0)
-            });
-
-            page.drawText(timeText, {
-                x: textX, y: textY,
-                size: fontSize,
-                font: usedFont,
-                color: rgb(0, 0, 0)
-            });
         }
 
         // --------------------------------------------------------------
@@ -1599,5 +1601,10 @@ canvas { display:block; max-width:100%; background:#fff; border-radius:4px; widt
     margin: 0 !important; /* xoá margin mặc định */
 }
 
+</style>
 
+<style>
+span.ant-tooltip-disabled-compatible-wrapper {
+    margin: 0 10px;
+}
 </style>

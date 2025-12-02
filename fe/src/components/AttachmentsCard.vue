@@ -17,7 +17,6 @@
             </a-tooltip>
         </div>
         <a-spin :spinning="loading" tip="Đang tải tài liệu...">
-
             <a-tabs v-model:activeKey="activeTab">
                 <a-tab-pane key="office" tab="Tài liệu Word/Excel/Office" />
                 <a-tab-pane key="pdf" tab="Tài liệu PDF" />

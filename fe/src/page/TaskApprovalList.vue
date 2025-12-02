@@ -54,6 +54,12 @@
             <template #renderItem="{ item }">
                 <a-list-item :key="itemKey(item)" class="list-item">
                     <a-card class="file-card" :hoverable="true">
+                        <!-- ⭐ TAG ở góc phải -->
+                        <div class="doc-type-tag" v-if="item.doc_type">
+                            <a-tag :color="item.doc_type === 'internal' ? 'blue' : 'green'">
+                                {{ item.doc_type === 'internal' ? 'Nội bộ' : 'Phát hành' }}
+                            </a-tag>
+                        </div>
                         <div class="file-row">
                             <div class="file-thumb">
                                 <component :is="item.icon" class="thumb-icon" v-if="item.kind !== 'image'" />
@@ -71,14 +77,6 @@
                                     <span class="dot">·</span>
                                     <span class="time">{{ formatDate(item.created_at) }}</span>
                                 </div>
-
-                                <div class="file-links" v-if="item.url">
-                                    <a-button type="link" @click="openFile(item)" class="link-btn">
-                                        <template #icon><LinkOutlined /></template>
-                                        Mở tài liệu
-                                    </a-button>
-                                </div>
-
                                 <div class="file-status">
                                     <a-tag color="blue" class="step-tag">
                                         Bước #{{ item.current_step_index || item.sequence || 1 }}
@@ -624,6 +622,23 @@ onMounted(() => {
 
 ul.ant-list-items li { margin-bottom:10px }
 .ant-card-body { padding-top:0 !important }
+.file-card {
+    position: relative;
+}
+
+.doc-type-tag {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+    pointer-events: none; /* để click không bị cản */
+}
+
+.doc-type-tag .ant-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
 
 @media (max-width:880px) {
     .file-row { grid-template-columns:64px 1fr }
