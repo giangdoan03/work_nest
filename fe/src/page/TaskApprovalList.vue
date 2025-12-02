@@ -56,10 +56,13 @@
                     <a-card class="file-card" :hoverable="true">
                         <!-- ⭐ TAG ở góc phải -->
                         <div class="doc-type-tag" v-if="item.doc_type">
-                            <a-tag :color="item.doc_type === 'internal' ? 'blue' : 'green'">
+                            <a-tag
+                                :class="item.doc_type === 'internal' ? 'tag-internal-gradient' : 'tag-external-gradient'"
+                            >
                                 {{ item.doc_type === 'internal' ? 'Nội bộ' : 'Phát hành' }}
                             </a-tag>
                         </div>
+
                         <div class="file-row">
                             <div class="file-thumb">
                                 <component :is="item.icon" class="thumb-icon" v-if="item.kind !== 'image'" />
@@ -639,6 +642,23 @@ ul.ant-list-items li { margin-bottom:10px }
     padding: 2px 8px;
     border-radius: 6px;
 }
+
+.tag-internal-gradient {
+    background: linear-gradient(135deg, #4e8ef6, #6bb9ff);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.tag-external-gradient {
+    background: linear-gradient(135deg, #00c98d, #4be2a7);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
 
 @media (max-width:880px) {
     .file-row { grid-template-columns:64px 1fr }
