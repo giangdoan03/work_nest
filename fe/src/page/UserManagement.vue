@@ -196,7 +196,20 @@
                                 </a-form-item>
                             </a-col>
 
-                            <!-- 👇 NEW -->
+                            <a-col :span="12">
+                                <a-form-item
+                                    label="Marker ký file (Preferred Marker)"
+                                    name="preferred_marker"
+                                    extra="Dùng cho ký file PDF nội bộ"
+                                    has-feedback
+                                >
+                                    <a-input
+                                        v-model:value="formData.preferred_marker"
+                                        placeholder="VD: sign1"
+                                        allow-clear
+                                    />
+                                </a-form-item>
+                            </a-col>
                             <a-col :span="12">
                                 <a-form-item
                                     label="Marker duyệt tài liệu (Document Marker)"
@@ -211,6 +224,7 @@
                                     />
                                 </a-form-item>
                             </a-col>
+
 
                         </a-row>
                     </a-form>
