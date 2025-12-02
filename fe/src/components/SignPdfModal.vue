@@ -7,6 +7,8 @@
         cancel-text="Hủy"
         :confirm-loading="saving"
         :ok-button-props="{ disabled: !isPdfReady || saving }"
+        centered
+        :maskClosable="false"
         @cancel="$emit('update:open', false)"
         @ok="handleSave"
     >
@@ -59,40 +61,35 @@
         </div>
 
         <template #footer>
-            <a-button :disabled="saving" @click="$emit('update:open', false)">
-                <template #icon><CloseOutlined class="icon-btn" /></template>
-                Hủy
-            </a-button>
+            <a-tooltip title="Dành cho văn bản phát hành">
+                <a-button
+                    :loading="savingApprove"
+                    :disabled="approveDisabled"
+                    @click="finalizeApproval"
+                >
+                    <template #icon><CheckCircleOutlined class="icon-btn" /></template>
+                    Duyệt văn bản
+                </a-button>
+            </a-tooltip>
+            <a-tooltip title="Dành cho văn bản nội bộ">
+                <a-button
+                    type="primary"
+                    :loading="saving"
+                    :disabled="!isPdfReady || saving || disableSignByDocType"
+                    @click="handleSave"
+                >
+                    <template #icon><EditOutlined class="icon-btn" /></template>
+                    Ký văn bản
+                </a-button>
+            </a-tooltip>
 
             <a-button @click="downloadSigned">
                 <template #icon><DownloadOutlined class="icon-btn" /></template>
-                Tải bản đã ký
+                Tải xuống
             </a-button>
-
-            <a-button :disabled="saving" @click="downloadOriginal">
-                <template #icon><FilePdfOutlined class="icon-btn" /></template>
-                Tải bản gốc
-            </a-button>
-
-            <a-button
-                :loading="savingApprove"
-                :disabled="approveDisabled"
-                @click="finalizeApproval"
-                title="Nếu document là internal thì không thể duyệt"
-            >
-                <template #icon><CheckCircleOutlined class="icon-btn" /></template>
-                Duyệt văn bản
-            </a-button>
-
-            <a-button
-                type="primary"
-                :loading="saving"
-                :disabled="!isPdfReady || saving || disableSignByDocType"
-                @click="handleSave"
-                title="Nếu document phát hành ra ngoài thì không thể ký"
-            >
-                <template #icon><EditOutlined class="icon-btn" /></template>
-                Ký văn bản
+            <a-button :disabled="saving" @click="$emit('update:open', false)">
+                <template #icon><CloseOutlined class="icon-btn" /></template>
+                Đóng
             </a-button>
         </template>
     </a-modal>
@@ -924,16 +921,6 @@ async function downloadSigned() {
     }
 }
 
-function downloadOriginal() {
-    if (!props.pdfUrl) return message.warning('Không có file gốc.')
-    const a = document.createElement('a')
-    a.href = props.pdfUrl
-    a.download = 'original.pdf'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-}
-
 /* helper: load font and return usedFont or null (for pdf-lib) */
 async function loadFontIfAvailable(pdfDocW) {
     try {
@@ -1309,4 +1296,32 @@ canvas { display:block; max-width:100%; background:#fff; border-radius:4px; }
     background:#fff; border-radius:4px; cursor:nwse-resize; box-shadow:0 1px 2px rgba(0,0,0,.12);
 }
 .icon-btn { font-size: 14px; }
+
+:deep(.ant-modal-body) {
+    max-height: none !important;
+    overflow: hidden !important;
+}
+
+.stage {
+    overflow: auto !important;
+    max-height: calc(100vh - 200px);
+}
+.stage::-webkit-scrollbar {
+    width: 4px;      /* chiều rộng scrollbar dọc */
+    height: 4px;     /* chiều cao scrollbar ngang */
+}
+
+.stage::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.25);
+    border-radius: 4px;
+}
+
+.stage::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.45);
+}
+
+.stage::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05);
+}
+
 </style>
