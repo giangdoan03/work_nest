@@ -144,6 +144,11 @@ export function replaceMarkerInTaskFile(taskId, userId) {
     });
 }
 
+// 🔥 API xoá hàng loạt tài liệu Office
+export function bulkDeleteDocuments(payload) {
+    return instance.post('/documents/bulk-delete', payload);
+}
+
 
 
 export default {
@@ -179,5 +184,6 @@ export default {
 
     getMyPendingFilesAPI,
     getMyResolvedFilesAPI,
-    replaceMarkerInTaskFile
+    replaceMarkerInTaskFile,
+    bulkDeleteDocuments
 }

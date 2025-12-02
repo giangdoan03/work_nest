@@ -46,7 +46,7 @@
                 v-if="activeTab === 'office'"
                 :data-source="officeFiles"
                 :columns="columns"
-                row-key="_key"
+                row-key="id"
                 bordered
                 size="small"
                 :row-selection="officeRowSelection"
@@ -100,16 +100,16 @@
                             </a-tooltip>
 
                             <!-- Xóa -->
-                            <a-tooltip title="Xoá">
-                                <a-button
-                                    size="small"
-                                    danger
-                                    @click="onClickDelete(record)"
-                                    :loading="deleting[record._key]"
-                                >
-                                    <DeleteOutlined/>
-                                </a-button>
-                            </a-tooltip>
+<!--                            <a-tooltip title="Xoá">-->
+<!--                                <a-button-->
+<!--                                    size="small"-->
+<!--                                    danger-->
+<!--                                    @click="onClickDelete(record)"-->
+<!--                                    :loading="deleting[record._key]"-->
+<!--                                >-->
+<!--                                    <DeleteOutlined/>-->
+<!--                                </a-button>-->
+<!--                            </a-tooltip>-->
 
 
 
@@ -159,9 +159,6 @@
                     </template>
                 </template>
             </a-table>
-
-
-
 
             <a-empty v-else description="Không có tài liệu trong tab này" />
 
@@ -280,7 +277,7 @@ import {
     getCommentFilesByTask,
     sendCommentApproval,
     deleteTaskFile,
-    deleteDocumentAPI, deleteTaskFileAPI, deleteCommentAPI
+    deleteDocumentAPI, deleteTaskFileAPI, deleteCommentAPI, bulkDeleteDocuments
 } from '@/api/taskFiles'
 import { useUserStore } from '@/stores/user'
 
@@ -867,22 +864,9 @@ const deleteOfficeBulk = () => {
 
         onOk: async () => {
             try {
+                const ids = selectedOfficeKeys.value;
 
-                for (const id of selectedOfficeKeys.value) {
-
-                    // Tìm record đầy đủ để xem source
-                    const file = officeFiles.value.find(f => f._key === id);
-
-                    if (!file) continue;
-
-                    if (file.source === 'document' || file._source === 'document') {
-                        await deleteDocumentAPI(Number(file.id));
-                    } else if (file._source === 'task_file' || file.task_file_id) {
-                        await deleteTaskFileAPI(Number(file.task_file_id || file.id));
-                    } else if (file._source === 'comment') {
-                        await deleteCommentAPI(Number(file.id));
-                    }
-                }
+                await bulkDeleteDocuments({ ids });
 
                 message.success("Đã xoá các file Office đã chọn");
 
@@ -890,16 +874,26 @@ const deleteOfficeBulk = () => {
                 await refresh();
 
             } catch (e) {
+                console.log("ERROR RAW:", e);
+                const data = e.response?.data;
+
                 const apiMsg =
-                    e.response?.data?.messages?.error ||
-                    e.response?.data?.message ||
+                    data?.messages?.error ||       // đúng field API của bạn
+                    data?.messages?.message ||     // nếu BE trả kiểu khác
+                    data?.message ||               // fallback kiểu CodeIgniter mặc định
+                    e.message ||                   // fallback JS
                     "Không thể xoá các file đã chọn";
 
                 message.error(apiMsg);
             }
+
         }
     });
 };
+
+
+
+
 
 
 

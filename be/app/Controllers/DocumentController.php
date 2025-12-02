@@ -1092,22 +1092,47 @@ class DocumentController extends ResourceController
         $ids = $this->request->getJSON(true)['ids'] ?? [];
 
         if (empty($ids)) {
-            return $this->failValidationErrors("Không có ID để xoá");
+            return $this->failValidationErrors("Thiếu danh sách ids.");
         }
 
-        $roleCode = session()->get('role_code');
-        if ($roleCode !== 'super_admin') {
-            return $this->failForbidden("Chỉ super_admin mới được xoá PDF convert");
+        // CHỈ SUPER ADMIN
+        if (session()->get('role_code') !== 'super_admin') {
+            return $this->failForbidden("Chỉ super_admin mới được xoá tài liệu Office.");
         }
 
-        $model = new DocumentConvertedModel();
+        $docModel      = new DocumentModel();
+        $approvalModel = new DocumentApprovalModel();
 
         foreach ($ids as $id) {
-            $model->delete((int)$id);
+            $id = (int)$id;
+            if (!$id) continue;
+
+            $doc = $docModel->find($id);
+            if (!$doc) continue;
+
+            // Nếu document đang pending duyệt thì bỏ qua
+            $pending = $approvalModel
+                ->where('document_id', $id)
+                ->where('status', 'pending')
+                ->first();
+
+            if ($pending) continue;
+
+            // Xóa file local nếu có
+            if (!empty($doc['file_path'])) {
+                $path = FCPATH . ltrim($doc['file_path'], '/');
+                if (is_file($path)) @unlink($path);
+            }
+
+            $docModel->delete($id);
         }
 
-        return $this->respond(['message' => 'Đã xoá hàng loạt']);
+        return $this->respond([
+            'message' => "Xoá hàng loạt thành công"
+        ]);
     }
+
+
 
 
 }

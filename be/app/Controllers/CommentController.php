@@ -722,48 +722,4 @@ class CommentController extends ResourceController
         $taskModel = new TaskModel();
         $taskModel->upsertRosterMembers($taskId, $norm);
     }
-
-    public function bulkDelete(): ResponseInterface
-    {
-        $ids = $this->request->getJSON(true)['ids'] ?? [];
-
-        if (empty($ids)) {
-            return $this->failValidationErrors("Thiếu danh sách ids.");
-        }
-
-        $userId = session()->get('user_id');
-        $isAdmin = session()->get('is_admin') || false;
-
-        if (!$isAdmin) {
-            return $this->failForbidden("Bạn không có quyền xóa hàng loạt.");
-        }
-
-        $docModel = new DocumentModel();
-
-        foreach ($ids as $id) {
-            $doc = $docModel->find($id);
-            if (!$doc) continue;
-
-            // Chỉ người upload hoặc admin được xoá
-            if (!$isAdmin && $doc['uploaded_by'] != $userId) continue;
-
-            // Kiểm tra pending
-            $apv = (new DocumentApprovalModel())
-                ->where('document_id', $id)
-                ->where('status', 'pending')
-                ->first();
-
-            if ($apv) continue;
-
-            // Xóa file local nếu có
-            if (!empty($doc['file_path']) && file_exists(FCPATH . $doc['file_path'])) {
-                @unlink(FCPATH . $doc['file_path']);
-            }
-
-            $docModel->delete($id);
-        }
-
-        return $this->respond(['message' => 'Bulk delete completed']);
-    }
-
 }
