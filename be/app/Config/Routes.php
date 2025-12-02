@@ -19,6 +19,8 @@ $routes->group('api', function ($routes) {
     $routes->get('documents/drive-pdf-list', 'DocumentController::listPdfFromDrive');
     $routes->post('documents/converted', 'DocumentController::saveConverted');
     $routes->get('documents/converted', 'DocumentController::listConverted');
+    $routes->delete('documents/converted/(:num)', 'DocumentController::deleteConverted/$1');
+    $routes->post('documents/converted/bulk-delete', 'DocumentController::bulkDelete');
 
 
     $routes->post('login', 'Auth::login');
@@ -118,6 +120,7 @@ $routes->group('api', function ($routes) {
     $routes->post('tasks/(:num)/extend', 'TaskController::extendDeadline/$1');
     $routes->get('tasks/(:num)/extensions/count', 'TaskController::countExtensions/$1');
     $routes->get('tasks/(:num)/extensions', 'TaskController::getExtensions/$1');
+    $routes->post('documents/bulk-delete', 'DocumentController::bulkDelete');
 
 
     $routes->put('subtasks/(:num)', 'TaskController::updateSubtask/$1');

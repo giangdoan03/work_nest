@@ -1,7 +1,6 @@
 <template>
     <a-card bordered class="doc-section">
         <div class="doc-header">
-            <div class="doc-header-title">Danh sách tài liệu</div>
             <a-tooltip title="Tải lại danh sách tài liệu">
                 <a-button
                     type="text"
@@ -9,6 +8,7 @@
                     class="refresh-btn"
                     @click="refresh"
                 >
+                    Tải lại
                     <ReloadOutlined
                         class="refresh-icon"
                         :class="{ 'is-rotating': loading }"
@@ -21,6 +21,27 @@
                 <a-tab-pane key="office" tab="Tài liệu Word/Excel/Office" />
                 <a-tab-pane key="pdf" tab="Tài liệu PDF" />
             </a-tabs>
+            <!-- Nút Xóa hàng loạt Office -->
+            <div v-if="activeTab === 'office'" style="margin: 10px 0;">
+                <a-button
+                    danger
+                    :disabled="selectedOfficeKeys.length === 0"
+                    @click="deleteOfficeBulk"
+                >
+                    Xoá đã chọn ({{ selectedOfficeKeys.length }})
+                </a-button>
+            </div>
+
+            <!-- 🔥 Nút Xoá hàng loạt -->
+            <div v-if="activeTab === 'pdf'" style="margin: 10px 0;">
+                <a-button
+                    danger
+                    :disabled="selectedRowKeys.length === 0"
+                    @click="deleteBulk"
+                >
+                    Xoá đã chọn ({{ selectedRowKeys.length }})
+                </a-button>
+            </div>
             <a-table
                 v-if="activeTab === 'office'"
                 :data-source="officeFiles"
@@ -28,6 +49,8 @@
                 row-key="_key"
                 bordered
                 size="small"
+                :row-selection="officeRowSelection"
+                :scroll="{ x: 'max-content' }"
             >
                 <template #bodyCell="{ column, record }">
 
@@ -100,26 +123,44 @@
                 v-else-if="activeTab === 'pdf'"
                 :data-source="convertedPdfs"
                 :columns="pdfColumns"
-                row-key="_key"
+                row-key="id"
                 bordered
                 size="small"
+                :row-selection="{ selectedRowKeys, onChange: onSelectChange }"
+                :scroll="{ x: 'max-content' }"
             >
                 <template #bodyCell="{ column, record }">
                     <template v-if="column.dataIndex === 'actions'">
                         <a-space>
-                            <a-tooltip :title="'Trình ký tài liệu'">
+
+                            <!-- Trình ký -->
+                            <a-tooltip title="Trình ký tài liệu">
                                 <a-button
                                     size="small"
                                     type="primary"
                                     @click="openSendApproval(record)"
                                 >
-                                    <SendOutlined/>
+                                    <SendOutlined />
                                 </a-button>
                             </a-tooltip>
+
+                            <!-- Xoá -->
+                            <a-tooltip title="Xoá PDF">
+                                <a-button
+                                    size="small"
+                                    danger
+                                    @click="deleteConverted(record)"
+                                >
+                                    <DeleteOutlined />
+                                </a-button>
+                            </a-tooltip>
+
                         </a-space>
                     </template>
                 </template>
             </a-table>
+
+
 
 
             <a-empty v-else description="Không có tài liệu trong tab này" />
@@ -249,7 +290,7 @@ import {
     uploadPdfToWordPress,
     uploadTaskFileSigned,
     saveConvertedDocument,
-    getConvertedPdfList
+    getConvertedPdfList, deleteConvertedPdf, bulkDeleteConvertedPdf
 } from "@/api/document.js";
 import {sendDocumentToSign} from "@/api/documentSign.js";
 
@@ -298,6 +339,15 @@ const officeFiles = computed(() =>
 
 const canConvert = r => !isPdf(r)
 
+const selectedOfficeKeys = ref([]);
+
+const officeRowSelection = {
+    selectedRowKeys: selectedOfficeKeys,
+    onChange: (keys) => {
+        selectedOfficeKeys.value = keys;
+    }
+};
+
 
 // ---------- consts & helpers ----------
 const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'])
@@ -307,11 +357,11 @@ const EXCEL_EXTS = new Set(['xls', 'xlsx', 'csv'])
 const PPT_EXTS   = new Set(['ppt', 'pptx'])
 
 const columns = [
-    { title: "Tên tài liệu", dataIndex: "title", key: "title", width: 100 },
+    { title: "Tên tài liệu", dataIndex: "title", key: "title", width: 150 },
     { title: "Kiểu file", dataIndex: "ext", key: "ext", width: 100, align: "center" },
-    { title: "Người upload", dataIndex: "uploader", key: "uploader", width: 150 },
-    { title: "Thời gian", dataIndex: "created_at", key: "created_at", width: 180 },
-    { title: "Hành động", dataIndex: "actions", key: "actions", width: 220, align: "center" },
+    { title: "Người upload", dataIndex: "uploader", key: "uploader", width: 170 },
+    { title: "Thời gian", dataIndex: "created_at", key: "created_at", width: 150 },
+    { title: "Hành động", dataIndex: "actions", key: "actions", width: 100, align: "center" },
 ];
 
 const pdfColumns = [
@@ -319,6 +369,7 @@ const pdfColumns = [
         title: "Tên PDF",
         dataIndex: "title",
         key: "title",
+        width: 200
     },
     {
         title: "Thời gian",
@@ -339,6 +390,13 @@ const pdfColumns = [
         width: 120,
     }
 ];
+
+// Danh sách id được chọn
+const selectedRowKeys = ref([]);
+
+const onSelectChange = (keys) => {
+    selectedRowKeys.value = keys;
+};
 
 
 const aborter = { controller: null }
@@ -746,6 +804,104 @@ async function autoFindMarker(pdfJsDoc, markers = []) {
     return null;
 }
 
+const deleteConverted = (record) => {
+    Modal.confirm({
+        title: "Bạn có chắc muốn xoá PDF này?",
+        content: record.title,
+        okText: "Xoá",
+        okType: "danger",
+        cancelText: "Huỷ",
+
+        onOk: async () => {
+            try {
+                await deleteConvertedPdf(record.id);
+                message.success("Đã xoá PDF");
+                await fetchConvertedPdfs();
+            } catch (e) {
+                const apiMsg =
+                    e.response?.data?.messages?.error ||
+                    e.response?.data?.message ||
+                    "Không xoá được PDF";
+
+                message.error(apiMsg);
+            }
+        }
+    });
+};
+
+
+const deleteBulk = () => {
+    Modal.confirm({
+        title: "Bạn có chắc muốn xoá các PDF đã chọn?",
+        content: `Tổng số: ${selectedRowKeys.value.length} file`,
+        okText: "Xoá",
+        okType: "danger",
+        cancelText: "Huỷ",
+
+        onOk: async () => {
+            try {
+                await bulkDeleteConvertedPdf(selectedRowKeys.value);
+
+                message.success("Đã xoá các PDF đã chọn");
+                selectedRowKeys.value = [];
+                await fetchConvertedPdfs();
+            } catch (e) {
+                const apiMsg =
+                    e.response?.data?.messages?.error ||
+                    e.response?.data?.message ||
+                    "Không thể xoá các file đã chọn";
+
+                message.error(apiMsg);
+            }
+        }
+    });
+};
+
+const deleteOfficeBulk = () => {
+    Modal.confirm({
+        title: "Bạn có chắc muốn xoá các file Office đã chọn?",
+        content: `Tổng số: ${selectedOfficeKeys.value.length} file`,
+        okText: "Xoá",
+        okType: "danger",
+        cancelText: "Huỷ",
+
+        onOk: async () => {
+            try {
+
+                for (const id of selectedOfficeKeys.value) {
+
+                    // Tìm record đầy đủ để xem source
+                    const file = officeFiles.value.find(f => f._key === id);
+
+                    if (!file) continue;
+
+                    if (file.source === 'document' || file._source === 'document') {
+                        await deleteDocumentAPI(Number(file.id));
+                    } else if (file._source === 'task_file' || file.task_file_id) {
+                        await deleteTaskFileAPI(Number(file.task_file_id || file.id));
+                    } else if (file._source === 'comment') {
+                        await deleteCommentAPI(Number(file.id));
+                    }
+                }
+
+                message.success("Đã xoá các file Office đã chọn");
+
+                selectedOfficeKeys.value = [];
+                await refresh();
+
+            } catch (e) {
+                const apiMsg =
+                    e.response?.data?.messages?.error ||
+                    e.response?.data?.message ||
+                    "Không thể xoá các file đã chọn";
+
+                message.error(apiMsg);
+            }
+        }
+    });
+};
+
+
 
 defineExpose({ refresh }) // nếu bạn muốn parent gọi được
 
@@ -868,7 +1024,7 @@ onBeforeUnmount(() => {
 .doc-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: end;
     padding: 6px 8px 10px;
     border-bottom: 1px solid #f0f0f0;
     margin-bottom: 8px;

@@ -1054,5 +1054,60 @@ class DocumentController extends ResourceController
         }
     }
 
+    public function deleteConverted($id = null): ResponseInterface
+    {
+        $id = (int)$id;
+        if ($id <= 0) {
+            return $this->failValidationErrors("converted_id không hợp lệ");
+        }
+
+        $model = new DocumentConvertedModel();
+
+        $file = $model->find($id);
+        if (!$file) {
+            return $this->failNotFound("Không tìm thấy bản PDF đã convert");
+        }
+
+        // Nếu muốn chỉ super_admin được xoá
+        $roleCode = session()->get('role_code');
+        if ($roleCode !== 'super_admin') {
+            return $this->failForbidden("Chỉ super_admin mới được phép xoá PDF convert");
+        }
+
+        // Nếu lưu file local → bạn xoá file tại đây, ví dụ:
+        // if (!empty($file['local_path']) && file_exists(FCPATH . $file['local_path'])) {
+        //     @unlink(FCPATH . $file['local_path']);
+        // }
+
+        $model->delete($id);
+
+        return $this->respondDeleted([
+            'message' => 'Đã xoá PDF convert',
+            'id'      => $id
+        ]);
+    }
+
+    public function bulkDelete(): ResponseInterface
+    {
+        $ids = $this->request->getJSON(true)['ids'] ?? [];
+
+        if (empty($ids)) {
+            return $this->failValidationErrors("Không có ID để xoá");
+        }
+
+        $roleCode = session()->get('role_code');
+        if ($roleCode !== 'super_admin') {
+            return $this->failForbidden("Chỉ super_admin mới được xoá PDF convert");
+        }
+
+        $model = new DocumentConvertedModel();
+
+        foreach ($ids as $id) {
+            $model->delete((int)$id);
+        }
+
+        return $this->respond(['message' => 'Đã xoá hàng loạt']);
+    }
+
 
 }

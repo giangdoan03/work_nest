@@ -74,6 +74,14 @@ export const getConvertedPdfList = (taskId) =>
         params: { task_id: taskId }
     });
 
+export const deleteConvertedPdf = (id) =>
+    instance.delete(`/documents/converted/${id}`);
+
+export const bulkDeleteConvertedPdf = (ids) =>
+    instance.post("/documents/converted/bulk-delete", { ids });
+
+
+
 
 
 
