@@ -71,7 +71,7 @@
                                     size="small"
                                     :disabled="!canConvert(record)"
                                     :loading="converting[record._key]"
-                                    @click="convertToPdf(record)"
+                                    @click="openDocTypePopup(record)"
                                 >
                                     <FilePdfOutlined />
                                 </a-button>
@@ -193,11 +193,37 @@
             </a-form>
         </a-modal>
     </a-card>
+    <a-modal
+        v-model:open="showDocType"
+        title="Chọn loại văn bản"
+        ok-text="Chuyển sang PDF"
+        class="doc-type-modal"
+        @ok="confirmConvert"
+    >
+        <div class="doc-type-box">
+
+            <div class="doc-type-hint">
+                <InfoCircleOutlined class="info-icon" />
+                <span>
+                Hãy chọn loại văn bản để hệ thống xử lý đúng luồng duyệt:
+                <b>Nội bộ</b> hoặc <b>Phát hành</b>.
+            </span>
+            </div>
+
+            <a-radio-group v-model:value="selectedDocType" class="doc-type-radio">
+                <a-radio value="internal">Nội bộ <small>(Mặc định)</small></a-radio>
+                <a-radio value="external">Phát hành</a-radio>
+            </a-radio-group>
+
+        </div>
+    </a-modal>
+
+
 </template>
 
 <script setup>
 import {
-    LinkOutlined, EyeOutlined, DownloadOutlined, SendOutlined,DeleteOutlined,
+    LinkOutlined, EyeOutlined, DownloadOutlined, SendOutlined,DeleteOutlined,InfoCircleOutlined,
     FilePdfOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined, FileTextOutlined, UserOutlined, ReloadOutlined, EditOutlined
 } from '@ant-design/icons-vue'
 import { computed, onMounted, ref, watch, reactive, nextTick, onBeforeUnmount } from 'vue'
@@ -235,7 +261,8 @@ const store = useUserStore()
 
 // ---------- props ----------
 const props = defineProps({
-    taskId: { type: [String, Number], required: true }
+    taskId: { type: [String, Number], required: true },
+    departmentId: { type: [Number, String], default: null }
 })
 
 // ---------- state ----------
@@ -255,6 +282,11 @@ const sendingItem = ref(null)
 const sendForm = reactive({ approver_ids: [], note: '' })
 const activeTab = ref("office")
 const convertedPdfs = ref([]);
+
+const showDocType = ref(false)
+const convertingItem = ref(null)
+const selectedDocType = ref("internal")  // mặc định nội bộ
+
 
 const isPdf = r => (r.ext || '').toLowerCase() === 'pdf'
 
@@ -350,6 +382,17 @@ const officeViewer = (url) => `https://view.officeapps.live.com/op/view.aspx?src
 
 const converting = reactive({});
 
+function openDocTypePopup(item) {
+    convertingItem.value = item
+    selectedDocType.value = "internal"   // mặc định
+    showDocType.value = true
+}
+
+async function confirmConvert() {
+    showDocType.value = false
+    await convertToPdf(convertingItem.value, selectedDocType.value)
+}
+
 
 async function fetchConvertedPdfs() {
     try {
@@ -375,7 +418,7 @@ async function fetchConvertedPdfs() {
 
 
 
-async function convertToPdf(item) {
+async function convertToPdf(item, docType = "internal") {
 
     converting[item._key] = true;
 
@@ -386,21 +429,18 @@ async function convertToPdf(item) {
             return message.error("Chuyển PDF thất bại.");
         }
 
-        // --- Tên file PDF sau convert ---
-        const original = item.name.replace(/\.[^.]+$/, "");  // bỏ .doc/.docx
-        const pdfFilename = `origin_${original}.pdf`;      // giữ nguyên tên
+        const original = item.name.replace(/\.[^.]+$/, "");
+        const pdfFilename = `origin_${original}.pdf`;
 
-        // URL tải PDF trực tiếp từ Google Drive
         const realPdfUrl = `https://drive.google.com/uc?export=download&id=${data.pdf_id}`;
 
-        // Upload lên WordPress (⚡ truyền filename)
         const wpUploaded = await uploadPdfToWordPress(realPdfUrl, pdfFilename);
 
         if (!wpUploaded) {
             return message.error("Upload WordPress thất bại!");
         }
 
-        // Lưu DB
+        // GỬI THÊM doc_type
         await saveConvertedDocument({
             wp_id: wpUploaded.id,
             file_url: wpUploaded.source_url,
@@ -412,6 +452,7 @@ async function convertToPdf(item) {
             uploaded_by: item.uploaded_by,
             uploader_name: item.uploader_name,
             wp_created_at: wpUploaded.raw?.date_gmt,
+            doc_type: docType,  // ← thêm vào đây
         });
 
         message.success("Đã chuyển & lưu PDF!");
@@ -424,6 +465,7 @@ async function convertToPdf(item) {
         await refresh();
     }
 }
+
 
 
 const normalizeKey = (url = '') => String(url || '').split('?')[0]
@@ -896,6 +938,50 @@ onBeforeUnmount(() => {
 
 .ant-table {
     margin-top: 10px;
+}
+/* ==== Popup chọn loại tài liệu ==== */
+
+.doc-type-modal .ant-modal-content {
+    border-radius: 10px;
+    padding: 20px 24px 16px;
+}
+
+.doc-type-box {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Hộp mô tả */
+.doc-type-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: #444;
+    background: #f5f9ff;
+    padding: 12px 14px;
+    border-radius: 6px;
+    border-left: 3px solid #1677ff;
+    line-height: 1.45;
+}
+
+.doc-type-hint .info-icon {
+    color: #1677ff;
+    font-size: 16px;
+    margin-top: 1px;
+}
+
+/* Radio group */
+.doc-type-radio {
+    padding-left: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.doc-type-radio .ant-radio-wrapper {
+    font-size: 14px;
 }
 
 

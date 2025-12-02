@@ -26,32 +26,10 @@
                 <div
                     class="stage"
                     ref="stageRef"
-                    @mousemove="onDrag"
-                    @mouseup="endDrag"
-                    @mouseleave="endDrag"
                 >
-                    <a-spin :spinning="previewSpinning" tip="Đang tải xem trước..." size="large">
+                    <a-spin :spinning="previewSpinning" tip="Đang tải xem trước..." size="large" style="display:block; min-height: 200px;">
                         <div class="pdf-viewer">
                             <canvas ref="canvasRef" class="pdf-canvas" />
-                            <!-- signature image & handle (hidden in DOM, used for sizing/drag logic) -->
-                            <div style="display: none">
-                                <img
-                                    v-if="effectiveSignatureUrl"
-                                    ref="sigRef"
-                                    class="sig"
-                                    :src="effectiveSignatureUrl"
-                                    :style="sigStyle"
-                                    draggable="false"
-                                    @mousedown.stop="startSigDrag"
-                                    alt=""
-                                />
-                                <div
-                                    v-if="effectiveSignatureUrl"
-                                    class="handle"
-                                    :style="handleStyle"
-                                    @mousedown.stop="startScale"
-                                />
-                            </div>
                         </div>
                     </a-spin>
                 </div>
@@ -203,62 +181,6 @@ function handleRatio() {
     }
 }
 
-/* computed styles for signature handle */
-const sigStyle = computed(() => ({
-    left: sigX.value + 'px',
-    top: sigY.value + 'px',
-    width: sigW.value + 'px',
-    opacity: (opacity.value / 100).toString()
-}))
-const handleStyle = computed(() => ({
-    left: sigX.value + sigW.value - 8 + 'px',
-    top: sigY.value + sigW.value * handleRatio() - 8 + 'px'
-}))
-
-/* drag/resize (kept performant) */
-let draggingSig = false, scalingSig = false
-let dragStart = { x: 0, y: 0 }, sigStart = { x: 0, y: 0, w: 0 }
-let rafId = 0, pendingEvt = null
-
-function startSigDrag(e) {
-    draggingSig = true
-    dragStart = { x: e.clientX, y: e.clientY }
-    sigStart = { x: sigX.value, y: sigY.value, w: sigW.value }
-}
-function startScale(e) {
-    scalingSig = true
-    dragStart = { x: e.clientX, y: e.clientY }
-    sigStart = { x: sigX.value, y: sigY.value, w: sigW.value }
-}
-function onDrag(e) {
-    pendingEvt = e
-    if (rafId) return
-    rafId = requestAnimationFrame(() => {
-        rafId = 0
-        const evt = pendingEvt; pendingEvt = null
-        if (!evt) return
-        const box = stageRef.value?.getBoundingClientRect()
-        const ratio = handleRatio()
-        if (!box) return
-
-        if (draggingSig) {
-            const dx = evt.clientX - dragStart.x
-            const dy = evt.clientY - dragStart.y
-            const w = sigW.value, h = w * ratio
-            const maxX = Math.max(0, box.width - 16 - w)
-            const maxY = Math.max(0, box.height - 16 - h)
-            sigX.value = Math.min(Math.max(0, sigStart.x + dx), maxX)
-            sigY.value = Math.min(Math.max(0, sigStart.y + dy), maxY)
-        } else if (scalingSig) {
-            const dx = evt.clientX - dragStart.x
-            const newW = Math.max(30, sigStart.w + dx)
-            const maxW = Math.max(30, box.width - 16 - sigX.value)
-            const maxH = Math.max(30, box.height - 16 - sigY.value)
-            sigW.value = Math.min(newW, maxW, maxH / ratio)
-        }
-    })
-}
-function endDrag() { draggingSig = scalingSig = false; if (rafId) { cancelAnimationFrame(rafId); rafId = 0; pendingEvt = null } }
 
 /* render control */
 let currentRenderTask = null
@@ -337,15 +259,39 @@ async function drawSignedStamps() {
 
         const img = await loadImage(sig.signature_url)
 
-        // đúng công thức PDF.js
         const xCanvas = sig.xPdf * scaleX
         const yCanvas = (pdfH - sig.yPdf - sig.hPdf) * scaleY
         const wCanvas = sig.wPdf * scaleX
         const hCanvas = sig.hPdf * scaleY
 
+        // --- Vẽ hình chữ ký ---
         ctx.drawImage(img, xCanvas, yCanvas, wCanvas, hCanvas)
+
+        // --- Vẽ timestamp nếu có ---
+        if (sig.signed_at) {
+            const t = new Date(sig.signed_at)
+            const pad = n => String(n).padStart(2, "0")
+            const ts =
+                `Date: ${pad(t.getDate())}/${pad(t.getMonth()+1)}/${t.getFullYear()}, ` +
+                `${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`
+            ctx.fillStyle = "#000"
+
+            const textWidth = ctx.measureText(ts).width
+
+            // căn giữa bên dưới chữ ký
+            let tx = xCanvas + (wCanvas - textWidth) / 2
+            let ty = yCanvas + hCanvas + 14
+
+            // nếu vượt ra dưới canvas → đưa lên trên chữ ký
+            if (ty > canvas.height - 5) {
+                ty = yCanvas - 5
+            }
+
+            ctx.fillText(ts, tx, ty)
+        }
     }
 }
+
 
 
 
@@ -360,16 +306,6 @@ function loadImage(url) {
     })
 }
 
-
-/* utility: get base page size (cached) */
-async function getBaseSize(pIndex) {
-    if (basePageSize.has(pIndex)) return basePageSize.get(pIndex)
-    const page = await pdfDoc.value.getPage(pIndex)
-    const vp = page.getViewport({ scale: 1 })
-    const sz = { w: vp.width, h: vp.height }
-    basePageSize.set(pIndex, sz)
-    return sz
-}
 
 /* Fit + reset helpers */
 function fitWidth() {
@@ -665,18 +601,6 @@ async function findSignatureMarkersSimple(markerText) {
     return results
 }
 
-
-async function tryAutoPlaceSignatureForSignature() {
-    const markers = myMarkers.value
-
-    for (const m of markers) {
-        const hits = await findSignatureMarkersSimple(m)
-        if (hits.length) return hits[0] // lấy kết quả đầu tiên
-    }
-
-    return null
-}
-
 function normalizeName(name) {
     if (!name) return ''
     return name
@@ -721,10 +645,6 @@ async function findNameInPdf(name) {
 }
 
 
-
-
-
-
 async function autoPlaceExistingSignatures() {
     existingPositions.value = [];
 
@@ -757,14 +677,13 @@ async function autoPlaceExistingSignatures() {
             xPdf: sigX,
             yPdf: sigY,
             wPdf: sigWidth,
-            hPdf: sigHeight
+            hPdf: sigHeight,
+            signed_at: step.signed_at || step.updated_at || null // thêm dòng này
         });
     }
 
     queueRender();
 }
-
-
 
 
 /* lifecycle: when open changes, load libraries + pdf + user session */
@@ -821,14 +740,49 @@ async function downloadSigned() {
         await loadPdfLib();
         const { PDFDocument, StandardFonts, rgb } = PDFLib;
 
-        // --- 1) Tải PDF gốc ---
+        // --- 1) Load PDF gốc ---
         const pdfRes = await fetch(props.pdfUrl);
         if (!pdfRes.ok) throw new Error("Không tải được file PDF");
         const pdfBytes = await pdfRes.arrayBuffer();
-
         const pdfDocW = await PDFDocument.load(pdfBytes);
 
-        // --- 2) Chèn chữ ký của các bước đã ký ---
+        // --------------------------------------------------------------
+        // ⭐ ẨN CHECKMARK bằng overlay 50×50
+        // --------------------------------------------------------------
+        const CHECK_PATTERN = /[✓✔☑🗹]/u;
+
+        for (let pIndex = 0; pIndex < pdfDocW.getPageCount(); pIndex++) {
+            const page = pdfDocW.getPage(pIndex);
+
+            const pdfPageJs = await pdfDoc.value.getPage(pIndex + 1);
+            const textContent = await pdfPageJs.getTextContent();
+
+            for (const item of textContent.items) {
+                if (!item.str) continue;
+                if (!CHECK_PATTERN.test(item.str)) continue;
+
+                const [a, , , d, x, y] = item.transform;
+                const w = item.width || Math.abs(a) || 12;
+                const h = Math.abs(d) || 12;
+
+                const centerX = x + w / 2;
+                const centerY = (y - h) + h / 2;
+
+                const boxSize = 50;
+
+                page.drawRectangle({
+                    x: centerX - boxSize / 2,
+                    y: centerY - boxSize / 2,
+                    width: boxSize,
+                    height: boxSize,
+                    color: rgb(1, 1, 1)
+                });
+            }
+        }
+
+        // --------------------------------------------------------------
+        // ⭐ 2) Chèn chữ ký của các bước đã ký trước
+        // --------------------------------------------------------------
         for (let pIndex = 0; pIndex < pdfDocW.getPageCount(); pIndex++) {
 
             const page = pdfDocW.getPage(pIndex);
@@ -841,16 +795,51 @@ async function downloadSigned() {
                 catch { img = await pdfDocW.embedJpg(imgBytes); }
 
                 page.drawImage(img, {
-                    x: s.xPdf,
-                    y: s.yPdf,
-                    width: s.wPdf,
-                    height: s.hPdf
+                    x: s.xPdf, y: s.yPdf,
+                    width: s.wPdf, height: s.hPdf
                 });
+
+                // timestamp của chữ ký trước
+                if (s.signed_at) {
+                    const tNow = new Date(s.signed_at);
+                    const pad = n => String(n).padStart(2, "0");
+                    const ts =
+                        `Date: ${pad(tNow.getDate())}/${pad(tNow.getMonth()+1)}/${tNow.getFullYear()}, ` +
+                        `${pad(tNow.getHours())}:${pad(tNow.getMinutes())}:${pad(tNow.getSeconds())}`;
+
+                    let f = await loadFontIfAvailable(pdfDocW);
+                    if (!f) f = await pdfDocW.embedFont(StandardFonts.Helvetica);
+
+                    const fs = Math.max(5, Math.min(12, s.wPdf / 20));
+                    const tw = f.widthOfTextAtSize(ts, fs);
+                    const th = typeof f.heightAtSize === "function" ? f.heightAtSize(fs) : fs;
+
+                    let tx = s.xPdf + (s.wPdf - tw) / 2;
+                    let ty = s.yPdf - th - 4;
+                    if (ty < 0) ty = s.yPdf + s.hPdf + 4;
+
+                    page.drawText(ts, {
+                        x: tx, y: ty,
+                        size: fs,
+                        font: f,
+                        color: rgb(0, 0, 0)
+                    });
+                }
             }
         }
 
-        // --- 3) Chèn chữ ký hàng động trên canvas ---
-        if (effectiveSignatureUrl.value) {
+        // --------------------------------------------------------------
+        // ⭐ 3) Chèn chữ ký người hiện tại (nếu họ đã ký)
+        // --------------------------------------------------------------
+
+        // người hiện tại đã ký hay chưa?
+        const userHasSigned = existingPositions.value.some(
+            s =>
+                s.signature_url === effectiveSignatureUrl.value ||
+                s.signed_by === currentUser.value?.id
+        );
+
+        if (effectiveSignatureUrl.value && userHasSigned) {
 
             const imgBytes = await fetch(effectiveSignatureUrl.value).then(r => r.arrayBuffer());
             let img;
@@ -878,19 +867,43 @@ async function downloadSigned() {
             const wPdf = sigCanvasW * scaleX;
             const hPdf = sigCanvasH * scaleY;
 
+            // thêm chữ ký người hiện tại
             page.drawImage(img, {
-                x: xPdf,
-                y: yPdf,
-                width: wPdf,
-                height: hPdf
+                x: xPdf, y: yPdf,
+                width: wPdf, height: hPdf
+            });
+
+            // timestamp người hiện tại
+            let usedFont2 = await loadFontIfAvailable(pdfDocW);
+            if (!usedFont2) usedFont2 = await pdfDocW.embedFont(StandardFonts.Helvetica);
+
+            const now2 = new Date();
+            const pad2 = n => String(n).padStart(2, "0");
+            const timeText2 =
+                `Date: ${pad2(now2.getDate())}/${pad2(now2.getMonth()+1)}/${now2.getFullYear()}, ` +
+                `${pad2(now2.getHours())}:${pad2(now2.getMinutes())}:${pad2(now2.getSeconds())}`;
+
+            const fs2 = Math.max(5, Math.min(12, wPdf / 20));
+            const tw2 = usedFont2.widthOfTextAtSize(timeText2, fs2);
+            const th2 = typeof usedFont2.heightAtSize === "function"
+                ? usedFont2.heightAtSize(fs2)
+                : fs2;
+
+            let tx2 = xPdf + (wPdf - tw2) / 2;
+            let ty2 = yPdf - th2 - 4;
+            if (ty2 < 0) ty2 = yPdf + hPdf + 4;
+
+            page.drawText(timeText2, {
+                x: tx2, y: ty2,
+                size: fs2,
+                font: usedFont2,
+                color: rgb(0, 0, 0)
             });
         }
 
-
-        // ------------------------------------------------------------------
-        // 🟦 4) BỔ SUNG PHẦN: Chèn text duyệt vào TẤT CẢ CÁC TRANG (như finalizeApproval)
-        // ------------------------------------------------------------------
-
+        // --------------------------------------------------------------
+        // ⭐ 4) Chèn footer duyệt (approver info)
+        // --------------------------------------------------------------
         const rawApprover =
             currentUser.value?.full_name ||
             currentUser.value?.name ||
@@ -900,13 +913,9 @@ async function downloadSigned() {
         const sanitizeToAscii = s => {
             try {
                 const nd = s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
-                return nd
-                    .replace(/Đ/g, "D")
-                    .replace(/đ/g, "d")
-                    .replace(/[^\x00-\x7F ]/g, "");
+                return nd.replace(/Đ/g, "D").replace(/đ/g, "d").replace(/[^\x00-\x7F ]/g, "");
             } catch {
-                return String(s)
-                    .replace(/[Đđ]/g, c => (c === "Đ" ? "D" : "d"))
+                return s.replace(/[Đđ]/g, c => c === "Đ" ? "D" : "d")
                     .replace(/[^\x00-\x7F ]/g, "");
             }
         };
@@ -916,15 +925,15 @@ async function downloadSigned() {
         const now = new Date();
         const pad = n => String(n).padStart(2, "0");
         const vnTime =
-            `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}, ` +
+            `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}, ` +
             `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
         const timeText = `${approverDisplay} — Date: ${vnTime}`;
 
         let usedFont = await loadFontIfAvailable(pdfDocW);
         if (!usedFont) usedFont = await pdfDocW.embedFont(StandardFonts.Helvetica);
 
         const totalPages = pdfDocW.getPageCount();
-
         for (let p = 0; p < totalPages; p++) {
             const page = pdfDocW.getPage(p);
             const pdfW = page.getWidth();
@@ -932,37 +941,32 @@ async function downloadSigned() {
             const fontSize = 6;
             const margin = 20;
 
-            const textWidth = usedFont.widthOfTextAtSize(timeText, fontSize);
-            const textHeight = (typeof usedFont.heightAtSize === "function")
+            const tw = usedFont.widthOfTextAtSize(timeText, fontSize);
+            const th = typeof usedFont.heightAtSize === "function"
                 ? usedFont.heightAtSize(fontSize)
                 : fontSize;
 
-            const textX = Math.max(margin, pdfW - margin - textWidth);
+            const textX = Math.max(margin, pdfW - margin - tw);
             const textY = margin;
-            const lineY = textY + textHeight + 2;
+            const lineY = textY + th + 2;
 
             page.drawRectangle({
-                x: textX,
-                y: lineY,
-                width: textWidth,
-                height: 0.7,
+                x: textX, y: lineY,
+                width: tw, height: 0.7,
                 color: rgb(0, 0, 0)
             });
 
             page.drawText(timeText, {
-                x: textX,
-                y: textY,
+                x: textX, y: textY,
                 size: fontSize,
                 font: usedFont,
                 color: rgb(0, 0, 0)
             });
         }
 
-
-        // ======================================================
-        // 5) Xuất file hoàn chỉnh
-        // ======================================================
-
+        // --------------------------------------------------------------
+        // ⭐ 5) Xuất PDF
+        // --------------------------------------------------------------
         const finalBytes = await pdfDocW.save();
         const blob = new Blob([finalBytes], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
@@ -981,6 +985,9 @@ async function downloadSigned() {
         message.error("Lỗi tạo PDF đã ký.");
     }
 }
+
+
+
 
 
 /* helper: load font and return usedFont or null (for pdf-lib) */
@@ -1114,7 +1121,7 @@ async function handleSave() {
 
         emits('done', signedBlob)
         message.success('Đã chèn chữ ký đúng vị trí.')
-
+        await loadPdf();
         if (props.closeAfterSave) emits('update:open', false)
 
         // reload preview from bytes
@@ -1163,198 +1170,356 @@ const approveDisabled = computed(() => {
 
 /* finalizeApproval: logic preserved, code structured */
 async function finalizeApproval() {
-    if (!props.pdfUrl) return message.warning('Không có file PDF để duyệt.')
-    if (!pdfDoc.value) return message.warning('Vui lòng chờ PDF tải xong.')
+    /* -------------------------------------------
+       1) VALIDATION
+    -------------------------------------------- */
+    if (!props.pdfUrl)
+        return message.warning("Không có file PDF để duyệt.");
 
+    if (!pdfDoc.value)
+        return message.warning("Vui lòng chờ PDF tải xong.");
 
-    const target = props.signTarget || null
-    console.log('target', target)
+    const target = props.signTarget || null;
+
     const normalizeStatus = (v) => {
-        try { if (v === null || typeof v === 'undefined') return ''; return String(v).trim().toLowerCase() } catch { return '' }
-    }
+        try {
+            if (v == null) return "";
+            return String(v).trim().toLowerCase();
+        } catch {
+            return "";
+        }
+    };
 
-    let alreadyApproved = false
+    /* -------------------------------------------
+       2) CHECK ALREADY APPROVED
+    -------------------------------------------- */
+    let alreadyApproved = false;
+
     if (target) {
-        const s1 = normalizeStatus(target.status)
-        const s2 = normalizeStatus(target.approval?.status)
-        const s3 = normalizeStatus(target.document?.status)
-        const quick = (s1 === 'approved' || s2 === 'approved' || s3 === 'approved')
-        if (quick) alreadyApproved = true
-        else if (target.approval_id) {
-            try {
-                const detRes = await getApprovalDetail(target.approval_id)
-                const det = detRes?.data || {}
-                const apvStatus = normalizeStatus(det.approval?.status)
-                const docStatus = normalizeStatus(det.document?.status)
-                let sigs = det.signatures || det.file_signatures || det.file_signature || []
-                if (sigs && !Array.isArray(sigs) && typeof sigs === 'object') sigs = Object.values(sigs)
-                sigs = Array.isArray(sigs) ? sigs : []
-                const hasApprovedSig = sigs.some(s => normalizeStatus(s?.status || s?.state || s) === 'approved')
-                alreadyApproved = (apvStatus === 'approved') || (docStatus === 'approved') || hasApprovedSig
+        const s1 = normalizeStatus(target.status);
+        const s2 = normalizeStatus(target.approval?.status);
+        const s3 = normalizeStatus(target.document?.status);
 
-                const steps = Array.isArray(det.steps) ? det.steps : []
-                if (!alreadyApproved && steps.length) {
-                    const unfinished = new Set(['active', 'pending', 'waiting', 'in_progress', 'todo', 'running'])
-                    const anyUnfinished = steps.some(s => unfinished.has(normalizeStatus(s?.status || s?.step_status || s?.state || '')))
-                    if (!anyUnfinished) alreadyApproved = true
+        if (s1 === "approved" || s2 === "approved" || s3 === "approved") {
+            alreadyApproved = true;
+        } else if (target.approval_id) {
+            try {
+                const detRes = await getApprovalDetail(target.approval_id);
+                const det = detRes?.data || {};
+
+                const apvStatus = normalizeStatus(det.approval?.status);
+                const docStatus = normalizeStatus(det.document?.status);
+
+                let sigs =
+                    det.signatures ||
+                    det.file_signatures ||
+                    det.file_signature ||
+                    [];
+
+                if (!Array.isArray(sigs) && typeof sigs === "object") {
+                    sigs = Object.values(sigs);
                 }
-            } catch (e) { console.warn('getApprovalDetail failed:', e); alreadyApproved = false }
+
+                sigs = Array.isArray(sigs) ? sigs : [];
+
+                const hasApprovedSig = sigs.some(
+                    (s) =>
+                        normalizeStatus(s?.status || s?.state || s) ===
+                        "approved"
+                );
+
+                if (
+                    apvStatus === "approved" ||
+                    docStatus === "approved" ||
+                    hasApprovedSig
+                ) {
+                    alreadyApproved = true;
+                }
+
+                const steps = Array.isArray(det.steps) ? det.steps : [];
+
+                if (!alreadyApproved && steps.length) {
+                    const unfinished = new Set([
+                        "active",
+                        "pending",
+                        "waiting",
+                        "in_progress",
+                        "todo",
+                        "running",
+                    ]);
+
+                    const anyUnfinished = steps.some((s) =>
+                        unfinished.has(
+                            normalizeStatus(
+                                s?.status ||
+                                s?.step_status ||
+                                s?.state ||
+                                ""
+                            )
+                        )
+                    );
+
+                    if (!anyUnfinished) alreadyApproved = true;
+                }
+            } catch (e) {
+                console.warn("getApprovalDetail failed:", e);
+                alreadyApproved = false;
+            }
         }
     }
 
     if (alreadyApproved) {
-        return message.info('Tài liệu này đã được duyệt trước đó.')
+        return message.info("Tài liệu này đã được duyệt trước đó.");
     }
 
-    savingApprove.value = true
+    /* -------------------------------------------
+       3) BEGIN APPROVE
+    -------------------------------------------- */
+    savingApprove.value = true;
+
     try {
-        const pdfRes = await safeFetch(props.pdfUrl)
-        if (!pdfRes.ok) throw new Error('Không tải được file PDF')
-        const pdfBytes = await pdfRes.arrayBuffer()
+        const pdfRes = await safeFetch(props.pdfUrl);
 
-        if (!PDFLib) await loadPdfLib()
-        const { PDFDocument, rgb, StandardFonts } = PDFLib
-        const pdfDocW = await PDFDocument.load(pdfBytes, { updateMetadata: false })
+        if (!pdfRes.ok)
+            throw new Error("Không tải được file PDF");
+
+        const pdfBytes = await pdfRes.arrayBuffer();
+
+        if (!PDFLib) await loadPdfLib();
+
+        const { PDFDocument, rgb, StandardFonts } = PDFLib;
+
+        const pdfDocW = await PDFDocument.load(pdfBytes, {
+            updateMetadata: false
+        });
+
+        // try enable fontkit
         try {
-            const fontkitMod = await import('@pdf-lib/fontkit')
-            pdfDocW.registerFontkit(fontkitMod.default || fontkitMod)
-        } catch (e) { console.warn('fontkit not available:', e) }
+            const fontkitMod = await import("@pdf-lib/fontkit");
+            pdfDocW.registerFontkit(fontkitMod.default || fontkitMod);
+        } catch (e) {
+            console.warn("fontkit not available:", e);
+        }
 
+        /* -------------------------------------------
+           4) BUILD APPROVAL TEXT
+        -------------------------------------------- */
         const rawApprover =
             currentUser.value?.full_name ||
             currentUser.value?.name ||
             currentUser.value?.username ||
-            'NguoiDuyet'
+            "NguoiDuyet";
 
-        const sanitizeToAscii = s => {
+        const sanitizeToAscii = (s) => {
             try {
-                const nd = s.normalize('NFD').replace(/\p{Diacritic}/gu, '')
-                return nd.replace(/Đ/g, 'D')
-                    .replace(/đ/g, 'd')
-                    .replace(/[^\x00-\x7F ]/g, '')
+                const nd = s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
+                return nd
+                    .replace(/Đ/g, "D")
+                    .replace(/đ/g, "d")
+                    .replace(/[^\x00-\x7F ]/g, "");
             } catch {
                 return String(s)
-                    .replace(/[Đđ]/g, c => c === 'Đ' ? 'D' : 'd')
-                    .replace(/[^\x00-\x7F ]/g, '')
+                    .replace(/[Đđ]/g, (c) => (c === "Đ" ? "D" : "d"))
+                    .replace(/[^\x00-\x7F ]/g, "");
             }
-        }
+        };
 
-        const approverDisplay = sanitizeToAscii(rawApprover)
+        const approverDisplay = sanitizeToAscii(rawApprover);
 
-        const now = new Date()
-        const pad = n => String(n).padStart(2, '0')
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, "0");
 
         const vnTime =
-            `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}, ` +
-            `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
+            `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}, ` +
+            `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
-        const timeText = `${approverDisplay} — Date: ${vnTime}`
+        const approveText = `${approverDisplay} — Date: ${vnTime}`;
 
-        // ❗ Load font trước khi vẽ
-        let usedFont = await loadFontIfAvailable(pdfDocW)
-        if (!usedFont) usedFont = await pdfDocW.embedFont(StandardFonts.Helvetica)
+        /* -------------------------------------------
+           5) LOAD FONT FOR WRITING
+        -------------------------------------------- */
+        let usedFont = await loadFontIfAvailable(pdfDocW);
 
+        if (!usedFont) {
+            usedFont = await pdfDocW.embedFont(StandardFonts.Helvetica);
+        }
 
-        // 🟢 Chèn vào tất cả các trang
-        const pageCount = pdfDocW.getPageCount()
+        /* -------------------------------------------
+           6) DRAW APPROVAL TEXT ON ALL PAGES
+        -------------------------------------------- */
+        const pageTotal = pdfDocW.getPageCount();
 
-        for (let i = 0; i < pageCount; i++) {
-            const page = pdfDocW.getPage(i)
-            const pdfW = page.getWidth()
+        for (let i = 0; i < pageTotal; i++) {
+            const page = pdfDocW.getPage(i);
+            const pdfW = page.getWidth();
 
-            const fontSize = 6
-            const textWidth = usedFont.widthOfTextAtSize(timeText, fontSize)
-            const textHeight = typeof usedFont.heightAtSize === 'function'
-                ? usedFont.heightAtSize(fontSize)
-                : fontSize
+            const fontSize = 6;
+            const margin = 20;
 
-            const margin = 20
-            const textX = Math.max(margin, pdfW - margin - textWidth)
-            const textY = margin
-            const lineY = textY + textHeight + 2
+            const textWidth = usedFont.widthOfTextAtSize(
+                approveText,
+                fontSize
+            );
 
+            const textHeight =
+                typeof usedFont.heightAtSize === "function"
+                    ? usedFont.heightAtSize(fontSize)
+                    : fontSize;
+
+            const x = Math.max(margin, pdfW - margin - textWidth);
+            const y = margin;
+
+            const lineY = y + textHeight + 2;
+
+            // draw underline
             page.drawRectangle({
-                x: textX,
+                x,
                 y: lineY,
                 width: textWidth,
                 height: 0.7,
                 color: rgb(0, 0, 0)
-            })
+            });
 
-            page.drawText(timeText, {
-                x: textX,
-                y: textY,
+            // draw text
+            page.drawText(approveText, {
+                x,
+                y,
                 size: fontSize,
                 font: usedFont,
                 color: rgb(0, 0, 0)
-            })
+            });
         }
 
+        /* -------------------------------------------
+           7) SAVE & RELOAD PREVIEW
+        -------------------------------------------- */
+        const out = await pdfDocW.save({
+            useObjectStreams: false
+        });
 
-        const out = await pdfDocW.save({ useObjectStreams: false })
-        const outBlob = new Blob([out], { type: 'application/pdf' })
-        if (signedBlobUrl.value) { try { URL.revokeObjectURL(signedBlobUrl.value) } catch {} }
-        signedBlobUrl.value = URL.createObjectURL(outBlob)
+        const outBlob = new Blob([out], {
+            type: "application/pdf"
+        });
 
+        if (signedBlobUrl.value) {
+            try {
+                URL.revokeObjectURL(signedBlobUrl.value);
+            } catch {}
+        }
+
+        signedBlobUrl.value = URL.createObjectURL(outBlob);
+
+        // reload PDF preview
         try {
-            const doc = await pdfjsLib.getDocument({ data: out }).promise
-            await nextTick()
-            pdfDoc.value = markRaw(doc)
-            pageCount.value = doc.numPages
-            pageNum.value = Math.max(1, Math.min(pageNum.value || 1, doc.numPages))
-            queueRender()
-        } catch (e) { console.warn('reload preview from bytes failed:', e) }
+            const doc = await pdfjsLib.getDocument({
+                data: out
+            }).promise;
 
-        emits('done', outBlob)
-        emits('refresh')
-        message.success('Đã chèn thông tin duyệt vào file (local).')
+            await nextTick();
 
+            pdfDoc.value = markRaw(doc);
+            pageCount.value = doc.numPages;
+
+            pageNum.value = Math.max(
+                1,
+                Math.min(pageNum.value || 1, doc.numPages)
+            );
+
+            queueRender();
+        } catch (e) {
+            console.warn("reload preview failed:", e);
+        }
+
+        emits("done", outBlob);
+        emits("refresh");
+
+        message.success("Thông tin duyệt đã được cập nhật vào tài liệu.");
+        await loadPdf();
+
+        /* -------------------------------------------
+           8) UPDATE BACKEND
+        -------------------------------------------- */
         const payload = {
-            task_file_id: target?.id || target?.source_task_id || target?.file_id || null,
+            task_file_id:
+                target?.id ||
+                target?.source_task_id ||
+                target?.file_id ||
+                null,
+
             approval_id: target?.approval_id || null,
+
             note: `Duyệt bởi ${approverDisplay} lúc ${vnTime}`,
+
             signed_by: currentUser.value?.id || null,
             signed_at: new Date().toISOString(),
-            status: 'approved',
+
+            status: "approved",
+
             approver_display: approverDisplay,
+
             signed_file_name: target?.title || null,
             signed_file_path: target?.signed_pdf_url || null,
             signed_file_size: target?.file_size || null,
-            document_id: target?.document_id || target?.document?.id || null,
+
+            document_id:
+                target?.document_id ||
+                target?.document?.id ||
+                null,
+        };
+
+        let res;
+
+        try {
+            res = await approveDocument(payload);
+        } catch (e) {
+            const msg = e?.response?.data?.message || e.message;
+            return message.error(
+                msg || "Lỗi khi lưu thông tin duyệt."
+            );
         }
 
-        let res
-        try { res = await approveDocument(payload) } catch (e) {
-            const msg = e?.response?.data?.message || e.message
-            return message.error(msg || 'Lỗi khi lưu thông tin duyệt.')
-        }
+        const serverData = res?.data || {};
 
-        const serverData = res?.data || {}
-        if (serverData?.message && /được duyệt trước/i.test(String(serverData.message))) {
-            message.info(serverData.message)
-            const existingSig = serverData?.data
+        if (
+            serverData?.message &&
+            /được duyệt trước/i.test(serverData.message)
+        ) {
+            message.info(serverData.message);
+
+            const existingSig = serverData?.data;
+
             if (target) {
-                target.status = 'approved'
-                if (target.approval) target.approval.status = 'approved'
-                target.file_signature = existingSig
+                target.status = "approved";
+                if (target.approval)
+                    target.approval.status = "approved";
+
+                target.file_signature = existingSig;
             }
-            savingApprove.value = false
-            return
+
+            savingApprove.value = false;
+            return;
         }
 
-        message.success(serverData?.message || 'Duyệt thành công.')
+        message.success(
+            serverData?.message || "Duyệt thành công."
+        );
+
         if (target) {
-            target.status = 'approved'
-            if (target.approval) target.approval.status = 'approved'
-            target.file_signature = serverData?.data || null
+            target.status = "approved";
+
+            if (target.approval)
+                target.approval.status = "approved";
+
+            target.file_signature = serverData?.data || null;
         }
     } catch (err) {
-        console.error('[finalizeApproval] error:', err)
-        message.error('Duyệt thất bại.')
+        console.error("[finalizeApproval] error:", err);
+        message.error("Duyệt thất bại.");
     } finally {
-        savingApprove.value = false
+        savingApprove.value = false;
     }
 }
+
 
 /* target/docType logic preserved */
 const targetForDoc = computed(() => {
@@ -1391,7 +1556,7 @@ watchEffect(() => console.log('Child got props.signTarget =', props.signTarget))
     position:relative; border:1px solid #eee; border-radius:8px; padding:8px;
     overflow:auto; background:#fafafa;
 }
-canvas { display:block; max-width:100%; background:#fff; border-radius:4px; }
+canvas { display:block; max-width:100%; background:#fff; border-radius:4px; width: 100% }
 .sig { position:absolute; user-select:none; cursor:move; }
 .handle {
     position:absolute; width:16px; height:16px; border:2px solid #1677ff;
@@ -1425,5 +1590,14 @@ canvas { display:block; max-width:100%; background:#fff; border-radius:4px; }
 .stage::-webkit-scrollbar-track {
     background: rgba(0,0,0,0.05);
 }
+:deep(.ant-modal-footer) {
+    display: flex !important;
+    gap: 12px !important;   /* spacing chuẩn */
+}
+
+:deep(.ant-modal-footer .ant-btn) {
+    margin: 0 !important; /* xoá margin mặc định */
+}
+
 
 </style>

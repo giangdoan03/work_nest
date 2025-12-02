@@ -190,28 +190,6 @@
                         <span class="name">{{ f.name }}</span>
                         <span class="x" @click.stop.prevent="removeFile(idx)">×</span>
                     </div>
-
-                    <div class="doc-type-note">
-                        <InfoCircleOutlined class="icon"/>
-                        Hãy chọn loại văn bản để hệ thống xử lý đúng luồng duyệt:
-                        <strong>Nội bộ</strong> hoặc <strong>Phát hành</strong>.
-                    </div>
-
-                    <div class="tg-file-meta doc-type-selector">
-                        <a-tag
-                            :class="['doc-type-pill', selectedDocType === 'internal' ? 'active-internal' : '']"
-                            @click="selectedDocType = 'internal'"
-                        >
-                            Nội bộ
-                        </a-tag>
-
-                        <a-tag
-                            :class="['doc-type-pill', selectedDocType === 'external' ? 'active-external' : '']"
-                            @click="selectedDocType = 'external'"
-                        >
-                            Phát hành
-                        </a-tag>
-                    </div>
                 </div>
 
 
@@ -590,7 +568,6 @@ function formatVi(dt) {
 /* ===== state ===== */
 const store = useUserStore()
 const route = useRoute()
-const selectedDocType = ref('internal') // mặc định 'internal'
 
 const taskId = computed(() => Number(route.params.taskId || route.params.id))
 const currentUserId = computed(() => store.currentUser?.id ?? null)
@@ -1305,7 +1282,6 @@ async function createNewComment({keepMentions = false} = {}) {
         form.append("user_id", store.currentUser.id);
         form.append("content", inputValue.value || "");
         form.append("mentions", JSON.stringify(mentionsPayload));
-        form.append("doc_type", selectedDocType.value || "internal");
 
         // ==== 3) Multi-file upload ====
         if (selectedFiles.value.length) {

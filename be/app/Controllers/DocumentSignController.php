@@ -98,9 +98,9 @@ class DocumentSignController extends ResourceController
         $convertedM = new DocumentConvertedModel();
         $db = db_connect();
 
-        // Lấy bước ký của user (pending + signed)
+        // 1) Lấy các bước ký của user
         $rows = $signM
-            ->where('approver_id', $uid)   // 🔥 đổi từ user_id → approver_id
+            ->where('approver_id', $uid)
             ->whereIn('status', ['pending', 'signed'])
             ->orderBy('order_index', 'ASC')
             ->findAll();
@@ -112,7 +112,7 @@ class DocumentSignController extends ResourceController
             $doc = $convertedM->find($s['converted_id']);
             if (!$doc) continue;
 
-            // JOIN chain ký
+            // 2) Lấy toàn bộ chain ký
             $chain = $db->table('document_sign_status ds')
                 ->select('
                 ds.id,
@@ -124,7 +124,7 @@ class DocumentSignController extends ResourceController
                 ds.signed_at,
                 ds.signed_pdf_url
             ')
-                ->join('users u', 'u.id = ds.approver_id', 'left')   // 🔥 đổi user_id → approver_id
+                ->join('users u', 'u.id = ds.approver_id', 'left')
                 ->where('ds.converted_id', $s['converted_id'])
                 ->orderBy('ds.order_index', 'ASC')
                 ->get()->getResultArray();
@@ -140,7 +140,7 @@ class DocumentSignController extends ResourceController
                 'is_approved'   => $x['status'] === 'signed',
             ], $chain);
 
-            // Nếu user đã ký thì hiển thị file đã ký
+            // 3) Nếu user đã ký → hiển thị file đã ký
             $signedUrl = $s['signed_pdf_url'] ?? null;
             $fileUrl = $signedUrl ?: $doc['file_url'];
 
@@ -151,14 +151,20 @@ class DocumentSignController extends ResourceController
                 'url'           => $fileUrl,
                 'original_url'  => $doc['file_url'],
                 'signed_url'    => $signedUrl,
-                'task_file_id'  => $s['task_file_id'] ?? null,    // 🔥 lấy từ bước ký
+                'task_file_id'  => $s['task_file_id'] ?? null,
                 'uploader_name' => $doc['uploader_name'],
-                'created_at'    => $doc['wp_created_at'],
+                'created_at'    => $doc['wp_created_at'],  // ✔ sort theo cái này
                 'sequence'      => $s['order_index'],
                 'status'        => $s['status'],
                 'steps'         => $steps,
+                'doc_type'      => $doc['doc_type'] ?? null, // nếu không cần thì xóa
             ];
         }
+
+        // 4) Sắp xếp theo created_at giảm dần (mới nhất lên đầu)
+        usort($result, function ($a, $b) {
+            return strtotime($b['created_at']) - strtotime($a['created_at']);
+        });
 
         return $this->respond(['items' => $result]);
     }

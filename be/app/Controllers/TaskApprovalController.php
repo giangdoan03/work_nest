@@ -653,7 +653,6 @@ class TaskApprovalController extends ResourceController
                     uploaded_by,
                     created_at,
                     google_file_id,
-                    signed_pdf_url,
                     drive_id,
                     file_size
                 ')

@@ -1034,6 +1034,7 @@ class DocumentController extends ResourceController
                 'uploaded_by' => $data['uploaded_by'] ?? null,
                 'uploader_name' => $data['uploader_name'] ?? null,
                 'wp_created_at'=> $data['wp_created_at'] ?? null,
+                'doc_type'     => $data['doc_type']     ?? 'internal',
             ];
 
             // Validate

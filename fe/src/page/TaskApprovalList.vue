@@ -287,7 +287,7 @@ function canSign(item) {
 }
 
 function signTooltip(item) {
-    if (canSign(item)) return 'Ký tài liệu'
+    if (canSign(item)) return 'Duyệt/Ký tài liệu'
     const cur = findCurrentStep(item)
     if (!cur) return 'Không có bước hiện tại'
     return `Chưa tới lượt: Bước #${cur.sequence} — ${cur.approver_name || 'người duyệt'}`

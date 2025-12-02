@@ -15,6 +15,7 @@ class DocumentConvertedModel extends Model
         'mime_type',
         'title',
         'size',
+        'doc_type',
         'drive_id',
         'task_file_id',
         'uploaded_by',
