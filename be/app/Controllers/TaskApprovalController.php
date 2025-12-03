@@ -10,6 +10,7 @@ use App\Models\TaskModel;
 use App\Services\TaskSnapshotObserver;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use Config\Services;
 use Google\Client;
 use Google\Service\Exception;
 use Google_Service_Docs;
@@ -728,8 +729,8 @@ class TaskApprovalController extends ResourceController
 
                 if (isset($oldMap[$uid])) {
                     $old = $oldMap[$uid];
-                    $nm['status']   = $old['status']   ?? $nm['status'];
-                    $nm['acted_at'] = $old['acted_at'] ?? $nm['acted_at'];
+                    $nm['status']   = $m['status'] ?? $old['status'] ?? 'pending';
+                    $nm['acted_at'] = $m['acted_at'] ?? $old['acted_at'] ?? null;
                     $nm['note']     = $old['note']     ?? $nm['note'];
                     $nm['added_at'] = $old['added_at'] ?? date('Y-m-d H:i:s');
                 } else {
@@ -773,7 +774,7 @@ class TaskApprovalController extends ResourceController
         service('taskSnapshot')->save($taskUpdated);
 
         // ========== OBSERVER — Gửi Mail ==========
-        service('taskSnapshotObserver')->detectChangesAndNotify($taskId);
+        Services::taskSnapshotObserver()->detectChangesAndNotify($taskId);
 
         // ========== TRẢ FE ==========
         $progress = $this->computeRosterProgress($newList, (string)($task['approval_status'] ?? 'pending'));

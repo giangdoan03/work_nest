@@ -71,15 +71,12 @@ class TaskSnapshotService
             'priority'             => $task['priority'] ?? null,
             'approval_status'      => $task['approval_status'] ?? null,
             'progress'             => $task['progress'] ?? null,
-
             'assigned_to'          => $task['assigned_to'] ?? null,
             'collaborated_by'      => $task['collaborated_by'] ?? null,
             'assigned_by'          => $task['assigned_by'] ?? null,
             'proposed_by'          => $task['proposed_by'] ?? null,
             'created_by'           => $task['created_by'] ?? null,
-
             'approval_roster_json' => $task['approval_roster_json'] ?? null,
-
             'latest_upload_batch'  => $latestBatch,
             'latest_files_json'    => json_encode($latestFiles, JSON_UNESCAPED_UNICODE),
         ]);

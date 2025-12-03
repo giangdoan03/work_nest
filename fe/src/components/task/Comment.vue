@@ -1588,33 +1588,38 @@ function cancelEdit() {
 }
 
 function canActOnChip(m) {
+    // 1️⃣ Không có m hoặc không pending thì không thao tác
     if (!m || (m.status || '').toLowerCase() !== 'pending') return false
 
     const curUid = String(currentUserId.value)
     const targetUid = String(m.user_id)
 
-    // ⚡ QUAN TRỌNG: dùng đúng thứ tự final cho UI
-    const rosterArr = Array.isArray(finalDrawerMentions.value)
-        ? finalDrawerMentions.value
-        : mentionsSelected.value
-
+    // 2️⃣ Lấy lượt đầu tiên đang chờ duyệt
+    const rosterArr = Array.isArray(mentionsSelected.value) ? mentionsSelected.value : []
     const firstPending = rosterArr.find(r => (r.status || '').toLowerCase() === 'pending')
 
-    // chính chủ
+    // 3️⃣ Nếu chính chủ (người của chip)
     if (curUid === targetUid) {
+        // chỉ được duyệt khi là người đầu tiên đang chờ
         return !!firstPending && String(firstPending.user_id) === targetUid
     }
 
-    // admin override
+    // 4️⃣ Nếu không phải chính chủ → chỉ cho admin/super_admin override
     const myRank = roleRank(currentRoleCode.value)
     if (myRank >= roleRank('admin')) {
+        // Lấy thông tin người target (nếu có)
         const targetUser = getUserById(Number(m.user_id)) || {}
         const targetRoleCode = targetUser.role_code || targetUser.role || 'user'
         const targetRank = roleRank(targetRoleCode)
-        return targetRank <= myRank;
 
+        // admin/super_admin không được duyệt người có cấp cao hơn
+        if (targetRank > myRank) return false
+
+        // admin/super_admin được phép duyệt người cùng cấp hoặc thấp hơn
+        return true
     }
 
+    // 5️⃣ Còn lại (user thường): không được duyệt chéo, chỉ duyệt lượt của mình
     return false
 }
 

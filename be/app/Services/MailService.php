@@ -24,15 +24,15 @@ class MailService
         $this->taskModel = new TaskModel();
 
         $this->email->initialize([
-            'protocol'  => getenv('email.protocol'),
-            'SMTPHost'  => getenv('email.SMTPHost'),
-            'SMTPUser'  => getenv('email.SMTPUser'),
-            'SMTPPass'  => getenv('email.SMTPPass'),
-            'SMTPPort'  => getenv('email.SMTPPort'),
-            'SMTPCrypto'=> getenv('email.SMTPCrypto'),
-            'mailType'  => getenv('email.mailType'),
-            'charset'   => getenv('email.charset'),
-            'newline'   => "\r\n",
+            'protocol'    => 'smtp',
+            'SMTPHost'    => getenv('email.SMTPHost'),
+            'SMTPUser'    => getenv('email.SMTPUser'),
+            'SMTPPass'    => getenv('email.SMTPPass'),
+            'SMTPPort'    => (int) getenv('email.SMTPPort'),  // Must be int !!!
+            'smtp_crypto' => getenv('email.SMTPCrypto'),       // use correct CI4 key
+            'mailType'    => getenv('email.mailType'),
+            'charset'     => getenv('email.charset'),
+            'newline'     => "\r\n",
         ]);
 
         $this->email->setFrom(
