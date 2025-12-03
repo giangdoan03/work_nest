@@ -307,13 +307,13 @@
                                                                         style="width: calc(83% + 50px); margin: 0 auto; display: block;"
                                                                     />
 
-                                                                    <div v-if="rosterTotal > 0" class="mt8">
-                                                                        <a-typography-text type="secondary">
-                                                                            Tiến độ bị giới hạn theo phê duyệt:
-                                                                            {{ rosterApproved }}/{{ rosterTotal }}
-                                                                            ({{ rosterProgress }}%)
-                                                                        </a-typography-text>
-                                                                    </div>
+<!--                                                                    <div v-if="rosterTotal > 0" class="mt8">-->
+<!--                                                                        <a-typography-text type="secondary">-->
+<!--                                                                            Tiến độ bị giới hạn theo phê duyệt:-->
+<!--                                                                            {{ rosterApproved }}/{{ rosterTotal }}-->
+<!--                                                                            ({{ rosterProgress }}%)-->
+<!--                                                                        </a-typography-text>-->
+<!--                                                                    </div>-->
                                                                 </template>
 
                                                             </a-form-item>

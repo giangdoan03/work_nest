@@ -11,6 +11,7 @@ use App\Models\TaskFileModel;
 use App\Models\TaskModel;
 use App\Models\UserModel;
 use App\Libraries\GoogleDriveService;
+use App\Services\TaskSnapshotService;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
@@ -383,7 +384,10 @@ class CommentController extends ResourceController
         if (empty($files)) {
             $created = $taskCommentModel->find($commentId);
             $created['files'] = [];
+
+            // merge mentions
             $this->mergeMentionsIntoTaskRoster((int)$task_id, $mentionsJson);
+
             return $this->respondCreated(['comment' => $created]);
         }
 
@@ -494,10 +498,31 @@ class CommentController extends ResourceController
         $createdComment = $taskCommentModel->find($commentId);
         $createdComment['files'] = $uploadedFiles;
 
+        // Merge roster mentions
         $this->mergeMentionsIntoTaskRoster((int)$task_id, $mentionsJson);
+
+        /* ======================================
+         *  🚀 UPDATE TASK: batch mới + files mới
+         * ======================================*/
+        $taskModel = new TaskModel();
+        $taskModel->update($task_id, [
+            'latest_upload_batch' => $uploadBatch,
+            'latest_files_json'   => json_encode($uploadedFiles, JSON_UNESCAPED_UNICODE),
+        ]);
+
+        /* ======================================
+         *  🚀 GHI SNAPSHOT
+         * ======================================*/
+        try {
+            $snapService = new TaskSnapshotService();
+            $snapService->createSnapshot($task_id);
+        } catch (Throwable $e) {
+            log_message('error', '[SNAPSHOT] ' . $e->getMessage());
+        }
 
         return $this->respondCreated(['comment' => $createdComment]);
     }
+
 
 
     public function update($id = null): ResponseInterface

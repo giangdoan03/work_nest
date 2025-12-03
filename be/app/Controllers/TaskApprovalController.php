@@ -7,6 +7,7 @@ use App\Libraries\GoogleDriveService;
 use App\Models\TaskApprovalLogModel;
 use App\Models\TaskApprovalModel;
 use App\Models\TaskModel;
+use App\Services\TaskSnapshotObserver;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use Google\Client;
@@ -707,16 +708,18 @@ class TaskApprovalController extends ResourceController
 
         $mentions = is_string($rawMent) ? json_decode($rawMent, true) : $rawMent;
         if (!is_array($mentions)) $mentions = [];
+
         $mode = strtolower((string)$rawMode);
         if (!in_array($mode, ['merge', 'replace'], true)) $mode = 'merge';
 
-        // ✅ Lấy roster cũ
+        // ========== ROSTER CŨ ==========
         $oldRoster = $this->readRoster($task);
         $oldMap = [];
         foreach ($oldRoster as $r) $oldMap[(int)$r['user_id']] = $r;
 
         $newList = [];
 
+        // ========== MODE REPLACE ==========
         if ($mode === 'replace') {
             foreach ($mentions as $m) {
                 $nm = $this->normalizeMention($m);
@@ -725,56 +728,63 @@ class TaskApprovalController extends ResourceController
 
                 if (isset($oldMap[$uid])) {
                     $old = $oldMap[$uid];
-                    // giữ status/acted_at/note/added_at
-                    if (empty($m['status'])) {
-                        $nm['status']   = $old['status']   ?? 'pending';
-                        $nm['acted_at'] = $old['acted_at'] ?? null;
-                        $nm['note']     = $old['note']     ?? null;
-                        $nm['added_at'] = date('Y-m-d H:i:s'); // 👈 thêm
-                    }
-                    $nm['added_at'] = $old['added_at'] ?? ($old['created_at'] ?? null);
+                    $nm['status']   = $old['status']   ?? $nm['status'];
+                    $nm['acted_at'] = $old['acted_at'] ?? $nm['acted_at'];
+                    $nm['note']     = $old['note']     ?? $nm['note'];
+                    $nm['added_at'] = $old['added_at'] ?? date('Y-m-d H:i:s');
                 } else {
-                    // người mới
-                    if (empty($m['status'])) {
-                        $nm['added_at'] = date('Y-m-d H:i:s'); // 👈 thêm
-                        $nm['status']   = 'pending';
-                        $nm['acted_at'] = null;
-                    }
+                    $nm['status']   = $m['status'] ?? 'pending';
+                    $nm['acted_at'] = null;
                     $nm['added_at'] = date('Y-m-d H:i:s');
                 }
                 $newList[] = $nm;
             }
-        } else { // MERGE
+        }
+
+        // ========== MODE MERGE ==========
+        else {
             $map = $oldMap;
             foreach ($mentions as $m) {
-                $nm  = $this->normalizeMention($m);
+                $nm = $this->normalizeMention($m);
                 if (!$nm) continue;
                 $uid = (int)$nm['user_id'];
 
                 if (!isset($map[$uid])) {
-                    $nm['added_at'] = date('Y-m-d H:i:s');   // 👈 người mới
+                    // Người mới
+                    $nm['added_at'] = date('Y-m-d H:i:s');
                     $map[$uid] = $nm;
                 } else {
+                    // Người cũ → cập nhật name/role
                     $old = $map[$uid];
-                    // cập nhật name/role, giữ các field khác
                     $old['name'] = $nm['name'];
                     $old['role'] = $nm['role'];
-                    // chống “trôi” key (giữ old):
                     $map[$uid] = $old + $nm;
                 }
             }
             $newList = array_values($map);
         }
 
-        // lưu + respond humanized
+        // ========== LƯU ROSTER ==========
         $this->writeRoster($taskId, $newList);
+
+        // ========== GHI SNAPSHOT ==========
+        $taskUpdated = $this->getTaskRow($taskId);
+        $taskUpdated['approval_roster_json'] = json_encode($newList, JSON_UNESCAPED_UNICODE);
+        service('taskSnapshot')->save($taskUpdated);
+
+        // ========== OBSERVER — Gửi Mail ==========
+        service('taskSnapshotObserver')->detectChangesAndNotify($taskId);
+
+        // ========== TRẢ FE ==========
         $progress = $this->computeRosterProgress($newList, (string)($task['approval_status'] ?? 'pending'));
+
         return $this->respond([
             'message'  => 'OK',
-            'roster'   => $this->addHumanDatesToRoster($newList), // 👈
+            'roster'   => $this->addHumanDatesToRoster($newList),
             'progress' => $progress,
         ]);
     }
+
 
 
 
@@ -835,32 +845,40 @@ class TaskApprovalController extends ResourceController
             return $this->failValidationErrors('Trạng thái không hợp lệ');
         }
 
-        $task   = $this->getTaskRow($taskId);
+        $task = $this->getTaskRow($taskId);
         if (!$task) return $this->failNotFound('Task not found');
 
         $uid    = (int)$this->getUserId();
         $roster = $this->readRoster($task);
 
-        // Quyền & vị trí trong roster
+        // ========== CHECK QUYỀN ==========
         [$can, $idx, $reason] = $this->canUserActOnRoster($roster, $uid);
         if (!$can) return $this->failForbidden($reason ?? 'Không thể thực hiện');
 
-        // Cập nhật member
+        // ========== UPDATE MEMBER ==========
         $payload = $this->getJsonBody();
         $note = $payload['note'] ?? null;
         if (is_array($note)) {
             $note = json_encode($note, JSON_UNESCAPED_UNICODE);
         }
+
         $roster[$idx]['status']   = $finalStatus;
         $roster[$idx]['acted_at'] = date('Y-m-d H:i:s');
-        if ($note !== null && $note !== '') {
-            $roster[$idx]['note'] = (string) $note;
-        }
+        if ($note !== null) $roster[$idx]['note'] = $note;
 
-
-        // Lưu roster
+        // ========== LƯU ==========
         $this->writeRoster($taskId, $roster);
 
+        // ========== GHI SNAPSHOT ==========
+        $taskUpdated = $this->getTaskRow($taskId);
+        $taskUpdated['approval_roster_json'] = json_encode($roster, JSON_UNESCAPED_UNICODE);
+        service('taskSnapshot')->save($taskUpdated);
+
+        // ========== OBSERVER — Gửi mail ==========
+        service('taskSnapshotObserver')->detectChangesAndNotify($taskId);
+
+
+        // ========== CẬP NHẬT TASK ==========
         if ($finalStatus === 'rejected') {
             $taskUpd = [
                 'approval_status' => 'rejected',
@@ -868,12 +886,13 @@ class TaskApprovalController extends ResourceController
                 'progress'        => $this->computeRosterProgress($roster, 'rejected'),
             ];
         } else {
-            $allApproved = !array_filter($roster, fn($r) => ($r['status'] ?? 'pending') !== 'approved');
-            $taskUpd['approved_at'] = date('Y-m-d H:i:s');
+            $allApproved = !array_filter($roster, fn($r) => ($r['status'] ?? '') !== 'approved');
+
             $taskUpd = [
                 'progress'     => $this->computeRosterProgress($roster, (string)($task['approval_status'] ?? 'pending')),
                 'approved_at'  => date('Y-m-d H:i:s'),
             ];
+
             if ($allApproved) {
                 $taskUpd['approval_status'] = 'approved';
                 $taskUpd['status']          = TaskStatus::DONE;
@@ -881,19 +900,15 @@ class TaskApprovalController extends ResourceController
             }
         }
 
-        $roster = $this->addHumanDatesToRoster($roster);
-
-
-        if ($taskUpd) {
-            db_connect()->table('tasks')->where('id', $taskId)->update($taskUpd);
-        }
+        db_connect()->table('tasks')->where('id', $taskId)->update($taskUpd);
 
         return $this->respond([
             'message'     => $finalStatus === 'approved' ? 'Approved' : 'Rejected',
-            'roster'      => $roster,
+            'roster'      => $this->addHumanDatesToRoster($roster),
             'task_update' => $taskUpd,
         ]);
     }
+
 
 
     /** POST /tasks/{id}/roster/approve: current user approve/sign */

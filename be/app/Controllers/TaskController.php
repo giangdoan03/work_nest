@@ -10,6 +10,7 @@ use App\Models\ContractStepModel;
 use App\Models\ContractStepTemplateModel;
 use App\Models\TaskApprovalModel;
 use App\Models\TaskExtensionModel;
+use App\Models\TaskSnapshotModel;
 use App\Models\TaskModel;
 use App\Enums\TaskStatus;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -24,7 +25,60 @@ helper('task');
 class TaskController extends ResourceController
 {
     protected $modelName = TaskModel::class;
+    protected TaskSnapshotModel $snapshotModel;
     protected $format = 'json';
+
+    public function __construct()
+    {
+        $this->snapshotModel = new TaskSnapshotModel();
+    }
+
+
+    /**
+     * @throws ReflectionException
+     */
+    private function saveSnapshot(array $task): void
+    {
+
+        $latestBatch = db_connect()->table('documents')
+            ->select('upload_batch')
+            ->where('source_task_id', $task['id'])
+            ->orderBy('upload_batch', 'DESC')
+            ->get()
+            ->getRow('upload_batch');
+
+        $latestFiles = [];
+        if ($latestBatch !== null) {
+            $latestFiles = db_connect()->table('documents')
+                ->select('id,title,file_path,google_file_id,file_size')
+                ->where('source_task_id', $task['id'])
+                ->where('upload_batch', $latestBatch)
+                ->get()
+                ->getResultArray();
+        }
+
+        $this->snapshotModel->insert([
+            'task_id'              => $task['id'],
+            'snapshot_at'          => date('Y-m-d H:i:s'),
+            'title'                => $task['title'],
+            'description'          => $task['description'],
+            'start_date'           => $task['start_date'],
+            'end_date'             => $task['end_date'],
+            'status'               => $task['status'],
+            'priority'             => $task['priority'],
+            'approval_status'      => $task['approval_status'],
+            'progress'             => $task['progress'],
+            'assigned_to'          => $task['assigned_to'],
+            'collaborated_by'      => $task['collaborated_by'],
+            'assigned_by'          => $task['assigned_by'],
+            'proposed_by'          => $task['proposed_by'],
+            'created_by'           => $task['created_by'],
+            'approval_roster_json' => $task['approval_roster_json'] ?? null,
+            'latest_upload_batch' => $latestBatch,
+            'latest_files_json'   => json_encode($latestFiles, JSON_UNESCAPED_UNICODE),
+        ]);
+    }
+
 
     /**
      * @throws Exception
@@ -290,6 +344,7 @@ class TaskController extends ResourceController
             ->where('t.id', $id)
             ->get()
             ->getRowArray();
+        $this->saveSnapshot($row);
 
         if (!$row) {
             return $this->failNotFound('Task not found');
@@ -512,6 +567,8 @@ class TaskController extends ResourceController
             ->where('t.id', $taskId)
             ->get()->getRowArray();
 
+        $this->saveSnapshot($row);
+
         return $this->respondCreated([
             'message' => 'Task created',
             'id' => $taskId,
@@ -616,6 +673,10 @@ class TaskController extends ResourceController
         if (!$this->model->update($id, $data)) {
             return $this->failValidationErrors($this->model->errors());
         }
+
+        $updated = $this->model->find($id);
+        $this->saveSnapshot($updated);
+
 
         return $this->respond(['message' => 'Task updated']);
     }

@@ -255,12 +255,12 @@
                                         :filterOption="filterUser"
                                         style="min-width: 220px"
                                         placeholder="Chọn người"
+                                        @change="onMentionUserChange"
                                     />
                                 </div>
                                 <div class="row">
                                     <span class="lbl">Vai trò:</span>
-                                    <a-segmented v-model:value="mentionForm.role"
-                                                 :options="[{ label: 'Duyệt', value: 'approve' }]"/>
+                                    <a-segmented v-model:value="mentionForm.role" :options="[{ label: 'Duyệt', value: 'approve' }]"/>
                                 </div>
                                 <div class="row" style="justify-content: flex-end; gap: 8px">
                                     <a-button size="small" @click="resetMentionForm">Hủy</a-button>
@@ -1076,6 +1076,18 @@ const getUserById = (id) => listUser.value.find((u) => u.id === id) || {}
 const userOptions = computed(() => (listUser.value || []).map((u) => ({value: String(u.id), label: u.name})))
 const filterUser = (input, option) => (option?.label ?? '').toLowerCase().includes(String(input).toLowerCase())
 
+function onMentionUserChange(userId) {
+    const user = listUser.value.find(u => String(u.id) === String(userId));
+
+    console.log("=== User được chọn ===");
+    console.log(user);                // Toàn bộ object user
+    console.log("ID:", user?.id);
+    console.log("Tên:", user?.name);
+    console.log("Email:", user?.email);
+    console.log("Role:", user?.role);
+}
+
+
 let addMentionOpen = ref(false)
 const mentionForm = ref({userId: null, role: 'approve'})
 
@@ -1576,38 +1588,33 @@ function cancelEdit() {
 }
 
 function canActOnChip(m) {
-    // 1️⃣ Không có m hoặc không pending thì không thao tác
     if (!m || (m.status || '').toLowerCase() !== 'pending') return false
 
     const curUid = String(currentUserId.value)
     const targetUid = String(m.user_id)
 
-    // 2️⃣ Lấy lượt đầu tiên đang chờ duyệt
-    const rosterArr = Array.isArray(mentionsSelected.value) ? mentionsSelected.value : []
+    // ⚡ QUAN TRỌNG: dùng đúng thứ tự final cho UI
+    const rosterArr = Array.isArray(finalDrawerMentions.value)
+        ? finalDrawerMentions.value
+        : mentionsSelected.value
+
     const firstPending = rosterArr.find(r => (r.status || '').toLowerCase() === 'pending')
 
-    // 3️⃣ Nếu chính chủ (người của chip)
+    // chính chủ
     if (curUid === targetUid) {
-        // chỉ được duyệt khi là người đầu tiên đang chờ
         return !!firstPending && String(firstPending.user_id) === targetUid
     }
 
-    // 4️⃣ Nếu không phải chính chủ → chỉ cho admin/super_admin override
+    // admin override
     const myRank = roleRank(currentRoleCode.value)
     if (myRank >= roleRank('admin')) {
-        // Lấy thông tin người target (nếu có)
         const targetUser = getUserById(Number(m.user_id)) || {}
         const targetRoleCode = targetUser.role_code || targetUser.role || 'user'
         const targetRank = roleRank(targetRoleCode)
+        return targetRank <= myRank;
 
-        // admin/super_admin không được duyệt người có cấp cao hơn
-        if (targetRank > myRank) return false
-
-        // admin/super_admin được phép duyệt người cùng cấp hoặc thấp hơn
-        return true
     }
 
-    // 5️⃣ Còn lại (user thường): không được duyệt chéo, chỉ duyệt lượt của mình
     return false
 }
 
@@ -1822,6 +1829,7 @@ onBeforeUnmount(() => {
     padding: 8px 10px 0;
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
+    min-height: 300px;
 }
 
 .list-comment::-webkit-scrollbar {
