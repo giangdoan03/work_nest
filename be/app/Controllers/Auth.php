@@ -32,35 +32,51 @@ class Auth extends Controller
     {
         $departmentId = $this->request->getGet('department_id');
 
-        $builder = $this->model;
+        $builder = $this->model
+            ->select('
+            users.*,
+            roles.name AS role_name,
+            roles.code AS role_code,
+            roles.description AS role_description
+        ')
+            ->join('roles', 'roles.id = users.role_id', 'left');
 
-        // ✅ Lọc theo department_id nếu có
         if ($departmentId) {
-            $builder = $builder->where('department_id', $departmentId);
+            $builder = $builder->where('users.department_id', $departmentId);
         }
 
         $users = $builder->findAll();
 
-        // ✅ Xóa mật khẩu trước khi trả về
-        $users = array_map(function ($user) {
-            unset($user['password']);
-            return $user;
+        // Xóa password
+        $users = array_map(function ($u) {
+            unset($u['password']);
+            return $u;
         }, $users);
 
         return $this->respond($users);
     }
+
     public function show($id = null): ResponseInterface
     {
-        $user = $this->model->find($id);
+        $user = $this->model
+            ->select('
+            users.*,
+            roles.name AS role_name,
+            roles.code AS role_code,
+            roles.description AS role_description
+        ')
+            ->join('roles', 'roles.id = users.role_id', 'left')
+            ->find($id);
+
         if (!$user) {
             return $this->failNotFound('User not found');
         }
 
-        // Xoá trường password
         unset($user['password']);
 
         return $this->respond($user);
     }
+
 
 
     /**
@@ -77,6 +93,7 @@ class Auth extends Controller
             'phone'             => 'required|regex_match[/^(0|\+84)[0-9]{9,10}$/]',
             'password'          => 'required|min_length[6]',
             'confirm_password'  => 'required|matches[password]',
+            'role_id'           => 'required|integer',  // ✔ thêm rule role_id
         ];
 
         if (!$this->validate($rules)) {
@@ -85,11 +102,16 @@ class Auth extends Controller
 
         unset($data['confirm_password']);
         $data['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
-        $data['role'] = 'customer';
 
+        // ❌ bỏ dòng này
+        // $data['role'] = 'customer';
+
+        // ✔ giữ nguyên role_id FE gửi lên
         $id = $this->model->insert($data);
+
         return $this->respondCreated(['id' => $id]);
     }
+
 
     /**
      * @throws ReflectionException

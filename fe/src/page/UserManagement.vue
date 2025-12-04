@@ -365,8 +365,8 @@ const formData = ref({
     name: '',
     email: '',
     phone: '',
-    department_id: undefined,
-    role_id: undefined,
+    department_id: '',
+    role_id: '',
     password: '',
     confirm_password: '',
     preferred_marker: '',
@@ -579,10 +579,20 @@ const submitForm = async () => {
         await getUser()
         onCloseDrawer()
     } catch (e) {
-        // nếu BE trả lỗi email duplicate:
-        const msg = e?.response?.data?.message || e?.response?.data?.error || 'Thao tác không thành công'
-        message.error(String(msg).includes('exist') ? 'Email đã tồn tại, vui lòng dùng email khác' : msg)
-    } finally {
+        const data = e?.response?.data
+
+        // Nếu backend trả về messages (chuẩn CI4)
+        if (data?.messages && typeof data.messages === 'object') {
+            // lấy lỗi đầu tiên
+            const firstError = Object.values(data.messages)[0]
+            message.error(firstError)
+        } else {
+            // fallback
+            const msg = data?.message || data?.error || 'Thao tác không thành công'
+            message.error(msg)
+        }
+    }
+    finally {
         loadingCreate.value = false
     }
 }

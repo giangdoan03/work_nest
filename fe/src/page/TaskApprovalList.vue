@@ -120,14 +120,13 @@
                                 </a-tooltip>
 
                                 <a-tooltip
-                                    v-if="item.kind === 'pdf' && mySignatureUrl"
-                                    :title="signTooltip(item)"
+                                    :title="mySignatureUrl ? signTooltip(item) : 'Bạn chưa tải chữ ký số'"
                                 >
                                     <a-button
                                         size="large"
                                         shape="circle"
                                         type="dashed"
-                                        :disabled="!canSign(item)"
+                                        :disabled="!mySignatureUrl || !canSign(item)"
                                         @click="openSign(item)"
                                     >
                                         <img :src="'/pen-icon.svg'" class="icon-pen" alt="pen" />

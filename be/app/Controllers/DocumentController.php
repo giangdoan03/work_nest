@@ -7,6 +7,7 @@ use App\Models\DocumentConvertedModel;
 use App\Models\DocumentSettingModel;
 use App\Models\DocumentSignStatusModel;
 use App\Models\TaskFileModel;
+use App\Models\TaskModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use App\Models\DocumentModel;
@@ -807,6 +808,40 @@ class DocumentController extends ResourceController
             ->where('converted_id', $convertedId)
             ->where('status', 'pending')
             ->first();
+
+        // ========================
+        // CẬP NHẬT ROSTER + SNAPSHOT + MAIL (y như MERGE)
+        // ========================
+        $taskModel = new TaskModel();
+
+        // Lấy task id từ step bảng document_sign_status
+        $taskId = (int)$step['task_file_id'];
+        $task = $taskModel->find($taskId);
+
+        if ($task) {
+            $roster = json_decode($task['approval_roster_json'], true) ?: [];
+
+            foreach ($roster as &$r) {
+                if ((int)$r['user_id'] === $userId) {
+                    $r['status'] = 'approved';
+                    $r['acted_at'] = date('Y-m-d H:i:s');
+                }
+            }
+
+            // Cập nhật task
+            $taskModel->update($taskId, [
+                'approval_roster_json' => json_encode($roster, JSON_UNESCAPED_UNICODE),
+            ]);
+
+            // Ghi snapshot
+            $taskUpdated = $taskModel->find($taskId);
+            service('taskSnapshot')->save($taskUpdated);
+
+            // Observer gửi mail
+            Services::taskSnapshotObserver()
+                ->detectChangesAndNotify($taskId);
+        }
+
 
         return $this->respond([
             'message'      => 'Đã ký thành công (không upload file).',

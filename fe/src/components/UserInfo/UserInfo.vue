@@ -93,7 +93,7 @@
                             {{ getNameDepartments || '—' }}
                         </a-descriptions-item>
                         <a-descriptions-item label="Loại tài khoản">
-                            {{ form.role || '—' }}
+                            {{ form.role_description || form.role_name || '—' }}
                         </a-descriptions-item>
                     </a-descriptions>
 
