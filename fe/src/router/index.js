@@ -7,7 +7,7 @@ import Dashboard from '../components/Dashboard.vue'
 import Layout from '../components/Layout.vue'
 import UserInfo from '../components/UserInfo/index.vue'
 import UserPermissionManager from '../components/UserPermissionManager.vue'
-import DepartmentList from '../page/DepartmentList.vue'
+import DepartmentList from '../page/documents/DocumentList.vue'
 import UserManagement from '../page/UserManagement.vue'
 import InternalTasks from '../page/InternalTasks.vue'
 import TaskDetail from '../components/task/index.vue'
@@ -189,43 +189,6 @@ const routes = [
             },
 
 
-            // Documents
-            {
-                path: '/documents',
-                name: 'documents',
-                component: DocumentList,
-                meta: {breadcrumb: 'Tài liệu', parent: 'dashboard'}
-            },
-            {
-                path: '/documents/my',
-                name: 'documents-my',
-                component: DocumentList,
-                meta: {breadcrumb: 'Tài liệu của tôi', parent: 'documents'}
-            },
-            {
-                path: '/documents/shared',
-                name: 'documents-shared',
-                component: DocumentSharedList,
-                meta: {breadcrumb: 'Được chia sẻ với tôi', parent: 'documents'}
-            },
-            {
-                path: '/documents/department',
-                name: 'documents-department',
-                component: DepartmentDocumentList,
-                meta: {breadcrumb: 'Theo phòng ban', parent: 'documents'}
-            },
-            {
-                path: '/documents/permission',
-                name: 'documents-permission',
-                component: DocumentPermissionList,
-                meta: {breadcrumb: 'Phân quyền tài liệu', parent: 'documents'}
-            },
-            {
-                path: '/documents/settings',
-                name: 'documents-settings',
-                component: DocumentSettingForm,
-                meta: {breadcrumb: 'Cấu hình tài liệu', parent: 'documents'}
-            },
 
             // Settings
             {
@@ -343,6 +306,32 @@ const routes = [
                 component: DepartmentList,
                 meta: { breadcrumb: 'Phòng ban' }
             },
+
+            {
+                path: '/documents',
+                children: [
+                    {
+                        path: 'my',
+                        name: 'documents-my',
+                        component: DocumentList,
+                        meta: { breadcrumb: 'Tài liệu của tôi' }
+                    },
+                    {
+                        path: 'department',
+                        name: 'documents-department',
+                        component: DepartmentList,
+                        meta: { breadcrumb: 'Tài liệu theo phòng ban' }
+                    },
+                    {
+                        path: ':id',
+                        name: 'document-detail',
+                        component: DocumentInfoPage,
+                        meta: { breadcrumb: 'Chi tiết tài liệu' }
+                    }
+                ]
+            },
+
+
 
         ]
     }

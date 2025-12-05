@@ -132,28 +132,24 @@
                                 <span class="menu-text">Tài liệu</span>
                                 <span class="submenu-arrow">▼</span>
                             </div>
+
                             <template #overlay>
                                 <a-menu :selectedKeys="documentsSelectedKeys">
                                     <a-menu-item key="documents-my" @click="navigateTo('/documents/my')">
-                                        <FileOutlined style="margin-right: 12px;"/>
+                                        <FileOutlined style="margin-right: 12px;" />
                                         <span>Tài liệu của tôi</span>
                                     </a-menu-item>
+
                                     <a-menu-item key="documents-department" @click="navigateTo('/documents/department')">
-                                        <ApartmentOutlined style="margin-right: 12px;"/>
+                                        <ApartmentOutlined style="margin-right: 12px;" />
                                         <span>Theo phòng ban</span>
-                                    </a-menu-item>
-                                    <a-menu-item key="documents-permission" @click="navigateTo('/documents/permission')">
-                                        <LockOutlined style="margin-right: 12px;"/>
-                                        <span>Phân quyền tài liệu</span>
-                                    </a-menu-item>
-                                    <a-menu-item key="documents-settings" @click="navigateTo('/documents/settings')">
-                                        <SettingOutlined style="margin-right: 12px;"/>
-                                        <span>Cấu hình tài liệu</span>
                                     </a-menu-item>
                                 </a-menu>
                             </template>
                         </a-dropdown>
                     </div>
+
+                    <!-- collapsed -->
                     <div v-else>
                         <a-dropdown placement="rightTop" :trigger="['hover']" :getPopupContainer="p => p.parentNode">
                             <div class="submenu-header" :class="{ active: isDocumentsActive }">
@@ -161,29 +157,24 @@
                                 <span class="menu-text-collapsed">Tài liệu</span>
                                 <span class="submenu-arrow-collapsed">▼</span>
                             </div>
+
                             <template #overlay>
                                 <a-menu :selectedKeys="documentsSelectedKeys">
                                     <a-menu-item key="documents-my" @click="navigateTo('/documents/my')">
-                                        <FileOutlined style="margin-right: 12px;"/>
+                                        <FileOutlined style="margin-right: 12px;" />
                                         <span>Tài liệu của tôi</span>
                                     </a-menu-item>
+
                                     <a-menu-item key="documents-department" @click="navigateTo('/documents/department')">
-                                        <ApartmentOutlined style="margin-right: 12px;"/>
+                                        <ApartmentOutlined style="margin-right: 12px;" />
                                         <span>Theo phòng ban</span>
-                                    </a-menu-item>
-                                    <a-menu-item key="documents-permission" @click="navigateTo('/documents/permission')">
-                                        <LockOutlined style="margin-right: 12px;"/>
-                                        <span>Phân quyền tài liệu</span>
-                                    </a-menu-item>
-                                    <a-menu-item key="documents-settings" @click="navigateTo('/documents/settings')">
-                                        <SettingOutlined style="margin-right: 12px;"/>
-                                        <span>Cấu hình tài liệu</span>
                                     </a-menu-item>
                                 </a-menu>
                             </template>
                         </a-dropdown>
                     </div>
                 </div>
+
 
                 <!-- 9. Danh sách khách hàng -->
 <!--                <a-tooltip placement="right" title="Khách hàng" v-if="collapsed">-->

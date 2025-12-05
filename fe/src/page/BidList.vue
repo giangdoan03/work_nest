@@ -164,15 +164,6 @@
                     <!-- Hành động -->
                     <template v-else-if="slot.column?.dataIndex === 'action'">
 
-                        <!-- Xem chi tiết -->
-                        <a-tooltip title="Xem chi tiết">
-                            <EyeOutlined
-                                class="icon-action"
-                                style="color:#52c41a;"
-                                @click="setActiveRow(slot.record.id); goToDetail(slot.record.id)"
-                            />
-                        </a-tooltip>
-
                         <!-- Cấp quyền truy cập -->
                         <a-tooltip title="Cấp quyền truy cập gói thầu">
                             <UserAddOutlined
@@ -194,7 +185,7 @@
                         <!-- Xoá -->
                         <a-popconfirm
                             title="Bạn chắc chắn muốn xoá gói thầu này?"
-                            ok-text
+                            ok-text="ok"
 
                             cancel-text="Huỷ"
                             @confirm="deleteConfirm(slot.record.id)"
@@ -287,9 +278,9 @@
                             <a-select
                                 v-model:value="formData.priority"
                                 :options="[
-                  { value: 1, label: 'Quan trọng' },
-                  { value: 0, label: 'Bình thường' }
-                ]"
+                                  { value: 1, label: 'Quan trọng' },
+                                  { value: 0, label: 'Bình thường' }
+                                ]"
                             />
                         </a-form-item>
                     </a-col>

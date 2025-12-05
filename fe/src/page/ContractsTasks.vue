@@ -124,8 +124,12 @@
 
                     <!-- Hành động -->
                     <template v-else-if="column.dataIndex === 'action'">
-                        <a-tooltip title="Xem chi tiết">
-                            <EyeOutlined class="icon-action" style="color:#52c41a" @click="goToContractDetail(record.id)"/>
+                        <a-tooltip title="Cấp quyền truy cập hợp đồng">
+                            <UserAddOutlined
+                                class="icon-action"
+                                style="color:#722ed1;"
+                                @click="setActiveRow(record.id); openMemberModal(record)"
+                            />
                         </a-tooltip>
                         <a-tooltip title="Chỉnh sửa">
                             <EditOutlined class="icon-action" style="color:#1890ff" @click="showPopupDetail(record)"/>
@@ -145,6 +149,14 @@
                 </template>
             </a-table>
         </a-card>
+
+        <EntityMemberManager
+            v-model:open="showMemberModal"
+            entityType="contract"
+            :entityId="Number(selectedEntityId)"
+            :entityData="selectedEntityData"
+            @saved="getContracts"
+        />
 
         <!-- Drawer lọc nhanh theo card -->
         <a-drawer
@@ -319,7 +331,8 @@ import {
     StopOutlined,
     EyeOutlined,
     EditOutlined,
-    DeleteOutlined
+    DeleteOutlined,
+    UserAddOutlined
 } from '@ant-design/icons-vue'
 import {useRouter} from 'vue-router'
 import {formatDate} from '@/utils/formUtils'
@@ -340,6 +353,7 @@ const store = useUserStore()
 import {useEntityAccess} from "@/utils/openEntityDetail.js";
 const { openEntity } = useEntityAccess();
 
+import EntityMemberManager from "@/components/common/EntityMemberManager.vue";
 // ✅ Tạo factory cho dữ liệu mặc định
 const defaultContract = () => ({
     name: '',
@@ -357,17 +371,17 @@ const defaultContract = () => ({
     collaborators: [],
 })
 
-
 const formData = ref(defaultContract())
-
-
 const isAwarded = computed(() => !!formData.value?.is_awarded)
-
-
 // Options cho select
 const awardedBiddings = ref([])       // gói thầu đã trúng
 const userOptions = ref([])       // người phụ trách
 const customers = ref([])       // danh sách KH
+const showMemberModal = ref(false);
+const selectedEntityId = ref(null);
+const selectedEntityData = ref(null);
+const activeRowId = ref(null);
+
 
 const customerOptions = computed(() =>
     customers.value.map(c => ({label: c.name, value: String(c.id)}))
@@ -657,6 +671,16 @@ const progressText = (r) => {
     return `Hoàn thành toàn bộ ${total} bước`
 }
 
+const setActiveRow = (id) => {
+    activeRowId.value = id;
+};
+
+const openMemberModal = (record) => {
+    selectedEntityData.value = record;   // full object của contract
+    selectedEntityId.value = record.id;
+    showMemberModal.value = true;
+};
+
 const getFirstLetter = (name) => (!name || name === 'N/A') ? '?' : name.charAt(0).toUpperCase()
 const getAvatarColor = (name) => {
     if (!name || name === 'N/A') return '#d9d9d9'
@@ -872,6 +896,17 @@ const submitForm = async () => {
         message.error('Không thể lưu hợp đồng')
     }
 }
+
+const deleteConfirm = async (id) => {
+    try {
+        await deleteContractAPI(id);
+        message.success("Xóa hợp đồng thành công");
+        await getContracts(); // reload danh sách
+    } catch (e) {
+        console.error(e);
+        message.error("Xóa hợp đồng thất bại");
+    }
+};
 
 
 const handleBulkDelete = async () => {

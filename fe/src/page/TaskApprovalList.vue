@@ -512,7 +512,7 @@ async function handleSignedBlob(blobOrUrl) {
         const res = await uploadSignedPdf(form)
         const data = res.data || {}
         const signedUrl = data.signed_url
-
+        //****//
         if (!signedUrl) {
             return message.error('Server không trả về URL file đã ký.')
         }

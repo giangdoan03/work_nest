@@ -9,6 +9,27 @@ use CodeIgniter\Router\RouteCollection;
 
 $routes->group('api', function ($routes) {
 
+    $routes->group("documents", function($routes){
+
+        // LIST & CRUD
+        $routes->get("/", "DocLibraryController::index");
+        $routes->get("by-department", "DocLibraryController::listByDepartment");   // ⭐ NEW
+        $routes->get("my", "DocLibraryController::listMyDocuments");             // ⭐ optional
+        $routes->get("shared-with-me", "DocLibraryController::listShared");      // ⭐ optional
+
+        $routes->get("(:num)", "DocLibraryController::show/$1");
+        $routes->post("/", "DocLibraryController::create");
+        $routes->put("(:num)", "DocLibraryController::update/$1");
+        $routes->delete("(:num)", "DocLibraryController::delete/$1");
+
+
+        // ACCESS CONTROL
+        $routes->post("user-access/add", "DocLibraryController::addUserAccess");
+        $routes->post("user-access/remove", "DocLibraryController::removeUserAccess");
+        $routes->get("can-access", "DocLibraryController::checkAccess");
+    });
+
+
     // ⭐ Google OAuth
     $routes->get('google/url', 'GoogleAuth::getUrl');
     $routes->get('google-auth', 'GoogleAuth::redirect');
@@ -172,17 +193,17 @@ $routes->group('api', function ($routes) {
     $routes->resource('bidding-steps', ['controller' => 'BiddingStepController']);
     $routes->get('biddings/(:num)/steps', 'BiddingStepController::byBidding/$1');
 
-    $routes->get('documents', 'DocumentController::index');
-    $routes->post('documents/upload', 'DocumentController::upload');
-    $routes->post('documents/share', 'DocumentController::share');
-    $routes->get('documents/shared/me', 'DocumentController::sharedWithMe');
-    $routes->put('documents/(:num)', 'DocumentController::update/$1');
-    $routes->delete('documents/(:num)', 'DocumentController::delete/$1');
-    $routes->get('documents/by-department', 'DocumentController::byDepartment');
-    $routes->get('document-permissions', 'DocumentController::getPermissions');
-    $routes->post('document-permissions', 'DocumentController::createPermission');
-    $routes->put('document-permissions/(:num)', 'DocumentController::updatePermission/$1');
-    $routes->delete('document-permissions/(:num)', 'DocumentController::deletePermission/$1');
+//    $routes->get('documents', 'DocumentController::index');
+//    $routes->post('documents/upload', 'DocumentController::upload');
+//    $routes->post('documents/share', 'DocumentController::share');
+//    $routes->get('documents/shared/me', 'DocumentController::sharedWithMe');
+//    $routes->put('documents/(:num)', 'DocumentController::update/$1');
+//    $routes->delete('documents/(:num)', 'DocumentController::delete/$1');
+//    $routes->get('documents/by-department', 'DocumentController::byDepartment');
+//    $routes->get('document-permissions', 'DocumentController::getPermissions');
+//    $routes->post('document-permissions', 'DocumentController::createPermission');
+//    $routes->put('document-permissions/(:num)', 'DocumentController::updatePermission/$1');
+//    $routes->delete('document-permissions/(:num)', 'DocumentController::deletePermission/$1');
 
     // ✅ Route cấu hình hệ thống tài liệu
     $routes->get('document-settings', 'DocumentController::getSettings');

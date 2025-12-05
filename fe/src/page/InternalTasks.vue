@@ -352,6 +352,10 @@ const listContract = ref([])
 const locale = ref(viVN)
 const dateRange = ref([])
 
+import { useEntityAccess } from "@/utils/openEntityDetail";
+const { openEntity } = useEntityAccess();
+
+
 const dataFilter = ref({
     linked_type: null, // null = Tất cả (bidding + contract)
     id_department: null,
@@ -561,8 +565,16 @@ const deleteConfirm = async (id) => {
 }
 
 const showPopupDetail = (record) => {
-    router.push({ name: 'workflow-task-info', params: { id: record.id } })
-}
+    const entityType = record.linked_type;   // bidding | contract | null
+    const entityId   = record.linked_id;     // id thực của entity
+
+    if (!entityType || !entityId) {
+        message.error("Nhiệm vụ này không thuộc gói thầu/hợp đồng.");
+        return router.push({ name: 'workflow-task-info', params: { id: record.id } });
+    }
+
+    openEntity(entityType, entityId, "workflow-task-info");
+};
 
 // ===== API helpers =====
 const onRangeChange = (dates, dateStrings) => {

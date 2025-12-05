@@ -1,9 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 05, 2025 at 09:24 AM
+-- Generation Time: Dec 05, 2025 at 05:20 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -1671,12 +1671,70 @@ INSERT INTO `document_sign_status` (`id`, `converted_id`, `approver_id`, `approv
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `doc_department_access`
+--
+
+CREATE TABLE `doc_department_access` (
+  `id` int NOT NULL,
+  `document_id` int NOT NULL,
+  `department_id` int NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `doc_documents`
+--
+
+CREATE TABLE `doc_documents` (
+  `id` int NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `file_url` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `department_id` int DEFAULT NULL,
+  `created_by` int NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `doc_documents`
+--
+
+INSERT INTO `doc_documents` (`id`, `title`, `description`, `file_url`, `department_id`, `created_by`, `created_at`) VALUES
+(1, 'Tiêu đề 2025', NULL, 'https://vnexpress.net/', 3, 29, '2025-12-05 23:20:53');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `doc_user_access`
+--
+
+CREATE TABLE `doc_user_access` (
+  `id` int NOT NULL,
+  `document_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `doc_user_access`
+--
+
+INSERT INTO `doc_user_access` (`id`, `document_id`, `user_id`, `created_at`) VALUES
+(1, 1, 4, '2025-12-05 23:57:42'),
+(2, 1, 3, '2025-12-05 23:57:42'),
+(3, 1, 1, '2025-12-05 23:57:42');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `entity_members`
 --
 
 CREATE TABLE `entity_members` (
   `id` int NOT NULL,
-  `entity_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `entity_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `entity_id` int NOT NULL,
   `user_id` int NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP
@@ -1705,8 +1763,6 @@ INSERT INTO `entity_members` (`id`, `entity_type`, `entity_id`, `user_id`, `crea
 (17, 'bidding', 41, 4, '2025-12-05 14:17:32'),
 (18, 'bidding', 41, 6, '2025-12-05 14:17:32'),
 (19, 'contract', 69, 5, '2025-12-05 14:18:43'),
-(20, 'contract', 69, 4, '2025-12-05 14:18:43'),
-(21, 'contract', 69, 6, '2025-12-05 14:18:43'),
 (22, 'contract', 69, 10, '2025-12-05 14:19:51'),
 (23, 'contract', 69, 9, '2025-12-05 14:19:51'),
 (24, 'contract', 69, 11, '2025-12-05 14:19:51'),
@@ -3521,7 +3577,20 @@ INSERT INTO `task_snapshots` (`id`, `task_id`, `snapshot_at`, `title`, `descript
 (254, 71, '2025-12-05 15:17:06', 'chấm thầu 4', '4324242424', '2025-08-01', '2025-09-30', 'todo', 'normal', 'pending', 0, 8, NULL, NULL, 5, 1, '[]', NULL, '[]', '2025-12-05 15:17:06', '2025-12-05 15:17:06'),
 (255, 65, '2025-12-05 15:17:11', 'hồ sơ dự thầu 2', '433535345', '2025-08-01', '2025-09-30', 'doing', 'normal', 'pending', 0, 8, NULL, NULL, 7, 1, '[]', NULL, '[]', '2025-12-05 15:17:11', '2025-12-05 15:17:11'),
 (256, 67, '2025-12-05 15:17:25', 'nhiệm vụ triển khai 1', '3423432434', '2025-08-01', '2025-09-30', 'todo', 'normal', 'pending', 0, 8, NULL, NULL, 5, 1, '[]', NULL, '[]', '2025-12-05 15:17:25', '2025-12-05 15:17:25'),
-(257, 65, '2025-12-05 15:17:33', 'hồ sơ dự thầu 2', '433535345', '2025-08-01', '2025-09-30', 'doing', 'normal', 'pending', 0, 8, NULL, NULL, 7, 1, '[]', NULL, '[]', '2025-12-05 15:17:33', '2025-12-05 15:17:33');
+(257, 65, '2025-12-05 15:17:33', 'hồ sơ dự thầu 2', '433535345', '2025-08-01', '2025-09-30', 'doing', 'normal', 'pending', 0, 8, NULL, NULL, 7, 1, '[]', NULL, '[]', '2025-12-05 15:17:33', '2025-12-05 15:17:33'),
+(258, 316, '2025-12-05 21:02:53', 'hợp đồng cháu', 'ok hợp đồng', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 6, NULL, 4, 3, '[]', NULL, '[]', '2025-12-05 21:02:53', '2025-12-05 21:02:53'),
+(259, 319, '2025-12-05 21:07:39', 'nhiệm vụ ko qt mới', 'ok', '2025-12-05', '2026-01-31', 'doing', 'low', 'pending', 0, 3, 4, NULL, 1, 3, '[{\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 29, \"acted_at\": null, \"added_at\": \"2025-12-05 14:29:41\"}]', NULL, '[]', '2025-12-05 21:07:39', '2025-12-05 21:07:39'),
+(260, 320, '2025-12-05 21:07:44', 'nhiệm vụ con ko qt mới', 'ok', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 8, 9, NULL, 7, 3, '[]', NULL, '[]', '2025-12-05 21:07:44', '2025-12-05 21:07:44'),
+(261, 318, '2025-12-05 21:08:09', 'hợp đồng chắt', 'ok hợp đồng cháu', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 10, 11, NULL, 9, 3, '[]', NULL, '[]', '2025-12-05 21:08:09', '2025-12-05 21:08:09'),
+(262, 319, '2025-12-05 21:08:16', 'nhiệm vụ ko qt mới', 'ok', '2025-12-05', '2026-01-31', 'doing', 'low', 'pending', 0, 3, 4, NULL, 1, 3, '[{\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 29, \"acted_at\": null, \"added_at\": \"2025-12-05 14:29:41\"}]', NULL, '[]', '2025-12-05 21:08:16', '2025-12-05 21:08:16'),
+(263, 313, '2025-12-05 21:08:24', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-05 21:08:24', '2025-12-05 21:08:24'),
+(264, 318, '2025-12-05 21:16:50', 'hợp đồng chắt', 'ok hợp đồng cháu', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 10, 11, NULL, 9, 3, '[]', NULL, '[]', '2025-12-05 21:16:50', '2025-12-05 21:16:50'),
+(265, 312, '2025-12-05 21:16:57', 'nhiệm vụ mới 03-12-2025 xxxx', 'ok', '2025-12-03', '2026-01-31', '', 'normal', 'pending', 0, 3, 7, NULL, 3, 3, '[{\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 29, \"acted_at\": \"2025-12-04 06:56:44\", \"added_at\": \"2025-12-04 13:56:37\"}]', 3, '[{\"id\": \"211\", \"title\": \"a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1oFuV_S2omEHbUXL7nJf-HMVQgtwdnWmQSh7nIfP7Tb0/edit\", \"file_size\": \"318161\", \"google_file_id\": \"1oFuV_S2omEHbUXL7nJf-HMVQgtwdnWmQSh7nIfP7Tb0\"}]', '2025-12-05 21:16:57', '2025-12-05 21:16:57'),
+(266, 318, '2025-12-05 21:17:23', 'hợp đồng chắt', 'ok hợp đồng cháu', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 10, 11, NULL, 9, 3, '[]', NULL, '[]', '2025-12-05 21:17:23', '2025-12-05 21:17:23'),
+(267, 318, '2025-12-05 21:18:05', 'hợp đồng chắt', 'ok hợp đồng cháu', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 10, 11, NULL, 9, 3, '[]', NULL, '[]', '2025-12-05 21:18:05', '2025-12-05 21:18:05'),
+(268, 318, '2025-12-05 21:19:12', 'hợp đồng chắt', 'ok hợp đồng cháu', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 10, 11, NULL, 9, 3, '[]', NULL, '[]', '2025-12-05 21:19:12', '2025-12-05 21:19:12'),
+(269, 41, '2025-12-05 21:22:26', 'nhiệm vụ hợp đồng 2', 'nghiệm thu', '2025-06-30', '2025-07-31', 'doing', 'normal', 'pending', 0, 23, NULL, NULL, 1, 1, '[]', NULL, '[]', '2025-12-05 21:22:26', '2025-12-05 21:22:26'),
+(270, 41, '2025-12-05 21:22:40', 'nhiệm vụ hợp đồng 2', 'nghiệm thu', '2025-06-30', '2025-07-31', 'doing', 'normal', 'pending', 0, 23, NULL, NULL, 1, 1, '[]', NULL, '[]', '2025-12-05 21:22:40', '2025-12-05 21:22:40');
 
 -- --------------------------------------------------------
 
@@ -3742,6 +3811,24 @@ ALTER TABLE `document_settings`
 -- Indexes for table `document_sign_status`
 --
 ALTER TABLE `document_sign_status`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `doc_department_access`
+--
+ALTER TABLE `doc_department_access`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `doc_documents`
+--
+ALTER TABLE `doc_documents`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `doc_user_access`
+--
+ALTER TABLE `doc_user_access`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -4023,6 +4110,24 @@ ALTER TABLE `document_sign_status`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=137;
 
 --
+-- AUTO_INCREMENT for table `doc_department_access`
+--
+ALTER TABLE `doc_department_access`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `doc_documents`
+--
+ALTER TABLE `doc_documents`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `doc_user_access`
+--
+ALTER TABLE `doc_user_access`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
 -- AUTO_INCREMENT for table `entity_members`
 --
 ALTER TABLE `entity_members`
@@ -4128,7 +4233,7 @@ ALTER TABLE `task_sign_logs`
 -- AUTO_INCREMENT for table `task_snapshots`
 --
 ALTER TABLE `task_snapshots`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=258;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=271;
 
 --
 -- AUTO_INCREMENT for table `users`
