@@ -27,29 +27,20 @@
                 </div>
             </a-card>
 
-            <div
-                class="scroll-container"
-                style="max-height: 400px; overflow-y: auto; border: 1px solid #f0f0f0; border-radius: 6px;"
-            >
-
-            <a-table
-                    :columns="columns"
-                    :data-source="users"
-                    row-key="id"
-                    :pagination="false"
-                >
-                    <template #bodyCell="{ column, record }">
-
-                        <!-- Checkbox -->
-                        <template v-if="column.dataIndex === 'select'">
-                            <a-checkbox
-                                :checked="record.hasAccess"
-                                @change="onToggle(record)"
-                            />
+            <div class="scroll-container" style="max-height: 400px; overflow-y: auto; border: 1px solid #f0f0f0; border-radius: 6px;">
+                <a-spin :spinning="loadingUser">
+                    <a-table :columns="columns" :data-source="users" row-key="id" :pagination="false">
+                        <template #bodyCell="{ column, record }">
+                            <!-- Checkbox -->
+                            <template v-if="column.dataIndex === 'select'">
+                                <a-checkbox
+                                    :checked="record.hasAccess"
+                                    @change="onToggle(record)"
+                                />
+                            </template>
                         </template>
-
-                    </template>
-                </a-table>
+                    </a-table>
+                </a-spin>
             </div>
         </div>
     </a-modal>
@@ -73,6 +64,7 @@ const emit = defineEmits(["update:open", "saved"]);
 
 const users = ref([]);
 const saving = ref(false);
+const loadingUser = ref(false);
 
 const modalTitle = computed(() => {
     switch (props.entityType) {
@@ -94,24 +86,30 @@ const columns = [
 const loadFullUsers = async () => {
     if (!props.entityType || !props.entityId) return;
 
-    const resUsers = await getUsers();
-    const allUsers = resUsers.data.map(u => ({
-        id: Number(u.id),
-        name: u.name,
-        email: u.email,
-        hasAccess: false // mặc định chưa có quyền
-    }));
+    loadingUser.value = true; // 🔥 bắt đầu loading
 
-    const resMembers = await listEntityMembers(props.entityType, props.entityId);
-    const memberIds = resMembers.data.map(m => Number(m.user_id));
+    try {
+        const resUsers = await getUsers();
+        const allUsers = resUsers.data.map(u => ({
+            id: Number(u.id),
+            name: u.name,
+            email: u.email,
+            hasAccess: false
+        }));
 
-    // đánh dấu user đã có quyền
-    allUsers.forEach(u => {
-        if (memberIds.includes(u.id)) u.hasAccess = true;
-    });
+        const resMembers = await listEntityMembers(props.entityType, props.entityId);
+        const memberIds = resMembers.data.map(m => Number(m.user_id));
 
-    users.value = allUsers;
+        allUsers.forEach(u => {
+            if (memberIds.includes(u.id)) u.hasAccess = true;
+        });
+
+        users.value = allUsers;
+    } finally {
+        loadingUser.value = false; // 🔥 tắt loading
+    }
 };
+
 
 
 // ⭐ Toggle quyền ngay lập tức
