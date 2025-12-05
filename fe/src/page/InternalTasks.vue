@@ -562,8 +562,6 @@ const deleteConfirm = async (id) => {
 
 const showPopupDetail = (record) => {
     router.push({ name: 'workflow-task-info', params: { id: record.id } })
-    // hoặc dùng path:
-    // router.push(`/workflow/tasks/${record.id}/info`)
 }
 
 // ===== API helpers =====

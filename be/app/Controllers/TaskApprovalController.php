@@ -751,7 +751,6 @@ class TaskApprovalController extends ResourceController
                 $uid = (int)$nm['user_id'];
 
                 if (!isset($map[$uid])) {
-                    // Người mới
                     $nm['added_at'] = date('Y-m-d H:i:s');
                     $map[$uid] = $nm;
                 } else {

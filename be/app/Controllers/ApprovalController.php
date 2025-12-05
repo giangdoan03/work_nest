@@ -460,7 +460,7 @@ class ApprovalController extends ResourceController
         $hasNext = $asModel->where('approval_instance_id', $id)->where('level >', $currLevel)->countAllResults() > 0;
         if ($hasNext) {
             $aiModel->update($id, [
-                'current_level' => (int) $ai['current_level'] + 1, // 0-based
+                'current_level' => (int) $ai['current_level'] + 1,
                 'status'        => 'pending',
             ]);
         } else {

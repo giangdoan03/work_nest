@@ -193,9 +193,7 @@
                     <template v-else-if="column.dataIndex === 'status'">
                         <a-tag :color="getStatusColor(record.status)">{{ getStatusLabel(record.status) }}</a-tag>
                     </template>
-                    <template v-else-if="column.dataIndex === 'start_date'">{{
-                            formatDate(record.start_date)
-                        }}
+                    <template v-else-if="column.dataIndex === 'start_date'">{{formatDate(record.start_date) }}
                     </template>
                     <template v-else-if="column.dataIndex === 'end_date'">{{ formatDate(record.end_date) }}</template>
                     <template v-else-if="column.dataIndex === 'due'">
@@ -335,7 +333,12 @@ import {
 } from '@/api/contract'
 import {getUsers} from '@/api/user'
 import {getCustomers} from '@/api/customer'
+import {addEntityMember} from "@/api/entityMembers.js";
+import { useUserStore } from '@/stores/user'
+const store = useUserStore()
 
+import {useEntityAccess} from "@/utils/openEntityDetail.js";
+const { openEntity } = useEntityAccess();
 
 // ✅ Tạo factory cho dữ liệu mặc định
 const defaultContract = () => ({
@@ -784,6 +787,20 @@ watch(openDrawer, (open) => {
     }
 });
 
+const addAccess = async (entityId, userId) => {
+    if (!entityId || !userId) return;
+    try {
+        await addEntityMember({
+            entity_type: "contract",
+            entity_id: Number(entityId),
+            user_id: Number(userId)
+        });
+        console.log(`✔ contract#${entityId} → cấp quyền cho user ${userId}`);
+    } catch (e) {
+        console.warn("⚠ Không thể thêm quyền truy cập:", e);
+    }
+};
+
 const submitForm = async () => {
     try {
         await formRef.value?.validate?.()
@@ -800,22 +817,56 @@ const submitForm = async () => {
             customer_id: formData.value.customer_id || null,
             priority: Number(formData.value.priority || 0),
             manager_id: formData.value.manager_id || null,
-            collaborators: Array.isArray(formData.value.collaborators) ? formData.value.collaborators : [],
+            collaborators: Array.isArray(formData.value.collaborators)
+                ? formData.value.collaborators
+                : [],
         }
 
+        let newId = null;
+
         if (selectedContract.value) {
+            // UPDATE
             await updateContractAPI(selectedContract.value.id, payload)
+            newId = selectedContract.value.id
             message.success('Cập nhật hợp đồng thành công')
+
         } else {
+            // CREATE
             const res = await createContractAPI(payload)
-            const newId = res?.data?.id
+            newId = res?.data?.id
+
             if (newId) await cloneStepsFromTemplateAPI(newId)
+
             message.success('Thêm hợp đồng thành công')
         }
+
+        /* -------------------------------------------------
+         * ⭐⭐⭐ AUTO-GRANT ACCESS vào bảng entity_members
+         * ------------------------------------------------- */
+        if (newId) {
+            // Người tạo
+            const creatorId = store.currentUser?.id
+            if (creatorId) await addAccess(newId, creatorId)
+
+            // Người phụ trách hợp đồng
+            if (payload.assigned_to) await addAccess(newId, payload.assigned_to)
+
+            // Quản lý hợp đồng (manager)
+            if (payload.manager_id) await addAccess(newId, payload.manager_id)
+
+            // Người phối hợp (nhiều)
+            if (Array.isArray(payload.collaborators)) {
+                for (const uid of payload.collaborators) {
+                    await addAccess(newId, uid)
+                }
+            }
+        }
+        /* ------------------------------------------------- */
+
         openDrawer.value = false
         await getContracts()
+
     } catch (e) {
-        // nếu là lỗi validate thì bỏ qua popup lỗi
         if (e?.errorFields) return
         console.error(e)
         message.error('Không thể lưu hợp đồng')
@@ -835,7 +886,9 @@ const handleBulkDelete = async () => {
 }
 
 /* ---------- Nav ---------- */
-const goToContractDetail = (id) => router.push({name: 'contract-detail', params: {id}})
+const goToContractDetail = (id) => {
+    openEntity("contract", id, "contract-detail");
+};
 
 /* ---------- Mount ---------- */
 onMounted(() => {

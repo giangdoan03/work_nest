@@ -515,6 +515,7 @@ import 'dayjs/locale/vi'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import BaseAvatar from '@/components/common/BaseAvatar.vue'
 import Draggable from 'vuedraggable'
+import {addEntityMember} from "@/api/entityMembers.js";
 
 dayjs.extend(relativeTime)
 dayjs.locale('vi')
@@ -1097,16 +1098,28 @@ function resetMentionForm() {
     closeMentionPopover()
 }
 
+const addAccess = async (entityType, entityId, userId) => {
+    if (!entityType || !entityId || !userId) return;
+    try {
+        await addEntityMember({
+            entity_type: entityType,
+            entity_id: Number(entityId),
+            user_id: Number(userId)
+        });
+        console.log(`✔ Added access: ${entityType}#${entityId} → user ${userId}`);
+    } catch (e) {
+        console.warn("⚠ Không thể thêm quyền truy cập:", e);
+    }
+};
+
 const addMention = async () => {
     const uid = mentionForm.value.userId
     if (!uid) return
     const user = listUser.value.find((u) => String(u.id) === String(uid))
     const displayName = user?.name || `#${uid}`
 
-    // bảo vệ: nếu đã có thì thông báo
     if (mentionsSelected.value.some((m) => String(m.user_id) === String(uid))) {
         message.info('Người này đã có trong danh sách')
-        // vẫn insert mention text vào composer nếu cần
         insertMention(displayName)
         addMentionOpen.value = false
         await nextTick()
@@ -1115,7 +1128,6 @@ const addMention = async () => {
         return
     }
 
-    // thêm local (optimistic)
     mentionsSelected.value.push({
         user_id: String(uid),
         name: displayName,
@@ -1124,29 +1136,49 @@ const addMention = async () => {
         added_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
     })
 
-    // cập nhật composer text + đóng pop
     insertMention(displayName)
     addMentionOpen.value = false
 
-    // persist lên server bằng mode 'merge' (thêm vào, không ghi đè toàn bộ)
     try {
-        // gọn: persistRoster(mode) đã có trong file — dùng mode 'merge'
         await persistRoster('merge')
-        // đồng bộ state từ server để chắc chắn cấu trúc/field đúng
         await syncRosterFromServer()
         message.success('Đã thêm người duyệt')
+
+        // ⭐⭐⭐ AUTO-GRANT ACCESS
+        try {
+            let entityType = null;
+            let entityId = null;
+
+            if (route.path.includes("/biddings/")) {
+                entityType = "bidding";
+                entityId = Number(route.params.bidId || route.params.id);
+            }
+            else if (route.path.includes("/contract/")) {
+                entityType = "contract";
+                entityId = Number(route.params.contractId || route.params.id);
+            }
+            else {
+                entityType = "internal";
+                entityId = Number(taskId.value);
+            }
+
+            await addAccess(entityType, entityId, uid);
+
+        } catch (e) {
+            console.warn("Không thể auto-add quyền cho người duyệt:", e);
+        }
+
     } catch (err) {
         console.error('addMention persist failed', err)
         message.error('Không thể thêm người duyệt — thử lại')
-        // rollback đơn giản: xóa item vừa push nếu muốn
         mentionsSelected.value = mentionsSelected.value.filter(m => String(m.user_id) !== String(uid))
     }
 
-    // focus composer
     await nextTick()
     const ta = document.querySelector('.tg-input textarea.ant-input')
     if (ta && typeof ta.focus === 'function') ta.focus()
 }
+
 
 
 function closeMentionPopover() {

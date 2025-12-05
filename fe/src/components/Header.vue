@@ -25,17 +25,17 @@
                         </router-link>
 
                         <template v-else>
-              <span class="crumb__current">
-                {{ route.meta.breadcrumb }}
-                <a-button
-                    v-if="showCrumbCreateBtn"
-                    size="small"
-                    class="crumb__add"
-                    @click="onClickCreateTask"
-                >
-                  <template #icon><PlusOutlined/></template>
-                </a-button>
-              </span>
+                          <span class="crumb__current">
+                            {{ route.meta.breadcrumb }}
+                            <a-button
+                                v-if="showCrumbCreateBtn"
+                                size="small"
+                                class="crumb__add"
+                                @click="onClickCreateTask"
+                            >
+                              <template #icon><PlusOutlined/></template>
+                            </a-button>
+                          </span>
                         </template>
                     </a-breadcrumb-item>
                 </a-breadcrumb>

@@ -303,5 +303,12 @@ $routes->group('api', function ($routes) {
     $routes->post('documents/approve', 'TaskFileController::approveOnly');
 
 
+    // ⭐ ENTITY MEMBER ROUTES
+    $routes->post('entity-members/add', 'EntityMemberController::add');
+    $routes->post('entity-members/remove', 'EntityMemberController::remove');
+    $routes->get('entity-members/list/(:segment)/(:num)', 'EntityMemberController::list/$1/$2');
+    $routes->get('entity-members/can-access', 'EntityMemberController::canAccess');
+
+
 
 });

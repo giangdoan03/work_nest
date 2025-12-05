@@ -504,6 +504,7 @@ import { SendOutlined, EditOutlined, MinusOutlined, PlusOutlined } from '@ant-de
 // Components có thể đang dùng trong template
 import DrawerCreateTask from '@/components/common/DrawerCreateTask.vue'
 import DrawerCreateSubtask from '@/components/common/DrawerCreateSubtask.vue'
+import {addEntityMember, removeEntityMember} from "@/api/entityMembers.js";
 
 dayjs.locale('vi')
 
@@ -956,9 +957,39 @@ const updateStepStatus = async (newStatus, step) => {
 const openAssignForId = ref(null)
 const onChangeAssigned = async (step, val) => {
     openAssignForId.value = step.id
+    const bidId = Number(route.params.id)
+
+    // Cập nhật trong bước
     await updateStepAssignedTo(val, step)
+
+    // Nếu chọn người mới
+    if (val) {
+        try {
+            await addEntityMember({
+                entity_type: "bidding",
+                entity_id: bidId,
+                user_id: Number(val)
+            })
+
+            console.log("✔ Gán người phụ trách + thêm quyền truy cập:", val)
+        } catch (e) {
+            console.error("❌ Lỗi khi thêm quyền:", e)
+        }
+    } else {
+        // Nếu clear → optional: xoá quyền
+        try {
+            await removeEntityMember({
+                entity_type: "bidding",
+                entity_id: bidId,
+                user_id: Number(step.assigned_to)
+            })
+            console.log("✔ Gỡ người phụ trách + xoá quyền")
+        } catch (e) {}
+    }
+
     openAssignForId.value = null
 }
+
 const updateStepAssignedTo = async (userId, step) => {
     try {
         if (!userId) return message.warning('Vui lòng chọn người phụ trách hợp lệ')

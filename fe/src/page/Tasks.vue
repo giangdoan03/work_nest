@@ -315,6 +315,10 @@ const userStore = useUserStore()
 const commonStore = useCommonStore()
 const router = useRouter()
 
+import { useEntityAccess } from "@/utils/openEntityDetail.js";
+
+const { openEntity } = useEntityAccess();
+
 const showFilterDrawer = ref(false)
 const loading = ref(false)
 const openDrawer = ref(false)
@@ -536,11 +540,8 @@ const deleteConfirm = async (id) => {
 }
 
 const showPopupDetail = async (record) => {
-    await router.push({
-        name: 'tasks-detail', // 👈 Đặt name route cho trang chi tiết "việc không quy trình" của bạn
-        params: { id: record.id }
-    })
-}
+    await openEntity("internal", record.id, "tasks-detail");
+};
 
 
 // Payload ép chỉ nội bộ, ép kiểu số, fallback theo role

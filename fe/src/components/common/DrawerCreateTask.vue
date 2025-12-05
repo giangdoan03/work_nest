@@ -219,6 +219,7 @@ import { useRoute } from 'vue-router'
 import dayjs from 'dayjs'
 dayjs.locale('vi')
 import viVN from 'ant-design-vue/es/locale/vi_VN'
+import {addEntityMember} from "@/api/entityMembers.js";
 
 const stepStore = useStepStore()
 const commonStore = useCommonStore()
@@ -575,9 +576,25 @@ const convertDateFormat = dateStr => {
     return `${year}-${month}-${day}`
 }
 
+
+const addAccess = async (entityType, entityId, userId) => {
+    if (!entityId || !userId) return
+    try {
+        await addEntityMember({
+            entity_type: entityType,
+            entity_id: Number(entityId),
+            user_id: Number(userId)
+        })
+        console.log(`✔ Added access: ${entityType}#${entityId} → user ${userId}`)
+    } catch (e) {
+        console.warn("⚠ Không thể thêm quyền truy cập:", e)
+    }
+}
+
 /* ---------------- Create ---------------- */
 const createDrawerInternal = async () => {
     if (loadingCreate.value) return
+
     const payload = { ...formData.value }
 
     payload.parent_id = props.createAsRoot ? null : effectiveParentId.value
@@ -607,15 +624,54 @@ const createDrawerInternal = async () => {
                 ? Number(payload[k])
                 : null
         })
+
     payload.created_by = store.currentUser?.id || null
 
     loadingCreate.value = true
+
     try {
+        // ===============================
+        // 1. GỌI API TẠO TASK
+        // ===============================
         const res = await createTask(payload)
+        const newTask = res.data
+
         message.success('Thêm mới nhiệm vụ thành công')
+
+        // ===============================
+        // 2. ⭐⭐⭐ AUTO-GRANT ACCESS
+        // ===============================
+        const entityType = payload.linked_type     // bidding | contract | internal
+        const entityId   = payload.linked_id       // 45, 66, hoặc null nếu internal
+
+        // Người tạo
+        await addAccess(entityType, entityId, payload.created_by)
+
+        // Người thực hiện
+        await addAccess(entityType, entityId, payload.assigned_to)
+
+        // Người đề nghị
+        await addAccess(entityType, entityId, payload.proposed_by)
+
+        // Người phối hợp (optional)
+        if (payload.collaborated_by)
+            await addAccess(entityType, entityId, payload.collaborated_by)
+
+        // Nếu INTERNAL → dùng ID của task làm entity
+        if (entityType === 'internal') {
+            await addAccess("internal", newTask.id, payload.created_by)
+            await addAccess("internal", newTask.id, payload.assigned_to)
+            if (payload.collaborated_by)
+                await addAccess("internal", newTask.id, payload.collaborated_by)
+        }
+
+        // ===============================
+        // 3. GIỮ NGUYÊN LOGIC CŨ
+        // ===============================
         await refreshStepTasks({ preferNewTaskStep: true })
-        emit('submitForm', res.data)
+        emit('submitForm', newTask)
         onCloseDrawer()
+
     } catch (err) {
         console.error('[createDrawerInternal] error:', err)
         message.error('Thêm mới nhiệm vụ không thành công')
@@ -623,6 +679,7 @@ const createDrawerInternal = async () => {
         loadingCreate.value = false
     }
 }
+
 
 // refresh danh sách task của step tương ứng
 async function refreshStepTasks ({ preferNewTaskStep = true } = {}) {

@@ -58,6 +58,7 @@
                 :pagination="pagination"
                 :scroll="{ x: 'max-content' }"
                 :row-selection="rowSelection"
+                :rowClassName="rowClass"
                 @change="handleTableChange"
             >
                 <!-- SLOT an toàn: dùng biến 'slot' -->
@@ -90,23 +91,6 @@
                             />
                         </a-tooltip>
                     </template>
-
-                    <!-- (Tuỳ chọn) Tiến độ theo mốc thời gian + rule 90%/100%
-                    Bật block dưới nếu muốn hiển thị theo thời gian:
-                    <template v-else-if="slot.column?.dataIndex === 'progress'">
-                      <a-tooltip :title="timeProgressText(slot.record)">
-                        <a-progress
-                          :percent="visualProgressPercent(slot.record)"
-                          :stroke-color="{ '0%': '#108ee9', '100%': '#87d068' }"
-                          :status="visualProgressPercent(slot.record) >= 100 ? 'success' : 'active'"
-                          size="small"
-                          :show-info="visualProgressPercent(slot.record) >= 100"
-                          style="cursor: pointer;"
-                          @click="openProgressModal(slot.record)"
-                        />
-                      </a-tooltip>
-                    </template>
-                    -->
 
                     <!-- Người phụ trách -->
                     <template v-else-if="slot.column?.dataIndex === 'assigned_to_name'">
@@ -177,46 +161,41 @@
                     </template>
 
                     <!-- Hành động -->
+                    <!-- Hành động -->
                     <template v-else-if="slot.column?.dataIndex === 'action'">
+
+                        <!-- Xem chi tiết -->
                         <a-tooltip title="Xem chi tiết">
-                            <EyeOutlined class="icon-action" style="color:#52c41a;" @click="goToDetail(slot.record.id)" />
+                            <EyeOutlined
+                                class="icon-action"
+                                style="color:#52c41a;"
+                                @click="setActiveRow(slot.record.id); goToDetail(slot.record.id)"
+                            />
                         </a-tooltip>
 
-                        <!-- Gửi phê duyệt lần đầu -->
-                        <a-tooltip
-                            v-if="Number(slot.record.status) === STATUS.PREPARING && (slot.record.approval_status ?? 'pending') === APPROVAL_STATUS.PENDING"
-                            title="Gửi phê duyệt"
-                        >
-                            <SendOutlined class="icon-action" style="color:#faad14;" @click="openSendApproval(slot.record)" />
+                        <!-- Cấp quyền truy cập -->
+                        <a-tooltip title="Cấp quyền truy cập gói thầu">
+                            <UserAddOutlined
+                                class="icon-action"
+                                style="color:#722ed1;"
+                                @click="setActiveRow(slot.record.id); openMemberModal(slot.record)"
+                            />
                         </a-tooltip>
 
-                        <!-- Gửi duyệt lại khi đã bị từ chối -->
-                        <a-tooltip
-                            v-else-if="(slot.record.approval_status ?? '') === APPROVAL_STATUS.REJECTED"
-                            title="Gửi lại phê duyệt"
-                        >
-                            <SendOutlined class="icon-action" style="color:#faad14;" @click="openSendApproval(slot.record)" />
-                        </a-tooltip>
-
-                        <template
-                            v-if="Number(slot.record.status) === STATUS.SENT_FOR_APPROVAL && (slot.record.approval_status ?? 'pending') === APPROVAL_STATUS.PENDING">
-                            <!-- Sửa người duyệt -->
-                            <a-tooltip title="Sửa người duyệt">
-                                <UserSwitchOutlined
-                                    class="icon-action"
-                                    style="color:#13c2c2"
-                                    @click="editApproval(slot.record)"
-                                />
-                            </a-tooltip>
-                        </template>
-
+                        <!-- Chỉnh sửa -->
                         <a-tooltip title="Chỉnh sửa">
-                            <EditOutlined class="icon-action" style="color:#1890ff;" @click="showPopupDetail(slot.record)" />
+                            <EditOutlined
+                                class="icon-action"
+                                style="color:#1890ff;"
+                                @click="setActiveRow(slot.record.id); showPopupDetail(slot.record)"
+                            />
                         </a-tooltip>
 
+                        <!-- Xoá -->
                         <a-popconfirm
                             title="Bạn chắc chắn muốn xoá gói thầu này?"
-                            ok-text="Xoá"
+                            ok-text
+
                             cancel-text="Huỷ"
                             @confirm="deleteConfirm(slot.record.id)"
                             placement="topRight"
@@ -229,6 +208,16 @@
                 </template>
             </a-table>
         </a-card>
+
+
+        <EntityMemberManager
+            v-model:open="showMemberModal"
+            entityType="bidding"
+            :entityId="Number(selectedEntityId)"
+            :entityData="selectedEntityData"
+            @saved="getBiddings"
+        />
+
 
         <!-- Drawer tạo/sửa -->
         <a-drawer
@@ -447,10 +436,7 @@ import {
     FireOutlined,
     StopOutlined,
     SearchOutlined,
-    SendOutlined,
-    CheckOutlined,
-    CloseOutlined,
-    UserSwitchOutlined
+    UserAddOutlined
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import {
@@ -470,6 +456,11 @@ import { useRouter } from 'vue-router'
 import { updateTask } from '@/api/task.js'
 import { getCustomers } from '@/api/customer.js'
 import BaseAvatar from '@/components/common/BaseAvatar.vue'
+import EntityMemberManager from "@/components/common/EntityMemberManager.vue";
+import {addEntityMember} from "@/api/entityMembers.js";
+import {useEntityAccess} from "@/utils/openEntityDetail.js";
+const { openEntity } = useEntityAccess();
+
 
 const router = useRouter()
 
@@ -505,6 +496,30 @@ const searchTerm = ref('')
 // --- Drawer state ---
 const drawerBidData = ref([])
 const drawerLoading = ref(false)
+
+// ==== CẤP QUYỀN TRUY CẬP GÓI THẦU ====
+const showMemberModal = ref(false)
+const selectedBidId = ref(null)
+const selectedEntityId = ref(null)
+const selectedEntityData = ref(null)
+const activeRowId = ref(null)
+
+
+const openMemberModal = (record) => {
+    selectedEntityData.value = record   // ⭐ Lưu nguyên object của bidding/contract
+    selectedEntityId.value = record.id
+    showMemberModal.value = true
+}
+
+const setActiveRow = (id) => {
+    activeRowId.value = id;
+};
+
+const rowClass = (record) => {
+    return record.id === activeRowId.value ? 'active-row' : '';
+};
+
+
 const drawerPagination = ref({
     current: 1,
     pageSize: 10,
@@ -600,23 +615,6 @@ const totalDisplay = computed(() => {
 // Summary
 const summary = ref({ won: 0, important: 0, normal: 0, overdue: 0, lost: 0, total: 0 })
 
-const filteredBiddings = computed(() => {
-    switch (drawerBidFilterKey.value) {
-        case 'won':
-            return tableData.value.filter(b => Number(b.status) === STATUS.WON)
-        case 'important':
-            return tableData.value.filter(b => Number(b.status) === STATUS.PREPARING && Number(b.priority) === PRIORITY.IMPORTANT)
-        case 'normal':
-            return tableData.value.filter(b => Number(b.status) === STATUS.PREPARING && Number(b.priority) === PRIORITY.NORMAL)
-        case 'overdue':
-            return tableData.value.filter(b => Number(b.status) === STATUS.PREPARING && Number(b.days_overdue) > 0)
-        case 'lost':
-            return tableData.value.filter(b => Number(b.status) === STATUS.CANCELLED)
-        default:
-            return []
-    }
-})
-
 // ==== ENUMS & CONSTANTS ====
 const STATUS = Object.freeze({
     PREPARING: 1,
@@ -634,10 +632,6 @@ const STATUS_MAP = {
     [STATUS.SENT_FOR_APPROVAL]: { text: 'Gửi phê duyệt', color: 'gold' }
 }
 
-const PRIORITY_MAP = {
-    [PRIORITY.NORMAL]: { text: 'Bình thường', color: 'blue' },
-    [PRIORITY.IMPORTANT]: { text: 'Cao', color: 'red' }
-}
 
 // Chỉ 2 card có thể gọi API theo status trực tiếp
 const CARD_STATUS_MAP = { won: STATUS.WON, lost: STATUS.CANCELLED }
@@ -647,11 +641,8 @@ const EDITABLE_STATUS_KEYS = [STATUS.PREPARING, STATUS.CANCELLED, STATUS.SENT_FO
 const editableStatusOptions = computed(() =>
     EDITABLE_STATUS_KEYS.map(k => ({ value: k, label: STATUS_MAP[k].text }))
 )
-const getStatusText = s => (STATUS_MAP[s]?.text ?? 'Không rõ')
-const getStatusColor = s => (STATUS_MAP[s]?.color ?? 'default')
 
-// “tự động” chỉ coi là Trúng thầu
-const isAutoStatus = computed(() => Number(formData.value.status) === STATUS.WON)
+
 
 const statsBiddings = computed(() => [
     { key: 'won', label: 'Trúng thầu', count: summary.value.won, color: '#52c41a', bg: '#f6ffed', icon: CheckCircleOutlined },
@@ -801,19 +792,6 @@ const visualProgressPercent = (r) => {
     return byTime
 }
 
-const timeProgressText = (r) => {
-    if (!r?.start_date || !r?.end_date) {
-        return `Tiến độ: ${visualProgressPercent(r)}%`
-    }
-    const start = dayjs(r.start_date)
-    const end = dayjs(r.end_date)
-    const today = dayjs()
-    let phase = 'đang diễn ra'
-    if (today.isBefore(start)) phase = 'chưa bắt đầu'
-    else if (today.isAfter(end)) phase = 'đã kết thúc'
-    const p = visualProgressPercent(r)
-    return `Tiến độ theo thời gian: ${p}% (${phase}) ${start.format('DD/MM')} → ${end.format('DD/MM')}`
-}
 
 const getFirstLetter = (name) => {
     if (!name || name === 'N/A') return '?'
@@ -1082,42 +1060,10 @@ const confirmSendApproval = async () => {
     }
 }
 
-const approveCurrentLevel = async (row) => {
-    try {
-        const ok = await confirmAsync({
-            title: 'Phê duyệt cấp hiện tại?',
-            content: `Bạn xác nhận phê duyệt cấp ${Number(row.current_level ?? 0) + 1}/${row.approval_steps?.length || 0}?`,
-            okText: 'Phê duyệt'
-        })
-        if (!ok) return
-        await approveBiddingAPI(row.id)
-        message.success('Đã phê duyệt.')
-        await getBiddings()
-    } catch (e) {
-        message.error(e?.response?.data?.message || 'Phê duyệt thất bại.')
-    }
-}
-
-const rejectCurrentLevel = async (row) => {
-    try {
-        const ok = await confirmAsync({
-            title: 'Từ chối phê duyệt?',
-            content: `Bạn chắc chắn từ chối ở cấp ${Number(row.current_level ?? 0) + 1}/${row.approval_steps?.length || 0}?`,
-            okButtonProps: { danger: true },
-            okText: 'Từ chối'
-        })
-        if (!ok) return
-        await rejectBiddingAPI(row.id)
-        message.success('Đã từ chối.')
-        await getBiddings()
-    } catch (e) {
-        message.error(e?.response?.data?.message || 'Từ chối thất bại.')
-    }
-}
 
 const goToDetail = (id) => {
-    router.push({ name: 'bid-detail', params: { id } })
-}
+    openEntity("bidding", id, "bid-detail");
+};
 
 // 🔒 Chỉ các field BE cho phép
 const ALLOWED_FIELDS = [
@@ -1142,12 +1088,26 @@ const buildBiddingPayload = (src) => {
         assigned_to: src.assigned_to ?? null,
         manager_id: src.manager_id ?? null,
         priority: Number(src.priority) || 0,
-        collaborators // ✅ thêm vào payload
+        collaborators: JSON.stringify(collaborators)
     }
 
     return Object.fromEntries(
         Object.entries(payload).filter(([k, v]) => ALLOWED_FIELDS.includes(k) && v !== undefined)
     )
+}
+
+
+const getCurrentUserId = () => {
+    try {
+        const raw = localStorage.getItem("user")
+        if (!raw) return null
+
+        const obj = JSON.parse(raw)
+
+        return obj?.user?.id ?? null
+    } catch {
+        return null
+    }
 }
 
 const submitForm = async () => {
@@ -1157,34 +1117,39 @@ const submitForm = async () => {
 
         const formatted = buildBiddingPayload(formData.value)
 
+        // Lấy user hiện tại từ localStorage hoặc auth store
+        const currentUserId = getCurrentUserId()
+
+        if (!currentUserId) {
+            message.error("Không xác định được người dùng hiện tại")
+            return
+        }
+
         if (selectedBidding.value) {
-            const prevStatus = Number(selectedBidding.value.status)
-            const nextStatus = Number(formatted.status)
-
-            if (prevStatus !== STATUS.WON && nextStatus === STATUS.WON) {
-                const res = await canMarkBiddingAsCompleteAPI(selectedBidding.value.id)
-                if (!res?.data?.allow) {
-                    message.warning('Cần hoàn tất tất cả bước trước khi chuyển sang "Trúng thầu".')
-                    return
-                }
-            }
-
-            if (prevStatus !== STATUS.CANCELLED && nextStatus === STATUS.CANCELLED) {
-                const ok = await confirmAsync({
-                    title: 'Xác nhận hủy gói thầu',
-                    content: 'Bạn chắc muốn chuyển trạng thái sang "Hủy thầu"?',
-                    okButtonProps: { danger: true }
-                })
-                if (!ok) return
-            }
-
+            // UPDATE
             await updateBiddingAPI(selectedBidding.value.id, formatted)
             message.success('Cập nhật thành công')
         } else {
-            const res = await createBiddingAPI(formatted)
+            // CREATE
+            const res = await createBiddingAPI({
+                ...formatted,
+                created_by: currentUserId // option nếu BE cần
+            })
+
+            const biddId = res.data?.id
+
+            // ⭐ Thêm quyền truy cập vào gói thầu vừa tạo
+            await addEntityMember({
+                entity_type: "bidding",
+                entity_id: biddId,
+                user_id: currentUserId
+            })
+
+            // Clone steps nếu cần
             if (formatted.status === STATUS.PREPARING) {
-                await cloneFromTemplatesAPI(res.data.id)
+                await cloneFromTemplatesAPI(biddId)
             }
+
             message.success('Tạo gói thầu thành công')
         }
 
@@ -1197,6 +1162,7 @@ const submitForm = async () => {
         loadingCreate.value = false
     }
 }
+
 
 const confirmAsync = (opts) =>
     new Promise(resolve => {
@@ -1322,5 +1288,15 @@ const showPopupCreate = () => {
 :deep(.overdue-cell) {
     border-left: 3px solid #ff4d4f;
     padding-left: 8px;
+}
+</style>
+<style>
+.active-row {
+    background-color: #e6f7ff !important;   /* xanh nhạt */
+    transition: background-color .3s ease;
+}
+
+.active-row:hover {
+    background-color: #bae7ff !important;   /* đậm hơn khi hover */
 }
 </style>
