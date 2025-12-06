@@ -2,6 +2,16 @@
     <div>
         <a-card>
             <!-- Filters -->
+            <!-- BACK BUTTON -->
+            <div class="header-row">
+                <a-button class="back-btn" @click="router.back()">
+                    ← Quay lại
+                </a-button>
+
+                <h2 class="page-title">Quản lý tài liệu</h2>
+            </div>
+
+            <!-- Filters -->
             <a-space style="margin-bottom: 16px" direction="vertical" size="middle">
                 <a-space>
                     <a-select
@@ -21,7 +31,10 @@
                         placeholder="Tìm theo tiêu đề"
                         style="width: 240px"
                         @pressEnter="fetchDocuments"
-                    />
+                    >
+                        <template #prefix><SearchOutlined /></template>
+                    </a-input>
+
                     <a-button type="primary" @click="fetchDocuments">Tìm kiếm</a-button>
                 </a-space>
             </a-space>
@@ -36,26 +49,28 @@
                 @change="handleTableChange"
             >
                 <template #bodyCell="{ column, record }">
+                    <!-- CỘT NGƯỜI TRUY CẬP -->
+                    <template v-if="column.key === 'allowed_users'">
+                        <a-avatar-group :maxCount="5">
+                            <template v-for="uid in record.allowed_users" :key="uid">
+                                <a-tooltip :title="getUserName(uid)">
+                                    <BaseAvatar
+                                        :src="getUser(uid)?.avatar"
+                                        :name="getUser(uid)?.name"
+                                        :size="32"
+                                        shape="circle"
+                                        :preferApiOrigin="true"
+                                    />
+                                </a-tooltip>
+                            </template>
+                        </a-avatar-group>
+                    </template>
                     <template v-if="column.key === 'action'">
                         <a-space>
                             <!-- Đi tới trang chi tiết -->
                             <a-tooltip title="Xem chi tiết">
                                 <a-button type="link" @click="goDetail(record)">
                                     <EyeOutlined />
-                                </a-button>
-                            </a-tooltip>
-
-                            <!-- Mở link gốc -->
-                            <a-tooltip title="Mở link gốc">
-                                <a-button type="link" @click="openOriginal(record)" :disabled="!record.file_path">
-                                    <ExportOutlined />
-                                </a-button>
-                            </a-tooltip>
-
-                            <!-- Sao chép link -->
-                            <a-tooltip title="Sao chép link">
-                                <a-button type="link" @click="copyLink(record)" :disabled="!record.file_path">
-                                    <CopyOutlined />
                                 </a-button>
                             </a-tooltip>
 
@@ -125,12 +140,14 @@ import { ref, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { getDocuments, deleteDocument, updateDocument } from '../api/document'
+import { getUsers } from '@/api/user'
+import dayjs from "dayjs";
+import BaseAvatar from '../components/common/BaseAvatar.vue'
 import {
     EyeOutlined,
     EditOutlined,
     DeleteOutlined,
-    ExportOutlined,
-    CopyOutlined,
+    SearchOutlined
 } from '@ant-design/icons-vue'
 
 const router = useRouter()
@@ -139,11 +156,27 @@ const router = useRouter()
 const documents = ref([])
 const loading = ref(false)
 const pagination = ref({ current: 1, pageSize: 10, total: 0 })
+const users = ref([])
+
+const getUser = (id) => users.value.find(u => u.id == id) || null
+const getUserName = (id) => getUser(id)?.name ?? "Chưa có tên"
 const filters = ref({
     department_id: null,
     dateRange: [],
     title: ''
 })
+
+const currentUser = ref(null)
+
+const loadCurrentUser = () => {
+    const raw = localStorage.getItem("user");
+    if (raw) currentUser.value = JSON.parse(raw).user;
+}
+
+
+const formatDate = (dateString) => {
+    return dateString ? dayjs(dateString).format("DD/MM/YYYY HH:mm") : "";
+};
 const departments = ref([
     { label: 'Nhân sự', value: 1 },
     { label: 'Kinh doanh', value: 2 }
@@ -169,43 +202,37 @@ const visColor = v => ({
 
 // ===== Columns =====
 const columns = [
-    { title: '#', dataIndex: 'id', key: 'id', width: 70 },
-    { title: 'Tiêu đề', dataIndex: 'title', key: 'title' },
-    { title: 'Phòng ban', dataIndex: 'department_name', key: 'department_name' },
-    { title: 'Người upload', dataIndex: 'uploader_name', key: 'uploader_name' },
-    { title: 'Ngày upload', dataIndex: 'created_at', key: 'created_at' },
+    { title: "#", dataIndex: "id", key: "id", width: 70 },
+    { title: "Tiêu đề", dataIndex: "title", key: "title" },
+    { title: "Phòng ban", dataIndex: "department_name", key: "department_name" },
+
+    { title: "Người truy cập", key: "allowed_users" },
+
     {
-        title: 'Quyền truy cập', dataIndex: 'visibility', key: 'visibility',
-        customRender: ({ text }) => h('a-tag', { color: visColor(text) }, () => text || 'private')
+        title: "Ngày upload",
+        key: "created_at",
+        dataIndex: "created_at",
+        customRender: ({ text }) => formatDate(text)
     },
-    { title: 'Tác vụ', key: 'action', width: 220 },
-]
+
+    { title: "Tác vụ", key: "action", width: 220 }
+];
+
 
 // ===== API =====
 const fetchDocuments = async () => {
-    loading.value = true
-    try {
-        const params = {
-            page: pagination.value.current,
-            per_page: pagination.value.pageSize,
-            department_id: filters.value.department_id,
-            title: filters.value.title,
-        }
-        if (Array.isArray(filters.value.dateRange) && filters.value.dateRange.length === 2) {
-            const [from, to] = filters.value.dateRange
-            params.created_from = from?.format?.('YYYY-MM-DD')
-            params.created_to   = to?.format?.('YYYY-MM-DD')
-        }
-        const res = await getDocuments(params)
-        documents.value = res?.data?.data || res?.data || []
-        pagination.value.total = res?.data?.pager?.total ?? (Array.isArray(res?.data) ? res.data.length : 0)
-    } catch (e) {
-        console.error(e)
-        message.error('Lỗi tải danh sách tài liệu')
-    } finally {
-        loading.value = false
+    loading.value = true;
+
+    const params = {
+        user_id: currentUser.value?.id,     // ⭐ quan trọng
+        department_id: filters.value.department_id,
+        title: filters.value.title
     }
-}
+
+    const res = await getDocuments(params);
+    documents.value = res.data;
+    loading.value = false;
+};
 
 const handleTableChange = (p) => {
     pagination.value.current = p.current
@@ -306,6 +333,38 @@ const resetEditForm = () => {
     editForm.value = { id: null, title: '', department_id: null, file_path: '', visibility: 'private' }
     editModalVisible.value = false
 }
+const loadUsers = async () => {
+    const res = await getUsers()
+    users.value = res.data
+}
 
-onMounted(fetchDocuments)
+onMounted(async () => {
+    loadCurrentUser()
+    await loadUsers()
+    await fetchDocuments()
+})
+
 </script>
+
+<style>
+.header-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.page-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+</style>

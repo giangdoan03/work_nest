@@ -13,9 +13,9 @@ $routes->group('api', function ($routes) {
 
         // LIST & CRUD
         $routes->get("/", "DocLibraryController::index");
-        $routes->get("by-department", "DocLibraryController::listByDepartment");   // ⭐ NEW
-        $routes->get("my", "DocLibraryController::listMyDocuments");             // ⭐ optional
-        $routes->get("shared-with-me", "DocLibraryController::listShared");      // ⭐ optional
+        $routes->get("by-department", "DocLibraryController::listByDepartment");
+        $routes->get("my", "DocLibraryController::listMyDocuments");
+        $routes->get("shared-with-me", "DocLibraryController::listShared");
 
         $routes->get("(:num)", "DocLibraryController::show/$1");
         $routes->post("/", "DocLibraryController::create");
@@ -79,7 +79,6 @@ $routes->group('api', function ($routes) {
     $routes->get('permissions', 'PermissionController::index');
     $routes->post('permissions/save', 'PermissionController::save');
     $routes->get('permissions/matrix', 'PermissionController::matrix');
-
     $routes->resource('departments', ['controller' => 'DepartmentController']);
 
     $routes->post('users/upload-avatar', 'Auth::uploadAvatar');
@@ -97,7 +96,6 @@ $routes->group('api', function ($routes) {
     $routes->get('tasks/(:num)/sign-history',       'TaskSignController::logs/$1');
     $routes->post('tasks/(:num)/sign/upload',       'TaskSignController::uploadSigned/$1');
     $routes->get('tasks/(:num)/sign/download',      'TaskSignController::downloadSigned/$1');
-
 
     $routes->get('tasks/(:num)/pinned-files',    'TaskFileController::pinnedByTask/$1');
     $routes->post('task-files/(:num)/pin',       'TaskFileController::pin/$1');

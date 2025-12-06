@@ -135,15 +135,15 @@
 
                             <template #overlay>
                                 <a-menu :selectedKeys="documentsSelectedKeys">
+                                    <a-menu-item key="documents-department" @click="navigateTo('/documents/department')">
+                                        <ApartmentOutlined style="margin-right: 12px;" />
+                                        <span>Theo phòng ban</span>
+                                    </a-menu-item>
                                     <a-menu-item key="documents-my" @click="navigateTo('/documents/my')">
                                         <FileOutlined style="margin-right: 12px;" />
                                         <span>Tài liệu của tôi</span>
                                     </a-menu-item>
 
-                                    <a-menu-item key="documents-department" @click="navigateTo('/documents/department')">
-                                        <ApartmentOutlined style="margin-right: 12px;" />
-                                        <span>Theo phòng ban</span>
-                                    </a-menu-item>
                                 </a-menu>
                             </template>
                         </a-dropdown>
@@ -160,14 +160,13 @@
 
                             <template #overlay>
                                 <a-menu :selectedKeys="documentsSelectedKeys">
-                                    <a-menu-item key="documents-my" @click="navigateTo('/documents/my')">
-                                        <FileOutlined style="margin-right: 12px;" />
-                                        <span>Tài liệu của tôi</span>
-                                    </a-menu-item>
-
                                     <a-menu-item key="documents-department" @click="navigateTo('/documents/department')">
                                         <ApartmentOutlined style="margin-right: 12px;" />
                                         <span>Theo phòng ban</span>
+                                    </a-menu-item>
+                                    <a-menu-item key="documents-my" @click="navigateTo('/documents/my')">
+                                        <FileOutlined style="margin-right: 12px;" />
+                                        <span>Tài liệu của tôi</span>
                                     </a-menu-item>
                                 </a-menu>
                             </template>

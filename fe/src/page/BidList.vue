@@ -167,10 +167,12 @@
                         <!-- Cấp quyền truy cập -->
                         <a-tooltip title="Cấp quyền truy cập gói thầu">
                             <UserAddOutlined
+                                v-if="canManageMembers"
                                 class="icon-action"
                                 style="color:#722ed1;"
                                 @click="setActiveRow(slot.record.id); openMemberModal(slot.record)"
                             />
+
                         </a-tooltip>
 
                         <!-- Chỉnh sửa -->
@@ -496,11 +498,24 @@ const selectedEntityData = ref(null)
 const activeRowId = ref(null)
 
 
+import { useUserStore } from "@/stores/user";
+const userStore = useUserStore()
+
+const canManageMembers = computed(() =>
+    ["admin", "super_admin"].includes(userStore.user?.role_code)
+)
+
+
 const openMemberModal = (record) => {
-    selectedEntityData.value = record   // ⭐ Lưu nguyên object của bidding/contract
+    if (!canManageMembers.value) {
+        return message.error("Bạn không có quyền thay đổi quyền truy cập gói thầu");
+    }
+
+    selectedEntityData.value = record
     selectedEntityId.value = record.id
     showMemberModal.value = true
 }
+
 
 const setActiveRow = (id) => {
     activeRowId.value = id;

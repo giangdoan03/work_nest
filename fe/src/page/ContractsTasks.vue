@@ -124,13 +124,15 @@
 
                     <!-- Hành động -->
                     <template v-else-if="column.dataIndex === 'action'">
-                        <a-tooltip title="Cấp quyền truy cập hợp đồng">
+                        <!-- ⭐ Chỉ admin & super_admin mới thấy icon cấp quyền -->
+                        <a-tooltip v-if="canManageMembers" title="Cấp quyền truy cập hợp đồng">
                             <UserAddOutlined
                                 class="icon-action"
                                 style="color:#722ed1;"
                                 @click="setActiveRow(record.id); openMemberModal(record)"
                             />
                         </a-tooltip>
+
                         <a-tooltip title="Chỉnh sửa">
                             <EditOutlined class="icon-action" style="color:#1890ff" @click="showPopupDetail(record)"/>
                         </a-tooltip>
@@ -385,6 +387,10 @@ const activeRowId = ref(null);
 
 const customerOptions = computed(() =>
     customers.value.map(c => ({label: c.name, value: String(c.id)}))
+)
+
+const canManageMembers = computed(() =>
+    ['admin', 'super_admin'].includes(store.currentUser?.role_code)
 )
 
 // Validate helpers
@@ -676,10 +682,14 @@ const setActiveRow = (id) => {
 };
 
 const openMemberModal = (record) => {
-    selectedEntityData.value = record;   // full object của contract
+    if (!canManageMembers.value) {
+        return message.warning("Bạn không có quyền chỉnh sửa người truy cập hợp đồng");
+    }
+    selectedEntityData.value = record;
     selectedEntityId.value = record.id;
     showMemberModal.value = true;
 };
+
 
 const getFirstLetter = (name) => (!name || name === 'N/A') ? '?' : name.charAt(0).toUpperCase()
 const getAvatarColor = (name) => {

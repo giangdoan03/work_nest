@@ -1,85 +1,127 @@
 <template>
-    <div class="file-preview">
-        <!-- PDF -->
-        <iframe v-if="isPDF" :src="url" class="preview-frame" />
+    <div class="doc-detail">
 
-        <!-- Ảnh -->
-        <img v-else-if="isImage" :src="url" class="preview-img" />
+        <!-- HEADER -->
+        <div class="doc-header">
+            <h2 class="doc-title">{{ doc.title }}</h2>
 
-        <!-- DOCX render nội bộ; nếu fail -> office viewer -->
-        <div v-else-if="isDocx && !forceOfficeViewer" ref="docxContainer" class="docx-view"></div>
+            <div class="doc-actions">
+                <a-button @click="openInNewTab">Mở trong tab mới</a-button>
+                <a-button type="primary" @click="downloadFile">Tải xuống</a-button>
+            </div>
+        </div>
 
-        <!-- Excel nội bộ (tuỳ chọn); có thể bỏ nếu chỉ muốn Office Viewer -->
-        <div v-else-if="isExcel && !forceOfficeViewer" ref="excelContainer" class="excel-view"></div>
+        <!-- INFO BLOCK -->
+        <div class="doc-meta">
+            <div><b>Phòng ban:</b> {{ doc.department_name }}</div>
+            <div><b>Người tạo:</b> {{ creatorName }}</div>
+            <div><b>Ngày tạo:</b> {{ formatDate(doc.created_at) }}</div>
+            <div><b>Số người được cấp quyền:</b> {{ doc.allowed_users?.length || 0 }}</div>
+        </div>
 
-        <!-- Office Web Viewer: .doc, .ppt, .xls… hoặc fallback -->
-        <iframe v-else-if="useOfficeViewer" :src="officeEmbedUrl" class="preview-frame" />
+        <!-- ACCESS LIST -->
+        <div class="doc-access" v-if="doc.allowed_users?.length">
+            <b>Người được cấp quyền:</b>
+            <a-avatar-group max-count="8">
+                <template v-for="uid in doc.allowed_users" :key="uid">
+                    <a-tooltip :title="getUserName(uid)">
+                        <a-avatar>{{ getInitial(getUserName(uid)) }}</a-avatar>
+                    </a-tooltip>
+                </template>
+            </a-avatar-group>
+        </div>
 
-        <!-- Cuối cùng: không hỗ trợ -->
-        <div v-else class="preview-empty">Không hỗ trợ xem trước định dạng này.</div>
     </div>
+
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { renderAsync } from 'docx-preview'
-import Spreadsheet from "x-data-spreadsheet";
-// Nếu dùng x-data-spreadsheet thì giữ import; không dùng có thể xoá
-// import Spreadsheet from 'x-data-spreadsheet'
+import { ref, computed, onMounted } from "vue"
+import { useRoute } from "vue-router"
+import { message } from "ant-design-vue"
+import FilePreview from "@/components/FilePreview.vue"
+import { getDocument } from "@/api/docs"
+import { getUsers } from "@/api/user"
+import dayjs from "dayjs"
 
-const props = defineProps({ url: { type: String, required: true } })
+const route = useRoute()
+const doc = ref({})
+const users = ref([])
 
-const docxContainer = ref(null)
-const excelContainer = ref(null)
-const forceOfficeViewer = ref(false)  // bật khi render nội bộ fail
-
-const ext = computed(() => (props.url.split('?')[0].split('#')[0].split('.').pop() || '').toLowerCase())
-const isPDF   = computed(() => ext.value === 'pdf')
-const isImage = computed(() => ['png','jpg','jpeg','gif','webp','bmp','svg'].includes(ext.value))
-const isDocx  = computed(() => ext.value === 'docx')
-const isDoc   = computed(() => ext.value === 'doc')
-const isExcel = computed(() => ['xls','xlsx','csv'].includes(ext.value))
-const isPpt   = computed(() => ['ppt','pptx'].includes(ext.value))
-
-// Dùng Office Viewer nếu là .doc / .ppt / .xls… hoặc nếu đã bật fallback
-const useOfficeViewer = computed(() => forceOfficeViewer.value || isDoc.value || isPpt.value || (isExcel.value && true))
-
-// Office Web Viewer
-const officeEmbedUrl = computed(() =>
-    `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(props.url)}`
-)
-// (Tuỳ chọn) Google Docs Viewer – đôi khi render tốt file public nhỏ
-const googleEmbedUrl = computed(() =>
-  `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(props.url)}`
-)
+const formatDate = (d) => d ? dayjs(d).format("DD/MM/YYYY HH:mm") : "—"
 
 onMounted(async () => {
-    // Thử render DOCX nội bộ; nếu lỗi -> fallback Office Viewer
-    if (isDocx.value && docxContainer.value) {
-        try {
-            const blob = await fetch(props.url, { mode: 'cors' }).then(r => r.blob())
-            await renderAsync(blob, docxContainer.value)
-        } catch (e) {
-            console.warn('DOCX inline render failed, fallback to Office Viewer:', e)
-            forceOfficeViewer.value = true
-        }
-    }
+    try {
+        const id = route.params.id
+        const res = await getDocument(id)
+        doc.value = res.data
 
-    // (Tuỳ chọn) render Excel nội bộ, nếu không muốn dùng Office Viewer cho Excel thì bỏ comment:
-    if (isExcel.value && excelContainer.value) {
-      try {
-        new Spreadsheet(excelContainer.value, { showToolbar: false }).loadData({})
-      } catch (e) {
-        console.warn('Excel inline render failed, fallback to Office Viewer:', e)
-        forceOfficeViewer.value = true
-      }
+        const u = await getUsers()
+        users.value = u.data
+    } catch {
+        message.error("Không tải được tài liệu")
     }
 })
+
+const getUserName = (id) => {
+    const u = users.value.find(x => x.id == id)
+    return u ? u.name : "Không rõ"
+}
+
+const getInitial = (name) =>
+    name ? name.trim().charAt(0).toUpperCase() : "?"
+
+const creatorName = computed(() =>
+    getUserName(doc.value.created_by)
+)
+
+const openInNewTab = () => window.open(doc.value.file_url, "_blank")
+const downloadFile = () => window.open(doc.value.file_url, "_blank")
+
 </script>
 
 <style scoped>
-.preview-frame { width: 100%; height: 600px; border: 0; background: #fff; }
-.preview-img   { max-width: 100%; max-height: 600px; object-fit: contain; background: #fff; }
-.docx-view, .excel-view { width: 100%; height: 600px; overflow: auto; background: #fff; }
-.preview-empty { padding: 40px 12px; text-align: center; color: #888; }
+.doc-detail {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px 12px;
+}
+
+.doc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.doc-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.doc-meta {
+    background: #fafafa;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    row-gap: 6px;
+}
+
+.doc-access {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #fff;
+    border-left: 3px solid #1677ff;
+    border-radius: 4px;
+}
+
+.doc-preview-wrapper {
+    margin-top: 20px;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
 </style>

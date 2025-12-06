@@ -20,15 +20,43 @@ class DocLibraryController extends ResourceController
     {
         $model = new DocDocumentModel();
 
-        $docs = $model->select("
-            doc_documents.*,
-            (SELECT GROUP_CONCAT(user_id)
-             FROM doc_user_access 
-             WHERE document_id = doc_documents.id
-            ) AS allowed_users
-        ")->findAll();
+        $departmentId = $this->request->getGet('department_id');
+        $search       = $this->request->getGet('search');
+        $userId       = $this->request->getGet('user_id'); // ⭐ Lấy user hiện tại
 
-        // Convert allowed_users -> array
+        $builder = $model->select("
+        doc_documents.*,
+        departments.name AS department_name,
+        (
+            SELECT GROUP_CONCAT(user_id)
+            FROM doc_user_access 
+            WHERE document_id = doc_documents.id
+        ) AS allowed_users
+    ")->join("departments", "departments.id = doc_documents.department_id", "left");
+
+
+        // 🔥 LỌC THEO USER ĐƯỢC TRUY CẬP
+        if (!empty($userId)) {
+            $builder->where("
+            doc_documents.created_by = $userId
+            OR doc_documents.id IN (
+                SELECT document_id FROM doc_user_access WHERE user_id = $userId
+            )
+        ");
+        }
+
+        // Lọc phòng ban
+        if (!empty($departmentId)) {
+            $builder->where("doc_documents.department_id", $departmentId);
+        }
+
+        // Lọc tiêu đề
+        if (!empty($search)) {
+            $builder->like("doc_documents.title", $search);
+        }
+
+        $docs = $builder->findAll();
+
         foreach ($docs as &$doc) {
             $doc['allowed_users'] = $doc['allowed_users']
                 ? array_map('intval', explode(',', $doc['allowed_users']))
@@ -37,6 +65,9 @@ class DocLibraryController extends ResourceController
 
         return $this->respond($docs);
     }
+
+
+
 
     // ============================================================
     //  DETAIL DOCUMENT
@@ -48,11 +79,14 @@ class DocLibraryController extends ResourceController
 
         $doc = $model->select("
             doc_documents.*,
-            (SELECT GROUP_CONCAT(user_id)
-             FROM doc_user_access 
-             WHERE document_id = doc_documents.id
+            departments.name AS department_name,
+            (
+                SELECT GROUP_CONCAT(user_id)
+                FROM doc_user_access 
+                WHERE document_id = doc_documents.id
             ) AS allowed_users
         ")
+            ->join("departments", "departments.id = doc_documents.department_id", "left")
             ->where("doc_documents.id", $id)
             ->first();
 
@@ -64,6 +98,7 @@ class DocLibraryController extends ResourceController
 
         return $this->respond($doc);
     }
+
 
     // ============================================================
     //  CREATE / UPDATE / DELETE
@@ -95,6 +130,9 @@ class DocLibraryController extends ResourceController
         ]);
     }
 
+    /**
+     * @throws ReflectionException
+     */
     public function update($id = null)
     {
         if (!$id) return $this->fail("Missing document ID");
@@ -128,8 +166,16 @@ class DocLibraryController extends ResourceController
     //  SHARE DOCUMENT (USER ACCESS)
     // ============================================================
 
+    /**
+     * @throws ReflectionException
+     */
     public function addUserAccess(): ResponseInterface
     {
+        // Kiểm tra quyền
+        if ($err = requireAdmin()) {
+            return $this->failForbidden($err['message']);
+        }
+
         $data = $this->request->getJSON(true) ?? [];
 
         if (empty($data["document_id"]) || empty($data["user_id"])) {
@@ -145,8 +191,14 @@ class DocLibraryController extends ResourceController
         return $this->respond(["message" => "User access granted"]);
     }
 
+
+
     public function removeUserAccess(): ResponseInterface
     {
+        if ($err = requireAdmin()) {
+            return $this->failForbidden($err['message']);
+        }
+
         $data = $this->request->getJSON(true) ?? [];
 
         if (empty($data["document_id"]) || empty($data["user_id"])) {
@@ -160,6 +212,8 @@ class DocLibraryController extends ResourceController
 
         return $this->respond(["message" => "User access removed"]);
     }
+
+
 
     // ============================================================
     //  CHECK ACCESS — ONLY ALLOWED USERS (NO DEPARTMENT)

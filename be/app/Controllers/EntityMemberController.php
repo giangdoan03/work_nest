@@ -14,6 +14,11 @@ class EntityMemberController extends ResourceController
     // ⭐ Add user to entity
     public function add(): ResponseInterface
     {
+
+        if ($err = requireAdmin()) {
+            return $this->failForbidden($err['message']);
+        }
+
         $data = $this->request->getJSON(true) ?? [];
 
         $entityType = $data['entity_type'] ?? null;
@@ -36,6 +41,11 @@ class EntityMemberController extends ResourceController
     // ⭐ Remove user from entity
     public function remove(): ResponseInterface
     {
+
+        if ($err = requireAdmin()) {
+            return $this->failForbidden($err['message']);
+        }
+
         $data = $this->request->getJSON(true) ?? [];
 
         $entityType = $data['entity_type'] ?? null;

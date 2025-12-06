@@ -1,42 +1,62 @@
 <template>
     <div>
-        <a-card bordered>
-            <!-- Header -->
-            <!-- Header -->
-            <a-flex justify="space-between" align="center" style="margin-bottom: 12px">
 
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <a-typography-title :level="4" style="margin:0">Quản lý tài liệu</a-typography-title>
+        <!-- Header -->
+        <a-card bordered style="margin-bottom: 16px">
+            <a-flex justify="space-between" align="center">
 
+                <!-- LEFT ZONE -->
+                <a-space align="center" size="middle">
+
+                    <!-- Back -->
+                    <a-button
+                        type="default"
+                        @click="router.push('/documents/department')"
+                        style="display:flex; align-items:center;"
+                    >
+                        ← Quay lại
+                    </a-button>
+
+                    <!-- Title -->
+                    <a-typography-title :level="4" style="margin:0;">
+                        Quản lý tài liệu
+                    </a-typography-title>
+
+                    <!-- Filter -->
                     <a-select
                         v-model:value="filterDept"
                         placeholder="Lọc theo phòng ban"
                         allow-clear
-                        style="width:200px;"
+                        style="width:200px"
                         :options="departmentOptions"
                         @change="fetchDocuments"
                     />
-                </div>
+                </a-space>
 
+                <!-- RIGHT ZONE -->
                 <a-space>
+
+                    <!-- Search -->
                     <a-input
                         v-model:value="searchText"
                         placeholder="Tìm kiếm tài liệu"
                         allow-clear
-                        style="width:240px"
+                        style="width:260px"
                         @input="debouncedSearch"
                     >
                         <template #prefix><SearchOutlined /></template>
                     </a-input>
 
-                    <!-- Nút thêm tài liệu -->
+                    <!-- Add document -->
                     <a-button type="primary" @click="openCreate">
-                        + Thêm tài liệu mới
+                        + Thêm tài liệu
                     </a-button>
                 </a-space>
 
             </a-flex>
+        </a-card>
 
+        <a-card bordered>
 
             <!-- Bulk delete -->
             <a-popconfirm
@@ -84,13 +104,18 @@
                         <a-avatar-group>
                             <template v-for="uid in record.allowed_users" :key="uid">
                                 <a-tooltip :title="getUserName(uid)">
-                                    <a-avatar :style="{ backgroundColor: avatarColor(getUserName(uid)) }">
-                                        {{ getUserName(uid)?.substring(0,1).toUpperCase() }}
-                                    </a-avatar>
+                                    <BaseAvatar
+                                        :src="getUser(uid)?.avatar"
+                                        :name="getUser(uid)?.name"
+                                        :size="32"
+                                        shape="circle"
+                                        :preferApiOrigin="true"
+                                    />
                                 </a-tooltip>
                             </template>
                         </a-avatar-group>
                     </template>
+
 
                     <!-- Hành động -->
                     <template v-else-if="column.dataIndex === 'action'">
@@ -102,11 +127,16 @@
                             </a-button>
 
                             <!-- Share document -->
-                            <a-tooltip title="Chia sẻ tài liệu">
-                                <a-button size="small" @click="openShareModal(record)">
-                                    <UserAddOutlined />
-                                </a-button>
-                            </a-tooltip>
+                            <template v-if="canShare">
+                                <a-tooltip title="Chia sẻ tài liệu">
+                                    <a-button
+                                        size="small"
+                                        @click="openShareModal(record)"
+                                    >
+                                        <UserAddOutlined />
+                                    </a-button>
+                                </a-tooltip>
+                            </template>
 
                             <!-- Delete -->
                             <a-popconfirm
@@ -140,7 +170,7 @@
             v-model:open="shareModalOpen"
             :document="shareTarget"
             :users="users"
-            :allowed-users="shareTarget?.allowed_users || []"
+            :departments="departments"
             @saved="fetchDocuments"
         />
 
@@ -148,12 +178,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { message } from "ant-design-vue";
 import { SearchOutlined, EditOutlined, DeleteOutlined, DownloadOutlined, UserAddOutlined } from "@ant-design/icons-vue";
 
 import DocumentFormModal from "./DocumentFormModal.vue";
 import ShareDocumentModal from "./ShareDocumentModal.vue";
+import BaseAvatar from '../../components/common/BaseAvatar.vue'
 
 import {
     getDocuments,
@@ -163,9 +194,16 @@ import {
 
 import { getUsers } from "@/api/user";
 import { getDepartments } from "@/api/department";
+const apiBaseUrl = import.meta.env.VITE_API_URL;
 
 import { useRouter } from "vue-router";
 const router = useRouter();
+import { useUserStore } from '@/stores/user'
+import { storeToRefs } from 'pinia'
+
+const userStore = useUserStore()
+const user = computed(() => userStore.user)
+
 
 const shareModalOpen = ref(false);
 const shareTarget = ref(null);
@@ -179,7 +217,7 @@ const openShareModal = (record) => {
 // =============================
 
 const columns = [
-    { title: "Tên tài liệu", dataIndex: "title" },
+    { title: "Tên tài liệu", dataIndex: "title",  width: 200 },
     { title: "Phòng ban", dataIndex: "department", width: 140 },
     { title: "Người xem", dataIndex: "allowed_users", width: 180 },
     { title: "Hành động", dataIndex: "action", width: 120 }
@@ -215,6 +253,13 @@ const pagination = ref({
 const departmentOptions = computed(() =>
     departments.value.map(d => ({ value: d.id, label: d.name }))
 );
+
+const getUser = (id) => users.value.find(u => u.id == id);
+
+const getAvatarUrl = (avatarPath) => {
+    if (!avatarPath) return null;
+    return `${apiBaseUrl}/${avatarPath}`;
+};
 
 // =============================
 // HELPERS
@@ -350,7 +395,13 @@ const loadDepartments = async () => {
     departments.value = res.data;
 };
 
+const canShare = computed(() =>
+    ['admin', 'super_admin'].includes(user.value?.role_code)
+)
 
+watch(user, () => {
+    console.log("User changed:", user.value)
+}, { immediate: true })
 
 
 onMounted(() => {

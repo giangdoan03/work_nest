@@ -154,33 +154,29 @@ class Auth extends Controller
         $email = $data['email'] ?? '';
         $password = $data['password'] ?? '';
 
-        // ❌ KHÔNG log password
-        log_message('debug', 'Email received: ' . $email);
-
+        // Lấy thông tin user + role_code từ bảng roles
         $user = (new UserModel())
-            ->where('email', $email)
+            ->select("users.*, roles.name AS role_name, roles.code AS role_code")
+            ->join("roles", "roles.id = users.role_id", "left")
+            ->where("users.email", $email)
             ->first();
-
-        log_message('debug', 'User from DB: ' . print_r($user, true));
 
         if ($user && password_verify($password, $user['password'])) {
             $session->regenerate();
 
-            // TÍNH is_admin từ role_id / role
-            $roleId = (int)($user['role_id'] ?? 0);
-            $role   = strtolower((string)($user['role'] ?? '')); // nếu có cột 'role'
-            $isAdmin = $roleId === 1 || in_array($role, ['admin', 'super admin'], true);
+            // kiểm tra quyền admin
+            $roleCode = strtolower($user['role_code'] ?? '');
+            $isAdmin = in_array($roleCode, ['admin', 'super_admin']);
 
-            // Lưu đủ thông tin vào session
+            // Lưu session
             $session->set([
                 'user_id'    => (int)$user['id'],
                 'user_email' => $user['email'],
                 'logged_in'  => true,
-                'user_name'    => $user['name'],
-                'role_id'    => $roleId,
-                'role'       => $user['role'] ?? null,
+                'user_name'  => $user['name'],
+                'role_id'    => $user['role_id'],
+                'role_code'  => $roleCode,
                 'is_admin'   => $isAdmin,
-                // 'roles'    => $user['roles'] ?? [], // nếu bạn có multi-roles
             ]);
 
             unset($user['password']);
@@ -188,7 +184,7 @@ class Auth extends Controller
             return $this->response->setJSON([
                 'status'  => 'success',
                 'message' => 'Login successful',
-                'user'    => $user,   // có thể là "1" dạng string, không sao
+                'user'    => $user, // FE sẽ nhận role_code đúng
             ]);
         }
 
