@@ -1,9 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 05, 2025 at 05:20 PM
+-- Generation Time: Dec 06, 2025 at 06:49 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -1689,9 +1689,9 @@ CREATE TABLE `doc_department_access` (
 
 CREATE TABLE `doc_documents` (
   `id` int NOT NULL,
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
-  `file_url` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `file_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `department_id` int DEFAULT NULL,
   `created_by` int NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP
@@ -1702,7 +1702,8 @@ CREATE TABLE `doc_documents` (
 --
 
 INSERT INTO `doc_documents` (`id`, `title`, `description`, `file_url`, `department_id`, `created_by`, `created_at`) VALUES
-(1, 'Tiêu đề 2025', NULL, 'https://vnexpress.net/', 3, 29, '2025-12-05 23:20:53');
+(1, 'Tiêu đề 2025', NULL, 'https://vnexpress.net/', 3, 29, '2025-12-05 23:20:53'),
+(2, 'tài liệu phòng hcns', NULL, 'https://www.facebook.com/', 1, 3, '2025-12-06 10:20:44');
 
 -- --------------------------------------------------------
 
@@ -1724,7 +1725,13 @@ CREATE TABLE `doc_user_access` (
 INSERT INTO `doc_user_access` (`id`, `document_id`, `user_id`, `created_at`) VALUES
 (1, 1, 4, '2025-12-05 23:57:42'),
 (2, 1, 3, '2025-12-05 23:57:42'),
-(3, 1, 1, '2025-12-05 23:57:42');
+(3, 1, 1, '2025-12-05 23:57:42'),
+(4, 1, 6, '2025-12-06 10:19:52'),
+(5, 2, 3, '2025-12-06 10:20:44'),
+(9, 1, 9, '2025-12-06 11:54:44'),
+(10, 1, 11, '2025-12-06 11:54:44'),
+(12, 2, 7, '2025-12-06 13:48:38'),
+(13, 2, 5, '2025-12-06 13:48:38');
 
 -- --------------------------------------------------------
 
@@ -1776,7 +1783,8 @@ INSERT INTO `entity_members` (`id`, `entity_type`, `entity_id`, `user_id`, `crea
 (32, 'internal', 319, 29, '2025-12-05 14:29:47'),
 (33, 'bidding', 41, 29, '2025-12-05 15:57:24'),
 (34, 'bidding', 41, 15, '2025-12-05 15:57:25'),
-(35, 'bidding', 45, 29, '2025-12-05 16:06:28');
+(35, 'bidding', 45, 29, '2025-12-05 16:06:28'),
+(36, 'contract', 69, 4, '2025-12-06 13:16:33');
 
 -- --------------------------------------------------------
 
@@ -3590,7 +3598,11 @@ INSERT INTO `task_snapshots` (`id`, `task_id`, `snapshot_at`, `title`, `descript
 (267, 318, '2025-12-05 21:18:05', 'hợp đồng chắt', 'ok hợp đồng cháu', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 10, 11, NULL, 9, 3, '[]', NULL, '[]', '2025-12-05 21:18:05', '2025-12-05 21:18:05'),
 (268, 318, '2025-12-05 21:19:12', 'hợp đồng chắt', 'ok hợp đồng cháu', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 10, 11, NULL, 9, 3, '[]', NULL, '[]', '2025-12-05 21:19:12', '2025-12-05 21:19:12'),
 (269, 41, '2025-12-05 21:22:26', 'nhiệm vụ hợp đồng 2', 'nghiệm thu', '2025-06-30', '2025-07-31', 'doing', 'normal', 'pending', 0, 23, NULL, NULL, 1, 1, '[]', NULL, '[]', '2025-12-05 21:22:26', '2025-12-05 21:22:26'),
-(270, 41, '2025-12-05 21:22:40', 'nhiệm vụ hợp đồng 2', 'nghiệm thu', '2025-06-30', '2025-07-31', 'doing', 'normal', 'pending', 0, 23, NULL, NULL, 1, 1, '[]', NULL, '[]', '2025-12-05 21:22:40', '2025-12-05 21:22:40');
+(270, 41, '2025-12-05 21:22:40', 'nhiệm vụ hợp đồng 2', 'nghiệm thu', '2025-06-30', '2025-07-31', 'doing', 'normal', 'pending', 0, 23, NULL, NULL, 1, 1, '[]', NULL, '[]', '2025-12-05 21:22:40', '2025-12-05 21:22:40'),
+(271, 69, '2025-12-06 13:16:41', 'chấm 1', '4432424', '2025-08-01', '2025-09-24', 'doing', 'normal', 'pending', 0, 8, NULL, NULL, 6, 1, '[]', NULL, '[]', '2025-12-06 13:16:41', '2025-12-06 13:16:41'),
+(272, 45, '2025-12-06 13:16:47', 'test nhiệm vụ gói thầu 7', 'chấm thầu', '2025-07-31', '2025-08-29', 'doing', 'high', 'pending', 50, 24, NULL, NULL, 2, 1, '[]', NULL, '[]', '2025-12-06 13:16:47', '2025-12-06 13:16:47'),
+(273, 320, '2025-12-06 13:16:56', 'nhiệm vụ con ko qt mới', 'ok', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 8, 9, NULL, 7, 3, '[]', NULL, '[]', '2025-12-06 13:16:56', '2025-12-06 13:16:56'),
+(274, 320, '2025-12-06 13:17:28', 'nhiệm vụ con ko qt mới', 'ok', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 8, 9, NULL, 7, 3, '[]', NULL, '[]', '2025-12-06 13:17:28', '2025-12-06 13:17:28');
 
 -- --------------------------------------------------------
 
@@ -4119,19 +4131,19 @@ ALTER TABLE `doc_department_access`
 -- AUTO_INCREMENT for table `doc_documents`
 --
 ALTER TABLE `doc_documents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `doc_user_access`
 --
 ALTER TABLE `doc_user_access`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `entity_members`
 --
 ALTER TABLE `entity_members`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `file_signatures`
@@ -4233,7 +4245,7 @@ ALTER TABLE `task_sign_logs`
 -- AUTO_INCREMENT for table `task_snapshots`
 --
 ALTER TABLE `task_snapshots`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=271;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=275;
 
 --
 -- AUTO_INCREMENT for table `users`
