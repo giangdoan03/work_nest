@@ -107,16 +107,16 @@
                                 —
                             </a-tag>
                         </template>
-                        <template v-else-if="column.key === 'action'">
-                            <a-space>
-                                <a-button size="small" type="primary" @click="approveTask(record)">
-                                    Duyệt
-                                </a-button>
-                                <a-button size="small" danger @click="rejectTask(record)">
-                                    Từ chối
-                                </a-button>
-                            </a-space>
-                        </template>
+<!--                        <template v-else-if="column.key === 'action'">-->
+<!--                            <a-space>-->
+<!--                                <a-button size="small" type="primary" @click="approveTask(record)">-->
+<!--                                    Duyệt-->
+<!--                                </a-button>-->
+<!--                                <a-button size="small" danger @click="rejectTask(record)">-->
+<!--                                    Từ chối-->
+<!--                                </a-button>-->
+<!--                            </a-space>-->
+<!--                        </template>-->
                     </template>
                 </a-table>
 
@@ -454,7 +454,7 @@ const columnsPersonal = [
     { title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date', align: 'center' },
     { title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date', align: 'center' },
     { title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 120, align: 'center' },
-    { title: 'Hành động', key: 'action', align: 'center', width: 180 },
+    // { title: 'Hành động', key: 'action', align: 'center', width: 180 },
 ];
 
 
