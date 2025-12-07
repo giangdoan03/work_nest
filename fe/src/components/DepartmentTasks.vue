@@ -164,11 +164,11 @@
 
                         <template v-else-if="column.dataIndex === 'step'">
                             <a-tooltip :title="record.step_name || '—'">
-        <span v-if="record.step_code || record.step_name">
-          <strong v-if="record.step_code">B{{ record.step_code }}</strong>
-          <span v-if="record.step_code && record.step_name"> - </span>
-          <span>{{ record.step_name || '—' }}</span>
-        </span>
+                                <span v-if="record.step_code || record.step_name">
+                                  <strong v-if="record.step_code">B{{ record.step_code }}</strong>
+                                  <span v-if="record.step_code && record.step_name"> - </span>
+                                  <span>{{ record.step_name || '—' }}</span>
+                                </span>
                                 <span v-else>—</span>
                             </a-tooltip>
                         </template>
@@ -211,8 +211,7 @@
             </div>
             <div class="table-section">
 
-                <a-divider>
-                    Danh sách công việc
+                <a-divider>Danh sách công việc
                     <template v-if="totalTasks">
                         ({{ totalTasks }})
                     </template>
@@ -302,19 +301,15 @@
                             <a-tooltip placement="top" :overlayStyle="{ maxWidth: '300px' }">
                                 <template #title>
                                     <div style="text-align: center; padding: 8px;">
-                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }"
-                                                  size="large" style="margin-bottom: 8px;">
+                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }" size="large" style="margin-bottom: 8px;">
                                             {{ getFirstLetter(record.assigned_to_name) }}
                                         </a-avatar>
-                                        <div style="font-weight: bold; color: white;">{{
-                                                record.assigned_to_name
-                                            }}
+                                        <div style="font-weight: bold; color: white;">{{record.assigned_to_name}}
                                         </div>
                                     </div>
                                 </template>
                                 <div style="display: flex; justify-content: center; align-items: center;">
-                                    <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }"
-                                              size="small">
+                                    <a-avatar :style="{ backgroundColor: getAvatarColor(record.assigned_to_name) }" size="small">
                                         {{ getFirstLetter(record.name) }}
                                     </a-avatar>
                                 </div>
@@ -344,10 +339,10 @@
                         <template v-else-if="column.dataIndex === 'parent'">
                             <a-tooltip
                                 :title="record.parent_title || (record.parent_id ? ('#' + record.parent_id) : '—')">
-      <span v-if="record.parent_id">
-        <!-- Chỉ text; nếu muốn link tới chi tiết cha, có thể router-link -->
-        {{ record.parent_title || ('#' + record.parent_id) }}
-      </span>
+                                  <span v-if="record.parent_id">
+                                    <!-- Chỉ text; nếu muốn link tới chi tiết cha, có thể router-link -->
+                                    {{ record.parent_title || ('#' + record.parent_id) }}
+                                  </span>
                                 <span v-else>—</span>
                             </a-tooltip>
                         </template>
@@ -357,16 +352,12 @@
                             <div style="display:flex; gap:8px; align-items:center; max-width: 100%;">
                                 <a-tag v-if="record.linked_type"
                                        :color="record.linked_type === 'bidding' ? 'blue' : (record.linked_type === 'contract' ? 'cyan' : 'geekblue')">
-                                    {{
-                                        record.linked_type === 'bidding' ? 'Gói thầu'
-                                            : record.linked_type === 'contract' ? 'Hợp đồng'
-                                                : 'Nội bộ'
-                                    }}
+                                    {{record.linked_type === 'bidding' ? 'Gói thầu' : record.linked_type === 'contract' ? 'Hợp đồng' : 'Nội bộ' }}
                                 </a-tag>
                                 <a-tooltip :title="record.linked_title || '—'" placement="topLeft">
-        <span class="ellipsis-text" style="max-width: 150px;">
-          {{ record.linked_title || '—' }}
-        </span>
+                                    <span class="ellipsis-text" style="max-width: 150px;">
+                                      {{ record.linked_title || '—' }}
+                                    </span>
                                 </a-tooltip>
                             </div>
                         </template>
@@ -374,11 +365,11 @@
                         <!-- 🆕 Cột Bước -->
                         <template v-else-if="column.dataIndex === 'step'">
                             <a-tooltip :title="record.step_name || '—'">
-      <span v-if="record.step_code || record.step_name">
-        <strong v-if="record.step_code">B{{ record.step_code }}</strong>
-        <span v-if="record.step_code && record.step_name"> - </span>
-        <span>{{ record.step_name || '—' }}</span>
-      </span>
+                                  <span v-if="record.step_code || record.step_name">
+                                    <strong v-if="record.step_code">B{{ record.step_code }}</strong>
+                                    <span v-if="record.step_code && record.step_name"> - </span>
+                                    <span>{{ record.step_name || '—' }}</span>
+                                  </span>
                                 <span v-else>—</span>
                             </a-tooltip>
                         </template>
@@ -386,14 +377,8 @@
                         <!-- 🆕 Cột Phê duyệt -->
                         <template v-else-if="column.dataIndex === 'approval'">
                             <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
-                                <a-tag :color="record.approval_status === 'approved' ? 'green'
-                      : record.approval_status === 'pending' ? 'orange'
-                      : 'default'">
-                                    {{
-                                        record.approval_status === 'approved' ? 'Đã duyệt'
-                                            : record.approval_status === 'pending' ? 'Chờ duyệt'
-                                                : (record.approval_status || '—')
-                                    }}
+                                <a-tag :color="record.approval_status === 'approved' ? 'green' : record.approval_status === 'pending' ? 'orange' : 'default'">
+                                    {{record.approval_status === 'approved' ? 'Đã duyệt' : record.approval_status === 'pending' ? 'Chờ duyệt' : (record.approval_status || '—') }}
                                 </a-tag>
                                 <small v-if="record.approval_steps">
                                     Cấp {{ record.current_level || 0 }}/{{ record.approval_steps }}
@@ -404,16 +389,14 @@
                         <!-- 🆕 Người đề nghị / Người tạo -->
                         <template v-else-if="column.dataIndex === 'proposed_by'">
                             <a-tooltip :title="getUserName(record.proposed_by) || '—'">
-                                <a-avatar :style="{ backgroundColor: getAvatarColor(getUserName(record.proposed_by)) }"
-                                          size="small">
+                                <a-avatar :style="{ backgroundColor: getAvatarColor(getUserName(record.proposed_by)) }" size="small">
                                     {{ getFirstLetter(getUserName(record.proposed_by)) }}
                                 </a-avatar>
                             </a-tooltip>
                         </template>
                         <template v-else-if="column.dataIndex === 'created_by'">
                             <a-tooltip :title="getUserName(record.created_by) || '—'">
-                                <a-avatar :style="{ backgroundColor: getAvatarColor(getUserName(record.created_by)) }"
-                                          size="small">
+                                <a-avatar :style="{ backgroundColor: getAvatarColor(getUserName(record.created_by)) }" size="small">
                                     {{ getFirstLetter(getUserName(record.created_by)) }}
                                 </a-avatar>
                             </a-tooltip>
@@ -527,41 +510,33 @@
                             <a-tooltip placement="top" :overlayStyle="{ maxWidth: '300px' }">
                                 <template #title>
                                     <div style="text-align: center; padding: 8px;">
-                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
-                                                  size="large" style="margin-bottom: 8px;">
+                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }" size="large" style="margin-bottom: 8px;">
                                             {{ getFirstLetter(record.assignee?.name) }}
                                         </a-avatar>
                                         <div style="font-weight: bold; color: white;">{{ record.assignee?.name }}</div>
                                     </div>
                                 </template>
                                 <div style="display: flex; justify-content: center; align-items: center;">
-                                    <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
-                                              size="small">
+                                    <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }" size="small">
                                         {{ getFirstLetter(record.assignee?.name) }}
                                     </a-avatar>
                                 </div>
                             </a-tooltip>
                         </template>
                         <template v-else-if="column.dataIndex === 'create_by'">
-                            <a-tooltip placement="top"
-                                       :overlayStyle="{ maxWidth: '400px', wordWrap: 'break-word', whiteSpace: 'normal' }">
+                            <a-tooltip placement="top" :overlayStyle="{ maxWidth: '400px', wordWrap: 'break-word', whiteSpace: 'normal' }">
                                 <template #title>
                                     <div style="text-align: center; padding: 12px; min-width: 200px;">
-                                        <a-avatar
-                                            :style="{ backgroundColor: getAvatarColor(getUserById(record.create_by)) }"
-                                            size="large" style="margin-bottom: 12px;">
+                                        <a-avatar :style="{ backgroundColor: getAvatarColor(getUserById(record.create_by)) }" size="large" style="margin-bottom: 12px;">
                                             {{ getFirstLetter(getUserById(record.create_by)) }}
                                         </a-avatar>
-                                        <div
-                                            style="font-weight: bold; color: white; word-wrap: break-word; white-space: normal; line-height: 1.4;">
+                                        <div style="font-weight: bold; color: white; word-wrap: break-word; white-space: normal; line-height: 1.4;">
                                             {{ getUserById(record.create_by) }}
                                         </div>
                                     </div>
                                 </template>
                                 <div style="display: flex; justify-content: center; align-items: center;">
-                                    <a-avatar
-                                        :style="{ backgroundColor: getAvatarColor(getUserById(record.create_by)) }"
-                                        size="small">
+                                    <a-avatar :style="{ backgroundColor: getAvatarColor(getUserById(record.create_by)) }" size="small">
                                         {{ getFirstLetter(getUserById(record.create_by)) }}
                                     </a-avatar>
                                 </div>

@@ -108,7 +108,6 @@ const downloadFile = () => window.open(doc.value.file_url, "_blank")
 <style scoped>
 /* Container */
 .doc-container {
-    max-width: 900px;
     margin: 0 auto;
     padding: 20px;
 }

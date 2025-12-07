@@ -75,7 +75,7 @@
                             <BaseAvatar
                                 :src="record.avatar"
                                 :name="record.name"
-                                :size="28"
+                                size="28"
                                 shape="circle"
                                 :preferApiOrigin="true"
                             />

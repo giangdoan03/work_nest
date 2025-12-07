@@ -48,23 +48,29 @@ class ContractController extends ResourceController
         // days_remaining = IF(end_date >= today, DATEDIFF(end_date, CURDATE()), 0)
         $list = $this->model
             ->select("
-            contracts.*,
-            u1.name AS assigned_to_name,
-            u2.name AS manager_name,
-            COALESCE(contracts.customer_id, contracts.customer_id) AS customer_id,
-            CASE
-              WHEN contracts.end_date IS NULL THEN NULL
-              WHEN DATE(contracts.end_date) < CURDATE() THEN DATEDIFF(CURDATE(), DATE(contracts.end_date))
-              ELSE 0
-            END AS days_overdue,
-            CASE
-              WHEN contracts.end_date IS NULL THEN NULL
-              WHEN DATE(contracts.end_date) >= CURDATE() THEN DATEDIFF(DATE(contracts.end_date), CURDATE())
-              ELSE 0
-            END AS days_remaining
-        ", false)
+        contracts.*,
+        u1.name   AS assigned_to_name,
+        u1.avatar AS assigned_to_avatar,
+        u2.name   AS manager_name,
+        u2.avatar AS manager_avatar,
+
+        COALESCE(contracts.customer_id, contracts.customer_id) AS customer_id,
+
+        CASE
+            WHEN contracts.end_date IS NULL THEN NULL
+            WHEN DATE(contracts.end_date) < CURDATE() THEN DATEDIFF(CURDATE(), DATE(contracts.end_date))
+            ELSE 0
+        END AS days_overdue,
+
+        CASE
+            WHEN contracts.end_date IS NULL THEN NULL
+            WHEN DATE(contracts.end_date) >= CURDATE() THEN DATEDIFF(DATE(contracts.end_date), CURDATE())
+            ELSE 0
+        END AS days_remaining
+    ", false)
             ->join('users AS u1', 'u1.id = contracts.assigned_to', 'left')
             ->join('users AS u2', 'u2.id = contracts.manager_id', 'left');
+
 
         $this->applyFilters($list, $filters);
         $list->orderBy('contracts.' . $sort, $dir);

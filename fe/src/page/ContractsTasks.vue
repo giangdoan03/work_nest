@@ -90,9 +90,11 @@
                     <!-- Người phụ trách -->
                     <template v-else-if="column.dataIndex === 'assigned_to_name'">
                         <a-tooltip :title="record.assigned_to_name">
-                            <a-avatar :style="{backgroundColor:getAvatarColor(record.assigned_to_name)}" size="small">
-                                {{ getFirstLetter(record.assigned_to_name) }}
-                            </a-avatar>
+                            <BaseAvatar
+                                :src="record.assigned_to_avatar"
+                                :name="record.assigned_to_name"
+                                size="28"
+                            />
                         </a-tooltip>
                     </template>
 
@@ -356,6 +358,7 @@ import {useEntityAccess} from "@/utils/openEntityDetail.js";
 const { openEntity } = useEntityAccess();
 
 import EntityMemberManager from "@/components/common/EntityMemberManager.vue";
+import BaseAvatar from '@/components/common/BaseAvatar.vue'
 // ✅ Tạo factory cho dữ liệu mặc định
 const defaultContract = () => ({
     name: '',

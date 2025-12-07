@@ -1,17 +1,5 @@
     <template>
         <div class="sidebar" :class="{ collapsed }">
-            <!-- Logo -->
-<!--            <div class="logo-container">-->
-<!--                <router-link to="/" class="logo">-->
-<!--                    <img-->
-<!--                        :src="collapsed ? '/logoMark.png' : '/TTID_logo.png'"-->
-<!--                        class="logo-img"-->
-<!--                        :alt="collapsed ? 'TTID' : 'TTID'"-->
-<!--                    />-->
-<!--                </router-link>-->
-<!--            </div>-->
-
-            <!-- Icon/Logo trên cùng -->
             <div
                 class="menu-top-icon"
                 :class="{ active: isOverviewActive }"
@@ -22,11 +10,7 @@
                 tabindex="0"
                 aria-label="Mở menu nhanh"
             >
-                <img
-                    :src="'/logoMark.png'"
-                    class="menu-top-logo"
-                    alt="TTID"
-                />
+                <img :src="'/logoMark.png'" class="menu-top-logo" alt="TTID"/>
                 <span v-if="!collapsed" class="menu-text">Menu</span>
             </div>
 
@@ -173,107 +157,6 @@
                         </a-dropdown>
                     </div>
                 </div>
-
-
-                <!-- 9. Danh sách khách hàng -->
-<!--                <a-tooltip placement="right" title="Khách hàng" v-if="collapsed">-->
-<!--                    <div class="menu-item" :class="{ active: isCustomerActive }" @click="navigateTo('/customers')">-->
-<!--                        <TeamOutlined/>-->
-<!--                        <div class="menu-text-collapsed">Khách hàng</div>-->
-<!--                    </div>-->
-<!--                </a-tooltip>-->
-<!--                <div v-else class="menu-item" :class="{ active: isCustomerActive }" @click="navigateTo('/customers')">-->
-<!--                    <TeamOutlined/>-->
-<!--                    <span class="menu-text">Khách hàng</span>-->
-<!--                </div>-->
-
-                <!-- 10. Danh sách phòng/ban -->
-<!--                <a-tooltip placement="right" title="Phòng ban" v-if="collapsed">-->
-<!--                    <div class="menu-item" :class="{ active: currentRoute === '/departments' }"-->
-<!--                         @click="navigateTo('/departments')">-->
-<!--                        <ApartmentOutlined/>-->
-<!--                        <div class="menu-text-collapsed">Phòng ban</div>-->
-<!--                    </div>-->
-<!--                </a-tooltip>-->
-<!--                <div v-else class="menu-item" :class="{ active: currentRoute === '/departments' }"-->
-<!--                     @click="navigateTo('/departments')">-->
-<!--                    <ApartmentOutlined/>-->
-<!--                    <span class="menu-text">Phòng ban</span>-->
-<!--                </div>-->
-
-                <!-- 11. Quản lý người dùng -->
-<!--                <a-tooltip placement="right" title="Quản lý người dùng" v-if="collapsed">-->
-<!--                    <div class="menu-item" :class="{ active: currentRoute === '/user-management' }"-->
-<!--                         @click="navigateTo('/user-management')">-->
-<!--                        <TeamOutlined/>-->
-<!--                        <div class="menu-text-collapsed">Quản lý người dùng</div>-->
-<!--                    </div>-->
-<!--                </a-tooltip>-->
-<!--                <div v-else class="menu-item" :class="{ active: currentRoute === '/user-management' }"-->
-<!--                     @click="navigateTo('/user-management')">-->
-<!--                    <TeamOutlined/>-->
-<!--                    <span class="menu-text">Quản lý người dùng</span>-->
-<!--                </div>-->
-
-                <!-- 12. Cấu hình chung (submenu) -->
-<!--                <div class="submenu">-->
-<!--                    <div v-if="!collapsed">-->
-<!--                        <a-dropdown placement="rightTop" :trigger="['hover']" :getPopupContainer="p => p.parentNode">-->
-<!--                            <div class="submenu-header" :class="{ active: isSettingsActive }">-->
-<!--                                <SettingOutlined/>-->
-<!--                                <span class="menu-text">Cấu hình chung</span>-->
-<!--                                <span class="submenu-arrow">▼</span>-->
-<!--                            </div>-->
-<!--                            <template #overlay>-->
-<!--                                <a-menu :selectedKeys="settingsSelectedKeys">-->
-<!--                                    <a-menu-item key="settings-bidding" @click="navigateTo('/settings/bidding')">-->
-<!--                                        <FileDoneOutlined style="margin-right: 12px;"/>-->
-<!--                                        <span>Đấu thầu</span>-->
-<!--                                    </a-menu-item>-->
-<!--                                    <a-menu-item key="settings-contract" @click="navigateTo('/settings/contract')">-->
-<!--                                        <ProfileOutlined style="margin-right: 12px;"/>-->
-<!--                                        <span>Hợp đồng</span>-->
-<!--                                    </a-menu-item>-->
-<!--                                </a-menu>-->
-<!--                            </template>-->
-<!--                        </a-dropdown>-->
-<!--                    </div>-->
-<!--                    <div v-else>-->
-<!--                        <a-dropdown placement="rightTop" :trigger="['hover']" :getPopupContainer="p => p.parentNode">-->
-<!--                            <div class="submenu-header" :class="{ active: isSettingsActive }">-->
-<!--                                <SettingOutlined/>-->
-<!--                                <span class="menu-text-collapsed">Cấu hình chung</span>-->
-<!--                                <span class="submenu-arrow-collapsed">▼</span>-->
-<!--                            </div>-->
-<!--                            <template #overlay>-->
-<!--                                <a-menu :selectedKeys="settingsSelectedKeys">-->
-<!--                                    <a-menu-item key="settings-bidding" @click="navigateTo('/settings/bidding')">-->
-<!--                                        <FileDoneOutlined style="margin-right: 12px;"/>-->
-<!--                                        <span>Đấu thầu</span>-->
-<!--                                    </a-menu-item>-->
-<!--                                    <a-menu-item key="settings-contract" @click="navigateTo('/settings/contract')">-->
-<!--                                        <ProfileOutlined style="margin-right: 12px;"/>-->
-<!--                                        <span>Hợp đồng</span>-->
-<!--                                    </a-menu-item>-->
-<!--                                </a-menu>-->
-<!--                            </template>-->
-<!--                        </a-dropdown>-->
-<!--                    </div>-->
-<!--                </div>-->
-
-                <!-- 13. Phân quyền -->
-<!--                <a-tooltip placement="right" title="Phân quyền" v-if="collapsed">-->
-<!--                    <div class="menu-item" :class="{ active: currentRoute === '/permissions' }"-->
-<!--                         @click="navigateTo('/permissions')">-->
-<!--                        <TeamOutlined/>-->
-<!--                        <div class="menu-text-collapsed">Phân quyền</div>-->
-<!--                    </div>-->
-<!--                </a-tooltip>-->
-<!--                <div v-else class="menu-item" :class="{ active: currentRoute === '/permissions' }"-->
-<!--                     @click="navigateTo('/permissions')">-->
-<!--                    <TeamOutlined/>-->
-<!--                    <span class="menu-text">Phân quyền</span>-->
-<!--                </div>-->
             </nav>
 
             <a-drawer
@@ -1166,7 +1049,7 @@
 
     /* Card title */
     .qm-card-title {
-        font-size: 13.5px; line-height: 1.2; color:#111827;
+        font-size: 13px; line-height: 1.2; color:#111827;
         text-wrap: balance;
     }
 

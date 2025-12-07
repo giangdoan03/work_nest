@@ -102,7 +102,7 @@
                             <BaseAvatar
                                 :src="slot.record.assigned_to_avatar_url || slot.record.assigned_to_avatar"
                                 :name="slot.record.assigned_to_name || 'N/A'"
-                                :size="24"
+                                size="28"
                                 shape="circle"
                                 :preferApiOrigin="true"
                             />

@@ -87,82 +87,110 @@ class TaskController extends ResourceController
     {
         $params = $this->request->getGet();
 
-        // ---- Giải nghĩa tham số thông minh ----
-        $linkedType = $params['linked_type'] ?? null;                 // 'internal' | 'bidding' | 'contract'
-        $scope = $params['scope'] ?? null;                 // 'external' | 'internal'
-        $excludeInner = !empty($params['exclude_internal']);              // =1 để bỏ nội bộ
-        $linkedTypeIn = $params['linked_type_in'] ?? null;                // mảng hoặc CSV
+        // ==========================
+        // 1) Xử lý tham số lọc
+        // ==========================
+        $linkedType   = $params['linked_type'] ?? null;
+        $scope        = $params['scope'] ?? null;
+        $excludeInner = !empty($params['exclude_internal']);
+        $linkedTypeIn = $params['linked_type_in'] ?? null;
 
-        // linked_type_in: chấp nhận 'bidding,contract' hoặc linked_type_in[]=bidding&linked_type_in[]=contract
         if ($linkedTypeIn && !is_array($linkedTypeIn)) {
             $linkedTypeIn = array_map('trim', explode(',', $linkedTypeIn));
         }
-        $allowedTypes = ['internal', 'bidding', 'contract'];
+
+        $allowed = ['internal', 'bidding', 'contract'];
+
         if (is_array($linkedTypeIn)) {
-            $linkedTypeIn = array_values(array_intersect($linkedTypeIn, $allowedTypes));
-            if (empty($linkedTypeIn)) $linkedTypeIn = null;
+            $linkedTypeIn = array_values(array_intersect($linkedTypeIn, $allowed));
+            if (!$linkedTypeIn) $linkedTypeIn = null;
         }
 
-        // ---- Builder chính (dùng cho dữ liệu + phân trang) ----
+        // ==========================
+        // 2) Base Builder
+        // ==========================
         $builder = $this->model->builder();
 
-        // Chỉ join cái cần: nội bộ thì không join gì; external thì join cả 2; nếu lọc 1 loại thì join đúng loại
-        $needJoinBidding = false;
+        // ==========================
+        // 3) Xác định join bidding / contract
+        // ==========================
+        $needJoinBidding  = false;
         $needJoinContract = false;
 
         if ($linkedType) {
-            $needJoinBidding = ($linkedType === 'bidding');
+            $needJoinBidding  = ($linkedType === 'bidding');
             $needJoinContract = ($linkedType === 'contract');
         } elseif ($linkedTypeIn) {
-            $needJoinBidding = in_array('bidding', $linkedTypeIn, true);
+            $needJoinBidding  = in_array('bidding', $linkedTypeIn, true);
             $needJoinContract = in_array('contract', $linkedTypeIn, true);
         } elseif ($scope === 'internal') {
-            // không join gì
+            // do nothing
         } elseif ($scope === 'external' || $excludeInner) {
             $needJoinBidding = $needJoinContract = true;
         } else {
-            // mặc định: có thể hiển thị mọi loại -> join cả 2 để có linked_title
             $needJoinBidding = $needJoinContract = true;
         }
 
-        // ---- SELECT + JOIN ----
-        $linkedTitleExpr = 'NULL AS linked_title';
+        // ==========================
+        // 4) CASE biểu diễn liên kết
+        // ==========================
         if ($needJoinBidding && $needJoinContract) {
             $linkedTitleExpr = "
-        CASE
-            WHEN tasks.linked_type = 'bidding'  THEN b.title
-            WHEN tasks.linked_type = 'contract' THEN c.title
-            ELSE NULL
-        END AS linked_title
-            ";
-                } elseif ($needJoinBidding) {
-                    $linkedTitleExpr = "
-                CASE
-                    WHEN tasks.linked_type = 'bidding' THEN b.title
-                    ELSE NULL
-                END AS linked_title
-            ";
-                } elseif ($needJoinContract) {
-                    $linkedTitleExpr = "
-                CASE
-                    WHEN tasks.linked_type = 'contract' THEN c.title
-                    ELSE NULL
-                END AS linked_title
-            ";
-                }
+            CASE
+                WHEN tasks.linked_type = 'bidding'  THEN b.title
+                WHEN tasks.linked_type = 'contract' THEN c.title
+                ELSE NULL
+            END AS linked_title
+        ";
+        } elseif ($needJoinBidding) {
+            $linkedTitleExpr = "
+            CASE WHEN tasks.linked_type = 'bidding' THEN b.title ELSE NULL END AS linked_title
+        ";
+        } elseif ($needJoinContract) {
+            $linkedTitleExpr = "
+            CASE WHEN tasks.linked_type = 'contract' THEN c.title ELSE NULL END AS linked_title
+        ";
+        } else {
+            $linkedTitleExpr = "NULL AS linked_title";
+        }
 
-                $builder->select("
-            tasks.*,
-            tasks.id AS task_id,
-            users.id   AS assignee_id,
-            users.name AS assignee_name,
-            parent.title AS parent_title,
-            {$linkedTitleExpr}
-        ", false); // false để không escape biểu thức CASE
+        // ==========================
+        // 5) SELECT + JOIN USER AVATAR
+        // ==========================
+        $builder->select("
+        tasks.*,
+        tasks.id AS task_id,
 
-        $builder->join('users', 'users.id = tasks.assigned_to', 'left');
+        u_assign.id     AS assignee_id,
+        u_assign.name   AS assignee_name,
+        u_assign.avatar AS assignee_avatar,
+
+        u_ab.id         AS assigned_by_id,
+        u_ab.name       AS assigned_by_name,
+        u_ab.avatar     AS assigned_by_avatar,
+
+        u_pb.id         AS proposed_by_id,
+        u_pb.name       AS proposed_by_name,
+        u_pb.avatar     AS proposed_by_avatar,
+
+        u_creator.id     AS created_by_id,
+        u_creator.name   AS created_by_name,
+        u_creator.avatar AS created_by_avatar,
+
+        parent.title AS parent_title,
+        {$linkedTitleExpr}
+    ", false);
+
+        // ---- JOIN user mapping ----
+        $builder->join('users u_assign',  'u_assign.id = tasks.assigned_to', 'left');
+        $builder->join('users u_ab',      'u_ab.id = tasks.assigned_by', 'left');
+        $builder->join('users u_pb',      'u_pb.id = tasks.proposed_by', 'left');
+        $builder->join('users u_creator', 'u_creator.id = tasks.created_by', 'left');
+
+        // ---- JOIN parent
         $builder->join('tasks parent', 'parent.id = tasks.parent_id', 'left');
 
+        // ---- JOIN bidding / contract
         if ($needJoinBidding) {
             $builder->join(
                 'biddings b',
@@ -170,6 +198,7 @@ class TaskController extends ResourceController
                 'left'
             );
         }
+
         if ($needJoinContract) {
             $builder->join(
                 'contracts c',
@@ -178,11 +207,11 @@ class TaskController extends ResourceController
             );
         }
 
-
-        // ---- Áp dụng filter chung (không bao gồm filter theo loại) ----
+        // ==========================
+        // 6) Apply Filters
+        // ==========================
         $this->applyCommonTaskFilters($builder, $params, true);
 
-        // ---- Filter theo loại (ưu tiên theo thứ tự: linked_type > linked_type_in > scope/exclude) ----
         if ($linkedType) {
             $builder->where('tasks.linked_type', $linkedType);
         } elseif ($linkedTypeIn) {
@@ -193,70 +222,73 @@ class TaskController extends ResourceController
             $builder->whereIn('tasks.linked_type', ['bidding', 'contract']);
         }
 
-        // ---- Phân trang an toàn ----
-        $page = max(1, (int)($params['page'] ?? 1));
-        $perPage = (int)($params['per_page'] ?? 10);
-        if ($perPage <= 0) $perPage = 10;
-        if ($perPage > 200) $perPage = 200;
-        $offset = ($page - 1) * $perPage;
+        // ==========================
+        // 7) Pagination
+        // ==========================
+        $page    = max(1, (int)($params['page'] ?? 1));
+        $perPage = min(max(1, (int)($params['per_page'] ?? 10)), 200);
+        $offset  = ($page - 1) * $perPage;
 
-        // Tổng với đúng filter hiện tại
         $countBuilder = clone $builder;
         $total = $countBuilder->countAllResults(false);
 
-        // Sắp xếp + limit
         $builder->orderBy('tasks.created_at', 'DESC');
         $builder->limit($perPage, $offset);
 
         $rows = $builder->get()->getResultArray();
 
-        // ---- Map step_name + assignee + deadline ----
-        $contractMap = array_column((new ContractStepTemplateModel())->findAll(), 'title', 'step_number');
-        $biddingMap = array_column((new BiddingStepTemplateModel())->findAll(), 'title', 'step_number');
-
+        // ==========================
+        // 8) Map thêm dữ liệu FE cần
+        // ==========================
         foreach ($rows as &$task) {
-            $stepCode = (int)($task['step_code'] ?? 0);
-            $task['step_name'] = $task['linked_type'] === 'contract'
-                ? ($contractMap[$stepCode] ?? null)
-                : ($task['linked_type'] === 'bidding' ? ($biddingMap[$stepCode] ?? null) : null);
-
             $task['assignee'] = [
-                'id' => $task['assignee_id'] ?? null,
-                'name' => $task['assignee_name'] ?? 'Chưa có',
+                'id'     => $task['assignee_id'],
+                'name'   => $task['assignee_name'],
+                'avatar' => $task['assignee_avatar'],
             ];
 
-            $diff = calculateDeadlineDiff($task['end_date']);
-            $task['days_remaining'] = $diff['days_remaining'];
-            $task['days_overdue'] = $diff['days_overdue'];
-
-            $task['is_subtask'] = !empty($task['parent_id']);
-
-            unset($task['assignee_id'], $task['assignee_name']);
-        }
-
-        // ---- (Tuỳ chọn) trả thêm tổng theo loại để FE hiển thị "Tất cả" chính xác ----
-        $meta = [];
-        if (!empty($params['with_totals'])) {
-            $meta['totals'] = [
-                'bidding' => $this->countByType($params, 'bidding'),
-                'contract' => $this->countByType($params, 'contract'),
-                'internal' => $this->countByType($params, 'internal'),
-                'external' => $this->countByType($params, ['bidding', 'contract']),
+            $task['assigned_by_user'] = [
+                'id'     => $task['assigned_by_id'],
+                'name'   => $task['assigned_by_name'],
+                'avatar' => $task['assigned_by_avatar'],
             ];
+
+            $task['proposed_by_user'] = [
+                'id'     => $task['proposed_by_id'],
+                'name'   => $task['proposed_by_name'],
+                'avatar' => $task['proposed_by_avatar'],
+            ];
+
+            $task['created_by_user'] = [
+                'id'     => $task['created_by_id'],
+                'name'   => $task['created_by_name'],
+                'avatar' => $task['created_by_avatar'],
+            ];
+
+            unset(
+                $task['assignee_id'], $task['assignee_name'], $task['assignee_avatar'],
+                $task['assigned_by_id'], $task['assigned_by_name'], $task['assigned_by_avatar'],
+                $task['proposed_by_id'], $task['proposed_by_name'], $task['proposed_by_avatar'],
+                $task['created_by_id'], $task['created_by_name'], $task['created_by_avatar']
+            );
         }
 
+        // ==========================
+        // 9) Trả dữ liệu
+        // ==========================
         return $this->response->setJSON([
             'status' => 'success',
             'data' => $rows,
             'pagination' => [
                 'total' => $total,
-                'page' => $page,
+                'page'  => $page,
                 'per_page' => $perPage,
                 'last_page' => (int)ceil($total / $perPage),
-            ],
-            'meta' => $meta,
+            ]
         ]);
     }
+
+
 
     /**
      * Áp dụng các bộ lọc chung (trừ filter theo loại nếu $skipTypeFilter = true)
