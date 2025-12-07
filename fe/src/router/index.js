@@ -7,16 +7,13 @@ import Dashboard from '../components/Dashboard.vue'
 import Layout from '../components/Layout.vue'
 import UserInfo from '../components/UserInfo/index.vue'
 import UserPermissionManager from '../components/UserPermissionManager.vue'
-import DepartmentList from '../page/documents/DocumentList.vue'
+import DepartmentList from '../page/DepartmentList.vue'
 import UserManagement from '../page/UserManagement.vue'
 import InternalTasks from '../page/InternalTasks.vue'
 import TaskDetail from '../components/task/index.vue'
 import ContractsTasks from '../page/ContractsTasks.vue'
-import DocumentList from '../page/DocumentList.vue'
-import DepartmentDocumentList from '../page/DepartmentDocumentList.vue'
-import DocumentSharedList from '../page/DocumentSharedList.vue'
-import DocumentPermissionList from '../page/DocumentPermissionList.vue'
-import DocumentSettingForm from '../page/DocumentSettingForm.vue'
+import DocumentList from '../page/documents/DocumentList.vue'
+import MyDocumentList from '../page/documents/MyDocumentList.vue'
 import BiddingStepTemplateList from '../page/BiddingStepTemplateList.vue'
 import ContractsStepTemplateList from '../page/ContractsStepTemplateList.vue'
 import BidList from '../page/BidList.vue'
@@ -310,27 +307,25 @@ const routes = [
 
             {
                 path: '/documents',
-                children: [
-                    {
-                        path: 'my',
-                        name: 'documents-my',
-                        component: DocumentList,
-                        meta: { breadcrumb: 'Tài liệu của tôi' }
-                    },
-                    {
-                        path: 'department',
-                        name: 'documents-department',
-                        component: DepartmentList,
-                        meta: { breadcrumb: 'Tài liệu theo phòng ban' }
-                    },
-                    {
-                        path: ':id',
-                        name: 'document-detail',
-                        component: DocumentInfoPage,
-                        meta: { breadcrumb: 'Chi tiết tài liệu' }
-                    }
-                ]
+                name: 'documents',
+                component: DocumentList,
+                meta: { breadcrumb: 'Tài liệu theo phòng ban' }
             },
+            {
+                path: '/my-documents',
+                name: 'my-documents',
+                component: MyDocumentList,  // của tôi
+                meta: { breadcrumb: 'Tài liệu của tôi' }
+            },
+            {
+                path: '/documents/:id',
+                name: 'document-detail',
+                component: DocumentInfoPage,
+                props: true,
+                meta: { breadcrumb: 'Chi tiết tài liệu' }
+            },
+
+
 
             {
                 path: '/user-guide',
@@ -359,10 +354,6 @@ const routePermissionMap = {
     'contract-detail': 'contract',
     'documents': 'document',
     'documents-my': 'document',
-    'documents-shared': 'document',
-    'documents-department': 'document',
-    'documents-permission': 'document',
-    'documents-settings': 'document',
     'user-management': 'user',
     'permissions': 'permission',
     'departments': 'department',

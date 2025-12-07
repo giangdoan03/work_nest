@@ -17,10 +17,10 @@
                     <a-segmented
                         v-model:value="density"
                         :options="[
-              { label: 'Gọn', value: 'small' },
-              { label: 'Vừa', value: 'middle' },
-              { label: 'Rộng', value: 'large' }
-            ]"
+                          { label: 'Gọn', value: 'small' },
+                          { label: 'Vừa', value: 'middle' },
+                          { label: 'Rộng', value: 'large' }
+                        ]"
                     />
 
                     <a-tooltip title="Làm mới">
@@ -52,10 +52,10 @@
                         <a-typography-text
                             strong
                             :style="{
-                cursor: 'pointer',
-                color: activeDepartmentId === record.id ? 'var(--brand, #fa541c)' : undefined,
-                textDecoration: activeDepartmentId === record.id ? 'underline' : undefined
-              }"
+                                cursor: 'pointer',
+                                color: activeDepartmentId === record.id ? 'var(--brand, #fa541c)' : undefined,
+                                textDecoration: activeDepartmentId === record.id ? 'underline' : undefined
+                              }"
                             @click="openUsersTab(record)"
                         >
                             {{ text }}

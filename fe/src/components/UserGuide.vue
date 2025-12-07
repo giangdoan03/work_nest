@@ -1,48 +1,137 @@
 <template>
     <div class="user-guide">
         <h1>📘 Hướng dẫn sử dụng hệ thống</h1>
+        <p class="intro">Chọn mô-đun bên dưới để xem hướng dẫn chi tiết.</p>
 
-        <p>Trang này chứa các tài liệu, video hướng dẫn và mô tả chức năng của hệ thống.</p>
+        <div class="module-grid">
+            <div
+                v-for="m in modules"
+                :key="m.key"
+                class="module-card"
+                @click="openGuide(m)"
+            >
+                <component :is="m.icon" class="module-icon" />
+                <div class="module-title">{{ m.title }}</div>
+            </div>
+        </div>
 
-        <section class="guide-section" v-for="item in guides" :key="item.title">
-            <h2>{{ item.title }}</h2>
-            <p>{{ item.description }}</p>
-
-            <ul>
-                <li v-for="c in item.contents" :key="c">{{ c }}</li>
-            </ul>
-        </section>
+        <!-- MODAL HIỂN THỊ HƯỚNG DẪN -->
+        <a-modal
+            v-model:open="modalOpen"
+            :title="activeModule?.title"
+            width="900px"
+            :footer="null"
+            class="guide-modal"
+        >
+            <GuideContent :module="activeModule?.key" />
+        </a-modal>
     </div>
 </template>
 
 <script setup>
-const guides = [
-    {
-        title: "1. Tổng quan hệ thống",
-        description: "Giới thiệu kiến trúc và các mô-đun chính.",
-        contents: ["Giao diện", "Sidebar", "Cách xem dữ liệu tổng quan"]
-    },
-    {
-        title: "2. Quy trình công việc",
-        description: "Hướng dẫn tạo, giao và theo dõi nhiệm vụ.",
-        contents: ["Tạo nhiệm vụ", "Theo dõi tiến độ", "Giao việc"]
-    },
-    {
-        title: "3. Quản lý tài liệu",
-        description: "Cách tải lên, phân quyền và chia sẻ tài liệu.",
-        contents: ["Tải lên tài liệu", "Cấp quyền", "Theo phòng ban"]
-    }
+import { ref } from "vue"
+import GuideContent from "./guide/GuideContent.vue"
+
+// ICONS ANT DESIGN
+import {
+    FileDoneOutlined,
+    ProjectOutlined,
+    FileTextOutlined,
+    TeamOutlined,
+    FolderOpenOutlined,
+    SettingOutlined,
+    ApartmentOutlined
+} from "@ant-design/icons-vue"
+
+const modalOpen = ref(false)
+const activeModule = ref(null)
+
+const modules = [
+    { key: "overview", title: "Tổng quan hệ thống", icon: FileDoneOutlined },
+    { key: "workflow", title: "Công việc không quy trình", icon: ProjectOutlined },
+    { key: "bidding", title: "Gói thầu & Hợp đồng", icon: FileTextOutlined },
+    { key: "documents", title: "Tài liệu", icon: FolderOpenOutlined },
+    { key: "customers", title: "Khách hàng", icon: TeamOutlined },
+    { key: "departments", title: "Phòng ban", icon: ApartmentOutlined },
+    { key: "settings", title: "Cấu hình hệ thống", icon: SettingOutlined }
 ]
+
+const openGuide = (module) => {
+    activeModule.value = module
+    modalOpen.value = true
+}
 </script>
 
 <style scoped>
 .user-guide {
-    padding: 24px;
+    padding: 32px;
     background: white;
 }
-.guide-section {
-    margin-top: 18px;
-    padding: 12px 0;
-    border-bottom: 1px solid #eee;
+
+.intro {
+    font-size: 15px;
+    margin-bottom: 24px;
 }
+
+.module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.module-card {
+    background: #f9fafb;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    text-align: center;
+    transition: 0.2s;
+}
+
+.module-card:hover {
+    background: #eef6ff;
+    border-color: #91caff;
+}
+
+.module-icon {
+    font-size: 36px;
+    color: #1677ff;
+}
+
+.module-title {
+    margin-top: 10px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+</style>
+<style>
+/* Cố định chiều cao của modal content */
+.guide-modal .ant-modal-body {
+    max-height: 70vh; /* 70% chiều cao màn hình */
+    overflow-y: auto;
+    padding-right: 16px; /* chống che chữ khi có scroll */
+}
+
+/* Thu nhỏ thanh scroll */
+.guide-modal .ant-modal-body::-webkit-scrollbar {
+    width: 6px; /* nhỏ gọn */
+}
+
+.guide-modal .ant-modal-body::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+
+.guide-modal .ant-modal-body::-webkit-scrollbar-thumb {
+    background: #c0c0c0;
+    border-radius: 3px;
+}
+
+.guide-modal .ant-modal-body::-webkit-scrollbar-thumb:hover {
+    background: #a0a0a0;
+}
+
 </style>

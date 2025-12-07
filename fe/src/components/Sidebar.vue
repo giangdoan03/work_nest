@@ -119,14 +119,16 @@
 
                             <template #overlay>
                                 <a-menu :selectedKeys="documentsSelectedKeys">
-                                    <a-menu-item key="documents-department" @click="navigateTo('/documents/department')">
+                                    <a-menu-item key="documents-department" @click="navigateTo('/documents')">
                                         <ApartmentOutlined style="margin-right: 12px;" />
                                         <span>Theo phòng ban</span>
                                     </a-menu-item>
-                                    <a-menu-item key="documents-my" @click="navigateTo('/documents/my')">
+
+                                    <a-menu-item key="documents-my" @click="navigateTo('/my-documents')">
                                         <FileOutlined style="margin-right: 12px;" />
                                         <span>Tài liệu của tôi</span>
                                     </a-menu-item>
+
 
                                 </a-menu>
                             </template>
@@ -144,14 +146,16 @@
 
                             <template #overlay>
                                 <a-menu :selectedKeys="documentsSelectedKeys">
-                                    <a-menu-item key="documents-department" @click="navigateTo('/documents/department')">
+                                    <a-menu-item key="documents-department" @click="navigateTo('/documents')">
                                         <ApartmentOutlined style="margin-right: 12px;" />
                                         <span>Theo phòng ban</span>
                                     </a-menu-item>
-                                    <a-menu-item key="documents-my" @click="navigateTo('/documents/my')">
+
+                                    <a-menu-item key="documents-my" @click="navigateTo('/my-documents')">
                                         <FileOutlined style="margin-right: 12px;" />
                                         <span>Tài liệu của tôi</span>
                                     </a-menu-item>
+
                                 </a-menu>
                             </template>
                         </a-dropdown>
@@ -216,10 +220,10 @@
                                 type="button"
                                 @click="navAndClose(item.path)"
                             >
-          <span class="qm-icon-box" :class="item.color">
-            <component :is="item.icon" />
-            <i class="shine" aria-hidden="true"></i>
-          </span>
+                                  <span class="qm-icon-box" :class="item.color">
+                                    <component :is="item.icon" />
+                                    <i class="shine" aria-hidden="true"></i>
+                                  </span>
                                 <span class="qm-card-title">{{ item.label }}</span>
                             </button>
                         </div>
@@ -327,9 +331,8 @@
     const isCustomerActive   = computed(() =>
         ['/customers', `/customers/${currentRouteId.value}`].includes(currentPath.value)
     )
-    const isDocumentsActive  = computed(() =>
-        ['/documents/my', '/documents/shared', '/documents/department', '/documents/permission', '/documents/settings']
-            .includes(currentPath.value)
+    const isDocumentsActive = computed(() =>
+        ['/documents', '/my-documents'].includes(currentPath.value)
     )
     const isSettingsActive   = computed(() =>
         ['/settings/bidding', '/settings/contract'].includes(currentPath.value)
@@ -339,11 +342,8 @@
 
     // === Submenu selected keys (Documents/Settings) ===
     const pathToKeyMap = {
-        '/documents/my': 'documents-my',
-        '/documents/shared': 'documents-shared',
-        '/documents/department': 'documents-department',
-        '/documents/permission': 'documents-permission',
-        '/documents/settings': 'documents-settings',
+        '/documents': 'documents-department',
+        '/my-documents': 'documents-my',
         '/settings/bidding': 'settings-bidding',
         '/settings/contract': 'settings-contract',
     }
@@ -388,7 +388,7 @@
                 { path: '/contracts-tasks',  icon: FileDoneOutlined,    color: 'purple', label: 'Hợp đồng' },
                 { path: '/workflow',         icon: AppstoreOutlined,    color: 'purple', label: 'Việc quy trình' },
                 { path: '/non-workflow',     icon: UnorderedListOutlined, color: 'sky',  label: 'Việc không quy trình' },
-                { path: '/documents/my',     icon: BookOutlined,        color: 'red',    label: 'Tài liệu' },
+                { path: '/my-documents', icon: BookOutlined, color: 'red', label: 'Tài liệu' }
             ],
         },
         {
