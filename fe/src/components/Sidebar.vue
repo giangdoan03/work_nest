@@ -157,6 +157,23 @@
                         </a-dropdown>
                     </div>
                 </div>
+                <!-- 9. Hướng dẫn sử dụng -->
+                <a-tooltip placement="right" title="Hướng dẫn sử dụng" v-if="collapsed">
+                    <div class="menu-item"
+                         :class="{ active: currentRoute === '/user-guide' }"
+                         @click="navigateTo('/user-guide')">
+                        <BookOutlined />
+                        <div class="menu-text-collapsed">Hướng dẫn</div>
+                    </div>
+                </a-tooltip>
+
+                <div v-else class="menu-item"
+                     :class="{ active: currentRoute === '/user-guide' }"
+                     @click="navigateTo('/user-guide')">
+                    <BookOutlined />
+                    <span class="menu-text">Hướng dẫn sử dụng</span>
+                </div>
+
             </nav>
 
             <a-drawer
@@ -318,6 +335,8 @@
         ['/settings/bidding', '/settings/contract'].includes(currentPath.value)
     )
 
+    const isUserGuideActive = computed(() => currentPath.value === '/user-guide')
+
     // === Submenu selected keys (Documents/Settings) ===
     const pathToKeyMap = {
         '/documents/my': 'documents-my',
@@ -389,6 +408,7 @@
                 { path: '/customers',        icon: TeamOutlined,        color: 'sky',    label: 'Khách hàng' },
                 { path: '/calendar',         icon: CalendarOutlined,    color: 'pink',   label: 'Lịch biểu' },
                 { path: '/reports',          icon: FileTextOutlined,    color: 'orange', label: 'Văn bản' },
+                { path: '/user-guide',       icon: BookOutlined,        color: 'purple', label: 'Hướng dẫn' },
             ],
         },
     ]

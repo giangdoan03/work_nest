@@ -18,7 +18,10 @@
                             @toggle="toggleCollapsed"
                             @logout="handleLogout"
                         />
+
                         <Content />
+
+<!--                        <FooterBar />-->
                     </a-layout>
                 </div>
             </a-col>
@@ -35,6 +38,7 @@ import { useRouter } from 'vue-router'
 import Sidebar from './Sidebar.vue'
 import Header from './Header.vue'
 import Content from './Content.vue'
+import FooterBar from './FooterBar.vue'
 import { logout } from '../api/auth'
 
 const collapsed = ref(true)              // Mặc định thu nhỏ lần đầu
@@ -93,5 +97,8 @@ const handleLogout = async () => {
 <style>
     .bg_card_gray {
         background: #f3f4f5;
+    }
+    .content-wrapper {
+        padding-bottom: 40px;
     }
 </style>

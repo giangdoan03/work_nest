@@ -30,6 +30,7 @@ import GanttChart from '../page/GanttChart.vue'
 import Tasks from '../page/Tasks.vue'
 import BiddingStepTasks from '../components/BiddingStepTask/BiddingStepTasks.vue'
 import ContractStepTasks from '../components/ContractStepTask/ContractStepTasks.vue'
+import UserGuide from '../components/UserGuide.vue'
 import DocumentInfoPage from '../page/documents/DocumentInfoPage.vue'
 import Forbidden403 from "@/page/Forbidden403.vue"
 
@@ -331,6 +332,13 @@ const routes = [
                 ]
             },
 
+            {
+                path: '/user-guide',
+                name: 'user-guide',
+                component: UserGuide,
+                meta: { breadcrumb: 'Hướng dẫn sử dụng' }
+            },
+
 
 
         ]
@@ -371,8 +379,9 @@ const routePermissionMap = {
     'project-overview': 'project',
     'tasks': 'task',
     'tasks-detail': 'task',
-    'non-workflow': 'task',              // ✅ thêm
+    'non-workflow': 'task',
     'department-task-detail': 'task',
+    'user-guide': 'guide',
 }
 
 router.beforeEach(async (to, from, next) => {
@@ -385,7 +394,9 @@ router.beforeEach(async (to, from, next) => {
         }
 
         const module = routePermissionMap[to.name]
-        if (module && !userStore.hasPermission(module, 'view')) {
+
+        // ⛔ BẮT BUỘC kiểm tra quyền, TRỪ module = 'guide'
+        if (module && module !== 'guide' && !userStore.hasPermission(module, 'view')) {
             return next('/403')
         }
     }
@@ -395,5 +406,6 @@ router.beforeEach(async (to, from, next) => {
 
     next()
 })
+
 
 export default router
