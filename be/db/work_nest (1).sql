@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 06, 2025 at 06:49 AM
+-- Generation Time: Dec 08, 2025 at 09:31 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -908,9 +908,7 @@ INSERT INTO `contracts` (`id`, `title`, `code`, `content`, `status`, `department
 (31, 'Cung cấp thiết bị điều khiển lò hơi - Nhiệt điện Vĩnh Tân 4', '#5222222', NULL, 4, NULL, 20, NULL, NULL, 0, 8, 9, '2025-06-07', '2025-06-16', '2025-06-21 14:24:12', '2025-06-22 14:26:44', NULL, '2343565879sdfgsdfsdfdfsf'),
 (32, 'Tư vấn nâng cấp hệ thống điều khiển DCS - Nhiệt điện Mông Dương', '#44444444', NULL, 4, NULL, 14, NULL, NULL, 0, 3, 4, '2025-06-07', '2025-06-16', '2025-06-21 14:56:49', '2025-06-22 14:29:14', NULL, '3432544656fghfgbcvbvbvc'),
 (33, 'Cung cấp than tổ hợp - Nhiệt điện Nghi Sơn', '#66666', NULL, 3, NULL, 22, NULL, NULL, 0, 1, 29, '2025-06-19', '2025-06-27', '2025-06-22 06:34:46', '2025-06-29 09:41:57', NULL, 'ưerrewrrrwwr'),
-(34, 'test hợp đồng 2', '#444444', NULL, 1, NULL, 19, NULL, NULL, 0, 2, 3, '2025-07-18', '2025-07-29', '2025-07-20 11:51:50', '2025-07-20 12:43:15', NULL, 'demo'),
 (65, 'HĐ gia công ống khói chịu nhiệt – Nhiệt điện Vĩnh Tân', 'HD001', NULL, 1, NULL, 4, NULL, '[\"5\"]', 0, NULL, 10, '2025-08-24', '2025-08-24', '2025-08-24 07:17:31', '2025-08-24 09:49:43', NULL, '423424244'),
-(66, 'hợp đồng xxxx', 'xxxxxx', NULL, 1, NULL, 17, NULL, '[\"5\", \"22\"]', 0, 5, 6, '2025-08-24', '2025-08-31', '2025-08-24 08:44:13', '2025-08-24 11:01:37', NULL, 'xxxxxxx'),
 (67, 'hợp đồng mới 05/12/2025', '#54656464', NULL, 1, NULL, 1, NULL, '[]', 0, 13, NULL, '2025-12-05', '2025-12-31', '2025-12-05 14:14:13', '2025-12-05 14:14:13', NULL, 'ok hợp đồng'),
 (68, 'hợp đồng mới 05/12/2025', '#54656464', NULL, 1, NULL, 1, NULL, '[]', 0, 13, NULL, '2025-12-05', '2025-12-31', '2025-12-05 14:14:19', '2025-12-05 14:14:19', NULL, 'ok hợp đồng'),
 (69, 'hợp đồng mới 05/12/2025', '#54656464', NULL, 1, NULL, 1, NULL, '[]', 0, 13, NULL, '2025-12-05', '2025-12-31', '2025-12-05 14:15:55', '2025-12-05 14:15:55', NULL, 'ok test');
@@ -1012,23 +1010,6 @@ INSERT INTO `contract_steps` (`id`, `contract_id`, `customer_id`, `step_number`,
 (324, 33, NULL, 24, 'Hỏi hồ sơ thanh quyết toán', 0, 23, NULL, NULL, NULL, NULL, '2025-06-22 06:34:46', '2025-06-29 17:13:19', '[\"P.KD\", \"P.TM\", \"P.TCKT\"]', 9),
 (325, 33, NULL, 25, 'Thanh toán', 0, 18, NULL, NULL, NULL, NULL, '2025-06-22 06:34:46', '2025-06-29 17:13:19', '[\"Khách hàng\"]', 14),
 (326, 33, NULL, 26, 'Thoả hồ sơ lưu chứng từ & kết thúc', 0, 7, NULL, NULL, NULL, NULL, '2025-06-22 06:34:46', '2025-06-29 17:13:19', '[\"P.KD\", \"P.TCKT\", \"P.TM\", \"P.KHNS\"]', 20),
-(327, 34, NULL, 10, 'Đặt hàng NCC', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"P.KD\", \"TP.M\", \"TP.TCKT\"]', NULL),
-(328, 34, NULL, 11, 'Duyệt đặt hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"Ban Giám đốc\"]', NULL),
-(329, 34, NULL, 12, 'Triển khai hợp đồng mua', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"P.TCKT\", \"P.KD\", \"P.DVKT\"]', NULL),
-(330, 34, NULL, 13, 'Duyệt hợp đồng mua', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"Ban Giám đốc\"]', NULL),
-(331, 34, NULL, 14, 'Thanh toán hợp đồng mua', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"P.TM\", \"P.TCKT\"]', NULL),
-(332, 34, NULL, 15, 'Kiểm tra hàng hóa', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"P.TM\"]', NULL),
-(333, 34, NULL, 16, 'Nghiệm thu', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"P.TM\", \"P.KD\", \"P.DVKT\"]', NULL),
-(334, 34, NULL, 17, 'Thông báo lỗi hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"P.TM\"]', NULL),
-(335, 34, NULL, 18, 'Nhập kho hàng hóa', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"P.KHNS\", \"P.TCKT\"]', NULL),
-(336, 34, NULL, 19, 'Xuất kho hàng hóa', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"P.KD\", \"P.TCKT\"]', NULL),
-(337, 34, NULL, 20, 'Duyệt phiếu xuất', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"Ban Giám đốc\"]', NULL),
-(338, 34, NULL, 21, 'Giao hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"P.KD\", \"P.KHNS\", \"P.TCKT\"]', NULL),
-(339, 34, NULL, 22, 'Nghiệm thu từ phía KH', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"Khách hàng\"]', NULL),
-(340, 34, NULL, 23, 'Xử lý sai lệch hoặc chứng từ', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"P.KD\", \"P.DVKT\", \"P.TMĐ\"]', NULL),
-(341, 34, NULL, 24, 'Hỏi hồ sơ thanh quyết toán', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"P.KD\", \"P.TM\", \"P.TCKT\"]', NULL),
-(342, 34, NULL, 25, 'Thanh toán', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"Khách hàng\"]', NULL),
-(343, 34, NULL, 26, 'Thoả hồ sơ lưu chứng từ & kết thúc', 0, NULL, NULL, NULL, NULL, NULL, '2025-07-20 11:51:51', '2025-07-20 11:51:51', '[\"P.KD\", \"P.TCKT\", \"P.TM\", \"P.KHNS\"]', NULL),
 (344, 65, NULL, 1, 'Đặt hàng NCC', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"P.KD\",\"TP.M\",\"TP.TCKT\"]', NULL),
 (345, 65, NULL, 2, 'Phát hành bảo lãnh', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"Ban Giám đốc\"]', NULL),
 (346, 65, NULL, 3, 'Hoàn thiện hồ sơ tạm ứng (nếu có)', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"P.TCKT\",\"P.KD\",\"P.DVKT\"]', NULL),
@@ -1048,25 +1029,6 @@ INSERT INTO `contract_steps` (`id`, `contract_id`, `customer_id`, `step_number`,
 (360, 65, NULL, 17, 'Thu hồi chứng từ', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"P.KD\",\"P.TCKT\",\"P.TM\",\"P.KHNS\"]', NULL),
 (361, 65, NULL, 18, 'Thanh lý hợp đồng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"Phòng Kinh doanh\"]', NULL),
 (362, 65, NULL, 19, 'Lưu hồ sơ', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 07:17:32', '2025-08-24 07:17:32', '[\"Phòng Kinh doanh\"]', NULL),
-(363, 66, NULL, 1, 'Đặt hàng NCC', 1, 6, '2025-08-24', NULL, '2025-08-31 00:00:00', NULL, '2025-08-24 08:44:13', '2025-10-08 09:06:53', '[\"P.KD\",\"TP.M\",\"TP.TCKT\"]', NULL),
-(364, 66, NULL, 2, 'Phát hành bảo lãnh', 1, 4, '2025-08-24', NULL, '2025-08-30 00:00:00', NULL, '2025-08-24 08:44:13', '2025-08-24 16:20:21', '[\"Ban Giám đốc\"]', NULL),
-(365, 66, NULL, 3, 'Hoàn thiện hồ sơ tạm ứng (nếu có)', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.TCKT\",\"P.KD\",\"P.DVKT\"]', NULL),
-(366, 66, NULL, 4, 'Đề nghị nhập hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"Ban Giám đốc\"]', NULL),
-(367, 66, NULL, 5, 'Đặt hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.TM\",\"P.TCKT\"]', NULL),
-(368, 66, NULL, 6, 'Giám sát, kiểm tra tình trạng đặt hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.TM\"]', NULL),
-(369, 66, NULL, 7, 'Thực hiện điều chỉnh nội dung hợp đồng (nếu có)', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.TM\",\"P.KD\",\"P.DVKT\"]', NULL),
-(370, 66, NULL, 8, 'Nghiệm thu hàng hoá (nội bộ)', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.TM\"]', NULL),
-(371, 66, NULL, 9, 'Nghiệm thu chứng từ bằng hoá (nội bộ)', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.KHNS\",\"P.TCKT\"]', NULL),
-(372, 66, NULL, 10, 'Lập kế hoạch giao hàng hoá và nghiệm thu kỹ thuật tới khách hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.KD\",\"P.TCKT\"]', NULL),
-(373, 66, NULL, 11, 'Bàn giao hàng hoá và nghiệm thu kỹ thuật tới khách hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"Ban Giám đốc\"]', NULL),
-(374, 66, NULL, 12, 'Xuất hoá đơn GTGT bằng hàng hoá, dịch vụ', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.KD\",\"P.KHNS\",\"P.TCKT\"]', NULL),
-(375, 66, NULL, 13, 'Nghiệm thu thương mại', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"Khách hàng\"]', NULL),
-(376, 66, NULL, 14, 'Phát hành bảo lãnh', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.KD\",\"P.DVKT\",\"P.TMĐ\"]', NULL),
-(377, 66, NULL, 15, 'Hoàn thiện hồ sơ thanh quyết toán', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.KD\",\"P.TM\",\"P.TCKT\"]', NULL),
-(378, 66, NULL, 16, 'Thu hồi công nợ', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"Khách hàng\"]', NULL),
-(379, 66, NULL, 17, 'Thu hồi chứng từ', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"P.KD\",\"P.TCKT\",\"P.TM\",\"P.KHNS\"]', NULL),
-(380, 66, NULL, 18, 'Thanh lý hợp đồng', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"Phòng Kinh doanh\"]', NULL),
-(381, 66, NULL, 19, 'Lưu hồ sơ', 0, NULL, NULL, NULL, NULL, NULL, '2025-08-24 08:44:13', '2025-08-24 08:44:13', '[\"Phòng Kinh doanh\"]', NULL),
 (382, 67, 13, 1, 'Xây dựng Bảng kế hoạch triển khai hợp đồng bán', 1, NULL, NULL, NULL, NULL, NULL, '2025-12-05 14:14:14', '2025-12-05 14:14:14', '[\"P.KD\",\"TP.M\",\"TP.TCKT\"]', NULL),
 (383, 67, 13, 2, 'Phát hành bảo lãnh', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-05 14:14:14', '2025-12-05 14:14:14', '[\"Ban Giám đốc\"]', NULL),
 (384, 67, 13, 3, 'Hoàn thiện hồ sơ tạm ứng (nếu có)', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-05 14:14:14', '2025-12-05 14:14:14', '[\"P.TCKT\",\"P.KD\",\"P.DVKT\"]', NULL),
@@ -1285,9 +1247,47 @@ INSERT INTO `departments` (`id`, `name`, `description`, `created_at`, `updated_a
 (1, 'Phòng Hành chính - Nhân sự', 'Cập nhật mô tả phòng ban', '2025-05-25 02:55:43', '2025-09-06 16:10:42'),
 (2, 'Phòng Tài chính - Kế toán', 'Quản lý tài chính và kế toán', '2025-06-04 09:01:59', '2025-09-06 16:10:32'),
 (3, 'Phòng Kinh doanh', 'Phụ trách phát triển kinh doanh', '2025-06-04 09:02:11', '2025-06-04 09:02:11'),
-(4, 'Phòng Thương mại', 'Quản lý hợp đồng và thương mại', '2025-06-04 09:02:29', '2025-06-04 09:02:29'),
-(5, 'Phòng Dịch vụ - Kỹ thuật', 'Hỗ trợ kỹ thuật và dịch vụ khách hàng', '2025-06-04 09:02:38', '2025-06-04 09:02:38'),
-(6, 'Ban giám dốc', 'Ban giám dốc', '2025-12-02 22:41:35', '2025-12-02 22:41:35');
+(4, 'Phòng Thương mại', 'Quản lý hợp đồng và thương mại', '2025-06-04 09:02:29', '2025-12-08 08:18:21'),
+(6, 'Ban giám đốc', 'Ban giám đốc', '2025-12-02 22:41:35', '2025-12-08 10:27:37');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `department_user`
+--
+
+CREATE TABLE `department_user` (
+  `id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `department_id` int NOT NULL,
+  `role_in_department` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'user',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `department_user`
+--
+
+INSERT INTO `department_user` (`id`, `user_id`, `department_id`, `role_in_department`, `created_at`, `updated_at`) VALUES
+(4, 5, 3, 'user', '2025-12-08 08:37:45', '2025-12-08 08:37:45'),
+(5, 6, 3, 'user', '2025-12-08 08:37:45', '2025-12-08 08:37:45'),
+(7, 8, 3, 'user', '2025-12-08 08:37:45', '2025-12-08 08:37:45'),
+(8, 9, 3, 'user', '2025-12-08 08:37:45', '2025-12-08 08:37:45'),
+(10, 11, 2, 'user', '2025-12-08 08:37:45', '2025-12-08 08:37:45'),
+(11, 13, 4, 'user', '2025-12-08 08:37:45', '2025-12-08 08:37:45'),
+(12, 14, 4, 'user', '2025-12-08 08:37:45', '2025-12-08 08:37:45'),
+(13, 15, 1, 'user', '2025-12-08 08:37:45', '2025-12-08 08:37:45'),
+(15, 30, 3, 'user', '2025-12-08 08:37:45', '2025-12-08 08:37:45'),
+(17, 10, 6, 'admin', '2025-12-08 08:38:17', '2025-12-08 08:38:17'),
+(18, 7, 3, 'admin', '2025-12-08 08:40:24', '2025-12-08 08:40:24'),
+(32, 10, 4, 'admin', '2025-12-08 10:23:29', '2025-12-08 10:23:29'),
+(33, 10, 2, 'admin', '2025-12-08 10:24:01', '2025-12-08 10:24:01'),
+(34, 1, 6, 'admin', '2025-12-08 10:25:46', '2025-12-08 10:25:46'),
+(35, 7, 6, 'admin', '2025-12-08 10:25:46', '2025-12-08 10:25:46'),
+(36, 3, 1, 'admin', '2025-12-08 10:28:30', '2025-12-08 10:28:30'),
+(37, 29, 1, 'admin', '2025-12-08 10:28:39', '2025-12-08 10:28:39'),
+(39, 4, 3, 'admin', '2025-12-08 10:36:11', '2025-12-08 10:36:11');
 
 -- --------------------------------------------------------
 
@@ -1338,7 +1338,10 @@ INSERT INTO `documents` (`id`, `title`, `file_path`, `file_size`, `department_id
 (208, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/11K1mssbDnLCJLuKtjqBv_dngTsHHT_IZXNO6W-1CavI/edit', 318161, 1, 3, 311, 201, 4, '11K1mssbDnLCJLuKtjqBv_dngTsHHT_IZXNO6W-1CavI', '2025-12-03 14:47:37', '2025-12-03 14:47:37', '', '11K1mssbDnLCJLuKtjqBv_dngTsHHT_IZXNO6W-1CavI', 'private'),
 (209, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1rJFYoVh2YpuCcuDLS4oo2qk3kAoTj8KDG0GxLZWWWIk/edit', 318161, 1, 3, 311, 202, 5, '1rJFYoVh2YpuCcuDLS4oo2qk3kAoTj8KDG0GxLZWWWIk', '2025-12-03 14:48:45', '2025-12-03 14:48:45', '', '1rJFYoVh2YpuCcuDLS4oo2qk3kAoTj8KDG0GxLZWWWIk', 'private'),
 (210, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1X9PRipxuDt4IyySzzvEiJXaQGOh2BT0y1yS7oIH0oeo/edit', 318161, 1, 3, 311, 203, 6, '1X9PRipxuDt4IyySzzvEiJXaQGOh2BT0y1yS7oIH0oeo', '2025-12-03 14:49:34', '2025-12-03 14:49:34', '', '1X9PRipxuDt4IyySzzvEiJXaQGOh2BT0y1yS7oIH0oeo', 'private'),
-(211, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1oFuV_S2omEHbUXL7nJf-HMVQgtwdnWmQSh7nIfP7Tb0/edit', 318161, 1, 3, 312, 204, 3, '1oFuV_S2omEHbUXL7nJf-HMVQgtwdnWmQSh7nIfP7Tb0', '2025-12-03 14:51:58', '2025-12-03 14:51:58', '', '1oFuV_S2omEHbUXL7nJf-HMVQgtwdnWmQSh7nIfP7Tb0', 'private');
+(211, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1oFuV_S2omEHbUXL7nJf-HMVQgtwdnWmQSh7nIfP7Tb0/edit', 318161, 1, 3, 312, 204, 3, '1oFuV_S2omEHbUXL7nJf-HMVQgtwdnWmQSh7nIfP7Tb0', '2025-12-03 14:51:58', '2025-12-03 14:51:58', '', '1oFuV_S2omEHbUXL7nJf-HMVQgtwdnWmQSh7nIfP7Tb0', 'private'),
+(212, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1LS8S6b3O90onuEegPv35pCyfZKufVoPdf0HtOhOScdo/edit', 315365, 6, 1, 313, 215, 1, '1LS8S6b3O90onuEegPv35pCyfZKufVoPdf0HtOhOScdo', '2025-12-07 21:48:26', '2025-12-07 21:48:26', '', '1LS8S6b3O90onuEegPv35pCyfZKufVoPdf0HtOhOScdo', 'private'),
+(213, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8/edit', 94720, 6, 1, 313, 216, 2, '1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8', '2025-12-07 21:54:43', '2025-12-07 21:54:43', '', '1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8', 'private'),
+(214, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ/edit', 315365, 6, 1, 313, 217, 3, '1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ', '2025-12-07 21:58:08', '2025-12-07 21:58:08', '', '1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ', 'private');
 
 -- --------------------------------------------------------
 
@@ -1385,7 +1388,10 @@ INSERT INTO `documents_converted` (`id`, `wp_id`, `file_url`, `mime_type`, `titl
 (35, 440, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', 'application/pdf', 'origin_a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', 127013, 'internal', '13nWfEsimjrGJoOEDNXlFgCTFh7tFeRHQpYmEUa709N0', 277, 1, 'Nguyễn Cảnh Hợp', '2025-12-02 07:24:50', '2025-12-02 14:24:51', '2025-12-02 14:24:51'),
 (36, 441, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251008_TTrHCNS_GiahanphanmemMicrosoft-365-T01-21.pdf', 'application/pdf', 'origin_20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.pdf', 174830, 'internal', '1F2yEeKki0kCc7i6sD_hGbAPo73hchyl8yK5Old30giw', 277, 1, 'Nguyễn Cảnh Hợp', '2025-12-02 07:25:04', '2025-12-02 14:25:05', '2025-12-02 14:25:05'),
 (37, 442, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-1.pdf', 'application/pdf', 'origin_a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', 127013, 'external', '13nWfEsimjrGJoOEDNXlFgCTFh7tFeRHQpYmEUa709N0', 277, 1, 'Nguyễn Cảnh Hợp', '2025-12-02 14:06:43', '2025-12-02 21:06:44', '2025-12-02 21:06:44'),
-(38, 443, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', 'application/pdf', 'origin_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 126127, 'internal', '1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw', 277, 1, 'Lương Đức Thuỷ', '2025-12-02 17:01:21', '2025-12-03 00:01:22', '2025-12-03 00:01:22');
+(38, 443, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', 'application/pdf', 'origin_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 126127, 'internal', '1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw', 277, 1, 'Lương Đức Thuỷ', '2025-12-02 17:01:21', '2025-12-03 00:01:22', '2025-12-03 00:01:22'),
+(39, 447, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-1.pdf', 'application/pdf', 'origin_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 921163, 'internal', '1LS8S6b3O90onuEegPv35pCyfZKufVoPdf0HtOhOScdo', 313, 1, 'Lương Đức Thuỷ', '2025-12-07 14:48:57', '2025-12-07 21:48:58', '2025-12-07 21:48:58'),
+(40, 448, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251008_TTrHCNS_GiahanphanmemMicrosoft-365-T01-23.pdf', 'application/pdf', 'origin_20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.pdf', 144619, 'internal', '1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8', 313, 1, 'Lương Đức Thuỷ', '2025-12-07 14:56:37', '2025-12-07 21:56:37', '2025-12-07 21:56:37'),
+(41, 449, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-2.pdf', 'application/pdf', 'origin_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 126127, 'internal', '1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ', 313, 1, 'Lương Đức Thuỷ', '2025-12-07 14:58:31', '2025-12-07 21:58:32', '2025-12-07 21:58:32');
 
 -- --------------------------------------------------------
 
@@ -1666,7 +1672,19 @@ INSERT INTO `document_sign_status` (`id`, `converted_id`, `approver_id`, `approv
 (124, 37, 1, 'Nguyễn Cảnh Hợp', 1, 2, 'signed', '2025-12-03 00:03:29', NULL, 1, 'Lương Đức Thuỷ', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '277', '2025-12-02 14:07:02'),
 (126, 37, 4, 'Tạ Quý Thọ', 3, 1, '', NULL, NULL, NULL, NULL, NULL, '277', '2025-12-02 14:07:02'),
 (127, 37, 5, 'Nguyễn Văn Chiểu', 4, 1, '', NULL, NULL, NULL, NULL, NULL, '277', '2025-12-02 14:07:02'),
-(136, 38, 29, 'Đoàn Văn Giang', 1, 2, 'signed', '2025-12-04 11:09:13', NULL, 29, 'Đoàn Văn Giang', 'https://assets.develop.io.vn/wp-content/uploads/2025/12/photo_2025-10-17_10-08-52-1.jpg', '277', '2025-12-04 04:08:32');
+(136, 38, 29, 'Đoàn Văn Giang', 1, 2, 'signed', '2025-12-04 11:09:13', NULL, 29, 'Đoàn Văn Giang', 'https://assets.develop.io.vn/wp-content/uploads/2025/12/photo_2025-10-17_10-08-52-1.jpg', '277', '2025-12-04 04:08:32'),
+(137, 39, 1, 'Lương Đức Thuỷ', 1, 1, 'pending', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:49:08'),
+(138, 39, 3, 'Đinh Văn Vịnh', 2, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:49:08'),
+(139, 39, 4, 'Tạ Quý Thọ', 3, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:49:08'),
+(140, 39, 5, 'Nguyễn Văn Chiểu', 4, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:49:08'),
+(141, 40, 1, 'Lương Đức Thuỷ', 1, 1, 'pending', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:57:33'),
+(142, 40, 3, 'Đinh Văn Vịnh', 2, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:57:33'),
+(143, 40, 4, 'Tạ Quý Thọ', 3, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:57:33'),
+(144, 40, 5, 'Nguyễn Văn Chiểu', 4, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:57:33'),
+(145, 41, 1, 'Lương Đức Thuỷ', 1, 1, 'pending', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:58:57'),
+(146, 41, 3, 'Đinh Văn Vịnh', 2, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:58:57'),
+(147, 41, 4, 'Tạ Quý Thọ', 3, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:58:57'),
+(148, 41, 5, 'Nguyễn Văn Chiểu', 4, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:58:57');
 
 -- --------------------------------------------------------
 
@@ -1784,7 +1802,9 @@ INSERT INTO `entity_members` (`id`, `entity_type`, `entity_id`, `user_id`, `crea
 (33, 'bidding', 41, 29, '2025-12-05 15:57:24'),
 (34, 'bidding', 41, 15, '2025-12-05 15:57:25'),
 (35, 'bidding', 45, 29, '2025-12-05 16:06:28'),
-(36, 'contract', 69, 4, '2025-12-06 13:16:33');
+(36, 'contract', 69, 4, '2025-12-06 13:16:33'),
+(37, 'bidding', 41, 1, '2025-12-07 15:36:43'),
+(38, 'bidding', 45, 1, '2025-12-07 15:36:53');
 
 -- --------------------------------------------------------
 
@@ -2283,7 +2303,6 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (27, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, NULL, NULL, 4, '2025-06-10', '2025-06-14', 'done', 'approved', NULL, 'bidding', 2, 1, 109, 3, 'high', 0, '2025-06-05 06:16:42', '2025-08-05 09:58:25', 1, NULL, 0, 1, 1, 100, NULL, NULL, NULL, '[]'),
 (28, 3, 'Thiết kế giao diện phụ - task con 3 có ngay bat dau - ngay ket thuc', 'Thiết kế giao diện cho phần chi tiết', 17, NULL, NULL, 4, '2025-06-25', '2025-07-31', 'done', 'approved', NULL, 'bidding', 2, 3, 111, 1, 'normal', 0, '2025-06-05 06:19:14', '2025-07-20 15:21:54', 1, NULL, 0, 1, 3, 0, NULL, NULL, NULL, '[]'),
 (29, 18, 'sub task 1', 'tesst subtask', 13, NULL, NULL, 4, '2025-06-24', '2025-07-31', '', 'pending', NULL, 'bidding', 5, 5, 104, 1, 'normal', 0, '2025-06-23 18:15:50', '2025-07-20 15:21:54', 1, NULL, 0, 1, 5, 0, NULL, NULL, NULL, '[]'),
-(30, NULL, 'test', 'tesst tesst', 22, NULL, NULL, 1, '2025-06-24', '2025-07-30', 'done', 'approved', NULL, 'bidding', 5, 5, 104, 1, 'normal', 0, '2025-06-23 18:52:15', '2025-09-03 19:15:10', 1, NULL, 0, 1, 1, 100, NULL, NULL, NULL, '[]'),
 (31, NULL, 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', 1, NULL, NULL, 4, '2025-08-29', '2025-08-31', 'overdue', 'pending', NULL, 'bidding', 2, 3, 111, 3, 'high', 0, '2025-06-24 18:47:18', '2025-08-05 09:07:21', 1, NULL, 0, 1, 4, 50, NULL, NULL, NULL, '[]'),
 (32, 1, 'tesst subtask', 'xxxxxxx', 22, NULL, NULL, 4, '2025-06-28', '2025-07-31', 'done', 'approved', NULL, 'bidding', 2, 1, 109, 1, 'normal', 0, '2025-06-28 08:01:02', '2025-07-20 15:21:54', 1, NULL, 0, 1, 3, 0, NULL, NULL, NULL, '[]'),
 (33, NULL, 'test task mới', 'test', 3, NULL, NULL, 4, '2025-06-29', '2025-07-31', 'done', 'approved', NULL, 'bidding', 5, 9, 108, 1, 'normal', 0, '2025-06-29 01:28:22', '2025-08-22 19:20:30', 1, NULL, 0, 1, 2, 100, NULL, NULL, NULL, '[]'),
@@ -2371,7 +2390,6 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (239, NULL, 'xxxxx', '543454353535', 5, NULL, NULL, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', NULL, 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:09:11', '2025-08-24 02:09:11', 1, NULL, 0, 1, 2, 0, NULL, NULL, NULL, '[]'),
 (240, NULL, '34535345', '5435353535', 5, NULL, NULL, 5, '2025-08-24', '2025-09-30', 'request_approval', 'pending', NULL, 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:10:23', '2025-08-24 02:10:23', 1, NULL, 0, 1, 1, 0, NULL, NULL, NULL, '[]'),
 (241, NULL, '3542342342', '4324324324', 5, NULL, NULL, 5, '2025-08-24', '2025-09-30', 'doing', 'pending', NULL, 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:14:06', '2025-08-24 02:14:06', 1, NULL, 0, 1, 1, 0, NULL, NULL, NULL, '[]'),
-(242, NULL, 'xxxxxxx', '4242342342', 5, NULL, NULL, 5, '2025-08-24', '2025-09-30', 'request_approval', 'pending', NULL, 'contract', 32, 10, 293, 3, 'normal', 0, '2025-08-24 02:20:07', '2025-08-24 02:20:07', 1, NULL, 0, 1, 1, 0, NULL, NULL, NULL, '[]'),
 (243, NULL, '4233243242', '23424234234', 5, NULL, NULL, 5, '2025-08-24', '2025-09-30', 'request_approval', 'pending', NULL, 'contract', 65, 1, 344, 3, 'normal', 0, '2025-08-24 02:33:59', '2025-08-24 02:41:22', 1, NULL, 0, 1, 2, 100, NULL, NULL, NULL, '[]'),
 (244, NULL, 'xxxxxx', '32424234243', 5, NULL, NULL, 5, '2025-08-24', '2025-09-30', 'done', 'approved', NULL, 'contract', 65, 1, 344, 3, 'normal', 0, '2025-08-24 02:38:58', '2025-08-24 02:40:34', 1, NULL, 0, 1, 2, 100, NULL, NULL, NULL, '[]'),
 (246, NULL, 'task con 2222', 'dsaddadada', 22, NULL, NULL, 22, '2025-08-24', '2025-09-30', 'request_approval', 'approved', NULL, 'contract', 66, 2, 364, 3, 'normal', 0, '2025-08-24 02:43:18', '2025-09-07 03:02:46', 0, NULL, 0, 0, 2, 100, NULL, NULL, NULL, '[]'),
@@ -2422,17 +2440,9 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (300, 281, '1.3.1. Lấy kế hoạch mục 1.3', '1.3.1. Lấy kế hoạch mục 1.3', 5, NULL, NULL, 4, '2025-09-05', '2025-09-05', '', 'pending', NULL, 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-17 00:57:04', '2025-10-04 21:34:52', 1, '[3]', 1, 1, 3, 0, NULL, NULL, NULL, '[]'),
 (301, 281, '1.3.2. Lấy kế hoạch mục 1.3', '1.3.2. Lấy kế hoạch mục 1.3', 5, NULL, NULL, 4, '2025-09-06', '2025-09-06', '', 'pending', NULL, 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-17 00:58:10', '2025-09-17 00:58:10', 1, NULL, 0, 1, 3, 0, NULL, NULL, NULL, '[]'),
 (302, NULL, 'nhiệm vụ mới 28/09/2025', 'test nhiệm vụ 28/09/2025', 5, 8, 14, 3, '2025-09-28', '2025-10-31', 'done', 'approved', NULL, 'bidding', 41, 1, 377, 3, 'high', 0, '2025-09-27 20:51:52', '2025-10-26 15:11:40', 0, '[9]', 1, 0, 3, 100, NULL, NULL, NULL, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-10-26 22:11:40\"}]'),
-(303, NULL, 'sub task 1', 'xxxxxx', 4, 5, NULL, 3, '2025-10-08', '2025-11-29', 'doing', 'pending', NULL, 'bidding', 41, 5, 381, 3, 'normal', 0, '2025-10-08 01:14:36', '2025-10-08 01:14:36', 0, NULL, 0, 1, 3, 0, NULL, NULL, NULL, '[]'),
 (304, NULL, 'công việc con 2', '4354354353', 5, 6, NULL, 6, '2025-10-08', '2025-10-26', 'doing', 'pending', NULL, 'bidding', 41, 1, 377, 3, 'normal', 0, '2025-10-08 01:17:59', '2025-10-26 15:12:54', 0, NULL, 0, 1, 3, 0, NULL, NULL, NULL, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-10-26 22:12:26\"}, {\"name\": \"Phạm Xuân Tuân\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 6, \"acted_at\": null, \"added_at\": \"2025-10-26 22:12:54\"}]'),
-(305, NULL, 'xxxxxxx', '32424242424', 5, 6, NULL, 4, '2025-10-08', '2025-11-28', 'doing', 'pending', NULL, 'contract', 66, 1, 363, 3, 'normal', 0, '2025-10-08 02:04:59', '2025-10-08 02:04:59', 0, NULL, 0, 1, 3, 0, NULL, NULL, NULL, '[]'),
-(306, 305, 'yyyyyyyyyyyyyyyyy', '234324244242', 5, 7, NULL, 6, '2025-10-08', '2025-11-29', 'doing', 'pending', NULL, 'contract', 66, 1, 363, 3, 'normal', 0, '2025-10-08 02:05:36', '2025-10-08 02:05:36', 0, NULL, 0, 1, 2, 0, NULL, NULL, NULL, '[]'),
-(307, 306, 'zzzzzzzzzzzzzz', '324243242424', 5, 7, NULL, 6, '2025-10-08', '2025-11-29', 'doing', 'pending', NULL, 'contract', 66, 1, 363, 3, 'normal', 0, '2025-10-08 02:06:19', '2025-10-08 02:06:19', 0, NULL, 0, 1, 3, 0, NULL, NULL, NULL, '[]'),
-(308, NULL, 'nnnnnnnnnnnn', '435345535353', 7, 9, NULL, 3, '2025-10-08', '2025-11-30', 'doing', 'pending', NULL, 'contract', 66, 4, 366, 3, 'normal', 0, '2025-10-08 02:24:36', '2025-10-08 02:24:36', 0, NULL, 0, 1, 3, 0, NULL, NULL, NULL, '[]'),
-(309, 308, 'vvvvvvvvvv', '432432424242', 7, 8, NULL, 3, '2025-10-08', '2025-11-29', 'doing', 'pending', NULL, 'contract', 66, 4, 366, 3, 'normal', 0, '2025-10-08 02:25:02', '2025-10-08 02:25:02', 0, NULL, 0, 1, 3, 0, NULL, NULL, NULL, '[]'),
 (310, NULL, 'nhiệm vụ mới 03-12-2025', 'ok', 5, 7, NULL, 3, '2025-12-03', '2026-01-30', 'doing', 'pending', NULL, 'bidding', 41, 1, 377, 3, 'normal', 0, '2025-12-03 06:45:29', '2025-12-03 06:45:29', 0, NULL, 0, 1, 3, 0, NULL, NULL, NULL, '[]'),
-(311, NULL, 'nhiệm vụ mới 03-12-2025 xxxx', 'ok', 3, 7, NULL, 3, '2025-12-03', '2026-01-31', 'doing', 'pending', NULL, 'bidding', 41, 1, 377, 3, 'normal', 0, '2025-12-03 06:53:49', '2025-12-03 07:49:34', 0, NULL, 0, 1, 3, 0, 6, '[{\"doc_type\": \"internal\", \"drive_id\": \"1X9PRipxuDt4IyySzzvEiJXaQGOh2BT0y1yS7oIH0oeo\", \"file_name\": \"a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1X9PRipxuDt4IyySzzvEiJXaQGOh2BT0y1yS7oIH0oeo/edit\", \"public_url\": \"https://docs.google.com/spreadsheets/d/1X9PRipxuDt4IyySzzvEiJXaQGOh2BT0y1yS7oIH0oeo/edit\", \"upload_batch\": 6, \"google_file_id\": \"1X9PRipxuDt4IyySzzvEiJXaQGOh2BT0y1yS7oIH0oeo\"}]', NULL, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-12-03 14:28:40\"}]'),
-(312, NULL, 'nhiệm vụ mới 03-12-2025 xxxx', 'ok', 3, 7, NULL, 3, '2025-12-03', '2026-01-31', '', 'pending', NULL, 'bidding', 41, 1, 377, 3, 'normal', 0, '2025-12-03 06:56:31', '2025-12-04 06:56:44', 0, NULL, 0, 1, 3, 0, 3, '[{\"doc_type\": \"internal\", \"drive_id\": \"1oFuV_S2omEHbUXL7nJf-HMVQgtwdnWmQSh7nIfP7Tb0\", \"file_name\": \"a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1oFuV_S2omEHbUXL7nJf-HMVQgtwdnWmQSh7nIfP7Tb0/edit\", \"public_url\": \"https://docs.google.com/spreadsheets/d/1oFuV_S2omEHbUXL7nJf-HMVQgtwdnWmQSh7nIfP7Tb0/edit\", \"upload_batch\": 3, \"google_file_id\": \"1oFuV_S2omEHbUXL7nJf-HMVQgtwdnWmQSh7nIfP7Tb0\"}]', NULL, '[{\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 29, \"acted_at\": \"2025-12-04 06:56:44\", \"added_at\": \"2025-12-04 13:56:37\"}]'),
-(313, NULL, 'nhiệm vụ mới', 'ok test', 5, 8, NULL, 3, '2025-12-05', '2026-01-31', 'doing', 'pending', NULL, 'bidding', 45, 1, 409, 3, 'normal', 0, '2025-12-05 06:55:24', '2025-12-05 06:55:24', 0, NULL, 0, 1, 3, 0, NULL, NULL, NULL, '[]'),
+(313, NULL, 'nhiệm vụ mới', 'ok test', 5, 8, NULL, 3, '2025-12-05', '2026-01-31', 'doing', 'pending', NULL, 'bidding', 45, 1, 409, 3, 'normal', 0, '2025-12-05 06:55:24', '2025-12-07 14:58:08', 0, NULL, 0, 1, 3, 0, 3, '[{\"doc_type\": \"internal\", \"drive_id\": \"1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ\", \"file_name\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ/edit\", \"public_url\": \"https://docs.google.com/spreadsheets/d/1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ/edit\", \"upload_batch\": 3, \"google_file_id\": \"1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ\"}]', NULL, '[]'),
 (314, NULL, 'nhiệm vụ chắt', 'ok nhé', 15, 9, NULL, 6, '2025-12-05', '2026-01-31', 'doing', 'pending', NULL, 'bidding', 45, 1, 409, 3, 'normal', 0, '2025-12-05 06:57:15', '2025-12-05 07:06:58', 0, NULL, 0, 1, 3, 0, NULL, NULL, NULL, '[{\"name\": \"Hoàng Thị Lan Anh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 13, \"acted_at\": null, \"added_at\": \"2025-12-05 14:06:58\"}]'),
 (315, 314, 'nhiệm vụ chắt chắt', 'ok test', 12, 29, NULL, 11, '2025-12-05', '2026-01-31', 'doing', 'pending', NULL, 'bidding', 45, 1, 409, 3, 'normal', 0, '2025-12-05 06:58:23', '2025-12-05 06:58:23', 0, NULL, 0, 1, 3, 0, NULL, NULL, NULL, '[]'),
 (316, NULL, 'hợp đồng cháu', 'ok hợp đồng', 5, 6, NULL, 4, '2025-12-05', '2026-01-31', 'doing', 'pending', NULL, 'bidding', 41, 1, 377, 3, 'normal', 0, '2025-12-05 07:17:32', '2025-12-05 07:17:32', 0, NULL, 0, 1, 3, 0, NULL, NULL, NULL, '[]'),
@@ -2756,7 +2766,20 @@ INSERT INTO `task_comments` (`id`, `task_id`, `user_id`, `comment_id`, `content`
 (201, 311, 3, NULL, '', '2025-12-03 07:47:30', '2025-12-03 07:47:30', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (202, 311, 3, NULL, '', '2025-12-03 07:48:39', '2025-12-03 07:48:39', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (203, 311, 3, NULL, '', '2025-12-03 07:49:26', '2025-12-03 07:49:26', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(204, 312, 3, NULL, '', '2025-12-03 07:51:51', '2025-12-03 07:51:51', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+(204, 312, 3, NULL, '', '2025-12-03 07:51:51', '2025-12-03 07:51:51', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(205, 313, 1, NULL, '', '2025-12-07 12:34:51', '2025-12-07 12:34:51', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(206, 313, 1, NULL, '', '2025-12-07 12:39:53', '2025-12-07 12:39:53', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(207, 313, 1, NULL, '', '2025-12-07 12:47:16', '2025-12-07 12:47:16', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(208, 313, 1, NULL, '', '2025-12-07 12:49:36', '2025-12-07 12:49:36', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(209, 313, 1, NULL, '', '2025-12-07 13:22:26', '2025-12-07 13:22:26', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(210, 313, 1, NULL, '', '2025-12-07 13:57:23', '2025-12-07 13:57:23', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(211, 313, 1, NULL, '', '2025-12-07 14:23:20', '2025-12-07 14:23:20', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(212, 313, 1, NULL, '', '2025-12-07 14:33:06', '2025-12-07 14:33:06', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(213, 313, 1, NULL, '', '2025-12-07 14:33:40', '2025-12-07 14:33:40', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(214, 313, 1, NULL, '', '2025-12-07 14:34:55', '2025-12-07 14:34:55', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(215, 313, 1, NULL, '', '2025-12-07 14:48:20', '2025-12-07 14:48:20', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(216, 313, 1, NULL, '', '2025-12-07 14:54:37', '2025-12-07 14:54:37', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(217, 313, 1, NULL, '', '2025-12-07 14:58:04', '2025-12-07 14:58:04', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -3200,7 +3223,13 @@ INSERT INTO `task_files` (`id`, `task_id`, `document_id`, `comment_id`, `file_na
 (370, 311, NULL, 203, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1X9PRipxuDt4IyySzzvEiJXaQGOh2BT0y1yS7oIH0oeo/edit', 3, NULL, '2025-12-03 07:49:34', '2025-12-03 14:49:34', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-12-03 14:49:34', 'google_drive', 318161, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 6, '1X9PRipxuDt4IyySzzvEiJXaQGOh2BT0y1yS7oIH0oeo'),
 (371, 311, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1X9PRipxuDt4IyySzzvEiJXaQGOh2BT0y1yS7oIH0oeo/edit', '2025-12-03 07:49:34', '2025-12-03 14:49:34', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-12-03 14:49:34', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
 (372, 312, NULL, 204, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1oFuV_S2omEHbUXL7nJf-HMVQgtwdnWmQSh7nIfP7Tb0/edit', 3, NULL, '2025-12-03 07:51:58', '2025-12-03 14:51:58', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-12-03 14:51:58', 'google_drive', 318161, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 3, '1oFuV_S2omEHbUXL7nJf-HMVQgtwdnWmQSh7nIfP7Tb0'),
-(373, 312, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1oFuV_S2omEHbUXL7nJf-HMVQgtwdnWmQSh7nIfP7Tb0/edit', '2025-12-03 07:51:58', '2025-12-03 14:51:58', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-12-03 14:51:58', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL);
+(373, 312, NULL, NULL, 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', 'a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 3, 'https://docs.google.com/spreadsheets/d/1oFuV_S2omEHbUXL7nJf-HMVQgtwdnWmQSh7nIfP7Tb0/edit', '2025-12-03 07:51:58', '2025-12-03 14:51:58', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-12-03 14:51:58', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(374, 313, NULL, 215, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1LS8S6b3O90onuEegPv35pCyfZKufVoPdf0HtOhOScdo/edit', 1, NULL, '2025-12-07 14:48:26', '2025-12-07 21:48:26', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 1, '2025-12-07 21:48:26', 'google_drive', 315365, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 1, '1LS8S6b3O90onuEegPv35pCyfZKufVoPdf0HtOhOScdo'),
+(375, 313, NULL, NULL, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 1, 'https://docs.google.com/spreadsheets/d/1LS8S6b3O90onuEegPv35pCyfZKufVoPdf0HtOhOScdo/edit', '2025-12-07 14:48:26', '2025-12-07 21:48:26', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-12-07 21:48:26', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(376, 313, NULL, 216, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8/edit', 1, NULL, '2025-12-07 14:54:43', '2025-12-07 21:54:43', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 1, '2025-12-07 21:54:43', 'google_drive', 94720, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 2, '1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8'),
+(377, 313, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 1, 'https://docs.google.com/document/d/1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8/edit', '2025-12-07 14:54:43', '2025-12-07 21:54:44', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-12-07 21:54:44', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(378, 313, NULL, 217, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', 'https://docs.google.com/spreadsheets/d/1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ/edit', 1, NULL, '2025-12-07 14:58:08', '2025-12-07 21:58:08', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 1, '2025-12-07 21:58:08', 'google_drive', 315365, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 3, '1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ'),
+(379, 313, NULL, NULL, '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', '20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx', NULL, 1, 'https://docs.google.com/spreadsheets/d/1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ/edit', '2025-12-07 14:58:08', '2025-12-07 21:58:09', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-12-07 21:58:09', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -3602,7 +3631,65 @@ INSERT INTO `task_snapshots` (`id`, `task_id`, `snapshot_at`, `title`, `descript
 (271, 69, '2025-12-06 13:16:41', 'chấm 1', '4432424', '2025-08-01', '2025-09-24', 'doing', 'normal', 'pending', 0, 8, NULL, NULL, 6, 1, '[]', NULL, '[]', '2025-12-06 13:16:41', '2025-12-06 13:16:41'),
 (272, 45, '2025-12-06 13:16:47', 'test nhiệm vụ gói thầu 7', 'chấm thầu', '2025-07-31', '2025-08-29', 'doing', 'high', 'pending', 50, 24, NULL, NULL, 2, 1, '[]', NULL, '[]', '2025-12-06 13:16:47', '2025-12-06 13:16:47'),
 (273, 320, '2025-12-06 13:16:56', 'nhiệm vụ con ko qt mới', 'ok', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 8, 9, NULL, 7, 3, '[]', NULL, '[]', '2025-12-06 13:16:56', '2025-12-06 13:16:56'),
-(274, 320, '2025-12-06 13:17:28', 'nhiệm vụ con ko qt mới', 'ok', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 8, 9, NULL, 7, 3, '[]', NULL, '[]', '2025-12-06 13:17:28', '2025-12-06 13:17:28');
+(274, 320, '2025-12-06 13:17:28', 'nhiệm vụ con ko qt mới', 'ok', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 8, 9, NULL, 7, 3, '[]', NULL, '[]', '2025-12-06 13:17:28', '2025-12-06 13:17:28'),
+(275, 313, '2025-12-07 09:29:58', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 09:29:58', '2025-12-07 09:29:58'),
+(276, 277, '2025-12-07 09:30:16', '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', '2025-09-01', '2025-09-01', 'done', 'high', 'approved', 100, 5, 3, 8, 4, 3, '[{\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 29, \"acted_at\": null, \"added_at\": \"2025-12-04 13:02:08\"}]', 25, '[{\"id\": \"202\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw\"}]', '2025-12-07 09:30:16', '2025-12-07 09:30:16'),
+(277, 30, '2025-12-07 09:30:49', 'test', 'tesst tesst', '2025-06-24', '2025-07-30', 'done', 'normal', 'approved', 100, 22, NULL, NULL, 1, 1, '[]', NULL, '[]', '2025-12-07 09:30:49', '2025-12-07 09:30:49'),
+(278, 242, '2025-12-07 09:31:08', 'xxxxxxx', '4242342342', '2025-08-24', '2025-09-30', 'request_approval', 'normal', 'pending', 0, 5, NULL, NULL, 5, 3, '[]', NULL, '[]', '2025-12-07 09:31:08', '2025-12-07 09:31:08'),
+(279, 69, '2025-12-07 09:31:46', 'chấm 1', '4432424', '2025-08-01', '2025-09-24', 'doing', 'normal', 'pending', 0, 8, NULL, NULL, 6, 1, '[]', NULL, '[]', '2025-12-07 09:31:46', '2025-12-07 09:31:46'),
+(280, 317, '2025-12-07 09:36:44', 'hợp đồng cháu', 'ok hợp đồng', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 6, NULL, 4, 3, '[{\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 29, \"acted_at\": null, \"added_at\": \"2025-12-05 14:20:18\"}, {\"name\": \"Trần Thị Hiền\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 15, \"acted_at\": null, \"added_at\": \"2025-12-05 14:21:39\"}]', NULL, '[]', '2025-12-07 09:36:44', '2025-12-07 09:36:44'),
+(281, 43, '2025-12-07 09:39:19', 'test nhiệm vụ hợp đồng 5', 'kiểm tra hàng hóa', '2025-07-01', '2025-08-31', 'doing', 'normal', 'pending', 0, 1, NULL, NULL, 2, 1, '[]', NULL, '[]', '2025-12-07 09:39:19', '2025-12-07 09:39:19'),
+(282, 277, '2025-12-07 09:42:36', '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', '2025-09-01', '2025-09-01', 'done', 'high', 'approved', 100, 5, 3, 8, 4, 3, '[{\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 29, \"acted_at\": null, \"added_at\": \"2025-12-04 13:02:08\"}]', 25, '[{\"id\": \"202\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw\"}]', '2025-12-07 09:42:36', '2025-12-07 09:42:36'),
+(283, 277, '2025-12-07 09:44:13', '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', '2025-09-01', '2025-09-01', 'done', 'high', 'approved', 100, 5, 3, 8, 4, 3, '[{\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 29, \"acted_at\": null, \"added_at\": \"2025-12-04 13:02:08\"}]', 25, '[{\"id\": \"202\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw\"}]', '2025-12-07 09:44:13', '2025-12-07 09:44:13'),
+(284, 277, '2025-12-07 09:44:28', '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', '2025-09-01', '2025-09-01', 'done', 'high', 'approved', 100, 5, 3, 8, 4, 3, '[{\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 29, \"acted_at\": null, \"added_at\": \"2025-12-04 13:02:08\"}]', 25, '[{\"id\": \"202\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw\"}]', '2025-12-07 09:44:28', '2025-12-07 09:44:28');
+INSERT INTO `task_snapshots` (`id`, `task_id`, `snapshot_at`, `title`, `description`, `start_date`, `end_date`, `status`, `priority`, `approval_status`, `progress`, `assigned_to`, `collaborated_by`, `assigned_by`, `proposed_by`, `created_by`, `approval_roster_json`, `latest_upload_batch`, `latest_files_json`, `created_at`, `updated_at`) VALUES
+(285, 277, '2025-12-07 09:49:18', '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', '2025-09-01', '2025-09-01', 'done', 'high', 'approved', 100, 5, 3, 8, 4, 3, '[{\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 29, \"acted_at\": null, \"added_at\": \"2025-12-04 13:02:08\"}]', 25, '[{\"id\": \"202\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw\"}]', '2025-12-07 09:49:18', '2025-12-07 09:49:18'),
+(286, 277, '2025-12-07 09:49:32', '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', '2025-09-01', '2025-09-01', 'done', 'high', 'approved', 100, 5, 3, 8, 4, 3, '[{\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 29, \"acted_at\": null, \"added_at\": \"2025-12-04 13:02:08\"}]', 25, '[{\"id\": \"202\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw\"}]', '2025-12-07 09:49:32', '2025-12-07 09:49:32'),
+(287, 277, '2025-12-07 09:49:40', '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', '2025-09-01', '2025-09-01', 'done', 'high', 'approved', 100, 5, 3, 8, 4, 3, '[{\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 29, \"acted_at\": null, \"added_at\": \"2025-12-04 13:02:08\"}]', 25, '[{\"id\": \"202\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw\"}]', '2025-12-07 09:49:40', '2025-12-07 09:49:40'),
+(288, 277, '2025-12-07 09:51:35', '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', '2025-09-01', '2025-09-01', 'done', 'high', 'approved', 100, 5, 3, 8, 4, 3, '[{\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 29, \"acted_at\": null, \"added_at\": \"2025-12-04 13:02:08\"}]', 25, '[{\"id\": \"202\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw\"}]', '2025-12-07 09:51:35', '2025-12-07 09:51:35'),
+(289, 313, '2025-12-07 09:59:45', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 09:59:45', '2025-12-07 09:59:45'),
+(290, 313, '2025-12-07 10:01:15', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 10:01:15', '2025-12-07 10:01:15'),
+(291, 313, '2025-12-07 10:01:33', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 10:01:33', '2025-12-07 10:01:33'),
+(292, 313, '2025-12-07 10:02:29', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 10:02:29', '2025-12-07 10:02:29'),
+(293, 313, '2025-12-07 10:03:43', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 10:03:43', '2025-12-07 10:03:43'),
+(294, 313, '2025-12-07 10:04:50', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 10:04:50', '2025-12-07 10:04:50'),
+(295, 313, '2025-12-07 10:07:17', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 10:07:17', '2025-12-07 10:07:17'),
+(296, 313, '2025-12-07 10:07:30', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 10:07:30', '2025-12-07 10:07:30'),
+(297, 313, '2025-12-07 10:08:20', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 10:08:20', '2025-12-07 10:08:20'),
+(298, 313, '2025-12-07 10:13:49', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 10:13:49', '2025-12-07 10:13:49'),
+(299, 313, '2025-12-07 10:42:59', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 10:42:59', '2025-12-07 10:42:59'),
+(300, 277, '2025-12-07 10:43:09', '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', '2025-09-01', '2025-09-01', 'done', 'high', 'approved', 100, 5, 3, 8, 4, 3, '[{\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 29, \"acted_at\": null, \"added_at\": \"2025-12-04 13:02:08\"}]', 25, '[{\"id\": \"202\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw\"}]', '2025-12-07 10:43:09', '2025-12-07 10:43:09'),
+(301, 277, '2025-12-07 15:33:31', '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', '2025-09-01', '2025-09-01', 'done', 'high', 'approved', 100, 5, 3, 8, 4, 3, '[{\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 29, \"acted_at\": null, \"added_at\": \"2025-12-04 13:02:08\"}]', 25, '[{\"id\": \"202\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1ov9IS-v5YtGb66JxIeyuHB8BxoqB36pByJ3Qr9vqmiw\"}]', '2025-12-07 15:33:31', '2025-12-07 15:33:31'),
+(302, 317, '2025-12-07 15:34:16', 'hợp đồng cháu', 'ok hợp đồng', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 6, NULL, 4, 3, '[{\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 29, \"acted_at\": null, \"added_at\": \"2025-12-05 14:20:18\"}, {\"name\": \"Trần Thị Hiền\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 15, \"acted_at\": null, \"added_at\": \"2025-12-05 14:21:39\"}]', NULL, '[]', '2025-12-07 15:34:16', '2025-12-07 15:34:16'),
+(303, 27, '2025-12-07 15:53:28', 'Task thuộc bước 1 - Gói thầu có ngay bat dau - ngay ket thuc', 'Mô tả công việc đăng ký bảo hành', '2025-06-10', '2025-06-14', 'done', 'high', 'approved', 100, 1, NULL, NULL, 4, 3, '[]', NULL, '[]', '2025-12-07 15:53:28', '2025-12-07 15:53:28'),
+(304, 313, '2025-12-07 19:34:43', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 19:34:43', '2025-12-07 19:34:43'),
+(305, 313, '2025-12-07 19:39:47', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 19:39:47', '2025-12-07 19:39:47'),
+(306, 313, '2025-12-07 19:47:09', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 19:47:09', '2025-12-07 19:47:09'),
+(307, 313, '2025-12-07 19:49:32', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 19:49:32', '2025-12-07 19:49:32'),
+(308, 313, '2025-12-07 20:22:20', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 20:22:20', '2025-12-07 20:22:20'),
+(309, 313, '2025-12-07 20:57:18', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 20:57:18', '2025-12-07 20:57:18'),
+(310, 313, '2025-12-07 21:07:52', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 21:07:52', '2025-12-07 21:07:52'),
+(311, 313, '2025-12-07 21:08:41', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 21:08:41', '2025-12-07 21:08:41'),
+(312, 313, '2025-12-07 21:23:15', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 21:23:15', '2025-12-07 21:23:15'),
+(313, 313, '2025-12-07 21:33:00', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 21:33:00', '2025-12-07 21:33:00'),
+(314, 313, '2025-12-07 21:33:35', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 21:33:35', '2025-12-07 21:33:35'),
+(315, 313, '2025-12-07 21:34:49', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 21:34:49', '2025-12-07 21:34:49'),
+(316, 313, '2025-12-07 21:48:15', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', NULL, '[]', '2025-12-07 21:48:15', '2025-12-07 21:48:15'),
+(317, 313, '2025-12-07 21:48:26', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', 1, '[{\"id\": \"212\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1LS8S6b3O90onuEegPv35pCyfZKufVoPdf0HtOhOScdo/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1LS8S6b3O90onuEegPv35pCyfZKufVoPdf0HtOhOScdo\"}]', '2025-12-07 21:48:26', '2025-12-07 21:48:26'),
+(318, 313, '2025-12-07 21:49:19', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', 1, '[{\"id\": \"212\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1LS8S6b3O90onuEegPv35pCyfZKufVoPdf0HtOhOScdo/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1LS8S6b3O90onuEegPv35pCyfZKufVoPdf0HtOhOScdo\"}]', '2025-12-07 21:49:19', '2025-12-07 21:49:19'),
+(319, 313, '2025-12-07 21:51:30', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', 1, '[{\"id\": \"212\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1LS8S6b3O90onuEegPv35pCyfZKufVoPdf0HtOhOScdo/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1LS8S6b3O90onuEegPv35pCyfZKufVoPdf0HtOhOScdo\"}]', '2025-12-07 21:51:30', '2025-12-07 21:51:30'),
+(320, 313, '2025-12-07 21:54:30', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', 1, '[{\"id\": \"212\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1LS8S6b3O90onuEegPv35pCyfZKufVoPdf0HtOhOScdo/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1LS8S6b3O90onuEegPv35pCyfZKufVoPdf0HtOhOScdo\"}]', '2025-12-07 21:54:30', '2025-12-07 21:54:30'),
+(321, 313, '2025-12-07 21:54:43', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', 2, '[{\"id\": \"213\", \"title\": \"20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc\", \"file_path\": \"https://docs.google.com/document/d/1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8/edit\", \"file_size\": \"94720\", \"google_file_id\": \"1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8\"}]', '2025-12-07 21:54:43', '2025-12-07 21:54:43'),
+(322, 313, '2025-12-07 21:55:34', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', 2, '[{\"id\": \"213\", \"title\": \"20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc\", \"file_path\": \"https://docs.google.com/document/d/1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8/edit\", \"file_size\": \"94720\", \"google_file_id\": \"1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8\"}]', '2025-12-07 21:55:34', '2025-12-07 21:55:34'),
+(323, 313, '2025-12-07 21:56:11', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', 2, '[{\"id\": \"213\", \"title\": \"20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc\", \"file_path\": \"https://docs.google.com/document/d/1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8/edit\", \"file_size\": \"94720\", \"google_file_id\": \"1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8\"}]', '2025-12-07 21:56:11', '2025-12-07 21:56:11'),
+(324, 313, '2025-12-07 21:57:24', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', 2, '[{\"id\": \"213\", \"title\": \"20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc\", \"file_path\": \"https://docs.google.com/document/d/1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8/edit\", \"file_size\": \"94720\", \"google_file_id\": \"1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8\"}]', '2025-12-07 21:57:24', '2025-12-07 21:57:24'),
+(325, 313, '2025-12-07 21:57:57', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', 2, '[{\"id\": \"213\", \"title\": \"20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc\", \"file_path\": \"https://docs.google.com/document/d/1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8/edit\", \"file_size\": \"94720\", \"google_file_id\": \"1CMGhgGD1VkmZE2IXIqGE0Bs4xgU8QfbBXBlrMU6bq-8\"}]', '2025-12-07 21:57:57', '2025-12-07 21:57:57'),
+(326, 313, '2025-12-07 21:58:08', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', 3, '[{\"id\": \"214\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ\"}]', '2025-12-07 21:58:08', '2025-12-07 21:58:08'),
+(327, 313, '2025-12-07 22:17:18', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', 3, '[{\"id\": \"214\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ\"}]', '2025-12-07 22:17:18', '2025-12-07 22:17:18'),
+(328, 313, '2025-12-07 22:29:56', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', 3, '[{\"id\": \"214\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ\"}]', '2025-12-07 22:29:56', '2025-12-07 22:29:56'),
+(329, 288, '2025-12-07 23:01:12', 'Nhiệm vụ Chắt 1_DVV', 'Nhiệm vụ cháu 1_DVV', '2025-09-10', '2025-09-10', 'request_approval', 'high', 'pending', 0, 3, NULL, NULL, 4, 3, '[]', NULL, '[]', '2025-12-07 23:01:12', '2025-12-07 23:01:12'),
+(330, 313, '2025-12-08 00:01:14', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', 3, '[{\"id\": \"214\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ\"}]', '2025-12-08 00:01:14', '2025-12-08 00:01:14'),
+(331, 313, '2025-12-08 11:58:56', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'doing', 'normal', 'pending', 0, 5, 8, NULL, 3, 3, '[]', 3, '[{\"id\": \"214\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ\"}]', '2025-12-08 11:58:56', '2025-12-08 11:58:56');
 
 -- --------------------------------------------------------
 
@@ -3632,20 +3719,20 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `name`, `phone`, `avatar`, `signature_url`, `preferred_marker`, `approval_marker`, `department_id`, `role_id`) VALUES
 (1, 'thuy.luong@ttid.com.vn', '$2y$10$znGt22AodklURvc9mdHUfOK/vzj4s9IR0XCzpPIXfUs.FZj7/ABoy', '2025-04-07 18:49:01', '2025-12-02 22:56:55', 'Lương Đức Thuỷ', '0982240842', 'uploads/avatars/1764690034_cb385e2bc057c6d032b1.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', 'luongducthuy', 'luong_duc_thuy', 6, 1),
-(3, 'info@ttid.com.vn', '$2y$10$duTynUTzT2E8r/XfWDEAv.zruGL1CwtgiFyHoBybvwd8valutSCTW', '2025-04-20 14:02:38', '2025-12-02 22:43:42', 'Đinh Văn Vịnh', '0989268613', 'uploads/avatars/1764690219_07aa7e6ea0e0c0116def.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', 'dinhvanvinh', 'dinh_van_vinh', 1, 1),
+(3, 'info@ttid.com.vn', '$2y$10$tduOwfHi9s09ZNy9HuVq4u3s0ypoELdPAhQ4CpaUT6q07YWhaQUl.', '2025-04-20 14:02:38', '2025-12-06 22:28:33', 'Đinh Văn Vịnh', '0989268613', 'uploads/avatars/1764690219_07aa7e6ea0e0c0116def.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', 'dinhvanvinh', 'dinh_van_vinh', 1, 1),
 (4, 'tho.ta@ttid.com.vn', '$2y$10$X0AYs8k7Dw8fbMqF9DzxiuBhQzGzu.ehudtC.2SWOjA4tsTZK0sYG', '2025-05-26 04:33:21', '2025-12-02 22:57:15', 'Tạ Quý Thọ', '0979412583', 'uploads/avatars/1764690599_336c8efbddc85f1c45c0.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/11/photo_2025-10-17_10-09-07-1.jpg', 'taquytho', 'ta_quy_tho', 3, 2),
-(5, 'chieu.nguyenvan@ttid.com.vn', '$2y$10$MBmxJ.v7/6kO6HaPIDcRE.dsGApBjLkWGyF655SlW5gCBMeaCHrNe', '2025-06-04 09:10:50', '2025-12-02 23:00:18', 'Nguyễn Văn Chiểu', '0985412304', 'uploads/avatars/1764691177_7043e7f581526b0bab4a.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-04-1.jpg', 'nguyenvanchieu', 'nguyen_van_chieu', 3, 2),
-(6, 'b@worknest.vn', '$2y$10$ZKKb/DZ/dk0eFQW/xfG3Ne8Ozrdt1TcQcR1alq4KP5biJpmUm2Uuy', '2025-06-04 09:11:21', '2025-11-29 13:33:58', 'Phạm Xuân Tuân', '0911111112', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/z7010742803776_61e4e0e6d2380894deeebfd1b1d5d8c0.jpg', 'phamxuantuan', 'pham_xuan_tuan', 3, 2),
-(7, 'hop.nguyen@ttid.com.vn', '$2y$10$jh.Bqbz9rG5INlFCnuvo9uiL/.5Whd75mlamj14ZST9BCosMxt02a', '2025-06-04 09:11:44', '2025-12-02 22:48:14', 'Nguyễn Cảnh Hợp', '0973197806', 'uploads/avatars/1764690494_9a6c41da2fa1128e8b98.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10.jpg', 'nguyencanhhop', 'nguyen_canh_hop', 6, 1),
+(5, 'chieu.nguyenvan@ttid.com.vn', '$2y$10$PI6URVB3eIwq0P5KO9.8O.b.gPzleYYBsArXWQsdnCc7REZgLVRf6', '2025-06-04 09:10:50', '2025-12-08 08:17:10', 'Nguyễn Văn Chiểu', '0985412304', 'uploads/avatars/1764691177_7043e7f581526b0bab4a.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-04-1.jpg', 'nguyenvanchieu', 'nguyen_van_chieu', 3, 3),
+(6, 'tuan.pham@ttid.com.vn', '$2y$10$tji5VCbYZQxSUpSSEkv2w.K9rNnERL1SJRRXqY8BNjx8xXTPB1YKS', '2025-06-04 09:11:21', '2025-12-06 22:26:57', 'Phạm Xuân Tuân', '0333094031', 'uploads/avatars/1765034817_caee5d05bb45d9445825.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/z7010742803776_61e4e0e6d2380894deeebfd1b1d5d8c0.jpg', 'phamxuantuan', 'pham_xuan_tuan', 3, 3),
+(7, 'hop.nguyen@ttid.com.vn', '$2y$10$jh.Bqbz9rG5INlFCnuvo9uiL/.5Whd75mlamj14ZST9BCosMxt02a', '2025-06-04 09:11:44', '2025-12-06 21:07:44', 'Nguyễn Cảnh Hợp', '0973197806', 'uploads/avatars/1764690494_9a6c41da2fa1128e8b98.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10.jpg', 'nguyencanhhop', 'nguyen_canh_hop', 6, 2),
 (8, 'dung.hoang@ttid.com.vn', '$2y$10$k1c3wH5aRm2Y93C4BMuFzejAozu6VLioxhrug00Uk7f.NCuj8H6Ja', '2025-06-04 09:12:07', '2025-12-04 12:47:56', 'Hoàng Văn Dũng', '0966140205', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07.jpg', 'hoangvandung', 'hoang_van_dung', 3, 3),
-(9, 't@worknest.vn', '$2y$10$hGqQg.IGey/1/3a6Dt/3rOQKKdPgz2U787lWDghxeDqCmCk30v7SW', '2025-06-04 09:12:52', '2025-11-29 13:34:37', 'Nguyễn Danh Vương Bình', '0911111115', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-04.jpg', 'nguyendanhvuong', 'nguyen_danh_vuong', 3, 3),
-(10, 'thuy.vu@ttid.com.vn', '$2y$10$JGP3e6v4ZaWyO2CjAd6lieIt01IyZVyuJ3q95uT03kc4xUBzikxli', '2025-06-04 09:13:10', '2025-12-02 22:53:06', 'Vũ Thị Thuỷ', '0977587939', 'uploads/avatars/1764690786_c77cac7c876aea6f6990.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-08-52.jpg', 'vuthithuy', 'vu_thi_thuy', 2, 1),
-(11, 'h@worknest.vn', '$2y$10$HVsxejThJCOYfidLz.xreOCpRGZp8QI001kHhekDGq9tVFW0TWv0K', '2025-06-04 09:13:37', '2025-11-29 13:34:56', 'Đinh Thị Tú', '0911111117', NULL, NULL, 'dinhthitu', 'dinh_thi_tu', 2, 3),
-(12, 'hq@worknest.vn', '$2y$10$eqebovRoFs2X3pAu5WRwWuQf6JF1t/72sSqOwcQsd8yR7yHA47Pa.', '2025-06-04 16:15:57', '2025-11-12 16:37:42', 'Nguyễn Thị Ngọc Anh', '0911111118', NULL, NULL, 'nguyenthingocanh', NULL, 4, 3),
-(13, 'bich@worknest.vn', '$2y$10$QLmkrq1e97eFm2g59f06V.b1jy50AavfEWK8rJZBNYII1Dcd2nzKK', '2025-06-04 16:15:57', '2025-11-12 16:23:43', 'Hoàng Thị Lan Anh', '0911111119', NULL, NULL, 'hoangthilananh', NULL, 4, 3),
-(14, 'tuan@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-11-06 23:41:13', 'Nguyễn Thị Hạnh', '0911111120', NULL, NULL, 'nguyenthihanh', NULL, 4, 3),
-(15, 'phuc@worknest.vn', '$2y$10$kA/0rBhn7rfjCGZTk4SMKuON4RAmIxyjq0An4kLrgRAXX29ASbvi2', '2025-06-04 16:15:57', '2025-11-06 23:41:21', 'Trần Thị Hiền', '0911111121', NULL, NULL, 'tranthihien', NULL, 1, 3),
-(29, 'doangiang665@gmail.com', '$2y$10$3QhZCEuukB7nT.XEnDE9BO5E/nlbvKK.KujtmALEdqPlQvA7X7A/q', '2025-12-04 10:38:41', '2025-12-04 10:46:17', 'Đoàn Văn Giang', '0988888888', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/photo_2025-10-17_10-08-52-1.jpg', 'doanvangiang', 'doan_van_giang', 1, 1);
+(9, 'kd1@ttid.vn', '$2y$10$hGqQg.IGey/1/3a6Dt/3rOQKKdPgz2U787lWDghxeDqCmCk30v7SW', '2025-06-04 09:12:52', '2025-12-06 22:17:58', 'Nhạc Quang Huy', '0344322102', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-04.jpg', 'nhacquanghuy', 'nhac_quang_huy', 3, 3),
+(10, 'thuy.vu@ttid.com.vn', '$2y$10$JGP3e6v4ZaWyO2CjAd6lieIt01IyZVyuJ3q95uT03kc4xUBzikxli', '2025-06-04 09:13:10', '2025-12-06 21:07:54', 'Vũ Thị Thuỷ', '0977587939', 'uploads/avatars/1764690786_c77cac7c876aea6f6990.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-08-52.jpg', 'vuthithuy', 'vu_thi_thuy', 2, 2),
+(11, 'tu.dinh@ttid.vn', '$2y$10$xF05e7u.W99Avl/xDmb2r.LoqxLMc4OEsECtVUpak8xIK3nteX40G', '2025-06-04 09:13:37', '2025-12-06 22:30:52', 'Đinh Thị Tú', '0353334327', 'uploads/avatars/1765035052_874ee3529ca373ab8cb1.jpg', NULL, 'dinhthitu', 'dinh_thi_tu', 2, 3),
+(13, 'tm1@ttid.vn', '$2y$10$kt6NPnknnCknO/Z9NLrJ5e.sYkAqspltEtXXQBgT4UBF6r8nKxDwK', '2025-06-04 16:15:57', '2025-12-06 22:32:12', 'Hoàng Thị Lan Anh', '0966865092', 'uploads/avatars/1765035132_357528683932f28c3f7a.jpg', NULL, 'hoangthilananh', 'hoang_thi_lan_anh', 4, 3),
+(14, 'tm2@ttid.vn', '$2y$10$Dj6L0zV4NvclC79XjICTFuIm/oLPjuMbzttV2jgD9xHNKPlAwpJ/2', '2025-06-04 16:15:57', '2025-12-06 22:34:02', 'Nguyễn Thị Hạnh', '0982565691', 'uploads/avatars/1765035242_f51c9fc738b4db6bd0a2.jpg', NULL, 'nguyenthihanh', 'nguyen_thi_hanh', 4, 3),
+(15, 'hcns1@ttid.vn', '$2y$10$e6z52SuVrQnDyPITVROlq.lbJF3uj1xrb0redSB.B7mvhd3uKNBUG', '2025-06-04 16:15:57', '2025-12-06 22:35:50', 'Trần Thị Hiền', '0945317398', 'uploads/avatars/1765035350_f4d84714ad46fbca6283.jpg', NULL, 'tranthihien', 'tran_thi_hien', 1, 3),
+(29, 'doangiang665@gmail.com', '$2y$10$3QhZCEuukB7nT.XEnDE9BO5E/nlbvKK.KujtmALEdqPlQvA7X7A/q', '2025-12-04 10:38:41', '2025-12-04 10:46:17', 'Đoàn Văn Giang', '0988888888', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/photo_2025-10-17_10-08-52-1.jpg', 'doanvangiang', 'doan_van_giang', 1, 1),
+(30, 'hieu.le@ttid.vn', '$2y$10$PepN43S0NERKBT.w4jPlt.BnXb26Uf6xkpiGPW/9bVfSo0ce6Wb9W', '2025-12-06 22:24:56', '2025-12-06 22:25:12', 'Lê Minh Hiếu', '0335201151', NULL, NULL, 'leminhhieu', 'le_minh_hieu', 3, 3);
 
 --
 -- Indexes for dumped tables
@@ -3767,6 +3854,12 @@ ALTER TABLE `customer_transactions`
 -- Indexes for table `departments`
 --
 ALTER TABLE `departments`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `department_user`
+--
+ALTER TABLE `department_user`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -4074,16 +4167,22 @@ ALTER TABLE `departments`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
+-- AUTO_INCREMENT for table `department_user`
+--
+ALTER TABLE `department_user`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+
+--
 -- AUTO_INCREMENT for table `documents`
 --
 ALTER TABLE `documents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=212;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=215;
 
 --
 -- AUTO_INCREMENT for table `documents_converted`
 --
 ALTER TABLE `documents_converted`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `document_approvals`
@@ -4119,7 +4218,7 @@ ALTER TABLE `document_settings`
 -- AUTO_INCREMENT for table `document_sign_status`
 --
 ALTER TABLE `document_sign_status`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=137;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=149;
 
 --
 -- AUTO_INCREMENT for table `doc_department_access`
@@ -4143,7 +4242,7 @@ ALTER TABLE `doc_user_access`
 -- AUTO_INCREMENT for table `entity_members`
 --
 ALTER TABLE `entity_members`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `file_signatures`
@@ -4209,7 +4308,7 @@ ALTER TABLE `task_approval_logs`
 -- AUTO_INCREMENT for table `task_comments`
 --
 ALTER TABLE `task_comments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=205;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=218;
 
 --
 -- AUTO_INCREMENT for table `task_extensions`
@@ -4221,7 +4320,7 @@ ALTER TABLE `task_extensions`
 -- AUTO_INCREMENT for table `task_files`
 --
 ALTER TABLE `task_files`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=374;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=380;
 
 --
 -- AUTO_INCREMENT for table `task_notifications`
@@ -4245,13 +4344,13 @@ ALTER TABLE `task_sign_logs`
 -- AUTO_INCREMENT for table `task_snapshots`
 --
 ALTER TABLE `task_snapshots`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=275;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=332;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- Constraints for dumped tables

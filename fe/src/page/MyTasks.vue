@@ -20,7 +20,7 @@
                     </a-card>
                 </div>
 
-                <a-divider>Tổng quan công việc</a-divider>
+                <a-divider class="title_tq">Tổng quan công việc</a-divider>
 
                 <!-- Charts -->
                 <div class="charts">
@@ -815,5 +815,9 @@ const getUserById = getUserName;
     text-align: center;
     padding: 32px;
     font-style: italic;
+}
+
+.title_tq {
+    color: #004270;
 }
 </style>

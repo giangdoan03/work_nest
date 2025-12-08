@@ -1,6 +1,6 @@
 <template>
     <a-spin :spinning="loading" size="large" tip="Đang tải dữ liệu...">
-        <div class="dashboard">
+        <div class="dashboard nv_pb">
             <div class="summary-cards">
                 <a-card
                     v-for="item in stats"
@@ -18,7 +18,7 @@
                 </a-card>
             </div>
 
-            <a-divider>Tổng quan công việc</a-divider>
+            <a-divider class="title_tq">Tổng quan công việc</a-divider>
 
             <div class="charts">
                 <div class="chart-box">
@@ -32,7 +32,7 @@
             </div>
 
             <div class="table-section" style="margin-top: 20px; margin-bottom: 20px">
-                <a-divider>{{ dueIn1DayText }}</a-divider>
+                <a-divider class="cv_tn">{{ dueIn1DayText }}</a-divider>
                 <a-table
                     :columns="columnsDueSoon"
                     :dataSource="tasksDueIn1Day"
@@ -84,11 +84,7 @@
                             >
                                 <template #title>
                                     <div style="text-align: center; padding: 8px;">
-                                        <a-avatar
-                                            :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
-                                            size="large"
-                                            style="margin-bottom: 8px;"
-                                        >
+                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }" size="large" style="margin-bottom: 8px;">
                                             {{ getFirstLetter(record.assignee?.name) }}
                                         </a-avatar>
                                         <div style="font-weight: bold; color: white;">{{ record.assignee?.name }}</div>
@@ -211,7 +207,7 @@
             </div>
             <div class="table-section">
 
-                <a-divider>Danh sách công việc
+                <a-divider class="ds_cv_pb">Danh sách công việc
                     <template v-if="totalTasks">
                         ({{ totalTasks }})
                     </template>
@@ -243,11 +239,8 @@
 
                     <template #bodyCell="{ column, record }">
                         <template v-if="column.dataIndex === 'title'">
-                            <a-tooltip :title="record.title" placement="top" :overlayStyle="{ maxWidth: '360px' }"
-                                       :overlayInnerStyle="{ whiteSpace: 'pre-line' }">
-                                <router-link
-                                    :to="`/department-task/${record.id}/info`"
-                                    style="color:#1890ff; display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+                            <a-tooltip :title="record.title" placement="top" :overlayStyle="{ maxWidth: '360px' }" :overlayInnerStyle="{ whiteSpace: 'pre-line' }">
+                                <router-link :to="`/department-task/${record.id}/info`" style="color:#1890ff; display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
                                 >
                                     {{ record.title }}
                                 </router-link>
@@ -282,8 +275,7 @@
                             <a-tooltip placement="top" :overlayStyle="{ maxWidth: '300px' }">
                                 <template #title>
                                     <div style="text-align: center; padding: 8px;">
-                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }"
-                                                  size="large" style="margin-bottom: 8px;">
+                                        <a-avatar :style="{ backgroundColor: getAvatarColor(record.assignee?.name) }" size="large" style="margin-bottom: 8px;">
                                             {{ getFirstLetter(record.assignee?.name) }}
                                         </a-avatar>
                                         <div style="font-weight: bold; color: white;">{{ record.assignee?.name }}</div>
@@ -349,29 +341,22 @@
 
                         <!-- 🆕 Cột Liên kết (loại + tên) -->
                         <template v-else-if="column.dataIndex === 'linked'">
-                            <div style="display:flex; gap:8px; align-items:center; max-width: 100%;">
-                                <a-tag v-if="record.linked_type"
-                                       :color="record.linked_type === 'bidding' ? 'blue' : (record.linked_type === 'contract' ? 'cyan' : 'geekblue')">
-                                    {{record.linked_type === 'bidding' ? 'Gói thầu' : record.linked_type === 'contract' ? 'Hợp đồng' : 'Nội bộ' }}
-                                </a-tag>
+                            <div>
                                 <a-tooltip :title="record.linked_title || '—'" placement="topLeft">
-                                    <span class="ellipsis-text" style="max-width: 150px;">
-                                      {{ record.linked_title || '—' }}
-                                    </span>
+                                    <a-tag :color="record.linked_type === 'bidding'  ? 'blue' : record.linked_type === 'contract' ? 'cyan' : 'geekblue'">
+                                        {{ record.linked_type === 'bidding' ? 'Gói thầu' : record.linked_type === 'contract' ? 'Hợp đồng' : 'Nội bộ' }}
+                                    </a-tag>
                                 </a-tooltip>
                             </div>
                         </template>
 
                         <!-- 🆕 Cột Bước -->
                         <template v-else-if="column.dataIndex === 'step'">
-                            <a-tooltip :title="record.step_name || '—'">
-                                  <span v-if="record.step_code || record.step_name">
-                                    <strong v-if="record.step_code">B{{ record.step_code }}</strong>
-                                    <span v-if="record.step_code && record.step_name"> - </span>
-                                    <span>{{ record.step_name || '—' }}</span>
-                                  </span>
-                                <span v-else>—</span>
-                            </a-tooltip>
+                            <span v-if="record.step_code || record.step_name">
+                                <strong v-if="record.step_code">B{{ record.step_code }}</strong>
+                                <span v-if="record.step_code && record.step_name"> - </span>
+                            </span>
+                            <span v-else>—</span>
                         </template>
 
                         <!-- 🆕 Cột Phê duyệt -->
@@ -380,9 +365,6 @@
                                 <a-tag :color="record.approval_status === 'approved' ? 'green' : record.approval_status === 'pending' ? 'orange' : 'default'">
                                     {{record.approval_status === 'approved' ? 'Đã duyệt' : record.approval_status === 'pending' ? 'Chờ duyệt' : (record.approval_status || '—') }}
                                 </a-tag>
-                                <small v-if="record.approval_steps">
-                                    Cấp {{ record.current_level || 0 }}/{{ record.approval_steps }}
-                                </small>
                             </div>
                         </template>
 
@@ -613,7 +595,7 @@ import {
     FieldTimeOutlined,   // ⟵ tuần
     CalendarOutlined     // ⟵ tháng
 } from '@ant-design/icons-vue'
-import {formatDate} from '@/utils/formUtils';
+import {formatDate, getAvatarColor} from '@/utils/formUtils';
 import PieChart from './PieChart.vue'
 import BarChart from './BarChart.vue'
 import {getTasks, updateTask} from '@/api/task'
@@ -709,7 +691,7 @@ const columnsBase = [
         align: 'center',
         customRender: ({ index }) => index + 1,
     },
-    { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 220, ellipsis: true },
+    { title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 220, ellipsis: true, align: 'left' },
     { title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee', width: 120, align: 'center' },
     { title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: 120, align: 'center' },
     { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 120, align: 'center' },
@@ -749,29 +731,19 @@ const columns = [
         customRender: ({index}) =>
             (urgentPage.current - 1) * urgentPage.pageSize + index + 1,
     },
-    {title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 220, ellipsis: true},
-
-    // 🆕 Cột công việc cha
-    {title: 'Công việc cha', dataIndex: 'parent', key: 'parent', width: 200, ellipsis: true},
-
-    // 🆕 Liên kết (loại + tên)
-    {title: 'Liên kết', dataIndex: 'linked', key: 'linked', width: 220, ellipsis: true},
-
-    // 🆕 Bước quy trình
-    {title: 'Bước', dataIndex: 'step', key: 'step', width: 160, ellipsis: true, align: 'center'},
-
-    // 🆕 Phê duyệt
-    {title: 'Phê duyệt', dataIndex: 'approval', key: 'approval', width: 180, align: 'center'},
-
-    // Cột sẵn có
-    {title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee', width: 120, align: 'center'},
+    {title: 'Tên công việc', dataIndex: 'title', key: 'title', width: 220, ellipsis: true, align: 'left',},
+    {title: 'Công việc cha', dataIndex: 'parent', key: 'parent', width: 200, ellipsis: true, align: 'left'},
+    {title: 'Liên kết', dataIndex: 'linked', key: 'linked', width: 100, ellipsis: true, align: 'center'},
+    {title: 'Bước', dataIndex: 'step', key: 'step', width: 80, ellipsis: true, align: 'center'},
+    {title: 'Phê duyệt', dataIndex: 'approval', key: 'approval', width: 120, align: 'center'},
+    {title: 'Người thực hiện', dataIndex: 'assignee', key: 'assignee', width: 80, align: 'center'},
     {title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: 120, align: 'center'},
-    {title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 120, align: 'center'},
+    {title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 150, align: 'center'},
     {title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', width: 110, align: 'center'},
 
     // 🆕 Người đề nghị / Người tạo
-    {title: 'Người giao việc', dataIndex: 'proposed_by', key: 'proposed_by', width: 110, align: 'center'},
-    {title: 'Người phụ trách', dataIndex: 'created_by', key: 'created_by', width: 110, align: 'center'},
+    {title: 'Người giao việc', dataIndex: 'proposed_by', key: 'proposed_by', width: 80, align: 'center'},
+    {title: 'Người phụ trách', dataIndex: 'created_by', key: 'created_by', width: 80, align: 'center'},
 
     // 🆕 Thời gian
     {
@@ -785,24 +757,6 @@ const columns = [
         sorter: (a, b) => new Date(a.end_date) - new Date(b.end_date)
     },
 
-    // 🆕 Hạn (kèm tooltip lý do quá hạn)
-    {title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 140, align: 'center'},
-
-    // 🆕 Bình luận
-    {title: 'Bình luận', dataIndex: 'comments_count', key: 'comments_count', width: 110, align: 'center'},
-
-    // 🆕 Dấu hiệu Subtask
-    {title: 'Loại', dataIndex: 'is_subtask', key: 'is_subtask', width: 90, align: 'center'},
-
-    // 🆕 Tạo/Cập nhật
-    {
-        title: 'Tạo lúc', dataIndex: 'created_at', key: 'created_at', width: 160, align: 'center',
-        customRender: ({text}) => formatDate(text)
-    },
-    {
-        title: 'Cập nhật', dataIndex: 'updated_at', key: 'updated_at', width: 160, align: 'center',
-        customRender: ({text}) => formatDate(text)
-    },
 ]
 
 
@@ -1062,24 +1016,6 @@ const getFirstLetter = (name) => {
     return name.charAt(0).toUpperCase()
 }
 
-const getAvatarColor = (name) => {
-    if (!name || name === 'N/A') return '#d9d9d9'
-
-    const colors = [
-        '#f5222d', '#fa8c16', '#fadb14', '#52c41a',
-        '#13c2c2', '#1890ff', '#722ed1', '#eb2f96',
-        '#fa541c', '#faad14', '#a0d911', '#52c41a',
-        '#13c2c2', '#1890ff', '#722ed1', '#eb2f96'
-    ]
-
-    // Simple hash function to get consistent color for same name
-    let hash = 0
-    for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash)
-    }
-    const index = Math.abs(hash) % colors.length
-    return colors[index]
-}
 
 const filterStrategies = {
     today: () => {
@@ -1298,5 +1234,20 @@ watch(() => filteredTasks.value, () => {
 .no-tasks-drawer {
     text-align: center;
     padding: 40px 0;
+}
+.title_tq, .cv_tn, .ds_cv_pb {
+    color: #004270;
+}
+
+table .ant-table-thead > tr > th {
+    color: #000000 !important;
+    font-weight: 500 !important;
+}
+
+</style>
+
+<style>
+.nv_pb th {
+    text-align: center !important;
 }
 </style>

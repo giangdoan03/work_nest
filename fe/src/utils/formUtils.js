@@ -71,14 +71,10 @@ export const parseFieldsForList = (list, fields = ['logo']) => {
 }
 
 export const formatCurrency = (value) => {
-    if (!value) return '0 đ'
-    return Number(value).toLocaleString('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    })
+    if (!value) return '0 VNĐ'
+    return `${Number(value).toLocaleString('vi-VN')} VNĐ`
 }
+
 
 export const deadlineInfo = (end) => {
     if (!end) return { type: 'none' }
@@ -144,4 +140,8 @@ export function openDownloadFile(file) {
     if (!url) return false;
     window.open(url, '_blank', 'noopener');
     return true;
+}
+
+export function getAvatarColor(name) {
+    return '#004270'
 }

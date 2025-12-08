@@ -762,8 +762,8 @@ table .ant-progress-small {
 }
 
 table .ant-table-thead > tr > th {
-    color: #83868c !important;
-    font-weight: 400 !important;
+    color: #000000 !important;
+    font-weight: 500 !important;
     font-size: 14px !important;
 }
 </style>

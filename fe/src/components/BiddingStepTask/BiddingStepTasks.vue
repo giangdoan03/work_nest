@@ -57,9 +57,9 @@
                         <!-- Tên công việc -->
                         <template v-else-if="column.key === 'title'">
                             <router-link :to="buildTaskLink(record)" class="task-title-cell">
-                <span class="task-title" :class="{ child: record.parent_id }">
-                  {{ truncate(record.title, 25) }}
-                </span>
+                                <span class="task-title" :class="{ child: record.parent_id }">
+                                  {{ truncate(record.title, 25) }}
+                                </span>
                             </router-link>
                         </template>
 
@@ -252,9 +252,9 @@ const isExpanded = (row) => expandedKeys.value.includes(String(row?.id ?? row))
 
 /* ---------- Dictionaries ---------- */
 const PRIORITY_TEXT = { high: 'Cao', normal: 'Bình thường', low: 'Thấp' }
-const PRIORITY_COLOR = { high: 'red', normal: 'orange', low: 'blue' }
-const TASK_STATUS_TEXT = { todo: 'Chưa bắt đầu', doing: 'Đang làm', done: 'Hoàn thành', overdue: 'Trễ hạn' }
-const TASK_STATUS_COLOR = { todo: 'default', doing: 'blue', done: 'green', overdue: 'red' }
+const PRIORITY_COLOR = { high: 'red', normal: 'green', low: 'blue' }
+const TASK_STATUS_TEXT = { todo: 'Chưa bắt đầu', doing: 'Đang triển khai', done: 'Hoàn thành', overdue: 'Trễ hạn' }
+const TASK_STATUS_COLOR = { todo: 'default', doing: 'green', done: 'green', overdue: 'red' }
 const APPROVAL_TEXT = { approved: 'Đã duyệt', pending: 'Chờ duyệt', rejected: 'Từ chối' }
 const APPROVAL_COLOR = { approved: 'green', pending: 'blue', rejected: 'red', default: 'gray' }
 
@@ -374,7 +374,7 @@ const columns = [
     { title: 'Kết thúc', dataIndex: 'end_date', key: 'end_date', width: 120, align: 'center' },
     { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 140, align: 'center' },
     { title: 'Hạn', dataIndex: 'deadline', key: 'deadline', width: 160, align: 'center' },
-    { title: 'Duyệt', dataIndex: 'approval_status', key: 'approval_status', width: 220, align: 'center' },
+    { title: 'Phê duyệt', dataIndex: 'approval_status', key: 'approval_status', width: 220, align: 'center' },
     { title: 'Thao tác', key: 'actions', width: 80, align: 'center', fixed: 'right' },
 ]
 
@@ -577,7 +577,7 @@ onMounted(load)
 </script>
 
 <style scoped>
-.task-title{display:inline-block;font-weight:500;font-size:14px;color:#1890ff}
+.task-title{display:inline-block;font-size:14px;color:#000000}
 .task-title.child{position:relative;padding-left:30px;font-weight:400;font-size:12px;color:#555}
 .task-title.child::before{content:'';position:absolute;left:10px;top:50%;width:14px;height:1px;background:#ccc}
 .task-title.child::after{content:'';position:absolute;left:10px;top:0;bottom:50%;border-left:1px solid #ccc}
