@@ -10,8 +10,21 @@
             tabindex="0"
             aria-label="Mở menu nhanh"
         >
-            <img :src="'/logoMark.png'" class="menu-top-logo" alt="TTID"/>
-            <span v-if="!collapsed" class="menu-text">Menu</span>
+            <img
+                v-if="collapsed"
+                src="/logo_cv.png"
+                class="menu-top-logo"
+                alt="TTID"
+            />
+
+            <span v-else class="menu-text">
+                <img
+                    src="/logo_ex.png"
+                    class="menu-top-logo"
+                    alt="TTID"
+                />
+            </span>
+
         </div>
 
         <!-- Menu -->
@@ -425,7 +438,7 @@ const quickGroups = [
     width: 200px;
     min-width: 200px;
     max-width: 200px;
-    background: #001529;
+    background: #003b6d;
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -1145,14 +1158,14 @@ const quickGroups = [
 /* Logo trong menu-top-icon */
 .menu-top-logo {
     display: block;
-    height: 22px; /* chiều cao mặc định khi expanded */
+    height: 35px; /* chiều cao mặc định khi expanded */
     width: auto;
     transition: transform .2s ease, opacity .2s ease;
 }
 
 /* Khi sidebar collapsed, tăng size nhẹ cho icon mark cho cân */
 .sidebar.collapsed .menu-top-logo {
-    height: 26px; /* mark thường nhỏ hơn chữ, tăng chút cho cân */
+    height: 40px; /* mark thường nhỏ hơn chữ, tăng chút cho cân */
 }
 
 /* Hover effect đồng bộ */
