@@ -860,75 +860,85 @@ class DocumentController extends ResourceController
     public function convertToPdf(): ResponseInterface
     {
         $driveId = $this->request->getGet('drive_id');
-        if (!$driveId) return $this->failValidationErrors("Thiếu drive_id");
+        if (!$driveId) {
+            return $this->failValidationErrors("Thiếu drive_id");
+        }
 
-        $google = new GoogleDriveService();
-        $client = $google->getClient();
-        $drive  = new Google_Service_Drive($client);
-
-        // 🔥 Folder đích để lưu PDF
-        $targetFolder = "18z1HuZZgqiCIuVGnAEl-PJOFOGtayGmF";
+        // ⭐ Lấy folder PDF từ .env
+        $targetFolder = env("drive.folder_id");
+        if (!$targetFolder) {
+            return $this->fail("Thiếu cấu hình drive.folder_id trong .env");
+        }
 
         try {
-            // 1) Lấy metadata
-            $file = $drive->files->get($driveId, ['fields' => 'id,name,mimeType,parents']);
+            $google = new GoogleDriveService();
+            $drive  = $google->getDrive();
+
+            // 1) Lấy metadata file gốc
+            $file = $drive->files->get($driveId, ['fields' => 'id,name,mimeType']);
             $mime = $file->mimeType;
             $name = pathinfo($file->name, PATHINFO_FILENAME);
 
-            // 2) Nếu không phải Google Docs/Sheets/Slides → convert sang Google dạng trước
-            $googleDocTypes = [
+            // Các loại file Google có thể export PDF trực tiếp
+            $googleTypes = [
                 "application/vnd.google-apps.document",
                 "application/vnd.google-apps.spreadsheet",
-                "application/vnd.google-apps.presentation"
+                "application/vnd.google-apps.presentation",
             ];
 
-            if (!in_array($mime, $googleDocTypes)) {
+            // 2) Nếu KHÔNG phải Google Docs → convert sang Google Docs trước
+            if (!in_array($mime, $googleTypes)) {
 
-                // Tải file gốc
+                // Tải file binary từ Drive
                 $resp = $drive->files->get($driveId, ["alt" => "media"]);
                 $binary = $resp->getBody()->getContents();
 
-                // Xác định loại chuyển sang Google Docs
-                $convertMime = match(true) {
-                    str_contains($mime, 'word')        => "application/vnd.google-apps.document",
-                    str_contains($mime, 'sheet'),
-                    str_contains($mime, 'excel'),
-                    str_contains($mime, 'spread')      => "application/vnd.google-apps.spreadsheet",
-                    str_contains($mime, 'presentation'),
-                    str_contains($mime, 'powerpoint')  => "application/vnd.google-apps.presentation",
+                // Chọn loại Google file phù hợp để convert
+                $convertMime = match (true) {
+                    str_contains($mime, "word"),
+                    str_contains($mime, "doc")        => "application/vnd.google-apps.document",
+
+                    str_contains($mime, "sheet"),
+                    str_contains($mime, "excel"),
+                    str_contains($mime, "spread")     => "application/vnd.google-apps.spreadsheet",
+
+                    str_contains($mime, "presentation"),
+                    str_contains($mime, "powerpoint") => "application/vnd.google-apps.presentation",
+
                     default => null
                 };
 
                 if (!$convertMime) {
-                    return $this->failValidationErrors("Không thể chuyển file này sang Google Doc để xuất PDF.");
+                    return $this->failValidationErrors("Không hỗ trợ convert file này sang PDF.");
                 }
 
-                // Upload dạng Google Docs
-                $new = new Google_Service_Drive_DriveFile([
-                    'name'     => $name,
-                    'mimeType' => $convertMime
-                ]);
-
-                $googleConverted = $drive->files->create(
-                    $new,
+                // Convert sang Google Docs bằng upload
+                $converted = $drive->files->create(
+                    new Google_Service_Drive_DriveFile([
+                        "name"     => "Converted_" . $name,
+                        "mimeType" => $convertMime,
+                        "parents"  => [$targetFolder]
+                    ]),
                     [
                         "data"       => $binary,
                         "mimeType"   => "application/octet-stream",
-                        "uploadType" => "media"
+                        "uploadType" => "media",
+                        "fields"     => "id"
                     ]
                 );
 
-                $driveId = $googleConverted->id;
+                // Thay thế ID file để export PDF
+                $driveId = $converted->id;
             }
 
-            // 3) Export thành PDF
-            $pdf = $drive->files->export($driveId, "application/pdf", ["alt" => "media"]);
-            $pdfBinary = $pdf->getBody()->getContents();
+            // 3) Export Google Docs → PDF
+            $pdfResponse = $drive->files->export($driveId, "application/pdf", ["alt" => "media"]);
+            $pdfBinary = $pdfResponse->getBody()->getContents();
 
-            // 4) Upload PDF lên đúng folder **targetFolder**
+            // 4) Upload PDF vào folder PDF
             $pdfFile = new Google_Service_Drive_DriveFile([
                 "name"    => $name . ".pdf",
-                "parents" => [$targetFolder]   // 🔥 LƯU VÀO ĐÚNG FOLDER
+                "parents" => [$targetFolder]
             ]);
 
             $uploaded = $drive->files->create(
@@ -936,39 +946,48 @@ class DocumentController extends ResourceController
                 [
                     "data"       => $pdfBinary,
                     "mimeType"   => "application/pdf",
-                    "uploadType" => "media"
+                    "uploadType" => "media",
+                    "fields"     => "id, webViewLink"
                 ]
             );
 
             return $this->respond([
-                'url'    => "https://drive.google.com/file/d/{$uploaded->id}/view",
-                'pdf_id' => $uploaded->id,
-                'folder' => $targetFolder
+                'message' => 'Converted to PDF successfully',
+                'pdf_id'  => $uploaded->id,
+                'url'     => $uploaded->webViewLink,
+                'folder'  => $targetFolder
             ]);
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return $this->failServerError($e->getMessage());
         }
     }
 
 
+
     public function listPdfFromDrive(): ResponseInterface
     {
-        $folderId = "18z1HuZZgqiCIuVGnAEl-PJOFOGtayGmF";
+        // ⭐ Lấy folder PDF từ .env
+        $folderId = env("drive.folder_id");
+        if (!$folderId) {
+            return $this->fail("Thiếu cấu hình drive.folder_id trong .env");
+        }
 
         try {
             $google = new GoogleDriveService();
-            $client = $google->getClient();
-            $drive = new Google_Service_Drive($client);
+            $drive  = $google->getDrive();
 
+            // Query: chỉ lấy PDF & không bị xóa
             $query = "'{$folderId}' in parents and mimeType='application/pdf' and trashed=false";
 
-            $files = $drive->files->listFiles([
-                'q' => $query,
-                'fields' => 'files(id,name,mimeType,size,createdTime)'
+            $response = $drive->files->listFiles([
+                'q'      => $query,
+                'fields' => 'files(id, name, mimeType, size, createdTime)'
             ]);
 
-            // Dọn dữ liệu chỉ giữ field cần thiết
+            $files = $response->files ?? [];
+
+            // Làm sạch output
             $clean = array_map(function ($f) {
                 return [
                     "id"          => $f->id,
@@ -976,16 +995,18 @@ class DocumentController extends ResourceController
                     "mimeType"    => $f->mimeType,
                     "size"        => $f->size,
                     "createdTime" => $f->createdTime,
-                    "url"         => "https://drive.google.com/file/d/{$f->id}/view"
+                    "url"         => "https://drive.google.com/file/d/{$f->id}/view",
+                    "download"    => "https://drive.google.com/uc?export=download&id={$f->id}"
                 ];
-            }, $files->files ?? []);
+            }, $files);
 
             return $this->respond([
                 "folder" => $folderId,
+                "total"  => count($clean),
                 "files"  => $clean
             ]);
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return $this->failServerError($e->getMessage());
         }
     }
