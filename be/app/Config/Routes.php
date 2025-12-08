@@ -79,7 +79,7 @@ $routes->group('api', function ($routes) {
     $routes->get('permissions', 'PermissionController::index');
     $routes->post('permissions/save', 'PermissionController::save');
     $routes->get('permissions/matrix', 'PermissionController::matrix');
-    $routes->resource('departments', ['controller' => 'DepartmentController']);
+
 
     $routes->post('users/upload-avatar', 'Auth::uploadAvatar');
 
@@ -327,6 +327,24 @@ $routes->group('api', function ($routes) {
     $routes->post('entity-members/remove', 'EntityMemberController::remove');
     $routes->get('entity-members/list/(:segment)/(:num)', 'EntityMemberController::list/$1/$2');
     $routes->get('entity-members/can-access', 'EntityMemberController::canAccess');
+
+    // =======================
+    // ⭐ Department Routes
+    // =======================
+    // CRUD department
+    $routes->get('departments', 'DepartmentController::index');
+    $routes->get('departments/(:num)', 'DepartmentController::show/$1');
+    $routes->post('departments', 'DepartmentController::create');
+    $routes->put('departments/(:num)', 'DepartmentController::update/$1');
+    $routes->delete('departments/(:num)', 'DepartmentController::delete/$1');
+
+// CUSTOM routes phải đặt dưới
+    $routes->get('departments/(:num)/users', 'DepartmentController::users/$1');
+    $routes->post('departments/(:num)/users', 'DepartmentController::addUsers/$1');
+    $routes->delete('departments/(:num)/users/(:num)', 'DepartmentController::removeUser/$1/$2');
+
+
+
 
 
 

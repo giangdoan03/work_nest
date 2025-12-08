@@ -71,7 +71,7 @@
                     <!-- Tiêu đề -->
                     <template v-else-if="slot.column?.key === 'title'">
                         <a-tooltip :title="slot.record.title">
-                            <a-typography-text strong style="cursor: pointer" @click="goToDetail(slot.record.id)">
+                            <a-typography-text style="cursor: pointer" @click="goToDetail(slot.record.id)">
                                 {{ truncateText(slot.record.title, 25) }}
                             </a-typography-text>
                         </a-tooltip>
@@ -551,13 +551,13 @@ const columns = [
     { title: 'Tên gói thầu', dataIndex: 'title', key: 'title' },
     { title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: '150px', align: 'center' },
     { title: 'Người phụ trách', dataIndex: 'assigned_to_name', key: 'assigned_to_name', align: 'center' },
-    { title: 'Chi phí dự toán', dataIndex: 'estimated_cost', key: 'estimated_cost' },
-    { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority' },
+    { title: 'Chi phí dự toán', dataIndex: 'estimated_cost', key: 'estimated_cost', align: 'center' },
+    { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', align: 'center' },
     // { title: 'Trạng thái', dataIndex: 'status', key: 'status', align: 'center' },
     { title: 'Ngày bắt đầu', dataIndex: 'start_date', key: 'start_date' },
     { title: 'Ngày kết thúc', dataIndex: 'end_date', key: 'end_date' },
     { title: 'Hạn', dataIndex: 'due', key: 'due', align: 'center' },
-    { title: 'Phê duyệt', dataIndex: 'approval_status', key: 'approval_status', width: 150 },
+    { title: 'Phê duyệt', dataIndex: 'approval_status', key: 'approval_status', width: 150, align: 'center' },
     { title: 'Hành động', dataIndex: 'action', key: 'action' }
 ]
 

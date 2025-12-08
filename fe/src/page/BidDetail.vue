@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div style="max-width: 1000px; margin: 0 auto;">
         <a-card>
             <a-page-header
                 title="Chi tiết gói thầu"
@@ -9,7 +9,7 @@
             />
             <a-descriptions bordered :column="2">
                 <!-- Hàng 1 -->
-                <a-descriptions-item label="Tên"><strong>{{ bidding?.title }}</strong></a-descriptions-item>
+                <a-descriptions-item label="Tên">{{ bidding?.title }}</a-descriptions-item>
 
                 <a-descriptions-item label="Trạng thái">
                     <a-tag :color="getStatusColor(bidding?.status)">
@@ -20,7 +20,7 @@
                 <!-- Hàng 2 -->
                 <a-descriptions-item label="Giá trị">{{ formatCurrency(bidding?.estimated_cost) }}</a-descriptions-item>
                 <a-descriptions-item label="Khách hàng">
-                    <a @click="goToCustomerDetail(bidding?.customer_id)" style="color: #1890ff; cursor: pointer;">
+                    <a @click="goToCustomerDetail(bidding?.customer_id)" style="color: #000000; cursor: pointer;">
                         {{ getCustomerName(bidding?.customer_id) }}
                     </a>
                 </a-descriptions-item>
@@ -28,7 +28,7 @@
                 <!-- Hàng 3 -->
                 <a-descriptions-item label="Người phụ trách">
                     <a v-if="bidding?.assigned_to" @click="goToUserDetail(bidding.assigned_to)"
-                       style="color: #1890ff; cursor: pointer;">
+                       style="cursor: pointer; color: #000000">
                         {{ getAssignedUserName(bidding?.assigned_to) }}
                     </a>
                     <span v-else>Không xác định</span>
@@ -36,7 +36,7 @@
 
                 <a-descriptions-item label="Người giao việc">
                     <template v-if="bidding?.manager_id">
-                        <a @click="goToUserDetail(bidding.manager_id)" style="color:#1890ff; cursor:pointer;">
+                        <a @click="goToUserDetail(bidding.manager_id)" style="color:#000000; cursor:pointer;">
                             {{ bidding?.manager_name || `Người #${bidding.manager_id}` }}
                         </a>
                     </template>
@@ -45,12 +45,12 @@
 
                 <a-descriptions-item label="Thời gian">
                     <div class="time-item start">
-                        <span class="label">Bắt đầu:</span>
-                        <span class="value">{{ formatDate(bidding?.start_date) }}</span>
+                        <span style="min-width: 70px;">Bắt đầu:</span>
+                        <span style="color: #000000">{{ formatDate(bidding?.start_date) }}</span>
                     </div>
                     <div class="time-item end">
-                        <span class="label">Kết thúc:</span>
-                        <span class="value">{{ formatDate(bidding?.end_date) }}</span>
+                        <span style="min-width: 70px;">Kết thúc:</span>
+                        <span class="value" style="color: #000000">{{ formatDate(bidding?.end_date) }}</span>
                     </div>
                 </a-descriptions-item>
 
@@ -264,7 +264,7 @@
                                         </template>
 
                                         <span class="assigned-display">
-                                      <a v-if="step.assigned_to" @click.stop.prevent style="color:#1890ff;">
+                                      <a v-if="step.assigned_to" @click.stop.prevent style="color:#000000;">
                                         {{ getAssignedUserName(step.assigned_to) }}
                                       </a>
                                       <span v-else>Không xác định</span>
@@ -1431,4 +1431,5 @@ onMounted(async () => {
     bottom: 50%;
     border-left: 1px solid #ccc; /* gạch dọc */
 }
+
 </style>

@@ -20,14 +20,14 @@ class ApprovalInboxController extends ResourceController
     /**
      * GET /approvals/inbox?per_page=&page=&target_types=
      */
-    private function makeUrl(string $type, string|int $id, ?int $stepId = null): string
+    private function makeUrl(string $type, string|int $id): string
     {
         return match ($type) {
             'task' => "/tasks/$id/info",
             'bidding' => "/biddings/$id/info",
-            'bidding_step' => "/biddings/$id/steps/$stepId/tasks",
+            'bidding_step' => "/biddings/$id/steps/" . (null) . "/tasks",
             'contract' => "/contracts/$id/info",
-            'contract_step' => "/contracts/$id/steps/$stepId/tasks",
+            'contract_step' => "/contracts/$id/steps/" . (null) . "/tasks",
             'document'      => "/documents/$id",
             default => "/$type/$id",
         };

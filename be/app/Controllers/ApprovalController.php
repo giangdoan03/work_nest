@@ -142,7 +142,9 @@ class ApprovalController extends ResourceController
         ]);
     }
 
-    /** Đồng bộ bảng đích khi REJECT cấp hiện tại */
+    /** Đồng bộ bảng đích khi REJECT cấp hiện tại
+     * @throws Exception
+     */
     private function syncTargetOnReject(array $ai, int $currLevel0, ?string $note): void
     {
         $table = $this->tableFor((string)$ai['target_type']);
