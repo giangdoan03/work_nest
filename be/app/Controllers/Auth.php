@@ -172,14 +172,10 @@ class Auth extends Controller
 
         /** ================== MULTI ROLE FLAG ================== */
         $oldFlag = (int)($user['is_multi_role'] ?? 0);
-        $newFlag = array_key_exists('is_multi_role', $data)
-            ? (int)$data['is_multi_role']
-            : $oldFlag;
+        $newFlag = array_key_exists('is_multi_role', $data) ? (int)$data['is_multi_role'] : $oldFlag;
 
         /** ================== SIGNATURE URL ================== */
-        $newSignature = array_key_exists('signature_url', $data)
-            ? $data['signature_url']
-            : ($user['signature_url'] ?? null);
+        $newSignature = array_key_exists('signature_url', $data) ? $data['signature_url'] : ($user['signature_url'] ?? null);
 
         /** ================== UPDATE USER (cơ bản) ================== */
         $this->model->update($id, $data);
@@ -223,15 +219,13 @@ class Auth extends Controller
             $order++;
         }
 
-// disable những vai trò không còn gửi từ FE
+        // disable những vai trò không còn gửi từ FE
         if (!empty($keepIds)) {
             $sigModel->where('user_id', $id)
                 ->whereNotIn('id', $keepIds)
                 ->set(['active' => 0])
                 ->update();
         }
-
-
 
         return $this->respond(['status' => 'success']);
     }

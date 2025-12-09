@@ -264,11 +264,7 @@
                                     >
                                         <div style="display:flex; justify-content:space-between; align-items:center;">
                                             <span>{{ u.name }}</span>
-
-                                            <a-tag
-                                                :color="departmentColors[u.department_id]"
-                                                style="border-radius:6px;"
-                                            >
+                                            <a-tag :color="departmentColors[u.department_id]" style="border-radius:6px;">
                                                 {{ getDepartmentName(u.id) }}
                                             </a-tag>
                                         </div>
@@ -292,7 +288,8 @@
                                     type="warning"
                                     show-icon
                                     message="Người duyệt kiêm nhiệm"
-                                    description="Hãy chọn đúng vai trò để luồng duyệt được phân bổ chính xác."
+                                    description="Hãy chọn đúng vai trò để luồng duyệt được phân bổ chính xác. Mỗi vai trò đi kèm theo một chuỗi ký tự tương ứng để chèn vào file duyệt."
+
                                     class="role-alert"
                                 />
 
@@ -301,13 +298,64 @@
                                     <label class="field-label">Vai trò:</label>
 
                                     <a-radio-group v-model:value="mentionForm.role" class="role-radio-group">
-                                        <a-radio value="director">
-                                            Ban Giám đốc <span class="default-text" style="color: red">(mặc định)</span>
+                                        <a-radio value="6">
+                                            Ban Giám đốc <span class="default-text" style="color: red">(mặc định)</span> -
+
+                                            <a-tooltip title="Phó Giám Đốc">
+                                                <a-tag color="blue">vu_thi_thuy_bgd</a-tag>
+                                            </a-tooltip>
+
+                                            <a-tooltip title="Copy chuỗi">
+                                                <a-button
+                                                    class="copy-icon-btn"
+                                                    type="text"
+                                                    style="padding: 0; margin-left: 6px;"
+                                                    @click="copyTag('vu_thi_thuy_bgd')"
+                                                >
+                                                    <CopyOutlined />
+                                                </a-button>
+                                            </a-tooltip>
                                         </a-radio>
 
-                                        <a-radio value="sales">Phòng Kinh Doanh</a-radio>
-                                        <a-radio value="commerce">Phòng Thương Mại</a-radio>
+                                        <a-radio value="3">
+                                            Phòng Kế Toán - Tài Chính -
+
+                                            <a-tooltip title="Trưởng phòng kế toán - tài chính">
+                                                <a-tag color="green">vu_thi_thuy_kt</a-tag>
+                                            </a-tooltip>
+
+                                            <a-tooltip title="Copy chuỗi">
+                                                <a-button
+                                                    class="copy-icon-btn"
+                                                    type="text"
+                                                    style="padding: 0; margin-left: 6px;"
+                                                    @click="copyTag('vu_thi_thuy_kt')"
+                                                >
+                                                    <CopyOutlined />
+                                                </a-button>
+                                            </a-tooltip>
+                                        </a-radio>
+
+                                        <a-radio value="4">
+                                            Phòng Thương Mại -
+
+                                            <a-tooltip title="Trưởng phòng thương mại">
+                                                <a-tag color="orange">vu_thi_thuy_tm</a-tag>
+                                            </a-tooltip>
+
+                                            <a-tooltip title="Copy chuỗi">
+                                                <a-button
+                                                    class="copy-icon-btn"
+                                                    type="text"
+                                                    style="padding: 0; margin-left: 6px;"
+                                                    @click="copyTag('vu_thi_thuy_tm')"
+                                                >
+                                                    <CopyOutlined />
+                                                </a-button>
+                                            </a-tooltip>
+                                        </a-radio>
                                     </a-radio-group>
+
                                 </div>
                             </div>
 
@@ -542,7 +590,8 @@ import {
     PaperClipOutlined,
     SendOutlined,
     TeamOutlined,
-    EditOutlined
+    EditOutlined,
+    CopyOutlined
 } from '@ant-design/icons-vue'
 
 import {createComment, getComments, getTaskRosterAPI, mergeTaskRosterAPI, updateComment,} from '@/api/task'
@@ -1038,12 +1087,7 @@ const pinTooltip = (f) => {
     const by = nameOfPinnedBy(f)
     const at = formatDate(f.pinned_at || f.updated_at || f.created_at)
 
-    return `
-        <div>
-            <strong>Ghim bởi:</strong> ${by}<br>
-            <strong>Thời gian:</strong> ${at}
-        </div>
-    `
+    return `<div><strong>Ghim bởi:</strong> ${by}<br><strong>Thời gian:</strong> ${at}</div>`
 }
 
 
@@ -1187,7 +1231,7 @@ const sortedUsers = computed(() => {
 
 
 let addMentionOpen = ref(false)
-const mentionForm = ref({userId: null, role: 'director'})
+const mentionForm = ref({userId: null, role: 'approve'})
 
 function resetMentionForm() {
     mentionForm.value.userId = null
@@ -1369,6 +1413,41 @@ const userNameMap = computed(() => {
     }
     return map
 })
+
+
+const copyTag = async (text) => {
+    if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+            await navigator.clipboard.writeText(text);
+            message.success(`Đã copy: ${text}`);
+            return;
+        } catch (e) {
+            console.warn('Clipboard API lỗi, fallback execCommand', e);
+        }
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    try {
+        const ok = document.execCommand('copy');
+        if (ok) {
+            message.success(`Đã copy: ${text}`);
+        } else {
+            message.error('Copy thất bại (execCommand)');
+        }
+    } catch (e) {
+        console.error(e);
+        message.error('Copy thất bại');
+    } finally {
+        document.body.removeChild(textarea);
+    }
+};
 
 function extractMentionsFromInput(input = '') {
     const out = []
@@ -3002,7 +3081,17 @@ onBeforeUnmount(() => {
     margin-left: 6px;
     font-style: italic;
 }
+.copy-icon-btn {
+    padding: 0;
+    margin-left: 6px;
+    color: #999;
+    transition: 0.2s;
+}
 
+.copy-icon-btn:hover {
+    color: #1677ff !important;
+    transform: scale(1.15);
+}
 /* Responsive */
 @media (max-width: 768px) {
     .bubble {

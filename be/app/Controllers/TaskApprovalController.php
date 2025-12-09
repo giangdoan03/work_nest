@@ -957,6 +957,7 @@ class TaskApprovalController extends ResourceController
         $body = $this->getJsonBody();
         $taskId = (int) ($body['task_id'] ?? 0);
         $userId = (int) ($body['user_id'] ?? 0);
+        $departmentId = (int) ($body['department_id'] ?? 0); // FE gửi thêm
 
         if (!$taskId || !$userId)
             return $this->fail('Missing task_id or user_id');
@@ -967,7 +968,38 @@ class TaskApprovalController extends ResourceController
         $user = $db->table('users')->where('id', $userId)->get()->getRowArray();
         if (!$user) return $this->failNotFound("User not found");
 
-        $marker = trim($user['approval_marker'] ?? '');
+        $isMultiRole = (int)($user['is_multi_role'] ?? 0);
+
+        // -------------------------
+        // 🔥 NEW LOGIC
+        // Nếu user có nhiều role → lấy marker theo phòng ban
+        // -------------------------
+        if ($isMultiRole === 1) {
+
+            if (!$departmentId)
+                return $this->fail("Missing department_id for multi-role user");
+
+            // Lấy marker trong bảng user_signatures
+            $sig = $db->table('user_signatures')
+                ->where('user_id', $userId)
+                ->where('department_id', $departmentId)
+                ->where('active', 1)
+                ->get()
+                ->getRowArray();
+
+            if (!$sig)
+                return $this->failNotFound("No signature found for this department");
+
+            $marker = trim($sig['approval_marker'] ?? '');
+
+        } else {
+
+            // -------------------------
+            // 🔥 LOGIC CŨ (giữ nguyên)
+            // -------------------------
+            $marker = trim($user['approval_marker'] ?? '');
+        }
+
         if ($marker === '')
             return $this->respond(['message' => 'No marker']);
 
@@ -984,7 +1016,7 @@ class TaskApprovalController extends ResourceController
         if (!$latestBatch)
             return $this->fail('No upload_batch found');
 
-        // 3) Lấy tất cả file trong batch đó
+        // 3) Lấy file trong batch đó
         $files = $db->table('documents')
             ->where('source_task_id', $taskId)
             ->where('upload_batch', $latestBatch)
@@ -995,10 +1027,11 @@ class TaskApprovalController extends ResourceController
         if (empty($files))
             return $this->failNotFound('No document found in latest batch');
 
-        // 4) Replace marker cho từng file
+        // 4) Replace marker như cũ
         $results = [];
         foreach ($files as $file) {
             $fileId = $file['google_file_id'] ?? null;
+
             if (!$fileId) {
                 $results[] = [
                     'file_name' => $file['title'],
@@ -1030,6 +1063,7 @@ class TaskApprovalController extends ResourceController
             'results' => $results
         ]);
     }
+
 
 
 
