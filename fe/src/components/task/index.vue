@@ -386,7 +386,7 @@
                             <!-- Cột trái: Thảo luận -->
                             <a-col :span="24" :xs="24" :lg="24" style="padding-left: 0; padding-right: 0">
                                 <div class="discussion-scroll" v-auto-maxheight="12">
-                                    <Comment/>
+                                    <Comment :users="listUser" :departments="listDepartment" />
                                 </div>
                             </a-col>
                         </a-row>

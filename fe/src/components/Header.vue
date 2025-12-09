@@ -783,7 +783,7 @@ const stopPolling = () => {
 /* ========= Lifecycle ========= */
 onMounted(async () => {
     await Promise.all([ fetchUnread(), refreshNotify(), fetchNotifyUnreadCount() ])
-    startPolling()
+    // startPolling()
 })
 onBeforeUnmount(() => stopPolling())
 </script>

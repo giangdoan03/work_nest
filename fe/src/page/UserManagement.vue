@@ -83,7 +83,7 @@
                     </template>
 
                     <template v-else-if="column.dataIndex === 'name'">
-                        <a-typography-text strong class="link" @click="showPopupDetail(record)">
+                        <a-typography-text strong class="link" @click="openUserDetail(record.id)">
                             {{ text }}
                         </a-typography-text>
                     </template>
@@ -192,7 +192,12 @@
                         <a-row :gutter="16">
                             <a-col :span="12">
                                 <a-form-item label="Loại tài khoản" name="role_id" has-feedback>
-                                    <a-select v-model:value="formData.role_id" :options="roles" placeholder="Chọn loại tài khoản" allow-clear />
+                                    <a-select
+                                        v-model:value="formData.role_id"
+                                        :options="roles"
+                                        placeholder="Chọn loại tài khoản"
+                                        allow-clear
+                                    />
                                 </a-form-item>
                             </a-col>
 
@@ -200,7 +205,6 @@
                                 <a-form-item
                                     label="Marker ký file (Preferred Marker)"
                                     name="preferred_marker"
-                                    extra="Dùng cho ký file PDF nội bộ"
                                     has-feedback
                                 >
                                     <a-input
@@ -224,7 +228,61 @@
                                     />
                                 </a-form-item>
                             </a-col>
+                            <a-col :span="24">
+                                <a-form-item label="Chế độ kiêm nhiệm vai trò">
+                                    <a-switch
+                                        v-model:checked="formData.is_multi_role"
+                                        :checked-value="1"
+                                        :un-checked-value="0"
+                                        checked-children="Kiêm nhiệm"
+                                        un-checked-children="Bình thường"
+                                    />
+                                </a-form-item>
+                            </a-col>
 
+                            <!-- Multi-role block -->
+                            <a-col :span="24" v-if="formData.is_multi_role === 1">
+                                <div class="multi-role-header">
+                                    <a-button type="dashed" @click="addNewMultiRole">+ Thêm vai trò kiêm nhiệm</a-button>
+                                </div>
+
+                                <div v-for="(item, idx) in multiRoles" :key="idx" class="multi-role-box">
+                                    <a-row :gutter="19" align="middle">
+
+                                        <!-- Phòng ban -->
+                                        <a-col :span="7">
+                                            <a-form-item label="Phòng ban">
+                                                <a-select
+                                                    v-model:value="item.department_id"
+                                                    :options="departmentOptions"
+                                                    placeholder="Chọn phòng ban"
+                                                />
+                                            </a-form-item>
+                                        </a-col>
+
+                                        <!-- Marker ký file -->
+                                        <a-col :span="7">
+                                            <a-form-item label="Marker ký file">
+                                                <a-input v-model:value="item.preferred_marker" />
+                                            </a-form-item>
+                                        </a-col>
+
+                                        <!-- Marker duyệt tài liệu -->
+                                        <a-col :span="7">
+                                            <a-form-item label="Marker duyệt tài liệu">
+                                                <a-input v-model:value="item.approval_marker" />
+                                            </a-form-item>
+                                        </a-col>
+
+                                        <!-- Delete button -->
+                                        <a-col :span="3" style="display:flex; align-items:center;">
+                                            <a-button danger @click="removeMultiRole(idx)" block>Xóa</a-button>
+                                        </a-col>
+
+                                    </a-row>
+                                </div>
+
+                            </a-col>
 
                         </a-row>
                     </a-form>
@@ -265,6 +323,7 @@
                     </a-form>
                 </a-tab-pane>
 
+                <!-- Tab: Chữ ký -->
                 <a-tab-pane key="signature" tab="Chữ ký">
                     <a-space direction="vertical" style="width:100%">
                         <a-alert
@@ -284,12 +343,12 @@
                         <a-upload
                             :show-upload-list="false"
                             :before-upload="() => false"
-                        accept="image/png,image/jpeg,image/webp"
-                        @change="onPickSignature"
+                            accept="image/png,image/jpeg,image/webp"
+                            @change="onPickSignature"
                         >
-                        <a-button type="primary" :loading="sigUploading">
-                            {{ (formData.signature_url || selectedUser?.signature_url) ? 'Đổi chữ ký' : 'Tải chữ ký' }}
-                        </a-button>
+                            <a-button type="primary" :loading="sigUploading">
+                                {{ (formData.signature_url || selectedUser?.signature_url) ? 'Đổi chữ ký' : 'Tải chữ ký' }}
+                            </a-button>
                         </a-upload>
 
                         <a-popconfirm
@@ -297,13 +356,12 @@
                             title="Xoá liên kết chữ ký khỏi hồ sơ người dùng?"
                             ok-text="Xoá"
                             cancel-text="Huỷ"
-                            @confirm="removeSignature"
+                            @confirm="onRemoveMultiRole"
                         >
                             <a-button danger>Xoá chữ ký</a-button>
                         </a-popconfirm>
                     </a-space>
                 </a-tab-pane>
-
             </a-tabs>
 
             <template #extra>
@@ -319,10 +377,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, h } from 'vue'
+import { ref, onMounted, computed, h, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-    getUsers, createUser, updateUser, deleteUser
+    getUsers, getUserDetail, createUser, updateUser, deleteUser
 } from '@/api/user'
 import { getDepartments } from '@/api/department'
 import { getRoles } from '@/api/permission'
@@ -334,7 +392,9 @@ import {
 } from '@ant-design/icons-vue'
 import BaseAvatar from '@/components/common/BaseAvatar.vue'
 import { uploadWpMedia } from '@/api/wpMedia'
+
 const sigUploading = ref(false)
+
 
 /* ===== State ===== */
 const router = useRouter()
@@ -370,8 +430,52 @@ const formData = ref({
     password: '',
     confirm_password: '',
     preferred_marker: '',
-    approval_marker: ''
+    approval_marker: '',
+    is_multi_role: 0,
+    signature_url: undefined,
 })
+
+/* ===== Multi roles (kiêm nhiệm) ===== */
+const multiRoles = ref([])
+
+// [{ department_id, preferred_marker, approval_marker }]
+
+
+watch(
+    () => formData.value.is_multi_role,
+    (val) => {
+        if (val === 1) {
+            // nếu bật mà chưa có bản ghi nào thì tạo 1 bản default
+            if (multiRoles.value.length === 0) {
+                multiRoles.value.push({
+                    department_id: undefined,
+                    preferred_marker: '',
+                    approval_marker: '',
+                })
+            }
+        } else {
+            // tắt thì xoá hết
+            multiRoles.value = []
+        }
+    }
+)
+
+
+
+const addNewMultiRole = () => {
+    multiRoles.value.push({
+        department_id: null,
+        preferred_marker: '',
+        approval_marker: '',
+        signature_url: formData.value.signature_url || null,
+        approval_order: multiRoles.value.length + 1
+    })
+}
+
+
+const onRemoveMultiRole = (index) => {
+    multiRoles.value.splice(index, 1)
+}
 
 /* ===== Refs for master data ===== */
 const departments = ref([])
@@ -379,8 +483,12 @@ const roles = ref([]) // [{label, value}]
 
 /* ===== Options ===== */
 const departmentOptions = computed(() =>
-    (departments.value || []).map(d => ({ value: d.id, label: d.name }))
+    (departments.value || []).map(d => ({
+        value: Number(d.id),      // ép số
+        label: d.name
+    }))
 )
+
 
 /* ===== Columns ===== */
 const columns = [
@@ -432,7 +540,11 @@ const markerRe = /^[A-Za-z0-9._-]{1,64}$/  // cho phép chữ/số . _ -
 
 const rules = computed(() => {
     const base = {
-        name: [{ required: true, validator: (_r, v) => v ? Promise.resolve() : Promise.reject('Vui lòng nhập họ và tên'), trigger: ['blur','change'] }],
+        name: [{
+            required: true,
+            validator: (_r, v) => v ? Promise.resolve() : Promise.reject('Vui lòng nhập họ và tên'),
+            trigger: ['blur','change']
+        }],
         email: [{
             required: true,
             validator: (_r, v) => !v ? Promise.reject('Vui lòng nhập Email')
@@ -468,8 +580,7 @@ const rules = computed(() => {
                     : Promise.reject('Chỉ cho phép chữ/số, dấu chấm, gạch dưới, gạch nối (tối đa 64 ký tự)')
             },
             trigger: ['blur','change']
-        }]
-
+        }],
     }
     if (!selectedUser.value || changePassword.value) {
         base.password = [{
@@ -524,12 +635,72 @@ const showPopupCreate = () => {
     changePassword.value = true // bắt buộc đặt mật khẩu cho user mới
     activeTab.value = 'info'
     formData.value = {
-        name: '', email: '', phone: '',
-        department_id: undefined, role_id: undefined,
-        password: '', confirm_password: '', preferred_marker: ''
+        name: '',
+        email: '',
+        phone: '',
+        department_id: undefined,
+        role_id: undefined,
+        password: '',
+        confirm_password: '',
+        preferred_marker: '',
+        approval_marker: '',
+        is_multi_role: 0,
+        signature_url: undefined,
     }
+    multiRoles.value = []
     openDrawer.value = true
 }
+
+
+const openUserDetail = async (id) => {
+    try {
+        loading.value = true;
+
+        const { data } = await getUserDetail(id);
+
+        selectedUser.value = data;
+        changePassword.value = false;
+        activeTab.value = "info";
+
+        const isMulti = Number(data.is_multi_role) === 1;
+
+        formData.value = {
+            name: data.name || "",
+            email: data.email || "",
+            phone: data.phone || "",
+            department_id: Number(data.department_id),
+            role_id: Number(data.role_id),
+            preferred_marker: data.preferred_marker || "",
+            approval_marker: data.approval_marker || "",
+            signature_url: data.signature_url || null,
+            is_multi_role: isMulti ? 1 : 0,
+        };
+
+        // 🔥 QUAN TRỌNG — Map multi roles vào UI
+        if (isMulti && Array.isArray(data.multi_roles)) {
+            multiRoles.value = data.multi_roles.map(r => ({
+                id: r.id,
+                department_id: Number(r.department_id),   // ÉP SỐ !!!
+                preferred_marker: r.preferred_marker || '',
+                approval_marker: r.approval_marker || '',
+                signature_url: r.signature_url || null,
+                approval_order: Number(r.approval_order) || 1,
+            }));
+        } else {
+            multiRoles.value = [];
+        }
+
+        openDrawer.value = true;
+
+    } catch (e) {
+        message.error("Không thể tải chi tiết người dùng");
+    } finally {
+        loading.value = false;
+    }
+};
+
+
+
 
 const showPopupDetail = async (record) => {
     if (!roles.value.length) await getListRoles()
@@ -540,23 +711,55 @@ const showPopupDetail = async (record) => {
         name: record.name || '',
         email: record.email || '',
         phone: record.phone || '',
-        department_id: record.department_id,
+        department_id: Number(record.department_id),
         role_id: Number(record.role_id),
         password: '',
         confirm_password: '',
         signature_url: record.signature_url || null,
         preferred_marker: record.preferred_marker || '',
-        approval_marker: record.approval_marker || ''
+        approval_marker: record.approval_marker || '',
+        is_multi_role: record.is_multi_role ?? 0,
     }
+
+    // Nếu user đang là kiêm nhiệm mà chưa có dữ liệu multi_roles
+    // thì tạo 1 block mặc định
+    if (formData.value.is_multi_role === 1) {
+        // Nếu BE sau này trả về record.multi_roles thì map vào đây
+        if (Array.isArray(record.multi_roles) && record.multi_roles.length > 0) {
+            multiRoles.value = record.multi_roles.map(m => ({
+                id: m.id,
+                department_id: Number(m.department_id),   // ép số
+                preferred_marker: m.preferred_marker || '',
+                approval_marker: m.approval_marker || '',
+            }))
+        } else {
+            multiRoles.value = []
+        }
+    } else {
+        multiRoles.value = []
+    }
+
     openDrawer.value = true
 }
-
 
 const onCloseDrawer = () => {
     openDrawer.value = false
     selectedUser.value = null
     changePassword.value = false
+    multiRoles.value = []
     formRef.value?.resetFields?.()
+}
+
+const addMultiRole = () => {
+    multiRoles.value.push({
+        department_id: undefined,
+        preferred_marker: '',
+        approval_marker: '',
+    })
+}
+
+const removeMultiRole = (index) => {
+    multiRoles.value.splice(index, 1)
 }
 
 const submitForm = async () => {
@@ -564,11 +767,28 @@ const submitForm = async () => {
         await formRef.value?.validate?.()
         loadingCreate.value = true
         const payload = { ...formData.value }
+
+        // Xử lý chữ ký: nếu undefined thì bỏ khỏi payload
+        if (formData.value.signature_url === undefined) {
+            delete payload.signature_url
+        }
+        if (formData.value.signature_url) {
+            payload.signature_url = formData.value.signature_url
+        }
+
         // Nếu không đổi mật khẩu ở chế độ sửa, bỏ 2 field này khỏi payload
         if (selectedUser.value && !changePassword.value) {
             delete payload.password
             delete payload.confirm_password
         }
+
+        // Gửi danh sách kiêm nhiệm lên BE
+        if (formData.value.is_multi_role === 1 && multiRoles.value.length > 0) {
+            payload.multi_roles = multiRoles.value
+        } else {
+            payload.multi_roles = []
+        }
+
         if (selectedUser.value) {
             await updateUser(selectedUser.value.id, payload)
             message.success('Cập nhật người dùng thành công')
@@ -694,5 +914,40 @@ onMounted(async () => {
     border-radius: 4px;
     background: #fff;
     padding: 2px;
+}
+
+/* Multi role styles */
+.multi-role-header{
+    margin-top: 4px;
+    margin-bottom: 8px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+}
+.multi-role-title{
+    font-weight:600;
+}
+.multi-role-empty{
+    padding:8px 12px;
+    border-radius:6px;
+    background:#fafafa;
+    border:1px dashed #e5e7eb;
+    color:#777;
+    font-size:13px;
+}
+.multi-role-item{
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 8px;
+    border:1px solid #e5e7eb;
+    background:#fcfcfc;
+}
+.multi-role-item-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:8px;
+    font-weight:500;
 }
 </style>

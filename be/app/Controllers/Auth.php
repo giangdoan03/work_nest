@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\UserModel;
+use App\Models\UserSignatureModel;
 use CodeIgniter\Controller;
 use CodeIgniter\Files\File;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -35,6 +36,7 @@ class Auth extends Controller
         $builder = $this->model
             ->select('
             users.*,
+            users.is_multi_role,
             roles.name AS role_name,
             roles.code AS role_code,
             roles.description AS role_description
@@ -42,25 +44,28 @@ class Auth extends Controller
             ->join('roles', 'roles.id = users.role_id', 'left');
 
         if ($departmentId) {
-            $builder = $builder->where('users.department_id', $departmentId);
+            $builder->where('users.department_id', $departmentId);
         }
 
         $users = $builder->findAll();
 
-        // Xóa password
         $users = array_map(function ($u) {
+            $sigModel = new UserSignatureModel();
             unset($u['password']);
+            $u['multi_roles'] = $sigModel->getActiveByUser($u['id']);
             return $u;
         }, $users);
 
         return $this->respond($users);
     }
 
+
     public function show($id = null): ResponseInterface
     {
         $user = $this->model
             ->select('
             users.*,
+            users.is_multi_role,
             roles.name AS role_name,
             roles.code AS role_code,
             roles.description AS role_description
@@ -74,11 +79,18 @@ class Auth extends Controller
 
         unset($user['password']);
 
+        $sigModel = new UserSignatureModel();
+        $user['multi_roles'] = $sigModel->getActiveByUser($id);
+
         return $this->respond($user);
     }
 
 
 
+
+    /**
+     * @throws ReflectionException
+     */
     /**
      * @throws ReflectionException
      */
@@ -86,14 +98,15 @@ class Auth extends Controller
     {
         $data = $this->request->getJSON(true);
         $validation = Services::validation();
+        $sigModel = new UserSignatureModel();
 
         $rules = [
             'name'              => 'required',
             'email'             => 'required|valid_email|is_unique[users.email]',
-            'phone'             => 'required|regex_match[/^(0|\+84)[0-9]{9,10}$/]',
+            'phone'             => 'required',
             'password'          => 'required|min_length[6]',
             'confirm_password'  => 'required|matches[password]',
-            'role_id'           => 'required|integer',  // ✔ thêm rule role_id
+            'role_id'           => 'required|integer',
         ];
 
         if (!$this->validate($rules)) {
@@ -103,36 +116,127 @@ class Auth extends Controller
         unset($data['confirm_password']);
         $data['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
 
-        // ❌ bỏ dòng này
-        // $data['role'] = 'customer';
-
-        // ✔ giữ nguyên role_id FE gửi lên
+        // Tạo user
         $id = $this->model->insert($data);
+        if (!$id) {
+            return $this->fail("Cannot create user");
+        }
+
+        /* ==========================================================
+         * XỬ LÝ MULTI ROLE (KIÊM NHIỆM)
+         * ========================================================== */
+
+        $isMulti = (int)($data['is_multi_role'] ?? 0);
+
+        if ($isMulti === 1) {
+            $sigModel->insert([
+                'user_id'          => $id,
+                'role_name'        => $data['role_name'] ?? null,
+                'department_id'    => $data['department_id'] ?? null,
+                'preferred_marker' => $data['preferred_marker'] ?? null,
+                'approval_marker'  => $data['approval_marker'] ?? null,
+                'signature_url'    => $data['signature_url'] ?? null,
+                'approval_order'   => 1,
+                'active'           => 1
+            ]);
+        }
 
         return $this->respondCreated(['id' => $id]);
     }
 
 
+
+    /**
+     * @throws ReflectionException
+     */
     /**
      * @throws ReflectionException
      */
     public function update($id = null): ResponseInterface
     {
-        $data = $this->request->getJSON(true);
+        $data = $this->request->getJSON(true) ?? [];
+
         $user = $this->model->find($id);
         if (!$user) {
             return $this->failNotFound('User not found');
         }
 
+        $sigModel = new UserSignatureModel();
+
+        /** ================== PASSWORD ================== */
         if (!empty($data['password'])) {
             $data['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
         } else {
             unset($data['password']);
         }
 
+        /** ================== MULTI ROLE FLAG ================== */
+        $oldFlag = (int)($user['is_multi_role'] ?? 0);
+        $newFlag = array_key_exists('is_multi_role', $data)
+            ? (int)$data['is_multi_role']
+            : $oldFlag;
+
+        /** ================== SIGNATURE URL ================== */
+        $newSignature = array_key_exists('signature_url', $data)
+            ? $data['signature_url']
+            : ($user['signature_url'] ?? null);
+
+        /** ================== UPDATE USER (cơ bản) ================== */
         $this->model->update($id, $data);
-        return $this->respond(['status' => 'success', 'message' => 'User updated']);
+
+        /** ===============================================================
+         *  MULTI ROLES (danh sách phòng ban + marker)
+         * =============================================================== */
+        $multiRoles = $data['multi_roles'] ?? [];
+
+        if ($newFlag === 0) {
+            // về đơn nhiệm => tắt hết multi role
+            $sigModel->where('user_id', $id)->set(['active' => 0])->update();
+            return $this->respond(['status' => 'success']);
+        }
+
+        $keepIds = [];
+        $order   = 1;
+
+        foreach ($multiRoles as $role) {
+            $row = [
+                'department_id'    => $role['department_id'] ?? null,
+                'role_name'        => $role['role_name'] ?? null,
+                'preferred_marker' => $role['preferred_marker'] ?? null,
+                'approval_marker'  => $role['approval_marker'] ?? null,
+                'signature_url'    => $role['signature_url'] ?? $newSignature,
+                'approval_order'   => $order,
+                'active'           => 1,
+            ];
+
+            if (!empty($role['id'])) {
+                // update bản ghi cũ
+                $sigModel->update($role['id'], $row);
+                $keepIds[] = $role['id'];
+            } else {
+                // insert mới
+                $row['user_id'] = $id;
+                $newId = $sigModel->insert($row);
+                $keepIds[] = $newId;
+            }
+
+            $order++;
+        }
+
+// disable những vai trò không còn gửi từ FE
+        if (!empty($keepIds)) {
+            $sigModel->where('user_id', $id)
+                ->whereNotIn('id', $keepIds)
+                ->set(['active' => 0])
+                ->update();
+        }
+
+
+
+        return $this->respond(['status' => 'success']);
     }
+
+
 
     public function delete($id = null): ResponseInterface
     {

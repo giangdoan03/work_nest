@@ -18,30 +18,52 @@ class GoogleDriveService
      */
     public function __construct()
     {
-        $secretFile = APPPATH . "ThirdParty/google/client_secret_1017504240479-khuf6h4dedtdf2s0n7q8lac979th42jq.apps.googleusercontent.com.json";
-        $tokenPath  = APPPATH . "ThirdParty/google/token.json";
-
-        // ---- Lấy folder từ .env ----
+        // ----------------------------
+        // Lấy cấu hình từ ENV
+        // ----------------------------
+        $clientId     = env("google.client_id");
+        $clientSecret = env("google.client_secret");
+        $redirectUri  = env("google.redirect_uri");
         $this->folderId = env("drive.folder_id");
+
+        if (!$clientId || !$clientSecret || !$redirectUri) {
+            throw new Exception("Thiếu cấu hình google.client_* trong .env");
+        }
 
         if (!$this->folderId) {
             throw new Exception("Thiếu cấu hình drive.folder_id trong .env");
         }
 
-        if (!file_exists($secretFile)) {
-            throw new Exception("Không tìm thấy file client_secret.json");
-        }
-        if (!file_exists($tokenPath)) {
-            throw new Exception("Không tìm thấy token.json trong ThirdParty/google/");
-        }
+        // ----------------------------
+        // Build config JSON thay thế file client_secret.json
+        // ----------------------------
+        $googleConfig = [
+            "web" => [
+                "client_id" => $clientId,
+                "client_secret" => $clientSecret,
+                "redirect_uris" => [$redirectUri],
+                "auth_uri" => "https://accounts.google.com/o/oauth2/auth",
+                "token_uri" => "https://oauth2.googleapis.com/token",
+            ]
+        ];
 
-        // ---- Init Google Client ----
+        // ----------------------------
+        // Init Google Client
+        // ----------------------------
         $this->client = new Google_Client();
-        $this->client->setAuthConfig($secretFile);
+        $this->client->setAuthConfig($googleConfig);
         $this->client->setAccessType("offline");
         $this->client->addScope(Google_Service_Drive::DRIVE);
 
-        // ---- Load token ----
+        // ----------------------------
+        // Load token.json
+        // ----------------------------
+        $tokenPath = APPPATH . "ThirdParty/google/token.json";
+
+        if (!file_exists($tokenPath)) {
+            throw new Exception("Không tìm thấy token.json");
+        }
+
         $token = json_decode(file_get_contents($tokenPath), true);
 
         if (!$token) {
@@ -50,7 +72,9 @@ class GoogleDriveService
 
         $this->client->setAccessToken($token);
 
-        // ---- Refresh token nếu hết hạn ----
+        // ----------------------------
+        // Refresh access token
+        // ----------------------------
         if ($this->client->isAccessTokenExpired()) {
             $newToken = $this->client->fetchAccessTokenWithRefreshToken(
                 $this->client->getRefreshToken()
@@ -62,7 +86,9 @@ class GoogleDriveService
             );
         }
 
-        // ---- Init Service ----
+        // ----------------------------
+        // Init Google Drive Service
+        // ----------------------------
         $this->drive = new Google_Service_Drive($this->client);
     }
 
@@ -76,9 +102,9 @@ class GoogleDriveService
         return $this->drive;
     }
 
-    /** ------------------------------------------------------------------
-     *  UPLOAD FILE (KHÔNG CONVERT)
-     * ------------------------------------------------------------------ */
+    // ================================================================
+    // UPLOAD FILE THƯỜNG
+    // ================================================================
     public function uploadFile(string $path, string $name): array
     {
         $meta = new Google_Service_Drive_DriveFile([
@@ -101,15 +127,14 @@ class GoogleDriveService
         ];
     }
 
-    /** ------------------------------------------------------------------
-     *  UPLOAD + AUTO CONVERT DOC/XLS/PPT → Google Docs/Sheets/Slides
-     * ------------------------------------------------------------------ */
+    // ================================================================
+    // UPLOAD + AUTO CONVERT (DOC/XLS/PPT → Google Docs/Sheets/Slides)
+    // ================================================================
     public function uploadAndConvert(string $path, string $name): array
     {
         $ext  = strtolower(pathinfo($name, PATHINFO_EXTENSION));
         $mime = mime_content_type($path);
 
-        // MIME convert hợp lệ
         $googleMime = match ($ext) {
             'doc', 'docx' => "application/vnd.google-apps.document",
             'xls', 'xlsx' => "application/vnd.google-apps.spreadsheet",
@@ -117,7 +142,7 @@ class GoogleDriveService
             default       => null,
         };
 
-        // ❌ Không convert được → upload gốc
+        // Không convert → upload nguyên bản
         if (!$googleMime) {
             if ($ext === 'pdf') {
                 throw new Exception("Không được upload file PDF.");
@@ -139,16 +164,18 @@ class GoogleDriveService
             $id = $uploaded->id;
 
             return [
-                'drive_id'      => $id,
-                'google_file_id'=> $id,
-                'view'          => "https://drive.google.com/file/d/{$id}/view",
-                'mime'          => $mime,
-                'original_id'   => $id,
-                'converted'     => false,
+                'drive_id'        => $id,
+                'google_file_id'  => $id,
+                'view'            => "https://drive.google.com/file/d/{$id}/view",
+                'mime'            => $mime,
+                'original_id'     => $id,
+                'converted'       => false,
             ];
         }
 
-        // ---- Upload file gốc ----
+        // ----------------------------
+        // Upload file gốc
+        // ----------------------------
         $origin = $this->drive->files->create(
             new Google_Service_Drive_DriveFile([
                 'name'    => $name,
@@ -164,7 +191,9 @@ class GoogleDriveService
 
         $sourceId = $origin->id;
 
-        // ---- Convert ----
+        // ----------------------------
+        // Convert
+        // ----------------------------
         $converted = $this->drive->files->copy(
             $sourceId,
             new Google_Service_Drive_DriveFile([
@@ -176,7 +205,6 @@ class GoogleDriveService
 
         $convertedId = $converted->id;
 
-        // Viewer URL
         $googleUrl = match ($googleMime) {
             "application/vnd.google-apps.document"
             => "https://docs.google.com/document/d/$convertedId/edit",
@@ -187,12 +215,12 @@ class GoogleDriveService
         };
 
         return [
-            'drive_id'        => $convertedId,
-            'google_file_id'  => $convertedId,
-            'view'            => $googleUrl,
-            'mime'            => $googleMime,
-            'original_id'     => $sourceId,
-            'converted'       => true,
+            'drive_id'       => $convertedId,
+            'google_file_id' => $convertedId,
+            'view'           => $googleUrl,
+            'mime'           => $googleMime,
+            'original_id'    => $sourceId,
+            'converted'      => true,
         ];
     }
 }

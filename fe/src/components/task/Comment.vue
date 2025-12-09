@@ -237,38 +237,89 @@
 
                 <!-- Mention pop -->
                 <div class="mention-row">
-                    <a-popover
-                        trigger="click"
-                        :open="addMentionOpen"
-                        @update:open="(v) => (addMentionOpen = v)"
-                        placement="topLeft"
-                        :getPopupContainer="(t) => t.parentNode"
+                    <a-modal
+                        v-model:open="addMentionOpen"
+                        title="Thêm người duyệt"
+                        centered
+                        :footer="null"
+                        width="520px"
+                        class="mention-modal"
                     >
-                        <template #content>
-                            <div class="mention-pop">
-                                <div class="row">
-                                    <span class="lbl">Người:</span>
-                                    <a-select
-                                        v-model:value="mentionForm.userId"
-                                        :options="userOptions"
-                                        show-search
-                                        :filterOption="filterUser"
-                                        style="min-width: 220px"
-                                        placeholder="Chọn người"
-                                        @change="onMentionUserChange"
-                                    />
-                                </div>
-                                <div class="row">
-                                    <span class="lbl">Vai trò:</span>
-                                    <a-segmented v-model:value="mentionForm.role" :options="[{ label: 'Duyệt', value: 'approve' }]"/>
-                                </div>
-                                <div class="row" style="justify-content: flex-end; gap: 8px">
-                                    <a-button size="small" @click="resetMentionForm">Hủy</a-button>
-                                    <a-button size="small" type="primary" @click="addMention">Thêm</a-button>
+                        <div class="mention-body">
+
+                            <!-- Chọn người -->
+                            <div class="field">
+                                <label class="field-label">Người duyệt:</label>
+                                <a-select
+                                    v-model:value="mentionForm.userId"
+                                    show-search
+                                    :filterOption="filterUser"
+                                    placeholder="Chọn người"
+                                    style="width:100%"
+                                >
+                                    <a-select-option
+                                        v-for="u in sortedUsers"
+                                        :key="u.id"
+                                        :value="String(u.id)"
+                                    >
+                                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                                            <span>{{ u.name }}</span>
+
+                                            <a-tag
+                                                :color="departmentColors[u.department_id]"
+                                                style="border-radius:6px;"
+                                            >
+                                                {{ getDepartmentName(u.id) }}
+                                            </a-tag>
+                                        </div>
+                                    </a-select-option>
+                                </a-select>
+                            </div>
+
+                            <!-- HIỂN THỊ CHỈ KHI USER LÀ ĐA NHIỆM -->
+                            <div v-if="Number(selectedUser?.is_multi_role) === 1">
+                                <a-alert
+                                    v-if="Number(selectedUser?.is_multi_role) !== 1"
+                                    type="warning"
+                                    show-icon
+                                    message="Chọn vai trò duyệt"
+                                    description="Hãy chọn đúng vai trò để luồng duyệt được phân bổ chính xác."
+                                    class="role-alert"
+                                />
+
+                                <a-alert
+                                    v-else
+                                    type="warning"
+                                    show-icon
+                                    message="Người duyệt kiêm nhiệm"
+                                    description="Hãy chọn đúng vai trò để luồng duyệt được phân bổ chính xác."
+                                    class="role-alert"
+                                />
+
+
+                                <div class="field">
+                                    <label class="field-label">Vai trò:</label>
+
+                                    <a-radio-group v-model:value="mentionForm.role" class="role-radio-group">
+                                        <a-radio value="director">
+                                            Ban Giám đốc <span class="default-text" style="color: red">(mặc định)</span>
+                                        </a-radio>
+
+                                        <a-radio value="sales">Phòng Kinh Doanh</a-radio>
+                                        <a-radio value="commerce">Phòng Thương Mại</a-radio>
+                                    </a-radio-group>
                                 </div>
                             </div>
-                        </template>
-                    </a-popover>
+
+
+                            <!-- Footer buttons -->
+                            <div class="modal-footer">
+                                <a-button @click="addMentionOpen = false">Hủy</a-button>
+                                <a-button type="primary" @click="addMention">Thêm</a-button>
+                            </div>
+                        </div>
+                    </a-modal>
+
                 </div>
             </a-spin>
         </div>
@@ -520,6 +571,11 @@ import {addEntityMember} from "@/api/entityMembers.js";
 dayjs.extend(relativeTime)
 dayjs.locale('vi')
 
+const props = defineProps({
+    departments: { type: Array, default: () => [] },
+    users: { type: Array, default: () => [] }
+})
+
 
 const latestBatch = ref(null)
 const latestFiles = ref([])
@@ -559,6 +615,13 @@ function fromNowVi(dt) {
     tick.value
     const d = dayjs(dt)
     return d.isValid() ? d.fromNow() : ''
+}
+
+const getDepartmentName = (userId) => {
+    const user = props.users.find(u => String(u.id) === String(userId))
+    if (!user) return ''
+    const dept = props.departments.find(d => d.id === user.department_id)
+    return dept?.name || ''
 }
 
 function formatVi(dt) {
@@ -1074,23 +1137,57 @@ async function persistRosterWithPayload(payload) {
 
 /* users & mentions add/remove */
 const getUserById = (id) => listUser.value.find((u) => u.id === id) || {}
-const userOptions = computed(() => (listUser.value || []).map((u) => ({value: String(u.id), label: u.name})))
+const userOptions = computed(() =>
+    sortedUsers.value.map(u => ({
+        label: u.name,
+        value: String(u.id),
+    }))
+);
 const filterUser = (input, option) => (option?.label ?? '').toLowerCase().includes(String(input).toLowerCase())
 
-function onMentionUserChange(userId) {
-    const user = listUser.value.find(u => String(u.id) === String(userId));
+const selectedUser = computed(() => {
+    return listUser.value.find(u => String(u.id) === String(mentionForm.value.userId)) || null;
+});
 
-    console.log("=== User được chọn ===");
-    console.log(user);                // Toàn bộ object user
-    console.log("ID:", user?.id);
-    console.log("Tên:", user?.name);
-    console.log("Email:", user?.email);
-    console.log("Role:", user?.role);
-}
+const departmentColors = computed(() => {
+    const colors = ["blue", "green", "orange", "purple", "cyan", "magenta", "geekblue", "volcano", "gold", "lime",];
+
+    const map = {};
+    let index = 0;
+
+    for (const d of props.departments) {
+        map[d.id] = colors[index % colors.length];
+        index++;
+    }
+
+    return map;
+});
+
+
+const BGD = 6; // ID phòng ban Ban Giám đốc
+const sortedUsers = computed(() => {
+    return [...props.users].sort((a, b) => {
+        // 1) Ban Giám đốc lên đầu
+        const aIsBGD = Number(a.department_id) === BGD ? 0 : 1;
+        const bIsBGD = Number(b.department_id) === BGD ? 0 : 1;
+
+        if (aIsBGD !== bIsBGD) {
+            return aIsBGD - bIsBGD;
+        }
+
+        // 2) Nhóm theo phòng ban
+        if (Number(a.department_id) !== Number(b.department_id)) {
+            return Number(a.department_id) - Number(b.department_id);
+        }
+
+        // 3) Sort theo tên trong cùng phòng
+        return a.name.localeCompare(b.name, "vi");
+    });
+});
 
 
 let addMentionOpen = ref(false)
-const mentionForm = ref({userId: null, role: 'approve'})
+const mentionForm = ref({userId: null, role: 'director'})
 
 function resetMentionForm() {
     mentionForm.value.userId = null
@@ -2823,6 +2920,87 @@ onBeforeUnmount(() => {
 
 .dot.signed {
     background: #2f855a;
+}
+
+/* === Modal tùy chỉnh === */
+.mention-modal .ant-modal-content {
+    border-radius: 14px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+}
+
+/* Header */
+.mention-modal .ant-modal-header {
+    padding: 16px 20px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.mention-modal .ant-modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Body */
+.mention-body {
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* Field */
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+/* Alert style */
+.role-alert {
+    border-radius: 8px !important;
+    padding: 10px 12px !important;
+    background: #fffbe6 !important;
+}
+
+/* Radio group */
+.role-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 6px 10px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.role-radio-group .ant-radio-wrapper {
+    padding: 4px 6px;
+    font-size: 14px;
+}
+
+/* Footer */
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 14px;
+    border-top: 1px solid #e5e7eb;
+}
+.default-text {
+    font-size: 12px;
+    color: #999;
+    margin-left: 6px;
+    font-style: italic;
 }
 
 /* Responsive */
