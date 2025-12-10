@@ -386,7 +386,7 @@
                             <!-- Cột trái: Thảo luận -->
                             <a-col :span="24" :xs="24" :lg="24" style="padding-left: 0; padding-right: 0">
                                 <div class="discussion-scroll" v-auto-maxheight="12">
-                                    <Comment :users="listUser" :departments="listDepartment" />
+                                    <Comment :users="listUser" :departments="listDepartment" :roster="logData" />
                                 </div>
                             </a-col>
                         </a-row>
@@ -953,6 +953,7 @@ const fetchTaskFiles = async () => {
     }
     try {
         const res = await getTaskFilesAPI(taskId)
+        console.log('data2', res)
         fileList.value = (res.data || []).map(f => ({
             uid: f.id || f.file_name,
             name: f.file_name,
@@ -1007,7 +1008,6 @@ const getStatusText = (status) => {
             return 'Không xác định'
     }
 }
-
 // thay thế function fetchLogHistory cũ
 const fetchLogHistory = async () => {
     const taskId = route.params.id;
@@ -1019,6 +1019,8 @@ const fetchLogHistory = async () => {
     try {
         const res = await getTaskRosterAPI(taskId);
         const body = res?.data ?? {};
+
+        console.log('body', body)
 
         // roster là mảng các bước duyệt
         const roster = Array.isArray(body.roster) ? body.roster : [];
@@ -1207,7 +1209,6 @@ onMounted(async () => {
         await getUser()
         await getListBidding()
         await getListContract()
-        await fetchTaskFiles()
         await fetchLogHistory()
         handleChangeLinkedId()
     } catch (e) {

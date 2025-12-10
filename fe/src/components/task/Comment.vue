@@ -257,11 +257,7 @@
                                     placeholder="Chọn người"
                                     style="width:100%"
                                 >
-                                    <a-select-option
-                                        v-for="u in sortedUsers"
-                                        :key="u.id"
-                                        :value="String(u.id)"
-                                    >
+                                    <a-select-option v-for="u in sortedUsers" :key="u.id" :value="String(u.id)">
                                         <div style="display:flex; justify-content:space-between; align-items:center;">
                                             <span>{{ u.name }}</span>
                                             <a-tag :color="departmentColors[u.department_id]" style="border-radius:6px;">
@@ -289,7 +285,6 @@
                                     show-icon
                                     message="Người duyệt kiêm nhiệm"
                                     description="Hãy chọn đúng vai trò để luồng duyệt được phân bổ chính xác. Mỗi vai trò đi kèm theo một chuỗi ký tự tương ứng để chèn vào file duyệt."
-
                                     class="role-alert"
                                 />
 
@@ -298,62 +293,56 @@
                                     <label class="field-label">Vai trò:</label>
 
                                     <a-radio-group v-model:value="mentionForm.role" class="role-radio-group">
-                                        <a-radio value="6">
-                                            Ban Giám đốc <span class="default-text" style="color: red">(mặc định)</span> -
 
+                                        <!-- Ban Giám Đốc -->
+                                        <a-radio value="vu_thi_thuy_bgd">
+                                            Ban Giám đốc
+                                            <span class="default-text" style="color:red">(mặc định)</span> –
                                             <a-tooltip title="Phó Giám Đốc">
                                                 <a-tag color="blue">vu_thi_thuy_bgd</a-tag>
                                             </a-tooltip>
 
                                             <a-tooltip title="Copy chuỗi">
-                                                <a-button
-                                                    class="copy-icon-btn"
-                                                    type="text"
-                                                    style="padding: 0; margin-left: 6px;"
-                                                    @click="copyTag('vu_thi_thuy_bgd')"
-                                                >
-                                                    <CopyOutlined />
+                                                <a-button class="copy-icon-btn" type="text"
+                                                          style="padding:0; margin-left:6px;"
+                                                          @click="copyTag('vu_thi_thuy_bgd')">
+                                                    <CopyOutlined/>
                                                 </a-button>
                                             </a-tooltip>
                                         </a-radio>
 
-                                        <a-radio value="3">
-                                            Phòng Kế Toán - Tài Chính -
-
+                                        <!-- Kế toán – Tài chính -->
+                                        <a-radio value="vu_thi_thuy_kt">
+                                            Phòng Kế Toán - Tài Chính –
                                             <a-tooltip title="Trưởng phòng kế toán - tài chính">
                                                 <a-tag color="green">vu_thi_thuy_kt</a-tag>
                                             </a-tooltip>
 
                                             <a-tooltip title="Copy chuỗi">
-                                                <a-button
-                                                    class="copy-icon-btn"
-                                                    type="text"
-                                                    style="padding: 0; margin-left: 6px;"
-                                                    @click="copyTag('vu_thi_thuy_kt')"
-                                                >
-                                                    <CopyOutlined />
+                                                <a-button class="copy-icon-btn" type="text"
+                                                          style="padding:0; margin-left:6px;"
+                                                          @click="copyTag('vu_thi_thuy_kt')">
+                                                    <CopyOutlined/>
                                                 </a-button>
                                             </a-tooltip>
                                         </a-radio>
 
-                                        <a-radio value="4">
-                                            Phòng Thương Mại -
-
+                                        <!-- Thương mại -->
+                                        <a-radio value="vu_thi_thuy_tm">
+                                            Phòng Thương Mại –
                                             <a-tooltip title="Trưởng phòng thương mại">
                                                 <a-tag color="orange">vu_thi_thuy_tm</a-tag>
                                             </a-tooltip>
 
                                             <a-tooltip title="Copy chuỗi">
-                                                <a-button
-                                                    class="copy-icon-btn"
-                                                    type="text"
-                                                    style="padding: 0; margin-left: 6px;"
-                                                    @click="copyTag('vu_thi_thuy_tm')"
-                                                >
-                                                    <CopyOutlined />
+                                                <a-button class="copy-icon-btn" type="text"
+                                                          style="padding:0; margin-left:6px;"
+                                                          @click="copyTag('vu_thi_thuy_tm')">
+                                                    <CopyOutlined/>
                                                 </a-button>
                                             </a-tooltip>
                                         </a-radio>
+
                                     </a-radio-group>
 
                                 </div>
@@ -471,7 +460,7 @@
                 <!-- thay bằng Draggable (PascalCase) -->
                 <Draggable
                     v-model="dragList"
-                    item-key="user_id"
+                    :item-key="m => `${m.user_id}_${m.department_id}`"
                     handle=".chip-card"
                     ghost-class="chip-ghost"
                     animation="200"
@@ -480,8 +469,9 @@
                 >
                     <template v-slot:item="{ element: m, index }">
                         <div
-                            :key="m.user_id + '-' + (m.status || '') + '-' + (m.acted_at || '') + '-' + (m.added_at || '')"
-                            class="drawer-chip">
+                            :key="`${m.user_id}_${m.department_id}_${m.status}`"
+                            class="drawer-chip"
+                        >
                             <!-- Tooltip hướng dẫn kéo thả; đặt trên chip-card để người dùng thấy khi hover -->
                             <a-tooltip
                                 :title="filterPendingOnly || drawerSearch ? 'Tắt bộ lọc hoặc tìm kiếm để sắp xếp lại thứ tự duyệt' : canModifyRoster  ? 'Kéo thả để thay đổi thứ tự duyệt' : 'Chỉ người tạo task mới được sắp xếp thứ tự duyệt'"
@@ -507,9 +497,24 @@
 
                                     <!-- Thông tin -->
                                     <div class="chip-body">
-                                        <div class="name-row" :title="m.name">
+                                        <div class="name-row enhanced-chip-name">
                                             <span class="chip-name">@{{ m.name }}</span>
+
+                                            <!-- TAG PHÒNG BAN — đẹp, nhạt, chuyên nghiệp -->
+                                            <a-tag v-if="m.department_id" color="blue">
+                                                {{ getDepartmentName(m) }}
+                                            </a-tag>
+                                            <!-- TAG SIGNATURE CODE — style dạng 'code' -->
+                                            <a-tag
+                                                v-if="m.signature_code"
+                                                color="purple"
+                                                class="sig-tag"
+                                            >
+                                                {{ m.signature_code }}
+                                            </a-tag>
                                         </div>
+
+
                                         <div class="meta-row">
                                             <span class="dot" :class="statusDotClass(m.status)"></span>
                                             <span class="chip-state">
@@ -525,7 +530,8 @@
                                                 <a-button
                                                     size="small"
                                                     type="primary"
-                                                    :loading="approveLoading[m.user_id]?.approved"
+                                                    :loading="approveLoading[m.user_id]?.[m.department_id]?.approved"
+
                                                     @click="handleApproveAction(m, 'approved')"
                                                 >
                                                     <template #icon><CheckOutlined /></template>
@@ -535,7 +541,7 @@
                                                 <a-button
                                                     size="small"
                                                     danger
-                                                    :loading="approveLoading[m.user_id]?.rejected"
+                                                    :loading="approveLoading[m.user_id]?.[m.department_id]?.rejected"
                                                     @click="handleApproveAction(m, 'rejected')"
                                                 >
                                                     <template #icon><CloseOutlined /></template>
@@ -555,7 +561,7 @@
                                                 size="small"
                                                 type="text"
                                                 class="chip-close"
-                                                @click="removeMention(m.user_id)"
+                                                @click="removeMention(m)"
                                             >×</a-button>
                                         </div>
 
@@ -585,12 +591,10 @@ import {
     FilePptOutlined,
     FileTextOutlined,
     FileWordOutlined,
-    InfoCircleOutlined,
     LinkOutlined,
     PaperClipOutlined,
     SendOutlined,
     TeamOutlined,
-    EditOutlined,
     CopyOutlined
 } from '@ant-design/icons-vue'
 
@@ -622,7 +626,8 @@ dayjs.locale('vi')
 
 const props = defineProps({
     departments: { type: Array, default: () => [] },
-    users: { type: Array, default: () => [] }
+    users: { type: Array, default: () => [] },
+    roster: { type: Array, default: () => [] }
 })
 
 
@@ -666,12 +671,11 @@ function fromNowVi(dt) {
     return d.isValid() ? d.fromNow() : ''
 }
 
-const getDepartmentName = (userId) => {
-    const user = props.users.find(u => String(u.id) === String(userId))
-    if (!user) return ''
-    const dept = props.departments.find(d => d.id === user.department_id)
-    return dept?.name || ''
-}
+const getDepartmentName = (m) => {
+    const dept = props.departments.find(d => Number(d.id) === Number(m.department_id));
+    return dept?.name || '';
+};
+
 
 function formatVi(dt) {
     const d = dayjs(dt)
@@ -963,6 +967,7 @@ async function ensureTaskFileId(file, {autoPin = false} = {}) {
 async function loadTaskFiles() {
     try {
         const {data} = await getTaskFilesAPI(taskId.value)
+        console.log('data1', data)
         const files = Array.isArray(data) ? data : data?.data || []
         const idx = {}
         for (const f of files) {
@@ -1094,6 +1099,7 @@ const pinTooltip = (f) => {
 
 /* ===== Roster actions (Drawer) ===== */
 async function handleApproveAction(m, status) {
+
     if (!['approved', 'rejected'].includes(status)) return;
 
     if (!canActOnChip(m)) {
@@ -1101,82 +1107,126 @@ async function handleApproveAction(m, status) {
         return;
     }
 
-    const uid = m.user_id;
+    const uid  = Number(m.user_id);
+    const dept = Number(m.department_id);
+
+    // ⭐ Lấy thông tin user thật từ hệ thống (đảm bảo có is_multi_role)
+    const userInfo = getUserById(uid) || {};
+    const isMulti  = Number(userInfo.is_multi_role ?? 0);
+
+    // ⭐ Setup loading theo composite key
     if (!approveLoading.value[uid]) approveLoading.value[uid] = {};
-    approveLoading.value[uid][status] = true;
+    if (!approveLoading.value[uid][dept]) approveLoading.value[uid][dept] = {};
+    approveLoading.value[uid][dept][status] = true;
 
     try {
+        const now = new Date().toISOString().slice(0, 19).replace("T", " ");
         const myRank = roleRank(currentRoleCode.value);
-        const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
         // Clone roster
-        const roster = mentionsSelected.value.map(r => ({ ...r }));
+        let roster = mentionsSelected.value.map(r => ({ ...r }));
 
-        const idx = roster.findIndex(x => String(x.user_id) === String(uid));
+        // ⭐ Tìm đúng bản ghi theo USER + DEPT
+        const idx = roster.findIndex(x =>
+            Number(x.user_id) === uid &&
+            Number(x.department_id) === dept
+        );
+
         if (idx === -1) {
-            message.error('Không tìm thấy thành viên trong danh sách');
+            message.error("Không tìm thấy bản ghi đúng (user + phòng ban)");
             return;
         }
 
         const target = roster[idx];
+
+        // ⭐ Update trạng thái CHỈ bản ghi này
         target.status = status;
         target.acted_at = now;
 
-        // Cascade cho admin
-        if (status === 'approved' && myRank >= roleRank('admin')) {
+        // ⭐ Cascade chỉ khi user KHÔNG đa nhiệm
+        if (status === "approved" && myRank >= roleRank("admin") && isMulti === 0) {
             for (const item of roster) {
-                if ((item.status || '').toLowerCase() !== 'pending') continue;
+                if ((item.status || "").toLowerCase() !== "pending") continue;
+
                 const u = getUserById(Number(item.user_id)) || {};
-                const rcode = u.role_code || u.role || 'user';
+                const rcode = u.role_code || u.role || "user";
+
                 if (roleRank(rcode) <= myRank) {
-                    item.status = 'approved';
+                    item.status = "approved";
                     item.acted_at = now;
                 }
             }
         }
 
-        const payload = roster.map(x => ({
-            user_id: Number(x.user_id),
-            name: x.name,
-            role: x.role,
-            status: x.status,
-            acted_at: x.acted_at || null,
-            note: x.note || null,
-        }));
+        // ⭐⭐⭐ Gửi đúng 1 RECORD (để backend merge đúng) ⭐⭐⭐
+        const payload = {
+            mentions: [
+                {
+                    user_id: uid,
+                    name: target.name,
+                    role: target.role,
+                    status: target.status,
+                    acted_at: target.acted_at || null,
+                    note: target.note ?? null,
+                    department_id: dept,
+                    signature_code: target.signature_code ?? null
+                }
+            ],
+            mode: "merge"
+        };
 
         await persistRosterWithPayload(payload);
 
-        try {
-            await replaceMarkerInTaskFile(taskId.value, Number(uid));
-        } catch (err) {
-            console.warn('marker replace failed', err);
-        }
+        // ⭐ Replace marker đúng vai trò
+        await replaceMarkerInTaskFile(taskId.value, uid, dept);
 
-        mentionsSelected.value = roster;
+        // ⭐ Sync lại để load đúng roster
         await syncRosterFromServer();
 
-        message.success(status === 'approved' ? 'Đã duyệt' : 'Đã từ chối');
+        message.success(status === "approved" ? "Đã duyệt" : "Đã từ chối");
+
     } catch (e) {
-        console.error('handleApproveAction error', e);
-        message.error('Xử lý không thành công');
+        console.error("handleApproveAction error", e);
+        message.error("Xử lý không thành công");
+
     } finally {
-        approveLoading.value[uid][status] = false;
+
+        approveLoading.value[uid][dept][status] = false;
+
     }
 }
+
+
+
 
 
 
 // wrapper: persist roster by replace (calls mergeTaskRosterAPI or direct axios)
 async function persistRosterWithPayload(payload) {
     try {
-        // if you already have mergeTaskRosterAPI defined: mergeTaskRosterAPI(taskId, payload, 'replace')
-        await mergeTaskRosterAPI(taskId.value, payload, 'replace')
-        // optionally call syncRosterFromServer after
+        const mentions = Array.isArray(payload.mentions)
+            ? payload.mentions.map(x => ({
+                user_id: Number(x.user_id),
+                name: x.name,
+                role: x.role,
+                status: x.status,
+                acted_at: x.acted_at || null,
+                note: x.note || null,
+                department_id: x.department_id ?? null,
+                signature_code: x.signature_code ?? null,
+            }))
+            : [];
+
+        const mode = payload.mode || "merge"; // mặc định merge
+
+        await mergeTaskRosterAPI(taskId.value, mentions, mode);
     } catch (e) {
-        console.error('persistRosterWithPayload failed', e)
-        throw e
+        console.error("persistRosterWithPayload failed", e);
+        throw e;
     }
 }
+
+
 
 
 /* users & mentions add/remove */
@@ -1229,10 +1279,17 @@ const sortedUsers = computed(() => {
     });
 });
 
+const multiRoles = {
+    vu_thi_thuy_bgd: { department_id: 6, marker_code: "vu_thi_thuy_bgd" },
+    vu_thi_thuy_kt:  { department_id: 2, marker_code: "vu_thi_thuy_kt" },
+    vu_thi_thuy_tm:  { department_id: 4, marker_code: "vu_thi_thuy_tm" }
+};
 
 let addMentionOpen = ref(false)
-const mentionForm = ref({userId: null, role: 'approve'})
-
+const mentionForm = ref({
+    userId: null,
+    role: null   // role = "bgd" | "kt" | "tm"
+});
 function resetMentionForm() {
     mentionForm.value.userId = null
     mentionForm.value.role = 'approve'
@@ -1254,71 +1311,129 @@ const addAccess = async (entityType, entityId, userId) => {
 };
 
 const addMention = async () => {
-    const uid = mentionForm.value.userId
-    if (!uid) return
-    const user = listUser.value.find((u) => String(u.id) === String(uid))
-    const displayName = user?.name || `#${uid}`
+    const uid = mentionForm.value.userId;
+    if (!uid) return;
 
-    if (mentionsSelected.value.some((m) => String(m.user_id) === String(uid))) {
-        message.info('Người này đã có trong danh sách')
-        insertMention(displayName)
-        addMentionOpen.value = false
-        await nextTick()
-        const ta = document.querySelector('.tg-input textarea.ant-input')
-        if (ta && typeof ta.focus === 'function') ta.focus()
-        return
-    }
+    const user = listUser.value.find(u => String(u.id) === String(uid));
+    const displayName = user?.name || `#${uid}`;
 
-    mentionsSelected.value.push({
-        user_id: String(uid),
-        name: displayName,
-        role: mentionForm.value.role,
-        status: 'pending',
-        added_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
-    })
+    let departmentId = null;
+    let signatureCode = null;
 
-    insertMention(displayName)
-    addMentionOpen.value = false
+    // ======================================================
+    // ⭐ XÁC ĐỊNH department_id + signature_code
+    // ======================================================
+    if (Number(user?.is_multi_role) === 1) {
 
-    try {
-        await persistRoster('merge')
-        await syncRosterFromServer()
-        message.success('Đã thêm người duyệt')
+        const roleKey = mentionForm.value.role;         // "bgd" | "kt" | "tm"
+        const selected = multiRoles[roleKey];           // LẤY OBJECT TỪ MAP
 
-        // ⭐⭐⭐ AUTO-GRANT ACCESS
-        try {
-            let entityType = null;
-            let entityId = null;
-
-            if (route.path.includes("/biddings/")) {
-                entityType = "bidding";
-                entityId = Number(route.params.bidId || route.params.id);
-            }
-            else if (route.path.includes("/contract/")) {
-                entityType = "contract";
-                entityId = Number(route.params.contractId || route.params.id);
-            }
-            else {
-                entityType = "internal";
-                entityId = Number(taskId.value);
-            }
-
-            await addAccess(entityType, entityId, uid);
-
-        } catch (e) {
-            console.warn("Không thể auto-add quyền cho người duyệt:", e);
+        if (!selected) {
+            message.warning("Vui lòng chọn vai trò/phòng ban duyệt");
+            return;
         }
 
-    } catch (err) {
-        console.error('addMention persist failed', err)
-        message.error('Không thể thêm người duyệt — thử lại')
-        mentionsSelected.value = mentionsSelected.value.filter(m => String(m.user_id) !== String(uid))
+        departmentId = selected.department_id;
+        signatureCode = selected.marker_code;
+
+    } else {
+        // User 1 vai trò
+        departmentId = Number(user?.department_id);
+        signatureCode = user?.signature_code ?? null;
     }
 
-    await nextTick()
-    const ta = document.querySelector('.tg-input textarea.ant-input')
-    if (ta && typeof ta.focus === 'function') ta.focus()
-}
+    // ======================================================
+    // ⭐ CHECK TRÙNG
+    // ======================================================
+    if (Number(user?.is_multi_role) !== 1) {
+        // --- User 1 vai trò → chỉ 1 lần duy nhất ---
+        if (mentionsSelected.value.some(m => String(m.user_id) === String(uid))) {
+            message.info("Người này đã có trong danh sách");
+            insertMention(displayName);
+            addMentionOpen.value = false;
+            return;
+        }
+    } else {
+        // --- User đa vai trò → cho phép nhiều vai trò ---
+        const roleKey = mentionForm.value.role;
+        const selected = multiRoles[roleKey];
+
+// ❗ Nếu FE chưa chọn role (selected = null) → chặn
+        if (!selected) {
+            message.warning("Vui lòng chọn vai trò/phòng ban duyệt");
+            return;
+        }
+
+// Check trùng theo composite key (user_id + department_id)
+        const isDup = mentionsSelected.value.some(m =>
+            String(m.user_id) === String(uid) &&
+            Number(m.department_id) === Number(selected.department_id)
+        );
+
+        if (isDup) {
+            message.info("Người này đã có trong danh sách với đúng vai trò này");
+            insertMention(displayName);
+            addMentionOpen.value = false;
+            return;
+        }
+
+    }
+
+
+    // ======================================================
+    // ⭐ PUSH MENTION
+    // ======================================================
+    mentionsSelected.value.push({
+        user_id: Number(uid),
+        name: displayName,
+        role: "approve",                          // ⭐ FE luôn gửi approve
+        department_id: departmentId,              // ⭐ đúng
+        signature_code: signatureCode,            // ⭐ đúng marker_code
+        status: "pending",
+        added_at: new Date().toISOString().slice(0,19).replace("T"," ")
+    });
+
+
+    insertMention(displayName);
+    addMentionOpen.value = false;
+
+    try {
+        await persistRoster("merge");
+        await syncRosterFromServer();
+        message.success("Đã thêm người duyệt");
+
+        // ==================================================
+        // ⭐ AUTO-GRANT ACCESS
+        // ==================================================
+        let entityType = null;
+        let entityId = null;
+
+        if (route.path.includes("/biddings/")) {
+            entityType = "bidding";
+            entityId = Number(route.params.bidId || route.params.id);
+        } else if (route.path.includes("/contract/")) {
+            entityType = "contract";
+            entityId = Number(route.params.contractId || route.params.id);
+        } else {
+            entityType = "internal";
+            entityId = Number(taskId.value);
+        }
+
+        await addAccess(entityType, entityId, uid);
+
+    } catch (err) {
+        console.error("addMention persist failed", err);
+        message.error("Không thể thêm người duyệt — thử lại");
+
+        // rollback
+        mentionsSelected.value = mentionsSelected.value.filter(
+            m => String(m.user_id) !== String(uid)
+        );
+    }
+
+    await nextTick();
+    document.querySelector(".tg-input textarea.ant-input")?.focus?.();
+};
 
 
 
@@ -1338,14 +1453,28 @@ function insertMention(displayName) {
     inputValue.value = `${v} `
 }
 
-function removeMention(uid) {
+function removeMention(m) {
     if (!canModifyRoster.value) {
-        message.warning('Chỉ người tạo task mới được xóa người duyệt')
-        return
+        message.warning('Chỉ người tạo task mới được xóa người duyệt');
+        return;
     }
-    mentionsSelected.value = mentionsSelected.value.filter((m) => String(m.user_id) !== String(uid))
-    void persistRoster('replace')
+
+    const uid = Number(m.user_id);
+    const dept = Number(m.department_id ?? 0);
+
+    mentionsSelected.value = mentionsSelected.value.filter(item =>
+        !(Number(item.user_id) === uid && Number(item.department_id) === dept)
+    );
+
+    const payload = {
+        mentions: mentionsSelected.value,
+        mode: "replace"
+    };
+
+    persistRosterWithPayload(payload);
 }
+
+
 
 const metaTime = (m) =>
     m.status === 'approved' || m.status === 'rejected'
@@ -1683,14 +1812,14 @@ function faviconOf(u = '') {
 }
 
 /* ===== users ===== */
-async function getUser() {
-    try {
-        const {data} = await getUsers()
-        listUser.value = Array.isArray(data) ? data : data?.data ?? []
-    } catch (e) {
-        message.error('Không thể tải người dùng')
-    }
-}
+// async function getUser() {
+//     try {
+//         const {data} = await getUsers()
+//         listUser.value = Array.isArray(data) ? data : data?.data ?? []
+//     } catch (e) {
+//         message.error('Không thể tải người dùng')
+//     }
+// }
 
 /* ===== roster sync/persist ===== */
 async function persistRoster(mode = 'merge') {
@@ -1699,14 +1828,20 @@ async function persistRoster(mode = 'merge') {
             user_id: Number(m.user_id),
             name: m.name,
             role: m.role,
+            department_id: m.department_id ?? null,   // ⭐ THÊM DÒNG NÀY
+            signature_code: m.signature_code ?? null,   // ⭐ THÊM DÒNG NÀY
+            status: m.status ?? 'pending',
         }))
+
         await mergeTaskRosterAPI(taskId.value, payload, mode)
         await syncRosterFromServer()
+
     } catch (e) {
         console.error('persistRoster error', e)
         message.error('Không thể lưu danh sách người duyệt/ký')
     }
 }
+
 
 async function loadPinnedFiles() {
     try {
@@ -1767,6 +1902,8 @@ async function syncRosterFromServer() {
             acted_at_vi: r.acted_at_vi || null,
             added_at: r.added_at || null,
             added_at_vi: r.added_at_vi || null,
+            department_id: r.department_id ?? null,   // ⭐ đảm bảo giữ phòng ban
+            signature_code: r.signature_code ?? null, // ⭐ GIỮ MÃ KÝ
         }))
     } catch (e) {
         console.error('syncRosterFromServer failed', e)
@@ -1904,7 +2041,7 @@ function canSign(m) {
 /* ===== lifecycle ===== */
 onMounted(async () => {
     t = setInterval(() => (tick.value = Date.now()), 60_000)
-    await getUser()
+    // await getUser()
     await getListComment(1)
     await loadTaskFiles()
     await loadPinnedFiles()
@@ -1915,6 +2052,32 @@ onMounted(async () => {
         footerEl.value && ro.observe(footerEl.value)
     }
 })
+watch(
+    () => props.users,
+    (val) => {
+        listUser.value = Array.isArray(val) ? val : []
+    },
+    { immediate: true }
+)
+
+const localRoster = ref([])
+
+watch(() => props.roster, (v) => {
+    console.log("🔥 props.roster:", v)
+})
+
+// đồng bộ khi prop thay đổi
+watch(
+    () => props.roster,
+    (v) => {
+        localRoster.value = (v || []).map(r => ({
+            ...r,
+            department_id: r.department_id ?? r.dept_id ?? null,   // ⭐ GẮN ĐÚNG
+            signature_code: r.signature_code ?? null,
+        }))
+    },
+    { immediate: true }
+)
 onBeforeUnmount(() => {
     clearInterval(t)
     ro?.disconnect?.()
@@ -3119,6 +3282,32 @@ onBeforeUnmount(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     vertical-align: bottom;
+}
+.enhanced-chip-name {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.dept-tag {
+    background: #e8f1ff !important;
+    border-color: #c6ddff !important;
+    color: #1d4ed8 !important;
+    font-size: 11px;
+    padding: 0 6px;
+    border-radius: 6px;
+}
+
+.sig-tag {
+    background: #f3e8ff !important;
+    border-color: #e0c7ff !important;
+    color: #7e22ce !important;
+    font-size: 11px;
+    padding: 0 6px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
 }
 
 

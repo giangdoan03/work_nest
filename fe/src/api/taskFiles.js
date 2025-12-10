@@ -137,10 +137,11 @@ export const deleteCommentAPI = (commentId) =>
     instance.delete(`/comments/${commentId}`)
 
 // xử lý preferred_marker trong file Google Docs/Sheets
-export function replaceMarkerInTaskFile(taskId, userId) {
+export function replaceMarkerInTaskFile(taskId, userId, departmentId) {
     return instance.post(`/marker/replace`, {
         task_id: taskId,
-        user_id: userId
+        user_id: userId,
+        department_id: departmentId ?? null, // ⭐ gửi nếu có
     });
 }
 
