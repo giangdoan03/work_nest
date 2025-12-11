@@ -244,117 +244,135 @@
                         :footer="null"
                         width="520px"
                         class="mention-modal"
+                        :maskClosable="!rosterAllApproved"
+                        :keyboard="!rosterAllApproved"
                     >
                         <div class="mention-body">
 
-                            <!-- Chọn người -->
-                            <div class="field">
-                                <label class="field-label">Người duyệt:</label>
-                                <a-select
-                                    v-model:value="mentionForm.userId"
-                                    show-search
-                                    :filterOption="filterUser"
-                                    placeholder="Chọn người"
-                                    style="width:100%"
-                                >
-                                    <a-select-option v-for="u in sortedUsers" :key="u.id" :value="String(u.id)">
-                                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                                            <span>{{ u.name }}</span>
-                                            <a-tag :color="departmentColors[u.department_id]" style="border-radius:6px;">
-                                                {{ getDepartmentName(u.id) }}
-                                            </a-tag>
-                                        </div>
-                                    </a-select-option>
-                                </a-select>
+                            <!-- Nếu đã duyệt 100% → chỉ hiện thông báo, ẩn mọi input -->
+                            <div v-if="rosterAllApproved" class="lock-overlay"
+                                 style="padding:14px; text-align:center; font-size:15px; color:#444;">
+                                Hồ sơ đã duyệt xong — không thể thêm người duyệt.
                             </div>
 
-                            <!-- HIỂN THỊ CHỈ KHI USER LÀ ĐA NHIỆM -->
-                            <div v-if="Number(selectedUser?.is_multi_role) === 1">
-                                <a-alert
-                                    v-if="Number(selectedUser?.is_multi_role) !== 1"
-                                    type="warning"
-                                    show-icon
-                                    message="Chọn vai trò duyệt"
-                                    description="Hãy chọn đúng vai trò để luồng duyệt được phân bổ chính xác."
-                                    class="role-alert"
-                                />
+                            <!-- Nếu CHƯA duyệt xong → hiển thị giao diện thêm người duyệt -->
+                            <template v-else>
 
-                                <a-alert
-                                    v-else
-                                    type="warning"
-                                    show-icon
-                                    message="Người duyệt kiêm nhiệm"
-                                    description="Hãy chọn đúng vai trò để luồng duyệt được phân bổ chính xác. Mỗi vai trò đi kèm theo một chuỗi ký tự tương ứng để chèn vào file duyệt."
-                                    class="role-alert"
-                                />
-
-
+                                <!-- Chọn người -->
                                 <div class="field">
-                                    <label class="field-label">Vai trò:</label>
+                                    <label class="field-label">Người duyệt:</label>
 
-                                    <a-radio-group v-model:value="mentionForm.role" class="role-radio-group">
+                                    <a-select
+                                        v-model:value="mentionForm.userId"
+                                        show-search
+                                        :filterOption="filterUser"
+                                        placeholder="Chọn người"
+                                        style="width:100%"
+                                    >
+                                        <a-select-option
+                                            v-for="u in sortedUsers"
+                                            :key="u.id"
+                                            :value="String(u.id)"
+                                        >
+                                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                <span>{{ u.name }}</span>
 
-                                        <!-- Ban Giám Đốc -->
-                                        <a-radio value="vu_thi_thuy_bgd">
-                                            Ban Giám đốc
-                                            <span class="default-text" style="color:red">(mặc định)</span> –
-                                            <a-tooltip title="Phó Giám Đốc">
-                                                <a-tag color="blue">vu_thi_thuy_bgd</a-tag>
-                                            </a-tooltip>
-
-                                            <a-tooltip title="Copy chuỗi">
-                                                <a-button class="copy-icon-btn" type="text"
-                                                          style="padding:0; margin-left:6px;"
-                                                          @click="copyTag('vu_thi_thuy_bgd')">
-                                                    <CopyOutlined/>
-                                                </a-button>
-                                            </a-tooltip>
-                                        </a-radio>
-
-                                        <!-- Kế toán – Tài chính -->
-                                        <a-radio value="vu_thi_thuy_kt">
-                                            Phòng Kế Toán - Tài Chính –
-                                            <a-tooltip title="Trưởng phòng kế toán - tài chính">
-                                                <a-tag color="green">vu_thi_thuy_kt</a-tag>
-                                            </a-tooltip>
-
-                                            <a-tooltip title="Copy chuỗi">
-                                                <a-button class="copy-icon-btn" type="text"
-                                                          style="padding:0; margin-left:6px;"
-                                                          @click="copyTag('vu_thi_thuy_kt')">
-                                                    <CopyOutlined/>
-                                                </a-button>
-                                            </a-tooltip>
-                                        </a-radio>
-
-                                        <!-- Thương mại -->
-                                        <a-radio value="vu_thi_thuy_tm">
-                                            Phòng Thương Mại –
-                                            <a-tooltip title="Trưởng phòng thương mại">
-                                                <a-tag color="orange">vu_thi_thuy_tm</a-tag>
-                                            </a-tooltip>
-
-                                            <a-tooltip title="Copy chuỗi">
-                                                <a-button class="copy-icon-btn" type="text"
-                                                          style="padding:0; margin-left:6px;"
-                                                          @click="copyTag('vu_thi_thuy_tm')">
-                                                    <CopyOutlined/>
-                                                </a-button>
-                                            </a-tooltip>
-                                        </a-radio>
-
-                                    </a-radio-group>
-
+                                                <a-tag
+                                                    :color="departmentColors[u.department_id]"
+                                                    style="border-radius:6px;"
+                                                >
+                                                    {{ getDepartmentName(u) }}
+                                                </a-tag>
+                                            </div>
+                                        </a-select-option>
+                                    </a-select>
                                 </div>
-                            </div>
 
+                                <!-- Chọn vai trò nếu user đa nhiệm -->
+                                <div v-if="Number(selectedUser?.is_multi_role) === 1">
+                                    <a-alert
+                                        type="warning"
+                                        show-icon
+                                        message="Người duyệt kiêm nhiệm"
+                                        description="Hãy chọn đúng vai trò để luồng duyệt được phân bổ chính xác."
+                                        class="role-alert"
+                                    />
 
-                            <!-- Footer buttons -->
-                            <div class="modal-footer">
-                                <a-button @click="addMentionOpen = false">Hủy</a-button>
-                                <a-button type="primary" @click="addMention">Thêm</a-button>
-                            </div>
+                                    <div class="field">
+                                        <label class="field-label">Vai trò:</label>
+
+                                        <a-radio-group
+                                            v-model:value="mentionForm.role"
+                                            class="role-radio-group"
+                                        >
+
+                                            <!-- Ban Giám Đốc -->
+                                            <a-radio value="vu_thi_thuy_bgd">
+                                                Ban Giám đốc
+                                                <span class="default-text" style="color:red">(mặc định)</span> –
+                                                <a-tooltip title="Phó Giám Đốc">
+                                                    <a-tag color="blue">vu_thi_thuy_bgd</a-tag>
+                                                </a-tooltip>
+
+                                                <a-button
+                                                    class="copy-icon-btn"
+                                                    type="text"
+                                                    style="padding:0; margin-left:6px;"
+                                                    @click="copyTag('vu_thi_thuy_bgd')"
+                                                >
+                                                    <CopyOutlined/>
+                                                </a-button>
+                                            </a-radio>
+
+                                            <!-- Kế toán -->
+                                            <a-radio value="vu_thi_thuy_kt">
+                                                Phòng Kế Toán - Tài Chính –
+                                                <a-tooltip title="Trưởng phòng kế toán - tài chính">
+                                                    <a-tag color="green">vu_thi_thuy_kt</a-tag>
+                                                </a-tooltip>
+
+                                                <a-button
+                                                    class="copy-icon-btn"
+                                                    type="text"
+                                                    style="padding:0; margin-left:6px;"
+                                                    @click="copyTag('vu_thi_thuy_kt')"
+                                                >
+                                                    <CopyOutlined/>
+                                                </a-button>
+                                            </a-radio>
+
+                                            <!-- Thương mại -->
+                                            <a-radio value="vu_thi_thuy_tm">
+                                                Phòng Thương Mại –
+                                                <a-tooltip title="Trưởng phòng thương mại">
+                                                    <a-tag color="orange">vu_thi_thuy_tm</a-tag>
+                                                </a-tooltip>
+
+                                                <a-button
+                                                    class="copy-icon-btn"
+                                                    type="text"
+                                                    style="padding:0; margin-left:6px;"
+                                                    @click="copyTag('vu_thi_thuy_tm')"
+                                                >
+                                                    <CopyOutlined/>
+                                                </a-button>
+                                            </a-radio>
+
+                                        </a-radio-group>
+                                    </div>
+                                </div>
+
+                                <!-- Nút footer -->
+                                <div class="modal-footer">
+                                    <a-button @click="addMentionOpen = false">Hủy</a-button>
+                                    <a-button type="primary" @click="addMention">Thêm</a-button>
+                                </div>
+
+                            </template>
+
                         </div>
+
+
                     </a-modal>
 
                 </div>
@@ -528,25 +546,26 @@
                                             <!-- 1️⃣ Các nút DUYỆT – TỪ CHỐI -->
                                             <template v-if="canActOnChip(m)">
                                                 <a-button
+                                                    v-if="m.user_id === currentUserId && m.status === 'pending'"
                                                     size="small"
                                                     type="primary"
                                                     :loading="approveLoading[m.user_id]?.[m.department_id]?.approved"
-
                                                     @click="handleApproveAction(m, 'approved')"
                                                 >
                                                     <template #icon><CheckOutlined /></template>
                                                     Đồng ý
                                                 </a-button>
 
-                                                <a-button
-                                                    size="small"
-                                                    danger
-                                                    :loading="approveLoading[m.user_id]?.[m.department_id]?.rejected"
-                                                    @click="handleApproveAction(m, 'rejected')"
-                                                >
-                                                    <template #icon><CloseOutlined /></template>
-                                                    Từ chối
-                                                </a-button>
+
+<!--                                                <a-button-->
+<!--                                                    size="small"-->
+<!--                                                    danger-->
+<!--                                                    :loading="approveLoading[m.user_id]?.[m.department_id]?.rejected"-->
+<!--                                                    @click="handleApproveAction(m, 'rejected')"-->
+<!--                                                >-->
+<!--                                                    <template #icon><CloseOutlined /></template>-->
+<!--                                                    Từ chối-->
+<!--                                                </a-button>-->
                                             </template>
                                             <!-- 4️⃣ Hiển thị “Lượt của ...” -->
                                             <template v-if="!canActOnChip(m) && m.status === 'pending'">
@@ -598,7 +617,14 @@ import {
     CopyOutlined
 } from '@ant-design/icons-vue'
 
-import {createComment, getComments, getTaskRosterAPI, mergeTaskRosterAPI, updateComment,} from '@/api/task'
+import {
+    approveRosterAPI,
+    createComment,
+    getComments,
+    getTaskRosterAPI,
+    mergeTaskRosterAPI,
+    updateComment,
+} from '@/api/task'
 import { signTaskForUserAPI } from "@/api/taskSign";
 
 import {
@@ -967,7 +993,6 @@ async function ensureTaskFileId(file, {autoPin = false} = {}) {
 async function loadTaskFiles() {
     try {
         const {data} = await getTaskFilesAPI(taskId.value)
-        console.log('data1', data)
         const files = Array.isArray(data) ? data : data?.data || []
         const idx = {}
         for (const f of files) {
@@ -1110,91 +1135,32 @@ async function handleApproveAction(m, status) {
     const uid  = Number(m.user_id);
     const dept = Number(m.department_id);
 
-    // ⭐ Lấy thông tin user thật từ hệ thống (đảm bảo có is_multi_role)
-    const userInfo = getUserById(uid) || {};
-    const isMulti  = Number(userInfo.is_multi_role ?? 0);
-
-    // ⭐ Setup loading theo composite key
+    // loading
     if (!approveLoading.value[uid]) approveLoading.value[uid] = {};
     if (!approveLoading.value[uid][dept]) approveLoading.value[uid][dept] = {};
     approveLoading.value[uid][dept][status] = true;
 
     try {
-        const now = new Date().toISOString().slice(0, 19).replace("T", " ");
-        const myRank = roleRank(currentRoleCode.value);
 
-        // Clone roster
-        let roster = mentionsSelected.value.map(r => ({ ...r }));
+        await approveRosterAPI(taskId.value, m.note ?? null);
 
-        // ⭐ Tìm đúng bản ghi theo USER + DEPT
-        const idx = roster.findIndex(x =>
-            Number(x.user_id) === uid &&
-            Number(x.department_id) === dept
-        );
-
-        if (idx === -1) {
-            message.error("Không tìm thấy bản ghi đúng (user + phòng ban)");
-            return;
-        }
-
-        const target = roster[idx];
-
-        // ⭐ Update trạng thái CHỈ bản ghi này
-        target.status = status;
-        target.acted_at = now;
-
-        // ⭐ Cascade chỉ khi user KHÔNG đa nhiệm
-        if (status === "approved" && myRank >= roleRank("admin") && isMulti === 0) {
-            for (const item of roster) {
-                if ((item.status || "").toLowerCase() !== "pending") continue;
-
-                const u = getUserById(Number(item.user_id)) || {};
-                const rcode = u.role_code || u.role || "user";
-
-                if (roleRank(rcode) <= myRank) {
-                    item.status = "approved";
-                    item.acted_at = now;
-                }
-            }
-        }
-
-        // ⭐⭐⭐ Gửi đúng 1 RECORD (để backend merge đúng) ⭐⭐⭐
-        const payload = {
-            mentions: [
-                {
-                    user_id: uid,
-                    name: target.name,
-                    role: target.role,
-                    status: target.status,
-                    acted_at: target.acted_at || null,
-                    note: target.note ?? null,
-                    department_id: dept,
-                    signature_code: target.signature_code ?? null
-                }
-            ],
-            mode: "merge"
-        };
-
-        await persistRosterWithPayload(payload);
-
-        // ⭐ Replace marker đúng vai trò
+        // ⭐ Replace marker cho người đang duyệt
         await replaceMarkerInTaskFile(taskId.value, uid, dept);
 
-        // ⭐ Sync lại để load đúng roster
+        // ⭐ đồng bộ lại
         await syncRosterFromServer();
 
-        message.success(status === "approved" ? "Đã duyệt" : "Đã từ chối");
+        message.success("Đã duyệt");
 
     } catch (e) {
         console.error("handleApproveAction error", e);
         message.error("Xử lý không thành công");
 
     } finally {
-
         approveLoading.value[uid][dept][status] = false;
-
     }
 }
+
 
 
 
@@ -1508,14 +1474,20 @@ function onInputDetectMention(e) {
 
 /* ===== upload handlers (single file) ===== */
 async function handleBeforeUpload(file) {
+    if (rosterAllApproved.value) {
+        message.warning("Hồ sơ đã duyệt xong, không thể upload thêm tài liệu.");
+        return false; // CHẶN LUÔN
+    }
+
     if (selectedFiles.value.length >= 3) {
         message.warning("Chỉ được đính kèm tối đa 3 file");
         return false;
     }
 
     selectedFiles.value.push(file);
-    return false; // giữ chế độ upload thủ công
+    return false;
 }
+
 
 function removeFile(index) {
     selectedFiles.value.splice(index, 1);
@@ -1634,6 +1606,12 @@ async function createNewComment({keepMentions = false} = {}) {
 
         // ==== 3) Multi-file upload ====
         if (selectedFiles.value.length) {
+
+            if (rosterAllApproved.value) {
+                message.warning("Hồ sơ đã duyệt xong — không thể đính kèm file.");
+                uploading.value = false;
+                return;
+            }
 
             // 🚫 CHẶN FILE PDF
             for (const f of selectedFiles.value) {
@@ -1933,39 +1911,27 @@ function cancelEdit() {
 }
 
 function canActOnChip(m) {
-    // 1️⃣ Không có m hoặc không pending thì không thao tác
-    if (!m || (m.status || '').toLowerCase() !== 'pending') return false
+    if (!m || (m.status || '').toLowerCase() !== 'pending') return false;
 
-    const curUid = String(currentUserId.value)
-    const targetUid = String(m.user_id)
+    const curRole = normalizeRoleCode(currentRoleCode.value);
+    const curUid  = String(currentUserId.value);
+    const targetUid = String(m.user_id);
 
-    // 2️⃣ Lấy lượt đầu tiên đang chờ duyệt
-    const rosterArr = Array.isArray(mentionsSelected.value) ? mentionsSelected.value : []
-    const firstPending = rosterArr.find(r => (r.status || '').toLowerCase() === 'pending')
+    // 1️⃣ SUPER ADMIN luôn luôn được duyệt mọi chip
+    if (curRole === 'super_admin') return true;
 
-    // 3️⃣ Nếu chính chủ (người của chip)
-    if (curUid === targetUid) {
-        // chỉ được duyệt khi là người đầu tiên đang chờ
-        return !!firstPending && String(firstPending.user_id) === targetUid
+    // 2️⃣ ADMIN được duyệt mọi user (trừ super_admin)
+    if (curRole === 'admin') {
+        const target = getUserById(Number(m.user_id)) || {};
+        const targetRole = normalizeRoleCode(target.role_code || target.role || 'user');
+        return targetRole !== 'super_admin';
     }
 
-    // 4️⃣ Nếu không phải chính chủ → chỉ cho admin/super_admin override
-    const myRank = roleRank(currentRoleCode.value)
-    if (myRank >= roleRank('admin')) {
-        // Lấy thông tin người target (nếu có)
-        const targetUser = getUserById(Number(m.user_id)) || {}
-        const targetRoleCode = targetUser.role_code || targetUser.role || 'user'
-        const targetRank = roleRank(targetRoleCode)
+    // 3️⃣ User thường chỉ được duyệt đúng lượt
+    const rosterArr = mentionsSelected.value || [];
+    const firstPending = rosterArr.find(r => (r.status || '').toLowerCase() === 'pending');
 
-        // admin/super_admin không được duyệt người có cấp cao hơn
-        if (targetRank > myRank) return false
-
-        // admin/super_admin được phép duyệt người cùng cấp hoặc thấp hơn
-        return true
-    }
-
-    // 5️⃣ Còn lại (user thường): không được duyệt chéo, chỉ duyệt lượt của mình
-    return false
+    return firstPending && String(firstPending.user_id) === curUid;
 }
 
 
