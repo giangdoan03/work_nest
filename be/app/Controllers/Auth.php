@@ -35,13 +35,17 @@ class Auth extends Controller
 
         $builder = $this->model
             ->select('
-            users.*,
-            users.is_multi_role,
-            roles.name AS role_name,
-            roles.code AS role_code,
-            roles.description AS role_description
-        ')
-            ->join('roles', 'roles.id = users.role_id', 'left');
+        users.*,
+        users.is_multi_role,
+        roles.name AS role_name,
+        roles.code AS role_code,
+        roles.description AS role_description,
+        positions.name AS position_name,
+        positions.level AS position_level
+    ')
+            ->join('roles', 'roles.id = users.role_id', 'left')
+            ->join('positions', 'positions.id = users.position_id', 'left');
+
 
         if ($departmentId) {
             $builder->where('users.department_id', $departmentId);

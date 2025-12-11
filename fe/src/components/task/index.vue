@@ -39,7 +39,7 @@
         <div class="task-info">
             <a-row :gutter="16">
                 <!-- LEFT: 2/3 — Thông tin nhiệm vụ -->
-                <a-col :span="14" :xs="24" :lg="14" :xl="14">
+                <a-col :span="13" :xs="24" :lg="13" :xl="13">
                     <a-card title="Chi tiết nhiệm vụ" bordered>
                         <div>
                             <a-tabs v-model:activeKey="leftTab" class="task-left-tabs">
@@ -380,12 +380,12 @@
                     </a-card>
                 </a-col>
                 <!-- RIGHT: 1/3 — Subtasks + Thảo luận -->
-                <a-col :span="10" :xs="24" :lg="10" :xl="10" class="right-col">
+                <a-col :span="11" :xs="24" :lg="11" :xl="11" class="right-col">
                     <a-card title="Thảo luận & Phê duyệt" bordered class="discussion-card">
                         <a-row :gutter="[16, 8]">
                             <!-- Cột trái: Thảo luận -->
                             <a-col :span="24" :xs="24" :lg="24" style="padding-left: 0; padding-right: 0">
-                                <div class="discussion-scroll" v-auto-maxheight="12">
+                                <div class="discussion-scroll" v-auto-maxheight>
                                     <Comment :users="listUser" :departments="listDepartment" :roster="logData" />
                                 </div>
                             </a-col>
@@ -1423,6 +1423,46 @@ onMounted(async () => {
 .approver-item.rejected .name {
     font-weight: 600;
     color: #c00;
+}
+.right-col {
+    display: flex;
+    flex-direction: column;
+}
+/* Cho row trở thành flex container full height */
+.task-info .ant-row {
+    display: flex;
+    align-items: stretch; /* QUAN TRỌNG */
+}
+
+/* Cho 2 cột kéo giãn bằng nhau */
+.task-info .ant-col {
+    display: flex;
+    flex-direction: column;
+}
+.right-col .ant-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* Card bên trong phải chiếm full chiều cao cột */
+.task-info .ant-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.discussion-scroll {
+    flex: 1;
+    min-height: 0;   /* BẮT BUỘC để scroll đúng */
+    overflow-y: auto;
+}
+
+.discussion-card {
+    flex: 1;            /* QUAN TRỌNG */
+    display: flex;
+    flex-direction: column;
+    min-height: 0;      /* QUAN TRỌNG - cho phép con được scroll */
 }
 
 </style>

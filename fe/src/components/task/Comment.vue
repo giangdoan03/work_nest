@@ -94,7 +94,7 @@
         </div>
 
         <!-- LIST COMMENT (bubbles) -->
-        <div class="list-comment" v-if="listComment" ref="listEl" :style="{ paddingBottom: listPadBottom }">
+        <div class="list-comment" v-if="listComment" ref="listEl">
             <a-spin :spinning="loadingComment">
                 <div
                     class="tg-row"
@@ -369,12 +369,8 @@
                                 </div>
 
                             </template>
-
                         </div>
-
-
                     </a-modal>
-
                 </div>
             </a-spin>
         </div>
@@ -384,7 +380,7 @@
             v-model:open="openApproverDrawer"
             title="Danh sách người duyệt/ký"
             placement="right"
-            width="420"
+            width="520"
             :get-container="false"
             :style="{ position: 'absolute' }"
             class="approver-drawer"
@@ -1910,29 +1906,128 @@ function cancelEdit() {
     inputValue.value = ''
 }
 
+
+function getRank(member) {
+    // role_code lấy từ API (đã có trong roster)
+    const role = (member.role_code || member.role || '').toLowerCase();
+
+    if (role === 'super_admin') return 3;
+    if (role === 'admin') return 2;
+
+    return 1; // user
+}
+
+const normalizePositionCode = (code) => (code || '').toLowerCase()
+
+
 function canActOnChip(m) {
     if (!m || (m.status || '').toLowerCase() !== 'pending') return false;
 
-    const curRole = normalizeRoleCode(currentRoleCode.value);
     const curUid  = String(currentUserId.value);
     const targetUid = String(m.user_id);
 
-    // 1️⃣ SUPER ADMIN luôn luôn được duyệt mọi chip
-    if (curRole === 'super_admin') return true;
+    const rosterArr = mentionsSelected.value || [];
 
-    // 2️⃣ ADMIN được duyệt mọi user (trừ super_admin)
-    if (curRole === 'admin') {
-        const target = getUserById(Number(m.user_id)) || {};
-        const targetRole = normalizeRoleCode(target.role_code || target.role || 'user');
-        return targetRole !== 'super_admin';
+    const curPos = normalizePositionCode(getUserById(currentUserId.value)?.position_code);
+    const chipPos = normalizePositionCode(getUserById(m.user_id)?.position_code);
+
+    /* ================================================
+       1️⃣ EXECUTIVE — Giám đốc
+       Không được ký trước executive phía trên
+    ================================================= */
+    if (curPos === 'executive') {
+
+        const executives = rosterArr.filter(r =>
+            normalizePositionCode(getUserById(r.user_id)?.position_code) === 'executive'
+        );
+
+        const iCur  = executives.findIndex(r => String(r.user_id) === curUid);
+        const iChip = executives.findIndex(r => String(r.user_id) === targetUid);
+
+        // Nếu tôi & chip đều là executive
+        if (iChip >= 0 && iCur >= 0) {
+
+            if (iCur > 0) {
+                const previous = executives[iCur - 1];
+                if ((previous.status || '').toLowerCase() !== 'approved') return false;
+            }
+
+            return iCur === iChip;
+        }
+
+        // executive có thể duyệt tất cả cấp dưới
+        return true;
     }
 
-    // 3️⃣ User thường chỉ được duyệt đúng lượt
-    const rosterArr = mentionsSelected.value || [];
+    /* ================================================
+       2️⃣ SENIOR MANAGER — Phó giám đốc
+       Không được vượt executive & không vượt senior_manager đứng trước
+    ================================================= */
+    if (curPos === 'senior_manager') {
+
+        // Nếu chip là executive → KO ĐƯỢC KÝ
+        if (chipPos === 'executive') return false;
+
+        // Lấy danh sách senior_manager theo thứ tự
+        const seniors = rosterArr.filter(r =>
+            normalizePositionCode(getUserById(r.user_id)?.position_code) === 'senior_manager'
+        );
+
+        const iCur  = seniors.findIndex(r => String(r.user_id) === curUid);
+        const iChip = seniors.findIndex(r => String(r.user_id) === targetUid);
+
+        if (iChip >= 0 && iCur >= 0) {
+            if (iCur > 0) {
+                const previous = seniors[iCur - 1];
+                if ((previous.status || '').toLowerCase() !== 'approved') return false;
+            }
+
+            return iCur === iChip;
+        }
+
+        // Phó giám đốc có thể duyệt cấp dưới
+        return true;
+    }
+
+    /* ================================================
+       3️⃣ MANAGER — Trưởng phòng
+       Giống admin cũ, không được vượt manager phía trên
+    ================================================= */
+    if (curPos === 'manager') {
+
+        // Không được ký trước executive hoặc senior_manager
+        if (['executive', 'senior_manager'].includes(chipPos)) return false;
+
+        const managers = rosterArr.filter(r =>
+            normalizePositionCode(getUserById(r.user_id)?.position_code) === 'manager'
+        );
+
+        const iCur  = managers.findIndex(r => String(r.user_id) === curUid);
+        const iChip = managers.findIndex(r => String(r.user_id) === targetUid);
+
+        if (iChip >= 0 && iCur >= 0) {
+            if (iCur > 0) {
+                const previous = managers[iCur - 1];
+                if ((previous.status || '').toLowerCase() !== 'approved') return false;
+            }
+
+            return iCur === iChip;
+        }
+
+        // Manager chỉ được duyệt staff
+        return chipPos === 'staff';
+    }
+
+    /* ================================================
+       4️⃣ STAFF — Nhân viên
+       Chỉ ký được chính mình, và phải là pending đầu tiên
+    ================================================= */
     const firstPending = rosterArr.find(r => (r.status || '').toLowerCase() === 'pending');
 
     return firstPending && String(firstPending.user_id) === curUid;
 }
+
+
 
 
 async function handleUpdateCommentInline() {
@@ -2165,13 +2260,12 @@ onBeforeUnmount(() => {
 
 /* List comments */
 .list-comment {
+    height: 50vh;
     flex: 1 1 auto;
-    min-height: 0;
     overflow: auto;
     padding: 8px 10px 0;
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
-    min-height: 300px;
 }
 
 .list-comment::-webkit-scrollbar {

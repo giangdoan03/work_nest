@@ -174,10 +174,8 @@ class TaskApprovalController extends ResourceController
             'user_id'         => $uid,
             'name'            => $name ?: "#$uid",
             'role'            => $role,
-
-            'department_id'   => $departmentId,     // ⭐
-            'signature_code'  => $signatureCode,    // ⭐
-
+            'department_id'   => $departmentId,
+            'signature_code'  => $signatureCode,
             'status'          => $status,
             'acted_at'        => $actedAt,
             'note'            => $m['note'] ?? null,
@@ -267,9 +265,7 @@ class TaskApprovalController extends ResourceController
             if ($r['user_id'] == $uid && ($r['status'] ?? '') === 'pending') {
                 return [true, $i, null];
             }
-            break;
         }
-
         return [false, null, 'Chưa đến lượt bạn'];
     }
 
@@ -1097,13 +1093,19 @@ class TaskApprovalController extends ResourceController
 
         $db = db_connect();
 
-        // 1) Lấy user duyệt
-        $user = $db->table('users')->where('id', $userId)->get()->getRowArray();
+        // 1) Lấy user + vị trí (executive, senior_manager, manager, staff)
+        $user = $db->table('users u')
+            ->select('u.*, p.code AS position_code, p.level AS position_level')
+            ->join('positions p', 'p.id = u.position_id', 'left')
+            ->where('u.id', $userId)
+            ->get()
+            ->getRowArray();
+
         if (!$user) return $this->failNotFound("User not found");
 
         $isMultiRole = (int)($user['is_multi_role'] ?? 0);
 
-        // Xác định marker
+        // --------------- XÁC ĐỊNH MARKER ---------------
         if ($isMultiRole === 1) {
             if (!$departmentId)
                 return $this->fail("Missing department_id for multi-role user");
@@ -1112,8 +1114,7 @@ class TaskApprovalController extends ResourceController
                 ->where('user_id', $userId)
                 ->where('department_id', $departmentId)
                 ->where('active', 1)
-                ->get()
-                ->getRowArray();
+                ->get()->getRowArray();
 
             if (!$sig) return $this->failNotFound("No signature found for this department");
 
@@ -1125,114 +1126,104 @@ class TaskApprovalController extends ResourceController
         if ($marker === '')
             return $this->respond(['message' => 'No marker']);
 
-        // 2) Tìm upload batch mới nhất
+        // --------------- TÌM BATCH MỚI NHẤT ---------------
         $latestBatchRow = $db->table('documents')
             ->select('upload_batch')
             ->where('source_task_id', $taskId)
             ->orderBy('upload_batch', 'DESC')
             ->limit(1)
-            ->get()
-            ->getRowArray();
+            ->get()->getRowArray();
 
         $latestBatch = $latestBatchRow['upload_batch'] ?? null;
         if (!$latestBatch)
             return $this->fail('No upload_batch found');
 
-        // 3) Lấy file trong batch đó
+        // --------------- LẤY FILE CỦA BATCH ---------------
         $files = $db->table('documents')
             ->where('source_task_id', $taskId)
             ->where('upload_batch', $latestBatch)
             ->orderBy('id', 'ASC')
-            ->get()
-            ->getResultArray();
+            ->get()->getResultArray();
 
         if (empty($files))
             return $this->failNotFound('No document found in latest batch');
 
-        // 4) Replace marker
+        // --------------- THAY MARKER TRONG FILE ---------------
         $results = [];
+
         foreach ($files as $file) {
             $fileId = $file['google_file_id'] ?? null;
 
             if (!$fileId) {
                 $results[] = [
                     'file_name' => $file['title'],
-                    'status' => 'skip_no_google_id'
+                    'status'    => 'skip_no_google_id'
                 ];
                 continue;
             }
 
             try {
                 $this->googleReplaceMarker($fileId, $marker);
-
                 $results[] = [
-                    'file_name' => $file['title'],
+                    'file_name'      => $file['title'],
                     'google_file_id' => $fileId,
-                    'status' => 'replaced'
+                    'status'         => 'replaced'
                 ];
             } catch (Throwable $e) {
                 $results[] = [
-                    'file_name' => $file['title'],
+                    'file_name'      => $file['title'],
                     'google_file_id' => $fileId,
-                    'status' => 'error',
-                    'error' => $e->getMessage()
+                    'status'         => 'error',
+                    'error'          => $e->getMessage()
                 ];
             }
         }
 
-        // =====================================
-        // AUTO-APPROVE LOGIC FOR MARKER ACTION
-        // =====================================
+        // ======================================
+        // AUTO-APPROVE LOGIC THEO CẤP ĐỘ MỚI
+        // executive        → duyệt tất cả
+        // senior_manager   → duyệt manager + staff
+        // manager          → duyệt staff
+        // staff            → chỉ duyệt chính họ
+        // ======================================
 
-        $role = strtolower($user['role_code'] ?? 'user');
-        $task  = $this->getTaskRow($taskId);
+        $role = strtolower($user['position_code'] ?? 'staff');
+        $myLevel = (int)($user['position_level'] ?? 1);
+
+        $task   = $this->getTaskRow($taskId);
         $roster = $this->readRoster($task);
 
-        // SUPER ADMIN → auto approve ALL
-        if ($role === 'super_admin') {
-            foreach ($roster as &$r) {
+        foreach ($roster as &$r) {
+
+            // Lấy vị trí người trong roster
+            $u2 = $db->table('users u')
+                ->select('p.code AS position_code, p.level AS position_level')
+                ->join('positions p', 'p.id = u.position_id', 'left')
+                ->where('u.id', $r['user_id'])
+                ->get()->getRowArray();
+
+            $targetLevel = (int)($u2['position_level'] ?? 1);
+
+            // ================================
+            // QUY TẮC AUTO-APPROVE THEO LEVEL
+            // ================================
+            if ($myLevel > $targetLevel) {
+                // cấp cao auto duyệt cấp thấp
+                $r['status']   = 'approved';
+                $r['acted_at'] = date('Y-m-d H:i:s');
+            }
+
+            // STAFF (level=1) → chỉ duyệt chính họ
+            if ($myLevel === 1 && $r['user_id'] == $userId) {
                 $r['status']   = 'approved';
                 $r['acted_at'] = date('Y-m-d H:i:s');
             }
         }
 
-        // ADMIN → auto approve all normal users
-        if ($role === 'admin') {
-            foreach ($roster as &$r) {
-
-                // Lấy role đúng của user trong roster
-                $u2 = $db->table('users u')
-                    ->select('r.code AS role_code')
-                    ->join('roles r', 'r.id = u.role_id', 'left')
-                    ->where('u.id', $r['user_id'])
-                    ->get()
-                    ->getRowArray();
-
-                $role2 = strtolower($u2['role_code'] ?? 'user');
-
-                // Admin auto-approve tất cả trừ super_admin
-                if ($role2 !== 'super_admin') {
-                    $r['status']   = 'approved';
-                    $r['acted_at'] = date('Y-m-d H:i:s');
-                }
-            }
-        }
-
-
-        // USER → approve only themselves
-        if ($role === 'user') {
-            foreach ($roster as &$r) {
-                if ($r['user_id'] == $userId) {
-                    $r['status']   = 'approved';
-                    $r['acted_at'] = date('Y-m-d H:i:s');
-                }
-            }
-        }
-
-        // SAVE roster
+        // --------------- SAVE ROSTER ---------------
         $this->writeRoster($taskId, $roster);
 
-        // Update task progress / approval status
+        // --------------- UPDATE TASK STATUS ---------------
         $allApproved = !array_filter($roster, fn($r) => ($r['status'] ?? '') !== 'approved');
 
         if ($allApproved) {
@@ -1248,14 +1239,14 @@ class TaskApprovalController extends ResourceController
             ]);
         }
 
-        // RETURN RESULT
         return $this->respond([
-            'message' => "Marker '$marker' replaced for batch $latestBatch",
-            'results' => $results,
+            'message'       => "Marker '$marker' replaced for batch $latestBatch",
+            'results'       => $results,
             'auto_approved' => $role,
-            'roster' => $roster
+            'roster'        => $roster
         ]);
     }
+
 
 
 

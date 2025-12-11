@@ -100,8 +100,8 @@
                         {{ getDeptName(record.department_id) || '—' }}
                     </template>
 
-                    <template v-else-if="column.dataIndex === 'role_id'">
-                        {{ getRoleName(record.role_id) || '—' }}
+                    <template v-else-if="column.dataIndex === 'position_id'">
+                        {{ getPositionName(record) }}
                     </template>
 
                     <template v-else-if="column.dataIndex === 'signature_url'">
@@ -191,11 +191,11 @@
 
                         <a-row :gutter="16">
                             <a-col :span="12">
-                                <a-form-item label="Loại tài khoản" name="role_id" has-feedback>
+                                <a-form-item label="Vị trí" name="position_id" has-feedback>
                                     <a-select
-                                        v-model:value="formData.role_id"
-                                        :options="roles"
-                                        placeholder="Chọn loại tài khoản"
+                                        v-model:value="formData.position_id"
+                                        :options="positionOptions"
+                                        placeholder="Chọn vị trí"
                                         allow-clear
                                     />
                                 </a-form-item>
@@ -406,6 +406,7 @@ const density = ref('middle') // small | middle | large
 const searchTerm = ref('')
 const filterDept = ref()
 const filterRole = ref()
+const positions = ref([]);
 
 const pagination = ref({
     current: 1,
@@ -488,7 +489,12 @@ const departmentOptions = computed(() =>
         label: d.name
     }))
 )
-
+const positionList = [
+    { id: 1, name: "Giám đốc" },
+    { id: 2, name: "Phó giám đốc" },
+    { id: 3, name: "Trưởng phòng" },
+    { id: 4, name: "Nhân viên" },
+];
 
 /* ===== Columns ===== */
 const columns = [
@@ -498,18 +504,29 @@ const columns = [
     { title: 'Email', dataIndex: 'email', key: 'email', width: 200, sorter: (a,b) => (a.email||'').localeCompare(b.email||'') },
     { title: 'Số điện thoại', dataIndex: 'phone', key: 'phone', width: 140, sorter: (a,b) => (a.phone||'').localeCompare(b.phone||'') },
     { title: 'Phòng ban', dataIndex: 'department_id', key: 'department_id', width: 200 },
-    { title: 'Quyền', dataIndex: 'role_id', key: 'role_id', width: 180 },
+    { title: 'Vị trí', dataIndex: 'position_id', key: 'position_id', width: 180 },
     { title: 'Marker ký file', dataIndex: 'preferred_marker', key: 'preferred_marker', width: 140 },
     { title: 'Marker duyệt file', dataIndex: 'approval_marker', key: 'approval_marker', width: 140 },
     { title: 'Chữ ký', dataIndex: 'signature_url', key: 'signature_url', width: 120, align: 'center' },
     { title: 'Hành động', dataIndex: 'action', key: 'action', width: 100, align:'center', fixed: 'right' },
 ]
 
+const positionOptions = positionList.map(p => ({
+    label: p.name,
+    value: p.id
+}));
+
+
 /* ===== Helpers ===== */
 const getDeptName = (id) => {
     const x = departments.value.find(d => d.id === id)
     return x?.name
 }
+
+const getPositionName = (record) => {
+    return record.position_name || '—';
+};
+
 const roleMap = computed(() => {
     const map = new Map()
     roles.value.forEach(r => map.set(Number(r.value), r.label))
@@ -646,6 +663,7 @@ const showPopupCreate = () => {
         approval_marker: '',
         is_multi_role: 0,
         signature_url: undefined,
+        position_id: undefined,
     }
     multiRoles.value = []
     openDrawer.value = true
@@ -674,6 +692,7 @@ const openUserDetail = async (id) => {
             approval_marker: data.approval_marker || "",
             signature_url: data.signature_url || null,
             is_multi_role: isMulti ? 1 : 0,
+            position_id: Number(data.position_id),
         };
 
         // 🔥 QUAN TRỌNG — Map multi roles vào UI
