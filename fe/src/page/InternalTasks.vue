@@ -426,7 +426,7 @@ const columns = [
     { title: 'Tên nhiệm vụ', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
     { title: 'Loại Task', dataIndex: 'linked_type', key: 'linked_type' },
     { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority' },
-    { title: 'Người thực hiện', dataIndex: 'assigned_to', key: 'assigned_to', width: 120, align: 'center' },
+    { title: 'Người thực hiện', dataIndex: 'assigned_to', key: 'assigned_to', width: 200, align: 'center' },
     { title: 'Bắt đầu', dataIndex: 'start_date', key: 'start_date', align: 'center' },
     { title: 'Kết thúc', dataIndex: 'end_date', key: 'end_date', align: 'center' },
     { title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: 150, align: 'center' },
@@ -652,28 +652,30 @@ const fetchTasks = async () => {
         const payload = buildTaskQuery()
         const response = await getTasks(payload)
 
-        // Dữ liệu
         let rows = response?.data?.data ?? []
-        // Chắn hẳn 'internal' ở FE (khi BE không support linked_type_in)
+
+        // Loại bỏ internal nếu backend trả về (phòng trường hợp)
         rows = rows.filter(r => TYPES_IN_SCOPE.includes(r.linked_type))
+
         tableData.value = rows
 
-        // Tổng hiển thị: chỉ tính bidding + contract
-        const totalInScope = await fetchScopeTotal({ ...dataFilter.value })
         const pg = response?.data?.pagination ?? {}
 
         pagination.value = {
             ...pagination.value,
             current: pg.page ?? 1,
             pageSize: pg.per_page ?? pagination.value.pageSize,
-            total: Number.isFinite(totalInScope) ? totalInScope : rows.length
+            total: pg.total ?? rows.length
         }
+
     } catch (e) {
+        console.error(e)
         message.error('Không thể tải nhiệm vụ')
     } finally {
         loading.value = false
     }
 }
+
 
 const getUser = async () => {
     try {
