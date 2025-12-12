@@ -597,88 +597,125 @@ const createDrawerInternal = async () => {
 
     const payload = { ...formData.value }
 
-    payload.parent_id = props.createAsRoot ? null : effectiveParentId.value
+    // ==============
+    // 0. SET parent_id
+    // ==============
+    payload.parent_id = props.createAsRoot
+        ? null
+        : effectiveParentId.value
 
+    // =====================================================
+    // 1) VALIDATE nếu là bidding / contract
+    // =====================================================
     if (['bidding', 'contract'].includes(payload.linked_type)) {
+
         if (!payload.linked_id) {
-            message.error('Vui lòng chọn liên kết ' + (payload.linked_type === 'bidding' ? 'gói thầu' : 'hợp đồng'))
+            message.error(
+                "Vui lòng chọn liên kết " +
+                (payload.linked_type === "bidding" ? "gói thầu" : "hợp đồng")
+            )
             return
         }
+
+        // Tự map step_code → step_id
         if (!payload.step_id && payload.step_code) {
-            const found = stepOption.value.find(it => String(it.value) === String(payload.step_code))
+            const found = stepOption.value.find(
+                it => String(it.value) === String(payload.step_code)
+            )
             payload.step_id = found?.step_id ?? null
         }
+
+        // Trường hợp chỉ có 1 step → auto lấy
         if (!payload.step_id && stepOption.value.length === 1) {
             payload.step_id = stepOption.value[0].step_id
             payload.step_code = stepOption.value[0].value
         }
+
         if (!payload.step_id) {
-            message.error('Vui lòng chọn bước trước khi lưu')
+            message.error("Vui lòng chọn bước trước khi lưu")
             return
         }
     }
 
-    ;['created_by','assigned_to','proposed_by','parent_id','id_department','step_id','needs_approval']
-        .forEach(k => {
-            payload[k] = payload[k] !== undefined && payload[k] !== null && payload[k] !== ''
+    // =====================================================
+    // 2) EP NUMBER các field
+    // =====================================================
+    ;[
+        'created_by',
+        'assigned_to',
+        'proposed_by',
+        'parent_id',
+        'id_department',
+        'step_id',
+        'needs_approval'
+    ].forEach(k => {
+        payload[k] =
+            payload[k] !== undefined &&
+            payload[k] !== null &&
+            payload[k] !== ""
                 ? Number(payload[k])
                 : null
-        })
+    })
 
+    // Người tạo
     payload.created_by = store.currentUser?.id || null
 
     loadingCreate.value = true
 
     try {
-        // ===============================
-        // 1. GỌI API TẠO TASK
-        // ===============================
+        // =====================================================
+        // 3) TẠO TASK
+        // =====================================================
         const res = await createTask(payload)
         const newTask = res.data
 
-        message.success('Thêm mới nhiệm vụ thành công')
+        message.success("Thêm mới nhiệm vụ thành công")
 
-        // ===============================
-        // 2. ⭐⭐⭐ AUTO-GRANT ACCESS
-        // ===============================
-        const entityType = payload.linked_type     // bidding | contract | internal
-        const entityId   = payload.linked_id       // 45, 66, hoặc null nếu internal
+        // =====================================================
+        // 4) AUTO-GRANT ACCESS
+        // =====================================================
 
-        // Người tạo
-        await addAccess(entityType, entityId, payload.created_by)
+        // Loại entity của task:
+        // bidding | contract | internal (việc không quy trình)
+        let entityType = payload.linked_type
 
-        // Người thực hiện
-        await addAccess(entityType, entityId, payload.assigned_to)
-
-        // Người đề nghị
-        await addAccess(entityType, entityId, payload.proposed_by)
-
-        // Người phối hợp (optional)
-        if (payload.collaborated_by)
-            await addAccess(entityType, entityId, payload.collaborated_by)
-
-        // Nếu INTERNAL → dùng ID của task làm entity
-        if (entityType === 'internal') {
-            await addAccess("internal", newTask.id, payload.created_by)
-            await addAccess("internal", newTask.id, payload.assigned_to)
-            if (payload.collaborated_by)
-                await addAccess("internal", newTask.id, payload.collaborated_by)
+        // Nếu internal → entity chính là task ID
+        let entityId = payload.linked_id
+        if (entityType === "internal") {
+            entityId = newTask.id
         }
 
-        // ===============================
-        // 3. GIỮ NGUYÊN LOGIC CŨ
-        // ===============================
+        // Tập hợp toàn bộ user cần cấp quyền
+        const members = new Set([
+            payload.created_by,
+            payload.assigned_to,
+            payload.proposed_by,
+            payload.collaborated_by
+        ])
+
+        // Lọc null
+        const users = [...members].filter(v => !!v)
+
+        // Gọi API cấp quyền
+        for (const uid of users) {
+            await addAccess(entityType, entityId, uid)
+        }
+
+        // =====================================================
+        // 5) REFRESH LIST VÀ ĐÓNG FORM
+        // =====================================================
         await refreshStepTasks({ preferNewTaskStep: true })
-        emit('submitForm', newTask)
+        emit("submitForm", newTask)
         onCloseDrawer()
 
     } catch (err) {
-        console.error('[createDrawerInternal] error:', err)
-        message.error('Thêm mới nhiệm vụ không thành công')
+        console.error("[createDrawerInternal] error:", err)
+        message.error("Thêm mới nhiệm vụ không thành công")
     } finally {
         loadingCreate.value = false
     }
 }
+
 
 
 // refresh danh sách task của step tương ứng

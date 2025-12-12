@@ -191,18 +191,6 @@ $routes->group('api', function ($routes) {
     $routes->resource('bidding-steps', ['controller' => 'BiddingStepController']);
     $routes->get('biddings/(:num)/steps', 'BiddingStepController::byBidding/$1');
 
-//    $routes->get('documents', 'DocumentController::index');
-//    $routes->post('documents/upload', 'DocumentController::upload');
-//    $routes->post('documents/share', 'DocumentController::share');
-//    $routes->get('documents/shared/me', 'DocumentController::sharedWithMe');
-//    $routes->put('documents/(:num)', 'DocumentController::update/$1');
-//    $routes->delete('documents/(:num)', 'DocumentController::delete/$1');
-//    $routes->get('documents/by-department', 'DocumentController::byDepartment');
-//    $routes->get('document-permissions', 'DocumentController::getPermissions');
-//    $routes->post('document-permissions', 'DocumentController::createPermission');
-//    $routes->put('document-permissions/(:num)', 'DocumentController::updatePermission/$1');
-//    $routes->delete('document-permissions/(:num)', 'DocumentController::deletePermission/$1');
-
     // ✅ Route cấu hình hệ thống tài liệu
     $routes->get('document-settings', 'DocumentController::getSettings');
     $routes->post('document-settings', 'DocumentController::saveSetting');
@@ -338,7 +326,7 @@ $routes->group('api', function ($routes) {
     $routes->put('departments/(:num)', 'DepartmentController::update/$1');
     $routes->delete('departments/(:num)', 'DepartmentController::delete/$1');
 
-// CUSTOM routes phải đặt dưới
+    // CUSTOM routes phải đặt dưới
     $routes->get('departments/(:num)/users', 'DepartmentController::users/$1');
     $routes->post('departments/(:num)/users', 'DepartmentController::addUsers/$1');
     $routes->delete('departments/(:num)/users/(:num)', 'DepartmentController::removeUser/$1/$2');

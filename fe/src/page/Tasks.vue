@@ -99,6 +99,24 @@
                         </a-tooltip>
                     </template>
 
+                    <template v-if="column.dataIndex === 'deadline'">
+                        <template v-if="getDeadlineInfo(record).overdue">
+                            <a-tag color="error">Quá hạn {{ getDeadlineInfo(record).overdue }} ngày</a-tag>
+                        </template>
+
+                        <template v-else-if="getDeadlineInfo(record).remaining > 0">
+                            <a-tag color="green">Còn {{ getDeadlineInfo(record).remaining }} ngày</a-tag>
+                        </template>
+
+                        <template v-else-if="getDeadlineInfo(record).remaining === 0">
+                            <a-tag color="#faad14">Hạn chót hôm nay</a-tag>
+                        </template>
+
+                        <template v-else>
+                            <a-tag>—</a-tag>
+                        </template>
+                    </template>
+
                     <!-- Tiến độ -->
                     <template v-if="column.dataIndex === 'progress'">
                         <a-progress
@@ -110,25 +128,6 @@
                         />
                     </template>
 
-                    <!-- Ngày bắt đầu/kết thúc -->
-                    <template v-if="column.dataIndex === 'start_date' || column.dataIndex === 'end_date'">
-                        {{ formatDate(text) || '—' }}
-                    </template>
-
-                    <!-- Deadline -->
-                    <template v-if="column.dataIndex === 'deadline'">
-                        <a-tag v-if="record.days_overdue > 0" color="error">
-                            Quá hạn {{ record.days_overdue }} ngày
-                        </a-tag>
-                        <a-tag v-else-if="record.days_remaining > 0" color="green">
-                            Còn {{ record.days_remaining }} ngày
-                        </a-tag>
-                        <a-tag v-else-if="record.days_remaining === 0" :color="'#faad14'">
-                            Hạn chót hôm nay
-                        </a-tag>
-                        <a-tag v-else>—</a-tag>
-                    </template>
-
                     <!-- Trạng thái -->
                     <template v-if="column.dataIndex === 'status'">
                         <a-tag :color="getStatusColor(text)">
@@ -136,39 +135,52 @@
                         </a-tag>
                     </template>
 
-                    <!-- Actions -->
                     <template v-else-if="column.dataIndex === 'action'">
-                        <a-dropdown placement="left" :trigger="['click']" :getPopupContainer="n => n.parentNode">
-                            <a-button>
-                                <template #icon><MoreOutlined /></template>
-                            </a-button>
-                            <template #overlay>
-                                <a-menu>
-                                    <a-menu-item @click="showPopupDetail(record)">
-                                        <InfoCircleOutlined class="icon-action" style="color: blue;" />
-                                        Chi tiết
-                                    </a-menu-item>
-                                    <a-menu-item>
-                                        <a-popconfirm
-                                            title="Bạn chắc chắn muốn xóa nhiệm vụ này?"
-                                            ok-text="Xóa"
-                                            cancel-text="Hủy"
-                                            @confirm="deleteConfirm(record.id)"
-                                            placement="topRight"
-                                        >
-                                            <div style="width:100%; text-align:start;">
-                                                <DeleteOutlined class="icon-action" style="color: red;" />
-                                                Xóa
-                                            </div>
-                                        </a-popconfirm>
-                                    </a-menu-item>
-                                </a-menu>
-                            </template>
-                        </a-dropdown>
+                        <div class="action-icons">
+                            <a-tooltip title="Cấp quyền truy cập" v-if="canManageMembers(record)">
+                                <UserAddOutlined
+                                    class="icon-action"
+                                    style="color:#722ed1;"
+                                    @click="openMemberModal(record)"
+                                />
+                            </a-tooltip>
+
+                            <a-tooltip title="Chi tiết">
+                                <InfoCircleOutlined
+                                    class="icon-action"
+                                    style="color:blue;"
+                                    @click="showPopupDetail(record)"
+                                />
+                            </a-tooltip>
+
+                            <a-popconfirm
+                                title="Bạn chắc chắn muốn xóa nhiệm vụ này?"
+                                ok-text="Xóa"
+                                cancel-text="Hủy"
+                                @confirm="deleteConfirm(record.id)"
+                            >
+                                <a-tooltip title="Xóa">
+                                    <DeleteOutlined
+                                        class="icon-action"
+                                        style="color:red; cursor:pointer;"
+                                    />
+                                </a-tooltip>
+                            </a-popconfirm>
+                        </div>
                     </template>
+
                 </template>
             </a-table>
         </a-card>
+
+        <EntityMemberManager
+            v-model:open="memberModalVisible"
+            :entityType="activeEntityType"
+            :entityId="activeEntityId"
+            :entityData="activeEntityData"
+            @saved="fetchTasks"
+        />
+
 
         <!-- Drawer Create (nếu bạn muốn tạo task nhanh, giữ lại như InternalTasks.vue) -->
         <DrawerCreateTask
@@ -297,7 +309,8 @@ import {
     InfoCircleOutlined,
     DeleteOutlined,
     MoreOutlined,
-    FilterOutlined
+    FilterOutlined,
+    UserAddOutlined
 } from '@ant-design/icons-vue'
 
 import DrawerCreateTask from '@/components/common/DrawerCreateTask.vue'
@@ -307,6 +320,7 @@ import { formatDate } from '@/utils/formUtils'
 import { getTasks, deleteTask } from '@/api/task'
 import { getDepartments } from '@/api/department'
 import { getUsers } from '@/api/user'
+import dayjs from "dayjs";
 
 import { useUserStore } from '@/stores/user'
 import { useCommonStore } from '@/stores/common'
@@ -329,6 +343,13 @@ const listDepartment = ref([])
 
 const locale = ref(viVN)
 const dateRange = ref([])
+
+const activeRowId = ref(null)
+const memberModalVisible = ref(false)
+const activeEntity = ref(null)
+const activeEntityType = ref("internal")  // vì đây là task nội bộ
+const activeEntityId = ref(null)
+const activeEntityData = ref(null)
 
 const dataFilter = ref({
     linked_type: 'internal', // ✅ cố định nội bộ
@@ -408,26 +429,20 @@ const columns = [
         }
     },
     { title: 'Tên nhiệm vụ', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
-    { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority' },
-    { title: 'Người thực hiện', dataIndex: 'assigned_to', key: 'assigned_to', width: 120, align: 'center' },
-    { title: 'Bắt đầu', dataIndex: 'start_date', key: 'start_date', align: 'center' },
-    { title: 'Kết thúc', dataIndex: 'end_date', key: 'end_date', align: 'center' },
+    { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority',width: 150, align: 'center' },
+    { title: 'Người thực hiện', dataIndex: 'assigned_to', key: 'assigned_to', width: 150, align: 'center' },
+    { title: 'Bắt đầu', dataIndex: 'start_date', key: 'start_date',width: 150, align: 'center' },
+    { title: 'Kết thúc', dataIndex: 'end_date', key: 'end_date',width: 150, align: 'center' },
     { title: 'Tiến độ', dataIndex: 'progress', key: 'progress', width: 150, align: 'center' },
     {
         title: 'Hạn',
         dataIndex: 'deadline',
         key: 'deadline',
-        align: 'center',
-        customRender: ({ record }) => {
-            const o = record.days_overdue
-            const r = record.days_remaining
-            if (o > 0) return `Quá hạn ${o} ngày`
-            else if (r >= 0) return `Còn ${r} ngày`
-            else return '—'
-        }
+        width: 120,
+        align: 'center'
     },
     { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 100, align: 'center' },
-    { title: 'Thao tác', dataIndex: 'action', key: 'action', width: 80, align: 'center' }
+    { title: 'Thao tác', dataIndex: 'action', key: 'action', width: 200, align: 'center' }
 ]
 
 // ===== Helpers =====
@@ -443,6 +458,48 @@ const getAvatarColor = (name) => {
     const hue = Math.abs(hash) % 360
     return `hsl(${hue}, 65%, 55%)`
 }
+
+const canManageMembers = (record) => {
+    // Bạn tùy biến điều kiện này
+    // vd: chỉ admin hoặc người tạo mới được cấp quyền:
+    const uid = userStore.currentUser?.id
+    return userStore.currentUser?.is_admin || record.created_by === uid
+}
+
+const openMemberModal = (record) => {
+    activeEntityType.value = "internal"
+    activeEntityId.value = record.id
+
+    activeEntityData.value = {
+        ...record,
+
+        // ⭐ GỬI THÊM manager_name cho component chung
+        manager_name:
+            record.creator?.name ||
+            record.created_by_name ||
+            record.created_by_name_full ||
+            listUser.value.find(u => u.id === record.created_by)?.name ||
+            "—"
+    }
+
+    memberModalVisible.value = true
+}
+
+
+const getDeadlineInfo = (record) => {
+    if (!record.end_date) return { overdue: null, remaining: null };
+
+    const today = dayjs();
+    const end = dayjs(record.end_date);
+
+    const diff = end.diff(today, "day"); // số ngày còn lại
+
+    if (diff < 0) return { overdue: Math.abs(diff), remaining: null };
+    if (diff === 0) return { overdue: 0, remaining: 0 };
+
+    return { overdue: null, remaining: diff };
+};
+
 
 const checkPriority = (text) => {
     switch (text) {
@@ -561,13 +618,13 @@ const buildTaskQuery = () => {
         f.department_id = f.id_department
     }
 
-    // fallback role nếu chưa chọn người/phòng ban
-    if (!f.assigned_to && !f.id_department) {
-        const user = userStore.currentUser
-        const roleId = Number(user?.role_id)
-        if (roleId === 3) f.assigned_to = Number(user.id)
-        else if (roleId === 2) f.id_department = Number(user.department_id)
-    }
+    // fallback role nếu chưa chọn người/phòng ban    // if (!f.assigned_to && !f.id_department) {
+    //     const user = userStore.currentUser
+    //     const roleId = Number(user?.role_id)
+    //     if (roleId === 3) f.assigned_to = Number(user.id)
+    //     else if (roleId === 2) f.id_department = Number(user.department_id)
+    // }
+
 
     return f
 }
@@ -613,6 +670,7 @@ const submitForm = () => { fetchTasks() }
 
 // Lắng nghe tín hiệu mở tạo task nhanh từ store chung (nếu có)
 import { watch } from 'vue'
+import EntityMemberManager from "@/components/common/EntityMemberManager.vue";
 watch(() => commonStore.createTaskSignal, () => {
     openDrawer.value = true
 })
@@ -637,6 +695,12 @@ table tr td a { font-size: 14px !important; }
 table tr td span { font-size: 14px !important; }
 table .ant-progress-small { font-size: 14px !important; }
 table .ant-table-thead > tr > th { color: #000000 !important; font-weight: 500 !important; font-size: 14px !important; }
+.action-icons {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* chỉnh khoảng cách icon ở đây */
+    justify-content: center;
+}
 </style>
 
 <style scoped>

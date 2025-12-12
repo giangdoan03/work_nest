@@ -11,6 +11,7 @@ if (!function_exists('currentUser')) {
             'name'       => $session->get('user_name'),
             'role_id'    => $session->get('role_id'),
             'role_code'  => $session->get('role_code'),
+            'position_code'  => $session->get('position_code'),
             'is_admin'   => (bool)$session->get('is_admin'),
         ];
     }
@@ -21,7 +22,6 @@ if (!function_exists('requireAdmin')) {
     {
         $user = currentUser();
 
-        // ❌ Chưa đăng nhập
         if (empty($user['id'])) {
             return [
                 'status'  => 'unauthorized',
@@ -29,15 +29,17 @@ if (!function_exists('requireAdmin')) {
             ];
         }
 
-        // ❌ Không phải admin/super admin
-        if (!in_array($user['role_code'], ['admin', 'super_admin'], true)) {
+        // nếu không phải admin/super admin thì kiểm tra level
+        $allowed = ['admin', 'staff', 'executive', 'senior_manager', 'manager'];
+
+        if (!in_array($user['position_code'], $allowed, true)) {
             return [
                 'status'  => 'forbidden',
                 'message' => 'Bạn không có quyền thực hiện thao tác này'
             ];
         }
 
-        // ✔ Hợp lệ
         return null;
     }
 }
+

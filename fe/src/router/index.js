@@ -30,6 +30,8 @@ import ContractStepTasks from '../components/ContractStepTask/ContractStepTasks.
 import UserGuide from '../components/UserGuide.vue'
 import DocumentInfoPage from '../page/documents/DocumentInfoPage.vue'
 import Forbidden403 from "@/page/Forbidden403.vue"
+import { message } from "ant-design-vue";
+import { canAccessEntity } from "@/api/entityMembers";
 
 const routes = [
     {
@@ -96,13 +98,13 @@ const routes = [
                 name: 'bid-detail',
                 component: BidDetail,
                 props: true, // ✅ để tự động nhận param id
-                meta: {breadcrumb: 'Chi tiết gói thầu', parent: 'bid-list'}
+                meta: { breadcrumb: 'Chi tiết gói thầu', parent: 'bid-list', requiresBiddingAccess: true }
             },
             {
                 path: '/biddings/:bidId/steps/:stepId/tasks',
                 name: 'bidding-step-tasks',
                 component: BiddingStepTasks,
-                meta: {breadcrumb: 'Công việc', parent: 'biddings-info'},
+                meta: { breadcrumb: 'Công việc', parent: 'biddings-info', requiresBiddingAccess: true },
                 props: route => ({
                     bidId: Number(route.params.bidId),
                     stepId: Number(route.params.stepId),
@@ -113,7 +115,7 @@ const routes = [
                 name: 'bidding-task-info-in-step',
                 component: TaskDetail,
                 props: true,
-                meta: {breadcrumb: 'Chi tiết công việc', parent: 'bidding-step-tasks'}
+                meta: { breadcrumb: 'Chi tiết công việc', parent: 'bidding-step-tasks', requiresBiddingAccess: true }
             },
 
 
@@ -121,7 +123,7 @@ const routes = [
                 path: '/contract/:contractId/steps/:stepId/tasks',
                 name: 'contract-step-tasks',
                 component: ContractStepTasks,
-                meta: { breadcrumb: 'Công việc', parent: 'contract-detail' },
+                meta: { breadcrumb: 'Công việc', parent: 'contract-detail', requiresEntityAccess: true, entityType: 'contract' },
                 props: route => ({
                     contractId: Number(route.params.contractId),
                     stepId: Number(route.params.stepId),
@@ -132,7 +134,7 @@ const routes = [
                 name: 'contract-task-info-in-step',
                 component: TaskDetail,
                 props: true,
-                meta: { breadcrumb: 'Chi tiết công việc', parent: 'contract-step-tasks' },
+                meta: { breadcrumb: 'Chi tiết công việc', parent: 'contract-step-tasks', requiresEntityAccess: true, entityType: 'contract' },
             },
 
             // Contracts
@@ -152,14 +154,14 @@ const routes = [
                 path: 'contracts/:id',
                 name: 'contract-detail',
                 component: ContractDetail,
-                meta: { breadcrumb: 'Chi tiết hợp đồng' }
+                meta: { breadcrumb: 'Chi tiết hợp đồng', requiresEntityAccess: true, entityType: 'contract' }
             },
 
             {
                 path: '/workflow/tasks/:id/info',
                 name: 'workflow-task-info',
                 component: InternalTasks,
-                meta: { section: 'workflow' },
+                meta: { section: 'workflow', requiresEntityAccess: true, entityType: 'workflow-task' },
             },
 
 
@@ -248,7 +250,7 @@ const routes = [
                 path: '/non-workflow/tasks/:id/info',
                 name: 'tasks-detail',
                 component: TaskDetail,
-                meta: {breadcrumb: 'Chi tiết công việc', parent: 'non-workflow'}
+                meta: {breadcrumb: 'Chi tiết công việc', parent: 'non-workflow', requiresEntityAccess: true, entityType: 'non-workflow-task'}
             },
 
             {
@@ -386,7 +388,7 @@ router.beforeEach(async (to, from, next) => {
 
         const module = routePermissionMap[to.name]
 
-        // ⛔ BẮT BUỘC kiểm tra quyền, TRỪ module = 'guide'
+        // ⛔ Permission check chung (giữ nguyên logic cũ)
         if (module && module !== 'guide' && !userStore.hasPermission(module, 'view')) {
             return next('/403')
         }
@@ -395,8 +397,51 @@ router.beforeEach(async (to, from, next) => {
     if (!isLoggedIn && to.path !== '/') return next('/')
     if (isLoggedIn && to.path === '/') return next('/project-overview')
 
+    // -----------------------------------------
+    // 🔐 KIỂM TRA QUYỀN TRUY CẬP ENTITY (Bidding, Contract, Workflow Task, Non-workflow)
+    // -----------------------------------------
+    if (to.meta.requiresEntityAccess) {
+        const userId = userStore.user?.id
+        if (!userId) return next('/403')
+
+        // 1️⃣ Xác định loại entity
+        let entityType = to.meta.entityType
+
+        // Nếu workflow / non-workflow → backend đang dùng chung "task"
+        if (entityType === 'workflow-task' || entityType === 'non-workflow-task') {
+            entityType = 'internal'
+        }
+
+        // 2️⃣ Lấy entity id từ params
+        const entityId = to.params.id || to.params.bidId || to.params.contractId
+
+        if (!entityId) return next('/403')
+
+        try {
+            const res = await canAccessEntity({
+                entity_type: entityType,
+                entity_id: entityId,
+                user_id: userId,
+            })
+
+            console.log("ENTITY ACCESS CHECK:", entityType, entityId, res.data)
+
+            if (!res.data?.access) {
+                message.error("Bạn không có quyền truy cập mục này.")
+                return next('/403')
+            }
+
+        } catch (e) {
+            console.error("Lỗi kiểm tra quyền entity:", e)
+            return next('/403')
+        }
+    }
+
+
+
     next()
 })
+
 
 
 export default router

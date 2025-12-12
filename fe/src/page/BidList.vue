@@ -161,13 +161,12 @@
                     </template>
 
                     <!-- Hành động -->
-                    <!-- Hành động -->
                     <template v-else-if="slot.column?.dataIndex === 'action'">
 
                         <!-- Cấp quyền truy cập -->
                         <a-tooltip title="Cấp quyền truy cập gói thầu">
                             <UserAddOutlined
-                                v-if="canManageMembers"
+                                v-if="canManageMembers(slot.record)"
                                 class="icon-action"
                                 style="color:#722ed1;"
                                 @click="setActiveRow(slot.record.id); openMemberModal(slot.record)"
@@ -417,41 +416,39 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
-import { message, Modal } from 'ant-design-vue'
+import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue'
+import {message, Modal} from 'ant-design-vue'
 import {
     CheckCircleOutlined,
-    CloseCircleOutlined,
     ClockCircleOutlined,
-    EditOutlined,
+    CloseCircleOutlined,
     DeleteOutlined,
-    EyeOutlined,
+    EditOutlined,
     FireOutlined,
-    StopOutlined,
     SearchOutlined,
+    StopOutlined,
     UserAddOutlined
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import {
-    getBiddingsAPI,
-    createBiddingAPI,
     cloneFromTemplatesAPI,
+    createBiddingAPI,
     deleteBiddingAPI,
+    getBiddingsAPI,
     sendBiddingForApprovalAPI,
-    approveBiddingAPI,
-    rejectBiddingAPI,
-    updateApprovalStepsAPI
+    updateApprovalStepsAPI,
+    updateBiddingAPI
 } from '@/api/bidding'
-import { updateBiddingAPI, canMarkBiddingAsCompleteAPI } from '@/api/bidding'
-import { formatDate } from '@/utils/formUtils'
-import { getUsers } from '@/api/user.js'
-import { useRouter } from 'vue-router'
-import { updateTask } from '@/api/task.js'
-import { getCustomers } from '@/api/customer.js'
+import {formatDate} from '@/utils/formUtils'
+import {getUsers} from '@/api/user.js'
+import {useRouter} from 'vue-router'
+import {getCustomers} from '@/api/customer.js'
 import BaseAvatar from '@/components/common/BaseAvatar.vue'
 import EntityMemberManager from "@/components/common/EntityMemberManager.vue";
 import {addEntityMember} from "@/api/entityMembers.js";
 import {useEntityAccess} from "@/utils/openEntityDetail.js";
+import {useUserStore} from "@/stores/user";
+
 const { openEntity } = useEntityAccess();
 
 
@@ -498,16 +495,19 @@ const selectedEntityData = ref(null)
 const activeRowId = ref(null)
 
 
-import { useUserStore } from "@/stores/user";
 const userStore = useUserStore()
 
-const canManageMembers = computed(() =>
-    ["admin", "super_admin"].includes(userStore.user?.role_code)
-)
+const canManageMembers = (record) => {
+    const currentUserId = Number(userStore.user?.id)
+    return (
+        currentUserId === Number(record.assigned_to) ||
+        currentUserId === Number(record.manager_id)
+    )
+}
 
 
 const openMemberModal = (record) => {
-    if (!canManageMembers.value) {
+    if (!canManageMembers(record)) {
         return message.error("Bạn không có quyền thay đổi quyền truy cập gói thầu");
     }
 
@@ -515,6 +515,7 @@ const openMemberModal = (record) => {
     selectedEntityId.value = record.id
     showMemberModal.value = true
 }
+
 
 
 const setActiveRow = (id) => {
@@ -962,24 +963,22 @@ const getBiddings = async () => {
             }))
         }
 
-        const rows = (data || []).map(r => {
+        tableData.value = (data || []).map(r => {
             const steps = parseApprovalSteps(r.approval_steps)
             return {
                 ...r,
                 status: r.status != null ? Number(r.status) : null,
                 priority: r.priority != null ? Number(r.priority) : 0,
                 progress_percent: r.progress_percent ?? r.progress?.bidding_progress ?? 0,
-                steps_done:       r.steps_done       ?? r.progress?.steps_completed   ?? 0,
-                steps_total:      r.steps_total      ?? r.progress?.steps_total       ?? 0,
-                subtasks_done:    r.subtasks_done    ?? r.progress?.subtasks_approved ?? 0,
-                subtasks_total:   r.subtasks_total   ?? r.progress?.subtasks_total    ?? 0,
-                approval_status:  r.approval_status ?? APPROVAL_STATUS.PENDING,
-                approval_steps:   steps,
-                current_level:    Number(r.current_level ?? 0)
+                steps_done: r.steps_done ?? r.progress?.steps_completed ?? 0,
+                steps_total: r.steps_total ?? r.progress?.steps_total ?? 0,
+                subtasks_done: r.subtasks_done ?? r.progress?.subtasks_approved ?? 0,
+                subtasks_total: r.subtasks_total ?? r.progress?.subtasks_total ?? 0,
+                approval_status: r.approval_status ?? APPROVAL_STATUS.PENDING,
+                approval_steps: steps,
+                current_level: Number(r.current_level ?? 0)
             }
         })
-
-        tableData.value = rows
 
         if (s) {
             summary.value = {
@@ -1122,8 +1121,6 @@ const submitForm = async () => {
         loadingCreate.value = true
 
         const formatted = buildBiddingPayload(formData.value)
-
-        // Lấy user hiện tại từ localStorage hoặc auth store
         const currentUserId = getCurrentUserId()
 
         if (!currentUserId) {
@@ -1135,25 +1132,63 @@ const submitForm = async () => {
             // UPDATE
             await updateBiddingAPI(selectedBidding.value.id, formatted)
             message.success('Cập nhật thành công')
+
         } else {
             // CREATE
             const res = await createBiddingAPI({
                 ...formatted,
-                created_by: currentUserId // option nếu BE cần
+                created_by: currentUserId
             })
 
-            const biddId = res.data?.id
+            const bidId = res.data?.id
+            if (!bidId) throw new Error("Không lấy được ID gói thầu sau khi tạo")
 
-            // ⭐ Thêm quyền truy cập vào gói thầu vừa tạo
+            /* ---------------------------------------------------
+             * ⭐⭐ AUTO-GRANT ACCESS — thêm quyền cho những người liên quan
+             * --------------------------------------------------- */
+
+            // 1) Quyền cho người tạo
             await addEntityMember({
                 entity_type: "bidding",
-                entity_id: biddId,
-                user_id: currentUserId
+                entity_id: Number(bidId),
+                user_id: Number(currentUserId)
             })
+
+
+            // 2) Quyền cho manager nếu có
+            if (formatted.manager_id) {
+                await addEntityMember({
+                    entity_type: "bidding",
+                    entity_id: bidId,
+                    user_id: formatted.manager_id
+                })
+            }
+
+            // 3) Quyền cho người phụ trách chính (nếu có)
+            if (formatted.assigned_to) {
+                await addEntityMember({
+                    entity_type: "bidding",
+                    entity_id: bidId,
+                    user_id: formatted.assigned_to
+                })
+            }
+
+            // 4) Quyền cho danh sách cộng tác (nếu có)
+            if (Array.isArray(formatted.collaborators)) {
+                for (const uid of formatted.collaborators) {
+                    await addEntityMember({
+                        entity_type: "bidding",
+                        entity_id: bidId,
+                        user_id: uid
+                    })
+                }
+            }
+
+            /* --------------------------------------------------- */
 
             // Clone steps nếu cần
             if (formatted.status === STATUS.PREPARING) {
-                await cloneFromTemplatesAPI(biddId)
+                await cloneFromTemplatesAPI(bidId)
             }
 
             message.success('Tạo gói thầu thành công')
@@ -1161,6 +1196,7 @@ const submitForm = async () => {
 
         onCloseDrawer()
         await getBiddings()
+
     } catch (e) {
         console.error('Lỗi submitForm:', e?.response?.data || e)
         message.error(e?.response?.data?.message || 'Có lỗi xảy ra')
@@ -1168,6 +1204,7 @@ const submitForm = async () => {
         loadingCreate.value = false
     }
 }
+
 
 
 const confirmAsync = (opts) =>

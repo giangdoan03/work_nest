@@ -388,26 +388,32 @@ class Auth extends Controller
         if ($session->get('logged_in')) {
             $userId = $session->get('user_id');
 
-            // Lấy user từ database
             $userModel = new UserModel();
+
             $user = $userModel
                 ->select('
                 users.*,
                 roles.name AS role_name,
                 roles.code AS role_code,
-                departments.name AS department_name
+                departments.name AS department_name,
+                positions.name AS position_name,
+                positions.code AS position_code,
+                positions.level AS position_level
             ')
                 ->join('roles', 'roles.id = users.role_id', 'left')
                 ->join('departments', 'departments.id = users.department_id', 'left')
+                ->join('positions', 'positions.id = users.position_id', 'left')   // 🔥 thêm JOIN này
                 ->find($userId);
 
             if ($user) {
                 unset($user['password']);
 
-                // Lưu vào session (tùy chọn)
+                // Lưu session nếu bạn muốn
                 $session->set('role_name', $user['role_name']);
                 $session->set('role_code', $user['role_code']);
                 $session->set('department_name', $user['department_name']);
+                $session->set('position_name', $user['position_name']);
+                $session->set('position_code', $user['position_code']);
 
                 return $this->response->setJSON([
                     'status' => 'success',
@@ -415,7 +421,6 @@ class Auth extends Controller
                 ]);
             }
 
-            // Trường hợp user_id trong session không tồn tại trong DB
             return $this->response->setJSON([
                 'status'  => 'error',
                 'message' => 'User not found'
@@ -427,6 +432,7 @@ class Auth extends Controller
             'message' => 'Not logged in'
         ]);
     }
+
 
 
 
