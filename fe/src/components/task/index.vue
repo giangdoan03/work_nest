@@ -385,7 +385,7 @@
                         <a-row :gutter="[16, 8]">
                             <!-- Cột trái: Thảo luận -->
                             <a-col :span="24" :xs="24" :lg="24" style="padding-left: 0; padding-right: 0">
-                                <div class="discussion-scroll" v-auto-maxheight>
+                                <div class="discussion-scroll" v-auto-maxheight="-50">
                                     <Comment :users="listUser" :departments="listDepartment" :roster="logData" />
                                 </div>
                             </a-col>
@@ -1074,6 +1074,7 @@ const getDepartment = async () => {
 
 const vAutoMaxheight = {
     mounted(el, binding) {
+        console.log('xxxxx')
         const extra = Number(binding?.value ?? 0)
         const setH = () => {
             const rect = el.getBoundingClientRect()

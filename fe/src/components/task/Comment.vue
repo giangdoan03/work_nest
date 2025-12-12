@@ -1320,13 +1320,13 @@ const addMention = async () => {
         const roleKey = mentionForm.value.role;
         const selected = multiRoles[roleKey];
 
-// ❗ Nếu FE chưa chọn role (selected = null) → chặn
+        // ❗ Nếu FE chưa chọn role (selected = null) → chặn
         if (!selected) {
             message.warning("Vui lòng chọn vai trò/phòng ban duyệt");
             return;
         }
 
-// Check trùng theo composite key (user_id + department_id)
+        // Check trùng theo composite key (user_id + department_id)
         const isDup = mentionsSelected.value.some(m =>
             String(m.user_id) === String(uid) &&
             Number(m.department_id) === Number(selected.department_id)
@@ -1554,7 +1554,7 @@ function extractMentionsFromInput(input = '') {
     while ((m = re.exec(input))) {
         const raw = m[1].trim()
         if (!raw) continue
-        const cleaned = raw.replace(/[.,;:!?)\]\}]+$/, '').trim()
+        const cleaned = raw.replace(/[.,;:!?)\]}]+$/, '').trim()
         const key = vnNorm(cleaned)
         const u = userNameMap.value.get(key)
         if (u) out.push({user_id: String(u.id), name: u.name, role: 'approve', status: 'pending'})
@@ -2260,7 +2260,7 @@ onBeforeUnmount(() => {
 
 /* List comments */
 .list-comment {
-    height: 50vh;
+    height: 68vh;
     flex: 1 1 auto;
     overflow: auto;
     padding: 8px 10px 0;

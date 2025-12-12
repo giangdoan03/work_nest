@@ -139,16 +139,6 @@
                                         />
                                     </div>
                                 </div>
-
-                                <!-- Bên phải: nút gửi duyệt -->
-<!--                                <div>-->
-<!--                                    <a-tooltip :title="stepSendUI(step).tip" placement="top">-->
-<!--                                        <a-button type="link" size="small" :disabled="stepSendUI(step).disabled" @click.stop="onClickSend(step)">-->
-<!--                                            <template #icon><SendOutlined/></template>-->
-<!--                                            {{ stepSendUI(step).text }}-->
-<!--                                        </a-button>-->
-<!--                                    </a-tooltip>-->
-<!--                                </div>-->
                             </div>
                         </template>
 

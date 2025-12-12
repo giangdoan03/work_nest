@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div style="max-width: 1000px; margin: 0 auto;">
         <a-card>
             <a-page-header
                 title="Chi tiết hợp đồng"
@@ -153,16 +153,6 @@
                                         />
                                     </div>
                                 </div>
-
-                                <!-- Bên phải: nút gửi duyệt -->
-<!--                                <div>-->
-<!--                                    <a-tooltip :title="stepSendUI(step).tip" placement="top">-->
-<!--                                        <a-button type="link" size="small" :disabled="stepSendUI(step).disabled" @click.stop="onClickSend(step)">-->
-<!--                                            <template #icon><SendOutlined/></template>-->
-<!--                                            {{ stepSendUI(step).text }}-->
-<!--                                        </a-button>-->
-<!--                                    </a-tooltip>-->
-<!--                                </div>-->
                             </div>
                         </template>
                         <template #description>
@@ -193,9 +183,7 @@
                                         @openChange="v => openStatusForId = v ? step.id : null"
                                     >
                                         <template #content>
-                                            <a-select style="width:180px"
-                                                      :value="String(step.status)"
-                                                      @change="val => onChangeStatus(step, val)">
+                                            <a-select style="width:180px" :value="String(step.status)" @change="val => onChangeStatus(step, val)">
                                                 <a-select-option value="0">Chưa bắt đầu</a-select-option>
                                                 <a-select-option value="1">Đang xử lý</a-select-option>
                                                 <a-select-option value="2">Hoàn thành</a-select-option>
@@ -264,8 +252,6 @@
                                         @change="updateStepStartDate"
                                     />
                                 </a-descriptions-item>
-
-
 
                                 <!-- Hạn: full dòng để có không gian -->
                                 <a-descriptions-item label="Hạn">
@@ -347,17 +333,7 @@
 
                 <template v-else>
                     <!-- Header -->
-                    <div style="
-                          display: flex;
-                          justify-content: space-between;
-                          padding: 8px 0;
-                          font-weight: 500;
-                          color: #555;
-                          border-bottom: 1px solid #f0f0f0;
-                        "
-                    >
-                    </div>
-
+                    <div style=" display: flex; justify-content: space-between; padding: 8px 0; font-weight: 500; color: #555; border-bottom: 1px solid #f0f0f0;"></div>
                     <!-- Danh sách nhiệm vụ -->
                     <a-table
                         class="tiny-scroll"

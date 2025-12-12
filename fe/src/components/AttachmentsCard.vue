@@ -270,13 +270,9 @@ import 'dayjs/locale/vi'
 
 // API
 import { getUsers } from '@/api/user'
-import { sendDocumentApproval, getActiveDocumentApproval, convertDriveToPdfAPI, listDrivePdfAPI } from '@/api/approvals.js'
+import { convertDriveToPdfAPI } from '@/api/approvals.js'
 import {
-    adoptTaskFileFromPathAPI,
-    uploadTaskFileLinkAPI,
     getCommentFilesByTask,
-    sendCommentApproval,
-    deleteTaskFile,
     deleteDocumentAPI, deleteTaskFileAPI, deleteCommentAPI, bulkDeleteDocuments
 } from '@/api/taskFiles'
 import { useUserStore } from '@/stores/user'
@@ -285,7 +281,6 @@ import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
 import { PDFDocument, degrees } from "pdf-lib";
 import {
     uploadPdfToWordPress,
-    uploadTaskFileSigned,
     saveConvertedDocument,
     getConvertedPdfList, deleteConvertedPdf, bulkDeleteConvertedPdf
 } from "@/api/document.js";

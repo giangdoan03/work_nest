@@ -34,7 +34,7 @@ class CommentController extends ResourceController
     public function byTask($task_id): ResponseInterface
     {
         $page = (int)($this->request->getGet('page') ?? 1);
-        $limit = 5;
+        $limit = 10;
         $offset = ($page - 1) * $limit;
 
         $db = Database::connect();
