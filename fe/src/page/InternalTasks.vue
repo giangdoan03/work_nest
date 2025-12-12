@@ -161,37 +161,56 @@
 
                     <!-- Actions -->
                     <template v-else-if="column.dataIndex === 'action'">
-                        <a-dropdown placement="left" :trigger="['click']" :getPopupContainer="n => n.parentNode">
-                            <a-button>
-                                <template #icon><MoreOutlined /></template>
-                            </a-button>
-                            <template #overlay>
-                                <a-menu>
-                                    <a-menu-item @click="showPopupDetail(record)">
-                                        <InfoCircleOutlined class="icon-action" style="color: blue;"/>
-                                        Chi tiết
-                                    </a-menu-item>
-                                    <a-menu-item>
-                                        <a-popconfirm
-                                            title="Bạn chắc chắn muốn xóa nhiệm vụ này?"
-                                            ok-text="Xóa"
-                                            cancel-text="Hủy"
-                                            @confirm="deleteConfirm(record.id)"
-                                            placement="topRight"
-                                        >
-                                            <div style="width: 100%; text-align: start;">
-                                                <DeleteOutlined class="icon-action" style="color: red;"/>
-                                                Xóa
-                                            </div>
-                                        </a-popconfirm>
-                                    </a-menu-item>
-                                </a-menu>
-                            </template>
-                        </a-dropdown>
+                        <div class="action-icons">
+
+                            <!-- Cấp quyền -->
+                            <a-tooltip title="Cấp quyền truy cập gói thầu">
+                                <UserAddOutlined
+                                    v-if="canManageMembers(record)"
+                                    class="icon-action"
+                                    style="color:#722ed1;"
+                                    @click="openMemberModal(record)"
+                                />
+                            </a-tooltip>
+
+                            <!-- Chi tiết -->
+                            <a-tooltip title="Chi tiết">
+                                <InfoCircleOutlined
+                                    class="icon-action"
+                                    style="color: blue;"
+                                    @click="showPopupDetail(record)"
+                                />
+                            </a-tooltip>
+
+                            <!-- Xóa -->
+                            <a-popconfirm
+                                title="Bạn chắc chắn muốn xóa nhiệm vụ này?"
+                                ok-text="Xóa"
+                                cancel-text="Hủy"
+                                @confirm="deleteConfirm(record.id)"
+                            >
+                                <a-tooltip title="Xóa">
+                                    <DeleteOutlined
+                                        class="icon-action"
+                                        style="color:red; cursor:pointer;"
+                                    />
+                                </a-tooltip>
+                            </a-popconfirm>
+
+                        </div>
                     </template>
                 </template>
             </a-table>
         </a-card>
+
+        <EntityMemberManager
+            v-model:open="memberModalVisible"
+            :entityType="activeEntityType"
+            :entityId="activeEntityId"
+            :entityData="activeEntityData"
+            @saved="fetchTasks"
+        />
+
 
         <DrawerCreateTask
             v-model:open-drawer="openDrawer"
@@ -321,7 +340,7 @@ import { useRouter } from 'vue-router'
 import {
     InfoCircleOutlined,
     DeleteOutlined,
-    MoreOutlined,
+    UserAddOutlined,
     FilterOutlined
 } from '@ant-design/icons-vue'
 import DrawerCreateTask from '../components/common/DrawerCreateTask.vue'
@@ -348,11 +367,21 @@ const listUser = ref([])
 const listDepartment = ref([])
 const listBidding = ref([])
 const listContract = ref([])
-
 const locale = ref(viVN)
 const dateRange = ref([])
+const showMemberModal = ref(false)
+const selectedEntityId = ref(null)
+const selectedEntityData = ref(null)
+
+// ⭐ khai báo biến dùng cho modal cấp quyền
+const memberModalVisible = ref(false);
+const activeEntityId = ref(null);
+const activeEntityData = ref(null);
+const activeEntityType = ref(null)
 
 import { useEntityAccess } from "@/utils/openEntityDetail";
+import EntityMemberManager from "@/components/common/EntityMemberManager.vue";
+import {getBiddingById, getContractById} from "@/api/entityMembers.js";
 const { openEntity } = useEntityAccess();
 
 
@@ -440,7 +469,7 @@ const columns = [
         }
     },
     { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 100, align: 'center' },
-    { title: 'Thao tác', dataIndex: 'action', key: 'action', width: 80, align: 'center' }
+    { title: 'Thao tác', dataIndex: 'action', key: 'action', width: 200, align: 'center' }
 ]
 
 // ===== Helpers =====
@@ -505,6 +534,39 @@ const getTitleInfo = (r = {}) => {
     const lines = [r.title || '', ...bits]
     return { subline, lines }
 }
+
+const openMemberModal = async (record) => {
+    activeEntityType.value = record.linked_type;
+
+    // Lấy id thực gốc của entity
+    activeEntityId.value = Number(record.linked_id);
+
+    // GỌI API lấy thông tin entity (gói thầu hoặc hợp đồng)
+    let entityInfo = null;
+
+    if (record.linked_type === "bidding") {
+        const res = await getBiddingById(activeEntityId.value);
+        entityInfo = res.data.data;
+    }
+    else if (record.linked_type === "contract") {
+        const res = await getContractById(activeEntityId.value);
+        entityInfo = res.data.data;
+    }
+
+    // Lưu xuống FE để modal hiển thị
+    activeEntityData.value = entityInfo;
+
+    memberModalVisible.value = true;
+};
+
+
+
+
+const canManageMembers = (record) => {
+    const uid = userStore.currentUser?.id
+    return userStore.currentUser?.is_admin || record.created_by === uid
+}
+
 
 // ===== Filters / Actions =====
 const filterByType = (type) => {
@@ -781,8 +843,20 @@ table .ant-table-thead > tr > th {
     cursor: pointer;
 }
 
-&
-:last-child {
+& :last-child {
     margin-right: 0;
 }
+
+.action-icons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px; /* chỉnh khoảng cách icon */
+}
+
+.icon-action {
+    font-size: 18px;
+    cursor: pointer;
+}
+
 </style>

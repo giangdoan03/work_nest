@@ -8,78 +8,100 @@ use CodeIgniter\RESTful\ResourceController;
 
 class EntityMemberController extends ResourceController
 {
-    protected $modelName = 'App\Models\EntityMemberModel';
+    protected $modelName = EntityMemberModel::class;
     protected $format    = 'json';
 
-    // ⭐ Add user to entity
-    public function add(): ResponseInterface
+    /**
+     * Check admin permission once
+     */
+    private function ensureAdmin(): ?ResponseInterface
     {
-
         if ($err = requireAdmin()) {
             return $this->failForbidden($err['message']);
         }
+        return null;
+    }
 
-        $data = $this->request->getJSON(true) ?? [];
-
+    /**
+     * Validate required fields
+     */
+    private function validatePayload(array $data): array
+    {
         $entityType = $data['entity_type'] ?? null;
         $entityId   = $data['entity_id'] ?? null;
         $userId     = $data['user_id'] ?? null;
 
         if (!$entityType || !$entityId || !$userId) {
-            return $this->fail("Missing parameters");
+            return [false, "Missing parameters"];
         }
 
-        $this->model->addMember($entityType, $entityId, $userId);
+        return [true, compact('entityType', 'entityId', 'userId')];
+    }
+
+    /**
+     * ⭐ CENTRALIZED handler for ADD / REMOVE
+     */
+    private function handleMemberAction(callable $action): ResponseInterface
+    {
+        if ($res = $this->ensureAdmin()) return $res;
+
+        $data = $this->request->getJSON(true) ?? [];
+
+        [$ok, $payload] = $this->validatePayload($data);
+        if (!$ok) return $this->fail($payload);
+
+        ['entityType' => $type, 'entityId' => $id, 'userId' => $user] = $payload;
+
+        // run the injected action
+        $action($type, $id, $user);
 
         return $this->respond([
-            "message" => "Member added successfully",
-            "data"    => compact('entityType', 'entityId', 'userId')
+            'message' => 'Success',
+            'data' => $payload
         ]);
     }
 
+    /**
+     * ⭐ Add user to entity
+     */
+    public function add(): ResponseInterface
+    {
+        return $this->handleMemberAction(
+            fn($type, $id, $user) => $this->model->addMember($type, $id, $user)
+        );
+    }
 
-    // ⭐ Remove user from entity
+    /**
+     * ⭐ Remove user from entity
+     */
     public function remove(): ResponseInterface
     {
-
-        if ($err = requireAdmin()) {
-            return $this->failForbidden($err['message']);
-        }
-
-        $data = $this->request->getJSON(true) ?? [];
-
-        $entityType = $data['entity_type'] ?? null;
-        $entityId   = $data['entity_id'] ?? null;
-        $userId     = $data['user_id'] ?? null;
-
-        if (!$entityType || !$entityId || !$userId) {
-            return $this->fail("Missing parameters");
-        }
-
-        $this->model->removeMember($entityType, $entityId, $userId);
-
-        return $this->respond(["message" => "Member removed"]);
+        return $this->handleMemberAction(
+            fn($type, $id, $user) => $this->model->removeMember($type, $id, $user)
+        );
     }
 
-
-    // ⭐ List all users allowed to access entity
+    /**
+     * List users allowed to access the entity
+     */
     public function list($entityType, $entityId): ResponseInterface
     {
-        $data = $this->model->listMembers($entityType, $entityId);
-        return $this->respond($data);
+        return $this->respond(
+            $this->model->listMembers($entityType, $entityId)
+        );
     }
 
-    // ⭐ Check user access
+    /**
+     * Check if user has access
+     */
     public function canAccess(): ResponseInterface
     {
         $entityType = $this->request->getGet('entity_type');
         $entityId   = $this->request->getGet('entity_id');
         $userId     = $this->request->getGet('user_id');
 
-        if ($this->model->exists($entityType, $entityId, $userId)) {
-            return $this->respond(["access" => true]);
-        }
-
-        return $this->respond(["access" => false]);
+        return $this->respond([
+            "access" => $this->model->exists($entityType, $entityId, $userId)
+        ]);
     }
 }

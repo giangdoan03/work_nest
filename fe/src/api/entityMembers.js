@@ -21,3 +21,9 @@ export const listEntityMembers = (entityType, entityId) =>
 // ⭐ Kiểm tra user có quyền vào entity hay không
 export const canAccessEntity = (params = {}) =>
     instance.get('/entity-members/can-access', { params })
+
+export const getBiddingById = (id) =>
+    instance.get(`/biddings/${id}`);
+
+export const getContractById = (id) =>
+    instance.get(`/contracts/${id}`);
