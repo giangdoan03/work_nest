@@ -162,7 +162,6 @@ $routes->group('api', function ($routes) {
     $routes->get('contract-steps/(:num)/tasks', 'TaskController::byContractStep/$1');
 
     $routes->put('bidding-steps/(:num)/complete', 'BiddingStepController::completeStep/$1');
-    //    $routes->get('bidding-steps/(:num)/tasks', 'BiddingStepController::tasksByStep/$1');
     $routes->resource('bidding-steps', ['controller' => 'BiddingStepController']);
     $routes->get('biddings/(:num)/steps', 'BiddingStepController::stepsByBidding/$1');
     $routes->get('biddings/(:num)/steps/(:num)', 'BiddingStepController::stepDetail/$1/$2');
@@ -330,10 +329,5 @@ $routes->group('api', function ($routes) {
     $routes->get('departments/(:num)/users', 'DepartmentController::users/$1');
     $routes->post('departments/(:num)/users', 'DepartmentController::addUsers/$1');
     $routes->delete('departments/(:num)/users/(:num)', 'DepartmentController::removeUser/$1/$2');
-
-
-
-
-
 
 });
