@@ -140,17 +140,27 @@
 
                     <!-- Deadline -->
                     <template v-if="column.dataIndex === 'deadline'">
-                        <a-tag v-if="record.days_overdue > 0" color="error">
-                            Quá hạn {{ record.days_overdue }} ngày
-                        </a-tag>
-                        <a-tag v-else-if="record.days_remaining > 0" color="green">
-                            Còn {{ record.days_remaining }} ngày
-                        </a-tag>
-                        <a-tag v-else-if="record.days_remaining === 0" :color="'#faad14'">
-                            Hạn chót hôm nay
-                        </a-tag>
-                        <a-tag v-else>—</a-tag>
+                        <template v-if="calculateDeadline(record.end_date).overdue > 0">
+                            <a-tag color="error">
+                                Quá hạn {{ calculateDeadline(record.end_date).overdue }} ngày
+                            </a-tag>
+                        </template>
+
+                        <template v-else-if="calculateDeadline(record.end_date).remaining > 0">
+                            <a-tag color="green">
+                                Còn {{ calculateDeadline(record.end_date).remaining }} ngày
+                            </a-tag>
+                        </template>
+
+                        <template v-else-if="calculateDeadline(record.end_date).remaining === 0">
+                            <a-tag color="#faad14">Hạn chót hôm nay</a-tag>
+                        </template>
+
+                        <template v-else>
+                            <a-tag>—</a-tag>
+                        </template>
                     </template>
+
 
                     <!-- Trạng thái -->
                     <template v-if="column.dataIndex === 'status'">
@@ -654,37 +664,33 @@ const onRangeChange = (dates, dateStrings) => {
 const buildTaskQuery = () => {
     const f = { ...dataFilter.value }
 
+    // 1. Linked type
     if (!f.linked_type) {
-        // all in scope
-        f.linked_type_in = TYPES_IN_SCOPE.slice()
-    } else if (TYPES_IN_SCOPE.includes(f.linked_type)) {
-        f.linked_type_in = [f.linked_type]
-    } else {
-        f.linked_type = null
-        f.linked_type_in = TYPES_IN_SCOPE.slice()
+        delete f.linked_type
     }
 
-    // Ép kiểu số
-    if (f.id_department !== null && f.id_department !== undefined && f.id_department !== '') {
-        f.id_department = Number(f.id_department)
+    // 2. Department
+    if (f.id_department) {
+        f.department_id = Number(f.id_department)
     }
-    if (f.assigned_to !== null && f.assigned_to !== undefined && f.assigned_to !== '') {
+    delete f.id_department
+
+    // 3. Search by title
+    if (f.title && f.title.trim() !== "") {
+        f.search = f.title.trim()
+    }
+    delete f.title
+
+    // 4. Convert assigned_to
+    if (f.assigned_to) {
         f.assigned_to = Number(f.assigned_to)
     }
-    if (f.id_department && !f.department_id) {
-        f.department_id = f.id_department
-    }
 
-    // Fallback role nếu chưa chọn người/phòng ban
-    if (!f.assigned_to && !f.id_department) {
-        const user = userStore.currentUser
-        const roleId = Number(user?.role_id)
-        if (roleId === 3) f.assigned_to = Number(user.id)
-        else if (roleId === 2) f.id_department = Number(user.department_id)
-    }
+    // 5. start_date & end_date giữ nguyên (BE hỗ trợ)
 
     return f
 }
+
 
 // Lấy tổng đúng cho scope hiện tại (không dính internal)
 const fetchScopeTotal = async (basePayload) => {
@@ -716,8 +722,6 @@ const fetchTasks = async () => {
 
         let rows = response?.data?.data ?? []
 
-        // Loại bỏ internal nếu backend trả về (phòng trường hợp)
-        rows = rows.filter(r => TYPES_IN_SCOPE.includes(r.linked_type))
 
         tableData.value = rows
 
@@ -771,6 +775,20 @@ const getContracts = async () => {
         message.error('Không thể tải hợp đồng')
     }
 }
+
+const calculateDeadline = (endDate) => {
+    if (!endDate) return { overdue: null, remaining: null }
+
+    const today = new Date()
+    const end = new Date(endDate)
+
+    const diff = Math.floor((end - today) / (1000 * 60 * 60 * 24))
+
+    if (diff < 0) return { overdue: Math.abs(diff), remaining: null }
+    if (diff === 0) return { overdue: 0, remaining: 0 }
+    return { overdue: 0, remaining: diff }
+}
+
 
 const submitForm = () => { fetchTasks() }
 
