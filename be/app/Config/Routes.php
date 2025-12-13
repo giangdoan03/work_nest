@@ -29,7 +29,6 @@ $routes->group('api', function ($routes) {
         $routes->get("can-access", "DocLibraryController::checkAccess");
     });
 
-
     // ⭐ Google OAuth
     $routes->get('google/url', 'GoogleAuth::getUrl');
     $routes->get('google-auth', 'GoogleAuth::redirect');
@@ -42,7 +41,6 @@ $routes->group('api', function ($routes) {
     $routes->get('documents/converted', 'DocumentController::listConverted');
     $routes->delete('documents/converted/(:num)', 'DocumentController::deleteConverted/$1');
     $routes->post('documents/converted/bulk-delete', 'DocumentController::bulkDelete');
-
 
     $routes->post('login', 'Auth::login');
     $routes->get('logout', 'Auth::logout');
@@ -79,7 +77,6 @@ $routes->group('api', function ($routes) {
     $routes->get('permissions', 'PermissionController::index');
     $routes->post('permissions/save', 'PermissionController::save');
     $routes->get('permissions/matrix', 'PermissionController::matrix');
-
 
     $routes->post('users/upload-avatar', 'Auth::uploadAvatar');
 
@@ -140,7 +137,6 @@ $routes->group('api', function ($routes) {
     $routes->get('tasks/(:num)/extensions/count', 'TaskController::countExtensions/$1');
     $routes->get('tasks/(:num)/extensions', 'TaskController::getExtensions/$1');
     $routes->post('documents/bulk-delete', 'DocumentController::bulkDelete');
-
 
     $routes->put('subtasks/(:num)', 'TaskController::updateSubtask/$1');
     $routes->delete('subtasks/(:num)', 'TaskController::deleteSubtask/$1');
@@ -297,7 +293,6 @@ $routes->group('api', function ($routes) {
     });
 
 
-
     // ✅ WordPress Media Proxy
     $routes->post('wp-media',          'WpMediaController::create');
     $routes->post('wp-media/url',      'WpMediaController::uploadUrl');
@@ -308,16 +303,12 @@ $routes->group('api', function ($routes) {
     $routes->get('file-signatures/(:num)/download', 'TaskFileController::downloadSigned/$1');
     $routes->post('documents/approve', 'TaskFileController::approveOnly');
 
-
     // ⭐ ENTITY MEMBER ROUTES
     $routes->post('entity-members/add', 'EntityMemberController::add');
     $routes->post('entity-members/remove', 'EntityMemberController::remove');
     $routes->get('entity-members/list/(:segment)/(:num)', 'EntityMemberController::list/$1/$2');
     $routes->get('entity-members/can-access', 'EntityMemberController::canAccess');
 
-    // =======================
-    // ⭐ Department Routes
-    // =======================
     // CRUD department
     $routes->get('departments', 'DepartmentController::index');
     $routes->get('departments/(:num)', 'DepartmentController::show/$1');
