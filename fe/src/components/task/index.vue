@@ -1074,7 +1074,6 @@ const getDepartment = async () => {
 
 const vAutoMaxheight = {
     mounted(el, binding) {
-        console.log('xxxxx')
         const extra = Number(binding?.value ?? 0)
         const setH = () => {
             const rect = el.getBoundingClientRect()

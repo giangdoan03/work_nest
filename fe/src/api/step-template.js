@@ -5,10 +5,15 @@ const instance = axios.create({
     withCredentials: true
 })
 
-export const getStepTemplatesAPI = () => instance.get('/step-templates')
+// ✅ PHẢI NHẬN params
+export const getStepTemplatesAPI = (params) =>
+    instance.get('/step-templates', { params })
 
-export const createStepTemplateAPI = (data) => instance.post('/step-templates', data)
+export const createStepTemplateAPI = (data) =>
+    instance.post('/step-templates', data)
 
-export const updateStepTemplateAPI = (id, data) => instance.put(`/step-templates/${id}`, data)
+export const updateStepTemplateAPI = (id, data) =>
+    instance.put(`/step-templates/${id}`, data)
 
-export const deleteStepTemplateAPI = (id) => instance.delete(`/step-templates/${id}`)
+export const deleteStepTemplateAPI = (id) =>
+    instance.delete(`/step-templates/${id}`)

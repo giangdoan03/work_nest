@@ -14,7 +14,8 @@
                 :loading="loading"
                 row-key="id"
                 :pagination="pagination"
-                :scroll="{ x: 'max-content'}"
+                :scroll="{ x: 1300 }"
+                tableLayout="fixed"
                 @change="onTableChange"
             >
                 <template #bodyCell="{ column, record, index }">
@@ -25,13 +26,40 @@
                         <a-tag color="blue">Bước {{ record.step_number }}</a-tag>
                     </template>
                     <template v-else-if="column.dataIndex === 'step_code'">
-                        <a-typography-text>{{ record.step_code }}</a-typography-text>
+                        <a-tag color="green">
+                            {{ record.step_code }}
+                        </a-tag>
                     </template>
+
                     <template v-else-if="column.dataIndex === 'title'">
-                        <a-typography-text strong style="cursor: pointer;" @click="editStep(record)">
+                        <a-typography-text style="cursor: pointer;" @click="editStep(record)">
                             {{ record.title }}
                         </a-typography-text>
                     </template>
+                    <template v-else-if="column.dataIndex === 'processing_basis'">
+                        <a-tooltip
+                            :title="record.processing_basis || '-'"
+                            :overlayStyle="{ whiteSpace: 'pre-line', maxWidth: '500px' }"
+                        >
+                            <a-typography-text
+                                :content="record.processing_basis || '-'"
+                                :ellipsis="{ showTitle: false }"
+                            />
+                        </a-tooltip>
+                    </template>
+
+                    <template v-else-if="column.dataIndex === 'processing_detail'">
+                        <a-tooltip
+                            :title="record.processing_detail || '-'"
+                            :overlayStyle="{ whiteSpace: 'pre-line', maxWidth: '600px' }"
+                        >
+                            <a-typography-text
+                                :content="record.processing_detail || '-'"
+                                :ellipsis="{ showTitle: false }"
+                            />
+                        </a-tooltip>
+                    </template>
+
                     <template v-else-if="column.dataIndex === 'department'">
                         <a-space wrap>
                             <a-tag v-for="dept in record.department" :key="dept">{{ dept }}</a-tag>
@@ -83,6 +111,32 @@
                         allow-clear
                     />
                 </a-form-item>
+                <a-form-item
+                    label="Căn cứ xử lý"
+                    name="processing_basis"
+                >
+                    <a-textarea
+                        v-model:value="formData.processing_basis"
+                        :rows="3"
+                        placeholder="Nhập căn cứ xử lý"
+                        show-count
+                        :maxlength="1000"
+                    />
+                </a-form-item>
+
+                <a-form-item
+                    label="Nội dung xử lý chi tiết"
+                    name="processing_detail"
+                >
+                    <a-textarea
+                        v-model:value="formData.processing_detail"
+                        :rows="5"
+                        placeholder="Nhập nội dung xử lý chi tiết"
+                        show-count
+                        :maxlength="2000"
+                    />
+                </a-form-item>
+
             </a-form>
 
             <template #extra>
@@ -124,10 +178,13 @@ const departmentOptions = computed(() =>
 
 const formData = ref({
     step_number: null,
-    title: '',
     step_code: '',
-    department: []
+    title: '',
+    department: [],
+    processing_basis: '',
+    processing_detail: ''
 })
+
 
 // pagination state
 const pagination = ref({
@@ -163,20 +220,40 @@ const parseDept = (raw) => {
 }
 
 const columns = [
-    { title: 'STT', dataIndex: 'stt', key: 'stt',  width: '60px' },
-    { title: 'Bước số', dataIndex: 'step_number', key: 'step_number',  width: '100px' },
-    { title: 'Mã bước', dataIndex: 'step_code', key: 'step_code', width: 300 },
+    { title: 'STT', dataIndex: 'stt', key: 'stt', width: 60 },
+    { title: 'Bước số', dataIndex: 'step_number', key: 'step_number', width: 100, 'align': 'center' },
+    { title: 'Mã bước', dataIndex: 'step_code', key: 'step_code', width: 200, 'align': 'center' },
     { title: 'Tên bước', dataIndex: 'title', key: 'title' },
-    { title: 'Phòng ban', dataIndex: 'department', key: 'department' },
-    { title: 'Hành động', dataIndex: 'action', key: 'action' }
+
+    {
+        title: 'Căn cứ xử lý',
+        dataIndex: 'processing_basis',
+        key: 'processing_basis',
+        width: 200,
+        ellipsis: { showTitle: true }
+    },
+    {
+        title: 'Nội dung xử lý',
+        dataIndex: 'processing_detail',
+        key: 'processing_detail',
+        width: 250,
+        ellipsis: { showTitle: true }
+    },
+
+    { title: 'Phòng ban', dataIndex: 'department', key: 'department', width: 200 },
+    { title: 'Hành động', dataIndex: 'action', key: 'action', width: 120, 'align': 'center' }
 ]
+
 
 const rules = {
     step_number: [{ required: true, message: 'Vui lòng nhập số bước' }],
+    step_code: [{ required: true, message: 'Vui lòng nhập mã bước' }],
     title: [{ required: true, message: 'Vui lòng nhập tên bước' }],
-    step_code: [{ required: true, message: 'Vui lòng nhập mã bước (step_code)' }],
-    department: [{ required: true, type: 'array', message: 'Vui lòng chọn ít nhất 1 phòng ban' }]
+    department: [{ required: true, type: 'array', message: 'Chọn ít nhất 1 phòng ban' }],
+    processing_basis: [{ required: true, message: 'Vui lòng nhập căn cứ xử lý' }],
+    processing_detail: [{ required: true, message: 'Vui lòng nhập nội dung xử lý' }]
 }
+
 
 // Gọi API có phân trang và cập nhật total đúng cách
 const fetchSteps = async () => {

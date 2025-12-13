@@ -454,6 +454,14 @@ const hasAnyAdvancedFilter = computed(() => {
 const optionsAssigned = computed(() => listUser.value.map(ele => ({ value: ele.id, label: ele.name })))
 const optionsDepartment = computed(() => listDepartment.value.map(ele => ({ value: ele.id, label: ele.name })))
 
+const statusOption = [
+    { value: 'todo', label: 'Chưa bắt đầu' },
+    { value: 'doing', label: 'Đang thực hiện' },
+    { value: 'done', label: 'Hoàn thành' },
+    { value: 'overdue', label: 'Quá hạn' },
+    { value: 'request_approval', label: 'Chờ phê duyệt' }
+]
+
 const columns = [
     { title: 'STT', key: 'index', width: 50, align: 'center', fixed: 'left',
         customRender: ({ index }) => {

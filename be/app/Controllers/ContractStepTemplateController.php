@@ -12,8 +12,25 @@ class ContractStepTemplateController extends ResourceController
 
     public function index()
     {
-        return $this->respond($this->model->orderBy('step_number', 'ASC')->findAll());
+        $page    = (int) ($this->request->getGet('page') ?? 1);
+        $perPage = (int) ($this->request->getGet('per_page') ?? 10);
+
+        $data = $this->model
+            ->orderBy('step_number', 'ASC')
+            ->paginate($perPage, 'default', $page);
+
+        $pager = $this->model->pager;
+
+        return $this->respond([
+            'data' => $data,
+            'pagination' => [
+                'page'     => $pager->getCurrentPage('default'),
+                'per_page' => $pager->getPerPage('default'),
+                'total'    => $pager->getTotal('default'),
+            ]
+        ]);
     }
+
 
     public function create()
     {

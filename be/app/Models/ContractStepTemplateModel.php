@@ -8,6 +8,6 @@ class ContractStepTemplateModel extends Model
 {
     protected $table = 'contract_step_templates';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['step_number', 'step_code', 'title', 'department'];
+    protected $allowedFields = ['step_number', 'step_code', 'title', 'department', 'processing_basis', 'processing_detail',];
     protected $useTimestamps = true;
 }

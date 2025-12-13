@@ -415,6 +415,15 @@ const optionsDepartment = computed(() =>
     listDepartment.value.map(d => ({ value: d.id, label: d.name }))
 )
 
+const statusOption = [
+    { value: 'todo', label: 'Chưa bắt đầu' },
+    { value: 'doing', label: 'Đang thực hiện' },
+    { value: 'done', label: 'Hoàn thành' },
+    { value: 'overdue', label: 'Quá hạn' },
+    { value: 'request_approval', label: 'Chờ phê duyệt' }
+]
+
+
 const columns = [
     {
         title: 'STT',

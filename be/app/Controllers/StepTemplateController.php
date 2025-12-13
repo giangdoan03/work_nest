@@ -12,8 +12,28 @@ class StepTemplateController extends ResourceController
 
     public function index()
     {
-        return $this->respond($this->model->orderBy('step_number', 'ASC')->findAll());
+        $page    = max(1, (int) ($this->request->getGet('page') ?? 1));
+        $perPage = max(1, (int) ($this->request->getGet('per_page') ?? 10));
+        $offset  = ($page - 1) * $perPage;
+
+        // Tổng số bản ghi
+        $total = $this->model->countAll();
+
+        // Lấy dữ liệu theo trang
+        $data = $this->model
+            ->orderBy('step_number', 'ASC')
+            ->findAll($perPage, $offset);
+
+        return $this->respond([
+            'data' => $data,
+            'pagination' => [
+                'page'     => $page,
+                'per_page' => $perPage,
+                'total'    => $total,
+            ]
+        ]);
     }
+
 
     public function create()
     {
