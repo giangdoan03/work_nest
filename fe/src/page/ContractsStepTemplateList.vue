@@ -84,7 +84,7 @@
 
         <a-drawer
             :title="selectedStep ? 'Chỉnh sửa bước' : 'Thêm bước mới'"
-            :width="500"
+            :width="700"
             :open="openDrawer"
             @close="onCloseDrawer"
             :footer-style="{ textAlign: 'right' }"
@@ -117,7 +117,7 @@
                 >
                     <a-textarea
                         v-model:value="formData.processing_basis"
-                        :rows="3"
+                        :rows="7"
                         placeholder="Nhập căn cứ xử lý"
                         show-count
                         :maxlength="1000"
@@ -130,7 +130,7 @@
                 >
                     <a-textarea
                         v-model:value="formData.processing_detail"
-                        :rows="5"
+                        :rows="7"
                         placeholder="Nhập nội dung xử lý chi tiết"
                         show-count
                         :maxlength="2000"
@@ -220,7 +220,7 @@ const parseDept = (raw) => {
 }
 
 const columns = [
-    { title: 'STT', dataIndex: 'stt', key: 'stt', width: 60 },
+    { title: 'STT', dataIndex: 'stt', key: 'stt', width: 60, 'align': 'center'},
     { title: 'Bước số', dataIndex: 'step_number', key: 'step_number', width: 100, 'align': 'center' },
     { title: 'Mã bước', dataIndex: 'step_code', key: 'step_code', width: 200, 'align': 'center' },
     { title: 'Tên bước', dataIndex: 'title', key: 'title' },

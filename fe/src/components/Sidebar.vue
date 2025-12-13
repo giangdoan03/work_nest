@@ -206,10 +206,6 @@
                 <div class="qm-header">
                     <div class="qm-brand">
                         <img :src="'/TTID_logo.png'" alt="Menu logo" class="qm-logo"/>
-                        <!--                            <div class="qm-brand-text">-->
-                        <!--                                <div class="title">Office Portal</div>-->
-                        <!--                                <div class="sub">Truy cập nhanh mô-đun</div>-->
-                        <!--                            </div>-->
                     </div>
                 </div>
             </template>
