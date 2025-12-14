@@ -195,7 +195,7 @@ class DocumentSignController extends ResourceController
 
         // Find current step for user
         $step = $signM->where('converted_id', $convertedId)
-            ->where('user_id', $uid)
+            ->where('approver_id', $uid)   // ✅ ĐÚNG
             ->where('status', 'pending')
             ->first();
 

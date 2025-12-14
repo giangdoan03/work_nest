@@ -203,71 +203,18 @@ class TaskApprovalController extends ResourceController
     /** Kiểm tra quyền: user có trong roster và còn pending */
     private function canUserActOnRoster(array $roster, int $uid): array
     {
-        $db = db_connect();
-
-        // ==============================
-        // LẤY ROLE ĐÚNG CÁCH
-        // ==============================
-        $me = $db->table('users u')
-            ->select('r.code AS role_code')
-            ->join('roles r', 'r.id = u.role_id', 'left')
-            ->where('u.id', $uid)
-            ->get()
-            ->getRowArray();
-
-        $myRole = strtolower($me['role_code'] ?? 'user');
-
-
-        // ==============================
-        // SUPER ADMIN → duyệt bất kỳ ai
-        // ==============================
-        if ($myRole === 'super_admin') {
-            foreach ($roster as $i => $r) {
-                if (($r['status'] ?? '') === 'pending') {
-                    return [true, $i, null];
-                }
-            }
-            return [false, null, 'Không ai đang chờ duyệt'];
-        }
-
-
-        // ==============================
-        // ADMIN → duyệt tất cả trừ super_admin
-        // ==============================
-        if ($myRole === 'admin') {
-
-            foreach ($roster as $i => $r) {
-                if (($r['status'] ?? '') !== 'pending') continue;
-
-                // Lấy role đúng của user đang xét
-                $u2 = $db->table('users u')
-                    ->select('r.code AS role_code')
-                    ->join('roles r', 'r.id = u.role_id', 'left')
-                    ->where('u.id', $r['user_id'])
-                    ->get()
-                    ->getRowArray();
-
-                $targetRole = strtolower($u2['role_code'] ?? 'user');
-
-                if ($targetRole !== 'super_admin') {
-                    return [true, $i, null];
-                }
-            }
-
-            return [false, null, 'Không còn ai để duyệt'];
-        }
-
-
-        // ==============================
-        // USER → chỉ duyệt chính họ
-        // ==============================
         foreach ($roster as $i => $r) {
-            if ($r['user_id'] == $uid && ($r['status'] ?? '') === 'pending') {
+            if (
+                (int)$r['user_id'] === $uid &&
+                ($r['status'] ?? '') === 'pending'
+            ) {
                 return [true, $i, null];
             }
         }
-        return [false, null, 'Chưa đến lượt bạn'];
+
+        return [false, null, 'Chưa đến lượt bạn hoặc bạn đã duyệt'];
     }
+
 
 
 
@@ -899,92 +846,37 @@ class TaskApprovalController extends ResourceController
         }
 
         $task = $this->getTaskRow($taskId);
-        if (!$task) return $this->failNotFound('Task not found');
+        if (!$task) {
+            return $this->failNotFound('Task not found');
+        }
 
-        $uid     = (int)$this->getUserId();
-        $db      = db_connect();
-        $roster  = $this->readRoster($task);
+        $uid    = (int)$this->getUserId();
+        $db     = db_connect();
+        $roster = $this->readRoster($task);
 
         // ==========================
-        // CHECK QUYỀN
+        // CHECK QUYỀN (CHỈ SLOT CỦA MÌNH)
         // ==========================
         [$can, $idx, $reason] = $this->canUserActOnRoster($roster, $uid);
-        if (!$can) return $this->failForbidden($reason ?? 'Không thể thực hiện');
+        if (!$can) {
+            return $this->failForbidden($reason ?? 'Không thể thực hiện');
+        }
 
         // ==========================
-        // LẤY ROLE_CODE ĐÚNG CÁCH
-        // ==========================
-        $roleRow = $db->table('users u')
-            ->select('r.code AS role_code')
-            ->join('roles r', 'r.id = u.role_id', 'left')
-            ->where('u.id', $uid)
-            ->get()
-            ->getRowArray();
-
-        $role = strtolower($roleRow['role_code'] ?? 'user');
-
-
-        // ==========================
-        // UPDATE USER HIỆN TẠI
+        // UPDATE CHÍNH USER HIỆN TẠI
         // ==========================
         $payload = $this->getJsonBody();
         $note = $payload['note'] ?? null;
+
         if (is_array($note)) {
             $note = json_encode($note, JSON_UNESCAPED_UNICODE);
         }
 
         $roster[$idx]['status']   = $finalStatus;
         $roster[$idx]['acted_at'] = date('Y-m-d H:i:s');
-        if ($note !== null) $roster[$idx]['note'] = $note;
-
-
-
-        // ==========================
-        // AUTO-APPROVE LOGIC
-        // super_admin → duyệt tất cả
-        // admin → duyệt toàn user
-        // ==========================
-        if ($finalStatus === 'approved') {
-
-            // SUPER ADMIN → duyệt tất cả
-            if ($role === 'super_admin') {
-
-                foreach ($roster as $i => $r) {
-                    if (($roster[$i]['status'] ?? '') !== 'approved') {
-                        $roster[$i]['status']   = 'approved';
-                        $roster[$i]['acted_at'] = date('Y-m-d H:i:s');
-                    }
-                }
-            }
-
-            // ADMIN → duyệt toàn USER
-            if ($role === 'admin') {
-
-                foreach ($roster as $i => $r) {
-                    $uid2 = (int)($r['user_id'] ?? 0);
-                    if ($uid2 === $uid) continue;
-
-                    // Lấy role_code đúng của user
-                    $u2 = $db->table('users u')
-                        ->select('r.code AS role_code')
-                        ->join('roles r', 'r.id = u.role_id', 'left')
-                        ->where('u.id', $uid2)
-                        ->get()
-                        ->getRowArray();
-
-                    $role2 = strtolower($u2['role_code'] ?? 'user');
-
-                    if ($role2 === 'user') {
-                        if (($roster[$i]['status'] ?? '') !== 'approved') {
-                            $roster[$i]['status']   = 'approved';
-                            $roster[$i]['acted_at'] = date('Y-m-d H:i:s');
-                        }
-                    }
-                }
-            }
+        if ($note !== null) {
+            $roster[$idx]['note'] = $note;
         }
-
-
 
         // ==========================
         // SAVE ROSTER
@@ -999,9 +891,8 @@ class TaskApprovalController extends ResourceController
         // OBSERVER NOTIFY
         service('taskSnapshotObserver')->detectChangesAndNotify($taskId);
 
-
         // ==========================
-        // CẬP NHẬT TASK STATUS
+        // UPDATE TASK STATUS
         // ==========================
         if ($finalStatus === 'rejected') {
 
@@ -1013,17 +904,23 @@ class TaskApprovalController extends ResourceController
 
         } else {
 
-            $allApproved = !array_filter($roster, fn($r) => ($r['status'] ?? '') !== 'approved');
+            $allApproved = !array_filter(
+                $roster,
+                fn($r) => ($r['status'] ?? '') !== 'approved'
+            );
 
             $taskUpd = [
-                'progress'     => $this->computeRosterProgress($roster, (string)($task['approval_status'] ?? 'pending')),
-                'approved_at'  => date('Y-m-d H:i:s'),
+                'progress'    => $this->computeRosterProgress(
+                    $roster,
+                    (string)($task['approval_status'] ?? 'pending')
+                ),
             ];
 
             if ($allApproved) {
                 $taskUpd['approval_status'] = 'approved';
                 $taskUpd['status']          = TaskStatus::DONE;
                 $taskUpd['progress']        = 100;
+                $taskUpd['approved_at']     = date('Y-m-d H:i:s');
             }
         }
 
@@ -1035,7 +932,6 @@ class TaskApprovalController extends ResourceController
             'task_update' => $taskUpd,
         ]);
     }
-
 
 
 
@@ -1195,9 +1091,8 @@ class TaskApprovalController extends ResourceController
 
         foreach ($roster as &$r) {
 
-            // Lấy vị trí người trong roster
             $u2 = $db->table('users u')
-                ->select('p.code AS position_code, p.level AS position_level')
+                ->select('p.level AS position_level')
                 ->join('positions p', 'p.id = u.position_id', 'left')
                 ->where('u.id', $r['user_id'])
                 ->get()->getRowArray();
@@ -1205,20 +1100,27 @@ class TaskApprovalController extends ResourceController
             $targetLevel = (int)($u2['position_level'] ?? 1);
 
             // ================================
-            // QUY TẮC AUTO-APPROVE THEO LEVEL
+            // STAFF → CHỈ DUYỆT CHÍNH HỌ
             // ================================
-            if ($myLevel > $targetLevel) {
-                // cấp cao auto duyệt cấp thấp
-                $r['status']   = 'approved';
-                $r['acted_at'] = date('Y-m-d H:i:s');
+            if ($myLevel === 1) {
+                if ($r['user_id'] == $userId) {
+                    $r['status']   = 'approved';
+                    $r['acted_at'] = date('Y-m-d H:i:s');
+                }
+                continue; // ❗ chặn staff duyệt người khác
             }
 
-            // STAFF (level=1) → chỉ duyệt chính họ
-            if ($myLevel === 1 && $r['user_id'] == $userId) {
+            // ================================
+            // CẤP CAO DUYỆT CẤP THẤP
+            // ================================
+            if ($myLevel > $targetLevel) {
                 $r['status']   = 'approved';
                 $r['acted_at'] = date('Y-m-d H:i:s');
             }
         }
+
+
+
 
         // --------------- SAVE ROSTER ---------------
         $this->writeRoster($taskId, $roster);

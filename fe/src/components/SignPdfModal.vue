@@ -23,10 +23,7 @@
                     <a-button @click="resetView">Reset</a-button>
                 </div>
 
-                <div
-                    class="stage"
-                    ref="stageRef"
-                >
+                <div class="stage" ref="stageRef">
                     <a-spin :spinning="previewSpinning" tip="Đang tải xem trước..." size="large" style="display:block; min-height: 200px;">
                         <div class="pdf-viewer">
                             <canvas ref="canvasRef" class="pdf-canvas" />
@@ -191,12 +188,14 @@ let destroyed = false
 const basePageSize = new Map()
 
 function queueRender() {
+    if (suppressRender.value) return
     if (renderQueued) return
     renderQueued = true
     requestAnimationFrame(async () => {
         renderQueued = false
         isPdfReady.value = false
-        try { await renderPage() } finally { if (!destroyed) isPdfReady.value = true }
+        try { await renderPage() }
+        finally { if (!destroyed) isPdfReady.value = true }
     })
 }
 
@@ -687,12 +686,14 @@ async function autoPlaceExistingSignatures() {
     queueRender();
 }
 
-
+const suppressRender = ref(false)
 /* lifecycle: when open changes, load libraries + pdf + user session */
 watch(() => props.open, async (v) => {
     if (v) {
+        suppressRender.value = true   // ⛔ khóa render
         destroyed = false
         isPdfReady.value = false
+
         await nextTick()
         await loadPdfLib()
 
@@ -703,28 +704,27 @@ watch(() => props.open, async (v) => {
             const res = await checkSession()
             const user = res.data?.user || {}
             currentUser.value = user
-            if (!localSignatureUrl.value && user.signature_url) localSignatureUrl.value = user.signature_url
 
-            const pm = (user.preferred_marker || '').trim()
-            if (pm) {
-                const set = new Set([pm, ...myMarkers.value])
-                myMarkers.value = Array.from(set)
-            }
-        } catch (e) {
-            console.error('Lỗi checkSession:', e)
-        }
+            if (!localSignatureUrl.value && user.signature_url)
+                localSignatureUrl.value = user.signature_url
+        } catch {}
 
         await loadPdf()
         await autoPlaceExistingSignatures()
-        queueRender()
+
+        suppressRender.value = false  // ✅ RẤT QUAN TRỌNG
+        queueRender()                 // 🔥 render đúng 1 lần
     } else {
+        suppressRender.value = true   // optional: khóa lại khi đóng
         destroyed = true
-        if (currentRenderTask) { try { currentRenderTask.cancel() } catch {} currentRenderTask = null }
-        if (pdfLoadAbort) { try { pdfLoadAbort.abort() } catch {} pdfLoadAbort = null }
+        if (currentRenderTask) {
+            try { currentRenderTask.cancel() } catch {}
+            currentRenderTask = null
+        }
         pdfDoc.value = null
-        if (signedBlobUrl.value) { URL.revokeObjectURL(signedBlobUrl.value); signedBlobUrl.value = '' }
     }
 }, { immediate: true })
+
 
 watch([pageNum, scale], () => { if (pdfDoc.value) queueRender() })
 onBeforeUnmount(() => {
@@ -834,74 +834,74 @@ async function downloadSigned() {
         // ⭐ 3) Chèn chữ ký người hiện tại (nếu họ đã ký)
         // --------------------------------------------------------------
 
-        // người hiện tại đã ký hay chưa?
-        const userHasSigned = existingPositions.value.some(
-            s =>
-                s.signature_url === effectiveSignatureUrl.value ||
-                s.signed_by === currentUser.value?.id
-        );
-
-        if (effectiveSignatureUrl.value && userHasSigned) {
-
-            const imgBytes = await fetch(effectiveSignatureUrl.value).then(r => r.arrayBuffer());
-            let img;
-            try { img = await pdfDocW.embedPng(imgBytes); }
-            catch { img = await pdfDocW.embedJpg(imgBytes); }
-
-            const pageIndex = pageNum.value - 1;
-            const page = pdfDocW.getPage(pageIndex);
-
-            const pdfW = page.getWidth();
-            const pdfH = page.getHeight();
-
-            const rawPage = await pdfDoc.value.getPage(pageNum.value);
-            const vp = rawPage.getViewport({ scale: scale.value });
-
-            const sigCanvasW = sigW.value;
-            const sigCanvasH = sigCanvasW * handleRatio();
-
-            const scaleX = pdfW / vp.width;
-            const scaleY = pdfH / vp.height;
-
-            const xPdf = sigX.value * scaleX;
-            const yPdf = (vp.height - (sigY.value + sigCanvasH)) * scaleY;
-
-            const wPdf = sigCanvasW * scaleX;
-            const hPdf = sigCanvasH * scaleY;
-
-            // thêm chữ ký người hiện tại
-            page.drawImage(img, {
-                x: xPdf, y: yPdf,
-                width: wPdf, height: hPdf
-            });
-
-            // timestamp người hiện tại
-            let usedFont2 = await loadFontIfAvailable(pdfDocW);
-            if (!usedFont2) usedFont2 = await pdfDocW.embedFont(StandardFonts.Helvetica);
-
-            const now2 = new Date();
-            const pad2 = n => String(n).padStart(2, "0");
-            const timeText2 =
-                `Date: ${pad2(now2.getDate())}/${pad2(now2.getMonth()+1)}/${now2.getFullYear()}, ` +
-                `${pad2(now2.getHours())}:${pad2(now2.getMinutes())}:${pad2(now2.getSeconds())}`;
-
-            const fs2 = Math.max(5, Math.min(12, wPdf / 20));
-            const tw2 = usedFont2.widthOfTextAtSize(timeText2, fs2);
-            const th2 = typeof usedFont2.heightAtSize === "function"
-                ? usedFont2.heightAtSize(fs2)
-                : fs2;
-
-            let tx2 = xPdf + (wPdf - tw2) / 2;
-            let ty2 = yPdf - th2 - 4;
-            if (ty2 < 0) ty2 = yPdf + hPdf + 4;
-
-            page.drawText(timeText2, {
-                x: tx2, y: ty2,
-                size: fs2,
-                font: usedFont2,
-                color: rgb(0, 0, 0)
-            });
-        }
+        // // người hiện tại đã ký hay chưa?
+        // const userHasSigned = existingPositions.value.some(
+        //     s =>
+        //         s.signature_url === effectiveSignatureUrl.value ||
+        //         s.signed_by === currentUser.value?.id
+        // );
+        //
+        // if (effectiveSignatureUrl.value && userHasSigned) {
+        //
+        //     const imgBytes = await fetch(effectiveSignatureUrl.value).then(r => r.arrayBuffer());
+        //     let img;
+        //     try { img = await pdfDocW.embedPng(imgBytes); }
+        //     catch { img = await pdfDocW.embedJpg(imgBytes); }
+        //
+        //     const pageIndex = pageNum.value - 1;
+        //     const page = pdfDocW.getPage(pageIndex);
+        //
+        //     const pdfW = page.getWidth();
+        //     const pdfH = page.getHeight();
+        //
+        //     const rawPage = await pdfDoc.value.getPage(pageNum.value);
+        //     const vp = rawPage.getViewport({ scale: scale.value });
+        //
+        //     const sigCanvasW = sigW.value;
+        //     const sigCanvasH = sigCanvasW * handleRatio();
+        //
+        //     const scaleX = pdfW / vp.width;
+        //     const scaleY = pdfH / vp.height;
+        //
+        //     const xPdf = sigX.value * scaleX;
+        //     const yPdf = (vp.height - (sigY.value + sigCanvasH)) * scaleY;
+        //
+        //     const wPdf = sigCanvasW * scaleX;
+        //     const hPdf = sigCanvasH * scaleY;
+        //
+        //     // thêm chữ ký người hiện tại
+        //     page.drawImage(img, {
+        //         x: xPdf, y: yPdf,
+        //         width: wPdf, height: hPdf
+        //     });
+        //
+        //     // timestamp người hiện tại
+        //     let usedFont2 = await loadFontIfAvailable(pdfDocW);
+        //     if (!usedFont2) usedFont2 = await pdfDocW.embedFont(StandardFonts.Helvetica);
+        //
+        //     const now2 = new Date();
+        //     const pad2 = n => String(n).padStart(2, "0");
+        //     const timeText2 =
+        //         `Date: ${pad2(now2.getDate())}/${pad2(now2.getMonth()+1)}/${now2.getFullYear()}, ` +
+        //         `${pad2(now2.getHours())}:${pad2(now2.getMinutes())}:${pad2(now2.getSeconds())}`;
+        //
+        //     const fs2 = Math.max(5, Math.min(12, wPdf / 20));
+        //     const tw2 = usedFont2.widthOfTextAtSize(timeText2, fs2);
+        //     const th2 = typeof usedFont2.heightAtSize === "function"
+        //         ? usedFont2.heightAtSize(fs2)
+        //         : fs2;
+        //
+        //     let tx2 = xPdf + (wPdf - tw2) / 2;
+        //     let ty2 = yPdf - th2 - 4;
+        //     if (ty2 < 0) ty2 = yPdf + hPdf + 4;
+        //
+        //     page.drawText(timeText2, {
+        //         x: tx2, y: ty2,
+        //         size: fs2,
+        //         font: usedFont2,
+        //         color: rgb(0, 0, 0)
+        //     });
+        // }
 
         // --------------------------------------------------------------
         // ⭐ 4) Chèn footer duyệt (approver info)
@@ -987,7 +987,6 @@ async function downloadSigned() {
         message.error("Lỗi tạo PDF đã ký.");
     }
 }
-
 
 
 

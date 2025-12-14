@@ -107,17 +107,6 @@
                             </div>
 
                             <div class="file-actions">
-                                <a-tooltip title="Xem trước">
-                                    <a-button size="large" shape="circle" @click="openFile(item)">
-                                        <EyeOutlined />
-                                    </a-button>
-                                </a-tooltip>
-
-                                <a-tooltip title="Tải / mở">
-                                    <a-button size="large" shape="circle" @click="download(item)">
-                                        <DownloadOutlined />
-                                    </a-button>
-                                </a-tooltip>
 
                                 <a-tooltip
                                     :title="mySignatureUrl ? signTooltip(item) : 'Bạn chưa tải chữ ký số'"
@@ -129,9 +118,63 @@
                                         :disabled="!mySignatureUrl || !canSign(item)"
                                         @click="openSign(item)"
                                     >
+                                        <EyeOutlined />
+                                    </a-button>
+                                </a-tooltip>
+
+<!--                                <a-tooltip title="Xem file ký">-->
+<!--                                    <a-button size="large" shape="circle" @click="openFile(item)">-->
+<!--                                        <EyeOutlined />-->
+<!--                                    </a-button>-->
+<!--                                </a-tooltip>-->
+
+<!--                                <a-tooltip title="Tải file ký">-->
+<!--                                    <a-button size="large" shape="circle" @click="download(item)">-->
+<!--                                        <DownloadOutlined />-->
+<!--                                    </a-button>-->
+<!--                                </a-tooltip>-->
+
+<!--                                <a-tooltip-->
+<!--                                    :title="mySignatureUrl ? signTooltip(item) : 'Bạn chưa tải chữ ký số'"-->
+<!--                                >-->
+<!--                                    <a-button-->
+<!--                                        size="large"-->
+<!--                                        shape="circle"-->
+<!--                                        type="dashed"-->
+<!--                                        :disabled="!mySignatureUrl || !canSign(item)"-->
+<!--                                        @click="openSign(item)"-->
+<!--                                    >-->
+<!--                                        <img :src="'/pen-icon.svg'" class="icon-pen" alt="pen" />-->
+<!--                                    </a-button>-->
+<!--                                </a-tooltip>-->
+
+                                <a-tooltip :title="approveTooltip(item)">
+                                    <a-button
+                                        size="large"
+                                        shape="circle"
+                                        type="dashed"
+                                        :disabled="!canApprove(item)"
+                                        @click="openApprove(item)"
+                                    >
+                                        <CheckCircleOutlined />
+                                    </a-button>
+                                </a-tooltip>
+
+                                <a-tooltip :title="signButtonTooltip(item)">
+                                    <a-button
+                                        :class="{ 'btn-signed': isSigned(item) }"
+                                        size="large"
+                                        shape="circle"
+                                        type="dashed"
+                                        :loading="signing[itemKey(item)]"
+                                        :disabled="isSignedByMe(item) || !canSign(item)"
+                                        @click="onClickSign(item)"
+                                    >
                                         <img :src="'/pen-icon.svg'" class="icon-pen" alt="pen" />
                                     </a-button>
                                 </a-tooltip>
+
+
 
                                 <a-tooltip title="Xóa tài liệu">
                                     <a-button
@@ -181,16 +224,18 @@ import {
     LinkOutlined,
     ReloadOutlined,
     SearchOutlined,
-    UserOutlined
+    UserOutlined,
+    CheckCircleOutlined
 } from '@ant-design/icons-vue'
 import {message, Modal} from 'ant-design-vue'
 
 import SignPdfModal from '../components/SignPdfModal.vue'
 import {checkSession} from '@/api/auth.js'
 import {uploadSignedPdf} from '@/api/document'
+import { approveDocument } from '@/api/document'
 
 // 🔥 API mới cho quy trình ký
-import {deleteSignStep, getMySignInbox, getDocumentSignDetail} from '@/api/documentSign'
+import {deleteSignStep, getMySignInbox, getDocumentSignDetail, signDocument} from '@/api/documentSign'
 
 dayjs.locale('vi')
 
@@ -219,6 +264,177 @@ const WORD = new Set(['doc', 'docx'])
 const EXCEL = new Set(['xls', 'xlsx', 'csv'])
 const PPT = new Set(['ppt', 'pptx'])
 const PDF = new Set(['pdf'])
+
+
+const signMode = ref('sign') // 'sign' | 'approve'
+
+
+async function openApprove(item) {
+    confirm({
+        title: 'Xác nhận duyệt',
+        content: 'Bạn chắc chắn muốn duyệt văn bản này?',
+        okText: 'Duyệt',
+        cancelText: 'Hủy',
+        async onOk() {
+            try {
+                const payload = {
+                    task_file_id: item.task_file_id || item.id,
+                    approval_id: item.approval_id || null,
+                    document_id: item.document_id || null,
+
+                    signed_by: currentUserId.value,
+                    signed_at: new Date().toISOString(),
+
+                    status: 'approved',
+                    note: `Duyệt bởi ${currentUserName.value}`,
+
+                    // các field dưới đây FE có thể gửi hoặc không
+                    signed_file_name: null,
+                    signed_file_path: null,
+                    signed_file_size: null,
+                    signed_mime: null,
+                    approver_display: currentUserName.value
+                }
+
+                await approveDocument(payload)
+
+                message.success('Đã lưu thông tin duyệt.')
+
+                // cập nhật UI nhẹ (KHÔNG đụng PDF)
+                item.status = 'approved'
+
+                // optional: reload list cho chắc
+                await fetchData()
+
+            } catch (e) {
+                const msg = e?.response?.data?.message || 'Duyệt thất bại.'
+                message.error(msg)
+            }
+        }
+    })
+}
+
+
+function isSigned(item) {
+    return String(item?.status).toLowerCase() === 'signed'
+}
+
+function isSignedByMe(item) {
+    if (!Array.isArray(item?.steps) || !currentUserId.value) return false
+
+    return item.steps.some(
+        s =>
+            Number(s.approver_id) === Number(currentUserId.value) &&
+            String(s.status).toLowerCase() === 'signed'
+    )
+}
+
+function signButtonTooltip(item) {
+    if (isSignedByMe(item)) {
+        return 'Bạn đã ký tài liệu này'
+    }
+
+    if (String(item?.status).toLowerCase() === 'signed') {
+        return 'Tài liệu đã được ký'
+    }
+
+    if (!canSign(item)) {
+        return 'Chưa tới lượt bạn ký'
+    }
+
+    return 'Ký tài liệu'
+}
+
+
+
+const signing = reactive({})
+async function onClickSign(item) {
+    if (!item?.converted_id) {
+        return message.error('Thiếu converted_id.')
+    }
+
+    confirm({
+        title: 'Xác nhận ký',
+        content: 'Bạn chắc chắn muốn ký tài liệu này?',
+        okText: 'Ký',
+        cancelText: 'Hủy',
+        async onOk() {
+            const key = itemKey(item)
+            signing[key] = true
+
+            try {
+                // 🟢 GỌI API KÝ – CHỈ UPDATE DB
+                const res = await signDocument({
+                    converted_id: item.converted_id,
+                    signature_url: mySignatureUrl.value || null,
+                    comment: null
+                })
+
+                const data = res.data || {}
+
+                message.success('Đã ký tài liệu.')
+
+                // 🟢 Update UI local
+                item.status = 'signed'
+                item.signed_url = data.signed_pdf_url || data.signed_url || null
+
+                // 🟢 update đúng step hiện tại
+                const step = item.steps?.find(
+                    s =>
+                        Number(s.approver_id) === Number(currentUserId.value) &&
+                        String(s.status).toLowerCase() === 'pending'
+                )
+                if (step) {
+                    step.status = 'signed'
+                    step.is_current = false
+                    step.signed_at = new Date().toISOString()
+                }
+
+                // 🟢 reload lại list cho chắc
+                await fetchData()
+
+            } catch (e) {
+                console.error('signDocument error', e)
+                message.error(e?.response?.data?.message || 'Ký thất bại.')
+            } finally {
+                signing[key] = false
+            }
+        }
+    })
+}
+
+
+function canApprove(item) {
+    // chỉ cho văn bản phát hành
+    const docType = String(item.doc_type || '').toLowerCase()
+    if (docType !== 'external') return false
+
+    // đã duyệt rồi thì thôi
+    if (String(item.status).toLowerCase() === 'approved') return false
+
+    // admin / super duyệt được
+    if (isAdmin.value || isSuper.value) return true
+
+    // hoặc logic riêng của bạn
+    return canSign(item)
+}
+
+function approveTooltip(item) {
+    if (String(item.doc_type).toLowerCase() !== 'external')
+        return 'Chỉ áp dụng cho văn bản phát hành'
+
+    if (String(item.status).toLowerCase() === 'approved')
+        return 'Văn bản đã được duyệt'
+
+    return 'Phê duyệt văn bản'
+}
+
+
+
+
+
+
+
 
 const extOf = (name = '') => {
     const base = String(name).split('?')[0]
@@ -287,7 +503,7 @@ function canSign(item) {
 }
 
 function signTooltip(item) {
-    if (canSign(item)) return 'Duyệt/Ký tài liệu'
+    if (canSign(item)) return 'Xem hoặc tải tài liệu về máy'
     const cur = findCurrentStep(item)
     if (!cur) return 'Không có bước hiện tại'
     return `Chưa tới lượt: Bước #${cur.sequence} — ${cur.approver_name || 'người duyệt'}`
@@ -658,6 +874,11 @@ ul.ant-list-items li { margin-bottom:10px }
     font-weight: 600;
 }
 
+.btn-signed {
+    background: #f5f5f5;
+    color: #999;
+    cursor: not-allowed;
+}
 
 @media (max-width:880px) {
     .file-row { grid-template-columns:64px 1fr }
