@@ -56,9 +56,7 @@
                     <a-card class="file-card" :hoverable="true">
                         <!-- ⭐ TAG ở góc phải -->
                         <div class="doc-type-tag" v-if="item.doc_type">
-                            <a-tag
-                                :class="item.doc_type === 'internal' ? 'tag-internal-gradient' : 'tag-external-gradient'"
-                            >
+                            <a-tag :class="item.doc_type === 'internal' ? 'tag-internal-gradient' : 'tag-external-gradient'">
                                 {{ item.doc_type === 'internal' ? 'Nội bộ' : 'Phát hành' }}
                             </a-tag>
                         </div>
@@ -80,34 +78,67 @@
                                     <span class="dot">·</span>
                                     <span class="time">{{ formatDate(item.created_at) }}</span>
                                 </div>
+                                <!-- ⭐ CONTEXT TASK -->
+                                <div class="file-task" v-if="item.task">
+                                    <FolderOutlined class="task-icon" />
+
+                                    <span class="task-title" :title="item.task.title">
+                                        {{ item.task.title }}
+                                    </span>
+                                    <template v-if="item.linked">
+                                        <span class="task-sep">·</span>
+                                        <span class="linked-type">
+                                            {{ linkedTypeLabel(item.linked.type) }}:
+                                        </span>
+                                        <span class="linked-name" :title="item.linked.name">
+                                            {{ item.linked.name }}
+                                        </span>
+                                    </template>
+
+                                    <!-- ✅ STEP -->
+                                    <div class="linked-step" v-if="item.linked?.step">
+                                        ↳ Bước {{ item.linked.step.number }}:
+                                        <span class="step-title" :title="item.linked.step.title">
+                                            {{ item.linked.step.title }}
+                                        </span>
+                                    </div>
+                                </div>
+
                                 <div class="file-status">
                                     <a-tag color="blue" class="step-tag">
-                                        Bước #{{ item.current_step_index || item.sequence || 1 }}
+                                        Bước #{{ item.sequence || 1 }}
                                     </a-tag>
+
                                     <a-tag :color="statusColor(item.status)" class="status-tag">
                                         {{ labelStatus(item.status) }}
                                     </a-tag>
-                                    <!-- doc_type không có trong API mới, để đó cũng không sao vì luôn falsy -->
-                                    <a-tag v-if="item.document?.doc_type" :color="docTypeColor(item.document.doc_type)">
-                                        {{ docTypeLabel(item.document.doc_type) }}
-                                    </a-tag>
+
                                 </div>
 
                                 <div class="steps-line" v-if="stepsOf(item).length">
                                     <span class="steps-label">Chuỗi ký:</span>
                                     <template v-for="(s, idx) in stepsOf(item)" :key="s.id || s.step_id || idx">
-                                        <a-tag :class="pillClass(s)" class="step-pill">
-                                            {{ s.approver_name || ('#' + (s.approver_id || s.id || idx)) }}
-                                            <span class="att-approval-pill-status">
-                                                ({{ shortStepStatus(s) }})
-                                            </span>
+                                        <a-tag
+                                            :class="[
+        pillClass(s),
+        {
+            skipped: s.status === 'skipped' && !isVisuallyCompleted(s, stepsOf(item)),
+            'auto-signed': isVisuallyCompleted(s, stepsOf(item))
+        }
+    ]"
+                                            :color="isVisuallyCompleted(s, stepsOf(item)) ? 'green' : undefined"
+                                        >
+
+                                        {{ s.approver_name }}
+                                            <span>
+    ({{ displayStepStatus(s, stepsOf(item)) }})
+</span>
                                         </a-tag>
                                     </template>
                                 </div>
                             </div>
 
                             <div class="file-actions">
-
                                 <a-tooltip
                                     :title="mySignatureUrl ? signTooltip(item) : 'Bạn chưa tải chữ ký số'"
                                 >
@@ -115,39 +146,11 @@
                                         size="large"
                                         shape="circle"
                                         type="dashed"
-                                        :disabled="!mySignatureUrl || !canSign(item)"
                                         @click="openSign(item)"
                                     >
                                         <EyeOutlined />
                                     </a-button>
                                 </a-tooltip>
-
-<!--                                <a-tooltip title="Xem file ký">-->
-<!--                                    <a-button size="large" shape="circle" @click="openFile(item)">-->
-<!--                                        <EyeOutlined />-->
-<!--                                    </a-button>-->
-<!--                                </a-tooltip>-->
-
-<!--                                <a-tooltip title="Tải file ký">-->
-<!--                                    <a-button size="large" shape="circle" @click="download(item)">-->
-<!--                                        <DownloadOutlined />-->
-<!--                                    </a-button>-->
-<!--                                </a-tooltip>-->
-
-<!--                                <a-tooltip-->
-<!--                                    :title="mySignatureUrl ? signTooltip(item) : 'Bạn chưa tải chữ ký số'"-->
-<!--                                >-->
-<!--                                    <a-button-->
-<!--                                        size="large"-->
-<!--                                        shape="circle"-->
-<!--                                        type="dashed"-->
-<!--                                        :disabled="!mySignatureUrl || !canSign(item)"-->
-<!--                                        @click="openSign(item)"-->
-<!--                                    >-->
-<!--                                        <img :src="'/pen-icon.svg'" class="icon-pen" alt="pen" />-->
-<!--                                    </a-button>-->
-<!--                                </a-tooltip>-->
-
                                 <a-tooltip :title="approveTooltip(item)">
                                     <a-button
                                         size="large"
@@ -173,9 +176,6 @@
                                         <img :src="'/pen-icon.svg'" class="icon-pen" alt="pen" />
                                     </a-button>
                                 </a-tooltip>
-
-
-
                                 <a-tooltip title="Xóa tài liệu">
                                     <a-button
                                         size="large"
@@ -225,13 +225,14 @@ import {
     ReloadOutlined,
     SearchOutlined,
     UserOutlined,
-    CheckCircleOutlined
+    CheckCircleOutlined,
+    FolderOutlined
 } from '@ant-design/icons-vue'
 import {message, Modal} from 'ant-design-vue'
 
 import SignPdfModal from '../components/SignPdfModal.vue'
 import {checkSession} from '@/api/auth.js'
-import {uploadSignedPdf} from '@/api/document'
+import {approveExternalDocument, uploadSignedPdf} from '@/api/document'
 import { approveDocument } from '@/api/document'
 
 // 🔥 API mới cho quy trình ký
@@ -279,24 +280,20 @@ async function openApprove(item) {
             try {
                 const payload = {
                     task_file_id: item.task_file_id || item.id,
-                    approval_id: item.approval_id || null,
-                    document_id: item.document_id || null,
-
+                    document_id: item.converted_id,   // hoặc item.document_id nếu có
                     signed_by: currentUserId.value,
                     signed_at: new Date().toISOString(),
-
-                    status: 'approved',
+                    status: 'signed',
                     note: `Duyệt bởi ${currentUserName.value}`,
-
-                    // các field dưới đây FE có thể gửi hoặc không
-                    signed_file_name: null,
-                    signed_file_path: null,
-                    signed_file_size: null,
-                    signed_mime: null,
+                    signed_file_name: item.title || item.name || null,
+                    signed_file_path: item.signed_url || item.url || item.original_url || null,
+                    signed_file_size: item.file_size || null,
+                    signed_mime: 'application/pdf',
                     approver_display: currentUserName.value
                 }
 
-                await approveDocument(payload)
+
+                await approveExternalDocument(payload)
 
                 message.success('Đã lưu thông tin duyệt.')
 
@@ -338,11 +335,11 @@ function signButtonTooltip(item) {
         return 'Tài liệu đã được ký'
     }
 
-    if (!canSign(item)) {
-        return 'Chưa tới lượt bạn ký'
+    if (canSign(item)) {
+        return 'Ký tài liệu'
     }
 
-    return 'Ký tài liệu'
+    return 'Chưa tới lượt bạn ký'
 }
 
 
@@ -405,19 +402,20 @@ async function onClickSign(item) {
 
 
 function canApprove(item) {
-    // chỉ cho văn bản phát hành
     const docType = String(item.doc_type || '').toLowerCase()
+
+    // ❌ chỉ duyệt văn bản phát hành
     if (docType !== 'external') return false
 
-    // đã duyệt rồi thì thôi
+    // ❌ đã duyệt thì không duyệt lại
     if (String(item.status).toLowerCase() === 'approved') return false
 
-    // admin / super duyệt được
-    if (isAdmin.value || isSuper.value) return true
+    const cur = findCurrentStep(item)
+    if (!cur) return false
 
-    // hoặc logic riêng của bạn
-    return canSign(item)
+    return Number(cur.approver_id) === Number(currentUserId.value)
 }
+
 
 function approveTooltip(item) {
     if (String(item.doc_type).toLowerCase() !== 'external')
@@ -428,12 +426,6 @@ function approveTooltip(item) {
 
     return 'Phê duyệt văn bản'
 }
-
-
-
-
-
-
 
 
 const extOf = (name = '') => {
@@ -471,15 +463,39 @@ const statusColor = (s) => {
     return 'default'
 }
 
-const docTypeLabel = (t) => {
-    if (!t) return '—'
-    const v = String(t).toLowerCase()
-    return v === 'internal' ? 'Nội bộ' : 'Phát hành'
+
+function highestSignedSequence(steps = []) {
+    return Math.max(
+        0,
+        ...steps
+            .filter(s => String(s.status).toLowerCase() === 'signed')
+            .map(s => Number(s.sequence || 0))
+    )
 }
-const docTypeColor = (t) => {
-    if (!t) return 'default'
-    const v = String(t).toLowerCase()
-    return v === 'internal' ? 'purple' : 'cyan'
+
+function isVisuallyCompleted(step, steps = []) {
+    const maxSignedSeq = highestSignedSequence(steps)
+
+    // ký thật
+    if (String(step.status).toLowerCase() === 'signed') return true
+
+    // bị override bởi người cấp cao hơn
+    return (
+        maxSignedSeq > 0 &&
+        Number(step.sequence) > maxSignedSeq
+    )
+}
+
+function displayStepStatus(step, steps = []) {
+    if (String(step.status).toLowerCase() === 'signed') return 'đã ký'
+
+    if (isVisuallyCompleted(step, steps))
+        return 'hoàn tất'
+
+    if (step.status === 'pending') return 'đang chờ'
+    if (step.status === 'waiting') return 'chờ ký'
+
+    return 'chưa ký'
 }
 
 function stepsOf(item) { return Array.isArray(item.steps) ? item.steps : [] }
@@ -492,22 +508,44 @@ function findCurrentStep(item) {
 }
 
 function canSign(item) {
-    // admin/super được ký bất cứ lúc
-    if (isAdmin.value || isSuper.value) return true
+    if (!item?.steps || !currentUserId.value) return false
 
-    const cur = findCurrentStep(item)
-    if (!cur) return false
+    const myStep = item.steps.find(
+        s => Number(s.approver_id) === Number(currentUserId.value)
+    )
+    if (!myStep) return false
+    if (myStep.status === 'skipped') return false
 
-    // Dựa trên approver_id + currentUserId
-    return Number(cur.approver_id) === Number(currentUserId.value)
+    // ✅ TH1: tới lượt bình thường
+    if (myStep.status === 'pending') return true
+
+    // ✅ TH2: override – tôi là người có sequence LỚN NHẤT
+    const maxSeq = Math.max(...item.steps.map(s => Number(s.sequence || 0)))
+
+    if (
+        Number(myStep.sequence) === maxSeq &&
+        myStep.status !== 'signed'
+    ) {
+        return true
+    }
+
+    return false
 }
+
+
+
+
 
 function signTooltip(item) {
-    if (canSign(item)) return 'Xem hoặc tải tài liệu về máy'
+    if (hasSigned(item)) return 'Bạn đã ký – bấm để xem lại'
+    if (canSignNow(item)) return 'Xem và ký tài liệu'
+
     const cur = findCurrentStep(item)
     if (!cur) return 'Không có bước hiện tại'
+
     return `Chưa tới lượt: Bước #${cur.sequence} — ${cur.approver_name || 'người duyệt'}`
 }
+
 
 /* step helpers */
 const stepStatusLabel = (step) => {
@@ -609,17 +647,14 @@ async function fetchSignature() {
 
         mySignatureUrl.value = user.signature_url || ''
         currentUserId.value = user.id ? Number(user.id) : null
-        currentUserName.value = user.name || user.full_name || user.username || ''
+        currentUserName.value =
+            user.name || user.full_name || user.username || ''
 
-        const roleRaw = String(user.role || user.role_name || user.role_code || '').toLowerCase().trim()
-        const roleCode = String(user.role_code || '').toLowerCase().trim()
-
-        isSuper.value = roleRaw.includes('super') || roleCode === 'super_admin' || roleRaw === 'super_admin'
-        isAdmin.value = isSuper.value || roleRaw === 'admin' || roleCode === 'admin' || roleRaw === 'administrator'
     } catch (e) {
         console.error('fetchSignature error', e)
     }
 }
+
 
 async function fetchData() {
     loading.value = true
@@ -636,45 +671,54 @@ async function fetchData() {
     }
 }
 
-/* open/download */
-function openFile(it) {
-    const url = it.signed_url || it.url || it.original_url
-    if (!url) return message.warning('Không có file để mở.')
-    window.open(url, '_blank', 'noopener')
+function hasSigned(item) {
+    const steps = item.steps || []
+    return steps.some(
+        s =>
+            String(s.approver_id) === String(currentUserId.value) &&
+            s.status === 'signed'
+    )
 }
-function download(it) { if (!it.url) return; window.open(it.url, '_blank', 'noopener') }
+
+function canSignNow(item) {
+    const cur = findCurrentStep(item)
+    if (!cur) return false
+
+    return (
+        String(cur.approver_id) === String(currentUserId.value) &&
+        cur.status === 'pending'
+    )
+}
+
 
 /* ---------- sign flow (open modal + handle signed blob) ---------- */
 
 async function openSign(item) {
-    if (!canSign(item) && !(isAdmin.value || isSuper.value)) {
-        return message.info('Bạn chưa có quyền ký tài liệu này.')
-    }
-
-    const pdfUrl = item?.url || item?.file_path
-    if (!pdfUrl) return message.warning('Không có file PDF để ký.')
 
     try {
         loading.value = true
 
-        // 🟢 Gọi API detail
         const res = await getDocumentSignDetail(item.converted_id)
         const detail = res.data || {}
 
-        console.log("🔍 DETAIL:", detail)
-
-        // danh sách người đã ký
-        const signedSteps = (detail.steps || []).filter(s => s.status === 'signed')
+        const signedSteps = (detail.steps || []).filter(
+            s => s.status === 'signed' || s.is_approved
+        )
 
         signTarget.value = {
             ...item,
-            pdfUrl,
-            steps: detail.steps || [],
-            signedSteps,     // 🟢 Lưu riêng danh sách bước đã ký
+            pdfUrl: hasSigned(item)
+                ? (item.signed_url || item.url || item.original_url)
+                : (item.url || item.file_path),
+
+            steps: detail.steps || [],        // ⭐ RẤT QUAN TRỌNG
+            signedSteps,                      // ⭐ cho chữ ký cũ
+            doc_type: detail.document?.doc_type || item.doc_type,
+            document: detail.document || item.document,
+            status: detail.document?.status || item.status,
+            readOnly: hasSigned(item),
             detail
         }
-
-        console.log("🔵 SIGN TARGET:", signTarget.value)
 
         signOpen.value = true
 
@@ -686,6 +730,17 @@ async function openSign(item) {
     }
 }
 
+
+function linkedTypeLabel(type) {
+    switch (type) {
+        case 'bidding':
+            return 'Gói thầu'
+        case 'contract':
+            return 'Hợp đồng'
+        default:
+            return 'Liên kết'
+    }
+}
 
 
 // Nhận blob từ modal, upload lên WP, rồi gọi API signDocument
@@ -792,7 +847,6 @@ async function onClickDelete(item) {
     })
 }
 
-
 /* ---------- lifecycle ---------- */
 onMounted(() => {
     fetchSignature()
@@ -815,7 +869,7 @@ onMounted(() => {
 .files-list { width:100% }
 .list-item { padding:0 }
 .file-card { width:100%; border-radius:10px }
-.file-row { display:grid; grid-template-columns:76px 1fr auto; gap:16px; align-items:center }
+.file-row { display:grid; grid-template-columns:76px 1fr auto; gap:16px }
 .file-thumb { width:76px; height:76px; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#fbfdff 0%,#f7f9fb 100%); border-radius:10px; overflow:hidden; box-shadow:0 1px 0 rgba(16,24,40,0.04) inset; }
 .thumb-icon { font-size:30px; opacity:.9 }
 .file-meta { min-width:0 }
@@ -878,6 +932,68 @@ ul.ant-list-items li { margin-bottom:10px }
     background: #f5f5f5;
     color: #999;
     cursor: not-allowed;
+}
+.file-task {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+}
+
+.task-icon {
+    font-size: 15px;
+}
+
+.task-title {
+    font-weight: 600;
+    color: #262626;
+}
+
+.task-sep {
+    color: #bfbfbf;
+}
+
+.linked-type {
+    color: #8c8c8c;
+    font-size: 13px;
+}
+
+.linked-name {
+    color: #262626;
+    font-weight: 500;
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.linked-step {
+    width: 100%;
+    margin-left: 22px;
+    font-size: 13px;
+    color: #595959;
+}
+
+.step-title {
+    font-style: italic;
+    color: #434343;
+}
+
+.task-icon {
+    font-size: 15px;
+    color: #003b6d;
+    margin-right: 2px;
+}
+.step-pill.skipped {
+    opacity: 0.4;
+    text-decoration: line-through;
+}
+.step-pill.auto-signed {
+    background: #f6ffed;
+    border: 1px solid #b7eb8f;
+    color: #237804;
+    font-weight: 500;
 }
 
 @media (max-width:880px) {

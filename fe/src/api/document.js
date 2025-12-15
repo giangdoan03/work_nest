@@ -33,6 +33,11 @@ export const uploadSignedPdf = (formData) => instance.post('/documents/upload-si
 export const saveSignedDocument = (payload) => instance.post('/documents/signed', payload)
 export const uploadTaskFileSigned = (formData) => instance.post('/task-files/upload-signed', formData, {headers: { 'Content-Type': 'multipart/form-data' }})
 export const approveDocument = (payload) => instance.post('/documents/approve', payload, {headers: { 'Content-Type': 'application/json' }});
+export const approveExternalDocument = (payload) =>
+    instance.post('/documents/approve-external', payload, {
+        headers: { 'Content-Type': 'application/json' }
+    });
+
 export const deleteDocumentAPI = (documentId, opts = {}) =>
     instance.delete(`/document-approvals/document/${documentId}`, { params: { force: opts.force ? 1 : 0 }});
 

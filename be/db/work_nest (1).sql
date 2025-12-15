@@ -1,9 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 14, 2025 at 04:17 PM
+-- Generation Time: Dec 15, 2025 at 09:37 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -326,7 +326,8 @@ INSERT INTO `biddings` (`id`, `title`, `description`, `customer_id`, `estimated_
 (41, 'Cung cấp vật tư dự phòng TB1', 'Cung cấp vật tư dự phòng TB1', 10, 555.00, 5, 4, NULL, '2025-09-01', '2025-09-30', '2025-09-15 04:10:10', '2025-09-15 04:10:10', 1, 1, 'pending', NULL, 0),
 (45, 'gói thầu test mới 05/12', 'test test', 13, 500000.00, 3, 1, '[]', '2025-12-05', '2025-12-31', '2025-12-05 13:32:07', '2025-12-05 13:32:07', 1, 0, 'pending', NULL, 0),
 (46, 'gói thầu 12-12-2025', 'gói thầu test phân quyền', 13, 60000000.00, 14, 3, '[]', '2025-12-12', '2025-12-31', '2025-12-12 14:09:12', '2025-12-12 14:11:18', 1, 0, 'pending', NULL, 0),
-(48, 'gói thầu test', 'gói thầu test', 12, 2000000.00, 1, 3, '[]', '2025-12-12', '2025-12-12', '2025-12-12 14:27:36', '2025-12-12 14:27:36', 1, 0, 'pending', NULL, 0);
+(48, 'gói thầu test', 'gói thầu test', 12, 2000000.00, 1, 3, '[]', '2025-12-12', '2025-12-12', '2025-12-12 14:27:36', '2025-12-12 14:27:36', 1, 0, 'pending', NULL, 0),
+(49, 'gói thầu mới', '5345435', 12, 400000000.00, 1, 1, '[]', '2025-12-15', '2025-12-31', '2025-12-15 16:24:29', '2025-12-15 16:24:29', 1, 0, 'pending', NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -744,7 +745,25 @@ INSERT INTO `bidding_steps` (`id`, `bidding_id`, `step_number`, `title`, `start_
 (459, 48, 9, 'Xây dựng kịch bản HSMT', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-12-12 14:27:37', '2025-12-12 14:27:37', 0, 12, NULL, NULL),
 (460, 48, 10, 'Duyệt', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-12-12 14:27:37', '2025-12-12 14:27:37', 0, 12, NULL, NULL),
 (461, 48, 11, '11', NULL, NULL, NULL, 0, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-12-12 14:27:37', '2025-12-12 14:27:37', 0, 12, NULL, NULL),
-(462, 48, 22, '22', NULL, NULL, NULL, 0, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-12-12 14:27:37', '2025-12-12 14:27:37', 0, 12, NULL, NULL);
+(462, 48, 22, '22', NULL, NULL, NULL, 0, NULL, '[\"Phòng Tài chính - Kế toán\"]', '2025-12-12 14:27:37', '2025-12-12 14:27:37', 0, 12, NULL, NULL),
+(465, 49, 1, 'Lấy KH: SXKD, SCL, SCTK hoặc KHK của khách hàng', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 1, 12, NULL, NULL),
+(466, 49, 2, 'Phân tích và lập kế hoạch bóc', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL),
+(467, 49, 3, 'Làm rõ tính chất kỹ thuật, NSX của hàng hóa, dịch vụ', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL),
+(468, 49, 4, 'Làm việc với NSX, NCC', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL),
+(469, 49, 5, 'Kiểm tra', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL),
+(470, 49, 6, 'Nhận báo giá, kiểm tra và cơ sở đàm phán (nếu có)', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL),
+(471, 49, 7, 'Đánh giá, báo cáo tính khả thi', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL),
+(472, 49, 8, 'Duyệt', NULL, NULL, NULL, 0, NULL, '[\"Ban giám đốc\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL),
+(473, 49, 9, 'Xây dựng kịch bản HSMT', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL),
+(474, 49, 10, 'Duyệt', NULL, NULL, NULL, 0, NULL, '[\"Ban giám đốc\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL),
+(475, 49, 11, 'Xây dựng HSDT', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\",\"Phòng Tài chính - Kế toán\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL),
+(476, 49, 12, 'Duyệt', NULL, NULL, NULL, 0, NULL, '[\"Ban giám đốc\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL),
+(477, 49, 13, 'Nộp HSDT và  báo cáo kết quả', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL),
+(478, 49, 14, 'Chấm thầu', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL),
+(479, 49, 15, 'Thương thảo hợp đồng', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\",\"Ban giám đốc\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL),
+(480, 49, 16, 'Đàm phán', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\",\"Ban giám đốc\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL),
+(481, 49, 17, 'Ký hợp đồng bán', NULL, NULL, NULL, 0, NULL, '[\"Ban giám đốc\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL),
+(482, 49, 18, 'Lưu hồ sơ', NULL, NULL, NULL, 0, NULL, '[\"Phòng Kinh doanh\"]', '2025-12-15 16:24:30', '2025-12-15 16:24:30', 0, 12, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -760,8 +779,8 @@ CREATE TABLE `bidding_step_templates` (
   `department` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `processing_basis` text COLLATE utf8mb4_unicode_ci COMMENT 'Thông tin, chứng từ là căn cứ xử lý',
-  `processing_detail` text COLLATE utf8mb4_unicode_ci COMMENT 'Nội dung xử lý chi tiết'
+  `processing_basis` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Thông tin, chứng từ là căn cứ xử lý',
+  `processing_detail` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Nội dung xử lý chi tiết'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -906,7 +925,8 @@ INSERT INTO `contracts` (`id`, `title`, `code`, `content`, `status`, `department
 (68, 'hợp đồng mới 05/12/2025', '#54656464', NULL, 1, NULL, 1, NULL, '[]', 0, 13, NULL, '2025-12-05', '2025-12-31', '2025-12-05 14:14:19', '2025-12-05 14:14:19', NULL, 'ok hợp đồng'),
 (69, 'hợp đồng mới 05/12/2025', '#54656464', NULL, 1, NULL, 1, NULL, '[]', 0, 13, NULL, '2025-12-05', '2025-12-31', '2025-12-05 14:15:55', '2025-12-05 14:15:55', NULL, 'ok test'),
 (70, 'hợp đồng 12-12-2025', '#9999999', NULL, 1, NULL, 14, NULL, '[]', 0, 13, NULL, '2025-12-12', '2025-12-31', '2025-12-12 14:04:00', '2025-12-12 14:06:51', NULL, 'test phân quyền gói thầu'),
-(71, 'hợp đồng mới test', '#54656464', NULL, 1, NULL, 14, NULL, '[]', 0, 12, NULL, '2025-12-12', '2025-12-29', '2025-12-12 14:41:16', '2025-12-12 14:41:16', NULL, 'test');
+(71, 'hợp đồng mới test', '#54656464', NULL, 1, NULL, 14, NULL, '[]', 0, 12, NULL, '2025-12-12', '2025-12-29', '2025-12-12 14:41:16', '2025-12-12 14:41:16', NULL, 'test'),
+(72, 'test hop dong mới', '#54656464', NULL, 1, NULL, 1, NULL, '[]', 0, 12, NULL, '2025-12-15', '2025-12-31', '2025-12-15 16:22:26', '2025-12-15 16:22:26', NULL, 'test');
 
 -- --------------------------------------------------------
 
@@ -1050,7 +1070,26 @@ INSERT INTO `contract_steps` (`id`, `contract_id`, `customer_id`, `step_number`,
 (473, 71, 12, 16, 'Thu hồi công nợ', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-12 14:41:16', '2025-12-12 14:41:16', '[\"Khách hàng\"]', NULL),
 (474, 71, 12, 17, 'Thu hồi chứng từ', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-12 14:41:16', '2025-12-12 14:41:16', '[\"P.KD\",\"P.TCKT\",\"P.TM\",\"P.KHNS\"]', NULL),
 (475, 71, 12, 18, 'Thanh lý hợp đồng', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-12 14:41:16', '2025-12-12 14:41:16', '[\"Phòng Kinh doanh\"]', NULL),
-(476, 71, 12, 19, 'Lưu hồ sơ', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-12 14:41:16', '2025-12-12 14:41:16', '[\"Phòng Kinh doanh\"]', NULL);
+(476, 71, 12, 19, 'Lưu hồ sơ', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-12 14:41:16', '2025-12-12 14:41:16', '[\"Phòng Kinh doanh\"]', NULL),
+(477, 72, 12, 1, 'Xây dựng Bảng kế hoạch triển khai hợp đồng bán', 1, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Kinh doanh\"]', NULL),
+(478, 72, 12, 2, 'Phát hành bảo lãnh', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Tài chính - Kế toán\",\"Phòng Kinh doanh\"]', NULL),
+(479, 72, 12, 3, 'Hoàn thiện hồ sơ tạm ứng (nếu có)', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Kinh doanh\"]', NULL),
+(480, 72, 12, 4, 'Đề nghị nhập hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', NULL),
+(481, 72, 12, 5, 'Đặt hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Thương mại\"]', NULL),
+(482, 72, 12, 6, 'Giám sát, kiểm tra tình trạng đặt hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', NULL),
+(483, 72, 12, 7, 'Thực hiện điều chỉnh nội dung hợp đồng (nếu có)', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Kinh doanh\"]', NULL),
+(484, 72, 12, 8, 'Nghiệm thu hàng hoá (nội bộ)', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', NULL),
+(485, 72, 12, 9, 'Nghiệm thu chứng từ bằng hoá (nội bộ)', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Kinh doanh\",\"Phòng Thương mại\"]', NULL),
+(486, 72, 12, 10, 'Lập kế hoạch giao hàng hoá và nghiệm thu kỹ thuật tới khách hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Kinh doanh\"]', NULL),
+(487, 72, 12, 11, 'Bàn giao hàng hoá và nghiệm thu kỹ thuật tới khách hàng', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Kinh doanh\"]', NULL),
+(488, 72, 12, 12, 'Xuất hoá đơn GTGT bằng hàng hoá, dịch vụ', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Kinh doanh\"]', NULL),
+(489, 72, 12, 13, 'Nghiệm thu thương mại', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Kinh doanh\"]', NULL),
+(490, 72, 12, 14, 'Phát hành bảo lãnh', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Kinh doanh\",\"Phòng Tài chính - Kế toán\"]', NULL),
+(491, 72, 12, 15, 'Hoàn thiện hồ sơ thanh quyết toán', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Kinh doanh\",\"Phòng Tài chính - Kế toán\"]', NULL),
+(492, 72, 12, 16, 'Thu hồi công nợ', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Tài chính - Kế toán\",\"Phòng Kinh doanh\"]', NULL),
+(493, 72, 12, 17, 'Thu hồi chứng từ', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Kinh doanh\"]', NULL),
+(494, 72, 12, 18, 'Thanh lý hợp đồng', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Kinh doanh\"]', NULL),
+(495, 72, 12, 19, 'Lưu hồ sơ', 0, NULL, NULL, NULL, NULL, NULL, '2025-12-15 16:22:26', '2025-12-15 16:22:26', '[\"Phòng Kinh doanh\",\"Phòng Tài chính - Kế toán\",\"Phòng Hành chính - Nhân sự\"]', NULL);
 
 -- --------------------------------------------------------
 
@@ -1342,7 +1381,9 @@ INSERT INTO `documents` (`id`, `title`, `file_path`, `file_size`, `department_id
 (245, '20251110_TTrHCNS_Test Phan mem.doc', 'https://docs.google.com/document/d/1vSAMR2EdcOJHD1FixzipauMIuVV4ZAXSKfqeeO0NqnQ/edit', 84480, 1, 3, 330, 246, 1, '1vSAMR2EdcOJHD1FixzipauMIuVV4ZAXSKfqeeO0NqnQ', '2025-12-13 17:32:58', '2025-12-13 17:32:58', '', '1vSAMR2EdcOJHD1FixzipauMIuVV4ZAXSKfqeeO0NqnQ', 'private'),
 (246, '20251110_TTrHCNS_Test Phan mem.doc', 'https://docs.google.com/document/d/1E8ebgEUN1TtGXg2Wf7IHXxwuSjNUQydl1LHe1Sgmj1k/edit', 84480, 4, 14, 331, 247, 1, '1E8ebgEUN1TtGXg2Wf7IHXxwuSjNUQydl1LHe1Sgmj1k', '2025-12-13 22:05:27', '2025-12-13 22:05:27', '', '1E8ebgEUN1TtGXg2Wf7IHXxwuSjNUQydl1LHe1Sgmj1k', 'private'),
 (247, '20251110_TTrHCNS_Test Phan mem.doc', 'https://docs.google.com/document/d/1ob7s_f3EQ6-A6_-EwXgq90whtNXbOvids4Hja8V7HoM/edit', 84480, 6, 1, 332, 248, 1, '1ob7s_f3EQ6-A6_-EwXgq90whtNXbOvids4Hja8V7HoM', '2025-12-13 22:08:41', '2025-12-13 22:08:41', '', '1ob7s_f3EQ6-A6_-EwXgq90whtNXbOvids4Hja8V7HoM', 'private'),
-(248, '20251110_TTrHCNS_Test Phan mem.doc', 'https://docs.google.com/document/d/1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc/edit', 84480, 1, 3, 333, 249, 1, '1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc', '2025-12-14 22:04:35', '2025-12-14 22:04:35', '', '1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc', 'private');
+(248, '20251110_TTrHCNS_Test Phan mem.doc', 'https://docs.google.com/document/d/1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc/edit', 84480, 1, 3, 333, 249, 1, '1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc', '2025-12-14 22:04:35', '2025-12-14 22:04:35', '', '1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc', 'private'),
+(249, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1pdQlRx_9KvbBj4dMVcjNWG4KLVO5b6zuRS3wuJXfGjY/edit', 98816, 6, 1, 335, 250, 1, '1pdQlRx_9KvbBj4dMVcjNWG4KLVO5b6zuRS3wuJXfGjY', '2025-12-15 16:25:16', '2025-12-15 16:25:16', '', '1pdQlRx_9KvbBj4dMVcjNWG4KLVO5b6zuRS3wuJXfGjY', 'private'),
+(250, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1V42O-XmPS4FoZznxfJqy3etjHkhofNe856oeEV3EIx0/edit', 98816, 6, 1, 336, 251, 1, '1V42O-XmPS4FoZznxfJqy3etjHkhofNe856oeEV3EIx0', '2025-12-15 16:28:13', '2025-12-15 16:28:13', '', '1V42O-XmPS4FoZznxfJqy3etjHkhofNe856oeEV3EIx0', 'private');
 
 -- --------------------------------------------------------
 
@@ -1396,7 +1437,11 @@ INSERT INTO `documents_converted` (`id`, `wp_id`, `file_url`, `mime_type`, `titl
 (42, 453, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251110_TTrHCNS_Test-Phan-mem-2.pdf', 'application/pdf', 'origin_20251110_TTrHCNS_Test Phan mem.pdf', 126294, 'internal', '1xZ75fXy_1MNtOzRNvO4R0A-XkKHeIpnl1gn9nirz1fY', 316, 3, 'Đinh Văn Vịnh', '2025-12-13 07:51:45', '2025-12-13 14:51:47', '2025-12-13 14:51:47'),
 (43, 454, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251110_TTrHCNS_Test-Phan-mem-3.pdf', 'application/pdf', 'origin_20251110_TTrHCNS_Test Phan mem.pdf', 124656, 'internal', '1vqgrAkNq7HZhopl89O1qM6X7PngbxCq_LH8yG5wkprE', 315, 3, 'Đinh Văn Vịnh', '2025-12-13 08:35:17', '2025-12-13 15:35:19', '2025-12-13 15:35:19'),
 (44, 455, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251110_TTrHCNS_Test-Phan-mem-4.pdf', 'application/pdf', 'origin_20251110_TTrHCNS_Test Phan mem.pdf', 128742, 'internal', '1ob7s_f3EQ6-A6_-EwXgq90whtNXbOvids4Hja8V7HoM', 332, 1, 'Lương Đức Thuỷ', '2025-12-13 15:13:21', '2025-12-13 22:13:23', '2025-12-13 22:13:23'),
-(45, 457, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251110_TTrHCNS_Test-Phan-mem-5.pdf', 'application/pdf', 'origin_20251110_TTrHCNS_Test Phan mem.pdf', 125387, 'external', '1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc', 333, 3, 'Đinh Văn Vịnh', '2025-12-14 15:05:07', '2025-12-14 22:05:08', '2025-12-14 22:05:08');
+(45, 457, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251110_TTrHCNS_Test-Phan-mem-5.pdf', 'application/pdf', 'origin_20251110_TTrHCNS_Test Phan mem.pdf', 125387, 'external', '1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc', 333, 3, 'Đinh Văn Vịnh', '2025-12-14 15:05:07', '2025-12-14 22:05:08', '2025-12-14 22:05:08'),
+(46, 458, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-3.pdf', 'application/pdf', 'origin_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 126127, 'external', '1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ', 313, 1, 'Lương Đức Thuỷ', '2025-12-15 07:10:36', '2025-12-15 14:10:37', '2025-12-15 14:10:37'),
+(47, 459, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-4.pdf', 'application/pdf', 'origin_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 126127, 'external', '1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ', 313, 1, 'Lương Đức Thuỷ', '2025-12-15 07:11:13', '2025-12-15 14:11:14', '2025-12-15 14:11:14'),
+(48, 460, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251008_TTrHCNS_GiahanphanmemMicrosoft-365-T01-24.pdf', 'application/pdf', 'origin_20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.pdf', 175512, 'internal', '1pdQlRx_9KvbBj4dMVcjNWG4KLVO5b6zuRS3wuJXfGjY', 335, 1, 'Lương Đức Thuỷ', '2025-12-15 09:25:54', '2025-12-15 16:25:55', '2025-12-15 16:25:55'),
+(49, 461, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251008_TTrHCNS_GiahanphanmemMicrosoft-365-T01-25.pdf', 'application/pdf', 'origin_20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.pdf', 175512, 'internal', '1V42O-XmPS4FoZznxfJqy3etjHkhofNe856oeEV3EIx0', 336, 1, 'Lương Đức Thuỷ', '2025-12-15 09:28:30', '2025-12-15 16:28:32', '2025-12-15 16:28:32');
 
 -- --------------------------------------------------------
 
@@ -1686,8 +1731,8 @@ INSERT INTO `document_sign_status` (`id`, `converted_id`, `approver_id`, `approv
 (142, 40, 3, 'Đinh Văn Vịnh', 2, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:57:33'),
 (143, 40, 4, 'Tạ Quý Thọ', 3, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:57:33'),
 (144, 40, 5, 'Nguyễn Văn Chiểu', 4, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:57:33'),
-(145, 41, 1, 'Lương Đức Thuỷ', 1, 1, 'pending', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:58:57'),
-(146, 41, 3, 'Đinh Văn Vịnh', 2, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:58:57'),
+(145, 41, 1, 'Lương Đức Thuỷ', 1, 1, 'signed', '2025-12-15 15:53:23', NULL, NULL, NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '313', '2025-12-07 14:58:57'),
+(146, 41, 3, 'Đinh Văn Vịnh', 2, 1, 'pending', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:58:57'),
 (147, 41, 4, 'Tạ Quý Thọ', 3, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:58:57'),
 (148, 41, 5, 'Nguyễn Văn Chiểu', 4, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-07 14:58:57'),
 (149, 42, 3, 'Đinh Văn Vịnh', 1, 2, 'signed', '2025-12-13 14:52:07', NULL, 3, 'Đinh Văn Vịnh', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '316', '2025-12-13 07:51:54'),
@@ -1697,9 +1742,22 @@ INSERT INTO `document_sign_status` (`id`, `converted_id`, `approver_id`, `approv
 (153, 44, 3, 'Đinh Văn Vịnh', 1, 2, 'signed', '2025-12-13 22:14:01', NULL, 3, 'Đinh Văn Vịnh', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '332', '2025-12-13 15:13:38'),
 (154, 44, 14, 'Nguyễn Thị Hạnh', 2, 3, 'signed', '2025-12-13 22:16:51', NULL, 14, 'Nguyễn Thị Hạnh', 'https://assets.develop.io.vn/wp-content/uploads/2025/12/photo_2025-10-17_10-09-04-1.jpg', '332', '2025-12-13 15:13:38'),
 (155, 44, 10, 'Vũ Thị Thuỷ', 3, 4, 'signed', '2025-12-13 22:28:36', NULL, 10, 'Vũ Thị Thuỷ', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-08-52.jpg', '332', '2025-12-13 15:13:38'),
-(156, 45, 3, 'Đinh Văn Vịnh', 1, 2, 'signed', '2025-12-14 22:11:54', NULL, 3, 'Đinh Văn Vịnh', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '333', '2025-12-14 15:05:25'),
-(157, 45, 1, 'Lương Đức Thuỷ', 2, 1, 'pending', NULL, NULL, NULL, NULL, NULL, '333', '2025-12-14 15:05:25'),
-(158, 45, 4, 'Tạ Quý Thọ', 3, 1, '', NULL, NULL, NULL, NULL, NULL, '333', '2025-12-14 15:05:25');
+(159, 45, 5, 'Nguyễn Văn Chiểu', 1, 1, 'signed', '2025-12-15 13:35:02', NULL, 5, NULL, NULL, '333', '2025-12-15 03:56:31'),
+(160, 46, 3, 'Đinh Văn Vịnh', 1, 1, 'signed', '2025-12-15 14:12:07', NULL, 3, NULL, NULL, '313', '2025-12-15 07:11:57'),
+(161, 47, 1, 'Lương Đức Thuỷ', 1, 1, 'signed', '2025-12-15 16:18:35', NULL, NULL, NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '313', '2025-12-15 09:08:49'),
+(162, 47, 3, 'Đinh Văn Vịnh', 2, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-15 09:08:49'),
+(163, 47, 4, 'Tạ Quý Thọ', 3, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-15 09:08:49'),
+(164, 47, 5, 'Nguyễn Văn Chiểu', 4, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-15 09:08:49'),
+(165, 47, 6, 'Phạm Xuân Tuân', 5, 1, '', NULL, NULL, NULL, NULL, NULL, '313', '2025-12-15 09:08:49'),
+(166, 48, 1, 'Lương Đức Thuỷ', 1, 1, 'signed', '2025-12-15 16:26:16', NULL, NULL, NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10-1.jpg', '335', '2025-12-15 09:26:04'),
+(167, 48, 3, 'Đinh Văn Vịnh', 2, 1, '', NULL, NULL, NULL, NULL, NULL, '335', '2025-12-15 09:26:04'),
+(168, 48, 4, 'Tạ Quý Thọ', 3, 1, '', NULL, NULL, NULL, NULL, NULL, '335', '2025-12-15 09:26:04'),
+(169, 48, 5, 'Nguyễn Văn Chiểu', 4, 1, '', NULL, NULL, NULL, NULL, NULL, '335', '2025-12-15 09:26:04'),
+(170, 49, 5, 'Nguyễn Văn Chiểu', 1, 1, 'signed', '2025-12-15 16:29:42', NULL, NULL, NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-04-1.jpg', '336', '2025-12-15 09:28:51'),
+(171, 49, 9, 'Nhạc Quang Huy', 2, 1, '', NULL, NULL, NULL, NULL, NULL, '336', '2025-12-15 09:28:51'),
+(172, 49, 7, 'Nguyễn Cảnh Hợp', 3, 1, '', NULL, NULL, NULL, NULL, NULL, '336', '2025-12-15 09:28:51'),
+(173, 49, 3, 'Đinh Văn Vịnh', 4, 1, '', NULL, NULL, NULL, NULL, NULL, '336', '2025-12-15 09:28:51'),
+(174, 49, 1, 'Lương Đức Thuỷ', 5, 1, '', NULL, NULL, NULL, NULL, NULL, '336', '2025-12-15 09:28:51');
 
 -- --------------------------------------------------------
 
@@ -1859,7 +1917,11 @@ INSERT INTO `entity_members` (`id`, `entity_type`, `entity_id`, `user_id`, `crea
 (76, 'bidding', 46, 3, '2025-12-13 22:03:53'),
 (77, 'bidding', 46, 1, '2025-12-13 22:04:04'),
 (78, 'bidding', 46, 10, '2025-12-13 22:04:06'),
-(79, 'bidding', 46, 4, '2025-12-13 22:08:23');
+(79, 'bidding', 46, 4, '2025-12-13 22:08:23'),
+(80, 'contract', 72, 1, '2025-12-15 16:22:26'),
+(81, 'bidding', 49, 1, '2025-12-15 16:24:29'),
+(82, 'bidding', 49, 3, '2025-12-15 16:24:58'),
+(83, 'bidding', 49, 4, '2025-12-15 16:27:51');
 
 -- --------------------------------------------------------
 
@@ -1929,7 +1991,13 @@ INSERT INTO `file_signatures` (`id`, `task_file_id`, `approval_id`, `document_id
 (46, 96, NULL, NULL, 'origin_20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.pdf', NULL, NULL, NULL, 1, '2025-12-02 04:35:13', 'approved', 'Duyệt bởi Nguyen Canh Hop lúc 02/12/2025, 11:35:11', '2025-12-02 11:35:13', '2025-12-02 11:35:13'),
 (47, 124, NULL, NULL, 'origin_a_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01.pdf', NULL, NULL, NULL, 1, '2025-12-02 17:03:29', 'approved', 'Duyệt bởi Luong Duc Thuy lúc 03/12/2025, 00:03:28', '2025-12-03 00:03:29', '2025-12-03 00:03:29'),
 (48, 156, NULL, NULL, 'origin_20251110_TTrHCNS_Test Phan mem.pdf', NULL, NULL, NULL, 3, '2025-12-14 15:11:55', 'approved', 'Duyệt bởi Dinh Van Vinh lúc 14/12/2025, 22:11:53', '2025-12-14 22:11:55', '2025-12-14 22:11:55'),
-(49, 333, NULL, NULL, NULL, NULL, NULL, NULL, 3, '2025-12-14 16:13:11', 'approved', 'Duyệt bởi Đinh Văn Vịnh', '2025-12-14 23:13:11', '2025-12-14 23:13:11');
+(49, 333, NULL, NULL, NULL, NULL, NULL, NULL, 3, '2025-12-14 16:13:11', 'approved', 'Duyệt bởi Đinh Văn Vịnh', '2025-12-14 23:13:11', '2025-12-14 23:13:11'),
+(50, 333, NULL, 45, 'origin_20251110_TTrHCNS_Test Phan mem.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251110_TTrHCNS_Test-Phan-mem-5.pdf', NULL, 'application/pdf', 3, '2025-12-15 09:22:57', 'approved', 'Duyệt bởi Đinh Văn Vịnh', '2025-12-15 09:22:57', '2025-12-15 09:22:57'),
+(51, 333, NULL, 45, 'origin_20251110_TTrHCNS_Test Phan mem.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251110_TTrHCNS_Test-Phan-mem-5.pdf', NULL, 'application/pdf', 3, '2025-12-15 10:41:22', 'approved', 'Duyệt bởi Đinh Văn Vịnh', '2025-12-15 10:41:22', '2025-12-15 10:41:22'),
+(52, 333, NULL, 45, 'origin_20251110_TTrHCNS_Test Phan mem.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251110_TTrHCNS_Test-Phan-mem-5.pdf', NULL, 'application/pdf', 3, '2025-12-15 10:50:34', 'approved', 'Duyệt bởi Đinh Văn Vịnh', '2025-12-15 10:50:34', '2025-12-15 10:50:34'),
+(57, 333, NULL, 45, 'origin_20251110_TTrHCNS_Test Phan mem.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251110_TTrHCNS_Test-Phan-mem-5.pdf', NULL, 'application/pdf', 5, '2025-12-15 11:08:19', 'approved', 'Duyệt bởi Nguyễn Văn Chiểu', '2025-12-15 11:08:19', '2025-12-15 11:08:19'),
+(77, 333, NULL, 45, 'origin_20251110_TTrHCNS_Test Phan mem.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251110_TTrHCNS_Test-Phan-mem-5.pdf', NULL, 'application/pdf', 5, '2025-12-15 13:35:02', 'approved', 'Duyệt bởi Nguyễn Văn Chiểu', '2025-12-15 13:35:02', '2025-12-15 13:35:02'),
+(78, 313, NULL, 46, 'origin_20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.pdf', 'https://assets.develop.io.vn/wp-content/uploads/2025/12/origin_20251008_PLTTr-HCNS_DanhmuchanghoadichvuT01-3.pdf', NULL, 'application/pdf', 3, '2025-12-15 14:12:07', 'approved', 'Duyệt bởi Đinh Văn Vịnh', '2025-12-15 14:12:07', '2025-12-15 14:12:07');
 
 -- --------------------------------------------------------
 
@@ -2509,7 +2577,10 @@ INSERT INTO `tasks` (`id`, `parent_id`, `title`, `description`, `assigned_to`, `
 (330, NULL, '32424242', '342424', 3, 1, NULL, 1, '2025-12-13', '2026-01-31', 'done', 'approved', '2025-12-13 17:36:18', 'bidding', 48, 2, 452, 3, 'normal', 0, '2025-12-13 10:32:21', '2025-12-13 10:36:18', 0, NULL, 0, 1, 1, 100, 1, '[{\"doc_type\": \"internal\", \"drive_id\": \"1vSAMR2EdcOJHD1FixzipauMIuVV4ZAXSKfqeeO0NqnQ\", \"file_name\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1vSAMR2EdcOJHD1FixzipauMIuVV4ZAXSKfqeeO0NqnQ/edit\", \"public_url\": \"https://docs.google.com/document/d/1vSAMR2EdcOJHD1FixzipauMIuVV4ZAXSKfqeeO0NqnQ/edit\", \"upload_batch\": 1, \"google_file_id\": \"1vSAMR2EdcOJHD1FixzipauMIuVV4ZAXSKfqeeO0NqnQ\"}]', NULL, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 3, \"acted_at\": \"2025-12-13 17:36:18\", \"added_at\": \"2025-12-13 17:34:03\", \"department_id\": 1, \"signature_code\": null}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 10, \"acted_at\": \"2025-12-13 17:36:18\", \"added_at\": \"2025-12-13 17:34:13\", \"department_id\": 6, \"signature_code\": \"vu_thi_thuy_bgd\"}, {\"name\": \"Lương Đức Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 1, \"acted_at\": \"2025-12-13 17:36:08\", \"added_at\": \"2025-12-13 17:34:23\", \"department_id\": 6, \"signature_code\": null}, {\"name\": \"Nguyễn Văn Chiểu\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 5, \"acted_at\": \"2025-12-13 17:36:18\", \"added_at\": \"2025-12-13 17:34:28\", \"department_id\": 3, \"signature_code\": null}]'),
 (331, NULL, 'test nhiệm vụ hạnh', '345435345', 14, 3, NULL, 1, '2025-12-13', '2026-01-31', 'done', 'approved', '2025-12-13 22:06:55', 'bidding', 46, 1, 423, 14, 'normal', 0, '2025-12-13 15:05:07', '2025-12-13 15:06:55', 0, NULL, 0, 1, 3, 100, 1, '[{\"doc_type\": \"internal\", \"drive_id\": \"1E8ebgEUN1TtGXg2Wf7IHXxwuSjNUQydl1LHe1Sgmj1k\", \"file_name\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1E8ebgEUN1TtGXg2Wf7IHXxwuSjNUQydl1LHe1Sgmj1k/edit\", \"public_url\": \"https://docs.google.com/document/d/1E8ebgEUN1TtGXg2Wf7IHXxwuSjNUQydl1LHe1Sgmj1k/edit\", \"upload_batch\": 1, \"google_file_id\": \"1E8ebgEUN1TtGXg2Wf7IHXxwuSjNUQydl1LHe1Sgmj1k\"}]', NULL, '[{\"name\": \"Lương Đức Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 1, \"acted_at\": \"2025-12-13 22:06:47\", \"added_at\": \"2025-12-13 22:05:41\", \"department_id\": 6, \"signature_code\": null}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 10, \"acted_at\": \"2025-12-13 22:06:55\", \"added_at\": \"2025-12-13 22:05:52\", \"department_id\": 6, \"signature_code\": \"vu_thi_thuy_bgd\"}, {\"name\": \"Nguyễn Thị Hạnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 14, \"acted_at\": \"2025-12-13 22:06:55\", \"added_at\": \"2025-12-13 22:06:03\", \"department_id\": 4, \"signature_code\": null}, {\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 3, \"acted_at\": \"2025-12-13 22:06:55\", \"added_at\": \"2025-12-13 22:06:13\", \"department_id\": 1, \"signature_code\": null}]'),
 (332, NULL, 'test nhiệm vụ hanh mới', '34534534535', 3, 4, NULL, 1, '2025-12-13', '2026-01-31', 'done', 'approved', '2025-12-13 22:13:00', 'bidding', 46, 1, 423, 1, 'normal', 0, '2025-12-13 15:08:21', '2025-12-13 15:28:36', 0, NULL, 0, 1, 3, 100, 1, '[{\"doc_type\": \"internal\", \"drive_id\": \"1ob7s_f3EQ6-A6_-EwXgq90whtNXbOvids4Hja8V7HoM\", \"file_name\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1ob7s_f3EQ6-A6_-EwXgq90whtNXbOvids4Hja8V7HoM/edit\", \"public_url\": \"https://docs.google.com/document/d/1ob7s_f3EQ6-A6_-EwXgq90whtNXbOvids4Hja8V7HoM/edit\", \"upload_batch\": 1, \"google_file_id\": \"1ob7s_f3EQ6-A6_-EwXgq90whtNXbOvids4Hja8V7HoM\"}]', NULL, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 3, \"acted_at\": \"2025-12-13 22:14:01\", \"added_at\": \"2025-12-13 22:11:29\", \"department_id\": 1, \"signature_code\": null}, {\"name\": \"Nguyễn Thị Hạnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 14, \"acted_at\": \"2025-12-13 22:16:51\", \"added_at\": \"2025-12-13 22:11:29\", \"department_id\": 4, \"signature_code\": null}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 10, \"acted_at\": \"2025-12-13 22:28:36\", \"added_at\": \"2025-12-13 22:11:29\", \"department_id\": 6, \"signature_code\": \"vu_thi_thuy_bgd\"}]'),
-(333, NULL, 'test duyệt vb phát hành', 'ok', 3, 4, NULL, 1, '2025-12-14', '2026-01-31', 'doing', 'pending', NULL, 'bidding', 48, 4, 454, 3, 'low', 0, '2025-12-14 15:04:06', '2025-12-14 15:11:54', 0, NULL, 0, 1, 1, 0, 1, '[{\"doc_type\": \"internal\", \"drive_id\": \"1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc\", \"file_name\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc/edit\", \"public_url\": \"https://docs.google.com/document/d/1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc/edit\", \"upload_batch\": 1, \"google_file_id\": \"1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc\"}]', NULL, '[]');
+(333, NULL, 'test duyệt vb phát hành', 'ok', 3, 4, NULL, 1, '2025-12-14', '2026-01-31', 'doing', 'pending', NULL, 'bidding', 48, 4, 454, 3, 'low', 0, '2025-12-14 15:04:06', '2025-12-14 15:11:54', 0, NULL, 0, 1, 1, 0, 1, '[{\"doc_type\": \"internal\", \"drive_id\": \"1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc\", \"file_name\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc/edit\", \"public_url\": \"https://docs.google.com/document/d/1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc/edit\", \"upload_batch\": 1, \"google_file_id\": \"1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc\"}]', NULL, '[]'),
+(334, NULL, 'nhiem vu test', 'ok test', 1, 1, NULL, 1, '2025-12-15', '2026-01-31', 'doing', 'pending', NULL, 'contract', 72, 1, 477, 1, 'normal', 0, '2025-12-15 09:22:53', '2025-12-15 09:22:53', 0, NULL, 0, 1, 1, 0, NULL, NULL, NULL, '[]'),
+(335, NULL, 'nhiệm vụ test', 'ok', 1, 3, NULL, 1, '2025-12-15', '2026-01-31', 'doing', 'pending', NULL, 'bidding', 49, 1, 465, 1, 'normal', 0, '2025-12-15 09:24:57', '2025-12-15 09:25:16', 0, NULL, 0, 1, 3, 0, 1, '[{\"doc_type\": \"internal\", \"drive_id\": \"1pdQlRx_9KvbBj4dMVcjNWG4KLVO5b6zuRS3wuJXfGjY\", \"file_name\": \"20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc\", \"file_path\": \"https://docs.google.com/document/d/1pdQlRx_9KvbBj4dMVcjNWG4KLVO5b6zuRS3wuJXfGjY/edit\", \"public_url\": \"https://docs.google.com/document/d/1pdQlRx_9KvbBj4dMVcjNWG4KLVO5b6zuRS3wuJXfGjY/edit\", \"upload_batch\": 1, \"google_file_id\": \"1pdQlRx_9KvbBj4dMVcjNWG4KLVO5b6zuRS3wuJXfGjY\"}]', NULL, '[]'),
+(336, NULL, 'nhiem vụ moi 22', 'ok test', 3, 4, NULL, 1, '2025-12-15', '2026-01-31', '', 'pending', NULL, 'bidding', 49, 1, 465, 1, 'normal', 0, '2025-12-15 09:27:51', '2025-12-15 09:28:13', 0, NULL, 0, 1, 3, 0, 1, '[{\"doc_type\": \"internal\", \"drive_id\": \"1V42O-XmPS4FoZznxfJqy3etjHkhofNe856oeEV3EIx0\", \"file_name\": \"20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc\", \"file_path\": \"https://docs.google.com/document/d/1V42O-XmPS4FoZznxfJqy3etjHkhofNe856oeEV3EIx0/edit\", \"public_url\": \"https://docs.google.com/document/d/1V42O-XmPS4FoZznxfJqy3etjHkhofNe856oeEV3EIx0/edit\", \"upload_batch\": 1, \"google_file_id\": \"1V42O-XmPS4FoZznxfJqy3etjHkhofNe856oeEV3EIx0\"}]', NULL, '[]');
 
 -- --------------------------------------------------------
 
@@ -2871,7 +2942,9 @@ INSERT INTO `task_comments` (`id`, `task_id`, `user_id`, `comment_id`, `content`
 (246, 330, 3, NULL, '', '2025-12-13 10:32:51', '2025-12-13 10:32:51', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (247, 331, 14, NULL, '', '2025-12-13 15:05:19', '2025-12-13 15:05:19', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (248, 332, 1, NULL, '', '2025-12-13 15:08:34', '2025-12-13 15:08:34', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(249, 333, 3, NULL, '', '2025-12-14 15:04:27', '2025-12-14 15:04:27', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+(249, 333, 3, NULL, '', '2025-12-14 15:04:27', '2025-12-14 15:04:27', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(250, 335, 1, NULL, '', '2025-12-15 09:25:08', '2025-12-15 09:25:08', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(251, 336, 1, NULL, '', '2025-12-15 09:28:07', '2025-12-15 09:28:07', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -3061,7 +3134,11 @@ INSERT INTO `task_files` (`id`, `task_id`, `document_id`, `comment_id`, `file_na
 (444, 332, NULL, 248, '20251110_TTrHCNS_Test Phan mem.doc', '20251110_TTrHCNS_Test Phan mem.doc', 'https://docs.google.com/document/d/1ob7s_f3EQ6-A6_-EwXgq90whtNXbOvids4Hja8V7HoM/edit', 1, NULL, '2025-12-13 15:08:41', '2025-12-13 22:08:41', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 1, '2025-12-13 22:08:41', 'google_drive', 84480, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 1, '1ob7s_f3EQ6-A6_-EwXgq90whtNXbOvids4Hja8V7HoM'),
 (445, 332, NULL, NULL, '20251110_TTrHCNS_Test Phan mem.doc', '20251110_TTrHCNS_Test Phan mem.doc', NULL, 1, 'https://docs.google.com/document/d/1ob7s_f3EQ6-A6_-EwXgq90whtNXbOvids4Hja8V7HoM/edit', '2025-12-13 15:08:41', '2025-12-13 22:08:42', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-12-13 22:08:42', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
 (446, 333, NULL, 249, '20251110_TTrHCNS_Test Phan mem.doc', '20251110_TTrHCNS_Test Phan mem.doc', 'https://docs.google.com/document/d/1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc/edit', 3, NULL, '2025-12-14 15:04:35', '2025-12-14 22:04:35', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 3, '2025-12-14 22:04:35', 'google_drive', 84480, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 1, '1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc'),
-(447, 333, NULL, NULL, '20251110_TTrHCNS_Test Phan mem.doc', '20251110_TTrHCNS_Test Phan mem.doc', NULL, 3, 'https://docs.google.com/document/d/1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc/edit', '2025-12-14 15:04:35', '2025-12-14 22:04:36', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-12-14 22:04:36', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL);
+(447, 333, NULL, NULL, '20251110_TTrHCNS_Test Phan mem.doc', '20251110_TTrHCNS_Test Phan mem.doc', NULL, 3, 'https://docs.google.com/document/d/1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc/edit', '2025-12-14 15:04:35', '2025-12-14 22:04:36', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-12-14 22:04:36', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(448, 335, NULL, 250, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1pdQlRx_9KvbBj4dMVcjNWG4KLVO5b6zuRS3wuJXfGjY/edit', 1, NULL, '2025-12-15 09:25:16', '2025-12-15 16:25:16', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 1, '2025-12-15 16:25:16', 'google_drive', 98816, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 1, '1pdQlRx_9KvbBj4dMVcjNWG4KLVO5b6zuRS3wuJXfGjY'),
+(449, 335, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 1, 'https://docs.google.com/document/d/1pdQlRx_9KvbBj4dMVcjNWG4KLVO5b6zuRS3wuJXfGjY/edit', '2025-12-15 09:25:16', '2025-12-15 16:25:16', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-12-15 16:25:16', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL),
+(450, 336, NULL, 251, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', 'https://docs.google.com/document/d/1V42O-XmPS4FoZznxfJqy3etjHkhofNe856oeEV3EIx0/edit', 1, NULL, '2025-12-15 09:28:13', '2025-12-15 16:28:13', 0, '', NULL, NULL, NULL, NULL, 1, NULL, 1, '2025-12-15 16:28:13', 'google_drive', 98816, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, 1, '1V42O-XmPS4FoZznxfJqy3etjHkhofNe856oeEV3EIx0'),
+(451, 336, NULL, NULL, '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', '20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc', NULL, 1, 'https://docs.google.com/document/d/1V42O-XmPS4FoZznxfJqy3etjHkhofNe856oeEV3EIx0/edit', '2025-12-15 09:28:14', '2025-12-15 16:28:15', 1, '', NULL, NULL, NULL, NULL, 1, NULL, 0, '2025-12-15 16:28:15', 'wp_media', 0, NULL, NULL, NULL, 'wordpress', NULL, 'private', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -4211,7 +4288,33 @@ INSERT INTO `task_snapshots` (`id`, `task_id`, `snapshot_at`, `title`, `descript
 (988, 333, '2025-12-14 22:04:06', 'test duyệt vb phát hành', 'ok', '2025-12-14', '2026-01-31', 'doing', 'low', 'pending', 0, 3, 4, NULL, 1, 3, '[]', NULL, '[]', '2025-12-14 22:04:06', '2025-12-14 22:04:06'),
 (989, 333, '2025-12-14 22:04:13', 'test duyệt vb phát hành', 'ok', '2025-12-14', '2026-01-31', 'doing', 'low', 'pending', 0, 3, 4, NULL, 1, 3, '[]', NULL, '[]', '2025-12-14 22:04:13', '2025-12-14 22:04:13'),
 (990, 333, '2025-12-14 22:04:35', 'test duyệt vb phát hành', 'ok', '2025-12-14', '2026-01-31', 'doing', 'low', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 1, '[{\"id\": \"248\", \"title\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc/edit\", \"file_size\": \"84480\", \"google_file_id\": \"1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc\"}]', '2025-12-14 22:04:35', '2025-12-14 22:04:35'),
-(991, 333, '2025-12-14 22:11:54', 'test duyệt vb phát hành', 'ok', '2025-12-14', '2026-01-31', 'doing', 'low', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 1, '[{\"id\": \"248\", \"title\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc/edit\", \"file_size\": \"84480\", \"google_file_id\": \"1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc\"}]', '2025-12-14 22:11:54', '2025-12-14 22:11:54');
+(991, 333, '2025-12-14 22:11:54', 'test duyệt vb phát hành', 'ok', '2025-12-14', '2026-01-31', 'doing', 'low', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 1, '[{\"id\": \"248\", \"title\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc/edit\", \"file_size\": \"84480\", \"google_file_id\": \"1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc\"}]', '2025-12-14 22:11:54', '2025-12-14 22:11:54'),
+(992, 277, '2025-12-15 09:43:27', '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', '2025-09-01', '2025-09-01', 'done', 'high', 'approved', 100, 5, 3, 8, 4, 3, '[{\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 10, \"acted_at\": \"2025-12-10 09:11:57\", \"added_at\": \"2025-12-10 16:19:54\", \"department_id\": 4, \"signature_code\": \"vu_thi_thuy_tm\"}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 10, \"acted_at\": null, \"added_at\": \"2025-12-10 16:26:18\", \"department_id\": 2, \"signature_code\": \"vu_thi_thuy_kt\"}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 10, \"acted_at\": null, \"added_at\": \"2025-12-10 16:30:02\", \"department_id\": 6, \"signature_code\": \"vu_thi_thuy_bgd\"}]', 35, '[{\"id\": \"224\", \"title\": \"20251110_PLTTr-HCNS Danh muc filetest phan memT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/15mrIIYxG0dJ30QBi-0yyG9Y8CbYT7n3TTNa2kvIdDTA/edit\", \"file_size\": \"318795\", \"google_file_id\": \"15mrIIYxG0dJ30QBi-0yyG9Y8CbYT7n3TTNa2kvIdDTA\"}]', '2025-12-15 09:43:27', '2025-12-15 09:43:27'),
+(993, 316, '2025-12-15 09:45:36', 'hợp đồng cháu', 'ok hợp đồng', '2025-12-05', '2026-01-31', 'done', 'normal', 'approved', 100, 5, 6, NULL, 4, 3, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 3, \"acted_at\": \"2025-12-13 14:52:07\", \"added_at\": \"2025-12-13 14:51:00\", \"department_id\": 1, \"signature_code\": null}]', 2, '[{\"id\": \"235\", \"title\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1xZ75fXy_1MNtOzRNvO4R0A-XkKHeIpnl1gn9nirz1fY/edit\", \"file_size\": \"83968\", \"google_file_id\": \"1xZ75fXy_1MNtOzRNvO4R0A-XkKHeIpnl1gn9nirz1fY\"}]', '2025-12-15 09:45:36', '2025-12-15 09:45:36'),
+(994, 277, '2025-12-15 09:45:47', '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', '2025-09-01', '2025-09-01', 'done', 'high', 'approved', 100, 5, 3, 8, 4, 3, '[{\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 10, \"acted_at\": \"2025-12-10 09:11:57\", \"added_at\": \"2025-12-10 16:19:54\", \"department_id\": 4, \"signature_code\": \"vu_thi_thuy_tm\"}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 10, \"acted_at\": null, \"added_at\": \"2025-12-10 16:26:18\", \"department_id\": 2, \"signature_code\": \"vu_thi_thuy_kt\"}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 10, \"acted_at\": null, \"added_at\": \"2025-12-10 16:30:02\", \"department_id\": 6, \"signature_code\": \"vu_thi_thuy_bgd\"}]', 35, '[{\"id\": \"224\", \"title\": \"20251110_PLTTr-HCNS Danh muc filetest phan memT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/15mrIIYxG0dJ30QBi-0yyG9Y8CbYT7n3TTNa2kvIdDTA/edit\", \"file_size\": \"318795\", \"google_file_id\": \"15mrIIYxG0dJ30QBi-0yyG9Y8CbYT7n3TTNa2kvIdDTA\"}]', '2025-12-15 09:45:47', '2025-12-15 09:45:47'),
+(995, 278, '2025-12-15 09:45:55', '2. Lấy kế hoạch SCL', '2. Lấy kế hoạch SCL', '2025-09-02', '2025-09-02', 'request_approval', 'high', 'pending', 0, 5, NULL, NULL, 4, 3, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-10-26 22:10:48\"}, {\"name\": \"Nguyễn Thị Ngọc Anh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 12, \"acted_at\": null, \"added_at\": \"2025-10-26 22:11:29\"}]', 1, '[{\"id\": \"183\", \"title\": \"20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc\", \"file_path\": \"https://docs.google.com/document/d/1-Z86_obmMpUTuI8fC5LCx--MCX_bGHlyW48DUhv9SPk/edit\", \"file_size\": \"95744\", \"google_file_id\": \"1-Z86_obmMpUTuI8fC5LCx--MCX_bGHlyW48DUhv9SPk\"}]', '2025-12-15 09:45:55', '2025-12-15 09:45:55'),
+(996, 302, '2025-12-15 09:46:04', 'nhiệm vụ mới 28/09/2025', 'test nhiệm vụ 28/09/2025', '2025-09-28', '2025-10-31', 'done', 'high', 'approved', 100, 5, 8, 14, 3, 3, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-10-26 22:11:40\"}]', NULL, '[]', '2025-12-15 09:46:04', '2025-12-15 09:46:04'),
+(997, 304, '2025-12-15 09:46:11', 'công việc con 2', '4354354353', '2025-10-08', '2025-10-26', 'done', 'normal', 'approved', 100, 5, 6, NULL, 6, 3, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 3, \"acted_at\": \"2025-12-11 10:50:37\", \"added_at\": \"2025-10-26 22:12:26\"}, {\"name\": \"Phạm Xuân Tuân\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 6, \"acted_at\": \"2025-12-11 10:50:37\", \"added_at\": \"2025-10-26 22:12:54\"}]', NULL, '[]', '2025-12-15 09:46:11', '2025-12-15 09:46:11'),
+(998, 298, '2025-12-15 09:46:37', '2.1. Lấy kế hoạch SCL 1', '2.1. Lấy kế hoạch SCL 1', '2025-09-03', '2025-09-03', 'done', 'high', 'approved', 100, 3, 6, NULL, 4, 3, '[]', NULL, '[]', '2025-12-15 09:46:37', '2025-12-15 09:46:37'),
+(999, 299, '2025-12-15 09:46:44', '2.1.1. Lấy kế hoạch SCL 2.1', '2.1.1. Lấy kế hoạch SCL 2.1', '2025-09-03', '2025-09-03', 'done', 'high', 'approved', 100, 5, NULL, NULL, 4, 3, '[{\"name\": \"Lương Đức Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 1, \"acted_at\": \"2025-12-11 10:56:40\", \"added_at\": \"2025-12-11 10:55:19\", \"department_id\": 6, \"signature_code\": null}, {\"name\": \"Đoàn Văn Giang\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 29, \"acted_at\": \"2025-12-11 10:56:40\", \"added_at\": \"2025-12-11 10:55:26\", \"department_id\": 1, \"signature_code\": null}, {\"name\": \"Tạ Quý Thọ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 4, \"acted_at\": \"2025-12-11 10:56:40\", \"added_at\": \"2025-12-11 10:55:33\", \"department_id\": 3, \"signature_code\": null}]', 1, '[{\"id\": \"229\", \"title\": \"20251110_PLTTr-HCNS Danh muc filetest phan memT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1HumzRvIG_p51el5kVrb7vQryN2x9JteH8ubYnVIzYC0/edit\", \"file_size\": \"318795\", \"google_file_id\": \"1HumzRvIG_p51el5kVrb7vQryN2x9JteH8ubYnVIzYC0\"}, {\"id\": \"230\", \"title\": \"new_file_ex.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1V543sAdRdEMl5LGpC2-ZvMQCQppth-bR_GLKmzLM8fQ/edit\", \"file_size\": \"152505\", \"google_file_id\": \"1V543sAdRdEMl5LGpC2-ZvMQCQppth-bR_GLKmzLM8fQ\"}]', '2025-12-15 09:46:44', '2025-12-15 09:46:44'),
+(1000, 277, '2025-12-15 10:55:23', '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', '2025-09-01', '2025-09-01', 'done', 'high', 'approved', 100, 5, 3, 8, 4, 3, '[{\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 10, \"acted_at\": \"2025-12-10 09:11:57\", \"added_at\": \"2025-12-10 16:19:54\", \"department_id\": 4, \"signature_code\": \"vu_thi_thuy_tm\"}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 10, \"acted_at\": null, \"added_at\": \"2025-12-10 16:26:18\", \"department_id\": 2, \"signature_code\": \"vu_thi_thuy_kt\"}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 10, \"acted_at\": null, \"added_at\": \"2025-12-10 16:30:02\", \"department_id\": 6, \"signature_code\": \"vu_thi_thuy_bgd\"}]', 35, '[{\"id\": \"224\", \"title\": \"20251110_PLTTr-HCNS Danh muc filetest phan memT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/15mrIIYxG0dJ30QBi-0yyG9Y8CbYT7n3TTNa2kvIdDTA/edit\", \"file_size\": \"318795\", \"google_file_id\": \"15mrIIYxG0dJ30QBi-0yyG9Y8CbYT7n3TTNa2kvIdDTA\"}]', '2025-12-15 10:55:23', '2025-12-15 10:55:23'),
+(1001, 333, '2025-12-15 10:55:29', 'test duyệt vb phát hành', 'ok', '2025-12-14', '2026-01-31', 'doing', 'low', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 1, '[{\"id\": \"248\", \"title\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc/edit\", \"file_size\": \"84480\", \"google_file_id\": \"1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc\"}]', '2025-12-15 10:55:29', '2025-12-15 10:55:29'),
+(1002, 277, '2025-12-15 11:36:56', '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', '2025-09-01', '2025-09-01', 'done', 'high', 'approved', 100, 5, 3, 8, 4, 3, '[{\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 10, \"acted_at\": \"2025-12-10 09:11:57\", \"added_at\": \"2025-12-10 16:19:54\", \"department_id\": 4, \"signature_code\": \"vu_thi_thuy_tm\"}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 10, \"acted_at\": null, \"added_at\": \"2025-12-10 16:26:18\", \"department_id\": 2, \"signature_code\": \"vu_thi_thuy_kt\"}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 10, \"acted_at\": null, \"added_at\": \"2025-12-10 16:30:02\", \"department_id\": 6, \"signature_code\": \"vu_thi_thuy_bgd\"}]', 35, '[{\"id\": \"224\", \"title\": \"20251110_PLTTr-HCNS Danh muc filetest phan memT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/15mrIIYxG0dJ30QBi-0yyG9Y8CbYT7n3TTNa2kvIdDTA/edit\", \"file_size\": \"318795\", \"google_file_id\": \"15mrIIYxG0dJ30QBi-0yyG9Y8CbYT7n3TTNa2kvIdDTA\"}]', '2025-12-15 11:36:56', '2025-12-15 11:36:56'),
+(1003, 333, '2025-12-15 11:37:12', 'test duyệt vb phát hành', 'ok', '2025-12-14', '2026-01-31', 'doing', 'low', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 1, '[{\"id\": \"248\", \"title\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc/edit\", \"file_size\": \"84480\", \"google_file_id\": \"1dWMnIIctOeBFsWB38jPnVXKGP5NFBlf-P0g33nZdqBc\"}]', '2025-12-15 11:37:12', '2025-12-15 11:37:12'),
+(1004, 313, '2025-12-15 14:10:16', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'done', 'normal', 'approved', 100, 5, 8, NULL, 3, 3, '[{\"name\": \"Lương Đức Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 1, \"acted_at\": \"2025-12-11 11:30:37\", \"added_at\": \"2025-12-11 11:29:55\", \"department_id\": 6, \"signature_code\": null}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 10, \"acted_at\": \"2025-12-11 11:30:50\", \"added_at\": \"2025-12-11 11:30:03\", \"department_id\": 2, \"signature_code\": \"vu_thi_thuy_kt\"}, {\"name\": \"Lê Minh Hiếu\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 30, \"acted_at\": \"2025-12-11 11:30:50\", \"added_at\": \"2025-12-11 11:30:10\", \"department_id\": 3, \"signature_code\": null}, {\"name\": \"Tạ Quý Thọ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 4, \"acted_at\": \"2025-12-11 11:30:50\", \"added_at\": \"2025-12-11 11:30:15\", \"department_id\": 3, \"signature_code\": null}]', 3, '[{\"id\": \"214\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ\"}]', '2025-12-15 14:10:16', '2025-12-15 14:10:16'),
+(1005, 313, '2025-12-15 16:08:35', 'nhiệm vụ mới', 'ok test', '2025-12-05', '2026-01-31', 'done', 'normal', 'approved', 100, 5, 8, NULL, 3, 3, '[{\"name\": \"Lương Đức Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 1, \"acted_at\": \"2025-12-11 11:30:37\", \"added_at\": \"2025-12-11 11:29:55\", \"department_id\": 6, \"signature_code\": null}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 10, \"acted_at\": \"2025-12-11 11:30:50\", \"added_at\": \"2025-12-11 11:30:03\", \"department_id\": 2, \"signature_code\": \"vu_thi_thuy_kt\"}, {\"name\": \"Lê Minh Hiếu\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 30, \"acted_at\": \"2025-12-11 11:30:50\", \"added_at\": \"2025-12-11 11:30:10\", \"department_id\": 3, \"signature_code\": null}, {\"name\": \"Tạ Quý Thọ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 4, \"acted_at\": \"2025-12-11 11:30:50\", \"added_at\": \"2025-12-11 11:30:15\", \"department_id\": 3, \"signature_code\": null}]', 3, '[{\"id\": \"214\", \"title\": \"20251008_PLTTr HCNS_DanhmuchanghoadichvuT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ/edit\", \"file_size\": \"315365\", \"google_file_id\": \"1hH-7W5nO2uZGRq-WIiAM-P07689VmdbyPqNEXL3ZisQ\"}]', '2025-12-15 16:08:35', '2025-12-15 16:08:35'),
+(1006, 277, '2025-12-15 16:19:33', '1. Lấy kế hoạch SXKD', '1. Lấy kế hoạch SXKD', '2025-09-01', '2025-09-01', 'done', 'high', 'approved', 100, 5, 3, 8, 4, 3, '[{\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 10, \"acted_at\": \"2025-12-10 09:11:57\", \"added_at\": \"2025-12-10 16:19:54\", \"department_id\": 4, \"signature_code\": \"vu_thi_thuy_tm\"}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 10, \"acted_at\": null, \"added_at\": \"2025-12-10 16:26:18\", \"department_id\": 2, \"signature_code\": \"vu_thi_thuy_kt\"}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 10, \"acted_at\": null, \"added_at\": \"2025-12-10 16:30:02\", \"department_id\": 6, \"signature_code\": \"vu_thi_thuy_bgd\"}]', 35, '[{\"id\": \"224\", \"title\": \"20251110_PLTTr-HCNS Danh muc filetest phan memT01.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/15mrIIYxG0dJ30QBi-0yyG9Y8CbYT7n3TTNa2kvIdDTA/edit\", \"file_size\": \"318795\", \"google_file_id\": \"15mrIIYxG0dJ30QBi-0yyG9Y8CbYT7n3TTNa2kvIdDTA\"}]', '2025-12-15 16:19:33', '2025-12-15 16:19:33'),
+(1007, 316, '2025-12-15 16:19:50', 'hợp đồng cháu', 'ok hợp đồng', '2025-12-05', '2026-01-31', 'done', 'normal', 'approved', 100, 5, 6, NULL, 4, 3, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 3, \"acted_at\": \"2025-12-13 14:52:07\", \"added_at\": \"2025-12-13 14:51:00\", \"department_id\": 1, \"signature_code\": null}]', 2, '[{\"id\": \"235\", \"title\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1xZ75fXy_1MNtOzRNvO4R0A-XkKHeIpnl1gn9nirz1fY/edit\", \"file_size\": \"83968\", \"google_file_id\": \"1xZ75fXy_1MNtOzRNvO4R0A-XkKHeIpnl1gn9nirz1fY\"}]', '2025-12-15 16:19:50', '2025-12-15 16:19:50'),
+(1008, 279, '2025-12-15 16:20:11', '1.1. Lấy kế hoạch SXKD lần 1', '1.1. Lấy kế hoạch SXKD lần 1', '2025-09-02', '2025-09-03', 'request_approval', 'high', 'pending', 75, 5, NULL, NULL, 4, 3, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-10-26 22:08:29\"}, {\"name\": \"Nguyễn Cảnh Hợp\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 1, \"acted_at\": null, \"added_at\": \"2025-10-26 22:09:07\"}]', 1, '[{\"id\": \"182\", \"title\": \"20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc\", \"file_path\": \"https://docs.google.com/document/d/192fjz_J4k0S-7bjCSGEPxUBvjY3-Z8M2nQbQLNU9mSU/edit\", \"file_size\": \"95744\", \"google_file_id\": \"192fjz_J4k0S-7bjCSGEPxUBvjY3-Z8M2nQbQLNU9mSU\"}]', '2025-12-15 16:20:11', '2025-12-15 16:20:11'),
+(1009, 310, '2025-12-15 16:20:18', 'nhiệm vụ mới 03-12-2025', 'ok', '2025-12-03', '2026-01-30', 'doing', 'normal', 'pending', 0, 5, 7, NULL, 3, 3, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 3, \"acted_at\": null, \"added_at\": \"2025-12-11 08:34:07\", \"department_id\": 1, \"signature_code\": null}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 10, \"acted_at\": null, \"added_at\": \"2025-12-11 08:34:15\", \"department_id\": 6, \"signature_code\": \"vu_thi_thuy_bgd\"}, {\"name\": \"Lương Đức Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 1, \"acted_at\": null, \"added_at\": \"2025-12-11 08:34:29\", \"department_id\": 6, \"signature_code\": null}, {\"name\": \"Nguyễn Cảnh Hợp\", \"note\": null, \"role\": \"approve\", \"status\": \"pending\", \"user_id\": 7, \"acted_at\": null, \"added_at\": \"2025-12-11 08:44:56\", \"department_id\": 6, \"signature_code\": null}]', 1, '[{\"id\": \"227\", \"title\": \"new_file_ex.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1PnHE8BfNHTS__fXhW_7jY08vm4ddgZb6BCLufgkieec/edit\", \"file_size\": \"152505\", \"google_file_id\": \"1PnHE8BfNHTS__fXhW_7jY08vm4ddgZb6BCLufgkieec\"}, {\"id\": \"228\", \"title\": \"20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc\", \"file_path\": \"https://docs.google.com/document/d/15mEGKVFCKZQGHHOMRgzHkL1ESGBrPleHKG9gIJfdD3A/edit\", \"file_size\": \"98304\", \"google_file_id\": \"15mEGKVFCKZQGHHOMRgzHkL1ESGBrPleHKG9gIJfdD3A\"}]', '2025-12-15 16:20:18', '2025-12-15 16:20:18'),
+(1010, 334, '2025-12-15 16:22:53', 'nhiem vu test', 'ok test', '2025-12-15', '2026-01-31', 'doing', 'normal', 'pending', 0, 1, 1, NULL, 1, 1, '[]', NULL, '[]', '2025-12-15 16:22:53', '2025-12-15 16:22:53'),
+(1011, 335, '2025-12-15 16:24:57', 'nhiệm vụ test', 'ok', '2025-12-15', '2026-01-31', 'doing', 'normal', 'pending', 0, 1, 3, NULL, 1, 1, '[]', NULL, '[]', '2025-12-15 16:24:57', '2025-12-15 16:24:57'),
+(1012, 335, '2025-12-15 16:25:00', 'nhiệm vụ test', 'ok', '2025-12-15', '2026-01-31', 'doing', 'normal', 'pending', 0, 1, 3, NULL, 1, 1, '[]', NULL, '[]', '2025-12-15 16:25:00', '2025-12-15 16:25:00'),
+(1013, 335, '2025-12-15 16:25:16', 'nhiệm vụ test', 'ok', '2025-12-15', '2026-01-31', 'doing', 'normal', 'pending', 0, 1, 3, NULL, 1, 1, '[]', 1, '[{\"id\": \"249\", \"title\": \"20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc\", \"file_path\": \"https://docs.google.com/document/d/1pdQlRx_9KvbBj4dMVcjNWG4KLVO5b6zuRS3wuJXfGjY/edit\", \"file_size\": \"98816\", \"google_file_id\": \"1pdQlRx_9KvbBj4dMVcjNWG4KLVO5b6zuRS3wuJXfGjY\"}]', '2025-12-15 16:25:16', '2025-12-15 16:25:16'),
+(1014, 335, '2025-12-15 16:27:26', 'nhiệm vụ test', 'ok', '2025-12-15', '2026-01-31', 'doing', 'normal', 'pending', 0, 1, 3, NULL, 1, 1, '[]', 1, '[{\"id\": \"249\", \"title\": \"20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc\", \"file_path\": \"https://docs.google.com/document/d/1pdQlRx_9KvbBj4dMVcjNWG4KLVO5b6zuRS3wuJXfGjY/edit\", \"file_size\": \"98816\", \"google_file_id\": \"1pdQlRx_9KvbBj4dMVcjNWG4KLVO5b6zuRS3wuJXfGjY\"}]', '2025-12-15 16:27:26', '2025-12-15 16:27:26'),
+(1015, 336, '2025-12-15 16:27:51', 'nhiem vụ moi 22', 'ok test', '2025-12-15', '2026-01-31', '', 'normal', 'pending', 0, 3, 4, NULL, 1, 1, '[]', NULL, '[]', '2025-12-15 16:27:51', '2025-12-15 16:27:51'),
+(1016, 336, '2025-12-15 16:27:54', 'nhiem vụ moi 22', 'ok test', '2025-12-15', '2026-01-31', '', 'normal', 'pending', 0, 3, 4, NULL, 1, 1, '[]', NULL, '[]', '2025-12-15 16:27:54', '2025-12-15 16:27:54'),
+(1017, 336, '2025-12-15 16:28:13', 'nhiem vụ moi 22', 'ok test', '2025-12-15', '2026-01-31', '', 'normal', 'pending', 0, 3, 4, NULL, 1, 1, '[]', 1, '[{\"id\": \"250\", \"title\": \"20251008_TTrHCNS_GiahanphanmemMicrosoft 365 T01.doc\", \"file_path\": \"https://docs.google.com/document/d/1V42O-XmPS4FoZznxfJqy3etjHkhofNe856oeEV3EIx0/edit\", \"file_size\": \"98816\", \"google_file_id\": \"1V42O-XmPS4FoZznxfJqy3etjHkhofNe856oeEV3EIx0\"}]', '2025-12-15 16:28:13', '2025-12-15 16:28:13');
 
 -- --------------------------------------------------------
 
@@ -4249,7 +4352,7 @@ INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `nam
 (6, 'tuan.pham@ttid.com.vn', '$2y$10$tji5VCbYZQxSUpSSEkv2w.K9rNnERL1SJRRXqY8BNjx8xXTPB1YKS', '2025-06-04 09:11:21', '2025-12-11 10:23:44', 'Phạm Xuân Tuân', '0333094031', 'uploads/avatars/1765034817_caee5d05bb45d9445825.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/z7010742803776_61e4e0e6d2380894deeebfd1b1d5d8c0.jpg', 0, 'phamxuantuan', 'pham_xuan_tuan', 3, 3, 4),
 (7, 'hop.nguyen@ttid.com.vn', '$2y$10$jh.Bqbz9rG5INlFCnuvo9uiL/.5Whd75mlamj14ZST9BCosMxt02a', '2025-06-04 09:11:44', '2025-12-11 10:23:44', 'Nguyễn Cảnh Hợp', '0973197806', 'uploads/avatars/1764690494_9a6c41da2fa1128e8b98.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-10.jpg', 0, 'nguyencanhhop', 'nguyen_canh_hop', 6, 3, 2),
 (8, 'dung.hoang@ttid.com.vn', '$2y$10$k1c3wH5aRm2Y93C4BMuFzejAozu6VLioxhrug00Uk7f.NCuj8H6Ja', '2025-06-04 09:12:07', '2025-12-11 10:23:44', 'Hoàng Văn Dũng', '0966140205', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-07.jpg', 0, 'hoangvandung', 'hoang_van_dung', 3, 3, 4),
-(9, 'kd1@ttid.vn', '$2y$10$hGqQg.IGey/1/3a6Dt/3rOQKKdPgz2U787lWDghxeDqCmCk30v7SW', '2025-06-04 09:12:52', '2025-12-11 10:23:44', 'Nhạc Quang Huy', '0344322102', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-04.jpg', 0, 'nhacquanghuy', 'nhac_quang_huy', 3, 3, 4),
+(9, 'kd1@ttid.vn', '$2y$10$QWbvY1gfqKYsMNcmf4e1DO8WgwX28yMNCOKZMHeVtqI30oJJi1TlS', '2025-06-04 09:12:52', '2025-12-15 16:31:20', 'Nhạc Quang Huy', '0344322102', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-09-04.jpg', 0, 'nhacquanghuy', 'nhac_quang_huy', 3, 3, 4),
 (10, 'thuy.vu@ttid.com.vn', '$2y$10$JGP3e6v4ZaWyO2CjAd6lieIt01IyZVyuJ3q95uT03kc4xUBzikxli', '2025-06-04 09:13:10', '2025-12-11 10:23:44', 'Vũ Thị Thuỷ', '0977587939', 'uploads/avatars/1764690786_c77cac7c876aea6f6990.jpg', 'https://assets.develop.io.vn/wp-content/uploads/2025/10/photo_2025-10-17_10-08-52.jpg', 1, 'vuthithuy', 'vu_thi_thuy', 6, 3, 2),
 (11, 'tu.dinh@ttid.vn', '$2y$10$xF05e7u.W99Avl/xDmb2r.LoqxLMc4OEsECtVUpak8xIK3nteX40G', '2025-06-04 09:13:37', '2025-12-11 10:23:44', 'Đinh Thị Tú', '0353334327', 'uploads/avatars/1765035052_874ee3529ca373ab8cb1.jpg', NULL, 0, 'dinhthitu', 'dinh_thi_tu', 2, 3, 4),
 (13, 'tm1@ttid.vn', '$2y$10$kt6NPnknnCknO/Z9NLrJ5e.sYkAqspltEtXXQBgT4UBF6r8nKxDwK', '2025-06-04 16:15:57', '2025-12-11 10:23:44', 'Hoàng Thị Lan Anh', '0966865092', 'uploads/avatars/1765035132_357528683932f28c3f7a.jpg', NULL, 0, 'hoangthilananh', 'hoang_thi_lan_anh', 4, 3, 4),
@@ -4646,13 +4749,13 @@ ALTER TABLE `approval_steps`
 -- AUTO_INCREMENT for table `biddings`
 --
 ALTER TABLE `biddings`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT for table `bidding_steps`
 --
 ALTER TABLE `bidding_steps`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=463;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=483;
 
 --
 -- AUTO_INCREMENT for table `bidding_step_templates`
@@ -4676,13 +4779,13 @@ ALTER TABLE `comment_reads`
 -- AUTO_INCREMENT for table `contracts`
 --
 ALTER TABLE `contracts`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
 
 --
 -- AUTO_INCREMENT for table `contract_steps`
 --
 ALTER TABLE `contract_steps`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=477;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=496;
 
 --
 -- AUTO_INCREMENT for table `contract_step_files`
@@ -4724,13 +4827,13 @@ ALTER TABLE `department_user`
 -- AUTO_INCREMENT for table `documents`
 --
 ALTER TABLE `documents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=249;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=251;
 
 --
 -- AUTO_INCREMENT for table `documents_converted`
 --
 ALTER TABLE `documents_converted`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT for table `document_approvals`
@@ -4766,7 +4869,7 @@ ALTER TABLE `document_settings`
 -- AUTO_INCREMENT for table `document_sign_status`
 --
 ALTER TABLE `document_sign_status`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=159;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=175;
 
 --
 -- AUTO_INCREMENT for table `doc_department_access`
@@ -4790,13 +4893,13 @@ ALTER TABLE `doc_user_access`
 -- AUTO_INCREMENT for table `entity_members`
 --
 ALTER TABLE `entity_members`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=84;
 
 --
 -- AUTO_INCREMENT for table `file_signatures`
 --
 ALTER TABLE `file_signatures`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=79;
 
 --
 -- AUTO_INCREMENT for table `permissions`
@@ -4838,7 +4941,7 @@ ALTER TABLE `step_templates`
 -- AUTO_INCREMENT for table `tasks`
 --
 ALTER TABLE `tasks`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=334;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=337;
 
 --
 -- AUTO_INCREMENT for table `task_approvals`
@@ -4856,7 +4959,7 @@ ALTER TABLE `task_approval_logs`
 -- AUTO_INCREMENT for table `task_comments`
 --
 ALTER TABLE `task_comments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=250;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=252;
 
 --
 -- AUTO_INCREMENT for table `task_extensions`
@@ -4868,7 +4971,7 @@ ALTER TABLE `task_extensions`
 -- AUTO_INCREMENT for table `task_files`
 --
 ALTER TABLE `task_files`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=448;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=452;
 
 --
 -- AUTO_INCREMENT for table `task_notifications`
@@ -4892,7 +4995,7 @@ ALTER TABLE `task_sign_logs`
 -- AUTO_INCREMENT for table `task_snapshots`
 --
 ALTER TABLE `task_snapshots`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=992;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1018;
 
 --
 -- AUTO_INCREMENT for table `users`

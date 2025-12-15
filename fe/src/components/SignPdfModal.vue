@@ -291,12 +291,10 @@ async function drawSignedStamps() {
             ctx.fillText(ts, tx, ty)
         }
     }
+
+    await drawApproveFooterPreview(ctx, canvas, pageIndex)
+
 }
-
-
-
-
-
 
 function loadImage(url) {
     return new Promise((resolve) => {
@@ -560,48 +558,6 @@ async function loadPdf() {
     }
 }
 
-
-async function findSignatureMarkersSimple(markerText) {
-    if (!pdfDoc.value) return []
-
-    const results = []
-    const totalPages = pdfDoc.value.numPages
-
-    // regex marker
-    const regex = buildRegex(markerText, props.caseInsensitive, props.wholeWord)
-
-    for (let pageIndex = 1; pageIndex <= totalPages; pageIndex++) {
-        const page = await pdfDoc.value.getPage(pageIndex)
-        const content = await page.getTextContent()
-
-        for (const item of content.items) {
-            if (!item?.str) continue
-
-            const text = String(item.str).trim()
-            if (!text) continue
-
-            if (!regex.test(text)) continue   // không match
-
-            // PDF transform matrix → position
-            const [a, , , d, x, y] = item.transform
-
-            const width = item.width || Math.abs(a)
-            const height = Math.abs(d) || 10
-
-            results.push({
-                pageIndex,
-                xPdf: x,
-                yPdf: y - height,
-                wPdf: width,
-                hPdf: height,
-                textFound: text
-            })
-        }
-    }
-
-    return results
-}
-
 function normalizeName(name) {
     if (!name) return ''
     return name
@@ -734,6 +690,97 @@ onBeforeUnmount(() => {
     if (signedBlobUrl.value) { URL.revokeObjectURL(signedBlobUrl.value); signedBlobUrl.value = '' }
 })
 
+const shouldShowApproveFooter = computed(() => {
+    if (docType.value !== 'external') return false
+
+    const t = props.signTarget
+    if (!t) return false
+
+    // 1️⃣ đã duyệt rồi
+    if (String(t.status).toLowerCase() === 'approved') return true
+
+    // 2️⃣ người hiện tại đã duyệt step
+    const uid = currentUser.value?.id
+    if (!uid || !Array.isArray(t.steps)) return false
+
+    return t.steps.some(s =>
+        Number(s.approver_id) === Number(uid) &&
+        ['approved', 'signed'].includes(String(s.status).toLowerCase())
+    )
+})
+
+
+function getApprovedStep(signTarget, currentUserId) {
+    if (!signTarget?.steps) return null
+
+    // ưu tiên: step đã approved/signed của user hiện tại
+    let step = signTarget.steps.find(
+        s =>
+            Number(s.approver_id) === Number(currentUserId) &&
+            (s.status === 'signed' || s.is_approved)
+    )
+
+    // fallback: step đã approved đầu tiên
+    if (!step) {
+        step = signTarget.steps.find(
+            s => s.status === 'signed' || s.is_approved
+        )
+    }
+
+    return step || null
+}
+
+
+
+
+async function drawApproveFooterPreview(ctx, canvas, pageIndex) {
+
+    console.log('xxxxxxx')
+
+    if (!shouldShowApproveFooter.value) return
+
+    const approvedStep = getApprovedStep(
+        props.signTarget,
+        currentUser.value?.id
+    )
+    if (!approvedStep) return
+
+    const rawApprover = approvedStep.approver_name || 'NguoiDuyet'
+    const approver = rawApprover
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .replace(/Đ/g, 'D')
+        .replace(/đ/g, 'd')
+
+    const t = new Date(
+        approvedStep.signed_at || approvedStep.approved_at
+    )
+    if (isNaN(t)) return
+
+    const pad = n => String(n).padStart(2, '0')
+    const timeText =
+        `${approver} — Date: ` +
+        `${pad(t.getDate())}/${pad(t.getMonth()+1)}/${t.getFullYear()}, ` +
+        `${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`
+
+    ctx.save()
+    ctx.font = '10px Helvetica'
+    ctx.fillStyle = '#000'
+
+    const textWidth = ctx.measureText(timeText).width
+    const padding = 10
+
+    const x = canvas.width - textWidth - padding
+    const y = canvas.height - padding
+
+    ctx.fillText(timeText, x, y)
+    ctx.fillRect(x, y + 2, textWidth, 0.7)
+
+    ctx.restore()
+}
+
+
+
 /* Download helpers (create temporary anchor) */
 async function downloadSigned() {
     try {
@@ -830,141 +877,88 @@ async function downloadSigned() {
             }
         }
 
-        // --------------------------------------------------------------
-        // ⭐ 3) Chèn chữ ký người hiện tại (nếu họ đã ký)
-        // --------------------------------------------------------------
-
-        // // người hiện tại đã ký hay chưa?
-        // const userHasSigned = existingPositions.value.some(
-        //     s =>
-        //         s.signature_url === effectiveSignatureUrl.value ||
-        //         s.signed_by === currentUser.value?.id
-        // );
-        //
-        // if (effectiveSignatureUrl.value && userHasSigned) {
-        //
-        //     const imgBytes = await fetch(effectiveSignatureUrl.value).then(r => r.arrayBuffer());
-        //     let img;
-        //     try { img = await pdfDocW.embedPng(imgBytes); }
-        //     catch { img = await pdfDocW.embedJpg(imgBytes); }
-        //
-        //     const pageIndex = pageNum.value - 1;
-        //     const page = pdfDocW.getPage(pageIndex);
-        //
-        //     const pdfW = page.getWidth();
-        //     const pdfH = page.getHeight();
-        //
-        //     const rawPage = await pdfDoc.value.getPage(pageNum.value);
-        //     const vp = rawPage.getViewport({ scale: scale.value });
-        //
-        //     const sigCanvasW = sigW.value;
-        //     const sigCanvasH = sigCanvasW * handleRatio();
-        //
-        //     const scaleX = pdfW / vp.width;
-        //     const scaleY = pdfH / vp.height;
-        //
-        //     const xPdf = sigX.value * scaleX;
-        //     const yPdf = (vp.height - (sigY.value + sigCanvasH)) * scaleY;
-        //
-        //     const wPdf = sigCanvasW * scaleX;
-        //     const hPdf = sigCanvasH * scaleY;
-        //
-        //     // thêm chữ ký người hiện tại
-        //     page.drawImage(img, {
-        //         x: xPdf, y: yPdf,
-        //         width: wPdf, height: hPdf
-        //     });
-        //
-        //     // timestamp người hiện tại
-        //     let usedFont2 = await loadFontIfAvailable(pdfDocW);
-        //     if (!usedFont2) usedFont2 = await pdfDocW.embedFont(StandardFonts.Helvetica);
-        //
-        //     const now2 = new Date();
-        //     const pad2 = n => String(n).padStart(2, "0");
-        //     const timeText2 =
-        //         `Date: ${pad2(now2.getDate())}/${pad2(now2.getMonth()+1)}/${now2.getFullYear()}, ` +
-        //         `${pad2(now2.getHours())}:${pad2(now2.getMinutes())}:${pad2(now2.getSeconds())}`;
-        //
-        //     const fs2 = Math.max(5, Math.min(12, wPdf / 20));
-        //     const tw2 = usedFont2.widthOfTextAtSize(timeText2, fs2);
-        //     const th2 = typeof usedFont2.heightAtSize === "function"
-        //         ? usedFont2.heightAtSize(fs2)
-        //         : fs2;
-        //
-        //     let tx2 = xPdf + (wPdf - tw2) / 2;
-        //     let ty2 = yPdf - th2 - 4;
-        //     if (ty2 < 0) ty2 = yPdf + hPdf + 4;
-        //
-        //     page.drawText(timeText2, {
-        //         x: tx2, y: ty2,
-        //         size: fs2,
-        //         font: usedFont2,
-        //         color: rgb(0, 0, 0)
-        //     });
-        // }
 
         // --------------------------------------------------------------
         // ⭐ 4) Chèn footer duyệt (approver info)
         // --------------------------------------------------------------
 
         if (docType.value !== 'internal') {
-            const rawApprover = currentUser.value?.full_name || currentUser.value?.name || currentUser.value?.username || "NguoiDuyet";
 
-            const sanitizeToAscii = s => {
-                try {
-                    const nd = s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
-                    return nd.replace(/Đ/g, "D").replace(/đ/g, "d").replace(/[^\x00-\x7F ]/g, "");
-                } catch {
-                    return s.replace(/[Đđ]/g, c => c === "Đ" ? "D" : "d")
-                        .replace(/[^\x00-\x7F ]/g, "");
+            const approvedStep = getApprovedStep(props.signTarget)
+            if (!approvedStep) {
+                console.warn('No approved step found → skip footer')
+            } else {
+
+                const rawApprover = approvedStep.approver_name || 'NguoiDuyet'
+
+                const sanitizeToAscii = s => {
+                    try {
+                        const nd = s.normalize("NFD").replace(/\p{Diacritic}/gu, "")
+                        return nd.replace(/Đ/g, "D").replace(/đ/g, "d")
+                    } catch {
+                        return s.replace(/[Đđ]/g, c => c === "Đ" ? "D" : "d")
+                    }
                 }
-            };
 
-            const approverDisplay = sanitizeToAscii(rawApprover);
+                const approverDisplay = sanitizeToAscii(rawApprover)
 
-            const now = new Date();
-            const pad = n => String(n).padStart(2, "0");
-            const vnTime =
-                `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}, ` +
-                `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+                const t = new Date(
+                    approvedStep.signed_at ||
+                    approvedStep.approved_at
+                )
 
-            const timeText = `${approverDisplay} — Date: ${vnTime}`;
+                if (!isNaN(t)) {
 
-            let usedFont = await loadFontIfAvailable(pdfDocW);
-            if (!usedFont) usedFont = await pdfDocW.embedFont(StandardFonts.Helvetica);
+                    const pad = n => String(n).padStart(2, "0")
+                    const timeText =
+                        `${approverDisplay} — Date: ` +
+                        `${pad(t.getDate())}/${pad(t.getMonth() + 1)}/${t.getFullYear()}, ` +
+                        `${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`
 
-            const totalPages = pdfDocW.getPageCount();
-            for (let p = 0; p < totalPages; p++) {
-                const page = pdfDocW.getPage(p);
-                const pdfW = page.getWidth();
+                    let usedFont = await loadFontIfAvailable(pdfDocW)
+                    if (!usedFont)
+                        usedFont = await pdfDocW.embedFont(StandardFonts.Helvetica)
 
-                const fontSize = 6;
-                const margin = 20;
+                    const totalPages = pdfDocW.getPageCount()
 
-                const tw = usedFont.widthOfTextAtSize(timeText, fontSize);
-                const th = typeof usedFont.heightAtSize === "function"
-                    ? usedFont.heightAtSize(fontSize)
-                    : fontSize;
+                    for (let p = 0; p < totalPages; p++) {
+                        const page = pdfDocW.getPage(p)
+                        const pdfW = page.getWidth()
 
-                const textX = Math.max(margin, pdfW - margin - tw);
-                const textY = margin;
-                const lineY = textY + th + 2;
+                        const fontSize = 6
+                        const margin = 20
 
-                page.drawRectangle({
-                    x: textX, y: lineY,
-                    width: tw, height: 0.7,
-                    color: rgb(0, 0, 0)
-                });
+                        const tw = usedFont.widthOfTextAtSize(timeText, fontSize)
+                        const th = typeof usedFont.heightAtSize === "function"
+                            ? usedFont.heightAtSize(fontSize)
+                            : fontSize
 
-                page.drawText(timeText, {
-                    x: textX, y: textY,
-                    size: fontSize,
-                    font: usedFont,
-                    color: rgb(0, 0, 0)
-                });
+                        const textX = Math.max(margin, pdfW - margin - tw)
+                        const textY = margin
+                        const lineY = textY + th + 2
+
+                        // gạch ngang
+                        page.drawRectangle({
+                            x: textX,
+                            y: lineY,
+                            width: tw,
+                            height: 0.7,
+                            color: rgb(0, 0, 0)
+                        })
+
+                        // text
+                        page.drawText(timeText, {
+                            x: textX,
+                            y: textY,
+                            size: fontSize,
+                            font: usedFont,
+                            color: rgb(0, 0, 0)
+                        })
+                    }
+                }
             }
-
         }
+
 
         // --------------------------------------------------------------
         // ⭐ 5) Xuất PDF
@@ -1441,37 +1435,30 @@ async function finalizeApproval() {
            8) UPDATE BACKEND
         -------------------------------------------- */
         const payload = {
-            task_file_id:
-                target?.id ||
-                target?.source_task_id ||
-                target?.file_id ||
-                null,
-
+            task_file_id: target?.id || target?.source_task_id || target?.file_id || null,
             approval_id: target?.approval_id || null,
-
             note: `Duyệt bởi ${approverDisplay} lúc ${vnTime}`,
-
             signed_by: currentUser.value?.id || null,
             signed_at: new Date().toISOString(),
-
             status: "approved",
-
             approver_display: approverDisplay,
-
             signed_file_name: target?.title || null,
             signed_file_path: target?.signed_pdf_url || null,
             signed_file_size: target?.file_size || null,
-
-            document_id:
-                target?.document_id ||
-                target?.document?.id ||
-                null,
+            document_id: target?.document_id || target?.document?.id || null,
         };
 
         let res;
 
         try {
-            res = await approveDocument(payload);
+            res = await approveDocument(payload)
+
+            if (target) {
+                target.status = 'approved'
+                target.approved_at = new Date().toISOString()
+            }
+
+
         } catch (e) {
             const msg = e?.response?.data?.message || e.message;
             return message.error(

@@ -2,8 +2,11 @@
 
 namespace App\Controllers;
 
+use App\Models\BiddingModel;
+use App\Models\ContractModel;
 use App\Models\DocumentConvertedModel;
 use App\Models\DocumentSignStatusModel;
+use App\Models\TaskModel;
 use App\Models\UserModel;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -85,6 +88,79 @@ class DocumentSignController extends ResourceController
 
 
 
+    private function getLinkedEntity(
+        string $type,
+        int $linkedId,
+        ?int $taskStepId = null
+    ): ?array
+    {
+        $db = db_connect();
+
+        /* ===============================
+           BIDDING
+           =============================== */
+        if ($type === 'bidding') {
+            $bidding = (new \App\Models\BiddingModel())->find($linkedId);
+            if (!$bidding) return null;
+
+            $step = null;
+            if ($taskStepId) {
+                $step = $db->table('bidding_steps')
+                    ->select('step_number, title')
+                    ->where('id', $taskStepId)
+                    ->where('bidding_id', $linkedId)
+                    ->get()
+                    ->getRowArray();
+            }
+
+            return [
+                'type' => 'bidding',
+                'id'   => $bidding['id'],
+                'code' => null,
+                'name' => $bidding['title'],
+                'step' => $step ? [
+                    'number' => (int)$step['step_number'],
+                    'title'  => $step['title'],
+                ] : null,
+            ];
+        }
+
+        /* ===============================
+           CONTRACT
+           =============================== */
+        if ($type === 'contract') {
+            $contract = (new \App\Models\ContractModel())->find($linkedId);
+            if (!$contract) return null;
+
+            $step = null;
+            if ($taskStepId) {
+                $step = $db->table('contract_steps')
+                    ->select('step_number, title')
+                    ->where('id', $taskStepId)
+                    ->where('contract_id', $linkedId)
+                    ->get()
+                    ->getRowArray();
+            }
+
+            return [
+                'type' => 'contract',
+                'id'   => $contract['id'],
+                'code' => $contract['code'],
+                'name' => $contract['title'],
+                'step' => $step ? [
+                    'number' => (int)$step['step_number'],
+                    'title'  => $step['title'],
+                ] : null,
+            ];
+        }
+
+        return null;
+    }
+
+
+
+
+
     /* ====================================================
        2. FETCH INBOX (FILE USER NEEDS TO SIGN)
        GET /api/document-sign/inbox
@@ -92,27 +168,43 @@ class DocumentSignController extends ResourceController
     public function inbox(): ResponseInterface
     {
         $uid = (int)(session()->get('user_id') ?? 0);
-        if ($uid <= 0) return $this->failUnauthorized('Chưa đăng nhập');
+        if ($uid <= 0) {
+            return $this->failUnauthorized('Chưa đăng nhập');
+        }
 
-        $signM = new DocumentSignStatusModel();
         $convertedM = new DocumentConvertedModel();
-        $db = db_connect();
+        $taskM      = new TaskModel();
+        $db         = db_connect();
 
-        // 1) Lấy các bước ký của user
-        $rows = $signM
+        /* =========================================
+           1. LẤY DANH SÁCH DOCUMENT USER CÓ THAM GIA KÝ
+           ========================================= */
+        $rows = $db->table('document_sign_status')
+            ->distinct()
+            ->select('converted_id')
             ->where('approver_id', $uid)
-            ->whereIn('status', ['pending', 'signed'])
-            ->orderBy('order_index', 'ASC')
-            ->findAll();
+            ->get()
+            ->getResultArray();
+
+        if (!$rows) {
+            return $this->respond(['items' => []]);
+        }
 
         $result = [];
 
-        foreach ($rows as $s) {
+        foreach ($rows as $r) {
 
-            $doc = $convertedM->find($s['converted_id']);
+            $convertedId = (int)$r['converted_id'];
+
+            /* ===============================
+               DOCUMENT
+               =============================== */
+            $doc = $convertedM->find($convertedId);
             if (!$doc) continue;
 
-            // 2) Lấy toàn bộ chain ký
+            /* ===============================
+               SIGN CHAIN (FULL)
+               =============================== */
             $chain = $db->table('document_sign_status ds')
                 ->select('
                 ds.id,
@@ -122,52 +214,107 @@ class DocumentSignController extends ResourceController
                 ds.order_index,
                 ds.status,
                 ds.signed_at,
-                ds.signed_pdf_url
+                ds.signed_pdf_url,
+                ds.task_file_id
             ')
                 ->join('users u', 'u.id = ds.approver_id', 'left')
-                ->where('ds.converted_id', $s['converted_id'])
+                ->where('ds.converted_id', $convertedId)
                 ->orderBy('ds.order_index', 'ASC')
-                ->get()->getResultArray();
+                ->get()
+                ->getResultArray();
 
-            $steps = array_map(fn($x) => [
-                'id'            => $x['id'],
-                'sequence'      => $x['order_index'],
-                'approver_id'   => $x['approver_id'],
-                'approver_name' => $x['approver_name'] ?? '—',
-                'status'        => $x['status'],
-                'signed_pdf_url'=> $x['signed_pdf_url'],
-                'is_current'    => $x['status'] === 'pending',
-                'is_approved'   => $x['status'] === 'signed',
+            if (!$chain) continue;
+
+            /* ===============================
+               STEP CỦA USER HIỆN TẠI
+               =============================== */
+            $myStep = null;
+            foreach ($chain as $c) {
+                if ((int)$c['approver_id'] === $uid) {
+                    $myStep = $c;
+                    break;
+                }
+            }
+
+            if (!$myStep) continue; // an toàn
+
+            /* ===============================
+               MAP STEPS CHO FE
+               =============================== */
+            $steps = array_map(static fn ($x) => [
+                'id'             => $x['id'],
+                'sequence'       => $x['order_index'],
+                'approver_id'    => $x['approver_id'],
+                'approver_name'  => $x['approver_name'] ?? '—',
+                'status'         => $x['status'] ?: 'waiting',
+                'signed_pdf_url' => $x['signed_pdf_url'],
+                'is_current'     => $x['status'] === 'pending',
+                'is_approved'    => $x['status'] === 'signed',
             ], $chain);
 
-            // 3) Nếu user đã ký → hiển thị file đã ký
-            $signedUrl = $s['signed_pdf_url'] ?? null;
-            $fileUrl = $signedUrl ?: $doc['file_url'];
+            /* ===============================
+               TASK + LINKED ENTITY
+               =============================== */
+            $task   = null;
+            $linked = null;
 
+            if (!empty($myStep['task_file_id'])) {
+                $taskRow = $taskM->find((int)$myStep['task_file_id']);
+                if ($taskRow) {
+                    $task = [
+                        'id'       => $taskRow['id'],
+                        'title'    => $taskRow['title'],
+                        'status'   => $taskRow['status'],
+                        'progress' => $taskRow['progress'],
+                        'priority' => $taskRow['priority'] ?? null,
+                    ];
+
+                    $linked = $this->getLinkedEntity(
+                        $taskRow['linked_type'],
+                        (int)$taskRow['linked_id'],
+                        $taskRow['step_id'] ?? null
+                    );
+                }
+            }
+
+            /* ===============================
+               FILE URL
+               =============================== */
+            $signedUrl = $myStep['signed_pdf_url'] ?? null;
+            $fileUrl   = $signedUrl ?: $doc['file_url'];
+
+            /* ===============================
+               PUSH RESULT
+               =============================== */
             $result[] = [
-                'id'            => $s['id'],
-                'converted_id'  => $s['converted_id'],
+                'id'            => $myStep['id'],
+                'converted_id'  => $convertedId,
                 'title'         => $doc['title'],
                 'url'           => $fileUrl,
                 'original_url'  => $doc['file_url'],
                 'signed_url'    => $signedUrl,
-                'task_file_id'  => $s['task_file_id'] ?? null,
+
+                'task_file_id'  => $myStep['task_file_id'],
+                'task'          => $task,
+                'linked'        => $linked,
+
                 'uploader_name' => $doc['uploader_name'],
-                'created_at'    => $doc['wp_created_at'],  // ✔ sort theo cái này
-                'sequence'      => $s['order_index'],
-                'status'        => $s['status'],
+                'created_at'    => $doc['wp_created_at'],
+                'sequence'      => $myStep['order_index'],
+                'status'        => $myStep['status'] ?: 'waiting', // 🔥 CỰC QUAN TRỌNG
                 'steps'         => $steps,
-                'doc_type'      => $doc['doc_type'] ?? null, // nếu không cần thì xóa
+                'doc_type'      => $doc['doc_type'] ?? null,
             ];
         }
 
-        // 4) Sắp xếp theo created_at giảm dần (mới nhất lên đầu)
-        usort($result, function ($a, $b) {
-            return strtotime($b['created_at']) - strtotime($a['created_at']);
-        });
+        usort($result, static fn ($a, $b) =>
+            strtotime($b['created_at']) <=> strtotime($a['created_at'])
+        );
 
         return $this->respond(['items' => $result]);
     }
+
+
 
 
 
@@ -181,47 +328,112 @@ class DocumentSignController extends ResourceController
     public function sign(): ResponseInterface
     {
         $uid = (int)(session()->get('user_id') ?? 0);
-        if ($uid <= 0) return $this->failUnauthorized('Chưa đăng nhập');
+        if ($uid <= 0) {
+            return $this->failUnauthorized('Chưa đăng nhập');
+        }
 
         $payload = $this->request->getJSON(true);
-        $convertedId = (int)($payload['converted_id'] ?? 0);
+
+        $convertedId  = (int)($payload['converted_id'] ?? 0);
         $signatureUrl = $payload['signature_url'] ?? null;
         $signedPdfUrl = $payload['signed_pdf_url'] ?? null;
-        $comment = $payload['comment'] ?? null;
+        $comment      = $payload['comment'] ?? null;
 
-        if ($convertedId <= 0) return $this->failValidationErrors('Thiếu converted_id');
+        if ($convertedId <= 0) {
+            return $this->failValidationErrors('Thiếu converted_id');
+        }
 
+        $db    = db_connect();
         $signM = new DocumentSignStatusModel();
 
-        // Find current step for user
-        $step = $signM->where('converted_id', $convertedId)
-            ->where('approver_id', $uid)   // ✅ ĐÚNG
-            ->where('status', 'pending')
-            ->first();
+        /* =====================================================
+           1. LẤY STEP CỦA USER (CHO PHÉP pending + waiting)
+           ===================================================== */
+        $step = $db->table('document_sign_status ds')
+            ->select('ds.*, p.level AS approver_level')
+            ->join('users u', 'u.id = ds.approver_id')
+            ->join('positions p', 'p.id = u.position_id', 'left')
+            ->where('ds.converted_id', $convertedId)
+            ->where('ds.approver_id', $uid)
+            ->whereIn('ds.status', ['pending', 'waiting']) // 🔥 QUAN TRỌNG
+            ->orderBy('ds.order_index', 'ASC')
+            ->get()
+            ->getRowArray();
 
-        if (!$step)
+        if (!$step) {
             return $this->failForbidden('Không phải lượt ký của bạn.');
+        }
 
-        // Mark signed
+        $currentLevel = (int)($step['approver_level'] ?? 0);
+
+        /* =====================================================
+           2. ĐÁNH DẤU STEP HIỆN TẠI = SIGNED
+           ===================================================== */
         $signM->update($step['id'], [
-            'status' => 'signed',
-            'signed_at' => date('Y-m-d H:i:s'),
-            'signature_url' => $signatureUrl,
+            'status'         => 'signed',
+            'signed_at'      => date('Y-m-d H:i:s'),
+            'signature_url'  => $signatureUrl,
             'signed_pdf_url' => $signedPdfUrl,
-            'comment' => $comment
+            'comment'        => $comment,
         ]);
 
-        // Open next step
-        $next = $signM->where('converted_id', $convertedId)
+        /* =====================================================
+           3. OVERRIDE LOGIC – CẤP CAO KÝ TRƯỚC
+           ===================================================== */
+        // Quy ước:
+        // level >= 3  → Phó GĐ, GĐ (tuỳ hệ thống của bạn)
+        $OVERRIDE_LEVEL = 3;
+
+        if ($currentLevel >= $OVERRIDE_LEVEL) {
+
+            // Skip toàn bộ step còn lại có level thấp hơn
+            $lowerSteps = $db->table('document_sign_status ds')
+                ->select('ds.id')
+                ->join('users u', 'u.id = ds.approver_id')
+                ->join('positions p', 'p.id = u.position_id', 'left')
+                ->where('ds.converted_id', $convertedId)
+                ->whereIn('ds.status', ['pending', 'waiting'])
+                ->where('p.level <', $currentLevel)
+                ->get()
+                ->getResultArray();
+
+            if (!empty($lowerSteps)) {
+                $ids = array_column($lowerSteps, 'id');
+
+                $signM->whereIn('id', $ids)
+                    ->set([
+                        'status'    => 'skipped',
+                        'signed_at' => date('Y-m-d H:i:s'),
+                    ])
+                    ->update();
+            }
+
+            // ❗ KHÔNG mở step tiếp theo
+            return $this->respond([
+                'message'  => 'Đã ký (override chuỗi ký)',
+                'override' => true,
+            ]);
+        }
+
+        /* =====================================================
+           4. LOGIC CŨ – KÝ TUẦN TỰ
+           ===================================================== */
+        $next = $signM
+            ->where('converted_id', $convertedId)
             ->where('order_index >', $step['order_index'])
+            ->where('status', 'waiting')
             ->orderBy('order_index', 'ASC')
             ->first();
 
         if ($next) {
-            $signM->update($next['id'], ['status' => 'pending']);
+            $signM->update($next['id'], [
+                'status' => 'pending',
+            ]);
         }
 
-        return $this->respond(['message' => 'Đã ký thành công']);
+        return $this->respond([
+            'message' => 'Đã ký thành công',
+        ]);
     }
 
     /* ====================================================

@@ -302,6 +302,8 @@ $routes->group('api', function ($routes) {
     $routes->post('task-files/upload-signed', 'TaskFileController::uploadSignedPdf');
     $routes->get('file-signatures/(:num)/download', 'TaskFileController::downloadSigned/$1');
     $routes->post('documents/approve', 'TaskFileController::approveOnly');
+    $routes->post('documents/approve-external', 'TaskFileController::approveExternal');
+
 
     // ⭐ ENTITY MEMBER ROUTES
     $routes->post('entity-members/add', 'EntityMemberController::add');
