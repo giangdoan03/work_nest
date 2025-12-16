@@ -25,7 +25,11 @@
                 <a-col :span="13" :xs="24" :lg="13" :xl="13">
                     <a-card title="Chi tiết nhiệm vụ" bordered>
                         <div>
-                            <a-tabs v-model:activeKey="leftTab" class="task-left-tabs">
+                            <a-tabs
+                                v-model:activeKey="activeTab"
+                                :destroyInactiveTabPane="false"
+                                @change="handleTabChange"
+                            >
                                 <!-- Tab 1: Thông tin nhiệm vụ -->
                                 <a-tab-pane key="info" tab="Thông tin">
                                     <div class="task-info-left">
@@ -334,7 +338,12 @@
                                     <template #tab>
                                         <span class="tab-with-badge">
                                             <span class="tab-text">Phê duyệt</span>
-                                          <a-badge :count="3" size="small" class="badge-animate" />
+                                            <a-badge
+                                                :count="approvalCount"
+                                                size="small"
+                                                class="badge-animate"
+                                                :show-zero="false"
+                                            />
                                         </span>
                                     </template>
                                     <ApprovalHistoryBlock
@@ -342,7 +351,6 @@
                                         :task-id="Number(route.params.id)"
                                     />
                                 </a-tab-pane>
-
                             </a-tabs>
                         </div>
                     </a-card>
@@ -409,6 +417,7 @@ import debounce from 'lodash-es/debounce'
 import AttachmentsCard from '@/components/AttachmentsCard.vue'
 import ApprovalStatus from '@/components/Approval/ApprovalStatus.vue'
 import ApprovalHistoryBlock from "@/components/task/ApprovalHistoryBlock.vue";
+import {getApprovalSessionsByTask} from "@/api/approvalSessions.js";
 
 const commonStore = useCommonStore()
 dayjs.locale('vi')
@@ -432,6 +441,9 @@ const logData = ref([])
 
 const leftTab = ref('info')
 const deleting = ref(false)
+const approvalHistoryRef = ref(null)
+const activeTab = ref('info')
+const approvalCount = ref(0)
 
 const formData = ref({
     title: '',
@@ -455,11 +467,29 @@ const formData = ref({
 })
 
 // 🔥 ref để gọi hàm reload bên ApprovalHistoryBlock
-const approvalHistoryRef = ref(null)
+const handleTabChange = async (key) => {
+    if (key === 'approval-history') {
+        await loadApprovalCount()     // ⭐ load count
+        await nextTick()
+        approvalHistoryRef.value?.reload?.()
+    }
+}
 
 // hàm gọi khi tạo phiên duyệt xong
-const handleApprovalSessionCreated = () => {
+const handleApprovalSessionCreated = async () => {
+    approvalCount.value++            // ⭐ badge nhảy số ngay
+    activeTab.value = 'approval-history'
+    await nextTick()
     approvalHistoryRef.value?.reload()
+}
+
+const loadApprovalCount = async () => {
+    try {
+        const { data } = await getApprovalSessionsByTask(Number(route.params.id))
+        approvalCount.value = Array.isArray(data) ? data.length : 0
+    } catch (e) {
+        approvalCount.value = 0
+    }
 }
 
 const priorityOption = ref([
@@ -1176,6 +1206,14 @@ watch(numericProgress, (val) => {
     }
 })
 
+watch(activeTab, v => {
+    console.log('TAB CHANGED TO:', v)
+})
+
+onMounted(async () => {
+    await loadApprovalCount()
+})
+
 onMounted(async () => {
     try {
         await getDepartment()
@@ -1488,14 +1526,15 @@ onMounted(() => {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 100%;
-    height: 100%;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     transform: translate(-50%, -50%);
     animation: badge-glow-circle 2.5s ease-out infinite;
     background: rgba(82, 196, 26, 0.4);
     z-index: -1;
 }
+
 
 
 @keyframes badge-glow-circle {
@@ -1518,4 +1557,28 @@ onMounted(() => {
 .header-wrapper .ant-card-body {
     padding: 5px 10px;
 }
+/* ================= BADGE TRÒN TUYỆT ĐỐI ================= */
+.badge-animate :deep(.ant-badge-count) {
+    width: 18px !important;
+    min-width: 18px !important;
+    max-width: 18px !important;
+
+    height: 18px !important;
+    line-height: 18px !important;
+
+    padding: 0 !important;
+    border-radius: 50% !important;
+
+    font-size: 11px;
+    font-weight: 500;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+
+
 </style>

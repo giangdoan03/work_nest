@@ -1,186 +1,189 @@
 <template>
     <a-card bordered size="small" class="approval-card">
-        <div class="approval-block">
-            <div
-                v-for="session in sortedSessions"
-                :key="session.session_no"
-                class="session-row"
-                :class="sessionClass(session)"
-            >
-                <!-- ================= HEADER ================= -->
-                <div class="session-header">
-                    <div class="header-left">
-                        <span class="session-title">
-                            <FileDoneOutlined />
-                            Phiên #{{ session.session_no }}
-                        </span>
-
-                        <a-tag
-                            v-if="isLatestSession(session)"
-                            color="processing"
-                            class="current-tag"
-                        >
-                            <SyncOutlined spin />
-                            PHIÊN HIỆN TẠI
-                        </a-tag>
-                    </div>
-
-                    <div class="header-right">
-                        <a-tag :color="session.valid ? 'success' : 'error'">
-                            <CheckCircleOutlined v-if="session.valid" />
-                            <CloseCircleOutlined v-else />
-                            {{ session.valid ? 'HỢP LỆ' : 'KHÔNG HỢP LỆ' }}
-                        </a-tag>
-
-                        <span class="time">
-                            <ClockCircleOutlined />
-                            {{ session.start }} – {{ session.end }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- ================= DOCUMENTS ================= -->
-                <div class="documents">
-                    <div class="section-title">
-                        <PaperClipOutlined />
-                        Tờ trình ({{ session.documents.length }})
-                    </div>
-
-                    <a-list
-                        size="small"
-                        :data-source="session.documents"
-                        class="doc-list"
-                    >
-                        <template #renderItem="{ item }">
-                            <a-list-item class="doc-item">
-                                <a-tag color="processing">{{ item.code }}</a-tag>
-                                <span class="doc-name">{{ item.name }}</span>
-                            </a-list-item>
-                        </template>
-                    </a-list>
-                </div>
-
-                <!-- ================= ERROR SUMMARY ================= -->
-                <div v-if="session.detected_error" class="error-summary">
-                    <a-alert
-                        type="error"
-                        show-icon
-                        message="KẾT LUẬN DUYỆT SAI THEO NHÓM"
-                    >
-                        <template #description>
-                            <div class="wrong-group">
-                                <div class="wrong-title">
-                                    <WarningOutlined />
-                                    Nhóm reviewer bị xác định duyệt sai
-                                </div>
-
-                                <div class="wrong-list">
-                                    <a-tag
-                                        v-for="name in session.detected_error.wrong_reviewer_names"
-                                        :key="name"
-                                        color="error"
-                                    >
-                                        <UserOutlined />
-                                        {{ name }}
-                                    </a-tag>
-                                </div>
-
-                                <div class="wrong-note">
-                                    <InfoCircleOutlined />
-                                    Phát hiện tại bước
-                                    <b>#{{ session.detected_error.detected_step }}</b>,
-                                    các bước trước đó thuộc nhóm duyệt sai
-                                </div>
-                            </div>
-                        </template>
-                    </a-alert>
-                </div>
-
-                <!-- ================= REVIEWERS ================= -->
-                <div class="reviewers">
-                    <div
-                        v-for="r in session.reviewers"
-                        :key="r.user_id"
-                        class="reviewer-row"
-                        :class="{ wrong: r.is_wrong }"
-                    >
-                        <div class="reviewer-left">
-                            <div class="reviewer-name">
-                                <UserOutlined />
-                                {{ r.step_order }}. {{ r.name }}
-                            </div>
-                            <div class="reviewer-meta">
-                                {{ r.title }} · {{ r.department }}
-                            </div>
-                        </div>
-
-                        <div class="reviewer-right">
-                            <a-tag
-                                size="small"
-                                :color="
-                                    r.result === 'approved'
-                                        ? 'success'
-                                        : r.result === 'rejected'
-                                        ? 'error'
-                                        : 'default'
-                                "
-                            >
-                                <CheckOutlined v-if="r.result === 'approved'" />
-                                <CloseOutlined v-if="r.result === 'rejected'" />
-                                {{
-                                    r.result === 'approved'
-                                        ? 'Đồng ý'
-                                        : r.result === 'rejected'
-                                            ? 'Không đồng ý'
-                                            : 'Chưa duyệt'
-                                }}
-                            </a-tag>
-
-                            <span v-if="r.reviewed_at" class="review-time">
-                                <ClockCircleOutlined />
-                                {{ r.reviewed_at }}
+        <a-spin :spinning="loading">
+            <div class="approval-block">
+                <div
+                    v-for="session in sortedSessions"
+                    :key="session.session_no"
+                    class="session-row"
+                    :class="sessionClass(session)"
+                >
+                    <!-- ================= HEADER ================= -->
+                    <div class="session-header">
+                        <div class="header-left">
+                            <span class="session-title">
+                                <FileDoneOutlined />
+                                Phiên #{{ session.session_no }}
                             </span>
 
-                            <a-tag v-if="r.is_wrong" color="warning">
-                                <ExclamationCircleOutlined />
-                                Duyệt sai
+                            <a-tag
+                                v-if="isLatestSession(session)"
+                                color="processing"
+                                class="current-tag"
+                            >
+                                <SyncOutlined spin />
+                                PHIÊN HIỆN TẠI
+                            </a-tag>
+                        </div>
+
+                        <div class="header-right">
+                            <a-tag :color="session.valid ? 'success' : 'error'">
+                                <CheckCircleOutlined v-if="session.valid" />
+                                <CloseCircleOutlined v-else />
+                                {{ session.valid ? 'HỢP LỆ' : 'KHÔNG HỢP LỆ' }}
                             </a-tag>
 
-                            <a-tag v-if="r.is_detector" color="processing">
-                                <EyeOutlined />
-                                Người phát hiện
-                            </a-tag>
+                            <span class="time">
+                                <ClockCircleOutlined />
+                                {{ session.start }} – {{ session.end }}
+                            </span>
 
-                            <!-- ===== ACTION BUTTONS ===== -->
-                            <template v-if="canReview(session, r)">
-                                <a-space>
+                            <!-- 🗑 XOÁ PHIÊN -->
+                            <a-popconfirm
+                                v-if="canDeleteSession(session)"
+                                title="Bạn chắc chắn muốn xoá phiên duyệt này?"
+                                ok-text="Xoá"
+                                cancel-text="Huỷ"
+                                ok-type="danger"
+                                @confirm="deleteSession(session)"
+                            >
+                                <a-tooltip title="Xoá phiên duyệt">
                                     <a-button
-                                        type="primary"
+                                        danger
+                                        type="text"
                                         size="small"
-                                        @click="approve(r)"
+                                        class="delete-session-btn"
                                     >
-                                        <CheckOutlined />
-                                        Đồng ý
+                                        <DeleteOutlined />
                                     </a-button>
+                                </a-tooltip>
+                            </a-popconfirm>
+                        </div>
+                    </div>
 
-                                    <a-popconfirm
-                                        title="Bạn chắc chắn KHÔNG đồng ý?"
-                                        ok-text="Xác nhận"
-                                        cancel-text="Hủy"
-                                        @confirm="openRejectModal(r)"
-                                    >
-                                        <a-button danger size="small">
-                                            <CloseOutlined />
-                                            Không đồng ý
-                                        </a-button>
-                                    </a-popconfirm>
-                                </a-space>
+                    <!-- ================= DOCUMENTS ================= -->
+                    <div class="documents">
+                        <div class="section-title">
+                            <PaperClipOutlined />
+                            Tờ trình ({{ session.documents.length }})
+                        </div>
+
+                        <a-list
+                            size="small"
+                            :data-source="session.documents"
+                            class="doc-list"
+                        >
+                            <template #renderItem="{ item }">
+                                <a-list-item class="doc-item">
+                                    <a-tag color="processing">{{ item.code }}</a-tag>
+                                    <span class="doc-name">{{ item.name }}</span>
+                                </a-list-item>
                             </template>
+                        </a-list>
+                    </div>
+
+                    <!-- ================= ERROR SUMMARY ================= -->
+                    <div v-if="session.detected_error" class="error-summary">
+                        <a-alert
+                            type="error"
+                            show-icon
+                            message="KẾT LUẬN DUYỆT SAI THEO NHÓM"
+                        >
+                            <template #description>
+                                <div class="wrong-group">
+                                    <div class="wrong-title">
+                                        <WarningOutlined />
+                                        Nhóm reviewer bị xác định duyệt sai
+                                    </div>
+
+                                    <div class="wrong-list">
+                                        <a-tag
+                                            v-for="name in session.detected_error.wrong_reviewer_names"
+                                            :key="name"
+                                            color="error"
+                                        >
+                                            <UserOutlined />
+                                            {{ name }}
+                                        </a-tag>
+                                    </div>
+
+                                    <div class="wrong-note">
+                                        <InfoCircleOutlined />
+                                        Phát hiện tại bước
+                                        <b>#{{ session.detected_error.detected_step }}</b>,
+                                        các bước trước đó thuộc nhóm duyệt sai
+                                    </div>
+                                </div>
+                            </template>
+                        </a-alert>
+                    </div>
+
+                    <!-- ================= REVIEWERS ================= -->
+                    <div class="reviewers">
+                        <div
+                            v-for="r in session.reviewers"
+                            :key="r.user_id"
+                            class="reviewer-row"
+                            :class="{ wrong: r.is_wrong }"
+                        >
+                            <div class="reviewer-left">
+                                <div class="reviewer-name">
+                                    <UserOutlined />
+                                    {{ r.step_order }}. {{ r.name }}
+                                </div>
+                                <div class="reviewer-meta">
+                                    {{ r.title }} · {{ r.department }}
+                                </div>
+                            </div>
+
+                            <div class="reviewer-right">
+                                <a-tag size="small" :color=" r.result === 'approved' ? 'success' : r.result === 'rejected' ? 'error' : 'default'">
+                                    <CheckOutlined v-if="r.result === 'approved'" />
+                                    <CloseOutlined v-if="r.result === 'rejected'" />
+                                    {{r.result === 'approved' ? 'Đồng ý' : r.result === 'rejected' ? 'Không đồng ý' : 'Chưa duyệt' }}
+                                </a-tag>
+
+                                <span v-if="r.reviewed_at" class="review-time">
+                                    <ClockCircleOutlined />
+                                    {{ r.reviewed_at }}
+                                </span>
+
+                                <a-tag v-if="r.is_wrong" color="warning">
+                                    <ExclamationCircleOutlined />
+                                    Duyệt sai
+                                </a-tag>
+
+                                <a-tag v-if="r.is_detector" color="processing">
+                                    <EyeOutlined />
+                                    Người phát hiện
+                                </a-tag>
+
+                                <!-- ===== ACTION BUTTONS ===== -->
+                                <template v-if="canReview(session, r)">
+                                    <a-space>
+                                        <a-button type="primary" size="small" @click="approve(r)">
+                                            <CheckOutlined />
+                                            Đồng ý
+                                        </a-button>
+
+                                        <a-popconfirm title="Bạn chắc chắn KHÔNG đồng ý?"
+                                            ok-text="Xác nhận"
+                                            cancel-text="Hủy"
+                                            @confirm="openRejectModal(r)"
+                                        >
+                                            <a-button danger size="small">
+                                                <CloseOutlined />
+                                                Không đồng ý
+                                            </a-button>
+                                        </a-popconfirm>
+                                    </a-space>
+                                </template>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </a-spin>
 
         <!-- ================= REJECT MODAL ================= -->
         <a-modal
@@ -215,11 +218,13 @@ import {
     CheckCircleOutlined,
     CloseCircleOutlined,
     ExclamationCircleOutlined,
+    DeleteOutlined
 } from '@ant-design/icons-vue'
 
 import { ref, computed, onMounted } from 'vue'
 
-import { getApprovalSessionsByTask } from '@/api/approvalSessions.js'
+import { getApprovalSessionsByTask, deleteApprovalSession } from '@/api/approvalSessions.js'
+import {message} from "ant-design-vue";
 
 const props = defineProps({
     taskId: {
@@ -232,6 +237,7 @@ const sessions = ref([])
 const rejectVisible = ref(false)
 const rejectReason = ref('')
 const currentReviewer = ref(null)
+const loading = ref(false)
 
 const sortedSessions = computed(() =>
     [...sessions.value].sort((a, b) => b.session_no - a.session_no)
@@ -270,9 +276,36 @@ const submitReject = () => {
 }
 
 const loadSessions = async () => {
-    const { data } = await getApprovalSessionsByTask(props.taskId)
-    sessions.value = data
+    loading.value = true
+    try {
+        const { data } = await getApprovalSessionsByTask(props.taskId)
+        sessions.value = data || []
+    } catch (e) {
+        console.error(e)
+    } finally {
+        loading.value = false
+    }
 }
+
+const canDeleteSession = (session) => {
+    return true
+}
+
+
+const deleteSession = async (session) => {
+    try {
+        loading.value = true
+        await deleteApprovalSession(session.session_id || session.id)
+        message.success('Đã xoá phiên duyệt')
+        await loadSessions()
+    } catch (e) {
+        console.error(e)
+        message.error('Không thể xoá phiên duyệt')
+    } finally {
+        loading.value = false
+    }
+}
+
 
 defineExpose({
     reload: loadSessions
@@ -285,6 +318,7 @@ onMounted(loadSessions)
 <style scoped>
 .approval-card {
     background: #fafafa;
+    min-height: 300px;
 }
 
 .approval-block {
@@ -301,16 +335,7 @@ onMounted(loadSessions)
     border: 1px solid #e5e7eb;
 }
 
-/* ===== CURRENT ===== */
-.session-latest.session-valid {
-    border-left: 6px solid var(--ant-primary-color);
-    background: #f0f5ff;
-}
 
-.session-latest.session-invalid {
-    border-left: 6px solid var(--ant-error-color);
-    background: #fff1f0;
-}
 
 /* ===== HEADER ===== */
 .session-header {
@@ -381,7 +406,6 @@ onMounted(loadSessions)
 .wrong-title {
     font-weight: 600;
     margin-bottom: 8px;
-    color: var(--ant-error-color);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -482,6 +506,15 @@ onMounted(loadSessions)
 
 .reviewer-row.wrong:not(:last-child) {
     border-bottom: 1px solid #ffe7ba;
+}
+
+.delete-session-btn {
+    padding: 0 6px;
+    height: 28px;
+}
+
+.delete-session-btn:hover {
+    background: #fff1f0;
 }
 
 </style>

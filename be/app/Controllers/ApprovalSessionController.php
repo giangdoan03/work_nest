@@ -8,6 +8,7 @@ use App\Models\ApprovalSessionApproverModel;
 use App\Libraries\GoogleDriveService;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\HTTP\ResponseInterface;
+use RuntimeException;
 use Throwable;
 
 class ApprovalSessionController extends ResourceController
@@ -53,70 +54,68 @@ class ApprovalSessionController extends ResourceController
 
             /* ================= FILES (GOOGLE DRIVE) ================= */
             $fileModel = new ApprovalSessionFileModel();
-            $files     = $this->request->getFileMultiple('files');
+            $files = $this->request->getFileMultiple('files');
 
-            if ($files) {
-                foreach ($files as $file) {
-                    if (!$file->isValid() || $file->hasMoved()) {
-                        continue;
-                    }
+            if (!$files) {
+                throw new RuntimeException('Không nhận được file upload');
+            }
 
-                    $ext = strtolower($file->getExtension());
-                    if (!in_array($ext, ['xls', 'xlsx', 'doc', 'docx'], true)) {
-                        return $this->fail(
-                            'Chỉ cho phép file Excel hoặc Word',
-                            400
-                        );
-                    }
-
-                    $originalName = $file->getClientName();
-
-                    /* ===== MOVE FILE TẠM ===== */
-                    $tmpName  = 'tmp_' . uniqid() . '_' . $originalName;
-                    $tempPath = WRITEPATH . 'uploads/' . $tmpName;
-                    $file->move(WRITEPATH . 'uploads', $tmpName);
-
-                    /* ===== UPLOAD GOOGLE DRIVE ===== */
-                    try {
-                        $google = new GoogleDriveService();
-                        $driveInfo = $google->uploadAndConvert(
-                            $tempPath,
-                            $originalName
-                        );
-                    } catch (Throwable $e) {
-                        @unlink($tempPath);
-
-                        return $this->fail([
-                            'message' => 'Google Drive đang gặp sự cố hoặc token đã hết hạn.',
-                            'code'    => 'GOOGLE_DRIVE_ERROR'
-                        ], 400);
-                    }
-
-                    @unlink($tempPath);
-
-                    if (!$driveInfo || empty($driveInfo['drive_id'])) {
-                        continue;
-                    }
-
-                    /* ===== SAVE DB ===== */
-                    $fileModel->insert([
-                        'session_id'     => $sessionId,
-                        'file_name'      => $originalName,
-                        'file_ext'       => $ext,
-                        'file_size'      => $file->getSize(),
-                        'file_path'      => $driveInfo['view'],           // URL Google Docs
-                        'drive_id'       => $driveInfo['drive_id'],
-                        'google_file_id' => $driveInfo['google_file_id'],
-                        'created_at'     => date('Y-m-d H:i:s'),
-                    ]);
+            foreach ($files as $file) {
+                if (!$file->isValid() || $file->hasMoved()) {
+                    continue;
                 }
+
+                $ext = strtolower($file->getExtension());
+                if (!in_array($ext, ['xls', 'xlsx', 'doc', 'docx'], true)) {
+                    throw new RuntimeException('Chỉ cho phép file Excel hoặc Word');
+                }
+
+                $originalName = $file->getClientName();
+
+                $tmpName  = 'tmp_' . uniqid() . '_' . $originalName;
+                $tempPath = WRITEPATH . 'uploads/' . $tmpName;
+                $file->move(WRITEPATH . 'uploads', $tmpName);
+
+                try {
+                    $google = new GoogleDriveService();
+                    $driveInfo = $google->uploadAndConvert($tempPath, $originalName);
+                } catch (Throwable $e) {
+                    @unlink($tempPath);
+                    throw new RuntimeException('Google Drive lỗi: ' . $e->getMessage());
+                }
+
+                @unlink($tempPath);
+
+                if (empty($driveInfo['drive_id'])) {
+                    throw new RuntimeException('Upload Google Drive thất bại');
+                }
+
+                $fileModel->insert([
+                    'session_id'     => $sessionId,
+                    'file_name'      => $originalName,
+                    'file_ext'       => $ext,
+                    'file_size'      => $file->getSize(),
+                    'file_path'      => $driveInfo['view'],
+                    'drive_id'       => $driveInfo['drive_id'],
+                    'google_file_id' => $driveInfo['google_file_id'],
+                    'created_at'     => date('Y-m-d H:i:s'),
+                ]);
             }
 
             /* ================= APPROVERS ================= */
             $approverModel = new ApprovalSessionApproverModel();
 
             foreach ($approvers as $index => $item) {
-                [$uid, $deptId] = explode('-', $item);
+
+                if (!is_string($item) || !str_contains($item, '-')) {
+                    throw new RuntimeException('Invalid approver format: ' . json_encode($item));
+                }
+
+                [$uid, $deptId] = explode('-', $item, 2);
+
+                if (!$uid || !$deptId) {
+                    throw new RuntimeException('Invalid approver value');
+                }
 
                 $approverModel->insert([
                     'session_id'     => $sessionId,
@@ -221,6 +220,7 @@ class ApprovalSessionController extends ResourceController
 
         foreach ($sessions as $index => $s) {
             $result[] = [
+                'session_id' => $s['id'], // 👈 thêm dòng này
                 'session_no' => $total - $index,
                 'start'      => date('H:i', strtotime($s['created_at'])),
                 'end'        => null,
@@ -232,6 +232,80 @@ class ApprovalSessionController extends ResourceController
 
         return $this->respond($result);
     }
+
+    public function delete($id = null): ResponseInterface
+    {
+        $db = db_connect();
+        $db->transBegin();
+
+        try {
+            /* ================= AUTH ================= */
+            $session = session();
+            if (!$session->get('logged_in')) {
+                return $this->failUnauthorized('Bạn chưa đăng nhập');
+            }
+
+            $userId = (int)$session->get('user_id');
+            $id = (int)$id;
+
+            if ($id <= 0) {
+                return $this->failValidationErrors('Session ID không hợp lệ');
+            }
+
+            /* ================= CHECK SESSION ================= */
+            $sessionRow = $this->model->find($id);
+            if (!$sessionRow) {
+                return $this->failNotFound('Phiên duyệt không tồn tại');
+            }
+
+            // (Tuỳ chọn) chỉ người tạo mới được xoá
+            if ((int)$sessionRow['created_by'] !== $userId) {
+                return $this->failForbidden('Bạn không có quyền xoá phiên duyệt này');
+            }
+
+            /* ================= DELETE FILES ================= */
+            $fileModel = new ApprovalSessionFileModel();
+            $files = $fileModel
+                ->where('session_id', $id)
+                ->findAll();
+
+            // 👉 nếu muốn xoá cả Google Drive
+//            foreach ($files as $f) {
+//                if (!empty($f['google_file_id'])) {
+//                    try {
+//                        $google = new GoogleDriveService();
+//                        $google->deleteFile($f['google_file_id']); // nếu bạn có method này
+//                    } catch (Throwable $e) {
+//                        log_message('error', '[ApprovalSession] Delete Drive fail: ' . $e->getMessage());
+//                    }
+//                }
+//            }
+
+            $fileModel->where('session_id', $id)->delete();
+
+            /* ================= DELETE APPROVERS ================= */
+            $approverModel = new ApprovalSessionApproverModel();
+            $approverModel->where('session_id', $id)->delete();
+
+            /* ================= DELETE SESSION ================= */
+            $this->model->delete($id);
+
+            $db->transCommit();
+
+            return $this->respond([
+                'success' => true,
+                'message' => 'Đã xoá phiên duyệt'
+            ]);
+
+        } catch (Throwable $e) {
+            $db->transRollback();
+
+            log_message('error', '[ApprovalSession][DELETE] ' . $e->getMessage());
+
+            return $this->failServerError('Không thể xoá phiên duyệt');
+        }
+    }
+
 
 
 }

@@ -27,7 +27,6 @@
             </a-button>
         </a-upload>
 
-
         <a-divider />
 
         <!-- Users -->
@@ -59,20 +58,17 @@
                                 </a-tag>
                             </div>
                         </label>
-
-
                     </div>
                 </div>
             </a-checkbox-group>
         </div>
-
     </a-modal>
 </template>
 
 <script setup>
-import { ref, computed, watch, toRefs } from 'vue'
+import { ref, computed, toRefs, watch } from 'vue'
 import { UploadOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
+import { message, Upload } from 'ant-design-vue'
 import { createApprovalSession } from '@/api/approvalSessions'
 
 /* ================= PROPS ================= */
@@ -97,9 +93,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:open', 'confirm'])
-emit('confirm')
-emit('update:open', false)
-const submitting = ref(false)
 
 /* expose props */
 const { users, getDepartmentName } = toRefs(props)
@@ -107,6 +100,7 @@ const { users, getDepartmentName } = toRefs(props)
 /* ================= STATE ================= */
 const fileList = ref([])
 const checkedUsers = ref([])
+const submitting = ref(false)
 
 /* ================= COMPUTED ================= */
 const canSubmit = computed(() =>
@@ -167,23 +161,22 @@ const usersByDepartment = computed(() => {
 const ALLOWED_EXTS = ['xls', 'xlsx', 'doc', 'docx']
 
 const handleBeforeUpload = (file) => {
-    if (submitting.value) return false
+    if (submitting.value) return Upload.LIST_IGNORE
 
     if (fileList.value.length >= props.maxFiles) {
         message.warning(`Chỉ được đính kèm tối đa ${props.maxFiles} file`)
-        return false
+        return Upload.LIST_IGNORE
     }
 
     const ext = file.name.split('.').pop().toLowerCase()
     if (!ALLOWED_EXTS.includes(ext)) {
         message.error('Chỉ cho phép file Excel hoặc Word')
-        return false
+        return Upload.LIST_IGNORE
     }
 
-    // chống add trùng
     if (fileList.value.some(f => f.name === file.name)) {
         message.warning('File đã được chọn')
-        return false
+        return Upload.LIST_IGNORE
     }
 
     fileList.value.push({
@@ -193,22 +186,13 @@ const handleBeforeUpload = (file) => {
         originFileObj: file
     })
 
-    return false
+    return Upload.LIST_IGNORE
 }
 
 const handleRemove = (file) => {
     fileList.value = fileList.value.filter(f => f.uid !== file.uid)
     return true
 }
-
-/* ================= WATCH ================= */
-watch(() => props.open, (v) => {
-    if (!v) {
-        fileList.value = []
-        checkedUsers.value = []
-        submitting.value = false
-    }
-})
 
 /* ================= SUBMIT ================= */
 const onOk = async () => {
@@ -220,19 +204,19 @@ const onOk = async () => {
     submitting.value = true
 
     try {
-        // ===== BUILD FORMDATA (GIỐNG createNewComment) =====
         const form = new FormData()
         form.append('task_id', props.taskId)
         form.append('approvers', JSON.stringify(checkedUsers.value))
 
-        for (const f of fileList.value) {
+        fileList.value.forEach(f => {
             form.append('files[]', f.originFileObj, f.name)
-        }
+        })
 
         await createApprovalSession(form)
 
         message.success('Tạo phiên duyệt thành công')
 
+        resetForm()                 // ⭐ RESET Ở ĐÂY
         emit('confirm')
         emit('update:open', false)
 
@@ -247,14 +231,27 @@ const onOk = async () => {
     }
 }
 
+
+const resetForm = () => {
+    fileList.value = []
+    checkedUsers.value = []
+    submitting.value = false
+}
+
 const onCancel = () => {
+    resetForm()                     // ⭐ RESET
     emit('update:open', false)
 }
+
+watch(
+    () => props.open,
+    (val) => {
+        if (!val) resetForm()
+    }
+)
 </script>
 
-
 <style scoped>
-    /* ===== Modal wrapper ===== */
 .upload-user-modal :deep(.ant-modal-content) {
     border-radius: 14px;
 }
@@ -274,19 +271,10 @@ const onCancel = () => {
     padding: 20px 22px;
 }
 
-/* ===== Section ===== */
 .section {
     margin-top: 8px;
 }
 
-.section-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 12px;
-}
-
-/* ===== Department group ===== */
 .dept-group {
     margin-bottom: 18px;
 }
@@ -304,18 +292,14 @@ const onCancel = () => {
 .dept-count {
     font-size: 12px;
     color: #6b7280;
-    font-weight: 400;
 }
 
-/* ===== 2-column grid ===== */
 .user-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px 12px;
 }
 
-/* ===== User item ===== */
-/* ===== User item ===== */
 .user-item {
     display: flex;
     align-items: center;
@@ -333,12 +317,11 @@ const onCancel = () => {
     border-color: #c7d2fe;
 }
 
-/* ===== Name + position inline ===== */
 .user-inline {
     display: flex;
     align-items: center;
     gap: 8px;
-    min-width: 0; /* để ellipsis hoạt động */
+    min-width: 0;
 }
 
 .user-name {
@@ -349,38 +332,28 @@ const onCancel = () => {
     text-overflow: ellipsis;
 }
 
-/* tag chức danh */
-.position-tag {
-    font-size: 12px;
-    border-radius: 999px;
-    padding: 0 8px;
-    line-height: 20px;
+.user-scroll {
+    max-height: 45vh;
+    overflow-y: auto;
+    padding-right: 4px;
 }
-    /* chỉ scroll phần user */
-    .user-scroll {
-        max-height: 45vh;
-        overflow-y: auto;
-        padding-right: 4px;
-    }
 
-    /* scrollbar đẹp */
-    .user-scroll::-webkit-scrollbar {
-        width: 6px;
-    }
+.user-scroll::-webkit-scrollbar {
+    width: 6px;
+}
 
-    .user-scroll::-webkit-scrollbar-thumb {
-        background: #d1d5db;
-        border-radius: 6px;
-    }
+.user-scroll::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 6px;
+}
 
-    .user-scroll::-webkit-scrollbar-thumb:hover {
-        background: #9ca3af;
-    }
-/* Responsive */
+.user-scroll::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
 @media (max-width: 520px) {
     .user-grid {
         grid-template-columns: 1fr;
     }
 }
-
 </style>

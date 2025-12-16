@@ -671,15 +671,15 @@ const props = defineProps({
     users: { type: Array, default: () => [] },
     roster: { type: Array, default: () => [] }
 })
-
+const uploadModalOpen = ref(false)
 
 const emit = defineEmits(['approval-session-created'])
 
-const uploadModalOpen = ref(false)
-
-const handleApprovalSessionCreated = () => {
-    emit('approval-session-created')
+const handleApprovalSessionCreated = (payload) => {
+    // payload có thể là { session_id: 29 }
+    emit('approval-session-created', payload)
 }
+
 
 const latestBatch = ref(null)
 const latestFiles = ref([])

@@ -21,3 +21,7 @@ export const createApprovalSession = (formData) => {
 export const getApprovalSessionsByTask = (taskId) => {
     return instance.get(`/tasks/${taskId}/approval-sessions`)
 }
+
+export const deleteApprovalSession = (sessionId) => {
+    return instance.delete(`/approval-sessions/${sessionId}`)
+}
