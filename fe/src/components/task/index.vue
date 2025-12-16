@@ -1,41 +1,24 @@
 <template>
     <div class="task">
         <div class="header-wrapper">
-            <a-page-header
-                title="Về danh sách"
-                @back="goBack"
-                style="padding: 0;"
-            />
-            <div class="action">
-                <a-button type="primary" v-if="!isEditMode" @click="editTask">Chỉnh sửa</a-button>
-                <a-button type="primary" v-if="isEditMode" @click="saveEditTask">Lưu</a-button>
-                <a-button v-if="isEditMode" @click="cancelEditTask">Hủy</a-button>
-                <a-dropdown trigger="click">
-                    <a-button>
-                        <EllipsisOutlined/>
-                    </a-button>
-                    <template #overlay>
-                        <a-menu>
-                            <a-menu-item danger>
-                                <a-popconfirm
-                                    title="Bạn chắc chắn muốn xoá nhiệm vụ này?"
-                                    ok-text="Xoá"
-                                    cancel-text="Huỷ"
-                                    ok-type="danger"
-                                    :disabled="deleting"
-                                    @confirm="handleDeleteCurrentTask"
-                                >
-                                    <template #icon>
-                                        <DeleteOutlined/>
-                                    </template>
-                                    <span :class="{ 'is-loading': deleting }">Xoá nhiệm vụ</span>
-                                </a-popconfirm>
-                            </a-menu-item>
-                        </a-menu>
-                    </template>
-                </a-dropdown>
-            </div>
+            <a-card class="header-card">
+                <a-row justify="space-between" align="middle">
+                    <a-page-header
+                        title="Về danh sách"
+                        @back="goBack"
+                        style="padding: 0;"
+                    />
+
+                    <div class="action">
+                        <a-button type="primary" v-if="!isEditMode" @click="editTask">Chỉnh sửa</a-button>
+                        <a-button type="primary" v-if="isEditMode" @click="saveEditTask">Lưu</a-button>
+                        <a-button v-if="isEditMode" @click="cancelEditTask">Hủy</a-button>
+                        <a-dropdown trigger="click"> <a-button> <EllipsisOutlined/> </a-button> <template #overlay> <a-menu> <a-menu-item danger> <a-popconfirm title="Bạn chắc chắn muốn xoá nhiệm vụ này?" ok-text="Xoá" cancel-text="Huỷ" ok-type="danger" :disabled="deleting" @confirm="handleDeleteCurrentTask" > <template #icon> <DeleteOutlined/> </template> <span :class="{ 'is-loading': deleting }">Xoá nhiệm vụ</span> </a-popconfirm> </a-menu-item> </a-menu> </template> </a-dropdown>
+                    </div>
+                </a-row>
+            </a-card>
         </div>
+
         <div class="task-info">
             <a-row :gutter="16">
                 <!-- LEFT: 2/3 — Thông tin nhiệm vụ -->
@@ -335,38 +318,7 @@
                                         </div>
                                     </div>
                                 </a-tab-pane>
-                                <!-- Tab 2: Lịch sử phê duyệt -->
-                                <a-tab-pane key="approval-history" tab="Lịch sử phê duyệt">
-                                    <div class="task-info-content">
-                                        <a-row :gutter="16">
-                                            <a-col :span="24">
-                                                <a-table :columns="logColumns" :data-source="logData" row-key="id">
-                                                    <template #bodyCell="{ column, record }">
-                                                        <template v-if="column.dataIndex === 'level'">Cấp
-                                                            {{ record.level }}
-                                                        </template>
-                                                        <template v-else-if="column.dataIndex === 'status'">
-                                                            <a-tag :color="getStatusColor(record.status)">
-                                                                {{ getStatusText(record.status) }}
-                                                            </a-tag>
-                                                        </template>
-                                                        <template v-else-if="column.dataIndex === 'approved_by_name'">
-                                                            {{ record.approved_by_name || '—' }}
-                                                        </template>
-                                                        <template v-else-if="column.dataIndex === 'comment'">
-                                                            <div>{{ record.comment || '—' }}</div>
-                                                            <div style="font-size: 12px; color: #888; margin-top:6px;">
-                                                                {{ record.acted_at_vi || record.added_at_vi || '' }}
-                                                            </div>
-                                                        </template>
-                                                    </template>
-                                                </a-table>
-                                            </a-col>
-                                        </a-row>
-                                    </div>
-                                </a-tab-pane>
-
-                                <!-- Tab 3: Tài liệu (MỚI) -->
+                                <!--  Tab 3: Tài liệu (MỚI) -->
                                 <a-tab-pane key="attachments" tab="Tài liệu">
                                     <div class="task-info-content">
                                         <div class="task-in-end">
@@ -375,6 +327,19 @@
                                         </div>
                                     </div>
                                 </a-tab-pane>
+
+                                <!-- Tab 2: Lịch sử phê duyệt -->
+
+                                <a-tab-pane key="approval-history">
+                                    <template #tab>
+                                        <span class="tab-with-badge">
+                                            <span class="tab-text">Phê duyệt</span>
+                                          <a-badge :count="3" size="small" class="badge-animate" />
+                                        </span>
+                                    </template>
+                                    Nội dung lịch sử phê duyệt
+                                </a-tab-pane>
+
                             </a-tabs>
                         </div>
                     </a-card>
@@ -397,7 +362,7 @@
     </div>
 </template>
 <script setup>
-import {EllipsisOutlined, DeleteOutlined} from '@ant-design/icons-vue'
+import {EllipsisOutlined, DeleteOutlined, HistoryOutlined} from '@ant-design/icons-vue'
 import {computed, nextTick, onMounted, reactive, ref, watch} from 'vue'
 import {message} from 'ant-design-vue'
 import 'dayjs/locale/vi'
@@ -1216,12 +1181,24 @@ onMounted(async () => {
         logData.value = []
     }
 })
+
+onMounted(() => {
+    const header = document.querySelector('.header-wrapper')
+    const observer = new IntersectionObserver(
+        ([e]) => {
+            header.classList.toggle('is-sticky', !e.isIntersecting)
+        },
+        { threshold: [1] }
+    )
+    observer.observe(header)
+})
+
 </script>
 
 <style scoped>
 
 .task-info {
-    margin-top: 16px;
+    margin-top: 10px;
 }
 
 .task-info-content {
@@ -1320,7 +1297,6 @@ onMounted(async () => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px; /* giữ khoảng cách dưới */
 }
 
 .action {
@@ -1465,4 +1441,64 @@ onMounted(async () => {
     min-height: 0;      /* QUAN TRỌNG - cho phép con được scroll */
 }
 
+.header-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-card {
+    width: 100%;
+}
+
+.tab-with-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px; /* khoảng cách chữ - badge */
+}
+.badge-animate {
+    position: relative;
+}
+
+/* ép badge thành tròn */
+.badge-animate .ant-badge-count {
+    border-radius: 50%;
+}
+
+/* vòng glow tròn */
+.badge-animate::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: badge-glow-circle 2.5s ease-out infinite;
+    background: rgba(82, 196, 26, 0.4);
+    z-index: -1;
+}
+
+
+@keyframes badge-glow-circle {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.6;
+    }
+    70% {
+        transform: translate(-50%, -50%) scale(3.4);
+        opacity: 0;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+</style>
+
+<style>
+.header-wrapper .ant-card-body {
+    padding: 5px 10px;
+}
 </style>
