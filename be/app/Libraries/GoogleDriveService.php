@@ -105,6 +105,9 @@ class GoogleDriveService
     // ================================================================
     // UPLOAD FILE THƯỜNG
     // ================================================================
+    /**
+     * @throws \Google\Service\Exception
+     */
     public function uploadFile(string $path, string $name): array
     {
         $meta = new Google_Service_Drive_DriveFile([
@@ -130,6 +133,10 @@ class GoogleDriveService
     // ================================================================
     // UPLOAD + AUTO CONVERT (DOC/XLS/PPT → Google Docs/Sheets/Slides)
     // ================================================================
+    /**
+     * @throws \Google\Service\Exception
+     * @throws Exception
+     */
     public function uploadAndConvert(string $path, string $name): array
     {
         $ext  = strtolower(pathinfo($name, PATHINFO_EXTENSION));

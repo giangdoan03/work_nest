@@ -337,7 +337,10 @@
                                           <a-badge :count="3" size="small" class="badge-animate" />
                                         </span>
                                     </template>
-                                    Nội dung lịch sử phê duyệt
+                                    <ApprovalHistoryBlock
+                                        ref="approvalHistoryRef"
+                                        :task-id="Number(route.params.id)"
+                                    />
                                 </a-tab-pane>
 
                             </a-tabs>
@@ -351,7 +354,12 @@
                             <!-- Cột trái: Thảo luận -->
                             <a-col :span="24" :xs="24" :lg="24" style="padding-left: 0; padding-right: 0">
                                 <div class="discussion-scroll" v-auto-maxheight="-50">
-                                    <Comment :users="listUser" :departments="listDepartment" :roster="logData" />
+                                    <Comment
+                                        :users="listUser"
+                                        :departments="listDepartment"
+                                        :roster="logData"
+                                        @approval-session-created="handleApprovalSessionCreated"
+                                    />
                                 </div>
                             </a-col>
                         </a-row>
@@ -400,6 +408,7 @@ import {useCommonStore} from '@/stores/common'
 import debounce from 'lodash-es/debounce'
 import AttachmentsCard from '@/components/AttachmentsCard.vue'
 import ApprovalStatus from '@/components/Approval/ApprovalStatus.vue'
+import ApprovalHistoryBlock from "@/components/task/ApprovalHistoryBlock.vue";
 
 const commonStore = useCommonStore()
 dayjs.locale('vi')
@@ -444,6 +453,14 @@ const formData = ref({
     approval_steps: 0,
     approval_status: '',
 })
+
+// 🔥 ref để gọi hàm reload bên ApprovalHistoryBlock
+const approvalHistoryRef = ref(null)
+
+// hàm gọi khi tạo phiên duyệt xong
+const handleApprovalSessionCreated = () => {
+    approvalHistoryRef.value?.reload()
+}
 
 const priorityOption = ref([
     {value: 'low', label: 'Thấp', color: 'success'},

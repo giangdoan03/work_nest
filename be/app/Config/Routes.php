@@ -54,6 +54,9 @@ $routes->group('api', function ($routes) {
 
     $routes->get('my-tasks', 'MyTaskController::index');
 
+    $routes->post('approval-sessions', 'ApprovalSessionController::create');
+    $routes->get('tasks/(:num)/approval-sessions', 'ApprovalSessionController::byTask/$1');
+
     // Danh sách hợp đồng của 1 khách hàng
     $routes->get('contracts/by-customer/(:num)', 'CustomerController::contracts/$1');
 

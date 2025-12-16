@@ -195,16 +195,36 @@
 
                 <div class="tg-composer">
                     <!-- Attach -->
-                    <a-upload
-                        :show-upload-list="false"
-                        :multiple="true"
-                        :max-count="3"
-                        :before-upload="handleBeforeUpload"
-                    >
-                        <a-button type="text" class="tg-attach-btn" title="Đính kèm">
-                            <PaperClipOutlined/>
+<!--                    <a-upload-->
+<!--                        :show-upload-list="false"-->
+<!--                        :multiple="true"-->
+<!--                        :max-count="3"-->
+<!--                        :before-upload="handleBeforeUpload"-->
+<!--                    >-->
+<!--                        <a-button type="text" class="tg-attach-btn" title="Đính kèm">-->
+<!--                            <PaperClipOutlined/>-->
+<!--                        </a-button>-->
+<!--                    </a-upload>-->
+
+                    <a-tooltip title="Tạo phiên duyệt mới">
+                        <a-button
+                            type="text"
+                            class="tg-attach-btn"
+                            @click="uploadModalOpen = true"
+                        >
+                            <PlusOutlined />
                         </a-button>
-                    </a-upload>
+                    </a-tooltip>
+
+
+                    <UploadWithUserModal
+                        v-model:open="uploadModalOpen"
+                        :task-id="Number(route.params.id)"
+                        :users="users"
+                        :get-department-name="getDepartmentName"
+                        @confirm="handleApprovalSessionCreated"
+                    />
+
 
                     <!-- Ô nhập -->
                     <a-textarea
@@ -600,7 +620,7 @@ import {
     CaretDownOutlined,
     CaretUpOutlined,
     CheckOutlined,
-    CloseOutlined,
+    PlusOutlined,
     FileExcelOutlined,
     FilePdfOutlined,
     FilePptOutlined,
@@ -642,10 +662,10 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import BaseAvatar from '@/components/common/BaseAvatar.vue'
 import Draggable from 'vuedraggable'
 import {addEntityMember} from "@/api/entityMembers.js";
-
+import UploadWithUserModal from '@/components/task/UploadWithUserModal.vue'
 dayjs.extend(relativeTime)
 dayjs.locale('vi')
-
+const openUploadModal = ref(false)
 const props = defineProps({
     departments: { type: Array, default: () => [] },
     users: { type: Array, default: () => [] },
@@ -653,11 +673,20 @@ const props = defineProps({
 })
 
 
+const emit = defineEmits(['approval-session-created'])
+
+const uploadModalOpen = ref(false)
+
+const handleApprovalSessionCreated = () => {
+    emit('approval-session-created')
+}
+
 const latestBatch = ref(null)
 const latestFiles = ref([])
 const latestBatchMeta = ref(null)
 const approveLoading = ref({})
 const signLoading = ref({})
+
 // bạn có thể lắng nghe sự kiện @update để cập nhật lại thứ tự
 const handleReorder = async (evt) => {
     if (!canModifyRoster.value) {
@@ -2092,6 +2121,19 @@ function canSign(m) {
 
     return isMe;
 }
+const handleUploadConfirm = ({ files, userIds }) => {
+    // 1️⃣ Gắn file vào logic hiện tại
+    selectedFiles.value.push(...files)
+
+    // 2️⃣ Nếu muốn auto mention / auto assign user
+    userIds.forEach(uid => {
+        const u = listUser.value.find(x => x.id === uid)
+        if (u) {
+            insertMention(u.name)
+        }
+    })
+}
+
 
 /* ===== lifecycle ===== */
 onMounted(async () => {
@@ -2254,7 +2296,7 @@ onBeforeUnmount(() => {
 
 /* List comments */
 .list-comment {
-    height: 68vh;
+    height: 45vh;
     flex: 1 1 auto;
     overflow: auto;
     padding: 8px 10px 0;
