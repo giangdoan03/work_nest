@@ -12,8 +12,9 @@
         :ok-button-props="{ disabled: !canSubmit }"
         :confirm-loading="submitting"
     >
-        <!-- Upload -->
+        <!-- Upload (chỉ CREATE) -->
         <a-upload
+            v-if="mode === 'create'"
             :file-list="fileList"
             :before-upload="handleBeforeUpload"
             @remove="handleRemove"
@@ -52,7 +53,6 @@
 
                             <div class="user-inline">
                                 <span class="user-name">{{ u.name }}</span>
-
                                 <a-tag size="small" color="blue">
                                     {{ u.position_name }}
                                 </a-tag>
@@ -65,81 +65,90 @@
     </a-modal>
 </template>
 
+
 <script setup>
-import { ref, computed, toRefs, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { UploadOutlined } from '@ant-design/icons-vue'
 import { message, Upload } from 'ant-design-vue'
-import { createApprovalSession } from '@/api/approvalSessions'
+import {
+    createApprovalSession,
+    updateApprovalSession
+} from '@/api/approvalSessions'
 
 /* ================= PROPS ================= */
 const props = defineProps({
     open: Boolean,
-    taskId: {
-        type: [Number, String],
-        required: true
-    },
-    users: {
-        type: Array,
-        default: () => []
-    },
-    maxFiles: {
-        type: Number,
-        default: 3
-    },
-    getDepartmentName: {
-        type: Function,
-        default: () => ''
-    }
+    mode: { type: String, default: 'create' }, // create | update
+    taskId: { type: [Number, String], required: true },
+
+    // FULL USERS (dùng cho cả create + update)
+    users: { type: Array, required: true },
+
+    // CHỈ DÙNG ĐỂ CHECK
+    reviewers: { type: Array, default: () => [] },
+
+    maxFiles: { type: Number, default: 3 },
+    getDepartmentName: { type: Function, default: () => '' },
+    sessionId: { type: [Number, null], default: null }
 })
 
 const emit = defineEmits(['update:open', 'confirm'])
-
-/* expose props */
-const { users, getDepartmentName } = toRefs(props)
 
 /* ================= STATE ================= */
 const fileList = ref([])
 const checkedUsers = ref([])
 const submitting = ref(false)
 
-/* ================= COMPUTED ================= */
-const canSubmit = computed(() =>
-    !submitting.value &&
-    fileList.value.length > 0 &&
-    checkedUsers.value.length > 0
-)
+/* ================= SUBMIT ENABLE ================= */
+const canSubmit = computed(() => {
+    if (submitting.value) return false
+    if (props.mode === 'update') return checkedUsers.value.length > 0
+    return checkedUsers.value.length > 0 && fileList.value.length > 0
+})
 
-/* ================= USERS DISPLAY ================= */
+/* =====================================================
+ * USERS – SINGLE SOURCE (CREATE & UPDATE DÙNG CHUNG)
+ * ===================================================== */
 const displayUsers = computed(() => {
     const result = []
 
-    users.value.forEach(user => {
-        // không kiêm nhiệm
+    props.users.forEach(user => {
+        // ===== USER THƯỜNG =====
         if (user.is_multi_role !== '1' || !user.multi_roles?.length) {
             result.push({
                 user_id: user.id,
                 name: user.name,
                 department_id: user.department_id,
-                department_name: getDepartmentName.value(user),
+
+                // 🔑 ƯU TIÊN department_name CÓ SẴN
+                department_name:
+                    user.department_name ??
+                    props.getDepartmentName(user),
+
                 position_name: user.position_name
             })
             return
         }
 
-        // kiêm nhiệm
+        // ===== USER KIÊM NHIỆM =====
         user.multi_roles.forEach(role => {
             if (role.active !== '1') return
-
-            const isBGD = role.department_name === 'Ban giám đốc'
 
             result.push({
                 user_id: user.id,
                 name: user.name,
                 department_id: role.department_id,
-                department_name: role.department_name,
-                position_name: isBGD
-                    ? user.position_name
-                    : 'Trưởng phòng'
+
+                // 🔑 ƯU TIÊN role.department_name → fallback user
+                department_name:
+                    role.department_name ??
+                    user.department_name ??
+                    props.getDepartmentName(user),
+
+                position_name:
+                    role.department_name === 'Ban giám đốc'
+                        ? user.position_name
+                        : 'Trưởng phòng'
             })
         })
     })
@@ -147,60 +156,69 @@ const displayUsers = computed(() => {
     return result
 })
 
+
+
+/* =====================================================
+ * GROUP BY DEPARTMENT (GIỐNG MODAL CREATE)
+ * ===================================================== */
 const usersByDepartment = computed(() => {
     const map = {}
+
     displayUsers.value.forEach(u => {
-        const dept = u.department_name || 'Khác'
+        const dept = u.department_name
         if (!map[dept]) map[dept] = []
         map[dept].push(u)
     })
-    return map
+
+    // sort user trong từng phòng
+    Object.keys(map).forEach(dept => {
+        map[dept].sort((a, b) =>
+            a.name.localeCompare(b.name, 'vi')
+        )
+    })
+
+    // sort phòng ban
+    return Object.fromEntries(
+        Object.entries(map).sort(([a], [b]) =>
+            a.localeCompare(b, 'vi')
+        )
+    )
 })
+
 
 /* ================= UPLOAD ================= */
 const ALLOWED_EXTS = ['xls', 'xlsx', 'doc', 'docx']
 
 const handleBeforeUpload = (file) => {
-    if (submitting.value) return Upload.LIST_IGNORE
+    if (props.mode === 'update') return Upload.LIST_IGNORE
 
     if (fileList.value.length >= props.maxFiles) {
-        message.warning(`Chỉ được đính kèm tối đa ${props.maxFiles} file`)
+        message.warning(`Chỉ được tối đa ${props.maxFiles} file`)
         return Upload.LIST_IGNORE
     }
 
     const ext = file.name.split('.').pop().toLowerCase()
     if (!ALLOWED_EXTS.includes(ext)) {
-        message.error('Chỉ cho phép file Excel hoặc Word')
-        return Upload.LIST_IGNORE
-    }
-
-    if (fileList.value.some(f => f.name === file.name)) {
-        message.warning('File đã được chọn')
+        message.error('Chỉ cho phép Excel / Word')
         return Upload.LIST_IGNORE
     }
 
     fileList.value.push({
         uid: file.uid,
         name: file.name,
-        status: 'done',
         originFileObj: file
     })
 
     return Upload.LIST_IGNORE
 }
 
-const handleRemove = (file) => {
+const handleRemove = file => {
     fileList.value = fileList.value.filter(f => f.uid !== file.uid)
-    return true
 }
 
 /* ================= SUBMIT ================= */
 const onOk = async () => {
-    if (!canSubmit.value) {
-        message.warning('Vui lòng chọn file và người duyệt')
-        return
-    }
-
+    if (!canSubmit.value) return
     submitting.value = true
 
     try {
@@ -208,30 +226,32 @@ const onOk = async () => {
         form.append('task_id', props.taskId)
         form.append('approvers', JSON.stringify(checkedUsers.value))
 
-        fileList.value.forEach(f => {
-            form.append('files[]', f.originFileObj, f.name)
-        })
+        if (props.mode === 'create') {
+            fileList.value.forEach(f =>
+                form.append('files[]', f.originFileObj, f.name)
+            )
+            await createApprovalSession(form)
+        } else {
+            await updateApprovalSession(props.sessionId, form)
+        }
 
-        await createApprovalSession(form)
+        message.success(
+            props.mode === 'create'
+                ? 'Tạo phiên duyệt thành công'
+                : 'Cập nhật phiên duyệt thành công'
+        )
 
-        message.success('Tạo phiên duyệt thành công')
-
-        resetForm()                 // ⭐ RESET Ở ĐÂY
         emit('confirm')
         emit('update:open', false)
-
-    } catch (err) {
-        console.error(err)
-        message.error(
-            err?.response?.data?.message ||
-            'Không thể tạo phiên duyệt'
-        )
+        resetForm()
+    } catch {
+        message.error('Không thể xử lý')
     } finally {
         submitting.value = false
     }
 }
 
-
+/* ================= RESET ================= */
 const resetForm = () => {
     fileList.value = []
     checkedUsers.value = []
@@ -239,17 +259,28 @@ const resetForm = () => {
 }
 
 const onCancel = () => {
-    resetForm()                     // ⭐ RESET
+    resetForm()
     emit('update:open', false)
 }
 
+/* ================= WATCH ================= */
 watch(
     () => props.open,
-    (val) => {
-        if (!val) resetForm()
-    }
+    (open) => {
+        if (!open) return resetForm()
+
+        if (props.mode === 'update') {
+            checkedUsers.value = props.reviewers.map(
+                r => `${r.user_id}-${r.department_id}`
+            )
+        }
+    },
+    { immediate: true }
 )
 </script>
+
+
+
 
 <style scoped>
 .upload-user-modal :deep(.ant-modal-content) {

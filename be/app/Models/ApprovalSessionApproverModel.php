@@ -13,6 +13,7 @@ class ApprovalSessionApproverModel extends Model
         'session_id',
         'user_id',
         'department_id',
+        'position_id',
         'position_name',
         'approval_order',
         'status',

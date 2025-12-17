@@ -339,16 +339,17 @@
                                         <span class="tab-with-badge">
                                             <span class="tab-text">Phê duyệt</span>
                                             <a-badge
+                                                v-if="approvalCount > 0"
                                                 :count="approvalCount"
                                                 size="small"
                                                 class="badge-animate"
-                                                :show-zero="false"
                                             />
                                         </span>
                                     </template>
                                     <ApprovalHistoryBlock
                                         ref="approvalHistoryRef"
                                         :task-id="Number(route.params.id)"
+                                        :users="listUser"
                                     />
                                 </a-tab-pane>
                             </a-tabs>

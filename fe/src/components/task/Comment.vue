@@ -222,6 +222,7 @@
                         :task-id="Number(route.params.id)"
                         :users="users"
                         :get-department-name="getDepartmentName"
+                        mode="create"
                         @confirm="handleApprovalSessionCreated"
                     />
 

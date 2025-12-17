@@ -38,6 +38,18 @@
                                 {{ session.start }} – {{ session.end }}
                             </span>
 
+                            <!-- ✏️ CẬP NHẬT PHIÊN -->
+                            <a-tooltip title="Cập nhật / thêm tài liệu">
+                                <a-button
+                                    type="text"
+                                    size="small"
+                                    class="edit-session-btn"
+                                    @click="openUpdateSession(session)"
+                                >
+                                    <EditOutlined />
+                                </a-button>
+                            </a-tooltip>
+
                             <!-- 🗑 XOÁ PHIÊN -->
                             <a-popconfirm
                                 v-if="canDeleteSession(session)"
@@ -59,6 +71,7 @@
                                 </a-tooltip>
                             </a-popconfirm>
                         </div>
+
                     </div>
 
                     <!-- ================= DOCUMENTS ================= -->
@@ -76,7 +89,15 @@
                             <template #renderItem="{ item }">
                                 <a-list-item class="doc-item">
                                     <a-tag color="processing">{{ item.code }}</a-tag>
-                                    <span class="doc-name">{{ item.name }}</span>
+
+                                    <a
+                                        :href="item.url"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="doc-link"
+                                    >
+                                        {{ item.name }}
+                                    </a>
                                 </a-list-item>
                             </template>
                         </a-list>
@@ -119,57 +140,64 @@
                     </div>
 
                     <!-- ================= REVIEWERS ================= -->
-                    <div class="reviewers">
-                        <div
-                            v-for="r in session.reviewers"
-                            :key="r.user_id"
-                            class="reviewer-row"
-                            :class="{ wrong: r.is_wrong }"
-                        >
-                            <div class="reviewer-left">
-                                <div class="reviewer-name">
-                                    <UserOutlined />
-                                    {{ r.step_order }}. {{ r.name }}
-                                </div>
-                                <div class="reviewer-meta">
-                                    {{ r.title }} · {{ r.department }}
-                                </div>
-                            </div>
+                    <Draggable
+                        v-model="session.reviewers"
+                        item-key="id"
+                        handle=".reviewer-left"
+                        ghost-class="reviewer-ghost"
+                        animation="200"
+                        :disabled="!canDrag(session)"
+                        :move="checkReviewerMove"
+                        @end="handleReviewerReorder(session)"
+                    >
+                        <template #item="{ element: r }">
+                            <div
+                                class="reviewer-row"
+                                :class="{ wrong: r.is_wrong }"
+                            >
+                                <div class="reviewer-left">
+                                    <!-- icon move -->
+                                    <span class="drag-handle">
+                                        <DragOutlined />
+                                    </span>
 
-                            <div class="reviewer-right">
-                                <a-tag size="small" :color=" r.result === 'approved' ? 'success' : r.result === 'rejected' ? 'error' : 'default'">
+                                    <!-- info -->
+                                    <div class="reviewer-info">
+                                        <div class="reviewer-name">
+                                            <UserOutlined />
+                                            {{ r.step_order }}. {{ r.name }}
+                                        </div>
+                                        <div class="reviewer-meta">
+                                            {{ r.position_name }} · {{ r.department_name }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="reviewer-right">
+                                <!-- TEXT TRẠNG THÁI (KHÔNG PHẢI USER HIỆN TẠI) -->
+                                <a-tag v-if="!canReview(session, r)" size="small" :color=" r.result === 'approved' ? 'success' : r.result === 'rejected' ? 'error' : 'default' ">
                                     <CheckOutlined v-if="r.result === 'approved'" />
                                     <CloseOutlined v-if="r.result === 'rejected'" />
-                                    {{r.result === 'approved' ? 'Đồng ý' : r.result === 'rejected' ? 'Không đồng ý' : 'Chưa duyệt' }}
+                                    {{r.result === 'approved' ? 'Đồng ý' : r.result === 'rejected' ? 'Không đồng ý' : 'Chưa duyệt'}}
                                 </a-tag>
 
-                                <span v-if="r.reviewed_at" class="review-time">
-                                    <ClockCircleOutlined />
-                                    {{ r.reviewed_at }}
-                                </span>
-
-                                <a-tag v-if="r.is_wrong" color="warning">
-                                    <ExclamationCircleOutlined />
-                                    Duyệt sai
-                                </a-tag>
-
-                                <a-tag v-if="r.is_detector" color="processing">
-                                    <EyeOutlined />
-                                    Người phát hiện
-                                </a-tag>
-
-                                <!-- ===== ACTION BUTTONS ===== -->
+                                <!-- NÚT DUYỆT (CHỈ USER CỦA BẢN GHI ĐÓ) -->
                                 <template v-if="canReview(session, r)">
                                     <a-space>
-                                        <a-button type="primary" size="small" @click="approve(r)">
+                                        <a-button
+                                            type="primary"
+                                            size="small"
+                                            @click="approve(r, session)"
+                                        >
                                             <CheckOutlined />
                                             Đồng ý
                                         </a-button>
 
-                                        <a-popconfirm title="Bạn chắc chắn KHÔNG đồng ý?"
+                                        <a-popconfirm
+                                            title="Bạn chắc chắn KHÔNG đồng ý?"
                                             ok-text="Xác nhận"
                                             cancel-text="Hủy"
-                                            @confirm="openRejectModal(r)"
+                                            @confirm="openRejectModal(r, session)"
                                         >
                                             <a-button danger size="small">
                                                 <CloseOutlined />
@@ -179,11 +207,26 @@
                                     </a-space>
                                 </template>
                             </div>
+
                         </div>
-                    </div>
+                        </template>
+                    </Draggable>
                 </div>
             </div>
         </a-spin>
+
+        <UploadWithUserModal
+            v-if="updateSession"
+            v-model:open="updateModalOpen"
+            :task-id="props.taskId"
+            :session-id="updateSession.session_id"
+            :reviewers="updateSession.reviewers"
+            :users="approvalUsers"
+            mode="update"
+            @confirm="handleUpdateSuccess"
+        />
+
+
 
         <!-- ================= REJECT MODAL ================= -->
         <a-modal
@@ -210,27 +253,50 @@ import {
     UserOutlined,
     ClockCircleOutlined,
     WarningOutlined,
-    EyeOutlined,
+    EditOutlined,
     InfoCircleOutlined,
     FileDoneOutlined,
     PaperClipOutlined,
     SyncOutlined,
     CheckCircleOutlined,
     CloseCircleOutlined,
-    ExclamationCircleOutlined,
+    DragOutlined,
     DeleteOutlined
 } from '@ant-design/icons-vue'
-
+import Draggable from 'vuedraggable'
 import { ref, computed, onMounted } from 'vue'
 
-import { getApprovalSessionsByTask, deleteApprovalSession } from '@/api/approvalSessions.js'
+import {
+    getApprovalSessionsByTask,
+    deleteApprovalSession,
+    approveReviewer,
+    rejectReviewer,
+    updateApprovalOrder,
+    getApprovalSelectableUsers
+} from '@/api/approvalSessions.js'
 import {message} from "ant-design-vue";
+
+
+import { useUserStore } from '@/stores/user'
+import { storeToRefs } from 'pinia'
+
+import UploadWithUserModal from '@/components/task/UploadWithUserModal.vue'
+import {getDepartments} from "@/api/department.js";
+
+const userStore = useUserStore()
+const { currentUser } = storeToRefs(userStore)
+const approvalUsers = ref([])
+const currentUserId = computed(() =>
+    Number(currentUser.value?.id) || null
+)
+
 
 const props = defineProps({
     taskId: {
         type: Number,
         required: true,
     },
+    users: { type: Array, default: () => [] },
 })
 
 const sessions = ref([])
@@ -238,6 +304,7 @@ const rejectVisible = ref(false)
 const rejectReason = ref('')
 const currentReviewer = ref(null)
 const loading = ref(false)
+const listDepartment = ref([])
 
 const sortedSessions = computed(() =>
     [...sessions.value].sort((a, b) => b.session_no - a.session_no)
@@ -252,33 +319,125 @@ const sessionClass = (session) => ({
     'session-invalid': !session.valid,
 })
 
-const currentUserId = 5
 
-const canReview = (session, reviewer) =>
-    isLatestSession(session) &&
-    reviewer.user_id === currentUserId &&
-    !reviewer.result
+const updateModalOpen = ref(false)
+const updateSession = ref(null)
 
-const approve = (reviewer) => {
-    reviewer.result = 'approved'
-    reviewer.reviewed_at = 'NOW'
+const openUpdateSession = (session) => {
+    updateSession.value = {
+        ...session,
+        reviewers: session.reviewers.map(r => ({ ...r }))
+    }
+    updateModalOpen.value = true
 }
 
-const openRejectModal = (reviewer) => {
+const handleUpdateSuccess = async () => {
+    updateModalOpen.value = false
+    await loadSessions()
+}
+
+
+
+const canReview = (session, reviewer) => {
+    if (!isLatestSession(session)) return false
+    return (
+        reviewer.user_id === currentUserId.value &&
+        reviewer.result === 'pending'
+    )
+}
+
+
+const currentSession = ref(null)
+
+const openRejectModal = (reviewer, session) => {
     currentReviewer.value = reviewer
+    currentSession.value = session
     rejectVisible.value = true
 }
 
-const submitReject = () => {
-    currentReviewer.value.result = 'rejected'
-    currentReviewer.value.reviewed_at = 'NOW'
-    rejectVisible.value = false
+
+
+const approve = async (reviewer, session) => {
+    try {
+        loading.value = true
+        await approveReviewer(session.session_id)
+        message.success('Đã duyệt')
+        await loadSessions()
+    } catch (e) {
+        message.error('Không thể duyệt')
+    } finally {
+        loading.value = false
+    }
 }
+
+const submitReject = async () => {
+    try {
+        loading.value = true
+        await rejectReviewer(
+            currentSession.value.session_id,
+            rejectReason.value
+        )
+        message.success('Đã từ chối')
+        rejectVisible.value = false
+        rejectReason.value = ''
+        await loadSessions()
+    } catch (e) {
+        message.error('Không thể từ chối')
+    } finally {
+        loading.value = false
+    }
+}
+
+const canDrag = (session) => {
+    return !session.reviewers.some(r => r.result !== 'pending')
+}
+
+const checkReviewerMove = (evt) => {
+    return true
+}
+
+
+const handleReviewerReorder = async (session) => {
+    // ✅ cập nhật lại step_order cho UI
+    session.reviewers.forEach((r, index) => {
+        r.step_order = index + 1
+    })
+
+    const payload = session.reviewers.map((r, index) => ({
+        id: r.id,
+        approval_order: index + 1
+    }))
+
+    try {
+        await updateApprovalOrder(session.session_id, payload)
+        message.success('Đã cập nhật thứ tự duyệt')
+    } catch (e) {
+        message.error('Không thể cập nhật thứ tự')
+        await loadSessions()
+    }
+}
+
+
+const getDepartmentName = async () => {
+    try {
+        const response = await getDepartments()
+        listDepartment.value = response.data
+    } catch (e) {
+        message.error('Không thể tải người dùng')
+    }
+}
+
+const loadApprovalUsers = async () => {
+    const res = await getApprovalSelectableUsers()
+    approvalUsers.value = res.data.users
+}
+onMounted(loadApprovalUsers)
 
 const loadSessions = async () => {
     loading.value = true
     try {
         const { data } = await getApprovalSessionsByTask(props.taskId)
+        console.log('data', data)
         sessions.value = data || []
     } catch (e) {
         console.error(e)
@@ -435,18 +594,13 @@ onMounted(loadSessions)
     justify-content: space-between;
     align-items: center;
     padding: 8px 10px;
-    border-radius: 8px;
 }
 
 .reviewer-row.wrong {
     background: #fff7e6;
 }
 
-.reviewer-left {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
+
 
 .reviewer-name {
     font-weight: 500;
@@ -464,6 +618,7 @@ onMounted(loadSessions)
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;   /* 👈 BẮT BUỘC */
 }
 
 .review-time {
@@ -515,6 +670,30 @@ onMounted(loadSessions)
 
 .delete-session-btn:hover {
     background: #fff1f0;
+}
+.doc-link {
+    color: #1677ff;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.doc-link:hover {
+    text-decoration: underline;
+}
+
+.reviewer-left {
+    display: flex;
+    gap: 8px;
+}
+
+.edit-session-btn {
+    padding: 0 6px;
+    height: 28px;
+}
+
+.edit-session-btn:hover {
+    background: #f0f5ff;
 }
 
 </style>

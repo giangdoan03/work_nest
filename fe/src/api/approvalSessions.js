@@ -25,3 +25,43 @@ export const getApprovalSessionsByTask = (taskId) => {
 export const deleteApprovalSession = (sessionId) => {
     return instance.delete(`/approval-sessions/${sessionId}`)
 }
+
+export const approveReviewer = (sessionId) => {
+    return instance.post(`/approval-sessions/${sessionId}/approve`)
+}
+
+export const rejectReviewer = (sessionId, reason) => {
+    const formData = new FormData()
+    formData.append('reason', reason)
+
+    return instance.post(
+        `/approval-sessions/${sessionId}/reject`,
+        formData
+    )
+}
+
+export const updateApprovalOrder = (sessionId, reviewers) => {
+    return instance.post(
+        `/approval-sessions/${sessionId}/reorder-reviewers`,
+        { reviewers }
+    )
+}
+
+export const updateApprovalSession = (sessionId, formData) => {
+    return instance.post(
+        `/approval-sessions/${sessionId}/update`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+    )
+}
+
+// Lấy danh sách user dùng cho modal create + update
+export const getApprovalSelectableUsers = () => {
+    return instance.get(
+        '/approval-sessions/selectable-users'
+    )
+}
+
+
+
+

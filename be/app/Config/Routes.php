@@ -57,7 +57,11 @@ $routes->group('api', function ($routes) {
     $routes->post('approval-sessions', 'ApprovalSessionController::create');
     $routes->get('tasks/(:num)/approval-sessions', 'ApprovalSessionController::byTask/$1');
     $routes->delete('approval-sessions/(:num)', 'ApprovalSessionController::delete/$1');
-
+    $routes->post('approval-sessions/(:num)/approve', 'ApprovalSessionController::approve/$1');
+    $routes->post('approval-sessions/(:num)/reject', 'ApprovalSessionController::reject/$1');
+    $routes->post('approval-sessions/(:num)/reorder-reviewers', 'ApprovalSessionController::updateApprovalOrder/$1');
+    $routes->post('approval-sessions/(:num)/update', 'ApprovalSessionController::updateApprovalSession/$1');
+    $routes->get('approval-sessions/selectable-users', 'ApprovalSessionController::selectableUsers');
     // Danh sách hợp đồng của 1 khách hàng
     $routes->get('contracts/by-customer/(:num)', 'CustomerController::contracts/$1');
 
