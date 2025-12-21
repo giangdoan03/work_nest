@@ -1,97 +1,97 @@
 <template>
     <div class="comment">
         <!-- STICKY: Tài liệu ghim (trái) + Drawer người duyệt (phải) -->
-        <div class="mention-chips sticky-mentions"
-             v-if="(pinnedFiles && pinnedFiles.length) || (mentionsSelected && mentionsSelected.length)">
-            <div class="sticky-head">
-                <!-- LEFT: tổng số file ghim + arrow toggle -->
-                <div class="sticky-left">
-                    <button
-                        class="pinned-toggle"
-                        :disabled="!hasPinnedOverflow"
-                        @click="toggleSticky"
-                        :title="hasPinnedOverflow ? (isStickyExpanded ? 'Thu gọn file ghim' : 'Hiện tất cả file ghim') : 'Không có thêm file để mở'"
-                        role="button"
-                        :aria-expanded="!!isStickyExpanded"
-                        aria-controls="pinned-files-region"
-                    >
-                        <span class="sticky-title">Tài liệu ghim</span>
-                        <span class="sticky-count">({{ pinnedTotal }} file)</span>
-                        <component :is="arrowIcon" class="arrow"/>
-                    </button>
-                </div>
+<!--        <div class="mention-chips sticky-mentions"-->
+<!--             v-if="(pinnedFiles && pinnedFiles.length) || (mentionsSelected && mentionsSelected.length)">-->
+<!--            <div class="sticky-head">-->
+<!--                &lt;!&ndash; LEFT: tổng số file ghim + arrow toggle &ndash;&gt;-->
+<!--                <div class="sticky-left">-->
+<!--                    <button-->
+<!--                        class="pinned-toggle"-->
+<!--                        :disabled="!hasPinnedOverflow"-->
+<!--                        @click="toggleSticky"-->
+<!--                        :title="hasPinnedOverflow ? (isStickyExpanded ? 'Thu gọn file ghim' : 'Hiện tất cả file ghim') : 'Không có thêm file để mở'"-->
+<!--                        role="button"-->
+<!--                        :aria-expanded="!!isStickyExpanded"-->
+<!--                        aria-controls="pinned-files-region"-->
+<!--                    >-->
+<!--                        <span class="sticky-title">Tài liệu ghim</span>-->
+<!--                        <span class="sticky-count">({{ pinnedTotal }} file)</span>-->
+<!--                        <component :is="arrowIcon" class="arrow"/>-->
+<!--                    </button>-->
+<!--                </div>-->
 
-                <!-- RIGHT: Drawer người duyệt -->
-                <div class="sticky-actions">
-                    <a-tooltip title="Danh sách người duyệt/ký">
-                        <a-badge :count="mentionsSelected?.length || 0" :offset="[-2, 3]">
-                            <a-button type="text" size="small" @click="openApproverDrawer = true" class="approver-btn">
-                                <TeamOutlined/>
-                                <span class="approver-text">Người duyệt</span>
-                            </a-button>
-                        </a-badge>
-                    </a-tooltip>
-                </div>
-            </div>
+<!--                &lt;!&ndash; RIGHT: Drawer người duyệt &ndash;&gt;-->
+<!--                <div class="sticky-actions">-->
+<!--                    <a-tooltip title="Danh sách người duyệt/ký">-->
+<!--                        <a-badge :count="mentionsSelected?.length || 0" :offset="[-2, 3]">-->
+<!--                            <a-button type="text" size="small" @click="openApproverDrawer = true" class="approver-btn">-->
+<!--                                <TeamOutlined/>-->
+<!--                                <span class="approver-text">Người duyệt</span>-->
+<!--                            </a-button>-->
+<!--                        </a-badge>-->
+<!--                    </a-tooltip>-->
+<!--                </div>-->
+<!--            </div>-->
 
-            <div id="pinned-files-region"></div>
+<!--            <div id="pinned-files-region"></div>-->
 
-            <!-- Pinned files -->
-            <div v-if="pinnedGroupedByComment.length" class="pinned-files">
+<!--            &lt;!&ndash; Pinned files &ndash;&gt;-->
+<!--            <div v-if="pinnedGroupedByComment.length" class="pinned-files">-->
 
-                <div
-                    v-for="group in visiblePinnedGroups"
-                    :key="group.comment_id"
-                    class="pinned-batch"
-                >
-                    <!-- HEADER của batch -->
-                    <div class="batch-title">
-                        <span>Lần {{ group.batch }}: {{ group.files.length }} file</span>
-                        <small>{{ formatVi(group.created_at) }}</small>
-                    </div>
+<!--                <div-->
+<!--                    v-for="group in visiblePinnedGroups"-->
+<!--                    :key="group.comment_id"-->
+<!--                    class="pinned-batch"-->
+<!--                >-->
+<!--                    &lt;!&ndash; HEADER của batch &ndash;&gt;-->
+<!--                    <div class="batch-title">-->
+<!--                        <span>Lần {{ group.batch }}: {{ group.files.length }} file</span>-->
+<!--                        <small>{{ formatVi(group.created_at) }}</small>-->
+<!--                    </div>-->
 
-                    <!-- FILES trong batch -->
-                    <div class="pinned-line">
-                        <div
-                            v-for="f in group.files"
-                            :key="f.id || f.file_path"
-                            class="pinned-pill"
-                            :title="titleOf(f)"
-                        >
-                            <a-tooltip placement="top">
-                                <template #title>
-                                    <div v-html="pinTooltip(f)"></div>
-                                </template>
+<!--                    &lt;!&ndash; FILES trong batch &ndash;&gt;-->
+<!--                    <div class="pinned-line">-->
+<!--                        <div-->
+<!--                            v-for="f in group.files"-->
+<!--                            :key="f.id || f.file_path"-->
+<!--                            class="pinned-pill"-->
+<!--                            :title="titleOf(f)"-->
+<!--                        >-->
+<!--                            <a-tooltip placement="top">-->
+<!--                                <template #title>-->
+<!--                                    <div v-html="pinTooltip(f)"></div>-->
+<!--                                </template>-->
 
-                                <a
-                                    :href="displayHrefOf(f)"
-                                    target="_blank"
-                                    rel="noopener"
-                                    class="pill-link"
-                                >
-                                    <PaperClipOutlined class="pill-icon"/>
-                                    <span class="pill-text">{{ titleOf(f) }}</span>
-                                </a>
-                            </a-tooltip>
-
-
-                            <a-tooltip title="Bỏ ghim">
-                                <button
-                                    class="pill-x"
-                                    type="button"
-                                    @click.stop.prevent="unpinOnly(f)"
-                                    :disabled="!canUnpinFile(f)"
-                                >×
-                                </button>
-                            </a-tooltip>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
+<!--                                <a-->
+<!--                                    :href="displayHrefOf(f)"-->
+<!--                                    target="_blank"-->
+<!--                                    rel="noopener"-->
+<!--                                    class="pill-link"-->
+<!--                                >-->
+<!--                                    <PaperClipOutlined class="pill-icon"/>-->
+<!--                                    <span class="pill-text">{{ titleOf(f) }}</span>-->
+<!--                                </a>-->
+<!--                            </a-tooltip>-->
 
 
-        </div>
+<!--                            <a-tooltip title="Bỏ ghim">-->
+<!--                                <button-->
+<!--                                    class="pill-x"-->
+<!--                                    type="button"-->
+<!--                                    @click.stop.prevent="unpinOnly(f)"-->
+<!--                                    :disabled="!canUnpinFile(f)"-->
+<!--                                >×-->
+<!--                                </button>-->
+<!--                            </a-tooltip>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+
+<!--            </div>-->
+
+
+<!--        </div>-->
 
         <!-- LIST COMMENT (bubbles) -->
         <div class="list-comment" v-if="listComment" ref="listEl">

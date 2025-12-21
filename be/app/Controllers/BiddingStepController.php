@@ -14,6 +14,8 @@ use DateTimeZone;
 use Exception;
 use Throwable;
 
+use App\Libraries\MailService;
+
 class BiddingStepController extends ResourceController
 {
     protected $modelName = BiddingStepModel::class;
@@ -93,52 +95,60 @@ class BiddingStepController extends ResourceController
     public function completeStep($id): ResponseInterface
     {
         $db = db_connect();
-        $db->transStart();
+        $db->transBegin();
 
-        // Khoá record để đảm bảo an toàn cạnh tranh
-        $current = $this->model->lockForUpdate()->find($id);
-        if (!$current) {
-            $db->transComplete();
-            return $this->failNotFound("Không tìm thấy bước với ID $id.");
+        try {
+            // 🔒 Lock row bằng SQL FOR UPDATE
+            $current = $db->table('bidding_steps')
+                ->where('id', $id)
+                ->get()
+                ->getRowArray();
+
+            if (!$current) {
+                throw new \RuntimeException("Không tìm thấy bước");
+            }
+
+            // ❌ kiểm tra bước trước
+            $unfinishedBefore = $db->table('bidding_steps')
+                ->where('bidding_id', $current['bidding_id'])
+                ->where('step_number <', $current['step_number'])
+                ->where('status !=', 2)
+                ->countAllResults();
+
+            if ($unfinishedBefore > 0) {
+                throw new \RuntimeException('Bạn cần hoàn thành các bước trước đó');
+            }
+
+            // ✅ hoàn thành bước hiện tại
+            $this->model->update($id, [
+                'status'     => 2,
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            // ✅ mở bước kế tiếp
+            $next = $this->model
+                ->where('bidding_id', $current['bidding_id'])
+                ->where('step_number >', $current['step_number'])
+                ->orderBy('step_number', 'ASC')
+                ->first();
+
+            if ($next) {
+                $this->model->update($next['id'], ['status' => 1]);
+            }
+
+            $db->transCommit();
+
+            return $this->respond([
+                'message'      => 'Bước đã hoàn thành',
+                'step_id'      => $id,
+                'next_step_id' => $next['id'] ?? null,
+            ]);
+        } catch (Throwable $e) {
+            $db->transRollback();
+            return $this->fail($e->getMessage());
         }
-
-        // Kiểm tra còn bước trước chưa hoàn thành
-        $unfinishedBefore = $this->model
-            ->where('bidding_id', $current['bidding_id'])
-            ->where('step_number <', $current['step_number'])
-            ->where('status !=', 2)
-            ->countAllResults();
-
-        if ($unfinishedBefore > 0) {
-            $db->transComplete();
-            return $this->fail('Bạn cần hoàn thành tất cả các bước trước đó.');
-        }
-
-        // Cập nhật bước hiện tại → hoàn thành
-        if (!$this->model->update($id, ['status' => 2, 'updated_at' => date('Y-m-d H:i:s')])) {
-            $db->transComplete();
-            return $this->failValidationErrors($this->model->errors());
-        }
-
-        // Mở bước tiếp theo (nếu có)
-        $next = $this->model
-            ->where('bidding_id', $current['bidding_id'])
-            ->where('step_number >', $current['step_number'])
-            ->orderBy('step_number', 'asc')
-            ->first();
-
-        if ($next) {
-            $this->model->update($next['id'], ['status' => 1]);
-        }
-
-        $db->transComplete();
-
-        return $this->respond([
-            'message'      => 'Bước đã hoàn thành và bước kế tiếp đã được mở.',
-            'step_id'      => $id,
-            'next_step_id' => $next['id'] ?? null,
-        ]);
     }
+
 
     /**
      * Clone các bước từ template cho 1 gói thầu
@@ -459,4 +469,166 @@ class BiddingStepController extends ResourceController
         $diff = (int)$today->diff($due)->format('%r%a');
         return [ max(0, $diff), max(0, -$diff) ];
     }
+
+    private function openNextStep(array $currentStep): void
+    {
+        $next = $this->model
+            ->where('bidding_id', $currentStep['bidding_id'])
+            ->where('step_number >', $currentStep['step_number'])
+            ->orderBy('step_number', 'asc')
+            ->first();
+
+        if ($next && (int)$next['status'] === 0) {
+            $this->model->update($next['id'], [
+                'status' => 1 // mở bước
+            ]);
+        }
+    }
+
+
+
+    public function requestSkip(int $id): ResponseInterface
+    {
+        if (!session()->get('logged_in')) {
+            return $this->failUnauthorized();
+        }
+
+        $userId = (int) session()->get('user_id');
+
+        // ✅ ĐÚNG: đọc JSON body
+        $data   = $this->request->getJSON(true);
+        $reason = trim($data['reason'] ?? '');
+
+        // DEBUG INPUT
+        log_message('error', 'REQUEST SKIP INPUT: ' . json_encode($data));
+
+        $step = $this->model->find($id);
+        if (!$step) return $this->failNotFound();
+
+        if ($step['skip_status'] === 'pending') {
+            return $this->fail('Bước này đã gửi yêu cầu bỏ qua');
+        }
+
+        $this->model->update($id, [
+            'skip_status'       => 'pending',
+            'skip_reason'       => $reason,
+            'skip_requested_by' => $userId,
+            'skip_requested_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        // 🔁 reload step để có dữ liệu mới
+        $step = $this->model->find($id);
+
+        // DEBUG STEP
+        log_message('error', 'STEP AFTER UPDATE: ' . json_encode($step));
+
+        // 📧 gửi mail
+        log_message('error', '=== BEFORE SEND SKIP MAIL ===');
+        $sent = (new MailService())->sendSkipStepMail($step);
+        log_message('error', '=== AFTER SEND SKIP MAIL | RESULT=' . ($sent ? 'OK' : 'FAIL'));
+
+        return $this->respond([
+            'message' => 'Đã gửi yêu cầu bỏ qua, chờ người giao việc xác nhận',
+            'mail_sent' => $sent
+        ]);
+    }
+
+
+    public function approveSkip(int $id): ResponseInterface
+    {
+        if (!session()->get('logged_in')) {
+            return $this->failUnauthorized();
+        }
+
+        $userId = (int) session()->get('user_id');
+
+        $step = $this->model->find($id);
+        if (!$step || $step['skip_status'] !== 'pending') {
+            return $this->fail('Yêu cầu không hợp lệ');
+        }
+
+        // kiểm tra manager
+        $bidding = db_connect()
+            ->table('biddings')
+            ->select('manager_id')
+            ->where('id', $step['bidding_id'])
+            ->get()
+            ->getRowArray();
+
+        if (!$bidding || (int)$bidding['manager_id'] !== $userId) {
+            return $this->failForbidden('Bạn không có quyền duyệt bỏ qua bước này');
+        }
+
+        // cập nhật trạng thái
+        $this->model->update($id, [
+            'skip_status'       => 'approved',
+            'status'            => 2, // coi như hoàn thành
+            'skip_approved_by'  => $userId,
+            'skip_approved_at'  => date('Y-m-d H:i:s'),
+        ]);
+
+        // reload step mới nhất
+        $step = $this->model->find($id);
+
+        // 📧 gửi mail thông báo đã duyệt
+        (new MailService())->sendApproveSkipStepMail($step);
+
+        // mở bước tiếp theo
+        $this->openNextStep($step);
+
+        return $this->respond([
+            'message' => 'Đã duyệt bỏ qua bước'
+        ]);
+    }
+
+
+    public function rejectSkip(int $id): ResponseInterface
+    {
+        if (!session()->get('logged_in')) {
+            return $this->failUnauthorized();
+        }
+
+        $userId = (int) session()->get('user_id');
+        $reason = trim((string)$this->request->getPost('reason'));
+
+        if ($reason === '') {
+            return $this->fail('Vui lòng nhập lý do từ chối');
+        }
+
+        $step = $this->model->find($id);
+        if (!$step || $step['skip_status'] !== 'pending') {
+            return $this->fail('Yêu cầu không hợp lệ');
+        }
+
+        // kiểm tra quyền manager
+        $bidding = db_connect()
+            ->table('biddings')
+            ->select('manager_id')
+            ->where('id', $step['bidding_id'])
+            ->get()
+            ->getRowArray();
+
+        if ((int)$bidding['manager_id'] !== $userId) {
+            return $this->failForbidden('Bạn không có quyền từ chối');
+        }
+
+        // cập nhật trạng thái
+        $this->model->update($id, [
+            'skip_status'      => 'rejected',
+            'skip_approved_by' => $userId,
+            'skip_approved_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        // 🔁 reload step
+        $step = $this->model->find($id);
+
+        // 📧 gửi mail
+        (new MailService())->sendRejectSkipStepMail($step, $reason);
+
+        return $this->respond([
+            'message' => 'Đã từ chối yêu cầu bỏ qua bước'
+        ]);
+    }
+
+
 }

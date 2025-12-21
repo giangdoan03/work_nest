@@ -62,6 +62,38 @@ export const getApprovalSelectableUsers = () => {
     )
 }
 
+export const getApprovalStatisticsByTask = (taskId) => {
+    return instance.get(
+        `/approval-sessions/task/${taskId}/statistics`
+    )
+}
+
+// Gửi yêu cầu bỏ qua bước
+export const requestSkipBiddingStep = (stepId, reason) => {
+    return instance.post(
+        `/bidding-steps/${stepId}/request-skip`,
+        { reason }
+    )
+}
+
+// Người giao việc duyệt bỏ qua bước
+export const approveSkipBiddingStep = (stepId) => {
+    return instance.post(
+        `/bidding-steps/${stepId}/approve-skip`
+    )
+}
+
+export const rejectSkipBiddingStep = (stepId, reason) => {
+    const formData = new FormData()
+    formData.append('reason', reason || '')
+
+    return instance.post(
+        `/bidding-steps/${stepId}/reject-skip`,
+        formData
+    )
+}
+
+
 
 
 

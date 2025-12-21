@@ -367,7 +367,6 @@ const routePermissionMap = {
     'customers': 'customer',
     'customer-detail': 'customer',
     'my-tasks': 'my-task',
-    // 'task-approvals': 'approval',
     'GanttChart': 'gantt',
     'project-overview': 'project',
     'tasks': 'task',

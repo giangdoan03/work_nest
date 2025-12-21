@@ -28,3 +28,14 @@ export const cloneContractStepsFromTemplateAPI = (contractId) =>
 // ✅ Bổ sung hàm hoàn thành bước
 export const completeContractStepAPI = (stepId) =>
     instance.put(`/contract-steps/${stepId}/complete`)
+
+
+// ===== Skip step (contract) =====
+export const requestSkipContractStep = (stepId, reason) =>
+    instance.post(`/contract-steps/${stepId}/request-skip`, { reason })
+
+export const approveSkipContractStep = (stepId) =>
+    instance.post(`/contract-steps/${stepId}/approve-skip`)
+
+export const rejectSkipContractStep = (stepId, reason) =>
+    instance.post(`/contract-steps/${stepId}/reject-skip`, { reason })

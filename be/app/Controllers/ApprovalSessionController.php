@@ -186,7 +186,8 @@ class ApprovalSessionController extends ResourceController
             return $this->respond([]);
         }
 
-        $sessionIds = array_column($sessions, 'id');
+        $totalSessions = count($sessions);
+        $sessionIds    = array_column($sessions, 'id');
 
         /* ================= 2. FILES ================= */
         $filesBySession = [];
@@ -208,104 +209,56 @@ class ApprovalSessionController extends ResourceController
         $reviewersBySession = [];
         $reviewers = $db->table('approval_session_approvers a')
             ->select('
-        a.id,
-        a.session_id,
-        a.user_id,
-        a.department_id,
-        a.approval_order,
-        a.status,
-        a.approved_at,
+            a.id,
+            a.session_id,
+            a.user_id,
+            a.department_id,
+            a.approval_order,
+            a.status,
+            a.approved_at,
 
-        u.name AS user_name,
-        u.is_multi_role,
+            u.name AS user_name,
+            u.is_multi_role,
 
-        d.name AS department_name,
+            d.name AS department_name,
 
-        p.id   AS position_id,
-        p.name AS position_name,
-        p.level
-    ')
+            p.id   AS position_id,
+            p.name AS position_name,
+            p.level
+        ')
             ->join('users u', 'u.id = a.user_id', 'left')
-
-            // 🔑 JOIN QUYẾT ĐỊNH
             ->join(
                 'department_user du',
                 'du.user_id = a.user_id AND du.department_id = a.department_id',
                 'left'
             )
-
             ->join('positions p', 'p.id = du.position_id', 'left')
             ->join('departments d', 'd.id = a.department_id', 'left')
-
             ->whereIn('a.session_id', $sessionIds)
             ->orderBy('a.approval_order', 'ASC')
             ->get()
             ->getResultArray();
-        $reviewers = $db->table('approval_session_approvers a')
-            ->select('
-        a.id,
-        a.session_id,
-        a.user_id,
-        a.department_id,
-        a.approval_order,
-        a.status,
-        a.approved_at,
-
-        u.name AS user_name,
-        u.is_multi_role,
-
-        d.name AS department_name,
-
-        p.id   AS position_id,
-        p.name AS position_name,
-        p.level
-    ')
-            ->join('users u', 'u.id = a.user_id', 'left')
-
-            // 🔑 JOIN QUYẾT ĐỊNH
-            ->join(
-                'department_user du',
-                'du.user_id = a.user_id AND du.department_id = a.department_id',
-                'left'
-            )
-
-            ->join('positions p', 'p.id = du.position_id', 'left')
-            ->join('departments d', 'd.id = a.department_id', 'left')
-
-            ->whereIn('a.session_id', $sessionIds)
-            ->orderBy('a.approval_order', 'ASC')
-            ->get()
-            ->getResultArray();
-
-
 
         foreach ($reviewers as $r) {
             $reviewersBySession[$r['session_id']][] = [
-                'id'              => (int) $r['id'],
-                'user_id'         => (int) $r['user_id'],
-                'department_id'   => (int) $r['department_id'],
-
+                'id'              => (int)$r['id'],
+                'user_id'         => (int)$r['user_id'],
+                'department_id'   => (int)$r['department_id'],
                 'name'            => $r['user_name'],
                 'department_name' => $r['department_name'] ?? '—',
                 'position_name'   => $r['position_name'] ?? '—',
-
                 'is_multi_role'   => $r['is_multi_role'] ?? '0',
-
-                'step_order'      => (int) $r['approval_order'],
-                'level'           => (int) $r['level'],
+                'step_order'      => (int)$r['approval_order'],
+                'level'           => (int)$r['level'],
                 'result'          => $r['status'],
                 'reviewed_at'     => $r['approved_at'],
             ];
         }
 
-
-
         /* ================= 4. BUILD RESPONSE ================= */
-        $totalSessions = count($sessions);
         $result = [];
 
         foreach ($sessions as $index => $s) {
-
             $sessionReviewers = $reviewersBySession[$s['id']] ?? [];
 
             // ❗ chỉ cần 1 rejected → invalid
@@ -320,6 +273,7 @@ class ApprovalSessionController extends ResourceController
             $result[] = [
                 'session_id' => (int)$s['id'],
                 'session_no' => $totalSessions - $index,
+                'created_at' => $s['created_at'],
                 'start'      => date('H:i', strtotime($s['created_at'])),
                 'end'        => null,
                 'valid'      => $valid,
@@ -330,6 +284,7 @@ class ApprovalSessionController extends ResourceController
 
         return $this->respond($result);
     }
+
 
 
     public function delete($id = null): ResponseInterface
@@ -723,6 +678,121 @@ class ApprovalSessionController extends ResourceController
     }
 
 
+    public function statisticsByTask(int $taskId): ResponseInterface
+    {
+        $db = db_connect();
+
+        /* ================= 1. SESSIONS ================= */
+        $sessions = $db->table('approval_sessions')
+            ->select('id')
+            ->where('task_id', $taskId)
+            ->orderBy('id', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        if (empty($sessions)) {
+            return $this->respond([]);
+        }
+
+        $totalSessions = count($sessions);
+        $sessionIds    = array_column($sessions, 'id');
+
+        // map session_id → session_no (GIỐNG byTask)
+        $sessionNoMap = [];
+        foreach ($sessions as $idx => $s) {
+            $sessionNoMap[$s['id']] = $totalSessions - $idx;
+        }
+
+        /* ================= 2. REVIEWERS ================= */
+        $reviewers = $db->table('approval_session_approvers a')
+            ->select('
+            a.session_id,
+            a.user_id,
+            a.status,
+
+            u.name AS user_name,
+
+            p.level,
+            p.violation_threshold
+        ')
+            ->join('users u', 'u.id = a.user_id')
+            ->join(
+                'department_user du',
+                'du.user_id = a.user_id AND du.department_id = a.department_id',
+                'left'
+            )
+            ->join('positions p', 'p.id = du.position_id', 'left')
+            ->whereIn('a.session_id', $sessionIds)
+            ->get()
+            ->getResultArray();
+
+        /* ================= 3. GROUP BY SESSION ================= */
+        $bySession = [];
+        foreach ($reviewers as $r) {
+            $bySession[$r['session_id']][] = $r;
+        }
+
+        /* ================= 4. STATISTICS ================= */
+        $userStats = [];
+
+        foreach ($bySession as $sessionId => $items) {
+
+            // 🔴 session có rejected?
+            $hasRejected = false;
+            foreach ($items as $r) {
+                if ($r['status'] === 'rejected') {
+                    $hasRejected = true;
+                    break;
+                }
+            }
+            if (!$hasRejected) continue;
+
+            foreach ($items as $r) {
+                if ($r['status'] !== 'approved') continue;
+
+                $uid = (int)$r['user_id'];
+
+                if (!isset($userStats[$uid])) {
+                    $userStats[$uid] = [
+                        'user_id'            => $uid,
+                        'user_name'          => $r['user_name'],
+                        'level'              => (int)($r['level'] ?? 1),
+                        'threshold'          => (int)($r['violation_threshold'] ?? 1),
+                        'total_error'        => 0,
+                        'overdue_count'      => 0,
+                        'violation_sessions' => [],
+                    ];
+                }
+
+                // tăng lỗi
+                $userStats[$uid]['total_error']++;
+
+                // ❗ tránh trùng session
+                $exists = array_column(
+                    $userStats[$uid]['violation_sessions'],
+                    'session_id'
+                );
+
+                if (!in_array($sessionId, $exists, true)) {
+                    $userStats[$uid]['violation_sessions'][] = [
+                        'session_id' => (int)$sessionId,
+                        'session_no' => $sessionNoMap[$sessionId] ?? null,
+                        'level'      => (int)($r['level'] ?? 1),
+                    ];
+                }
+            }
+        }
+
+        /* ================= 5. OVERDUE ================= */
+        foreach ($userStats as &$row) {
+            $row['overdue_count'] = max(
+                0,
+                $row['total_error'] - $row['threshold']
+            );
+        }
+
+        return $this->respond(array_values($userStats));
+    }
 
 
 

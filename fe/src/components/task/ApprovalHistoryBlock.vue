@@ -39,16 +39,24 @@
                             </span>
 
                             <!-- ✏️ CẬP NHẬT PHIÊN -->
-                            <a-tooltip title="Cập nhật / thêm tài liệu">
-                                <a-button
-                                    type="text"
-                                    size="small"
-                                    class="edit-session-btn"
-                                    @click="openUpdateSession(session)"
-                                >
-                                    <EditOutlined />
-                                </a-button>
+                            <a-tooltip
+                                :title="hasAnyReviewed(session)
+                                    ? 'Đã có người duyệt, không thể chỉnh sửa'
+                                    : 'Cập nhật phê duyệt'"
+                                                        >
+                                <span>
+                                    <a-button
+                                        type="text"
+                                        size="small"
+                                        class="edit-session-btn"
+                                        :disabled="hasAnyReviewed(session)"
+                                        @click="!hasAnyReviewed(session) && openUpdateSession(session)"
+                                    >
+                                        <EditOutlined />
+                                    </a-button>
+                                </span>
                             </a-tooltip>
+
 
                             <!-- 🗑 XOÁ PHIÊN -->
                             <a-popconfirm
@@ -331,6 +339,11 @@ const openUpdateSession = (session) => {
     updateModalOpen.value = true
 }
 
+const hasAnyReviewed = (session) => {
+    return session.reviewers.some(r => r.result !== 'pending')
+}
+
+
 const handleUpdateSuccess = async () => {
     updateModalOpen.value = false
     await loadSessions()
@@ -470,7 +483,7 @@ defineExpose({
     reload: loadSessions
 })
 
-onMounted(loadSessions)
+// onMounted(loadSessions)
 
 </script>
 
@@ -695,5 +708,8 @@ onMounted(loadSessions)
 .edit-session-btn:hover {
     background: #f0f5ff;
 }
-
+.edit-session-btn[disabled] {
+    color: #bfbfbf;
+    cursor: not-allowed;
+}
 </style>

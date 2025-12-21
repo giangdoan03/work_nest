@@ -352,6 +352,28 @@
                                         :users="listUser"
                                     />
                                 </a-tab-pane>
+
+                                <a-tab-pane key="approval-statistics">
+                                    <template #tab>
+                                    <span class="tab-with-badge">
+                                        <span class="tab-text">Thống kê</span>
+                                        <a-badge
+                                            v-if="violationCount > 0"
+                                            :count="violationCount"
+                                            size="small"
+                                            color="red"
+                                        />
+                                    </span>
+                                    </template>
+
+                                    <ApprovalStatisticsBlock
+                                        ref="approvalStatisticsRef"
+                                        :task-id="Number(route.params.id)"
+                                    />
+                                </a-tab-pane>
+
+
+
                             </a-tabs>
                         </div>
                     </a-card>
@@ -418,7 +440,8 @@ import debounce from 'lodash-es/debounce'
 import AttachmentsCard from '@/components/AttachmentsCard.vue'
 import ApprovalStatus from '@/components/Approval/ApprovalStatus.vue'
 import ApprovalHistoryBlock from "@/components/task/ApprovalHistoryBlock.vue";
-import {getApprovalSessionsByTask} from "@/api/approvalSessions.js";
+import ApprovalStatisticsBlock from "@/components/task/ApprovalStatisticsBlock.vue";
+import {getApprovalSessionsByTask, getApprovalStatisticsByTask} from "@/api/approvalSessions.js";
 
 const commonStore = useCommonStore()
 dayjs.locale('vi')
@@ -445,6 +468,8 @@ const deleting = ref(false)
 const approvalHistoryRef = ref(null)
 const activeTab = ref('info')
 const approvalCount = ref(0)
+const violationCount = ref(0)
+const approvalStatisticsRef = ref(null)
 
 const formData = ref({
     title: '',
@@ -470,11 +495,18 @@ const formData = ref({
 // 🔥 ref để gọi hàm reload bên ApprovalHistoryBlock
 const handleTabChange = async (key) => {
     if (key === 'approval-history') {
-        await loadApprovalCount()     // ⭐ load count
+        await loadApprovalCount()
         await nextTick()
         approvalHistoryRef.value?.reload?.()
     }
+
+    if (key === 'approval-statistics') {
+        await loadViolationCount()
+        await nextTick()
+        approvalStatisticsRef.value?.reload?.()
+    }
 }
+
 
 // hàm gọi khi tạo phiên duyệt xong
 const handleApprovalSessionCreated = async () => {
@@ -674,6 +706,27 @@ const getNameLinked = async (id) => {
                 : 'Trống'
     }
 }
+
+const loadViolationCount = async () => {
+    try {
+        const { data } = await getApprovalStatisticsByTask(Number(route.params.id))
+
+        if (!Array.isArray(data)) {
+            violationCount.value = 0
+            return
+        }
+
+        // 🔴 số user có overdue
+        violationCount.value = data.filter(
+            u => u.overdue_count > 0
+        ).length
+    } catch (e) {
+        violationCount.value = 0
+    }
+}
+
+
+
 
 watch(
     () => [effectiveLinkedId.value, effectiveLinkedType.value],

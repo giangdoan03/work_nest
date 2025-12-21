@@ -21,6 +21,14 @@ class BiddingStepModel extends Model
         'approval_steps',
         'current_level',
         'approval_status',
+
+        // 👇 THÊM ĐẦY ĐỦ CHO SKIP
+        'skip_status',
+        'skip_reason',
+        'skip_requested_by',
+        'skip_requested_at',
+        'skip_approved_by',
+        'skip_approved_at',
     ];
     protected $useTimestamps = true;
 }

@@ -279,7 +279,22 @@
                     </a-col>
                 </a-row>
                 <a-row :gutter="16">
-                    <a-col :span="24">
+                    <!-- 👑 Người quản lý -->
+                    <a-col :span="12">
+                        <a-form-item label="Người quản lý" name="manager_id">
+                            <a-select
+                                v-model:value="formData.manager_id"
+                                :options="userOptions"
+                                placeholder="Chọn người quản lý"
+                                allow-clear
+                                show-search
+                                :filter-option="(input, option) =>
+                    option.label.toLowerCase().includes(input.toLowerCase())
+                "
+                            />
+                        </a-form-item>
+                    </a-col>
+                    <a-col :span="12">
                         <a-form-item label="Người phụ trách" name="assigned_to">
                             <a-select v-model:value="formData.assigned_to" :options="userOptions"
                                       placeholder="Chọn người phụ trách" allow-clear show-search
@@ -956,6 +971,15 @@ const handleBulkDelete = async () => {
 const goToContractDetail = (id) => {
     openEntity("contract", id, "contract-detail");
 };
+
+watch(
+    () => formData.value.assigned_to,
+    (val) => {
+        if (!formData.value.manager_id) {
+            formData.value.manager_id = val
+        }
+    }
+)
 
 /* ---------- Mount ---------- */
 onMounted(() => {

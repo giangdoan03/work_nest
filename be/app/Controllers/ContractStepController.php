@@ -3,6 +3,7 @@
 // app/Controllers/ContractStepController.php
 namespace App\Controllers;
 
+use App\Libraries\MailService;
 use App\Models\ContractStepModel;
 use App\Models\ContractModel;
 use App\Models\ContractStepTemplateModel;
@@ -369,7 +370,7 @@ class ContractStepController extends ResourceController
         $db = Database::connect();
         $db->transStart();
 
-        $current = $this->model->where('id', $id)->lockForUpdate()->first();
+        $current = $this->model->find($id);
         if (!$current) {
             $db->transComplete();
             return $this->failNotFound("Không tìm thấy bước với ID $id");
@@ -387,13 +388,13 @@ class ContractStepController extends ResourceController
             return $this->fail('Bạn cần hoàn thành tất cả các bước trước đó.');
         }
 
-        // cập nhật current
+        // cập nhật bước hiện tại
         $ok1 = $this->model->update($id, [
             'status'       => 2,
             'completed_at' => date('Y-m-d H:i:s'),
         ]);
 
-        // mở next
+        // mở bước tiếp theo
         $next = $this->model
             ->where('contract_id', $current['contract_id'])
             ->where('step_number >', $current['step_number'])
@@ -402,7 +403,7 @@ class ContractStepController extends ResourceController
 
         $ok2 = true;
         if ($next) {
-            $ok2 = $this->model->update($next['id'], ['status' => 1]); // 1 = đang xử lý
+            $ok2 = $this->model->update($next['id'], ['status' => 1]);
         }
 
         $db->transComplete();
@@ -412,11 +413,12 @@ class ContractStepController extends ResourceController
         }
 
         return $this->respond([
-            'message'     => 'Bước đã hoàn thành và bước kế tiếp đã được mở.',
-            'step_id'     => $id,
-            'next_step_id'=> $next['id'] ?? null,
+            'message'      => 'Bước đã hoàn thành và bước kế tiếp đã được mở.',
+            'step_id'      => $id,
+            'next_step_id' => $next['id'] ?? null,
         ]);
     }
+
 
 
     public function tasksByStep($stepId): ResponseInterface
@@ -433,6 +435,151 @@ class ContractStepController extends ResourceController
             'tasks' => $tasks
         ]);
     }
+
+    private function openNextContractStep(array $currentStep): void
+    {
+        $next = $this->model
+            ->where('contract_id', $currentStep['contract_id'])
+            ->where('step_number >', $currentStep['step_number'])
+            ->orderBy('step_number', 'asc')
+            ->first();
+
+        if ($next && (int)$next['status'] === 0) {
+            $this->model->update($next['id'], [
+                'status' => 1 // mở bước
+            ]);
+        }
+    }
+
+
+    public function requestSkip(int $id): ResponseInterface
+    {
+        if (!session()->get('logged_in')) {
+            return $this->failUnauthorized();
+        }
+
+        $userId = (int) session()->get('user_id');
+        $reason = trim((string)$this->request->getPost('reason'));
+
+        $step = $this->model->find($id);
+        if (!$step) return $this->failNotFound();
+
+        if ($step['skip_status'] === 'pending') {
+            return $this->fail('Bước này đã gửi yêu cầu bỏ qua');
+        }
+
+        $this->model->update($id, [
+            'skip_status'       => 'pending',
+            'skip_reason'       => $reason,
+            'skip_requested_by' => $userId,
+            'skip_requested_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $step = $this->model->find($id);
+
+        // 📧 mail xin skip (dùng chung MailService)
+        (new MailService())->sendSkipContractStepMail($step);
+
+        return $this->respond([
+            'message' => 'Đã gửi yêu cầu bỏ qua, chờ người giao việc xác nhận'
+        ]);
+    }
+
+
+    public function approveSkip(int $id): ResponseInterface
+    {
+        if (!session()->get('logged_in')) {
+            return $this->failUnauthorized();
+        }
+
+        $userId = (int) session()->get('user_id');
+
+        $step = $this->model->find($id);
+        if (!$step || $step['skip_status'] !== 'pending') {
+            return $this->fail('Yêu cầu không hợp lệ');
+        }
+
+        // 🔒 LẤY MANAGER TỪ CONTRACT
+        $contract = db_connect()
+            ->table('contracts')
+            ->select('manager_id')
+            ->where('id', $step['contract_id'])
+            ->get()
+            ->getRowArray();
+
+        if (!$contract || (int)$contract['manager_id'] !== $userId) {
+            return $this->failForbidden('Bạn không có quyền duyệt bỏ qua bước này');
+        }
+
+        // ✅ duyệt skip
+        $this->model->update($id, [
+            'skip_status'       => 'approved',
+            'status'            => 2,
+            'skip_approved_by'  => $userId,
+            'skip_approved_at'  => date('Y-m-d H:i:s'),
+        ]);
+
+        $step = $this->model->find($id);
+
+        // 📧 mail thông báo đã duyệt
+        (new MailService())->sendApproveSkipContractStepMail($step);
+
+        // ▶️ mở bước tiếp theo
+        $this->openNextContractStep($step);
+
+        return $this->respond([
+            'message' => 'Đã duyệt bỏ qua bước'
+        ]);
+    }
+
+
+    public function rejectSkip(int $id): ResponseInterface
+    {
+        if (!session()->get('logged_in')) {
+            return $this->failUnauthorized();
+        }
+
+        $userId = (int) session()->get('user_id');
+
+        $payload = $this->request->getJSON(true);
+        $reason  = trim((string)($payload['reason'] ?? ''));
+
+        if ($reason === '') {
+            return $this->fail('Vui lòng nhập lý do từ chối');
+        }
+
+        $step = $this->model->find($id);
+        if (!$step || $step['skip_status'] !== 'pending') {
+            return $this->fail('Yêu cầu không hợp lệ');
+        }
+
+        $contract = db_connect()
+            ->table('contracts')
+            ->select('manager_id')
+            ->where('id', $step['contract_id'])
+            ->get()
+            ->getRowArray();
+
+        if ((int)$contract['manager_id'] !== $userId) {
+            return $this->failForbidden('Bạn không có quyền từ chối');
+        }
+
+        $this->model->update($id, [
+            'skip_status'      => 'rejected',
+            'skip_approved_by' => $userId,
+            'skip_approved_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $step = $this->model->find($id);
+
+        (new MailService())->sendRejectSkipContractStepMail($step, $reason);
+
+        return $this->respond([
+            'message' => 'Đã từ chối yêu cầu bỏ qua bước'
+        ]);
+    }
+
+
 
 
 

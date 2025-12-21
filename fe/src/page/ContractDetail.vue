@@ -1,3 +1,4 @@
+<>
 <template>
     <div style="max-width: 1000px; margin: 0 auto;">
         <a-card>
@@ -76,11 +77,29 @@
                 </a-descriptions-item>
 
                 <!-- 4) Hàng 4 -->
+                <!-- Hàng này đủ 2 cột -->
                 <a-descriptions-item label="Người phụ trách">
-                    <a @click="goToUserDetail(contract?.assigned_to)" style="color:#1890ff;cursor:pointer">
-                        {{ getAssignedUserName(contract?.assigned_to) }}
+                    <a
+                        v-if="contract?.assigned_to"
+                        @click="goToUserDetail(contract.assigned_to)"
+                        style="color:#1890ff;cursor:pointer"
+                    >
+                        {{ getAssignedUserName(contract.assigned_to) }}
                     </a>
+                    <span v-else>—</span>
                 </a-descriptions-item>
+
+                <a-descriptions-item label="Người giao việc">
+                    <a
+                        v-if="contract?.manager_id"
+                        @click="goToUserDetail(contract.manager_id)"
+                        style="color:#1890ff;cursor:pointer"
+                    >
+                        {{ getAssignedUserName(contract.manager_id) }}
+                    </a>
+                    <span v-else>—</span>
+                </a-descriptions-item>
+
                 <a-descriptions-item label="Khách hàng">
                     <a @click="goToCustomerDetail(contract?.customer_id)" style="color:#1890ff;cursor:pointer">
                         {{ getCustomerName(contract?.customer_id) }}
@@ -88,7 +107,7 @@
                 </a-descriptions-item>
 
                 <!-- 👇 Người phối hợp (gom của TẤT CẢ bước) -->
-                <a-descriptions-item label="Người phối hợp">
+                <a-descriptions-item label="Người phối hợp" :span="2">
                     <template v-if="(contract?.collaborators_detail?.length || 0) > 0">
                         <a-space size="small" align="center" wrap>
                             <a-avatar-group :maxCount="5" size="small">
@@ -96,7 +115,6 @@
                                     v-for="u in contract.collaborators_detail"
                                     :key="u.id"
                                     :title="u.name || 'Không rõ'"
-                                    placement="top"
                                 >
                                     <a-avatar :style="{ backgroundColor: getAvatarColor(u.name) }">
                                         {{ getInitials(u.name) }}
@@ -107,6 +125,7 @@
                     </template>
                     <span v-else>—</span>
                 </a-descriptions-item>
+
 
                 <!-- 5) Hàng 5: Mô tả full dòng -->
                 <a-descriptions-item label="Mô tả" :span="2">
@@ -121,40 +140,105 @@
                     <a-step v-for="(step, index) in steps" :key="step.id" :status="mapStepStatus(step.status)">
                         <template #title>
                             <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
-                                <!-- Bên trái: tiêu đề + statistic -->
-                                <div
-                                    @click.stop="goToStepTasks(step)"
-                                    @keydown.enter.prevent="goToStepTasks(step)"
-                                    @keydown.space.prevent="goToStepTasks(step)"
-                                    :class="{ 'active-step-title': activeStepId === step.id }"
-                                    role="button" tabindex="0"
-                                    style="display:flex;align-items:center;cursor:pointer;color:#1890ff;gap:12px;"
-                                ><span style="text-decoration: underline;">
-                                    Bước {{ step.step_number ?? '-' }}: {{ step.title ?? '-' }}
-                            </span>
-                                    <div style="display:flex;align-items:center;gap:6px;">
+                                <!-- ================= LEFT ================= -->
+                                <a-tooltip
+                                    :title="canOpenStep(step, index)
+                                    ? 'Xem chi tiết bước'
+                                    : 'Bạn cần hoàn thành các bước trước đó'"
+                                    placement="top"
+                                >
+                                    <div
+                                        role="button"
+                                        tabindex="0"
+                                        @click.stop="canOpenStep(step, index) && goToStepTasks(step)"
+                                        @keydown.enter.prevent="canOpenStep(step, index) && goToStepTasks(step)"
+                                        @keydown.space.prevent="canOpenStep(step, index) && goToStepTasks(step)"
+                                        :class="[
+                                            'step-title-wrapper',
+                                            {
+                                                'active-step-title': activeStepId === step.id,
+                                                'step-disabled': !canOpenStep(step, index)
+                                            }
+                                        ]"
+                                    >
+                                        <!-- Title -->
+                                        <span class="step-title-text">
+                                            Bước {{ step.step_number ?? '-' }}: {{ step.title ?? '-' }}
+                                        </span>
+
                                         <!-- Statistic -->
-                                        <a-tooltip
-                                            v-if="isAllTasksDone(step)"
-                                            :title="tooltipDoneTitle(step)"
-                                            placement="top"
-                                        >
+                                        <div class="step-statistic">
+                                            <a-tooltip
+                                                v-if="isAllTasksDone(step)"
+                                                :title="tooltipDoneTitle(step)"
+                                            >
+                                                <a-statistic
+                                                    :value="step.task_done_count ?? 0"
+                                                    :suffix="'/' + (step.task_count ?? 0) + ' task'"
+                                                    :value-style="{ fontSize: '12px', color: '#555' }"
+                                                />
+                                            </a-tooltip>
+
                                             <a-statistic
+                                                v-else
                                                 :value="step.task_done_count ?? 0"
-                                                :suffix="'/' + (step.task_count ?? 0) + ' task đã xong'"
-                                                :value-style="{ fontSize: '13px', color: '#555' }"
+                                                :suffix="'/' + (step.task_count ?? 0) + ' task'"
+                                                :value-style="{ fontSize: '12px', color: '#555' }"
                                             />
-                                        </a-tooltip>
-                                        <a-statistic
-                                            v-else
-                                            :value="step.task_done_count ?? 0"
-                                            :suffix="'/' + (step.task_count ?? 0) + ' task đã xong'"
-                                            :value-style="{ fontSize: '13px', color: '#555' }"
-                                        />
+                                        </div>
+
+                                        <!-- ===== SKIP STATUS ===== -->
+                                        <a-tag v-if="step.skip_status === 'pending'" color="orange">
+                                            Chờ duyệt bỏ qua
+                                        </a-tag>
+
+                                        <a-tag v-else-if="step.skip_status === 'approved'" color="green">
+                                            Đã bỏ qua
+                                        </a-tag>
+
+                                        <a-tag v-else-if="step.skip_status === 'rejected'" color="red">
+                                            Bị từ chối
+                                        </a-tag>
                                     </div>
+                                </a-tooltip>
+
+                                <!-- ================= RIGHT ================= -->
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <!-- USER -->
+                                    <a-button
+                                        v-if="canRequestSkip(step)"
+                                        size="small"
+                                        type="link"
+                                        danger
+                                        @click.stop="openSkipModal(step)"
+                                    >
+                                        Bỏ qua
+                                    </a-button>
+
+                                    <!-- MANAGER -->
+                                    <template v-if="isManager && step.skip_status === 'pending'">
+                                        <a-button
+                                            size="small"
+                                            type="primary"
+                                            :loading="approveLoadingId === step.id"
+                                            @click.stop="approveSkip(step)"
+                                        >
+                                            Duyệt
+                                        </a-button>
+
+                                        <a-button
+                                            size="small"
+                                            danger
+                                            @click.stop="openRejectSkip(step)"
+                                        >
+                                            Từ chối
+                                        </a-button>
+                                    </template>
                                 </div>
                             </div>
                         </template>
+
+
                         <template #description>
                             <a-descriptions
                                 class="desc-grid"
@@ -183,7 +267,8 @@
                                         @openChange="v => openStatusForId = v ? step.id : null"
                                     >
                                         <template #content>
-                                            <a-select style="width:180px" :value="String(step.status)" @change="val => onChangeStatus(step, val)">
+                                            <a-select style="width:180px" :value="String(step.status)"
+                                                      @change="val => onChangeStatus(step, val)">
                                                 <a-select-option value="0">Chưa bắt đầu</a-select-option>
                                                 <a-select-option value="1">Đang xử lý</a-select-option>
                                                 <a-select-option value="2">Hoàn thành</a-select-option>
@@ -333,7 +418,8 @@
 
                 <template v-else>
                     <!-- Header -->
-                    <div style=" display: flex; justify-content: space-between; padding: 8px 0; font-weight: 500; color: #555; border-bottom: 1px solid #f0f0f0;"></div>
+                    <div
+                        style=" display: flex; justify-content: space-between; padding: 8px 0; font-weight: 500; color: #555; border-bottom: 1px solid #f0f0f0;"></div>
                     <!-- Danh sách nhiệm vụ -->
                     <a-table
                         class="tiny-scroll"
@@ -434,951 +520,1142 @@
             type="contract"
             @submitForm="handleDrawerSubmit"
         />
+
+        <a-modal
+            v-model:open="skipModalOpen"
+            title="Yêu cầu bỏ qua bước"
+            @ok="submitSkipRequest"
+            ok-text="Gửi yêu cầu"
+            cancel-text="Hủy"
+            :confirm-loading="skipSubmitting"
+        >
+            <a-textarea
+                v-model:value="skipReason"
+                :rows="4"
+                placeholder="Nhập lý do xin bỏ qua bước này…"
+            />
+        </a-modal>
+
+        <a-modal
+            v-model:open="rejectModalVisible"
+            title="Từ chối bỏ qua bước"
+            ok-text="Từ chối"
+            cancel-text="Hủy"
+            :ok-button-props="{ danger: true }"
+            :confirm-loading="rejectSubmitting"
+            @ok="submitRejectSkip"
+        >
+            <a-textarea
+                v-model:value="rejectReason"
+                :rows="4"
+                placeholder="Nhập lý do từ chối"
+            />
+        </a-modal>
     </div>
 </template>
 
 <script setup>
-import {computed, onMounted, reactive, ref} from 'vue'
-import {useRoute, useRouter} from 'vue-router'
-import {message} from 'ant-design-vue'
-import {formatCurrency, formatDate} from '@/utils/formUtils'
-import dayjs from 'dayjs'
-import {getContractAPI} from '@/api/contract'
-import {getBiddingsAPI} from '@/api/bidding'
-import {EditOutlined, SendOutlined} from '@ant-design/icons-vue'
-import DrawerCreateTask from "@/components/common/DrawerCreateTask.vue"; // nếu chưa import
-import {
-    cloneContractStepsFromTemplateAPI,
-    completeContractStepAPI,
-    getContractStepsAPI,
-    updateContractStepAPI
-} from '@/api/contract-steps'
-import {getTaskDetail, getTasks, getTasksByBiddingStep, getTasksByContractStep} from '@/api/task' // giả sử bạn có API như vậy
-const activeStepId = ref(null)
+    import {computed, onMounted, reactive, ref} from 'vue'
+    import {useRoute, useRouter} from 'vue-router'
+    import {message} from 'ant-design-vue'
+    import {formatCurrency, formatDate} from '@/utils/formUtils'
+    import dayjs from 'dayjs'
+    import {getContractAPI} from '@/api/contract'
+    import {getBiddingsAPI} from '@/api/bidding'
+    import {EditOutlined, SendOutlined} from '@ant-design/icons-vue'
+    import DrawerCreateTask from "@/components/common/DrawerCreateTask.vue"; // nếu chưa import
+    import {
+        cloneContractStepsFromTemplateAPI,
+        completeContractStepAPI,
+        getContractStepsAPI,
+        updateContractStepAPI,
+        requestSkipContractStep,
+        approveSkipContractStep,
+        rejectSkipContractStep
+    } from '@/api/contract-steps'
+    import {getTaskDetail, getTasks, getTasksByBiddingStep, getTasksByContractStep} from '@/api/task' // giả sử bạn có API như vậy
+    const activeStepId = ref(null)
 
-import {useUserStore} from '@/stores/user'
+    import {useUserStore} from '@/stores/user'
 
-const userStore = useUserStore()
-const user = userStore.currentUser
+    const userStore = useUserStore()
+    const user = userStore.currentUser
 
-import {getCustomers} from '@/api/customer'
-import {getUsers} from '@/api/user.js'
+    import {getCustomers} from '@/api/customer'
+    import {getUsers} from '@/api/user.js'
 
-const openDrawer = ref(false)
+    const openDrawer = ref(false)
 
-import {useStepStore} from '@/stores/step'
-import {sendApproval} from "@/api/approvals.js";
+    import {useStepStore} from '@/stores/step'
+    import {sendApproval} from "@/api/approvals.js";
 
-const stepStore = useStepStore()
+    const stepStore = useStepStore()
 
-const biddings = ref([])
+    const biddings = ref([])
 
-const relatedTasks = computed(() => stepStore.relatedTasks)
-const loading = ref(false);
+    const relatedTasks = computed(() => stepStore.relatedTasks)
+    const loading = ref(false);
 
-// Định nghĩa cột cho bảng nhiệm vụ
-const relatedColumns = ref([
-    {
-        title: 'STT',
-        key: 'index',
-        width: 60,
-        align: 'center'
-    },
-    {
-        title: 'Tên công việc',
-        dataIndex: 'title',
-        key: 'title',
-        width: 200,
-        ellipsis: true
-    },
-    {
-        title: 'Người thực hiện',
-        dataIndex: 'assigned_to',
-        key: 'assigned_to',
-        width: 150,
-        align: 'center'
-    },
-    {
-        title: 'Tiến trình',
-        dataIndex: 'progress',
-        key: 'progress',
-        width: 120,
-        align: 'center'
-    },
-    {
-        title: 'Ưu tiên',
-        dataIndex: 'priority',
-        key: 'priority',
-        width: 150,
-        align: 'center'
-    },
-    {
-        title: 'Bắt đầu',
-        dataIndex: 'start_date',
-        key: 'start_date',
-        width: 100,
-        align: 'center'
-    },
-    {
-        title: 'Kết thúc',
-        dataIndex: 'end_date',
-        key: 'end_date',
-        width: 100,
-        align: 'center'
-    },
-    {
-        title: 'Trạng thái',
-        dataIndex: 'status',
-        key: 'status',
-        width: 120,
-        align: 'center'
-    },
-    {
-        title: 'Hạn',
-        dataIndex: 'deadline',
-        key: 'deadline',
-        width: 120,
-        align: 'center'
-    },
-    {
-        title: 'Duyệt',
-        dataIndex: 'approval_status',
-        key: 'approval_status',
-        width: 200,
-        align: 'center'
-    }
-])
-
-const router = useRouter()
-const route = useRoute()
-const id = route.params.id
-const isNewContract = ref(route.query.new === '1') // 👈 xác định hợp đồng mới
-const users = ref([])
-
-const contract = ref({})
-const steps = ref([])
-const loadingSteps = ref(false)
-
-const drawerVisible = ref(false)
-const selectedStep = ref(null)
-const customers = ref([])
-const customerName = ref('Đang tải...')
-const allTasks = ref([])
-// const relatedTasks = ref([])
-
-const onClickEditStart = (step) => {
-    if (!step) return
-    selectedStep.value = step
-    dateStart.value = step.start_date ? dayjs(step.start_date) : null
-    showEditDateStart.value = true
-    showEditDateEnd.value = false
-    activeStepId.value = step.id
-}
-
-const onClickEditEnd = (step) => {
-    if (!step) return
-    selectedStep.value = step
-    dateEnd.value = step.end_date ? dayjs(step.end_date) : null
-    showEditDateStart.value = false
-    showEditDateEnd.value = true
-    activeStepId.value = step.id
-}
-
-const showEditDate = ref(false)
-const dateStart = ref(null)
-const dateEnd = ref(null)
-// mở popover theo id step
-const openStatusForId = ref(null)
-const openAssignForId = ref(null)
-
-const showEditDateStart = ref(false)
-const showEditDateEnd = ref(false)
-const editDateStart = (step) => {
-    if (!step) return
-    selectedStep.value = step
-    dateStart.value = step.start_date ? dayjs(step.start_date) : null
-    showEditDateStart.value = true
-    showEditDateEnd.value = false
-}
-
-const editDateEnd = (step) => {
-    if (!step) return
-    selectedStep.value = step
-    dateEnd.value = step.end_date ? dayjs(step.end_date) : null
-    showEditDateStart.value = false
-    showEditDateEnd.value = true
-}
-const updateStepStartDate = async (value) => {
-    if (!selectedStep.value) return
-    const newStart = value ? dayjs(value).format('YYYY-MM-DD') : null
-    try {
-        await updateContractStepAPI(selectedStep.value.id, {start_date: newStart})
-        selectedStep.value.start_date = newStart
-        message.success('Cập nhật ngày bắt đầu thành công')
-        showEditDateStart.value = false
-        await fetchSteps()
-    } catch (e) {
-        message.error('Không thể cập nhật ngày bắt đầu')
-    }
-}
-
-const updateStepEndDate = async (value) => {
-    if (!selectedStep.value) return
-    const newEnd = value ? dayjs(value).format('YYYY-MM-DD') : null
-    try {
-        await updateContractStepAPI(selectedStep.value.id, {end_date: newEnd})
-        selectedStep.value.end_date = newEnd
-        message.success('Cập nhật ngày kết thúc thành công')
-        showEditDateEnd.value = false
-        await fetchSteps()
-    } catch (e) {
-        message.error('Không thể cập nhật ngày kết thúc')
-    }
-}
-
-const disabledDate = current => {
-    return current && current < dayjs(selectedStep.value.start_date).endOf('day');
-};
-const fetchBiddings = async () => {
-    try {
-        const res = await getBiddingsAPI()
-        biddings.value = res.data?.data || []
-    } catch (e) {
-        console.error('Không thể tải danh sách gói thầu', e)
-    }
-}
-
-
-const editing = reactive({
-    id: null,
-    field: null
-})
-
-
-// % tiến độ tổng HĐ
-const detailProgressPercent = (c) => Number(c?.progress?.contract_progress ?? 0);
-
-// Tooltip mô tả nhanh
-const detailProgressLines = (c) => {
-    const p = c?.progress || {};
-    const stepsDone = Number(p.steps_completed ?? 0);
-    const stepsTotal = Number(p.steps_total ?? 0);
-    const subDone = Number(p.subtasks_approved ?? 0);
-    const subTotal = Number(p.subtasks_total ?? 0);
-
-    const per = Array.isArray(p.per_steps) ? p.per_steps.slice(0, 3) : [];
-
-    return [
-        `Tiến độ hợp đồng: ${detailProgressPercent(c)}%`,
-        `Bước hoàn thành: ${stepsDone}/${stepsTotal}`,
-        `Nhiệm vụ con duyệt: ${subDone}/${subTotal}`
-    ];
-};
-
-const getAvatarColor = (name) => {
-    if (!name || name === 'N/A') return '#d9d9d9'
-
-    // Generate consistent color based on name
-    const colors = [
-        '#f5222d', '#fa8c16', '#fadb14', '#52c41a',
-        '#13c2c2', '#1890ff', '#722ed1', '#eb2f96',
-        '#fa541c', '#faad14', '#a0d911', '#52c41a',
-        '#13c2c2', '#1890ff', '#722ed1', '#eb2f96'
-    ]
-
-    // Simple hash function to get consistent color for same name
-    let hash = 0
-    for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash)
-    }
-    const index = Math.abs(hash) % colors.length
-    return colors[index]
-}
-
-// đổi trạng thái step (giống bidding, chú ý cast kiểu)
-const onChangeStatus = async (step, val) => {
-    const newVal = Number(val)
-    try {
-        if (newVal === 2 || String(newVal) === '2') {
-            await completeContractStepAPI(step.id)
-            message.success('Đã hoàn thành và mở bước kế tiếp')
-        } else {
-            await updateContractStepAPI(step.id, {status: newVal})
-            message.success('Đã cập nhật trạng thái bước')
+    // Định nghĩa cột cho bảng nhiệm vụ
+    const relatedColumns = ref([
+        {
+            title: 'STT',
+            key: 'index',
+            width: 60,
+            align: 'center'
+        },
+        {
+            title: 'Tên công việc',
+            dataIndex: 'title',
+            key: 'title',
+            width: 200,
+            ellipsis: true
+        },
+        {
+            title: 'Người thực hiện',
+            dataIndex: 'assigned_to',
+            key: 'assigned_to',
+            width: 150,
+            align: 'center'
+        },
+        {
+            title: 'Tiến trình',
+            dataIndex: 'progress',
+            key: 'progress',
+            width: 120,
+            align: 'center'
+        },
+        {
+            title: 'Ưu tiên',
+            dataIndex: 'priority',
+            key: 'priority',
+            width: 150,
+            align: 'center'
+        },
+        {
+            title: 'Bắt đầu',
+            dataIndex: 'start_date',
+            key: 'start_date',
+            width: 100,
+            align: 'center'
+        },
+        {
+            title: 'Kết thúc',
+            dataIndex: 'end_date',
+            key: 'end_date',
+            width: 100,
+            align: 'center'
+        },
+        {
+            title: 'Trạng thái',
+            dataIndex: 'status',
+            key: 'status',
+            width: 120,
+            align: 'center'
+        },
+        {
+            title: 'Hạn',
+            dataIndex: 'deadline',
+            key: 'deadline',
+            width: 120,
+            align: 'center'
+        },
+        {
+            title: 'Duyệt',
+            dataIndex: 'approval_status',
+            key: 'approval_status',
+            width: 200,
+            align: 'center'
         }
-        step.status = newVal
-    } catch (e) {
-        const msg = e?.response?.data?.messages?.error || 'Đã xảy ra lỗi'
-        message.error(msg)
-    } finally {
-        openStatusForId.value = null
-        await fetchSteps()
-    }
-}
+    ])
 
-// đổi người phụ trách step
-const onChangeAssigned = async (step, val) => {
-    try {
-        await updateContractStepAPI(step.id, {assigned_to: val || null})
-        message.success('Cập nhật người phụ trách thành công')
-        step.assigned_to = val || null
-    } catch (e) {
-        const msg = e?.response?.data?.messages?.error || 'Không thể cập nhật người phụ trách'
-        message.error(msg)
-    } finally {
-        openAssignForId.value = null
-        await fetchSteps()
-    }
-}
-const getInitials = (name) => {
-    if (!name) return '?'
-    const parts = name.trim().split(/\s+/)
-    return (parts[0][0] + (parts[parts.length - 1]?.[0] || '')).toUpperCase()
-}
+    const router = useRouter()
+    const route = useRoute()
+    const id = route.params.id
+    const isNewContract = ref(route.query.new === '1') // 👈 xác định hợp đồng mới
+    const users = ref([])
+
+    const contract = ref({})
+    const steps = ref([])
+    const loadingSteps = ref(false)
+
+    const drawerVisible = ref(false)
+    const selectedStep = ref(null)
+    const customers = ref([])
+    const customerName = ref('Đang tải...')
+    const allTasks = ref([])
+    // const relatedTasks = ref([])
 
 
-const getBiddingTitle = (id) => {
-    const found = biddings.value.find(b => String(b.id) === String(id))
-    return found?.title || `Gói thầu #${id}`
-}
+    const skipModalOpen = ref(false)
+    const rejectModalOpen = ref(false)
 
-const openStepDrawer = async (step) => {
-    selectedStep.value = {...step}
-    stepStore.setSelectedStep({...step})
-    activeStepId.value = step.id // 👈 đánh dấu bước đang mở
-    drawerVisible.value = true
+    const skipReason = ref('')
+    const rejectReason = ref('')
 
-    const user = userStore.currentUser
-    const dataFilter = {}
+    const skipStep = ref(null)
 
-    if (String(user?.role_id) === '3') {
-        // Nhân viên → chỉ xem nhiệm vụ của mình
-        dataFilter.assigned_to = user.id
-    } else if (String(user?.role_id) === '2') {
-        // Trưởng phòng → xem được nhiệm vụ của cả phòng
-        dataFilter.id_department = user.department_id
+    const skipLoading = ref(false)
+    const rejectLoading = ref(false)
+
+    const rejectModalVisible = ref(false)
+
+    const skipSubmitting = ref(false)
+    const rejectSubmitting = ref(false)
+
+
+
+    const openSkipModal = (step) => {
+        skipStep.value = step
+        skipReason.value = ''
+        skipModalOpen.value = true
     }
 
-    console.log('📤 dataFilter', dataFilter)
-
-    try {
-        const res = await getTasksByContractStep(step.id, dataFilter)
-        stepStore.setRelatedTasks(Array.isArray(res.data) ? res.data : [])
-    } catch (e) {
-        console.error('❌ Không thể tải công việc của bước', e)
-        message.error('Không thể tải danh sách công việc')
-        stepStore.setRelatedTasks([])
+    const openRejectSkip = (step) => {
+        skipStep.value = step
+        rejectReason.value = ''
+        rejectModalOpen.value = true
+        rejectModalVisible.value = true
     }
-}
 
-const showPopupCreate = () => {
-    openDrawer.value = true
-}
 
-const handleDrawerSubmit = async () => {
-    const user = userStore.currentUser
-    const dataFilter = {}
+    const submitSkipRequest = async () => {
+        if (!skipReason.value.trim()) {
+            return message.warning('Vui lòng nhập lý do')
+        }
 
-    if (String(user?.role_id) === '3') {
-        // Nhân viên → chỉ xem nhiệm vụ của mình
-        dataFilter.assigned_to = user.id
-    } else if (String(user?.role_id) === '2') {
-        // Trưởng phòng → xem nhiệm vụ của phòng
-        dataFilter.id_department = user.department_id
-    }
-    // Admin (1) → không lọc gì cả
-
-    if (stepStore.selectedStep?.id) {
+        skipSubmitting.value = true
         try {
-            // 1. Lấy danh sách task mới (sau khi tạo task xong)
-            const res = await getTasksByContractStep(stepStore.selectedStep.id, dataFilter)
-            const tasks = Array.isArray(res.data) ? res.data : []
-
-            // 2. Cập nhật vào store
-            stepStore.setRelatedTasks(tasks)
-
-            // 3. Gọi lại danh sách các bước để cập nhật task_count
+            await requestSkipContractStep(skipStep.value.id, skipReason.value)
+            message.success('Đã gửi yêu cầu')
+            skipModalOpen.value = false
             await fetchSteps()
+        } finally {
+            skipSubmitting.value = false
+        }
+    }
 
-            // 4. Cập nhật lại step đang mở để lấy task_count mới
-            const updatedStep = steps.value.find(s => s.id === stepStore.selectedStep.id)
-            if (updatedStep) {
-                selectedStep.value = {...updatedStep}
-                stepStore.setSelectedStep({...updatedStep})
+
+    const submitRejectSkip = async () => {
+        if (!rejectReason.value.trim()) {
+            return message.warning('Vui lòng nhập lý do')
+        }
+
+        rejectSubmitting.value = true
+        try {
+            await rejectSkipContractStep(skipStep.value.id, rejectReason.value)
+            message.success('Đã từ chối')
+            rejectModalVisible.value = false
+            await fetchSteps()
+        } finally {
+            rejectSubmitting.value = false
+        }
+    }
+
+
+    const isManager = computed(() => {
+        return Number(userStore.currentUser?.id) === Number(contract.value?.manager_id)
+    })
+
+
+    const canRequestSkip = (step) =>
+        step.status !== '2' &&
+        !step.skip_status &&
+        isAllTasksDone(step)
+
+    const approveLoadingId = ref(null)
+
+    const approveSkip = async (step) => {
+        approveLoadingId.value = step.id
+        try {
+            await approveSkipContractStep(step.id)
+            message.success('Đã duyệt bỏ qua')
+            await fetchSteps()
+        } finally {
+            approveLoadingId.value = null
+        }
+    }
+
+
+    const onClickEditStart = (step) => {
+        if (!step) return
+        selectedStep.value = step
+        dateStart.value = step.start_date ? dayjs(step.start_date) : null
+        showEditDateStart.value = true
+        showEditDateEnd.value = false
+        activeStepId.value = step.id
+    }
+
+    const onClickEditEnd = (step) => {
+        if (!step) return
+        selectedStep.value = step
+        dateEnd.value = step.end_date ? dayjs(step.end_date) : null
+        showEditDateStart.value = false
+        showEditDateEnd.value = true
+        activeStepId.value = step.id
+    }
+
+    const showEditDate = ref(false)
+    const dateStart = ref(null)
+    const dateEnd = ref(null)
+    // mở popover theo id step
+    const openStatusForId = ref(null)
+    const openAssignForId = ref(null)
+
+    const showEditDateStart = ref(false)
+    const showEditDateEnd = ref(false)
+    const editDateStart = (step) => {
+        if (!step) return
+        selectedStep.value = step
+        dateStart.value = step.start_date ? dayjs(step.start_date) : null
+        showEditDateStart.value = true
+        showEditDateEnd.value = false
+    }
+
+    const editDateEnd = (step) => {
+        if (!step) return
+        selectedStep.value = step
+        dateEnd.value = step.end_date ? dayjs(step.end_date) : null
+        showEditDateStart.value = false
+        showEditDateEnd.value = true
+    }
+    const updateStepStartDate = async (value) => {
+        if (!selectedStep.value) return
+        const newStart = value ? dayjs(value).format('YYYY-MM-DD') : null
+        try {
+            await updateContractStepAPI(selectedStep.value.id, {start_date: newStart})
+            selectedStep.value.start_date = newStart
+            message.success('Cập nhật ngày bắt đầu thành công')
+            showEditDateStart.value = false
+            await fetchSteps()
+        } catch (e) {
+            message.error('Không thể cập nhật ngày bắt đầu')
+        }
+    }
+
+    const updateStepEndDate = async (value) => {
+        if (!selectedStep.value) return
+        const newEnd = value ? dayjs(value).format('YYYY-MM-DD') : null
+        try {
+            await updateContractStepAPI(selectedStep.value.id, {end_date: newEnd})
+            selectedStep.value.end_date = newEnd
+            message.success('Cập nhật ngày kết thúc thành công')
+            showEditDateEnd.value = false
+            await fetchSteps()
+        } catch (e) {
+            message.error('Không thể cập nhật ngày kết thúc')
+        }
+    }
+
+    const disabledDate = current => {
+        return current && current < dayjs(selectedStep.value.start_date).endOf('day');
+    };
+    const fetchBiddings = async () => {
+        try {
+            const res = await getBiddingsAPI()
+            biddings.value = res.data?.data || []
+        } catch (e) {
+            console.error('Không thể tải danh sách gói thầu', e)
+        }
+    }
+
+
+    const editing = reactive({
+        id: null,
+        field: null
+    })
+
+
+    // % tiến độ tổng HĐ
+    const detailProgressPercent = (c) => Number(c?.progress?.contract_progress ?? 0);
+
+    // Tooltip mô tả nhanh
+    const detailProgressLines = (c) => {
+        const p = c?.progress || {};
+        const stepsDone = Number(p.steps_completed ?? 0);
+        const stepsTotal = Number(p.steps_total ?? 0);
+        const subDone = Number(p.subtasks_approved ?? 0);
+        const subTotal = Number(p.subtasks_total ?? 0);
+
+        const per = Array.isArray(p.per_steps) ? p.per_steps.slice(0, 3) : [];
+
+        return [
+            `Tiến độ hợp đồng: ${detailProgressPercent(c)}%`,
+            `Bước hoàn thành: ${stepsDone}/${stepsTotal}`,
+            `Nhiệm vụ con duyệt: ${subDone}/${subTotal}`
+        ];
+    };
+
+    const getAvatarColor = (name) => {
+        if (!name || name === 'N/A') return '#d9d9d9'
+
+        // Generate consistent color based on name
+        const colors = [
+            '#f5222d', '#fa8c16', '#fadb14', '#52c41a',
+            '#13c2c2', '#1890ff', '#722ed1', '#eb2f96',
+            '#fa541c', '#faad14', '#a0d911', '#52c41a',
+            '#13c2c2', '#1890ff', '#722ed1', '#eb2f96'
+        ]
+
+        // Simple hash function to get consistent color for same name
+        let hash = 0
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash)
+        }
+        const index = Math.abs(hash) % colors.length
+        return colors[index]
+    }
+
+    // đổi trạng thái step (giống bidding, chú ý cast kiểu)
+    const onChangeStatus = async (step, val) => {
+        const newVal = Number(val)
+        try {
+            if (newVal === 2 || String(newVal) === '2') {
+                await completeContractStepAPI(step.id)
+                message.success('Đã hoàn thành và mở bước kế tiếp')
             } else {
-                console.warn('⚠️ Không tìm thấy step để cập nhật')
+                await updateContractStepAPI(step.id, {status: newVal})
+                message.success('Đã cập nhật trạng thái bước')
             }
-
-            // 5. Kiểm tra lại tasks trong store
-            setTimeout(() => {
-                console.log('✅ Tasks trong store:', stepStore.relatedTasks)
-            }, 500)
-
-        } catch (err) {
-            console.error('❌ Không thể load task sau khi tạo:', err)
-            message.error('Không thể tải danh sách công việc sau khi tạo')
+            step.status = newVal
+        } catch (e) {
+            const msg = e?.response?.data?.messages?.error || 'Đã xảy ra lỗi'
+            message.error(msg)
+        } finally {
+            openStatusForId.value = null
+            await fetchSteps()
         }
     }
-}
 
-
-const getTaskStatusText = (status) => ({
-    todo: 'Chưa bắt đầu',
-    doing: 'Đang làm',
-    done: 'Hoàn thành',
-    overdue: 'Trễ hạn',
-}[status] || 'Không rõ')
-
-const getTaskStatusColor = (status) => ({
-    todo: 'default',
-    doing: 'blue',
-    done: 'green',
-    overdue: 'red',
-}[status] || 'default')
-
-// Hàm lấy màu cho mức độ ưu tiên
-const getPriorityColor = (priority) => {
-    const map = {
-        'low': 'green',
-        'medium': 'orange',
-        'high': 'red',
-        'urgent': 'red'
-    }
-    return map[priority] || 'default'
-}
-
-// Hàm lấy text cho mức độ ưu tiên
-const getPriorityText = (priority) => {
-    const map = {
-        'low': 'Thấp',
-        'medium': 'Trung bình',
-        'high': 'Cao',
-        'urgent': 'Khẩn cấp'
-    }
-    return map[priority] || 'Không xác định'
-}
-
-// Hàm tính toán thông tin deadline
-const deadlineInfo = (endDate) => {
-    if (!endDate) return {type: 'none', days: 0}
-
-    const today = dayjs()
-    const deadline = dayjs(endDate)
-    const diffDays = deadline.diff(today, 'day')
-
-    if (diffDays < 0) {
-        return {type: 'overdue', days: Math.abs(diffDays)}
-    } else if (diffDays === 0) {
-        return {type: 'today', days: 0}
-    } else {
-        return {type: 'remaining', days: diffDays}
-    }
-}
-
-// Hàm lấy màu cho trạng thái duyệt
-const getApprovalStatusColor = (status) => {
-    const map = {
-        'pending': 'orange',
-        'approved': 'green',
-        'rejected': 'red'
-    }
-    return map[status] || 'default'
-}
-
-// Hàm lấy text cho trạng thái duyệt
-const getApprovalStatusText = (status) => {
-    const map = {
-        'pending': 'Chờ duyệt',
-        'approved': 'Đã duyệt',
-        'rejected': 'Từ chối'
-    }
-    return map[status] || 'Không xác định'
-}
-
-const getStatusColor = (status) => {
-    const map = {
-        0: 'gray',
-        1: 'blue',
-        2: 'orange',
-        3: 'cyan',
-        4: 'green',
-        5: 'red',
-    }
-    return map[status] || 'default'
-}
-
-const getStatusText = (status) => {
-    const map = {
-        0: 'Nháp',
-        1: 'Đang thực hiện',
-        2: 'Chờ duyệt',
-        3: 'Đã duyệt',
-        4: 'Hoàn thành',
-        5: 'Đã hủy',
-    }
-    return map[status] || 'Không xác định'
-}
-
-const statusText = (status) => ({
-    '0': 'Chưa bắt đầu',
-    '1': 'Đang xử lý',
-    '2': 'Đã hoàn thành',
-    '3': 'Bỏ qua',
-}[status] || 'Không rõ')
-
-const mapStepStatus = (status) => ({
-    '0': 'wait',
-    '1': 'process',
-    '2': 'finish',
-    '3': 'error',
-}[status] || 'wait')
-
-const getStepStatusColor = (status) => ({
-    '0': 'default',
-    '1': 'blue',
-    '2': 'green',
-    '3': 'orange',
-}[status] || 'default')
-
-const lastCompletedIndex = () => {
-    for (let i = steps.value.length - 1; i >= 0; i--) {
-        if (steps.value[i].status === '2') return i
-    }
-    return -1
-}
-
-const currentStepIndex = () => {
-    const last = lastCompletedIndex()
-    const next = last + 1
-    return next >= steps.value.length ? steps.value.length - 1 : next
-}
-
-const updateStepStatus = async (newStatus, step) => {
-    try {
-        if (newStatus === '2') {
-            await completeContractStepAPI(step.id)
-            message.success('Đã hoàn thành và mở bước kế tiếp')
-        } else {
-            await updateContractStepAPI(step.id, {status: newStatus})
-            message.success('Đã cập nhật trạng thái bước')
+    // đổi người phụ trách step
+    const onChangeAssigned = async (step, val) => {
+        try {
+            await updateContractStepAPI(step.id, {assigned_to: val || null})
+            message.success('Cập nhật người phụ trách thành công')
+            step.assigned_to = val || null
+        } catch (e) {
+            const msg = e?.response?.data?.messages?.error || 'Không thể cập nhật người phụ trách'
+            message.error(msg)
+        } finally {
+            openAssignForId.value = null
+            await fetchSteps()
         }
-        drawerVisible.value = false
-        await fetchSteps()
-    } catch (e) {
-        const msg = e?.response?.data?.messages?.error || 'Đã xảy ra lỗi'
-        if (e?.response?.status === 400) {
-            message.warning(msg) // ⚠️ Cảnh báo nhẹ nhàng
-        } else {
-            message.error(msg) // ❌ Lỗi khác thì vẫn báo lỗi đỏ
+    }
+    const getInitials = (name) => {
+        if (!name) return '?'
+        const parts = name.trim().split(/\s+/)
+        return (parts[0][0] + (parts[parts.length - 1]?.[0] || '')).toUpperCase()
+    }
+
+
+    const getBiddingTitle = (id) => {
+        const found = biddings.value.find(b => String(b.id) === String(id))
+        return found?.title || `Gói thầu #${id}`
+    }
+
+    const openStepDrawer = async (step) => {
+        selectedStep.value = {...step}
+        stepStore.setSelectedStep({...step})
+        activeStepId.value = step.id // 👈 đánh dấu bước đang mở
+        drawerVisible.value = true
+
+        const user = userStore.currentUser
+        const dataFilter = {}
+
+        if (String(user?.role_id) === '3') {
+            // Nhân viên → chỉ xem nhiệm vụ của mình
+            dataFilter.assigned_to = user.id
+        } else if (String(user?.role_id) === '2') {
+            // Trưởng phòng → xem được nhiệm vụ của cả phòng
+            dataFilter.id_department = user.department_id
         }
-        console.warn('Lỗi cập nhật bước:', msg)
-    }
-}
 
-const updateStepAssignedTo = async (newUserId, step) => {
-    try {
-        await updateContractStepAPI(step.id, {assigned_to: newUserId})
-        message.success('Cập nhật người phụ trách thành công')
-        drawerVisible.value = false
-        await fetchSteps()
-    } catch (e) {
-        const msg = e?.response?.data?.messages?.error || 'Không thể cập nhật người phụ trách'
-        message.error(msg)
-        console.warn('Lỗi cập nhật người phụ trách:', msg)
-    }
-}
+        console.log('📤 dataFilter', dataFilter)
 
-const showEditTitle = ref(false)
-const titleInput = ref('')
-
-const editTitle = () => {
-    titleInput.value = selectedStep.value.title || ''
-    showEditTitle.value = true
-}
-
-const updateStepTitle = async () => {
-    const newTitle = titleInput.value.trim()
-    if (!newTitle || newTitle === selectedStep.value.title) {
-        showEditTitle.value = false
-        return
-    }
-
-    try {
-        await updateContractStepAPI(selectedStep.value.id, {title: newTitle})
-        selectedStep.value.title = newTitle
-        message.success('Đã cập nhật tiêu đề bước')
-        showEditTitle.value = false
-        await fetchSteps()
-    } catch (e) {
-        console.warn('Lỗi cập nhật tiêu đề:', e)
-        message.error('Không thể cập nhật tiêu đề')
-        showEditTitle.value = false
-    }
-}
-
-
-const closeDrawer = () => {
-    drawerVisible.value = false
-    activeStepId.value = null
-    showEditDateStart.value = false
-    showEditDateEnd.value = false
-    dateStart.value = null
-    dateEnd.value = null
-}
-const fetchCustomers = async () => {
-    try {
-        const res = await getCustomers()
-        customers.value = res.data?.data || []
-    } catch (e) {
-        console.error(e)
-        message.error('Không thể tải danh sách khách hàng')
-    }
-}
-
-const getCustomerName = (id) => {
-    if (!id || !customers.value.length) return 'Đang tải...'
-    const customer = customers.value.find(c => String(c.id) === String(id))
-    return customer ? customer.name : `Khách hàng #${id}`
-}
-
-const getCustomerNameById = async (id) => {
-    try {
-        const res = await getCustomers({id})
-        const matched = res.data?.data?.find(c => c.id === id)
-        customerName.value = matched?.name || `Khách hàng #${id}`
-    } catch {
-        customerName.value = 'Không thể tải khách hàng'
-    }
-}
-
-const fetchSteps = async () => {
-    loadingSteps.value = true
-    try {
-        if (isNewContract.value && steps.value.length === 0) {
-            await cloneContractStepsFromTemplateAPI(id)
+        try {
+            const res = await getTasksByContractStep(step.id, dataFilter)
+            stepStore.setRelatedTasks(Array.isArray(res.data) ? res.data : [])
+        } catch (e) {
+            console.error('❌ Không thể tải công việc của bước', e)
+            message.error('Không thể tải danh sách công việc')
+            stepStore.setRelatedTasks([])
         }
-        const stepRes = await getContractStepsAPI(id)
-        steps.value = Array.isArray(stepRes.data) ? stepRes.data : [];
-
-        // Nếu sau khi fetch đã có steps thì không clone lại nữa
-        isNewContract.value = false
-    } catch (e) {
-        console.error(e)
-        message.error('Không thể tải bước xử lý')
-    } finally {
-        loadingSteps.value = false
     }
-}
 
-const fetchData = async () => {
-    try {
-        // 1. Lấy thông tin hợp đồng
-        const res = await getContractAPI(id)
-        contract.value = res.data
-        // 2. Lấy tên khách hàng nếu có
-        if (contract.value.customer_id) {
+    const showPopupCreate = () => {
+        openDrawer.value = true
+    }
+
+    const handleDrawerSubmit = async () => {
+        const user = userStore.currentUser
+        const dataFilter = {}
+
+        if (String(user?.role_id) === '3') {
+            // Nhân viên → chỉ xem nhiệm vụ của mình
+            dataFilter.assigned_to = user.id
+        } else if (String(user?.role_id) === '2') {
+            // Trưởng phòng → xem nhiệm vụ của phòng
+            dataFilter.id_department = user.department_id
+        }
+        // Admin (1) → không lọc gì cả
+
+        if (stepStore.selectedStep?.id) {
             try {
-                const customerRes = await getCustomers({id: contract.value.customer_id})
-                const matched = customerRes.data?.data?.find(c => String(c.id) === String(contract.value.customer_id))
-                customerName.value = matched?.name || `Khách hàng #${contract.value.customer_id}`
-            } catch (e) {
-                console.warn('Không thể tải khách hàng', e)
-                customerName.value = 'Không thể tải khách hàng'
+                // 1. Lấy danh sách task mới (sau khi tạo task xong)
+                const res = await getTasksByContractStep(stepStore.selectedStep.id, dataFilter)
+                const tasks = Array.isArray(res.data) ? res.data : []
+
+                // 2. Cập nhật vào store
+                stepStore.setRelatedTasks(tasks)
+
+                // 3. Gọi lại danh sách các bước để cập nhật task_count
+                await fetchSteps()
+
+                // 4. Cập nhật lại step đang mở để lấy task_count mới
+                const updatedStep = steps.value.find(s => s.id === stepStore.selectedStep.id)
+                if (updatedStep) {
+                    selectedStep.value = {...updatedStep}
+                    stepStore.setSelectedStep({...updatedStep})
+                } else {
+                    console.warn('⚠️ Không tìm thấy step để cập nhật')
+                }
+
+                // 5. Kiểm tra lại tasks trong store
+                setTimeout(() => {
+                    console.log('✅ Tasks trong store:', stepStore.relatedTasks)
+                }, 500)
+
+            } catch (err) {
+                console.error('❌ Không thể load task sau khi tạo:', err)
+                message.error('Không thể tải danh sách công việc sau khi tạo')
             }
+        }
+    }
+
+
+    const getTaskStatusText = (status) => ({
+        todo: 'Chưa bắt đầu',
+        doing: 'Đang làm',
+        done: 'Hoàn thành',
+        overdue: 'Trễ hạn',
+    }[status] || 'Không rõ')
+
+    const getTaskStatusColor = (status) => ({
+        todo: 'default',
+        doing: 'blue',
+        done: 'green',
+        overdue: 'red',
+    }[status] || 'default')
+
+    // Hàm lấy màu cho mức độ ưu tiên
+    const getPriorityColor = (priority) => {
+        const map = {
+            'low': 'green',
+            'medium': 'orange',
+            'high': 'red',
+            'urgent': 'red'
+        }
+        return map[priority] || 'default'
+    }
+
+    // Hàm lấy text cho mức độ ưu tiên
+    const getPriorityText = (priority) => {
+        const map = {
+            'low': 'Thấp',
+            'medium': 'Trung bình',
+            'high': 'Cao',
+            'urgent': 'Khẩn cấp'
+        }
+        return map[priority] || 'Không xác định'
+    }
+
+    // Hàm tính toán thông tin deadline
+    const deadlineInfo = (endDate) => {
+        if (!endDate) return {type: 'none', days: 0}
+
+        const today = dayjs()
+        const deadline = dayjs(endDate)
+        const diffDays = deadline.diff(today, 'day')
+
+        if (diffDays < 0) {
+            return {type: 'overdue', days: Math.abs(diffDays)}
+        } else if (diffDays === 0) {
+            return {type: 'today', days: 0}
         } else {
-            customerName.value = 'Không có khách hàng'
+            return {type: 'remaining', days: diffDays}
+        }
+    }
+
+    // Hàm lấy màu cho trạng thái duyệt
+    const getApprovalStatusColor = (status) => {
+        const map = {
+            'pending': 'orange',
+            'approved': 'green',
+            'rejected': 'red'
+        }
+        return map[status] || 'default'
+    }
+
+    // Hàm lấy text cho trạng thái duyệt
+    const getApprovalStatusText = (status) => {
+        const map = {
+            'pending': 'Chờ duyệt',
+            'approved': 'Đã duyệt',
+            'rejected': 'Từ chối'
+        }
+        return map[status] || 'Không xác định'
+    }
+
+    const getStatusColor = (status) => {
+        const map = {
+            0: 'gray',
+            1: 'blue',
+            2: 'orange',
+            3: 'cyan',
+            4: 'green',
+            5: 'red',
+        }
+        return map[status] || 'default'
+    }
+
+    const getStatusText = (status) => {
+        const map = {
+            0: 'Nháp',
+            1: 'Đang thực hiện',
+            2: 'Chờ duyệt',
+            3: 'Đã duyệt',
+            4: 'Hoàn thành',
+            5: 'Đã hủy',
+        }
+        return map[status] || 'Không xác định'
+    }
+
+    const statusText = (status) => ({
+        '0': 'Chưa bắt đầu',
+        '1': 'Đang xử lý',
+        '2': 'Đã hoàn thành',
+        '3': 'Bỏ qua',
+    }[status] || 'Không rõ')
+
+    const mapStepStatus = (status) => ({
+        '0': 'wait',
+        '1': 'process',
+        '2': 'finish',
+        '3': 'error',
+    }[status] || 'wait')
+
+    const getStepStatusColor = (status) => ({
+        '0': 'default',
+        '1': 'blue',
+        '2': 'green',
+        '3': 'orange',
+    }[status] || 'default')
+
+    const lastCompletedIndex = () => {
+        for (let i = steps.value.length - 1; i >= 0; i--) {
+            if (steps.value[i].status === '2') return i
+        }
+        return -1
+    }
+
+    const currentStepIndex = () => {
+        const last = lastCompletedIndex()
+        const next = last + 1
+        return next >= steps.value.length ? steps.value.length - 1 : next
+    }
+
+    const updateStepStatus = async (newStatus, step) => {
+        try {
+            if (newStatus === '2') {
+                await completeContractStepAPI(step.id)
+                message.success('Đã hoàn thành và mở bước kế tiếp')
+            } else {
+                await updateContractStepAPI(step.id, {status: newStatus})
+                message.success('Đã cập nhật trạng thái bước')
+            }
+            drawerVisible.value = false
+            await fetchSteps()
+        } catch (e) {
+            const msg = e?.response?.data?.messages?.error || 'Đã xảy ra lỗi'
+            if (e?.response?.status === 400) {
+                message.warning(msg) // ⚠️ Cảnh báo nhẹ nhàng
+            } else {
+                message.error(msg) // ❌ Lỗi khác thì vẫn báo lỗi đỏ
+            }
+            console.warn('Lỗi cập nhật bước:', msg)
+        }
+    }
+
+    const updateStepAssignedTo = async (newUserId, step) => {
+        try {
+            await updateContractStepAPI(step.id, {assigned_to: newUserId})
+            message.success('Cập nhật người phụ trách thành công')
+            drawerVisible.value = false
+            await fetchSteps()
+        } catch (e) {
+            const msg = e?.response?.data?.messages?.error || 'Không thể cập nhật người phụ trách'
+            message.error(msg)
+            console.warn('Lỗi cập nhật người phụ trách:', msg)
+        }
+    }
+
+    const showEditTitle = ref(false)
+    const titleInput = ref('')
+
+    const editTitle = () => {
+        titleInput.value = selectedStep.value.title || ''
+        showEditTitle.value = true
+    }
+
+    const updateStepTitle = async () => {
+        const newTitle = titleInput.value.trim()
+        if (!newTitle || newTitle === selectedStep.value.title) {
+            showEditTitle.value = false
+            return
         }
 
-        // 3. Lấy bước xử lý
-        await fetchSteps()
-    } catch (e) {
-        console.error(e)
-        message.error('Không thể tải hợp đồng')
+        try {
+            await updateContractStepAPI(selectedStep.value.id, {title: newTitle})
+            selectedStep.value.title = newTitle
+            message.success('Đã cập nhật tiêu đề bước')
+            showEditTitle.value = false
+            await fetchSteps()
+        } catch (e) {
+            console.warn('Lỗi cập nhật tiêu đề:', e)
+            message.error('Không thể cập nhật tiêu đề')
+            showEditTitle.value = false
+        }
     }
-}
 
-const goToCustomerDetail = (customerId) => {
-    if (!customerId) return
-    router.push(`/customers/${customerId}`)
-}
-const parseDepartment = (val) => {
-    if (!val) return []
-    try {
-        const parsed = JSON.parse(val)
-        return Array.isArray(parsed) ? parsed : []
-    } catch {
+
+    const closeDrawer = () => {
+        drawerVisible.value = false
+        activeStepId.value = null
+        showEditDateStart.value = false
+        showEditDateEnd.value = false
+        dateStart.value = null
+        dateEnd.value = null
+    }
+    const fetchCustomers = async () => {
+        try {
+            const res = await getCustomers()
+            customers.value = res.data?.data || []
+        } catch (e) {
+            console.error(e)
+            message.error('Không thể tải danh sách khách hàng')
+        }
+    }
+
+    const getCustomerName = (id) => {
+        if (!id || !customers.value.length) return 'Đang tải...'
+        const customer = customers.value.find(c => String(c.id) === String(id))
+        return customer ? customer.name : `Khách hàng #${id}`
+    }
+
+    const getCustomerNameById = async (id) => {
+        try {
+            const res = await getCustomers({id})
+            const matched = res.data?.data?.find(c => c.id === id)
+            customerName.value = matched?.name || `Khách hàng #${id}`
+        } catch {
+            customerName.value = 'Không thể tải khách hàng'
+        }
+    }
+
+    const fetchSteps = async () => {
+        loadingSteps.value = true
+        try {
+            if (isNewContract.value && steps.value.length === 0) {
+                await cloneContractStepsFromTemplateAPI(id)
+            }
+            const stepRes = await getContractStepsAPI(id)
+            steps.value = Array.isArray(stepRes.data) ? stepRes.data : [];
+
+            // Nếu sau khi fetch đã có steps thì không clone lại nữa
+            isNewContract.value = false
+        } catch (e) {
+            console.error(e)
+            message.error('Không thể tải bước xử lý')
+        } finally {
+            loadingSteps.value = false
+        }
+    }
+
+    const fetchData = async () => {
+        try {
+            // 1. Lấy thông tin hợp đồng
+            const res = await getContractAPI(id)
+            contract.value = res.data
+            // 2. Lấy tên khách hàng nếu có
+            if (contract.value.customer_id) {
+                try {
+                    const customerRes = await getCustomers({id: contract.value.customer_id})
+                    const matched = customerRes.data?.data?.find(c => String(c.id) === String(contract.value.customer_id))
+                    customerName.value = matched?.name || `Khách hàng #${contract.value.customer_id}`
+                } catch (e) {
+                    console.warn('Không thể tải khách hàng', e)
+                    customerName.value = 'Không thể tải khách hàng'
+                }
+            } else {
+                customerName.value = 'Không có khách hàng'
+            }
+
+            // 3. Lấy bước xử lý
+            await fetchSteps()
+        } catch (e) {
+            console.error(e)
+            message.error('Không thể tải hợp đồng')
+        }
+    }
+
+    const goToCustomerDetail = (customerId) => {
+        if (!customerId) return
+        router.push(`/customers/${customerId}`)
+    }
+    const parseDepartment = (val) => {
+        if (!val) return []
+        try {
+            const parsed = JSON.parse(val)
+            return Array.isArray(parsed) ? parsed : []
+        } catch {
+            return []
+        }
+    }
+
+    const getAssignedUserName = (userId) => {
+        if (!userId || !users.value.length) return 'Không xác định'
+        const found = users.value.find(u => String(u.id) === String(userId))
+        return found?.name || `Người dùng #${userId}`
+    }
+
+    const fetchUsers = async () => {
+        try {
+            const res = await getUsers()
+            users.value = Array.isArray(res.data) ? res.data : res.data?.data || []
+        } catch (e) {
+            console.error('Không thể tải danh sách người dùng', e)
+        }
+    }
+
+    const getBiddingCost = (id) => {
+        const bidding = biddings.value.find(b => String(b.id) === String(id))
+        return bidding ? formatCurrency(bidding.estimated_cost) : 'Không có dữ liệu'
+    }
+
+
+    const fetchTasks = async () => {
+        const user = userStore.currentUser
+        const dataFilter = {
+            linked_type: 'contract'
+        }
+
+        if (String(user?.role_id) === '3') {
+            // Nhân viên → chỉ xem nhiệm vụ của mình
+            dataFilter.assigned_to = user.id
+        } else if (String(user?.role_id) === '2') {
+            // Trưởng phòng → xem nhiệm vụ trong phòng
+            dataFilter.id_department = user.department_id
+        }
+        // Admin (role_id === '1') → không cần lọc thêm
+
+        try {
+            const res = await getTasks(dataFilter)
+            allTasks.value = res.data?.data || []
+        } catch (e) {
+            console.error('Không thể tải danh sách task', e)
+            message.error('Không thể tải danh sách nhiệm vụ')
+        }
+    }
+
+
+    const goToUserDetail = (userId) => {
+        if (!userId) return
+        router.push(`/users/${userId}`)
+    }
+
+    const goToBiddingDetail = (id) => {
+        if (!id) return
+        router.push(`/bid-detail/${id}`)
+    }
+
+    const goBack = () => {
+        router.push('/contracts-tasks')
+    }
+
+    const safeToNumber = v => (v === null || v === undefined || v === '' ? 0 : Number(v))
+    const tryParse = v => {
+        try {
+            return typeof v === 'string' ? JSON.parse(v) : v
+        } catch {
+            return null
+        }
+    }
+
+    const canOpenStep = (step, index) => {
+        if (index === 0) return true
+        return steps.value
+            .slice(0, index)
+            .every(s => String(s.status) === '2' || s.skip_status === 'approved')
+    }
+
+
+    const stepApprovalStatus = s => String(s?.approval_status || '').toLowerCase()
+    const isAllTasksDone = s => {
+        const total = safeToNumber(s?.task_count)
+        const done = safeToNumber(s?.task_done_count)
+
+        // ✅ không có task → cho phép skip
+        if (total === 0) return true
+
+        return done === total
+    }
+
+    const stepSendState = s => {
+        const st = stepApprovalStatus(s)
+        if (st === 'approved') return 'approved'
+        if (st === 'pending') return 'sent'
+        if (isAllTasksDone(s)) return 'canSend'
+        return 'disabled'
+    }
+    const stepSendUI = s => {
+        switch (stepSendState(s)) {
+            case 'approved':
+                return {text: 'Đã duyệt', disabled: true, tip: 'Bước đã được phê duyệt.'}
+            case 'sent':
+                return {text: 'Đã gửi', disabled: true, tip: 'Đang chờ phê duyệt.'}
+            case 'canSend':
+                return {text: 'Gửi duyệt', disabled: false, tip: '🎯 Tất cả task đã hoàn thành. Nhấn để gửi duyệt.'}
+            default:
+                return {text: 'Gửi duyệt', disabled: true, tip: 'Cần hoàn tất tất cả task (≥1 task và 100%).'}
+        }
+    }
+    const onClickSend = step => {
+        if (stepSendState(step) === 'canSend') sendStepForApproval(step)
+    }
+    const tooltipDoneTitle = s => {
+        const total = safeToNumber(s?.task_count)
+        const st = stepApprovalStatus(s)
+        if (total < 1) return 'Bước này chưa có công việc. Hãy thêm ít nhất 1 task trước khi gửi duyệt.'
+        if (st === 'approved') return '✅ Bước đã được phê duyệt.'
+        if (st === 'pending') return '⏳ Đã gửi phê duyệt. Vui lòng chờ.'
+        return '🎉 Tất cả task trong bước đã hoàn thành. Hãy bấm “Gửi duyệt” để hoàn tất bước.'
+    }
+    const pickApproverIds = s => {
+        if (Array.isArray(s?.approver_ids)) return s.approver_ids.map(Number).filter(Boolean)
+        const stepsArr = tryParse(s?.approval_steps)
+        if (Array.isArray(stepsArr)) return stepsArr.map(x => Number(x?.approver_id)).filter(Boolean)
+        if (Array.isArray(s?.approvers_detail)) return s.approvers_detail.map(x => Number(x?.id)).filter(Boolean)
+        if (s?.assigned_to) return [Number(s.assigned_to)]
         return []
     }
-}
+    const sendStepForApproval = async step => {
+        const approverIds = pickApproverIds(step)
+        if (!approverIds.length) return message.warning('Chưa cấu hình người duyệt cho bước này')
 
-const getAssignedUserName = (userId) => {
-    if (!userId || !users.value.length) return 'Không xác định'
-    const found = users.value.find(u => String(u.id) === String(userId))
-    return found?.name || `Người dùng #${userId}`
-}
+        const payload = {
+            target_type: 'contract_step',
+            target_id: Number(step.id),
+            approver_ids: approverIds,
+            meta: {
+                title: `Bước ${step.step_number}: ${step.title}`,
+                url: `/contract/${contract.value.id}/info`
+            }
+        }
 
-const fetchUsers = async () => {
-    try {
-        const res = await getUsers()
-        users.value = Array.isArray(res.data) ? res.data : res.data?.data || []
-    } catch (e) {
-        console.error('Không thể tải danh sách người dùng', e)
-    }
-}
-
-const getBiddingCost = (id) => {
-    const bidding = biddings.value.find(b => String(b.id) === String(id))
-    return bidding ? formatCurrency(bidding.estimated_cost) : 'Không có dữ liệu'
-}
-
-
-const fetchTasks = async () => {
-    const user = userStore.currentUser
-    const dataFilter = {
-        linked_type: 'contract'
-    }
-
-    if (String(user?.role_id) === '3') {
-        // Nhân viên → chỉ xem nhiệm vụ của mình
-        dataFilter.assigned_to = user.id
-    } else if (String(user?.role_id) === '2') {
-        // Trưởng phòng → xem nhiệm vụ trong phòng
-        dataFilter.id_department = user.department_id
-    }
-    // Admin (role_id === '1') → không cần lọc thêm
-
-    try {
-        const res = await getTasks(dataFilter)
-        allTasks.value = res.data?.data || []
-    } catch (e) {
-        console.error('Không thể tải danh sách task', e)
-        message.error('Không thể tải danh sách nhiệm vụ')
-    }
-}
-
-
-const goToUserDetail = (userId) => {
-    if (!userId) return
-    router.push(`/users/${userId}`)
-}
-
-const goToBiddingDetail = (id) => {
-    if (!id) return
-    router.push(`/bid-detail/${id}`)
-}
-
-const goBack = () => {
-    router.push('/contracts-tasks')
-}
-
-const safeToNumber = v => (v === null || v === undefined || v === '' ? 0 : Number(v))
-const tryParse = v => { try { return typeof v === 'string' ? JSON.parse(v) : v } catch { return null } }
-
-const stepApprovalStatus = s => String(s?.approval_status || '').toLowerCase()
-const isAllTasksDone = s => {
-    const total = safeToNumber(s?.task_count)
-    const done = safeToNumber(s?.task_done_count)
-    return total >= 1 && done === total
-}
-const stepSendState = s => {
-    const st = stepApprovalStatus(s)
-    if (st === 'approved') return 'approved'
-    if (st === 'pending') return 'sent'
-    if (isAllTasksDone(s)) return 'canSend'
-    return 'disabled'
-}
-const stepSendUI = s => {
-    switch (stepSendState(s)) {
-        case 'approved': return { text: 'Đã duyệt', disabled: true, tip: 'Bước đã được phê duyệt.' }
-        case 'sent':     return { text: 'Đã gửi',   disabled: true, tip: 'Đang chờ phê duyệt.' }
-        case 'canSend':  return { text: 'Gửi duyệt',disabled: false,tip: '🎯 Tất cả task đã hoàn thành. Nhấn để gửi duyệt.' }
-        default:         return { text: 'Gửi duyệt',disabled: true, tip: 'Cần hoàn tất tất cả task (≥1 task và 100%).' }
-    }
-}
-const onClickSend = step => {
-    if (stepSendState(step) === 'canSend') sendStepForApproval(step)
-}
-const tooltipDoneTitle = s => {
-    const total = safeToNumber(s?.task_count)
-    const st = stepApprovalStatus(s)
-    if (total < 1) return 'Bước này chưa có công việc. Hãy thêm ít nhất 1 task trước khi gửi duyệt.'
-    if (st === 'approved') return '✅ Bước đã được phê duyệt.'
-    if (st === 'pending') return '⏳ Đã gửi phê duyệt. Vui lòng chờ.'
-    return '🎉 Tất cả task trong bước đã hoàn thành. Hãy bấm “Gửi duyệt” để hoàn tất bước.'
-}
-const pickApproverIds = s => {
-    if (Array.isArray(s?.approver_ids)) return s.approver_ids.map(Number).filter(Boolean)
-    const stepsArr = tryParse(s?.approval_steps)
-    if (Array.isArray(stepsArr)) return stepsArr.map(x => Number(x?.approver_id)).filter(Boolean)
-    if (Array.isArray(s?.approvers_detail)) return s.approvers_detail.map(x => Number(x?.id)).filter(Boolean)
-    if (s?.assigned_to) return [Number(s.assigned_to)]
-    return []
-}
-const sendStepForApproval = async step => {
-    const approverIds = pickApproverIds(step)
-    if (!approverIds.length) return message.warning('Chưa cấu hình người duyệt cho bước này')
-
-    const payload = {
-        target_type: 'contract_step',
-        target_id: Number(step.id),
-        approver_ids: approverIds,
-        meta: {
-            title: `Bước ${step.step_number}: ${step.title}`,
-            url: `/contract/${contract.value.id}/info`
+        try {
+            await sendApproval(payload)
+            message.success('Đã gửi phê duyệt')
+            step.approval_status = 'pending' // optimistic
+            await fetchSteps()
+        } catch (e) {
+            console.error(e)
+            message.error(e?.response?.data?.message || 'Không thể gửi phê duyệt')
         }
     }
 
-    try {
-        await sendApproval(payload)
-        message.success('Đã gửi phê duyệt')
-        step.approval_status = 'pending' // optimistic
-        await fetchSteps()
-    } catch (e) {
-        console.error(e)
-        message.error(e?.response?.data?.message || 'Không thể gửi phê duyệt')
+
+    const goToStepTasks = (step) => {
+        const contractId = Number(route.params.id) // 👈 lấy id gói thầu từ route hiện tại
+        router.push({
+            name: 'contract-step-tasks',
+            params: {contractId, stepId: Number(step.id)}
+        })
     }
-}
 
-
-
-const goToStepTasks = (step) => {
-    const contractId = Number(route.params.id) // 👈 lấy id gói thầu từ route hiện tại
-    router.push({
-        name: 'contract-step-tasks',
-        params: { contractId, stepId: Number(step.id) }
+    onMounted(() => {
+        fetchData()
+        fetchCustomers()
+        fetchUsers()
+        fetchBiddings()
+        fetchTasks() // 👈 Thêm dòng này
     })
-}
-
-onMounted(() => {
-    fetchData()
-    fetchCustomers()
-    fetchUsers()
-    fetchBiddings()
-    fetchTasks() // 👈 Thêm dòng này
-})
 </script>
 
 <style>
-.ant-descriptions-item-content {
-    width: 300px;
-}
-
-.active-step-title .ant-statistic-content span {
-    color: #FFFFFF;
-}
-
-/* Cân cột, đồng nhất label, bố cục gọn */
-.desc-grid :deep(.ant-descriptions-view) {
-    table-layout: fixed;
-    width: 100%;
-}
-
-.desc-grid :deep(.ant-descriptions-item-label) {
-    width: 140px !important; /* đồng nhất label */
-    max-width: 140px;
-    white-space: nowrap;
-}
-
-.desc-grid :deep(.ant-descriptions-item-content) {
-    width: calc(100% - 140px); /* cột nội dung cố định thẳng hàng */
-}
-
-/* Item có control hiển thị đẹp hơn */
-.desc-grid .status-tag,
-.desc-grid .assigned-display {
-    display: inline-flex;
-    align-items: center;
-}
-
-/* Tag list phòng ban gọn gàng */
-.desc-grid :deep(.ant-tag) {
-    margin: 2px 4px 2px 0;
-}
-
-/* Responsive: mobile 1 cột, label gọn hơn */
-@media (max-width: 575.98px) {
-    .desc-grid :deep(.ant-descriptions-item-label) {
-        width: 120px !important;
-        max-width: 120px;
+    .ant-descriptions-item-content {
+        width: 300px;
     }
-}
+
+    .active-step-title .ant-statistic-content span {
+        color: #FFFFFF;
+    }
+
+    /* Cân cột, đồng nhất label, bố cục gọn */
+    .desc-grid :deep(.ant-descriptions-view) {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    .desc-grid :deep(.ant-descriptions-item-label) {
+        width: 140px !important; /* đồng nhất label */
+        max-width: 140px;
+        white-space: nowrap;
+    }
+
+    .desc-grid :deep(.ant-descriptions-item-content) {
+        width: calc(100% - 140px); /* cột nội dung cố định thẳng hàng */
+    }
+
+    /* Item có control hiển thị đẹp hơn */
+    .desc-grid .status-tag,
+    .desc-grid .assigned-display {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    /* Tag list phòng ban gọn gàng */
+    .desc-grid :deep(.ant-tag) {
+        margin: 2px 4px 2px 0;
+    }
+
+    /* Responsive: mobile 1 cột, label gọn hơn */
+    @media (max-width: 575.98px) {
+        .desc-grid :deep(.ant-descriptions-item-label) {
+            width: 120px !important;
+            max-width: 120px;
+        }
+    }
 
 </style>
 
 <style scoped>
 
 
-.active-step-title {
-    background-color: #91d5ff;
-    border-radius: 4px;
-    padding: 0 8px;
-}
+    .active-step-title {
+        background-color: #91d5ff;
+        border-radius: 4px;
+        padding: 0 8px;
+    }
 
-.active-step-title span {
-    color: #ffffff !important;
-}
+    .active-step-title span {
+        color: #ffffff !important;
+    }
 
-.ant-list-item {
-    padding-left: 0;
-    padding-right: 0;
-}
+    .ant-list-item {
+        padding-left: 0;
+        padding-right: 0;
+    }
 
-.step-actions {
-    margin-top: 12px;
-    text-align: right;
-}
+    .step-actions {
+        margin-top: 12px;
+        text-align: right;
+    }
 
-.ant-steps-item-title {
-    color: rgba(0, 0, 0, 0.85) !important;
-    font-weight: 500;
-    cursor: pointer;
-}
+    .ant-steps-item-title {
+        color: rgba(0, 0, 0, 0.85) !important;
+        font-weight: 500;
+        cursor: pointer;
+    }
 
-.mt-30 {
-    margin-top: 30px;
-}
+    .mt-30 {
+        margin-top: 30px;
+    }
 
-.mb-30 {
-    margin-bottom: 30px;
-}
+    .mb-30 {
+        margin-bottom: 30px;
+    }
 
-/* CSS cho bảng nhiệm vụ */
-.tiny-scroll {
-    max-height: 500px;
-    overflow-y: auto;
-}
+    /* CSS cho bảng nhiệm vụ */
+    .tiny-scroll {
+        max-height: 500px;
+        overflow-y: auto;
+    }
 
-.tiny-scroll::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
+    .tiny-scroll::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
 
-.tiny-scroll::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-}
+    .tiny-scroll::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
 
-.tiny-scroll::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
-}
+    .tiny-scroll::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+    }
 
-.tiny-scroll::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-}
+    .tiny-scroll::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
 
-/* CSS cho bảng */
-.ant-table-small .ant-table-thead > tr > th {
-    background-color: #fafafa;
-    font-weight: 600;
-    color: #262626;
-}
+    /* CSS cho bảng */
+    .ant-table-small .ant-table-thead > tr > th {
+        background-color: #fafafa;
+        font-weight: 600;
+        color: #262626;
+    }
 
-.ant-table-small .ant-table-tbody > tr > td {
-    padding: 8px 12px;
-}
+    .ant-table-small .ant-table-tbody > tr > td {
+        padding: 8px 12px;
+    }
 
-.ant-table-small .ant-table-tbody > tr:hover > td {
-    background-color: #f5f5f5;
-}
+    .ant-table-small .ant-table-tbody > tr:hover > td {
+        background-color: #f5f5f5;
+    }
+    .step-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+
+    .step-title-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        color: #1890ff;
+    }
+
+    .step-title-text {
+        text-decoration: underline;
+    }
+
+    .step-title-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .step-title-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        color: #1890ff;
+    }
+
+    .step-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .step-statistic {
+        display: flex;
+        align-items: center;
+    }
+
+
 </style>

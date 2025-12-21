@@ -107,37 +107,97 @@
                     <a-step v-for="(step, index) in steps" :key="step.id" :status="mapStepStatus(step.status)">
                         <template #title>
                             <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
-                                <!-- Bên trái: tiêu đề + statistic -->
-                                <div
-                                    @click.stop="goToStepTasks(step)"
-                                    @keydown.enter.prevent="goToStepTasks(step)"
-                                    @keydown.space.prevent="goToStepTasks(step)"
-                                    :class="{ 'active-step-title': activeStepId === step.id }"
-                                    role="button" tabindex="0"
-                                    style="display:flex;align-items:center;cursor:pointer;color:#1890ff;gap:12px;"
-                                ><span style="text-decoration: underline;">
-                                    Bước {{ step.step_number ?? '-' }}: {{ step.title ?? '-' }}
-                            </span>
-                                    <div style="display:flex;align-items:center;gap:6px;">
+                                <!-- ================= LEFT: TITLE + STATISTIC ================= -->
+                                <a-tooltip :title="canOpenStep(step, index)  ? 'Xem chi tiết bước' : 'Bạn cần hoàn thành các bước trước đó' " placement="top">
+                                    <div
+                                        role="button"
+                                        tabindex="0"
+                                        @click.stop="canOpenStep(step, index) && goToStepTasks(step)"
+                                        @keydown.enter.prevent="canOpenStep(step, index) && goToStepTasks(step)"
+                                        @keydown.space.prevent="canOpenStep(step, index) && goToStepTasks(step)"
+                                        :class="[ 'step-title-wrapper', { 'active-step-title': activeStepId === step.id,  'step-disabled': !canOpenStep(step, index)}]"
+                                    >
+                                                                <!-- Title -->
+                                        <span class="step-title-text">
+                                            Bước {{ step.step_number ?? '-' }}: {{ step.title ?? '-' }}
+                                        </span>
                                         <!-- Statistic -->
-                                        <a-tooltip
-                                            v-if="isAllTasksDone(step)"
-                                            :title="tooltipDoneTitle(step)"
-                                            placement="top"
-                                        >
+                                        <div class="step-statistic">
+                                            <a-tooltip
+                                                v-if="isAllTasksDone(step)"
+                                                :title="tooltipDoneTitle(step)"
+                                                placement="top"
+                                            >
+                                                <a-statistic
+                                                    :value="step.task_done_count ?? 0"
+                                                    :suffix="'/' + (step.task_count ?? 0) + ' task đã xong'"
+                                                    :value-style="{ fontSize: '13px', color: '#555' }"
+                                                />
+                                            </a-tooltip>
+
                                             <a-statistic
+                                                v-else
                                                 :value="step.task_done_count ?? 0"
                                                 :suffix="'/' + (step.task_count ?? 0) + ' task đã xong'"
                                                 :value-style="{ fontSize: '13px', color: '#555' }"
                                             />
-                                        </a-tooltip>
-                                        <a-statistic
-                                            v-else
-                                            :value="step.task_done_count ?? 0"
-                                            :suffix="'/' + (step.task_count ?? 0) + ' task đã xong'"
-                                            :value-style="{ fontSize: '13px', color: '#555' }"
-                                        />
+                                        </div>
+
+                                        <!-- ================= SKIP STATUS ================= -->
+                                        <a-tag
+                                            v-if="step.skip_status === 'pending'"
+                                            color="orange"
+                                        >
+                                            Chờ duyệt bỏ qua
+                                        </a-tag>
+
+                                        <a-tag
+                                            v-else-if="step.skip_status === 'approved'"
+                                            color="green"
+                                        >
+                                            Đã bỏ qua
+                                        </a-tag>
+
+                                        <a-tag
+                                            v-else-if="step.skip_status === 'rejected'"
+                                            color="red"
+                                        >
+                                            Bị từ chối
+                                        </a-tag>
                                     </div>
+                                </a-tooltip>
+
+                                <!-- ================= RIGHT: ACTION BUTTONS ================= -->
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <!-- Người thực hiện: gửi yêu cầu bỏ qua -->
+                                    <a-button
+                                        v-if="canRequestSkip(step)"
+                                        size="small"
+                                        type="link"
+                                        danger
+                                        @click.stop="openSkipModal(step)"
+                                    >
+                                        Bỏ qua
+                                    </a-button>
+
+                                    <!-- Người giao việc: duyệt / từ chối -->
+                                    <template v-if="isManager && step.skip_status === 'pending'">
+                                        <a-button
+                                            size="small"
+                                            type="primary"
+                                            @click.stop="approveSkip(step)"
+                                        >
+                                            Duyệt
+                                        </a-button>
+
+                                        <a-button
+                                            size="small"
+                                            danger
+                                            @click.stop="openRejectSkip(step)"
+                                        >
+                                            Từ chối
+                                        </a-button>
+                                    </template>
                                 </div>
                             </div>
                         </template>
@@ -460,6 +520,38 @@
             type="bidding"
             @submitForm="handleDrawerSubmit"
         />
+
+        <a-modal
+            v-model:open="skipModalOpen"
+            title="Yêu cầu bỏ qua bước"
+            @ok="submitSkipRequest"
+            ok-text="Gửi yêu cầu"
+            cancel-text="Hủy"
+            :confirm-loading="skipSubmitting"
+        >
+            <a-textarea
+                v-model:value="skipReason"
+                :rows="4"
+                placeholder="Nhập lý do xin bỏ qua bước này…"
+            />
+        </a-modal>
+
+        <a-modal
+            v-model:open="rejectModalVisible"
+            title="Từ chối bỏ qua bước"
+            ok-text="Từ chối"
+            cancel-text="Hủy"
+            :ok-button-props="{ danger: true }"
+            :confirm-loading="rejectSubmitting"
+            @ok="submitRejectSkip"
+        >
+            <a-textarea
+                v-model:value="rejectReason"
+                :rows="4"
+                placeholder="Nhập lý do từ chối"
+            />
+        </a-modal>
+
     </div>
 </template>
 
@@ -495,6 +587,7 @@ import { SendOutlined, EditOutlined, MinusOutlined, PlusOutlined } from '@ant-de
 import DrawerCreateTask from '@/components/common/DrawerCreateTask.vue'
 import DrawerCreateSubtask from '@/components/common/DrawerCreateSubtask.vue'
 import {addEntityMember, removeEntityMember} from "@/api/entityMembers.js";
+import {approveSkipBiddingStep, rejectSkipBiddingStep, requestSkipBiddingStep} from '@/api/approvalSessions'
 
 dayjs.locale('vi')
 
@@ -545,6 +638,15 @@ const dataFilter = ref({})
 const tableData = ref([])
 const pagination = ref({ current: 1, total: 0, pageSize: 10 })
 
+const skipModalOpen = ref(false)
+const skipReason = ref('')
+const skipStep = ref(null)
+const rejectModalVisible = ref(false)
+
+const skipSubmitting = ref(false)
+const rejectSubmitting = ref(false)
+
+
 /* =========================
  * Constants & Helpers
  * ========================= */
@@ -564,6 +666,50 @@ const TASK_STATUS_TEXT = { todo: 'Chưa bắt đầu', doing: 'Đang làm', done
 const TASK_STATUS_COLOR = { todo: 'default', doing: 'blue', done: 'green', overdue: 'red' }
 
 
+const openSkipModal = (step) => {
+    skipStep.value = step
+    skipReason.value = ''
+    skipModalOpen.value = true
+}
+
+const rejectReason = ref('')
+const rejectStep = ref(null)
+
+
+const openRejectSkip = (step) => {
+    rejectStep.value = step
+    rejectReason.value = ''
+    rejectModalVisible.value = true
+}
+
+const submitSkipRequest = async () => {
+    if (!skipReason.value.trim()) {
+        return message.warning('Vui lòng nhập lý do bỏ qua')
+    }
+
+    skipSubmitting.value = true
+    try {
+        await requestSkipBiddingStep(skipStep.value.id, skipReason.value)
+        message.success('Đã gửi yêu cầu bỏ qua, chờ người giao việc duyệt')
+        skipModalOpen.value = false
+        await fetchSteps()
+    } catch (e) {
+        message.error(e?.response?.data?.message || 'Không thể gửi yêu cầu')
+    } finally {
+        skipSubmitting.value = false
+    }
+}
+
+
+const approveSkip = async (step) => {
+    try {
+        await approveSkipBiddingStep(step.id)
+        message.success('Đã duyệt bỏ qua bước')
+        await fetchSteps()
+    } catch (e) {
+        message.error(e?.response?.data?.message || 'Không thể duyệt')
+    }
+}
 
 // ===== Helpers bổ sung cho cột =====
 const fmtDate = (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '—')
@@ -1074,6 +1220,41 @@ const parseDepartment = val => {
     return val ? [val] : []
 }
 
+
+// kiểm tra có được gửi yêu cầu skip không
+const canRequestSkip = (step) => {
+    // đã xin hoặc đã xử lý rồi thì không cho xin nữa
+    if (step.skip_status) return false
+
+    // chỉ cho xin skip khi bước chưa hoàn thành
+    return String(step.status) !== '2'
+}
+
+// kiểm tra user hiện tại có phải người giao việc không
+const isManager = computed(() => {
+    return Number(userStore.currentUser?.id) === Number(bidding.value?.manager_id)
+})
+
+const submitRejectSkip = async () => {
+    if (!rejectReason.value.trim()) {
+        return message.warning('Vui lòng nhập lý do từ chối')
+    }
+
+    rejectSubmitting.value = true
+    try {
+        await rejectSkipBiddingStep(rejectStep.value.id, rejectReason.value)
+        message.success('Đã từ chối yêu cầu bỏ qua')
+        rejectModalVisible.value = false
+        await fetchSteps()
+    } catch (e) {
+        message.error(e?.response?.data?.message || 'Không thể từ chối')
+    } finally {
+        rejectSubmitting.value = false
+    }
+}
+
+
+
 const lastCompletedIndex = () => {
     for (let i = steps.value.length - 1; i >= 0; i--) if (String(steps.value[i].status) === '2') return i
     return -1
@@ -1166,6 +1347,20 @@ const goToStepTasks = (step) => {
         params: { bidId, stepId: Number(step.id) }
     })
 }
+
+const canOpenStep = (step, index) => {
+    // Bước đầu tiên → luôn mở được
+    if (index === 0) return true
+
+    // Tất cả bước trước đó phải status === 2
+    for (let i = 0; i < index; i++) {
+        if (String(steps.value[i].status) !== '2') {
+            return false
+        }
+    }
+    return true
+}
+
 
 /* =========================
  * Lifecycle
@@ -1420,6 +1615,30 @@ onMounted(async () => {
     top: 0;
     bottom: 50%;
     border-left: 1px solid #ccc; /* gạch dọc */
+}
+.step-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    color: #1890ff;
+    outline: none;
+}
+
+.step-title-wrapper.step-disabled {
+    cursor: not-allowed;
+    color: #999;
+    opacity: 0.6;
+}
+
+.step-title-text {
+    text-decoration: underline;
+}
+
+.step-statistic {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 </style>

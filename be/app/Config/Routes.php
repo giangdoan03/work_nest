@@ -5,7 +5,7 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
-
+$routes->get('test-mail', 'TestMailController::index');
 
 $routes->group('api', function ($routes) {
 
@@ -62,6 +62,18 @@ $routes->group('api', function ($routes) {
     $routes->post('approval-sessions/(:num)/reorder-reviewers', 'ApprovalSessionController::updateApprovalOrder/$1');
     $routes->post('approval-sessions/(:num)/update', 'ApprovalSessionController::updateApprovalSession/$1');
     $routes->get('approval-sessions/selectable-users', 'ApprovalSessionController::selectableUsers');
+    $routes->get('approval-sessions/task/(:num)/statistics', 'ApprovalSessionController::statisticsByTask/$1');
+
+
+    $routes->post('bidding-steps/(:num)/request-skip', 'BiddingStepController::requestSkip/$1');
+    $routes->post('bidding-steps/(:num)/approve-skip', 'BiddingStepController::approveSkip/$1');
+    $routes->post('bidding-steps/(:num)/reject-skip', 'BiddingStepController::rejectSkip/$1');
+
+    $routes->post('contract-steps/(:num)/request-skip', 'ContractStepController::requestSkip/$1');
+    $routes->post('contract-steps/(:num)/approve-skip', 'ContractStepController::approveSkip/$1');
+    $routes->post('contract-steps/(:num)/reject-skip',  'ContractStepController::rejectSkip/$1');
+
+
     // Danh sách hợp đồng của 1 khách hàng
     $routes->get('contracts/by-customer/(:num)', 'CustomerController::contracts/$1');
 
@@ -330,5 +342,7 @@ $routes->group('api', function ($routes) {
     $routes->get('departments/(:num)/users', 'DepartmentController::users/$1');
     $routes->post('departments/(:num)/users', 'DepartmentController::addUsers/$1');
     $routes->delete('departments/(:num)/users/(:num)', 'DepartmentController::removeUser/$1/$2');
+
+
 
 });
