@@ -377,12 +377,11 @@ class ApprovalSessionController extends ResourceController
 
         // 1️⃣ Lấy approver hiện tại + level
         $current = $approverModel
-            ->select('a.*, p.level')
-            ->from('approval_session_approvers a')
-            ->join('positions p', 'p.id = a.position_id')
-            ->where('a.session_id', $sessionId)
-            ->where('a.user_id', $userId)
-            ->where('a.status', 'pending')
+            ->select('approval_session_approvers.*, p.level')
+            ->join('positions p', 'p.id = approval_session_approvers.position_id')
+            ->where('approval_session_approvers.session_id', $sessionId)
+            ->where('approval_session_approvers.user_id', $userId)
+            ->where('approval_session_approvers.status', 'pending')
             ->first();
 
         if (!$current) {
@@ -399,21 +398,16 @@ class ApprovalSessionController extends ResourceController
 
         // 3️⃣ AUTO APPROVE CẤP THẤP HƠN (RAW SQL)
         $db = db_connect();
-        $db->query("
-        UPDATE approval_session_approvers a
-        JOIN positions p ON p.id = a.position_id
-        SET
-            a.status = 'approved',
-            a.approved_at = ?
-        WHERE
-            a.session_id = ?
-            AND a.status = 'pending'
-            AND p.level < ?
-    ", [
-            date('Y-m-d H:i:s'),
-            $sessionId,
-            $currentLevel
-        ]);
+        $builder = $db->table('approval_session_approvers a');
+
+        $builder
+            ->set('a.status', 'approved')
+            ->set('a.approved_at', date('Y-m-d H:i:s'))
+            ->join('positions p', 'p.id = a.position_id')
+            ->where('a.session_id', $sessionId)
+            ->where('a.status', 'pending')
+            ->where('p.level <', $currentLevel)
+            ->update();
 
         return $this->respond([
             'success' => true,
