@@ -115,14 +115,14 @@ class CommentController extends ResourceController
         $builderDocs
             ->select(
                 'd.id,
-         d.title,
-         d.file_path,
-         d.file_size,
-         d.uploaded_by,
-         d.created_at,
-         d.approval_status,
-         d.drive_id,
-         u.name AS uploader_name'
+                 d.title,
+                 d.file_path,
+                 d.file_size,
+                 d.uploaded_by,
+                 d.created_at,
+                 d.approval_status,
+                 d.drive_id,
+                 u.name AS uploader_name'
             )
             ->join('users u', 'u.id = d.uploaded_by', 'left')
             ->where('d.source_task_id', $task_id)

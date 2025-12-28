@@ -195,26 +195,26 @@
 
                 <div class="tg-composer">
                     <!-- Attach -->
-<!--                    <a-upload-->
-<!--                        :show-upload-list="false"-->
-<!--                        :multiple="true"-->
-<!--                        :max-count="3"-->
-<!--                        :before-upload="handleBeforeUpload"-->
-<!--                    >-->
-<!--                        <a-button type="text" class="tg-attach-btn" title="Đính kèm">-->
-<!--                            <PaperClipOutlined/>-->
-<!--                        </a-button>-->
-<!--                    </a-upload>-->
-
-                    <a-tooltip title="Tạo phiên duyệt mới">
-                        <a-button
-                            type="text"
-                            class="tg-attach-btn"
-                            @click="uploadModalOpen = true"
-                        >
-                            <PlusOutlined />
+                    <a-upload
+                        :show-upload-list="false"
+                        :multiple="true"
+                        :max-count="3"
+                        :before-upload="handleBeforeUpload"
+                    >
+                        <a-button type="text" class="tg-attach-btn" title="Đính kèm">
+                            <PaperClipOutlined/>
                         </a-button>
-                    </a-tooltip>
+                    </a-upload>
+
+<!--                    <a-tooltip title="Tạo phiên duyệt mới">-->
+<!--                        <a-button-->
+<!--                            type="text"-->
+<!--                            class="tg-attach-btn"-->
+<!--                            @click="uploadModalOpen = true"-->
+<!--                        >-->
+<!--                            <PlusOutlined />-->
+<!--                        </a-button>-->
+<!--                    </a-tooltip>-->
 
 
                     <UploadWithUserModal
@@ -1657,9 +1657,7 @@ async function createNewComment({keepMentions = false} = {}) {
         try {
             const commentData = res?.data?.comment || res?.data || {};
 
-            const files = Array.isArray(commentData?.files)
-                ? commentData.files
-                : [];
+            const files = Array.isArray(commentData?.files) ? commentData.files : [];
 
             if (files.length) {
                 for (const f of files) {

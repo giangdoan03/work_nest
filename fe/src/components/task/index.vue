@@ -337,7 +337,7 @@
                                 <a-tab-pane key="approval-history">
                                     <template #tab>
                                         <span class="tab-with-badge">
-                                            <span class="tab-text">Phê duyệt</span>
+                                            <span class="tab-text">Phiên duyệt</span>
                                             <a-badge
                                                 v-if="approvalCount > 0"
                                                 :count="approvalCount"
@@ -350,6 +350,7 @@
                                         ref="approvalHistoryRef"
                                         :task-id="Number(route.params.id)"
                                         :users="listUser"
+                                        :departments="listDepartment"
                                     />
                                 </a-tab-pane>
 
@@ -380,9 +381,22 @@
                 </a-col>
                 <!-- RIGHT: 1/3 — Subtasks + Thảo luận -->
                 <a-col :span="11" :xs="24" :lg="11" :xl="11" class="right-col">
-                    <a-card title="Thảo luận & Phê duyệt" bordered class="discussion-card">
+                    <a-card
+                        title="Thảo luận"
+                        bordered
+                        class="discussion-card"
+                    >
+                        <template #extra>
+                            <a-button
+                                type="primary"
+                                size="small"
+                                @click="uploadModalOpen = true"
+                            >
+                                + Tạo phiên duyệt
+                            </a-button>
+                        </template>
+
                         <a-row :gutter="[16, 8]">
-                            <!-- Cột trái: Thảo luận -->
                             <a-col :span="24" :xs="24" :lg="24" style="padding-left: 0; padding-right: 0">
                                 <div class="discussion-scroll" v-auto-maxheight="-50">
                                     <Comment
@@ -395,9 +409,18 @@
                             </a-col>
                         </a-row>
                     </a-card>
+
                 </a-col>
             </a-row>
         </div>
+        <UploadWithUserModal
+            v-model:open="uploadModalOpen"
+            :task-id="Number(route.params.id)"
+            :users="listUser"
+            :departments="listDepartment"
+            mode="create"
+            @confirm="handleApprovalSessionCreated"
+        />
     </div>
 </template>
 <script setup>
@@ -442,6 +465,7 @@ import ApprovalStatus from '@/components/Approval/ApprovalStatus.vue'
 import ApprovalHistoryBlock from "@/components/task/ApprovalHistoryBlock.vue";
 import ApprovalStatisticsBlock from "@/components/task/ApprovalStatisticsBlock.vue";
 import {getApprovalSessionsByTask, getApprovalStatisticsByTask} from "@/api/approvalSessions.js";
+import UploadWithUserModal from "@/components/task/UploadWithUserModal.vue";
 
 const commonStore = useCommonStore()
 dayjs.locale('vi')
@@ -470,6 +494,7 @@ const activeTab = ref('info')
 const approvalCount = ref(0)
 const violationCount = ref(0)
 const approvalStatisticsRef = ref(null)
+const uploadModalOpen = ref(false)
 
 const formData = ref({
     title: '',

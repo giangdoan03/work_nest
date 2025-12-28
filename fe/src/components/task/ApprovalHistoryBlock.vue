@@ -42,8 +42,8 @@
                             <a-tooltip
                                 :title="hasAnyReviewed(session)
                                     ? 'Đã có người duyệt, không thể chỉnh sửa'
-                                    : 'Cập nhật phê duyệt'"
-                                                        >
+                                    : 'Chỉnh sửa phiên duyệt'"
+                            >
                                 <span>
                                     <a-button
                                         type="text"
@@ -56,7 +56,6 @@
                                     </a-button>
                                 </span>
                             </a-tooltip>
-
 
                             <!-- 🗑 XOÁ PHIÊN -->
                             <a-popconfirm
@@ -79,7 +78,6 @@
                                 </a-tooltip>
                             </a-popconfirm>
                         </div>
-
                     </div>
 
                     <!-- ================= DOCUMENTS ================= -->
@@ -164,65 +162,78 @@
                                 :class="{ wrong: r.is_wrong }"
                             >
                                 <div class="reviewer-left">
-                                    <!-- icon move -->
                                     <span class="drag-handle">
                                         <DragOutlined />
                                     </span>
 
-                                    <!-- info -->
                                     <div class="reviewer-info">
                                         <div class="reviewer-name">
                                             <UserOutlined />
                                             {{ r.step_order }}. {{ r.name }}
                                         </div>
                                         <div class="reviewer-meta">
-                                            {{ r.position_name }} · {{ r.department_name }}
+                                            {{ r.position_name }} ·
+                                            {{ resolveDepartmentName(r.department_id) }}
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="reviewer-right">
-                                <!-- TEXT TRẠNG THÁI (KHÔNG PHẢI USER HIỆN TẠI) -->
-                                <a-tag v-if="!canReview(session, r)" size="small" :color=" r.result === 'approved' ? 'success' : r.result === 'rejected' ? 'error' : 'default' ">
-                                    <CheckOutlined v-if="r.result === 'approved'" />
-                                    <CloseOutlined v-if="r.result === 'rejected'" />
-                                    {{r.result === 'approved' ? 'Đồng ý' : r.result === 'rejected' ? 'Không đồng ý' : 'Chưa duyệt'}}
-                                </a-tag>
+                                    <a-tag
+                                        v-if="!canReview(session, r)"
+                                        size="small"
+                                        :color="
+                                            r.result === 'approved'
+                                                ? 'success'
+                                                : r.result === 'rejected'
+                                                ? 'error'
+                                                : 'default'
+                                        "
+                                    >
+                                        <CheckOutlined v-if="r.result === 'approved'" />
+                                        <CloseOutlined v-if="r.result === 'rejected'" />
+                                        {{
+                                            r.result === 'approved'
+                                                ? 'Đồng ý'
+                                                : r.result === 'rejected'
+                                                    ? 'Không đồng ý'
+                                                    : 'Chưa duyệt'
+                                        }}
+                                    </a-tag>
 
-                                <!-- NÚT DUYỆT (CHỈ USER CỦA BẢN GHI ĐÓ) -->
-                                <template v-if="canReview(session, r)">
-                                    <a-space>
-                                        <a-button
-                                            type="primary"
-                                            size="small"
-                                            @click="approve(r, session)"
-                                        >
-                                            <CheckOutlined />
-                                            Đồng ý
-                                        </a-button>
-
-                                        <a-popconfirm
-                                            title="Bạn chắc chắn KHÔNG đồng ý?"
-                                            ok-text="Xác nhận"
-                                            cancel-text="Hủy"
-                                            @confirm="openRejectModal(r, session)"
-                                        >
-                                            <a-button danger size="small">
-                                                <CloseOutlined />
-                                                Không đồng ý
+                                    <template v-if="canReview(session, r)">
+                                        <a-space>
+                                            <a-button
+                                                type="primary"
+                                                size="small"
+                                                @click="approve(r, session)"
+                                            >
+                                                <CheckOutlined />
+                                                Đồng ý
                                             </a-button>
-                                        </a-popconfirm>
-                                    </a-space>
-                                </template>
-                            </div>
 
-                        </div>
+                                            <a-popconfirm
+                                                title="Bạn chắc chắn KHÔNG đồng ý?"
+                                                ok-text="Xác nhận"
+                                                cancel-text="Hủy"
+                                                @confirm="openRejectModal(r, session)"
+                                            >
+                                                <a-button danger size="small">
+                                                    <CloseOutlined />
+                                                    Không đồng ý
+                                                </a-button>
+                                            </a-popconfirm>
+                                        </a-space>
+                                    </template>
+                                </div>
+                            </div>
                         </template>
                     </Draggable>
                 </div>
             </div>
         </a-spin>
 
+        <!-- UPDATE MODAL -->
         <UploadWithUserModal
             v-if="updateSession"
             v-model:open="updateModalOpen"
@@ -230,11 +241,10 @@
             :session-id="updateSession.session_id"
             :reviewers="updateSession.reviewers"
             :users="approvalUsers"
+            :departments="departments"
             mode="update"
             @confirm="handleUpdateSuccess"
         />
-
-
 
         <!-- ================= REJECT MODAL ================= -->
         <a-modal
@@ -252,7 +262,6 @@
         </a-modal>
     </a-card>
 </template>
-
 
 <script setup>
 import {
@@ -273,6 +282,7 @@ import {
 } from '@ant-design/icons-vue'
 import Draggable from 'vuedraggable'
 import { ref, computed, onMounted } from 'vue'
+import { message } from 'ant-design-vue'
 
 import {
     getApprovalSessionsByTask,
@@ -282,38 +292,50 @@ import {
     updateApprovalOrder,
     getApprovalSelectableUsers
 } from '@/api/approvalSessions.js'
-import {message} from "ant-design-vue";
-
 
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
-
 import UploadWithUserModal from '@/components/task/UploadWithUserModal.vue'
-import {getDepartments} from "@/api/department.js";
 
+/* ================= USER ================= */
 const userStore = useUserStore()
 const { currentUser } = storeToRefs(userStore)
-const approvalUsers = ref([])
-const currentUserId = computed(() =>
-    Number(currentUser.value?.id) || null
-)
+const currentUserId = computed(() => Number(currentUser.value?.id) || null)
 
-
+/* ================= PROPS ================= */
 const props = defineProps({
-    taskId: {
-        type: Number,
-        required: true,
-    },
+    taskId: { type: Number, required: true },
     users: { type: Array, default: () => [] },
+    departments: { type: Array, default: () => [] }
 })
 
+/* ================= DEPARTMENT MAP ================= */
+const departmentMap = computed(() => {
+    const map = {}
+    props.departments.forEach(d => {
+        map[d.id] = d.name
+    })
+    return map
+})
+
+const resolveDepartmentName = (departmentId) => {
+    return departmentMap.value[departmentId] ?? 'Chưa phân phòng'
+}
+
+/* ================= STATE ================= */
 const sessions = ref([])
+const approvalUsers = ref([])
+const loading = ref(false)
+
 const rejectVisible = ref(false)
 const rejectReason = ref('')
 const currentReviewer = ref(null)
-const loading = ref(false)
-const listDepartment = ref([])
+const currentSession = ref(null)
 
+const updateModalOpen = ref(false)
+const updateSession = ref(null)
+
+/* ================= COMPUTED ================= */
 const sortedSessions = computed(() =>
     [...sessions.value].sort((a, b) => b.session_no - a.session_no)
 )
@@ -324,13 +346,10 @@ const isLatestSession = (session) =>
 const sessionClass = (session) => ({
     'session-latest': isLatestSession(session),
     'session-valid': session.valid,
-    'session-invalid': !session.valid,
+    'session-invalid': !session.valid
 })
 
-
-const updateModalOpen = ref(false)
-const updateSession = ref(null)
-
+/* ================= ACTIONS ================= */
 const openUpdateSession = (session) => {
     updateSession.value = {
         ...session,
@@ -339,17 +358,13 @@ const openUpdateSession = (session) => {
     updateModalOpen.value = true
 }
 
-const hasAnyReviewed = (session) => {
-    return session.reviewers.some(r => r.result !== 'pending')
-}
-
+const hasAnyReviewed = (session) =>
+    session.reviewers.some(r => r.result !== 'pending')
 
 const handleUpdateSuccess = async () => {
     updateModalOpen.value = false
     await loadSessions()
 }
-
-
 
 const canReview = (session, reviewer) => {
     if (!isLatestSession(session)) return false
@@ -359,16 +374,11 @@ const canReview = (session, reviewer) => {
     )
 }
 
-
-const currentSession = ref(null)
-
 const openRejectModal = (reviewer, session) => {
     currentReviewer.value = reviewer
     currentSession.value = session
     rejectVisible.value = true
 }
-
-
 
 const approve = async (reviewer, session) => {
     try {
@@ -376,7 +386,7 @@ const approve = async (reviewer, session) => {
         await approveReviewer(session.session_id)
         message.success('Đã duyệt')
         await loadSessions()
-    } catch (e) {
+    } catch {
         message.error('Không thể duyệt')
     } finally {
         loading.value = false
@@ -394,24 +404,19 @@ const submitReject = async () => {
         rejectVisible.value = false
         rejectReason.value = ''
         await loadSessions()
-    } catch (e) {
+    } catch {
         message.error('Không thể từ chối')
     } finally {
         loading.value = false
     }
 }
 
-const canDrag = (session) => {
-    return !session.reviewers.some(r => r.result !== 'pending')
-}
+const canDrag = (session) =>
+    !session.reviewers.some(r => r.result !== 'pending')
 
-const checkReviewerMove = (evt) => {
-    return true
-}
-
+const checkReviewerMove = () => true
 
 const handleReviewerReorder = async (session) => {
-    // ✅ cập nhật lại step_order cho UI
     session.reviewers.forEach((r, index) => {
         r.step_order = index + 1
     })
@@ -424,45 +429,13 @@ const handleReviewerReorder = async (session) => {
     try {
         await updateApprovalOrder(session.session_id, payload)
         message.success('Đã cập nhật thứ tự duyệt')
-    } catch (e) {
+    } catch {
         message.error('Không thể cập nhật thứ tự')
         await loadSessions()
     }
 }
 
-
-const getDepartmentName = async () => {
-    try {
-        const response = await getDepartments()
-        listDepartment.value = response.data
-    } catch (e) {
-        message.error('Không thể tải người dùng')
-    }
-}
-
-const loadApprovalUsers = async () => {
-    const res = await getApprovalSelectableUsers()
-    approvalUsers.value = res.data.users
-}
-onMounted(loadApprovalUsers)
-
-const loadSessions = async () => {
-    loading.value = true
-    try {
-        const { data } = await getApprovalSessionsByTask(props.taskId)
-        console.log('data', data)
-        sessions.value = data || []
-    } catch (e) {
-        console.error(e)
-    } finally {
-        loading.value = false
-    }
-}
-
-const canDeleteSession = (session) => {
-    return true
-}
-
+const canDeleteSession = () => true
 
 const deleteSession = async (session) => {
     try {
@@ -470,22 +443,37 @@ const deleteSession = async (session) => {
         await deleteApprovalSession(session.session_id || session.id)
         message.success('Đã xoá phiên duyệt')
         await loadSessions()
-    } catch (e) {
-        console.error(e)
+    } catch {
         message.error('Không thể xoá phiên duyệt')
     } finally {
         loading.value = false
     }
 }
 
+/* ================= LOAD ================= */
+const loadApprovalUsers = async () => {
+    const res = await getApprovalSelectableUsers()
+    approvalUsers.value = res.data.users
+}
 
-defineExpose({
-    reload: loadSessions
+const loadSessions = async () => {
+    loading.value = true
+    try {
+        const { data } = await getApprovalSessionsByTask(props.taskId)
+        sessions.value = data || []
+    } finally {
+        loading.value = false
+    }
+}
+
+onMounted(() => {
+    loadApprovalUsers()
+    loadSessions()
 })
 
-// onMounted(loadSessions)
-
+defineExpose({ reload: loadSessions })
 </script>
+
 
 <style scoped>
 .approval-card {
