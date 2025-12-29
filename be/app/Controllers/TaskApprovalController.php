@@ -1353,5 +1353,85 @@ class TaskApprovalController extends ResourceController
         }
     }
 
+    public function replaceMarkersOnOpen(): ResponseInterface
+    {
+        $session = session();
+        if (!$session->get('logged_in')) {
+            return $this->failUnauthorized('Bạn chưa đăng nhập');
+        }
+
+        $body   = $this->getJsonBody();
+        $taskId = (int)($body['task_id'] ?? 0);
+        $fileUrl = trim((string)($body['file_url'] ?? ''));
+
+        if (!$taskId || !$fileUrl) {
+            return $this->fail('Missing task_id or file_url');
+        }
+
+        $fileId = $this->extractDriveId($fileUrl);
+        if (!$fileId) {
+            return $this->respond(['skip' => true, 'reason' => 'not_google_file']);
+        }
+
+        // =============================
+        // 1️⃣ Lấy roster
+        // =============================
+        $task = $this->getTaskRow($taskId);
+        if (!$task) {
+            return $this->failNotFound('Task not found');
+        }
+
+        $roster = $this->readRoster($task);
+        if (empty($roster)) {
+            return $this->respond(['skip' => true, 'reason' => 'no_roster']);
+        }
+
+        // =============================
+        // 2️⃣ Lọc những người ĐÃ APPROVED + có signature_code
+        // =============================
+        $approved = array_filter($roster, function ($r) {
+            return
+                ($r['status'] ?? '') === 'approved'
+                && !empty($r['signature_code']);
+        });
+
+        if (!$approved) {
+            return $this->respond(['skip' => true, 'reason' => 'no_approved_marker']);
+        }
+
+        // =============================
+        // 3️⃣ Replace marker từng người
+        // =============================
+        $results = [];
+
+        foreach ($approved as $r) {
+            try {
+                $this->googleReplaceMarker(
+                    $fileId,
+                    '{{' . strtoupper($r['signature_code']) . '}}'
+                );
+
+                $results[] = [
+                    'user_id' => $r['user_id'],
+                    'marker'  => $r['signature_code'],
+                    'status'  => 'replaced'
+                ];
+            } catch (Throwable $e) {
+                $results[] = [
+                    'user_id' => $r['user_id'],
+                    'marker'  => $r['signature_code'],
+                    'status'  => 'error',
+                    'error'   => $e->getMessage()
+                ];
+            }
+        }
+
+        return $this->respond([
+            'message' => 'Markers replaced on open',
+            'results' => $results
+        ]);
+    }
+
+
 
 }

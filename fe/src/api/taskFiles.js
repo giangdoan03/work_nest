@@ -151,6 +151,15 @@ export function bulkDeleteDocuments(payload) {
 }
 
 
+// 🔎 replace marker khi MỞ FILE (chỉ replace, không approve)
+export function replaceMarkersOnOpenAPI(taskId, fileUrl) {
+    return instance.post('/marker/replace-on-open', {
+        task_id: taskId,
+        file_url: fileUrl,
+    });
+}
+
+
 
 export default {
     // list & upload
@@ -186,5 +195,6 @@ export default {
     getMyPendingFilesAPI,
     getMyResolvedFilesAPI,
     replaceMarkerInTaskFile,
-    bulkDeleteDocuments
+    bulkDeleteDocuments,
+    replaceMarkersOnOpenAPI
 }

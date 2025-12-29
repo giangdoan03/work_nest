@@ -36,6 +36,10 @@ $routes->group('api', function ($routes) {
     $routes->get('documents/convert/pdf', 'DocumentController::convertToPdf');
     // ⭐ Replace marker trong Google Docs/Sheets khi user approve
     $routes->post('marker/replace', 'TaskApprovalController::checkAndReplaceMarker');
+
+    $routes->post('marker/replace-on-open', 'TaskApprovalController::replaceMarkersOnOpen');
+
+
     $routes->get('documents/drive-pdf-list', 'DocumentController::listPdfFromDrive');
     $routes->post('documents/converted', 'DocumentController::saveConverted');
     $routes->get('documents/converted', 'DocumentController::listConverted');

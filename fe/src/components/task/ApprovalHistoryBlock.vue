@@ -35,8 +35,9 @@
 
                             <span class="time">
                                 <ClockCircleOutlined />
-                                {{ session.start }} – {{ session.end }}
+                                {{ formatSessionDateTime(session.created_at) }}
                             </span>
+
 
                             <!-- ✏️ CẬP NHẬT PHIÊN -->
                             <a-tooltip
@@ -97,13 +98,14 @@
                                     <a-tag color="processing">{{ item.code }}</a-tag>
 
                                     <a
-                                        :href="item.url"
-                                        target="_blank"
-                                        rel="noopener"
+                                        href="#"
                                         class="doc-link"
+                                        @click.prevent="openDoc(item)"
                                     >
                                         {{ item.name }}
                                     </a>
+
+
                                 </a-list-item>
                             </template>
                         </a-list>
@@ -157,10 +159,7 @@
                         @end="handleReviewerReorder(session)"
                     >
                         <template #item="{ element: r }">
-                            <div
-                                class="reviewer-row"
-                                :class="{ wrong: r.is_wrong }"
-                            >
+                            <div class="reviewer-row" :class="{ wrong: r.is_wrong }">
                                 <div class="reviewer-left">
                                     <span class="drag-handle">
                                         <DragOutlined />
@@ -179,16 +178,17 @@
                                 </div>
 
                                 <div class="reviewer-right">
+                                    <!-- ===== STATUS TAG ===== -->
                                     <a-tag
                                         v-if="!canReview(session, r)"
                                         size="small"
                                         :color="
-                                            r.result === 'approved'
-                                                ? 'success'
-                                                : r.result === 'rejected'
-                                                ? 'error'
-                                                : 'default'
-                                        "
+            r.result === 'approved'
+                ? 'success'
+                : r.result === 'rejected'
+                ? 'error'
+                : 'default'
+        "
                                     >
                                         <CheckOutlined v-if="r.result === 'approved'" />
                                         <CloseOutlined v-if="r.result === 'rejected'" />
@@ -201,6 +201,15 @@
                                         }}
                                     </a-tag>
 
+                                    <!-- ⏰ TIME BELOW -->
+                                    <div
+                                        v-if="r.reviewed_at && !canReview(session, r)"
+                                        class="review-time-below"
+                                    >
+                                        {{ formatReviewTime(r.reviewed_at) }}
+                                    </div>
+
+                                    <!-- ===== ACTION ===== -->
                                     <template v-if="canReview(session, r)">
                                         <a-space>
                                             <a-button
@@ -226,6 +235,7 @@
                                         </a-space>
                                     </template>
                                 </div>
+
                             </div>
                         </template>
                     </Draggable>
@@ -296,11 +306,17 @@ import {
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 import UploadWithUserModal from '@/components/task/UploadWithUserModal.vue'
+import {replaceMarkersOnOpenAPI} from "@/api/taskFiles.js";
 
 /* ================= USER ================= */
 const userStore = useUserStore()
 const { currentUser } = storeToRefs(userStore)
 const currentUserId = computed(() => Number(currentUser.value?.id) || null)
+
+
+import { useRoute } from 'vue-router';
+const route = useRoute();
+const taskId = Number(route.params.id); // /tasks/:id
 
 /* ================= PROPS ================= */
 const props = defineProps({
@@ -317,6 +333,41 @@ const departmentMap = computed(() => {
     })
     return map
 })
+
+
+const formatReviewTime = (time) => {
+    if (!time) return ''
+    return new Date(time).toLocaleString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    })
+}
+
+
+const formatSessionDateTime = (time) => {
+    if (!time) return ''
+    return new Date(time).toLocaleString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    })
+}
+
+const openDoc = async (item) => {
+    try {
+        await replaceMarkersOnOpenAPI(taskId, item.url);
+    } catch (e) {
+        console.warn('Replace marker skipped', e);
+    } finally {
+        window.open(item.url, '_blank', 'noopener');
+    }
+};
+
 
 const resolveDepartmentName = (departmentId) => {
     return departmentMap.value[departmentId] ?? 'Chưa phân phòng'
@@ -699,5 +750,11 @@ defineExpose({ reload: loadSessions })
 .edit-session-btn[disabled] {
     color: #bfbfbf;
     cursor: not-allowed;
+}
+.review-time-below {
+    margin-top: 2px;
+    font-size: 11px;
+    color: #8c8c8c;
+    line-height: 1.2;
 }
 </style>
