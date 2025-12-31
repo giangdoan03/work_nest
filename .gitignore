@@ -1,4 +1,6 @@
-# Logs
+# =====================
+# LOGS
+# =====================
 logs
 *.log
 npm-debug.log*
@@ -6,36 +8,49 @@ yarn-debug.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Dependency directories
+# =====================
+# DEPENDENCIES
+# =====================
 node_modules/
 
-# Build output
+# =====================
+# BUILD / ARTIFACT
+# =====================
 dist/
 dist-ssr/
 coverage/
+fe/dist/
+fe/dist.zip
 
-# Local env files
+# =====================
+# ENV / SECRET
+# =====================
 .env
-.env.*.local
-.env.*       # ← chặn mọi .env.production, .env.development...
+.env.*
+token.json
+
 be/.env.*
 fe/.env.*
-fe/.env.production
-fe/.gitignore
 
+# =====================
+# GOOGLE / OAUTH (DỄ CONFLICT)
+# =====================
+be/app/ThirdParty/google/*.json
+be/app/ThirdParty/google/token.json
+be/app/ThirdParty/google/config.php
 
-# Ignore specific files
-fe/vite.config.js
-be/public/index.php
-be/app/Config/Database.php
-# System files
+# =====================
+# TEST / DEBUG FILES
+# =====================
+test.php
+*/test.php
+be/public/test.php
+fe/test.php
+
+# =====================
+# IDE / SYSTEM
+# =====================
 .DS_Store
-
-# Cypress artifacts
-/cypress/videos/
-/cypress/screenshots/
-
-# Editor configs
 .vscode/*
 !.vscode/extensions.json
 .idea/
@@ -45,5 +60,3 @@ be/app/Config/Database.php
 *.sln
 *.sw?
 *.tsbuildinfo
-
-be/app/ThirdParty/google/
