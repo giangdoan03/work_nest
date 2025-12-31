@@ -228,14 +228,23 @@
 
 
                     <!-- Ô nhập -->
+<!--                    <a-textarea-->
+<!--                        v-model:value="inputValue"-->
+<!--                        class="tg-input"-->
+<!--                        :bordered="false"-->
+<!--                        :auto-size="{ minRows: 1, maxRows: 6 }"-->
+<!--                        :placeholder="isEditing ? 'Sửa bình luận… (Enter để lưu, Esc để hủy)' : 'Viết lời nhắn… (Enter để gửi, Shift+Enter để xuống dòng, gõ @ để thêm người duyệt)'"-->
+<!--                        @keydown="onComposerKeydown"-->
+<!--                        @input="onInputDetectMention"-->
+<!--                    />-->
+
                     <a-textarea
                         v-model:value="inputValue"
                         class="tg-input"
                         :bordered="false"
                         :auto-size="{ minRows: 1, maxRows: 6 }"
-                        :placeholder="isEditing ? 'Sửa bình luận… (Enter để lưu, Esc để hủy)' : 'Viết lời nhắn… (Enter để gửi, Shift+Enter để xuống dòng, gõ @ để thêm người duyệt)'"
+                        :placeholder="isEditing ? 'Sửa bình luận… (Enter để lưu, Esc để hủy)' : 'Viết lời nhắn… (Enter để gửi, Shift+Enter để xuống dòng)'"
                         @keydown="onComposerKeydown"
-                        @input="onInputDetectMention"
                     />
 
                     <!-- Nút gửi / lưu -->
@@ -1487,10 +1496,10 @@ watch(finalDrawerMentions, (v) => {
 
 
 /* input mention detect */
-function onInputDetectMention(e) {
-    const v = String(e?.target?.value ?? '')
-    if (v.endsWith('@')) addMentionOpen.value = true
-}
+// function onInputDetectMention(e) {
+//     const v = String(e?.target?.value ?? '')
+//     if (v.endsWith('@')) addMentionOpen.value = true
+// }
 
 /* ===== upload handlers (single file) ===== */
 async function handleBeforeUpload(file) {
