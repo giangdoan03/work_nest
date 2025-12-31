@@ -285,6 +285,7 @@ import {
     getConvertedPdfList, deleteConvertedPdf, bulkDeleteConvertedPdf
 } from "@/api/document.js";
 import {sendDocumentToSign} from "@/api/documentSign.js";
+import {getApprovalSessionsByTask} from "@/api/approvalSessions.js";
 
 
 // ---------- setup ----------
@@ -318,6 +319,7 @@ const convertedPdfs = ref([]);
 const showDocType = ref(false)
 const convertingItem = ref(null)
 const selectedDocType = ref("internal")  // mặc định nội bộ
+const approvalSessions = ref([])
 
 
 const isPdf = r => (r.ext || '').toLowerCase() === 'pdf'
@@ -325,9 +327,46 @@ const isPdf = r => (r.ext || '').toLowerCase() === 'pdf'
 // File Office = word, excel, ppt
 const officeExts = new Set(['doc','docx','xls','xlsx','ppt','pptx'])
 
-const officeFiles = computed(() =>
-    taskFileItems.value.filter(f => officeExts.has(f.ext))
-)
+const officeFiles = computed(() => {
+    if (!approvalSessions.value.length) return []
+
+    const rows = []
+
+    for (const session of approvalSessions.value) {
+        for (const doc of session.documents || []) {
+            rows.push({
+                id: `${session.session_id}-${doc.code}`, // unique
+                session_id: session.session_id,
+                session_no: session.session_no,
+                approval_session_id: session.session_id, // 🔥 QUAN TRỌNG
+
+                title: doc.name,
+                name: doc.name,
+                url: doc.url,
+
+                ext: doc.name.split('.').pop()?.toLowerCase(),
+                created_at: session.created_at,
+
+                uploader_name: `Phiên #${session.session_no}`,
+                uploaded_by: session.created_by,
+
+                drive_id: extractDriveId(doc.url),
+                _source: 'approval_session'
+            })
+        }
+    }
+
+    return rows
+})
+
+
+function extractDriveId(url = '') {
+    const m = url.match(/\/d\/([^/]+)/)
+    return m ? m[1] : null
+}
+
+
+
 
 const canConvert = r => !isPdf(r)
 
@@ -351,7 +390,7 @@ const PPT_EXTS   = new Set(['ppt', 'pptx'])
 const columns = [
     { title: "Tên tài liệu", dataIndex: "title", key: "title", width: 150 },
     { title: "Kiểu file", dataIndex: "ext", key: "ext", width: 100, align: "center" },
-    { title: "Người upload", dataIndex: "uploader", key: "uploader", width: 170 },
+    { title: "Phiên duyệt", dataIndex: "uploader", key: "uploader", width: 170 },
     { title: "Thời gian", dataIndex: "created_at", key: "created_at", width: 150 },
     { title: "Hành động", dataIndex: "actions", key: "actions", width: 100, align: "center" },
 ];
@@ -466,6 +505,23 @@ async function fetchConvertedPdfs() {
 }
 
 
+async function fetchApprovalSessionFiles() {
+    loading.value = true
+    try {
+        const { data } = await getApprovalSessionsByTask(props.taskId)
+        approvalSessions.value = data || []
+        console.log('approvalSessions', approvalSessions.value)
+    } catch (e) {
+        console.error(e)
+        message.error('Không lấy được file từ phiên duyệt')
+    } finally {
+        loading.value = false
+    }
+}
+
+
+
+
 
 async function convertToPdf(item, docType = "internal") {
 
@@ -497,6 +553,7 @@ async function convertToPdf(item, docType = "internal") {
             title: pdfFilename,
             size: wpUploaded.raw?.media_details?.filesize ?? null,
             drive_id: item.drive_id,
+            approval_session_id: item.session_id ?? null,
             task_file_id: item.task_file_id,
             uploaded_by: item.uploaded_by,
             uploader_name: item.uploader_name,
@@ -510,8 +567,13 @@ async function convertToPdf(item, docType = "internal") {
         console.error("convertToPdf error:", e);
         message.error("Lỗi chuyển hoặc upload PDF.");
     } finally {
-        converting[item._key] = false;
-        await refresh();
+        converting[item._key] = false
+
+        if (activeTab.value === 'pdf') {
+            await fetchConvertedPdfs()
+        } else {
+            await fetchApprovalSessionFiles()
+        }
     }
 }
 
@@ -706,15 +768,19 @@ const downloadAttachment = (it) => window.open(it.url, '_blank', 'noopener')
 const refresh = async () => {
     try {
         loading.value = true
-        await fetchTaskFiles()
-        message.destroy()
+
+        if (activeTab.value === 'office') {
+            await fetchApprovalSessionFiles()
+        } else if (activeTab.value === 'pdf') {
+            await fetchConvertedPdfs()
+        }
+
         message.success('Danh sách tài liệu đã được cập nhật')
-    } catch (e) {
-        message.error('Không thể tải lại tài liệu')
     } finally {
         loading.value = false
     }
 }
+
 
 async function onClickDelete(item) {
     Modal.confirm({
@@ -896,9 +962,17 @@ defineExpose({ refresh }) // nếu bạn muốn parent gọi được
 
 // ---------- lifecycle ----------
 onMounted(async () => {
-    await Promise.all([loadUsers(), fetchTaskFiles()])
+    await Promise.all([
+        loadUsers(),
+        fetchApprovalSessionFiles(), // 🔥 BẮT BUỘC
+        fetchTaskFiles()             // nếu còn dùng cho chỗ khác
+    ])
 })
-watch(() => props.taskId, () => fetchTaskFiles())
+
+watch(() => props.taskId, async () => {
+    await fetchApprovalSessionFiles()
+    await fetchTaskFiles()
+})
 watch(activeTab, async (val) => {
     if (val === "pdf") {
         await fetchConvertedPdfs();

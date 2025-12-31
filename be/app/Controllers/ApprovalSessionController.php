@@ -34,18 +34,18 @@ class ApprovalSessionController extends ResourceController
                 return $this->failUnauthorized('Bạn chưa đăng nhập');
             }
 
-            $creatorId = (int)$session->get('user_id');
+            $creatorId = (int) $session->get('user_id');
 
             /* ================= INPUT ================= */
-            $taskId = (int)$this->request->getPost('task_id');
-            $approvers = json_decode($this->request->getPost('approvers'), true);
+            $taskId    = (int) $this->request->getPost('task_id');
+            $approvers = json_decode((string)$this->request->getPost('approvers'), true);
 
             if ($taskId <= 0) {
-                return $this->failValidationErrors('Task không hợp lệ');
+                throw new RuntimeException('Task không hợp lệ');
             }
 
             if (!is_array($approvers) || empty($approvers)) {
-                return $this->failValidationErrors('Danh sách người duyệt không hợp lệ');
+                throw new RuntimeException('Danh sách người duyệt không hợp lệ');
             }
 
             // chống duplicate
@@ -59,13 +59,18 @@ class ApprovalSessionController extends ResourceController
                 'created_at' => date('Y-m-d H:i:s'),
             ], true);
 
+            if (!$sessionId) {
+                throw new RuntimeException('Không thể tạo approval session');
+            }
+
             /* ================= FILES (GOOGLE DRIVE) ================= */
             $files = $this->request->getFileMultiple('files');
-            if (!$files) {
+            if (empty($files)) {
                 throw new RuntimeException('Không nhận được file upload');
             }
 
             $fileModel = new ApprovalSessionFileModel();
+            $google    = new \App\Libraries\GoogleDriveService(); // ✅ DUY NHẤT 1 CLIENT
 
             foreach ($files as $file) {
                 if (!$file->isValid() || $file->hasMoved()) {
@@ -73,27 +78,23 @@ class ApprovalSessionController extends ResourceController
                 }
 
                 $ext = strtolower($file->getExtension());
-                if (!in_array($ext, ['xls', 'xlsx', 'doc', 'docx'], true)) {
-                    throw new RuntimeException('Chỉ cho phép file Excel hoặc Word');
+                if (!in_array($ext, ['doc', 'docx', 'xls', 'xlsx'], true)) {
+                    throw new RuntimeException('Chỉ cho phép file Word hoặc Excel');
                 }
 
                 $originalName = $file->getClientName();
-                $tmpName = 'tmp_' . uniqid() . '_' . $originalName;
-                $tempPath = WRITEPATH . 'uploads/' . $tmpName;
+                $tmpName      = uniqid('upload_', true) . '_' . $originalName;
+                $tmpPath      = WRITEPATH . 'uploads/' . $tmpName;
 
                 $file->move(WRITEPATH . 'uploads', $tmpName);
 
                 try {
-                    $google = new GoogleDriveService();
-                    $driveInfo = $google->uploadAndConvert($tempPath, $originalName);
-                } catch (Throwable $e) {
-                    @unlink($tempPath);
-                    throw new RuntimeException('Google Drive lỗi: ' . $e->getMessage());
+                    $driveInfo = $google->uploadAndConvert($tmpPath, $originalName);
+                } finally {
+                    @unlink($tmpPath);
                 }
 
-                @unlink($tempPath);
-
-                if (empty($driveInfo['drive_id'])) {
+                if (empty($driveInfo['google_file_id'])) {
                     throw new RuntimeException('Upload Google Drive thất bại');
                 }
 
@@ -101,59 +102,49 @@ class ApprovalSessionController extends ResourceController
                     'session_id'     => $sessionId,
                     'file_name'      => $originalName,
                     'file_ext'       => $ext,
-                    'file_size'      => $file->getSize(),
                     'file_path'      => $driveInfo['view'],
                     'drive_id'       => $driveInfo['drive_id'],
                     'google_file_id' => $driveInfo['google_file_id'],
-                    'created_at'     => date('Y-m-d H:i:s'),
                 ]);
             }
 
             /* ================= APPROVERS ================= */
-
             $approverModel = new ApprovalSessionApproverModel();
-            $db = db_connect();
 
             foreach ($approvers as $index => $item) {
 
                 if (!is_string($item) || !str_contains($item, '-')) {
-                    throw new RuntimeException('Invalid approver: ' . json_encode($item));
+                    throw new RuntimeException('Approver không hợp lệ: ' . json_encode($item));
                 }
 
                 [$uid, $deptId] = explode('-', $item, 2);
                 $uid    = (int) $uid;
                 $deptId = (int) $deptId;
 
-                /* ================= LẤY POSITION_ID ================= */
-                $positionRow = $db->table('department_user')
+                $pos = $db->table('department_user')
                     ->select('position_id')
                     ->where('user_id', $uid)
                     ->where('department_id', $deptId)
                     ->get()
                     ->getRowArray();
 
-                if (!$positionRow || empty($positionRow['position_id'])) {
+                if (empty($pos['position_id'])) {
                     throw new RuntimeException(
-                        "Không tìm thấy position_id cho user {$uid} tại department {$deptId}"
+                        "Không tìm thấy position cho user {$uid} tại department {$deptId}"
                     );
                 }
 
-                $positionId = (int) $positionRow['position_id'];
-
-                /* ================= INSERT APPROVER ================= */
                 $approverModel->insert([
                     'session_id'     => $sessionId,
                     'user_id'        => $uid,
                     'department_id'  => $deptId,
-                    'position_id'    => $positionId, // ✅ QUAN TRỌNG
+                    'position_id'    => (int)$pos['position_id'],
                     'approval_order' => $index + 1,
                     'status'         => 'pending',
-                    'created_at'     => date('Y-m-d H:i:s'),
                 ]);
             }
 
-
-
+            /* ================= COMMIT ================= */
             $db->transCommit();
 
             return $this->respondCreated([
@@ -162,13 +153,19 @@ class ApprovalSessionController extends ResourceController
             ]);
 
         } catch (Throwable $e) {
+
             $db->transRollback();
 
-            log_message('error', '[ApprovalSession:create] ' . $e->getMessage());
+            log_message('error', '[ApprovalSession::create] ' . $e->getMessage());
 
-            return $this->failServerError('Không thể tạo phiên duyệt');
+            return $this->failServerError(
+                ENVIRONMENT === 'development'
+                    ? $e->getMessage()
+                    : 'Không thể tạo phiên duyệt'
+            );
         }
     }
+
 
     public function byTask(int $taskId): ResponseInterface
     {
@@ -176,7 +173,7 @@ class ApprovalSessionController extends ResourceController
 
         /* ================= 1. SESSIONS ================= */
         $sessions = $db->table('approval_sessions')
-            ->select('id, created_at')
+            ->select('id, created_at, created_by')
             ->where('task_id', $taskId)
             ->orderBy('id', 'DESC')
             ->get()
@@ -274,6 +271,7 @@ class ApprovalSessionController extends ResourceController
                 'session_id' => (int)$s['id'],
                 'session_no' => $totalSessions - $index,
                 'created_at' => $s['created_at'],
+                'created_by' => (int)$s['created_by'],
                 'start'      => date('H:i', strtotime($s['created_at'])),
                 'end'        => null,
                 'valid'      => $valid,
@@ -362,7 +360,6 @@ class ApprovalSessionController extends ResourceController
 
 
     /**
-     * @throws ReflectionException
      */
     public function approve($sessionId): ResponseInterface
     {
@@ -370,17 +367,28 @@ class ApprovalSessionController extends ResourceController
             return $this->failUnauthorized();
         }
 
-        $userId    = (int) session()->get('user_id');
-        $sessionId = (int) $sessionId;
+        $userId = (int) session()->get('user_id');
 
+        // đọc JSON
+        $payload = $this->request->getJSON(true);
+        $deptId  = (int) ($payload['department_id'] ?? 0);
+
+        if ($deptId <= 0) {
+            return $this->failValidationErrors('Thiếu department_id');
+        }
+
+        $db = db_connect();
         $approverModel = new ApprovalSessionApproverModel();
 
-        // 1️⃣ Lấy approver hiện tại + level
+        /* =====================================================
+         * 1️⃣ LẤY NGƯỜI ĐANG DUYỆT + LEVEL
+         * ===================================================== */
         $current = $approverModel
             ->select('approval_session_approvers.*, p.level')
-            ->join('positions p', 'p.id = approval_session_approvers.position_id')
+            ->join('positions p', 'p.id = approval_session_approvers.position_id', 'left')
             ->where('approval_session_approvers.session_id', $sessionId)
             ->where('approval_session_approvers.user_id', $userId)
+            ->where('approval_session_approvers.department_id', $deptId)
             ->where('approval_session_approvers.status', 'pending')
             ->first();
 
@@ -388,31 +396,71 @@ class ApprovalSessionController extends ResourceController
             return $this->failForbidden('Không có quyền duyệt');
         }
 
-        $currentLevel = (int) $current['level'];
+        /* =====================================================
+         * 2️⃣ CHECK ĐÚNG LƯỢT (approval_order)
+         * ===================================================== */
+        $notApprovedBefore = $approverModel
+            ->where('session_id', $sessionId)
+            ->where('approval_order <', $current['approval_order'])
+            ->where('status !=', 'approved')
+            ->countAllResults();
 
-        // 2️⃣ Duyệt chính mình
-        $approverModel->update($current['id'], [
-            'status'      => 'approved',
-            'approved_at' => date('Y-m-d H:i:s')
-        ]);
+        if ($notApprovedBefore > 0) {
+            return $this->failForbidden('Chưa tới lượt duyệt của bạn');
+        }
 
-        // 3️⃣ AUTO APPROVE CẤP THẤP HƠN (RAW SQL)
-        $db = db_connect();
-        $builder = $db->table('approval_session_approvers a');
+        $db->transBegin();
 
-        $builder
-            ->set('a.status', 'approved')
-            ->set('a.approved_at', date('Y-m-d H:i:s'))
-            ->join('positions p', 'p.id = a.position_id')
-            ->where('a.session_id', $sessionId)
-            ->where('a.status', 'pending')
-            ->where('p.level <', $currentLevel)
-            ->update();
+        try {
+            /* =====================================================
+             * 3️⃣ DUYỆT CHÍNH NGƯỜI NÀY
+             * ===================================================== */
+            $approverModel->update($current['id'], [
+                'status'      => 'approved',
+                'approved_at' => date('Y-m-d H:i:s'),
+            ]);
 
-        return $this->respond([
-            'success' => true,
-            'message' => 'Đã duyệt'
-        ]);
+            /* =====================================================
+               * 4️⃣ AUTO DUYỆT NGƯỜI CẤP THẤP HƠN (KHÔNG NGANG CẤP)
+               * ===================================================== */
+            if (!empty($current['level'])) {
+
+                // 4.1 Lấy danh sách approver cấp thấp hơn
+                $lowerApprovers = $db->table('approval_session_approvers a')
+                    ->select('a.id')
+                    ->join('positions p', 'p.id = a.position_id')
+                    ->where('a.session_id', $sessionId)
+                    ->where('a.status', 'pending')
+                    ->where('p.level <', (int)$current['level'])
+                    ->get()
+                    ->getResultArray();
+
+                if (!empty($lowerApprovers)) {
+                    $ids = array_column($lowerApprovers, 'id');
+
+                    // 4.2 Update theo ID (KHÔNG JOIN)
+                    $approverModel
+                        ->whereIn('id', $ids)
+                        ->update(null, [
+                            'status'      => 'approved',
+                            'approved_at' => date('Y-m-d H:i:s'),
+                        ]);
+                }
+            }
+
+            $db->transCommit();
+
+            return $this->respond([
+                'success' => true,
+                'message' => 'Đã duyệt'
+            ]);
+
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', '[ApprovalSession::approve] ' . $e->getMessage());
+
+            return $this->failServerError('Không thể duyệt');
+        }
     }
 
 
@@ -425,20 +473,20 @@ class ApprovalSessionController extends ResourceController
      */
     public function reject($sessionId): ResponseInterface
     {
-        $session = session();
-        if (!$session->get('logged_in')) {
+        if (!session()->get('logged_in')) {
             return $this->failUnauthorized();
         }
 
-        $userId = (int)$session->get('user_id');
-        $reason = trim((string)$this->request->getPost('reason'));
+        $userId = (int) session()->get('user_id');
+        $reason = trim((string) $this->request->getPost('reason'));
 
         if ($reason === '') {
             return $this->failValidationErrors('Thiếu lý do');
         }
 
         $approverModel = new ApprovalSessionApproverModel();
-        $sessionModel = new ApprovalSessionModel();
+        $sessionModel  = new ApprovalSessionModel();
+        $db = db_connect();
 
         $approver = $approverModel
             ->where('session_id', $sessionId)
@@ -447,20 +495,28 @@ class ApprovalSessionController extends ResourceController
             ->first();
 
         if (!$approver) {
-            return $this->failForbidden();
+            return $this->failForbidden('Không có quyền từ chối');
         }
 
-        // ❌ từ chối
+        $db->transStart();
+
+        // 1️⃣ reject người hiện tại
         $approverModel->update($approver['id'], [
-            'status' => 'rejected',
-            'approved_at' => date('Y-m-d H:i:s'),
-            'reject_reason' => $reason
+            'status'        => 'rejected',
+            'approved_at'   => date('Y-m-d H:i:s'),
+            'reject_reason' => $reason, // nếu có cột
         ]);
 
-        // ❌ phiên không hợp lệ
+        // 2️⃣ đánh dấu session invalid
         $sessionModel->update($sessionId, [
-            'status' => 'invalid'
+            'status' => 'invalid',
         ]);
+
+        $db->transComplete();
+
+        if (!$db->transStatus()) {
+            return $this->failServerError('Không thể từ chối phiên duyệt');
+        }
 
         return $this->respond([
             'success' => true,
@@ -469,31 +525,45 @@ class ApprovalSessionController extends ResourceController
     }
 
 
+
     public function updateApprovalOrder(int $sessionId): ResponseInterface
     {
         if (!session()->get('logged_in')) {
             return $this->failUnauthorized();
         }
 
-        $data = $this->request->getJSON(true);
-        $reviewers = $data['reviewers'] ?? [];
+        $userId = (int) session()->get('user_id');
+        $payload = $this->request->getJSON(true);
+        $reviewers = $payload['reviewers'] ?? [];
 
         if (empty($reviewers)) {
             return $this->failValidationErrors('Danh sách reviewer rỗng');
         }
 
+        // 🔐 chỉ người tạo phiên
+        $sessionRow = $this->model->find($sessionId);
+        if (!$sessionRow || (int)$sessionRow['created_by'] !== $userId) {
+            return $this->failForbidden('Không có quyền sắp xếp lại');
+        }
+
         $db = db_connect();
+        $approverModel = new ApprovalSessionApproverModel();
+
         $db->transBegin();
 
         try {
-            $model = new ApprovalSessionApproverModel();
-
             foreach ($reviewers as $r) {
                 if (!isset($r['id'], $r['approval_order'])) {
                     continue;
                 }
 
-                $model->update((int)$r['id'], [
+                // ❗ KHÔNG cho đụng vào người đã duyệt
+                $row = $approverModel->find((int)$r['id']);
+                if (!$row || $row['status'] !== 'pending') {
+                    continue;
+                }
+
+                $approverModel->update((int)$r['id'], [
                     'approval_order' => (int)$r['approval_order']
                 ]);
             }
@@ -502,15 +572,16 @@ class ApprovalSessionController extends ResourceController
 
             return $this->respond([
                 'success' => true,
-                'message' => 'Cập nhật thứ tự duyệt thành công'
+                'message' => 'Đã cập nhật thứ tự duyệt'
             ]);
 
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $db->transRollback();
             log_message('error', '[updateApprovalOrder] ' . $e->getMessage());
             return $this->failServerError('Không thể cập nhật thứ tự');
         }
     }
+
 
 
     public function updateApprovalSession(int $sessionId): ResponseInterface

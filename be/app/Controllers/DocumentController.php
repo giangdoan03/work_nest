@@ -1047,7 +1047,7 @@ class DocumentController extends ResourceController
 
     public function listConverted(): ResponseInterface
     {
-        $taskId = $this->request->getGet('task_id');
+        $taskId = (int) $this->request->getGet('task_id');
 
         if (!$taskId) {
             return $this->failValidationErrors("Thiếu task_id");
@@ -1055,9 +1055,15 @@ class DocumentController extends ResourceController
 
         $db = db_connect();
 
-        $rows = $db->table('documents_converted')
-            ->where('task_file_id', $taskId)
-            ->orderBy('id', 'DESC')
+        $rows = $db->table('documents_converted dc')
+            ->select('dc.*')
+            ->join(
+                'approval_sessions s',
+                's.id = dc.approval_session_id',
+                'left'
+            )
+            ->where('s.task_id', $taskId)
+            ->orderBy('dc.id', 'DESC')
             ->get()
             ->getResultArray();
 
@@ -1066,6 +1072,7 @@ class DocumentController extends ResourceController
             'files'  => $rows
         ]);
     }
+
 
 
 
@@ -1079,6 +1086,7 @@ class DocumentController extends ResourceController
             }
 
             $model = new DocumentConvertedModel();
+
             $insertData = [
                 'wp_id'        => $data['wp_id']        ?? null,
                 'file_url'     => $data['file_url']     ?? null,
@@ -1086,16 +1094,26 @@ class DocumentController extends ResourceController
                 'title'        => $data['title']        ?? null,
                 'size'         => $data['size']         ?? null,
                 'drive_id'     => $data['drive_id']     ?? null,
-                'task_file_id' => $data['task_file_id'] ?? null,
-                'uploaded_by' => $data['uploaded_by'] ?? null,
-                'uploader_name' => $data['uploader_name'] ?? null,
+
+                // 🔥 QUAN TRỌNG
+                'task_file_id'        => $data['task_file_id'] ?? null,
+                'approval_session_id'=> $data['approval_session_id'] ?? null,
+
+                'uploaded_by'  => $data['uploaded_by'] ?? null,
+                'uploader_name'=> $data['uploader_name'] ?? null,
                 'wp_created_at'=> $data['wp_created_at'] ?? null,
-                'doc_type'     => $data['doc_type']     ?? 'internal',
+                'doc_type'     => $data['doc_type'] ?? 'internal',
             ];
 
-            // Validate
             if (!$insertData['wp_id'] || !$insertData['file_url']) {
                 return $this->failValidationErrors("Missing wp_id or file_url");
+            }
+
+            // ❗ Ít nhất phải gắn với task_file hoặc approval_session
+            if (!$insertData['task_file_id'] && !$insertData['approval_session_id']) {
+                return $this->failValidationErrors(
+                    "Missing task_file_id or approval_session_id"
+                );
             }
 
             $id = $model->insert($insertData);
@@ -1106,9 +1124,11 @@ class DocumentController extends ResourceController
             ]);
 
         } catch (Throwable $e) {
-            return $this->failServerError($e->getMessage());
+            log_message('error', '[saveConverted] ' . $e->getMessage());
+            return $this->failServerError('Cannot save converted PDF');
         }
     }
+
 
     public function deleteConverted($id = null): ResponseInterface
     {

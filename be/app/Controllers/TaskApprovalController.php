@@ -371,139 +371,97 @@ class TaskApprovalController extends ResourceController
     }
 
     /** Phê duyệt theo cấp (giữ nguyên)
-     * @throws ReflectionException
      */
-    public function approve($id): ResponseInterface
+    public function approve($sessionId): ResponseInterface
     {
         $session = session();
-        if (!$session->get('logged_in')) return $this->failUnauthorized('Bạn chưa đăng nhập');
-
-        $userId    = (int)$this->getUserId();
-        $model     = new TaskApprovalModel();
-        $taskModel = new TaskModel();
-
-        $approval = $model->find($id);
-        if (!$approval) return $this->failNotFound('Approval not found');
-
-        if (($approval['status'] ?? '') !== 'pending') {
-            return $this->failResourceExists('Bản ghi đã được xử lý trước đó');
+        if (!$session->get('logged_in')) {
+            return $this->failUnauthorized('Bạn chưa đăng nhập');
         }
 
-        $task = $taskModel->find($approval['task_id']);
-        if (!$task) return $this->failNotFound('Task not found');
+        $userId = (int) $session->get('user_id');
+        $db     = db_connect();
 
-        [$canApprove,, $reason] = $this->computePermission($task, $approval, $userId);
-        if (!$canApprove) return $this->failForbidden($reason ?? 'Không có quyền duyệt');
+        // 1️⃣ tìm đúng approver của user hiện tại
+        $approver = $db->table('approval_session_approvers')
+            ->where('session_id', $sessionId)
+            ->where('user_id', $userId)
+            ->where('status', 'pending')
+            ->get()
+            ->getRowArray();
 
-        $payload = $this->getJsonBody();
-        $comment = $payload['comment'] ?? null;
-
-        $db = db_connect();
-        $db->transStart();
-
-        $model->update($id, [
-            'status'      => 'approved',
-            'approved_by' => $userId,
-            'approved_at' => date('Y-m-d H:i:s'),
-            'comment'     => $comment
-        ]);
-
-        $db->table('task_approval_logs')->insert([
-            'task_id'     => $approval['task_id'],
-            'level'       => $approval['level'],
-            'status'      => 'approved',
-            'approved_by' => $userId,
-            'approved_at' => date('Y-m-d H:i:s'),
-            'comment'     => $comment
-        ]);
-
-        $currentLevel  = (int)$approval['level'];
-        $approvalSteps = (int)($task['approval_steps'] ?? 0);
-
-        if ($approvalSteps <= 0 || $currentLevel >= $approvalSteps) {
-            $taskModel->update($task['id'], [
-                'approval_status' => 'approved',
-                'status'          => TaskStatus::DONE,
-                'progress'        => 100,
-                'current_level'   => $approvalSteps,
-            ]);
-        } else {
-            $model->insert([
-                'task_id'    => $task['id'],
-                'level'      => $currentLevel + 1,
-                'status'     => 'pending',
-            ]);
-
-            $progress = (int) round(($currentLevel / max(1, $approvalSteps)) * 100);
-            $taskModel->update($task['id'], [
-                'current_level' => $currentLevel + 1,
-                'progress'      => $progress
-            ]);
+        if (!$approver) {
+            return $this->failForbidden('Bạn không có lượt duyệt hoặc đã duyệt');
         }
 
-        $db->transComplete();
-        if (!$db->transStatus()) return $this->fail('Không thể cập nhật duyệt');
+        // 2️⃣ update đúng 1 dòng
+        $db->table('approval_session_approvers')
+            ->where('id', $approver['id'])
+            ->update([
+                'status'      => 'approved',
+                'approved_at' => date('Y-m-d H:i:s'),
+            ]);
 
-        return $this->respond(['message' => 'Approved successfully']);
+        return $this->respond([
+            'message' => 'Approved successfully',
+            'id'      => $approver['id'],
+        ]);
     }
+
+
+
 
     /** Từ chối theo cấp (giữ nguyên)
-     * @throws ReflectionException
      */
-    public function reject($id): ResponseInterface
+    public function reject(int $sessionId): ResponseInterface
     {
-        $session = session();
-        if (!$session->get('logged_in')) return $this->failUnauthorized('Bạn chưa đăng nhập');
-
-        $userId    = (int)$this->getUserId();
-        $model     = new TaskApprovalModel();
-        $taskModel = new TaskModel();
-
-        $approval = $model->find($id);
-        if (!$approval) return $this->failNotFound('Approval not found');
-
-        if (($approval['status'] ?? '') !== 'pending') {
-            return $this->failResourceExists('Bản ghi đã được xử lý trước đó');
+        if (!session()->get('logged_in')) {
+            return $this->failUnauthorized('Bạn chưa đăng nhập');
         }
 
-        $task = $taskModel->find($approval['task_id']);
-        if (!$task) return $this->failNotFound('Task not found');
-
-        [,$canReject, $reason] = $this->computePermission($task, $approval, $userId);
-        if (!$canReject) return $this->failForbidden($reason ?? 'Không có quyền từ chối');
-
-        $payload = $this->getJsonBody();
-        $comment = $payload['comment'] ?? null;
-
+        $userId = (int) session()->get('user_id');
         $db = db_connect();
+
+        // 1️⃣ Lấy reviewer của chính user trong session
+        $reviewer = $db->table('approval_session_approvers')
+            ->where('session_id', $sessionId)
+            ->where('user_id', $userId)
+            ->where('status', 'pending')
+            ->get()
+            ->getRowArray();
+
+        if (!$reviewer) {
+            return $this->failForbidden('Bạn không có quyền từ chối hoặc đã xử lý');
+        }
+
         $db->transStart();
 
-        $model->update($id, [
-            'status'      => 'rejected',
-            'approved_by' => $userId,
-            'approved_at' => date('Y-m-d H:i:s'),
-            'comment'     => $comment
-        ]);
+        // 2️⃣ Reject reviewer hiện tại
+        $db->table('approval_session_approvers')
+            ->where('id', $reviewer['id'])
+            ->update([
+                'status'      => 'rejected',
+                'approved_at' => date('Y-m-d H:i:s'),
+            ]);
 
-        $db->table('task_approval_logs')->insert([
-            'task_id'     => $approval['task_id'],
-            'level'       => $approval['level'],
-            'status'      => 'rejected',
-            'approved_by' => $userId,
-            'approved_at' => date('Y-m-d H:i:s'),
-            'comment'     => $comment
-        ]);
-
-        $taskModel->update($approval['task_id'], [
-            'approval_status' => 'rejected',
-            'status'          => TaskStatus::TODO
-        ]);
+        // 3️⃣ Đánh dấu session là INVALID / REJECTED
+        $db->table('approval_sessions')
+            ->where('id', $sessionId)
+            ->update([
+                'status' => 'rejected',
+            ]);
 
         $db->transComplete();
-        if (!$db->transStatus()) return $this->fail('Không thể cập nhật từ chối');
 
-        return $this->respond(['message' => 'Rejected successfully']);
+        if (!$db->transStatus()) {
+            return $this->fail('Không thể từ chối session');
+        }
+
+        return $this->respond([
+            'message' => 'Rejected session successfully',
+        ]);
     }
+
 
     /** Lịch sử theo cấp (giữ nguyên) */
     public function history($taskId): ResponseInterface
@@ -1165,7 +1123,8 @@ class TaskApprovalController extends ResourceController
      */
     private function googleReplaceMarker(string $fileId, string $marker): void
     {
-        $client = (new GoogleDriveService())->getClient();
+        $service = new GoogleDriveService();
+        $client  = $service->getClient();
 
         $drive  = new Google_Service_Drive($client);
         $docs   = new Google_Service_Docs($client);
@@ -1182,8 +1141,8 @@ class TaskApprovalController extends ResourceController
         if ($mime === "application/vnd.google-apps.spreadsheet") {
             $this->replaceInSheets($sheets, $fileId, $marker);
         }
-
     }
+
 
 
     private function replaceInDocs($docs, $fileId, $marker): void
@@ -1355,82 +1314,98 @@ class TaskApprovalController extends ResourceController
 
     public function replaceMarkersOnOpen(): ResponseInterface
     {
-        $session = session();
-        if (!$session->get('logged_in')) {
-            return $this->failUnauthorized('Bạn chưa đăng nhập');
+        if (!session()->get('logged_in')) {
+            return $this->failUnauthorized();
         }
 
-        $body   = $this->getJsonBody();
+        $body = $this->getJsonBody();
         $taskId = (int)($body['task_id'] ?? 0);
-        $fileUrl = trim((string)($body['file_url'] ?? ''));
+        $fileUrl = trim($body['file_url'] ?? '');
 
         if (!$taskId || !$fileUrl) {
             return $this->fail('Missing task_id or file_url');
         }
 
+        $db = db_connect();
+
+        // 1️⃣ xác định session chứa file
+        $sessionRow = $db->table('approval_session_files f')
+            ->select('f.session_id')
+            ->join('approval_sessions s', 's.id = f.session_id')
+            ->where('s.task_id', $taskId)
+            ->where('f.file_path', $fileUrl)
+            ->orderBy('s.id', 'DESC')
+            ->get()
+            ->getRowArray();
+
+        if (!$sessionRow) {
+            return $this->respond(['skip' => true, 'reason' => 'file_not_in_session']);
+        }
+
+        $sessionId = (int)$sessionRow['session_id'];
+
+        // 2️⃣ reviewer đã approved
+        $reviewers = $db->table('approval_session_approvers a')
+            ->select('a.user_id, a.department_id, u.is_multi_role, u.approval_marker')
+            ->join('users u', 'u.id = a.user_id', 'left')
+            ->where('a.session_id', $sessionId)
+            ->where('a.status', 'approved')
+            ->get()
+            ->getResultArray();
+
+        if (!$reviewers) {
+            return $this->respond(['skip' => true, 'reason' => 'no_approved_reviewer']);
+        }
+
+        // 3️⃣ resolve markers
+        $markers = [];
+
+        foreach ($reviewers as $r) {
+            if ((int)$r['is_multi_role'] === 1 && $r['department_id']) {
+                $sig = $db->table('user_signatures')
+                    ->where('user_id', $r['user_id'])
+                    ->where('department_id', $r['department_id'])
+                    ->where('active', 1)
+                    ->get()
+                    ->getRowArray();
+
+                if (!empty($sig['approval_marker'])) {
+                    $markers[] = $sig['approval_marker'];
+                }
+            } else {
+                if (!empty($r['approval_marker'])) {
+                    $markers[] = $r['approval_marker'];
+                }
+            }
+        }
+
+        $markers = array_unique(array_filter($markers));
+        if (!$markers) {
+            return $this->respond(['skip' => true, 'reason' => 'no_marker']);
+        }
+
+        // 4️⃣ replace
         $fileId = $this->extractDriveId($fileUrl);
-        if (!$fileId) {
-            return $this->respond(['skip' => true, 'reason' => 'not_google_file']);
-        }
-
-        // =============================
-        // 1️⃣ Lấy roster
-        // =============================
-        $task = $this->getTaskRow($taskId);
-        if (!$task) {
-            return $this->failNotFound('Task not found');
-        }
-
-        $roster = $this->readRoster($task);
-        if (empty($roster)) {
-            return $this->respond(['skip' => true, 'reason' => 'no_roster']);
-        }
-
-        // =============================
-        // 2️⃣ Lọc những người ĐÃ APPROVED + có signature_code
-        // =============================
-        $approved = array_filter($roster, function ($r) {
-            return
-                ($r['status'] ?? '') === 'approved'
-                && !empty($r['signature_code']);
-        });
-
-        if (!$approved) {
-            return $this->respond(['skip' => true, 'reason' => 'no_approved_marker']);
-        }
-
-        // =============================
-        // 3️⃣ Replace marker từng người
-        // =============================
         $results = [];
 
-        foreach ($approved as $r) {
+        foreach ($markers as $m) {
             try {
-                $this->googleReplaceMarker(
-                    $fileId,
-                    '{{' . strtoupper($r['signature_code']) . '}}'
-                );
-
-                $results[] = [
-                    'user_id' => $r['user_id'],
-                    'marker'  => $r['signature_code'],
-                    'status'  => 'replaced'
-                ];
-            } catch (Throwable $e) {
-                $results[] = [
-                    'user_id' => $r['user_id'],
-                    'marker'  => $r['signature_code'],
-                    'status'  => 'error',
-                    'error'   => $e->getMessage()
-                ];
+                $this->googleReplaceMarker($fileId, '{{' . $m . '}}');
+                $results[] = ['marker' => $m, 'status' => 'replaced'];
+            } catch (\Throwable $e) {
+                $results[] = ['marker' => $m, 'status' => 'skip'];
             }
         }
 
         return $this->respond([
             'message' => 'Markers replaced on open',
-            'results' => $results
+            'results' => $results,
+            'session_id' => $sessionId,
         ]);
     }
+
+
+
 
 
 

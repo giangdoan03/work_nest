@@ -26,9 +26,13 @@ export const deleteApprovalSession = (sessionId) => {
     return instance.delete(`/approval-sessions/${sessionId}`)
 }
 
-export const approveReviewer = (sessionId) => {
-    return instance.post(`/approval-sessions/${sessionId}/approve`)
+export const approveReviewer = (sessionId, departmentId) => {
+    return instance.post(
+        `/approval-sessions/${sessionId}/approve`,
+        { department_id: departmentId }
+    )
 }
+
 
 export const rejectReviewer = (sessionId, reason) => {
     const formData = new FormData()

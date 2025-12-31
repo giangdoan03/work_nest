@@ -17,7 +17,9 @@ class ApprovalSessionApproverModel extends Model
         'position_name',
         'approval_order',
         'status',
+        'reject_reason',
         'approved_at'
+
     ];
 
     protected $useTimestamps = false;

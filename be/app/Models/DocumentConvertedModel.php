@@ -20,6 +20,7 @@ class DocumentConvertedModel extends Model
         'task_file_id',
         'uploaded_by',
         'uploader_name',
+        'approval_session_id',
         'wp_created_at'
     ];
 }

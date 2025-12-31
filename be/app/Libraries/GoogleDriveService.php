@@ -76,15 +76,21 @@ class GoogleDriveService
         // Refresh access token
         // ----------------------------
         if ($this->client->isAccessTokenExpired()) {
-            $newToken = $this->client->fetchAccessTokenWithRefreshToken(
+
+            log_message('info', 'Google token expired → refreshing');
+
+            $this->client->fetchAccessTokenWithRefreshToken(
                 $this->client->getRefreshToken()
             );
 
             file_put_contents(
                 $tokenPath,
-                json_encode($this->client->getAccessToken(), JSON_PRETTY_PRINT)
+                json_encode($this->client->getAccessToken(), JSON_UNESCAPED_UNICODE)
             );
+
+            log_message('info', 'Google token refreshed');
         }
+
 
         // ----------------------------
         // Init Google Drive Service

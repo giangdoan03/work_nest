@@ -83,10 +83,20 @@
 
                     <!-- ================= DOCUMENTS ================= -->
                     <div class="documents">
-                        <div class="section-title">
-                            <PaperClipOutlined />
-                            Tờ trình ({{ session.documents.length }})
+                        <div class="section-title doc-header-inline">
+                            <div class="doc-left">
+                                <PaperClipOutlined />
+                                Tờ trình ({{ session.documents.length }})
+                            </div>
+
+                            <a-tooltip title="Người trình">
+                                <div class="doc-right">
+                                    <UserOutlined />
+                                    {{ resolveUserName(session.created_by) }}
+                                </div>
+                            </a-tooltip>
                         </div>
+
 
                         <a-list
                             size="small"
@@ -97,14 +107,9 @@
                                 <a-list-item class="doc-item">
                                     <a-tag color="processing">{{ item.code }}</a-tag>
 
-                                    <a
-                                        href="#"
-                                        class="doc-link"
-                                        @click.prevent="openDoc(item)"
-                                    >
+                                    <a href="#" class="doc-link" @click.prevent="openDoc(item)">
                                         {{ item.name }}
                                     </a>
-
 
                                 </a-list-item>
                             </template>
@@ -161,7 +166,8 @@
                         <template #item="{ element: r }">
                             <div class="reviewer-row" :class="{ wrong: r.is_wrong }">
                                 <div class="reviewer-left">
-                                    <span class="drag-handle">
+                                    <!-- CHỈ ICON NÀY LÀ HANDLE -->
+                                    <span class="drag-handle" v-if="canDrag(session)">
                                         <DragOutlined />
                                     </span>
 
@@ -177,35 +183,38 @@
                                     </div>
                                 </div>
 
+
                                 <div class="reviewer-right">
                                     <!-- ===== STATUS TAG ===== -->
-                                    <a-tag
+                                    <a-tooltip
                                         v-if="!canReview(session, r)"
-                                        size="small"
-                                        :color="
-            r.result === 'approved'
-                ? 'success'
-                : r.result === 'rejected'
-                ? 'error'
-                : 'default'
-        "
+                                        :title="reviewDisabledReason(session, r)"
                                     >
-                                        <CheckOutlined v-if="r.result === 'approved'" />
-                                        <CloseOutlined v-if="r.result === 'rejected'" />
-                                        {{
-                                            r.result === 'approved'
-                                                ? 'Đồng ý'
-                                                : r.result === 'rejected'
-                                                    ? 'Không đồng ý'
-                                                    : 'Chưa duyệt'
-                                        }}
-                                    </a-tag>
+                                        <a-tag
+                                            size="small"
+                                            :color="
+                                                r.result === 'approved'
+                                                    ? 'success'
+                                                    : r.result === 'rejected'
+                                                    ? 'error'
+                                                    : 'default'
+                                            "
+                                        >
+                                            <CheckOutlined v-if="r.result === 'approved'" />
+                                            <CloseOutlined v-if="r.result === 'rejected'" />
+                                            {{
+                                                r.result === 'approved'
+                                                    ? 'Đồng ý'
+                                                    : r.result === 'rejected'
+                                                        ? 'Không đồng ý'
+                                                        : 'Chưa duyệt'
+                                            }}
+                                        </a-tag>
+                                    </a-tooltip>
+
 
                                     <!-- ⏰ TIME BELOW -->
-                                    <div
-                                        v-if="r.reviewed_at && !canReview(session, r)"
-                                        class="review-time-below"
-                                    >
+                                    <div v-if="r.reviewed_at && !canReview(session, r)" class="review-time-below">
                                         {{ formatReviewTime(r.reviewed_at) }}
                                     </div>
 
@@ -271,6 +280,15 @@
             />
         </a-modal>
     </a-card>
+    <!-- FULLSCREEN OVERLAY -->
+    <div v-if="openingDoc" class="doc-opening-overlay">
+        <a-spin size="large" />
+        <div class="overlay-text">
+            Đang xử lý chữ ký duyệt…<br />
+            <span class="file-name">{{ openingDocName }}</span>
+        </div>
+    </div>
+
 </template>
 
 <script setup>
@@ -359,14 +377,25 @@ const formatSessionDateTime = (time) => {
 }
 
 const openDoc = async (item) => {
+    openingDoc.value = true
+    openingDocName.value = item.name
+
     try {
-        await replaceMarkersOnOpenAPI(taskId, item.url);
+        await replaceMarkersOnOpenAPI(taskId, item.url)
     } catch (e) {
-        console.warn('Replace marker skipped', e);
+        console.warn('Replace marker skipped', e)
     } finally {
-        window.open(item.url, '_blank', 'noopener');
+        // ✅ Mở file sau khi xử lý xong (hoặc fail)
+        window.open(item.url, '_blank', 'noopener')
+
+        // ⏳ delay nhẹ cho mượt UX
+        setTimeout(() => {
+            openingDoc.value = false
+            openingDocName.value = ''
+        }, 300)
     }
-};
+}
+
 
 
 const resolveDepartmentName = (departmentId) => {
@@ -385,6 +414,9 @@ const currentSession = ref(null)
 
 const updateModalOpen = ref(false)
 const updateSession = ref(null)
+
+const openingDoc = ref(false)
+const openingDocName = ref('')
 
 /* ================= COMPUTED ================= */
 const sortedSessions = computed(() =>
@@ -419,10 +451,47 @@ const handleUpdateSuccess = async () => {
 
 const canReview = (session, reviewer) => {
     if (!isLatestSession(session)) return false
-    return (
-        reviewer.user_id === currentUserId.value &&
-        reviewer.result === 'pending'
+
+    // 1️⃣ Chỉ đúng user
+    if (reviewer.user_id !== currentUserId.value) return false
+
+    // 2️⃣ Chỉ khi pending
+    if (reviewer.result !== 'pending') return false
+
+    // 3️⃣ Check thứ tự duyệt
+    const previousNotApproved = session.reviewers.some(r =>
+        r.step_order < reviewer.step_order &&
+        r.result !== 'approved'
     )
+
+    // Giám đốc (level 4) bỏ qua thứ tự
+    if (reviewer.level < 4 && previousNotApproved) {
+        return false
+    }
+
+    return true
+}
+
+
+const reviewDisabledReason = (session, reviewer) => {
+    if (reviewer.user_id !== currentUserId.value)
+        return 'Không phải lượt của bạn'
+
+    const previousNotApproved = session.reviewers.some(r =>
+        r.step_order < reviewer.step_order &&
+        r.result !== 'approved'
+    )
+
+    if (previousNotApproved)
+        return 'Chưa tới lượt duyệt'
+
+    return ''
+}
+
+const resolveUserName = (userId) => {
+    if (!userId) return '—'
+    const u = approvalUsers.value.find(u => Number(u.id) === Number(userId))
+    return u?.name || `#${userId}`
 }
 
 const openRejectModal = (reviewer, session) => {
@@ -434,15 +503,24 @@ const openRejectModal = (reviewer, session) => {
 const approve = async (reviewer, session) => {
     try {
         loading.value = true
-        await approveReviewer(session.session_id)
+        await approveReviewer(
+            session.session_id,
+            reviewer.department_id
+        )
         message.success('Đã duyệt')
         await loadSessions()
-    } catch {
-        message.error('Không thể duyệt')
+    } catch (err) {
+        const msg =
+            err?.response?.data?.messages?.error ||
+            err?.response?.data?.message ||
+            'Không thể duyệt'
+        message.warning(msg)
     } finally {
         loading.value = false
     }
 }
+
+
 
 const submitReject = async () => {
     try {
@@ -462,8 +540,17 @@ const submitReject = async () => {
     }
 }
 
-const canDrag = (session) =>
-    !session.reviewers.some(r => r.result !== 'pending')
+
+const isSessionCreator = (session) => {
+    return session.created_by === currentUserId.value
+}
+
+
+const canDrag = (session) => {
+    // chỉ creator mới kéo được
+    return isSessionCreator(session)
+}
+
 
 const checkReviewerMove = () => true
 
@@ -757,4 +844,48 @@ defineExpose({ reload: loadSessions })
     color: #8c8c8c;
     line-height: 1.2;
 }
+.doc-opening-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(255, 255, 255, 0.85);
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+}
+
+.overlay-text {
+    font-size: 14px;
+    color: #595959;
+    text-align: center;
+}
+
+.file-name {
+    font-weight: 600;
+    color: #262626;
+}
+.doc-header-inline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.doc-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.doc-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #595959;
+}
+
 </style>
