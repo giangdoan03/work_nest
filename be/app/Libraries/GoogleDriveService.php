@@ -18,85 +18,96 @@ class GoogleDriveService
      */
     public function __construct()
     {
-        // ----------------------------
-        // Lấy cấu hình từ ENV
-        // ----------------------------
-        $clientId     = env("google.client_id");
-        $clientSecret = env("google.client_secret");
-        $redirectUri  = env("google.redirect_uri");
-        $this->folderId = env("drive.folder_id");
+        // ==================================================
+        // Load cấu hình từ .env
+        // ==================================================
+        $clientId     = env('google.client_id');
+        $clientSecret = env('google.client_secret');
+        $redirectUri  = env('google.redirect_uri');
+        $this->folderId = env('drive.folder_id');
 
         if (!$clientId || !$clientSecret || !$redirectUri) {
-            throw new Exception("Thiếu cấu hình google.client_* trong .env");
+            throw new Exception('Thiếu cấu hình google.client_* trong .env');
         }
 
         if (!$this->folderId) {
-            throw new Exception("Thiếu cấu hình drive.folder_id trong .env");
+            throw new Exception('Thiếu cấu hình drive.folder_id trong .env');
         }
 
-        // ----------------------------
-        // Build config JSON thay thế file client_secret.json
-        // ----------------------------
+        // ==================================================
+        // Build Google OAuth config (KHÔNG dùng file json)
+        // ==================================================
         $googleConfig = [
-            "web" => [
-                "client_id" => $clientId,
-                "client_secret" => $clientSecret,
-                "redirect_uris" => [$redirectUri],
-                "auth_uri" => "https://accounts.google.com/o/oauth2/auth",
-                "token_uri" => "https://oauth2.googleapis.com/token",
-            ]
+            'web' => [
+                'client_id'     => $clientId,
+                'client_secret' => $clientSecret,
+                'redirect_uris' => [$redirectUri],
+                'auth_uri'      => 'https://accounts.google.com/o/oauth2/auth',
+                'token_uri'     => 'https://oauth2.googleapis.com/token',
+            ],
         ];
 
-        // ----------------------------
+        // ==================================================
         // Init Google Client
-        // ----------------------------
+        // ==================================================
         $this->client = new Google_Client();
         $this->client->setAuthConfig($googleConfig);
-        $this->client->setAccessType("offline");
+        $this->client->setAccessType('offline');
+        $this->client->setPrompt('consent'); // đảm bảo có refresh_token
         $this->client->addScope(Google_Service_Drive::DRIVE);
 
-        // ----------------------------
-        // Load token.json
-        // ----------------------------
-        $tokenPath = APPPATH . "ThirdParty/google/token.json";
+        // ==================================================
+        // Load token từ WRITEPATH (CHUẨN CI4)
+        // ==================================================
+        $tokenPath = WRITEPATH . 'google/token.json';
 
         if (!file_exists($tokenPath)) {
-            throw new Exception("Không tìm thấy token.json");
+            throw new Exception('Không tìm thấy token.json trong writable/google');
         }
 
         $token = json_decode(file_get_contents($tokenPath), true);
 
-        if (!$token) {
-            throw new Exception("token.json bị rỗng hoặc lỗi.");
+        if (!is_array($token)) {
+            throw new Exception('token.json rỗng hoặc không hợp lệ');
         }
 
         $this->client->setAccessToken($token);
 
-        // ----------------------------
-        // Refresh access token
-        // ----------------------------
+        // ==================================================
+        // Refresh access token nếu hết hạn
+        // ==================================================
         if ($this->client->isAccessTokenExpired()) {
+
+            if (!$this->client->getRefreshToken()) {
+                throw new Exception('Token không có refresh_token – cần OAuth lại');
+            }
 
             log_message('info', 'Google token expired → refreshing');
 
-            $this->client->fetchAccessTokenWithRefreshToken(
+            $newToken = $this->client->fetchAccessTokenWithRefreshToken(
                 $this->client->getRefreshToken()
             );
 
+            if (isset($newToken['error'])) {
+                throw new Exception(
+                    'Refresh token failed: ' . ($newToken['error_description'] ?? $newToken['error'])
+                );
+            }
+
             file_put_contents(
                 $tokenPath,
-                json_encode($this->client->getAccessToken(), JSON_UNESCAPED_UNICODE)
+                json_encode($this->client->getAccessToken(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
             );
 
             log_message('info', 'Google token refreshed');
         }
 
-
-        // ----------------------------
+        // ==================================================
         // Init Google Drive Service
-        // ----------------------------
+        // ==================================================
         $this->drive = new Google_Service_Drive($this->client);
     }
+
 
     public function getClient(): Google_Client
     {
