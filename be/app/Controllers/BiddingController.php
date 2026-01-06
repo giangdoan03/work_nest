@@ -8,6 +8,7 @@ use App\Models\ApprovalStepModel;
 use App\Models\BiddingModel;
 use App\Models\BiddingStepModel;
 use App\Models\SettingModel;
+use App\Models\EntityMemberModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\Session\Session;
@@ -518,30 +519,67 @@ class BiddingController extends ResourceController
      */
     public function create()
     {
-        $data = $this->request->getJSON(true);
+        $data = $this->request->getJSON(true) ?? [];
 
-        // Validate bắt buộc
+        // 🔒 Lấy user hiện tại từ session (KHÔNG nhận từ FE)
+        $userId = (int) (session()->get('user_id') ?? 0);
+        if ($userId <= 0) {
+            return $this->failUnauthorized('Chưa đăng nhập');
+        }
+
+        // 1️⃣ Validate bắt buộc
         $requiredFields = ['title', 'customer_id', 'status'];
         foreach ($requiredFields as $field) {
             if (empty($data[$field])) {
-                return $this->failValidationErrors(["{$field}" => "Trường {$field} là bắt buộc."]);
+                return $this->failValidationErrors([
+                    $field => "Trường {$field} là bắt buộc."
+                ]);
             }
         }
 
-        if (!in_array($data['status'], $this->validStatuses)) {
-            return $this->failValidationErrors(['status' => 'Trạng thái không hợp lệ']);
+        if (!in_array((int)$data['status'], $this->validStatuses, true)) {
+            return $this->failValidationErrors([
+                'status' => 'Trạng thái không hợp lệ'
+            ]);
         }
 
+        // 2️⃣ Gán người tạo (OWNER)
+        $data['created_by'] = $userId;
+
+        // ❌ Không cho client tự set created_at nếu có
+        unset($data['created_at']);
+
+        // 3️⃣ Insert gói thầu
         if (!$this->model->insert($data)) {
             return $this->failValidationErrors($this->model->errors());
         }
 
-        $data['id'] = $this->model->getInsertID();
+        $bidId = (int) $this->model->getInsertID();
 
-        // ✅ Tự động tạo bước mẫu nếu có setting "bidding_steps"
-        $this->generateStepsFromTemplate($data['id'], $data['customer_id']);
+        // 4️⃣ AUTO-GRANT QUYỀN ENTITY (RẤT QUAN TRỌNG)
+        $em = new EntityMemberModel();
 
-        return $this->respondCreated($data);
+        // 4.1 Creator luôn có quyền
+        $em->addMember('bidding', $bidId, $userId);
+
+        // 4.2 Manager (nếu có)
+        if (!empty($data['manager_id'])) {
+            $em->addMember('bidding', $bidId, (int)$data['manager_id']);
+        }
+
+        // 4.3 Assigned user (nếu có)
+        if (!empty($data['assigned_to'])) {
+            $em->addMember('bidding', $bidId, (int)$data['assigned_to']);
+        }
+
+        // 5️⃣ Tạo step mẫu nếu có setting
+        $this->generateStepsFromTemplate($bidId, $data['customer_id']);
+
+        // 6️⃣ Response gọn, an toàn
+        return $this->respondCreated([
+            'id' => $bidId,
+            'message' => 'Tạo gói thầu thành công'
+        ]);
     }
 
     /**

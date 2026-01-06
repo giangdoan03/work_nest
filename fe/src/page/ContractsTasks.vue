@@ -861,13 +861,16 @@ const submitForm = async () => {
     try {
         await formRef.value?.validate?.()
 
-        // Chuẩn hóa payload gửi API
         const payload = {
             title: (formData.value.name || '').trim(),
             code: formData.value.code || '',
             status: Number(formData.value.status),
-            start_date: formData.value.start_date ? dayjs(formData.value.start_date).format('YYYY-MM-DD') : null,
-            end_date: formData.value.end_date ? dayjs(formData.value.end_date).format('YYYY-MM-DD') : null,
+            start_date: formData.value.start_date
+                ? dayjs(formData.value.start_date).format('YYYY-MM-DD')
+                : null,
+            end_date: formData.value.end_date
+                ? dayjs(formData.value.end_date).format('YYYY-MM-DD')
+                : null,
             description: formData.value.description || '',
             bidding_id: formData.value.bidding_id || null,
             assigned_to: formData.value.assigned_to || null,
@@ -881,67 +884,31 @@ const submitForm = async () => {
 
         let newId = null
 
-        // UPDATE CONTRACT
         if (selectedContract.value) {
             await updateContractAPI(selectedContract.value.id, payload)
             newId = selectedContract.value.id
             message.success('Cập nhật hợp đồng thành công')
-
         } else {
-            // CREATE CONTRACT
             const res = await createContractAPI(payload)
             newId = Number(res?.data?.id)
 
-            // Tự clone steps nếu hợp đồng mới
-            if (newId) await cloneStepsFromTemplateAPI(newId)
+            if (newId) {
+                await cloneStepsFromTemplateAPI(newId)
+            }
 
             message.success('Thêm hợp đồng thành công')
         }
-
-        /* -------------------------------------------------
-         * ⭐⭐⭐ AUTO ADD ACCESS — Cấp quyền tự động entity_members
-         * ------------------------------------------------- */
-        if (newId) {
-
-            // Người tạo
-            const creatorId = Number(store.currentUser?.id)
-
-            // Gom tất cả user cần được cấp quyền vào 1 list
-            const members = new Set([
-                creatorId,
-                Number(payload.assigned_to),
-                Number(payload.manager_id),
-                ...payload.collaborators.map(id => Number(id))
-            ])
-
-            // Loại bỏ giá trị null / undefined / 0
-            const finalMembers = [...members].filter(v => !!v)
-
-            // Gọi API addEntityMember cho từng người
-            for (const uid of finalMembers) {
-                try {
-                    await addEntityMember({
-                        entity_type: "contract",
-                        entity_id: Number(newId),
-                        user_id: Number(uid),
-                    })
-                    console.log(`✔ grant access: contract#${newId} -> user#${uid}`)
-                } catch (e) {
-                    console.warn(`⚠ Không thể cấp quyền cho user ${uid}`, e)
-                }
-            }
-        }
-        /* ------------------------------------------------- */
 
         openDrawer.value = false
         await getContracts()
 
     } catch (e) {
-        if (e?.errorFields) return   // lỗi validate form
+        if (e?.errorFields) return
         console.error(e)
         message.error('Không thể lưu hợp đồng')
     }
 }
+
 
 
 const deleteConfirm = async (id) => {

@@ -11,6 +11,55 @@ class EntityMemberController extends ResourceController
     protected $modelName = EntityMemberModel::class;
     protected $format    = 'json';
 
+
+    private function ensureCanManageEntity(
+        string $entityType,
+        int $entityId
+    ): ?ResponseInterface
+    {
+        $user = currentUser(); // helper bạn đang dùng
+        if (!$user) {
+            return $this->failForbidden('Không xác định người dùng');
+        }
+
+        // Admin luôn có quyền
+        if (!empty($user['is_admin'])) {
+            return null;
+        }
+
+        $uid = (int) $user['id'];
+
+        $canManage = false;
+
+        switch ($entityType) {
+            case 'bidding':
+                $db = db_connect();
+                $row = $db->table('biddings')
+                    ->select('id')
+                    ->where('id', $entityId)
+                    ->groupStart()
+                    ->where('created_by', $uid)
+                    ->orWhere('manager_id', $uid)
+                    ->orWhere('assigned_to', $uid)
+                    ->groupEnd()
+                    ->get()
+                    ->getRow();
+
+                $canManage = (bool) $row;
+                break;
+
+            default:
+                return $this->failForbidden('Entity không hợp lệ');
+        }
+
+        if (!$canManage) {
+            return $this->failForbidden('Bạn không có quyền thực hiện thao tác này');
+        }
+
+        return null;
+    }
+
+
     /**
      * Check admin permission once
      */
@@ -43,23 +92,30 @@ class EntityMemberController extends ResourceController
      */
     private function handleMemberAction(callable $action): ResponseInterface
     {
-        if ($res = $this->ensureAdmin()) return $res;
-
+        // 1️⃣ Lấy payload
         $data = $this->request->getJSON(true) ?? [];
 
+        // 2️⃣ Validate
         [$ok, $payload] = $this->validatePayload($data);
         if (!$ok) return $this->fail($payload);
 
         ['entityType' => $type, 'entityId' => $id, 'userId' => $user] = $payload;
 
-        // run the injected action
-        $action($type, $id, $user);
+        // 3️⃣ CHECK QUYỀN ĐÚNG NGHIỆP VỤ (thay cho ensureAdmin)
+        if ($res = $this->ensureCanManageEntity($type, (int)$id)) {
+            return $res;
+        }
 
+        // 4️⃣ Thực thi action
+        $action($type, (int)$id, (int)$user);
+
+        // 5️⃣ Response
         return $this->respond([
             'message' => 'Success',
             'data' => $payload
         ]);
     }
+
 
     /**
      * ⭐ Add user to entity

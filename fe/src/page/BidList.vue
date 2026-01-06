@@ -1121,72 +1121,15 @@ const submitForm = async () => {
         loadingCreate.value = true
 
         const formatted = buildBiddingPayload(formData.value)
-        const currentUserId = getCurrentUserId()
-
-        if (!currentUserId) {
-            message.error("Không xác định được người dùng hiện tại")
-            return
-        }
 
         if (selectedBidding.value) {
-            // UPDATE
             await updateBiddingAPI(selectedBidding.value.id, formatted)
             message.success('Cập nhật thành công')
-
         } else {
-            // CREATE
-            const res = await createBiddingAPI({
-                ...formatted,
-                created_by: currentUserId
-            })
-
+            const res = await createBiddingAPI(formatted)
             const bidId = res.data?.id
-            if (!bidId) throw new Error("Không lấy được ID gói thầu sau khi tạo")
+            if (!bidId) throw new Error('Không lấy được ID gói thầu')
 
-            /* ---------------------------------------------------
-             * ⭐⭐ AUTO-GRANT ACCESS — thêm quyền cho những người liên quan
-             * --------------------------------------------------- */
-
-            // 1) Quyền cho người tạo
-            await addEntityMember({
-                entity_type: "bidding",
-                entity_id: Number(bidId),
-                user_id: Number(currentUserId)
-            })
-
-
-            // 2) Quyền cho manager nếu có
-            if (formatted.manager_id) {
-                await addEntityMember({
-                    entity_type: "bidding",
-                    entity_id: bidId,
-                    user_id: formatted.manager_id
-                })
-            }
-
-            // 3) Quyền cho người phụ trách chính (nếu có)
-            if (formatted.assigned_to) {
-                await addEntityMember({
-                    entity_type: "bidding",
-                    entity_id: bidId,
-                    user_id: formatted.assigned_to
-                })
-            }
-
-            // 4) Quyền cho danh sách cộng tác (nếu có)
-            if (Array.isArray(formatted.collaborators)) {
-                for (const uid of formatted.collaborators) {
-                    await addEntityMember({
-                        entity_type: "bidding",
-                        entity_id: bidId,
-                        user_id: uid
-                    })
-                }
-            }
-
-            /* --------------------------------------------------- */
-
-            // Clone steps nếu cần
             if (formatted.status === STATUS.PREPARING) {
                 await cloneFromTemplatesAPI(bidId)
             }
@@ -1196,14 +1139,13 @@ const submitForm = async () => {
 
         onCloseDrawer()
         await getBiddings()
-
     } catch (e) {
-        console.error('Lỗi submitForm:', e?.response?.data || e)
         message.error(e?.response?.data?.message || 'Có lỗi xảy ra')
     } finally {
         loadingCreate.value = false
     }
 }
+
 
 
 

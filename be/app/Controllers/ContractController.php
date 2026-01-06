@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\ContractModel;
 use App\Models\ContractStepModel;
+use App\Models\EntityMemberModel;
 use App\Models\SettingModel;
 use App\Models\UserModel;
 use App\Models\BiddingModel;
@@ -515,18 +516,28 @@ class ContractController extends ResourceController
         return $this->respond($contract);
     }
 
-    /** Tạo mới hợp đồng + sinh step mặc định từ settings.contract_steps */
+    /** Tạo mới hợp đồng + sinh step mặc định từ settings.contract_steps
+     * @throws ReflectionException
+     */
+
     public function create()
     {
-        $data = $this->request->getJSON(true);
+        $data = $this->request->getJSON(true) ?? [];
 
+        // 🔒 Lấy user hiện tại
+        $userId = (int)(session()->get('user_id') ?? 0);
+        if ($userId <= 0) {
+            return $this->failUnauthorized('Chưa đăng nhập');
+        }
+
+        // 1️⃣ Validate cơ bản
         if (empty($data['title']) && empty($data['name'])) {
             return $this->failValidationErrors(['title' => 'Vui lòng nhập tên hợp đồng']);
         }
         $data['title'] = $data['title'] ?? $data['name'];
 
         if (empty($data['status'])) {
-            $data['status'] = 1; // mặc định
+            $data['status'] = 1;
         }
         if (!in_array((int)$data['status'], $this->validStatuses, true)) {
             return $this->failValidationErrors(['status' => 'Trạng thái không hợp lệ']);
@@ -536,32 +547,53 @@ class ContractController extends ResourceController
             $data['code'] = $this->generateContractCode();
         }
 
-        // nếu tạo từ bidding → auto gán customer_id
+        // 2️⃣ Gán OWNER
+        $data['created_by'] = $userId;
+        unset($data['created_at']); // không cho FE set
+
+        // 3️⃣ Nếu tạo từ bidding
         if (!empty($data['bidding_id'])) {
             $bidding = (new BiddingModel())->find($data['bidding_id']);
             if (!$bidding) {
                 return $this->failNotFound('Gói thầu không tồn tại');
             }
-            // nếu business yêu cầu chỉ tạo HĐ khi trúng thầu thì kiểm tra ở đây
             $data['customer_id'] = $data['customer_id'] ?? ($bidding['customer_id'] ?? null);
             $data['title']       = $data['title'] ?? $bidding['title'];
         }
 
+        // 4️⃣ Insert
         $id = $this->model->insert($data);
         if (!$id) {
             return $this->failServerError('Không thể tạo hợp đồng');
         }
 
-        // Sinh step mẫu từ setting
-        $this->generateStepsFromTemplate((int)$id, ($data['customer_id'] ?? $data['customer_id'] ?? null));
+        // 5️⃣ AUTO-GRANT ENTITY PERMISSION
+        $em = new EntityMemberModel();
+
+        // creator
+        $em->addMember('contract', (int)$id, $userId);
+
+        // manager
+        if (!empty($data['manager_id'])) {
+            $em->addMember('contract', (int)$id, (int)$data['manager_id']);
+        }
+
+        // assigned
+        if (!empty($data['assigned_to'])) {
+            $em->addMember('contract', (int)$id, (int)$data['assigned_to']);
+        }
+
+        // 6️⃣ Sinh step mẫu
+        $this->generateStepsFromTemplate((int)$id, $data['customer_id'] ?? null);
 
         return $this->respondCreated([
-            'status' => 'success',
-            'id'     => $id,
+            'id'     => (int)$id,
             'code'   => $data['code'],
-            'title'  => $data['title']
+            'title'  => $data['title'],
+            'message'=> 'Tạo hợp đồng thành công'
         ]);
     }
+
 
     private function generateContractCode(): string
     {
