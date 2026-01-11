@@ -68,7 +68,7 @@
 
                     <template v-else-if="column.key === 'name'">
                         <a-tooltip :title="record.name">
-                            <a-typography-text strong style="cursor:pointer" @click="goToContractDetail(record.id)">
+                            <a-typography-text style="cursor:pointer" @click="goToContractDetail(record.id)">
                                 {{ truncateText(record.name, 25) }}
                             </a-typography-text>
                         </a-tooltip>

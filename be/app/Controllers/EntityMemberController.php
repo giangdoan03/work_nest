@@ -17,7 +17,7 @@ class EntityMemberController extends ResourceController
         int $entityId
     ): ?ResponseInterface
     {
-        $user = currentUser(); // helper bạn đang dùng
+        $user = currentUser();
         if (!$user) {
             return $this->failForbidden('Không xác định người dùng');
         }
@@ -28,35 +28,51 @@ class EntityMemberController extends ResourceController
         }
 
         $uid = (int) $user['id'];
-
-        $canManage = false;
+        $db  = db_connect();
 
         switch ($entityType) {
+
             case 'bidding':
-                $db = db_connect();
                 $row = $db->table('biddings')
                     ->select('id')
                     ->where('id', $entityId)
                     ->groupStart()
-                    ->where('created_by', $uid)
-                    ->orWhere('manager_id', $uid)
+                    ->where('manager_id', $uid)
                     ->orWhere('assigned_to', $uid)
+                    ->orWhere("FIND_IN_SET($uid, collaborators) !=", 0)
                     ->groupEnd()
                     ->get()
                     ->getRow();
 
-                $canManage = (bool) $row;
+                if (!$row) {
+                    return $this->failForbidden('Bạn không có quyền quản lý gói thầu này');
+                }
                 break;
+
+
+            case 'contract':
+                $row = $db->table('contracts')
+                    ->select('id')
+                    ->where('id', $entityId)
+                    ->groupStart()
+                    ->where('assigned_to', $uid)
+                    ->orWhere('manager_id', $uid)
+                    ->orWhere('updated_by', $uid) // optional
+                    ->groupEnd()
+                    ->get()
+                    ->getRow();
+
+                if (!$row) {
+                    return $this->failForbidden('Bạn không có quyền quản lý hợp đồng này');
+                }
+                break;
+
 
             default:
                 return $this->failForbidden('Entity không hợp lệ');
         }
 
-        if (!$canManage) {
-            return $this->failForbidden('Bạn không có quyền thực hiện thao tác này');
-        }
-
-        return null;
+        return null; // OK
     }
 
 
@@ -160,4 +176,44 @@ class EntityMemberController extends ResourceController
             "access" => $this->model->exists($entityType, $entityId, $userId)
         ]);
     }
+
+    public function addBulk(): ResponseInterface
+    {
+        $data = $this->request->getJSON(true) ?? [];
+
+        $entityType = $data['entity_type'] ?? null;
+        $entityId   = $data['entity_id'] ?? null;
+        $users      = $data['users'] ?? null;
+
+        if (!$entityType || !$entityId || !is_array($users)) {
+            return $this->failValidationErrors("Invalid payload");
+        }
+
+        // Kiểm tra quyền
+        if ($res = $this->ensureCanManageEntity($entityType, (int)$entityId)) {
+            return $res;
+        }
+
+        // Lọc danh sách user hợp lệ
+        $cleanUsers = array_unique(
+            array_filter($users, fn($u) => (int)$u > 0)
+        );
+
+        if (empty($cleanUsers)) {
+            return $this->failValidationErrors("Empty users list");
+        }
+
+        // Model insert batch
+        $added = $this->model->addMembersBulk(
+            $entityType,
+            (int)$entityId,
+            $cleanUsers
+        );
+
+        return $this->respond([
+            "message" => "Bulk insert completed",
+            "added"   => $added
+        ]);
+    }
+
 }

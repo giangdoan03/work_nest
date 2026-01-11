@@ -10,6 +10,9 @@ const instance = axios.create({
 export const addEntityMember = (data) =>
     instance.post('/entity-members/add', data)
 
+export const addEntityMemberBulk = (data) =>
+    instance.post('/entity-members/add-bulk', data)
+
 // ⭐ Xoá user khỏi entity
 export const removeEntityMember = (data) =>
     instance.post('/entity-members/remove', data)

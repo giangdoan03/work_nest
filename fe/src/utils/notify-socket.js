@@ -1,54 +1,49 @@
-// src/utils/notify-socket.js
-import { io } from 'socket.io-client'
+import { io } from "socket.io-client";
 
-let sock = null
-let boundHandlers = false
-let boundUserId = null
+let socket = null;
+let currentUserId = null;
+let notifyCallbacks = [];
 
 export function connectNotifySocket(userId) {
-    userId = String(userId || '')
-    if (!userId) return null
+    if (!userId) return null;
+    userId = String(userId);
 
-    // ĐÃ có socket cho đúng user → dùng lại, KHÔNG tạo mới
-    if (sock && boundUserId === userId) return sock
+    // Nếu socket tồn tại và đã đúng user → dùng lại
+    if (socket && currentUserId === userId) return socket;
 
-    // Có socket khác user → đóng hẳn và reset state
-    if (sock && boundUserId !== userId) {
-        try { sock.disconnect() } catch {}
-        sock = null
-        boundHandlers = false
+    // Nếu đổi user → reset
+    if (socket && currentUserId !== userId) {
+        socket.disconnect();
+        socket = null;
+        notifyCallbacks = [];
     }
 
-    boundUserId = userId
-    sock = io('https://notify.bee-soft.net', {
-        path: '/socket.io/',
-        transports: ['websocket', 'polling'],   // ưu tiên websocket
+    currentUserId = userId;
+
+    socket = io("https://notify.bee-soft.net", {
+        path: "/socket.io/",
+        transports: ["websocket"],
         auth: { userId },
-        reconnection: true,
-        reconnectionAttempts: Infinity,
-        reconnectionDelay: 800,
-    })
+        reconnection: true
+    });
 
-    // log chuyển transport để dễ debug
-    sock.io.on('upgrade', (transport) => {
-        console.log('🚚 upgraded to', transport.name) // "websocket"
-    })
+    socket.on("connect", () => {
+        console.log("⚡ Socket connected:", socket.id);
+        socket.emit("register", currentUserId);
+    });
 
-    sock.on('connect', () => console.log('✅ Connected socket', sock.id))
-    sock.on('disconnect', (r) => console.log('❌ Disconnect:', r))
-    sock.on('connect_error', (e) => console.log('❌ connect_error:', e?.message || e))
+    socket.on("notify", (data) => {
+        console.log("🔔 Notify received:", data);
 
-    return sock
+        // gửi cho tất cả callback đã đăng ký
+        notifyCallbacks.forEach(fn => fn(data));
+    });
+
+    return socket;
 }
 
-// đảm bảo chỉ gắn 1 lần
 export function onNotify(cb) {
-    if (!sock) return
-    if (!boundHandlers) {
-        sock.off('notify')      // gỡ mọi handler cũ (nếu có)
-        sock.on('notify', cb)   // gắn 1 handler duy nhất
-        boundHandlers = true
+    if (typeof cb === "function") {
+        notifyCallbacks.push(cb);
     }
 }
-
-export function getSocket() { return sock }

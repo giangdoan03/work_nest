@@ -11,7 +11,7 @@ import DepartmentList from '../page/DepartmentList.vue'
 import UserManagement from '../page/UserManagement.vue'
 import InternalTasks from '../page/InternalTasks.vue'
 import TaskDetail from '../components/task/index.vue'
-import ContractsTasks from '../page/ContractsTasks.vue'
+import ContractList from '../page/ContractList.vue'
 import DocumentList from '../page/documents/DocumentList.vue'
 import MyDocumentList from '../page/documents/MyDocumentList.vue'
 import BiddingStepTemplateList from '../page/BiddingStepTemplateList.vue'
@@ -98,13 +98,13 @@ const routes = [
                 name: 'bid-detail',
                 component: BidDetail,
                 props: true, // ✅ để tự động nhận param id
-                meta: { breadcrumb: 'Chi tiết gói thầu', parent: 'bid-list', requiresBiddingAccess: true }
+                meta: { breadcrumb: 'Chi tiết gói thầu', parent: 'bid-list', requiresEntityAccess: true, entityType: 'bidding' }
             },
             {
                 path: '/biddings/:bidId/steps/:stepId/tasks',
                 name: 'bidding-step-tasks',
                 component: BiddingStepTasks,
-                meta: { breadcrumb: 'Công việc', parent: 'biddings-info', requiresBiddingAccess: true },
+                meta: { breadcrumb: 'Công việc', parent: 'biddings-info', requiresEntityAccess: true, entityType: 'bidding' },
                 props: route => ({
                     bidId: Number(route.params.bidId),
                     stepId: Number(route.params.stepId),
@@ -115,7 +115,7 @@ const routes = [
                 name: 'bidding-task-info-in-step',
                 component: TaskDetail,
                 props: true,
-                meta: { breadcrumb: 'Chi tiết công việc', parent: 'bidding-step-tasks', requiresBiddingAccess: true }
+                meta: { breadcrumb: 'Chi tiết công việc', parent: 'bidding-step-tasks', requiresEntityAccess: true, entityType: 'bidding' }
             },
 
 
@@ -139,9 +139,9 @@ const routes = [
 
             // Contracts
             {
-                path: 'contracts-tasks',
+                path: 'contract-list',
                 name: 'contracts-tasks',
-                component: ContractsTasks,
+                component: ContractList,
                 meta: { breadcrumb: 'Hợp đồng' }
             },
             {
@@ -154,7 +154,7 @@ const routes = [
                 path: 'contracts/:id',
                 name: 'contract-detail',
                 component: ContractDetail,
-                meta: { breadcrumb: 'Chi tiết hợp đồng', requiresEntityAccess: true, entityType: 'contract' }
+                meta: { breadcrumb: 'Chi tiết hợp đồng', parent: 'contracts-tasks', requiresEntityAccess: true, entityType: 'contract' }
             },
 
             {
@@ -400,41 +400,45 @@ router.beforeEach(async (to, from, next) => {
     // 🔐 KIỂM TRA QUYỀN TRUY CẬP ENTITY (Bidding, Contract, Workflow Task, Non-workflow)
     // -----------------------------------------
     if (to.meta.requiresEntityAccess) {
-        const userId = userStore.user?.id
-        if (!userId) return next('/403')
+        const userId = userStore.user?.id;
+        if (!userId) return next('/403');
 
-        // 1️⃣ Xác định loại entity
-        let entityType = to.meta.entityType
+        let entityType = to.meta.entityType;
 
-        // Nếu workflow / non-workflow → backend đang dùng chung "task"
         if (entityType === 'workflow-task' || entityType === 'non-workflow-task') {
-            entityType = 'internal'
+            entityType = 'internal';
         }
 
-        // 2️⃣ Lấy entity id từ params
-        const entityId = to.params.id || to.params.bidId || to.params.contractId
+        let entityId = null;
 
-        if (!entityId) return next('/403')
+        if (entityType === 'contract') {
+            entityId = to.params.contractId || to.params.id;
+        }
+        else if (entityType === 'bidding') {
+            entityId = to.params.bidId || to.params.id; // 👈 FIX ở đây
+        }
+        else {
+            entityId = to.params.id;
+        }
+
+        if (!entityId) return next('/403');
 
         try {
             const res = await canAccessEntity({
                 entity_type: entityType,
                 entity_id: entityId,
                 user_id: userId,
-            })
-
-            console.log("ENTITY ACCESS CHECK:", entityType, entityId, res.data)
+            });
 
             if (!res.data?.access) {
-                message.error("Bạn không có quyền truy cập mục này.")
-                return next('/403')
+                message.error("Bạn không có quyền truy cập mục này.");
+                return next('/403');
             }
-
         } catch (e) {
-            console.error("Lỗi kiểm tra quyền entity:", e)
-            return next('/403')
+            return next('/403');
         }
     }
+
 
 
 

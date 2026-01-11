@@ -86,7 +86,10 @@ const props = defineProps({
     departments: { type: Array, default: () => [] },
 
     maxFiles: { type: Number, default: 3 },
-    sessionId: { type: [Number, null], default: null }
+    sessionId: {
+        type: [Number, String, null],
+        default: null
+    }
 })
 
 const emit = defineEmits(['update:open', 'confirm'])
@@ -225,10 +228,13 @@ const onOk = async () => {
     if (!canSubmit.value) return
     submitting.value = true
 
+    console.log('checkedUsers', checkedUsers.value)
+
     try {
         const form = new FormData()
         form.append('task_id', props.taskId)
-        form.append('approvers', JSON.stringify(checkedUsers.value))
+        form.append('approvers', JSON.stringify([...checkedUsers.value]))
+
 
         if (props.mode === 'create') {
             fileList.value.forEach(f => {
@@ -236,8 +242,13 @@ const onOk = async () => {
             })
             await createApprovalSession(form)
         } else {
-            await updateApprovalSession(props.sessionId, form)
+        console.log("=== DEBUG FORM-DATA ===");
+        for (let [k, v] of form.entries()) {
+            console.log(k, v);
         }
+
+        await updateApprovalSession(Number(props.sessionId), form);
+    }
 
         message.success(
             props.mode === 'create'
@@ -361,7 +372,6 @@ watch(
     font-weight: 500;
     color: #111827;
     white-space: nowrap;
-    overflow: hidden;
     text-overflow: ellipsis;
 }
 

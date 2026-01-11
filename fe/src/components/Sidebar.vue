@@ -56,12 +56,12 @@
 
             <!-- 3. Hợp đồng -->
             <a-tooltip placement="right" title="Hợp đồng" v-if="collapsed">
-                <div class="menu-item" :class="{ active: isContractActive }" @click="navigateTo('/contracts-tasks')">
+                <div class="menu-item" :class="{ active: isContractActive }" @click="navigateTo('/contract-list')">
                     <FileTextOutlined/>
                     <div class="menu-text-collapsed">Hợp đồng</div>
                 </div>
             </a-tooltip>
-            <div v-else class="menu-item" :class="{ active: isContractActive }" @click="navigateTo('/contracts-tasks')">
+            <div v-else class="menu-item" :class="{ active: isContractActive }" @click="navigateTo('/contract-list')">
                 <FileTextOutlined/>
                 <span class="menu-text">Hợp đồng</span>
             </div>
@@ -299,7 +299,7 @@ const isBiddingLikePath = (p) => (
 
 // ✅ Giống isBiddingLikePath nhưng cho Contract
 const isContractLikePath = (p) => (
-    p === '/contracts-tasks' ||                                   // danh sách nhiệm vụ theo hợp đồng
+    p === '/contract-list' ||                                   // danh sách nhiệm vụ theo hợp đồng
     /^\/contracts\/\d+\/?$/.test(p) ||                            // chi tiết hợp đồng: /contracts/66
     /^\/contract\/\d+\/steps\/\d+\/tasks\/?$/.test(p) ||          // danh sách task trong step: /contract/66/steps/363/tasks
     /^\/contract\/\d+\/steps\/\d+\/tasks\/\d+\/info\/?$/.test(p)  // trang info task: /contract/66/steps/363/tasks/249/info
@@ -326,11 +326,11 @@ const isOverviewLikePath = (p) => (
 
 // === Active states (đặt ở top-level) ===
 const isOverviewActive = computed(() => isOverviewLikePath(route.path))
+
 const isBiddingActive = computed(() => isSection('bidding') || isBiddingLikePath(currentPath.value))
-// 🔁 Thay thế tính toán active cho menu "Hợp đồng"
-const isContractActive = computed(() =>
-    isSection('contract') || isContractLikePath(currentPath.value)
-)
+
+const isContractActive = computed(() => isSection('contract') || isContractLikePath(currentPath.value))
+
 const isTaskActive = computed(() =>
     isSection('non-workflow') || isNonWorkflowLikePath(currentPath.value)
 )

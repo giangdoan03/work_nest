@@ -1379,7 +1379,7 @@
     }
 
     const goBack = () => {
-        router.push('/contracts-tasks')
+        router.push('/contract-list')
     }
 
     const safeToNumber = v => (v === null || v === undefined || v === '' ? 0 : Number(v))

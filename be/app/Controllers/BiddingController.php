@@ -432,7 +432,7 @@ class BiddingController extends ResourceController
                 $diff = (int)$today->diff($end)->format('%r%a');
                 $daysRemaining = max($diff, 0);
                 $daysOverdue   = $diff < 0 ? -$diff : 0;
-            } catch (\Throwable $e) {
+            } catch (Throwable) {
                 $daysRemaining = null;
                 $daysOverdue   = null;
             }

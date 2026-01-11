@@ -29,6 +29,14 @@ $routes->group('api', function ($routes) {
         $routes->get("can-access", "DocLibraryController::checkAccess");
     });
 
+
+    // notifications
+    $routes->group('notifications', function($routes) {
+        $routes->post('send', 'NotificationController::send');
+        $routes->get('/', 'NotificationController::index');
+        $routes->post('read/(:num)', 'NotificationController::markRead/$1');
+    });
+
     // ⭐ Google OAuth
     $routes->get('google/url', 'GoogleAuth::getUrl');
     $routes->get('google-auth', 'GoogleAuth::redirect');
@@ -57,9 +65,8 @@ $routes->group('api', function ($routes) {
     $routes->delete('users/(:num)', 'Auth::delete/$1');// Xoá
 
     $routes->get('my-tasks', 'MyTaskController::index');
-
-    $routes->post('approval-sessions', 'ApprovalSessionController::create');
     $routes->get('tasks/(:num)/approval-sessions', 'ApprovalSessionController::byTask/$1');
+    $routes->post('approval-sessions', 'ApprovalSessionController::create');
     $routes->delete('approval-sessions/(:num)', 'ApprovalSessionController::delete/$1');
     $routes->post('approval-sessions/(:num)/approve', 'ApprovalSessionController::approve/$1');
     $routes->post('approval-sessions/(:num)/reject', 'ApprovalSessionController::reject/$1');
@@ -334,6 +341,8 @@ $routes->group('api', function ($routes) {
     $routes->post('entity-members/remove', 'EntityMemberController::remove');
     $routes->get('entity-members/list/(:segment)/(:num)', 'EntityMemberController::list/$1/$2');
     $routes->get('entity-members/can-access', 'EntityMemberController::canAccess');
+    $routes->post('entity-members/add-bulk', 'EntityMemberController::addBulk');
+
 
     // CRUD department
     $routes->get('departments', 'DepartmentController::index');

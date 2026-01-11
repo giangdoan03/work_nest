@@ -1111,8 +1111,6 @@ const fetchLogHistory = async () => {
         const res = await getTaskRosterAPI(taskId);
         const body = res?.data ?? {};
 
-        console.log('body', body)
-
         // roster là mảng các bước duyệt
         const roster = Array.isArray(body.roster) ? body.roster : [];
 

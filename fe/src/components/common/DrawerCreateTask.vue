@@ -219,7 +219,7 @@ import { useRoute } from 'vue-router'
 import dayjs from 'dayjs'
 dayjs.locale('vi')
 import viVN from 'ant-design-vue/es/locale/vi_VN'
-import {addEntityMember} from "@/api/entityMembers.js";
+import {addEntityMember, addEntityMemberBulk} from "@/api/entityMembers.js";
 
 const stepStore = useStepStore()
 const commonStore = useCommonStore()
@@ -592,129 +592,140 @@ const addAccess = async (entityType, entityId, userId) => {
 }
 
 /* ---------------- Create ---------------- */
-const createDrawerInternal = async () => {
-    if (loadingCreate.value) return
 
-    const payload = { ...formData.value }
 
-    // ==============
-    // 0. SET parent_id
-    // ==============
+const preparePayload = () => {
+    const payload = { ...formData.value };
+
+    // parent
     payload.parent_id = props.createAsRoot
         ? null
-        : effectiveParentId.value
+        : effectiveParentId.value;
 
-    // =====================================================
-    // 1) VALIDATE nếu là bidding / contract
-    // =====================================================
-    if (['bidding', 'contract'].includes(payload.linked_type)) {
+    // ép kiểu number
+    [
+        "created_by",
+        "assigned_to",
+        "proposed_by",
+        "parent_id",
+        "id_department",
+        "step_id",
+        "needs_approval"
+    ].forEach(k => {
+        payload[k] = payload[k] ? Number(payload[k]) : null;
+    });
 
-        if (!payload.linked_id) {
-            message.error(
-                "Vui lòng chọn liên kết " +
-                (payload.linked_type === "bidding" ? "gói thầu" : "hợp đồng")
-            )
-            return
-        }
+    // người tạo
+    payload.created_by = Number(store.currentUser?.id || null);
 
-        // Tự map step_code → step_id
-        if (!payload.step_id && payload.step_code) {
-            const found = stepOption.value.find(
-                it => String(it.value) === String(payload.step_code)
-            )
-            payload.step_id = found?.step_id ?? null
-        }
+    return payload;
+};
 
-        // Trường hợp chỉ có 1 step → auto lấy
-        if (!payload.step_id && stepOption.value.length === 1) {
-            payload.step_id = stepOption.value[0].step_id
-            payload.step_code = stepOption.value[0].value
-        }
 
-        if (!payload.step_id) {
-            message.error("Vui lòng chọn bước trước khi lưu")
-            return
-        }
+const validateLinkedData = (payload) => {
+    const type = payload.linked_type;
+
+    if (!["bidding", "contract"].includes(type)) {
+        return true; // internal → không cần validate step
     }
 
-    // =====================================================
-    // 2) EP NUMBER các field
-    // =====================================================
-    ;[
-        'created_by',
-        'assigned_to',
-        'proposed_by',
-        'parent_id',
-        'id_department',
-        'step_id',
-        'needs_approval'
-    ].forEach(k => {
-        payload[k] =
-            payload[k] !== undefined &&
-            payload[k] !== null &&
-            payload[k] !== ""
-                ? Number(payload[k])
-                : null
-    })
+    if (!payload.linked_id) {
+        message.error(`Vui lòng chọn liên kết ${type === "bidding" ? "gói thầu" : "hợp đồng"}`);
+        return false;
+    }
 
-    // Người tạo
-    payload.created_by = store.currentUser?.id || null
+    // Tự ánh xạ step_code → step_id
+    if (!payload.step_id && payload.step_code) {
+        const found = stepOption.value.find(o => String(o.value) === String(payload.step_code));
+        payload.step_id = found?.step_id || null;
+    }
 
-    loadingCreate.value = true
+    // Nếu chỉ có 1 step → tự set
+    if (!payload.step_id && stepOption.value.length === 1) {
+        const s = stepOption.value[0];
+        payload.step_id = s.step_id;
+        payload.step_code = s.value;
+    }
+
+    if (!payload.step_id) {
+        message.error("Vui lòng chọn bước trước khi lưu");
+        return false;
+    }
+
+    return true;
+};
+
+
+const grantEntityAccess = async (payload, newTask) => {
+    const type = payload.linked_type;
+    let entityId = payload.linked_id;
+
+    if (type === "internal") {
+        entityId = newTask.id;
+    }
+
+    const members = new Set([
+        payload.created_by,
+        payload.assigned_to,
+        payload.proposed_by,
+        payload.collaborated_by
+    ]);
+
+    const users = [...members].filter(Boolean);
+    if (!users.length) return;
+
+    // 1) Gán quyền vào task hoặc thực thể internal
+    await addEntityMemberBulk({
+        entity_type: type,
+        entity_id: entityId,
+        users
+    });
+
+    // 2) Nếu công việc thuộc hợp đồng → gán quyền contract
+    if (type === "contract") {
+        await addEntityMemberBulk({
+            entity_type: "contract",
+            entity_id: entityId,   // contract ID
+            users
+        });
+    }
+
+    console.log(`✔ Access granted for ${type}#${entityId}`, users);
+};
+
+
+
+
+const createDrawerInternal = async () => {
+    if (loadingCreate.value) return;
+
+    const payload = preparePayload();           // chuẩn hoá dữ liệu
+    if (!validateLinkedData(payload)) return;   // validate nhanh cho bidding/contract
+
+    loadingCreate.value = true;
 
     try {
-        // =====================================================
-        // 3) TẠO TASK
-        // =====================================================
-        const res = await createTask(payload)
-        const newTask = res.data
+        // 1) Tạo task
+        const res = await createTask(payload);
+        const newTask = res.data;
+        message.success("Thêm mới nhiệm vụ thành công");
 
-        message.success("Thêm mới nhiệm vụ thành công")
+        // 2) Gán quyền (bulk)
+        await grantEntityAccess(payload, newTask);
 
-        // =====================================================
-        // 4) AUTO-GRANT ACCESS
-        // =====================================================
-
-        // Loại entity của task:
-        // bidding | contract | internal (việc không quy trình)
-        let entityType = payload.linked_type
-
-        // Nếu internal → entity chính là task ID
-        let entityId = payload.linked_id
-        if (entityType === "internal") {
-            entityId = newTask.id
-        }
-
-        // Tập hợp toàn bộ user cần cấp quyền
-        const members = new Set([
-            payload.created_by,
-            payload.assigned_to,
-            payload.proposed_by,
-            payload.collaborated_by
-        ])
-
-        // Lọc null
-        const users = [...members].filter(v => !!v)
-
-        // Gọi API cấp quyền
-        for (const uid of users) {
-            await addAccess(entityType, entityId, uid)
-        }
-
-        // =====================================================
-        // 5) REFRESH LIST VÀ ĐÓNG FORM
-        // =====================================================
-        await refreshStepTasks({ preferNewTaskStep: true })
-        emit("submitForm", newTask)
-        onCloseDrawer()
+        // 3) Load lại danh sách & đóng drawer
+        await refreshStepTasks({ preferNewTaskStep: true });
+        emit("submitForm", newTask);
+        onCloseDrawer();
 
     } catch (err) {
-        console.error("[createDrawerInternal] error:", err)
-        message.error("Thêm mới nhiệm vụ không thành công")
+        console.error("[createDrawerInternal] error:", err);
+        message.error("Thêm mới nhiệm vụ không thành công");
     } finally {
-        loadingCreate.value = false
+        loadingCreate.value = false;
     }
-}
+};
+
 
 
 

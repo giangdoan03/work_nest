@@ -49,28 +49,39 @@ class TaskModel extends Model
 
         // Upsert từng người
         foreach ($mentions as $m) {
+
+            $uid = (int)$m['user_id'];
+
+            // Kiểm tra tồn tại
+            $exists = $db->table('task_roster')
+                ->where('task_id', $taskId)
+                ->where('user_id', $uid)
+                ->get()
+                ->getRowArray();
+
             $data = [
-                'task_id' => $taskId,
-                'user_id' => (int)$m['user_id'],
-                'role' => $m['role'] ?? 'approve',
-                'status' => $m['status'] ?? 'processing',
-                'name' => $m['name'] ?? null,
+                'role'       => $m['role'] ?? 'approve',
+                'status'     => $m['status'] ?? 'processing',
+                'name'       => $m['name'] ?? null,
                 'updated_at' => date('Y-m-d H:i:s'),
-                'created_at' => date('Y-m-d H:i:s'),
             ];
 
-            $sql = "
-        INSERT INTO task_roster (task_id, user_id, role, status, name, created_at, updated_at)
-        VALUES (:task_id:, :user_id:, :role:, :status:, :name:, :created_at:, :updated_at:)
-        ON DUPLICATE KEY UPDATE
-            role = VALUES(role),
-            status = VALUES(status),
-            name = VALUES(name),
-            updated_at = VALUES(updated_at)
-    ";
-
-            $db->query($sql, $data);
+            if ($exists) {
+                // UPDATE
+                $db->table('task_roster')
+                    ->where('task_id', $taskId)
+                    ->where('user_id', $uid)
+                    ->update($data);
+            } else {
+                // INSERT
+                $db->table('task_roster')->insert(array_merge($data, [
+                    'task_id'    => $taskId,
+                    'user_id'    => $uid,
+                    'created_at' => date('Y-m-d H:i:s'),
+                ]));
+            }
         }
+
 
         $db->transComplete();
         return $this->getRoster($taskId);

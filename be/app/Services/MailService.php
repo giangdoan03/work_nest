@@ -180,4 +180,16 @@ class MailService
 
         $this->send($creator['email'], $subject, $html);
     }
+
+    public function sendGeneric(string $to, string $subject, string $message): bool
+    {
+        $html = "
+        <h3>{$subject}</h3>
+        <p>{$message}</p>
+        <hr>
+        <p>Email tự động, vui lòng không trả lời.</p>
+    ";
+
+        return $this->send($to, $subject, $html);
+    }
 }

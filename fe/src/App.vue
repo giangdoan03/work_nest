@@ -7,45 +7,45 @@
 <script setup>
 import { onMounted, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
+import { useNotifyStore } from '@/stores/notifications'
 import { checkSession } from '@/api/auth'
 
-// ⬇️ Socket helpers
 import { connectNotifySocket, onNotify } from '@/utils/notify-socket.js'
-// (tuỳ chọn) store để +1 badge chuông
-// import { useNotifyStore } from '@/stores/notifications'
 
 const userStore = useUserStore()
-// const notify = useNotifyStore() // nếu dùng badge
+const notifyStore = useNotifyStore()
 
-// 1) Khởi tạo user từ session hiện tại
 onMounted(async () => {
-    try {
-        const res = await checkSession()
-        if (res.data.status === 'success') {
-            userStore.setUser(res.data.user)
-        } else {
-            userStore.clearUser()
-        }
-    } catch {
+    const res = await checkSession().catch(() => null)
+    if (res?.data?.status === 'success') {
+        userStore.setUser(res.data.user)
+    } else {
         userStore.clearUser()
     }
 })
 
-// 2) Khi có user.id → connect socket & lắng nghe notify
-let bootedForUser = null   // ⬅️ guard
+// Khi user.id xuất hiện → mở socket
 watch(() => userStore.user?.id, (id) => {
-    if (!id) return
-    if (bootedForUser === String(id)) return   // ⬅️ đã boot -> bỏ qua
-    bootedForUser = String(id)
+    if (!id) return;
 
-    console.log('[App] connect socket as user', id)
-    const sock = connectNotifySocket(String(id))
+    const sock = connectNotifySocket(String(id));
 
-    onNotify((n) => console.log('🔔 Notify:', n))
+    // Lắng nghe realtime notify từ server
+    onNotify((data) => {
+        console.log("STORE ADD:", data);
 
-    // tiện debug từ console
-    window.__sock = sock
-}, { immediate: true })
+        // chuẩn hóa và thêm vào store
+        notifyStore.addRealtime({
+            id: data.id,
+            title: data.title,
+            content: data.message ?? data.content,
+            url: data.url,
+            created_at: data.created_at
+        });
+    });
+
+    window.__sock = sock; // để debug
+}, { immediate: true });
 </script>
 
 <style>

@@ -60,3 +60,8 @@ fe/test.php
 *.sln
 *.sw?
 *.tsbuildinfo
+
+# =====================
+# CUSTOM IGNORED FILES
+# =====================
+be/app/Controllers/GoogleAuth.php

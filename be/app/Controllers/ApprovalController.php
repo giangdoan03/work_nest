@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\ApprovalInstanceModel;
+use App\Models\ApprovalReadModel;
 use App\Models\ApprovalStepModel;
 use App\Models\ApprovalLogModel;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -808,5 +809,34 @@ class ApprovalController extends ResourceController
             'instance' => $instance ?: null,
             'steps'    => $steps,
         ]);
+    }
+
+    public function markRead(): ResponseInterface
+    {
+        if (!session()->get('logged_in')) {
+            return $this->failUnauthorized();
+        }
+
+        $userId = session()->get('user_id');
+        $steps = $this->request->getJSON(true);
+
+        if (!is_array($steps) || empty($steps)) {
+            return $this->failValidationErrors("Invalid steps");
+        }
+
+        $db = db_connect();
+
+        $builder = $db->table('approval_reads');
+
+        foreach ($steps as $stepId) {
+            $builder->ignore(true)->insert([
+                'step_id' => (int) $stepId,
+                'user_id' => (int) $userId,
+                'read_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
+
+
+        return $this->respond(['success' => true]);
     }
 }

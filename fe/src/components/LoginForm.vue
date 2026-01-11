@@ -73,37 +73,29 @@ const formState = reactive({
 
 const onFinish = async () => {
     loading.value = true
-    hasServerError.value = false
 
     try {
         const response = await loginApi(formState.email, formState.password)
 
         if (response.data.status === 'success') {
-            userStore.setUser(response.data.user)
-            const user = response.data.user
-            const socket = connectNotifySocket(String(user.id))
 
-            onNotify((data) => {
-                console.log('🔔 Notify:', data)
-                // bạn có thể hiện message hoặc tăng badge ở đây
-            })
+            const user = response.data.user
+            userStore.setUser(user)
+
+            // ⬇️ chỉ connect socket, KHÔNG gắn onNotify ở đây
+            connectNotifySocket(String(user.id))
+
             await router.push('/project-overview')
         } else {
             showError(response.data.message || 'Đăng nhập thất bại')
         }
     } catch (error) {
-        if (error.response) {
-            showError(error.response.data?.message || 'Lỗi từ server.')
-        } else if (error.request) {
-            hasServerError.value = true
-        } else {
-            showError('Đã xảy ra lỗi không xác định.')
-        }
-        console.error('[Login error]', error)
+        showError('Lỗi server hoặc kết nối')
     } finally {
         loading.value = false
     }
 }
+
 
 const onFinishFailed = (errorInfo) => {
     console.warn('Form validation failed:', errorInfo)

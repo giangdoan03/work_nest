@@ -57,9 +57,9 @@
                         <!-- Tên công việc -->
                         <template v-else-if="column.key === 'title'">
                             <router-link :to="buildTaskLink(record)" class="task-title-cell">
-                <span class="task-title" :class="{ child: record.parent_id }">
-                  {{ truncate(record.title, 25) }}
-                </span>
+                            <span class="task-title" :class="{ child: record.parent_id }">
+                              {{ truncate(record.title, 25) }}
+                            </span>
                             </router-link>
                         </template>
 
@@ -204,6 +204,7 @@ import { approveTaskSimpleAPI, rejectTaskSimpleAPI } from '@/api/taskApproval.js
 import { useUserStore } from '@/stores/user'
 import DrawerCreateTask from '@/components/common/DrawerCreateTask.vue'
 import DrawerCreateSubtask from '@/components/common/DrawerCreateSubtask.vue'
+import {getContractStepsAPI} from "@/api/contract-steps.js";
 
 const route = useRoute()
 const router = useRouter()
@@ -416,7 +417,7 @@ const load = async () => {
     try {
         const [contractRes, stepsRes, usersRes] = await Promise.all([
             getContractAPI(contractId),
-            getContractStepCountAPI(contractId),
+            getContractStepsAPI(contractId),
             getUsers(),
         ])
         contract.value = contractRes?.data ?? null
@@ -579,7 +580,7 @@ onMounted(load)
 </script>
 
 <style scoped>
-.task-title{display:inline-block;font-weight:500;font-size:14px;color:#1890ff}
+.task-title{display:inline-block;font-size:14px;color:#000000}
 .task-title.child{position:relative;padding-left:30px;font-weight:400;font-size:12px;color:#555}
 .task-title.child::before{content:'';position:absolute;left:10px;top:50%;width:14px;height:1px;background:#ccc}
 .task-title.child::after{content:'';position:absolute;left:10px;top:0;bottom:50%;border-left:1px solid #ccc}

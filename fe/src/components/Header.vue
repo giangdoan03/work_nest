@@ -197,8 +197,8 @@
                     :trigger="['click']"
                     @openChange="onNotifyOpenChange"
                 >
-                    <a-badge :count="unreadNotifyBadge" size="small">
-                        <BellOutlined class="ha-icon" aria-label="Thông báo phê duyệt"/>
+                    <a-badge :count="notifyStore.unread" size="small">
+                        <BellOutlined class="ha-icon" />
                     </a-badge>
 
                     <template #overlay>
@@ -251,7 +251,8 @@
                                                         <template #description>
                                                             <div class="item-desc">
                                                                 <div>Gửi bởi: {{ item.submitted_by_name || '—' }}</div>
-                                                                <div class="meta-sub">{{ formatTime(item.submitted_at) }}</div>
+                                                                <div class="meta-sub">{{ formatTime(item.created_at) }}</div>
+
                                                             </div>
                                                         </template>
                                                     </a-list-item-meta>
@@ -281,8 +282,9 @@
                                                         </template>
                                                         <template #description>
                                                             <div class="item-desc">
-                                                                <div>Gửi bởi: {{ item.submitted_by_name || '—' }}</div>
-                                                                <div class="meta-sub">{{ formatTime(item.submitted_at) }}</div>
+                                                                <div>Gửi bởi: {{ item.submitted_by_name || 'Hệ thống' }}</div>
+                                                                <div class="meta-sub">{{ formatTime(item.created_at) }}</div>
+
                                                             </div>
                                                         </template>
                                                     </a-list-item-meta>
@@ -384,14 +386,25 @@
 /* ========= Imports ========= */
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import localizedFormat from "dayjs/plugin/localizedFormat";
+dayjs.extend(localizedFormat);
 import 'dayjs/locale/vi'
+dayjs.locale('vi')
+import { buildNotifyUrl } from "@/utils/build-notify-url";
+
+import { useNotifyStore } from '@/stores/notifications'
+import {
+    getNotificationAPI,
+    markNotificationReadAPI
+} from '@/api/notifications'
+
+const notifyStore = useNotifyStore()
 
 import { getMyRecentCommentsAPI, getMyUnreadCommentsCountAPI, markCommentsReadAPI } from '@/api/task'
-import { getApprovalInboxAPI, getApprovalUnreadCountAPI, markApprovalReadAPI } from '@/api/approvals'
 
 import { useUserStore } from '@/stores/user'
 import { useCommonStore } from '@/stores/common'
@@ -404,6 +417,7 @@ import {
 
 import ChangePasswordModal from '../components/common/ChangePasswordModal.vue'
 import BaseAvatar from '../components/common/BaseAvatar.vue'
+import {connectNotifySocket, onNotify} from "@/utils/notify-socket.js";
 
 /* ========= dayjs ========= */
 dayjs.extend(relativeTime)
@@ -434,11 +448,31 @@ const inboxOpen = ref(false)
 
 /* ========= State (Notify) ========= */
 const notifyOpen = ref(false)
-const notifyItems = ref([])
 const notifyPage = ref(1)
 const notifyHasMore = ref(false)
 const notifyLoading = ref(false)
 const changePwdOpen = ref(false)
+
+
+const notifyItems = computed(() => notifyStore.items)
+
+// Lọc mới (chưa đọc)
+const newNotifyItems = computed(() =>
+    notifyStore.items.filter(i => i.is_unread)
+)
+
+// Lọc cũ (đã đọc)
+const oldNotifyItems = computed(() =>
+    notifyStore.items.filter(i => !i.is_unread)
+)
+
+// Đếm số chưa đọc còn dư
+const moreNotifyUnread = computed(() =>
+    notifyStore.unread > newNotifyItems.value.length
+        ? notifyStore.unread - newNotifyItems.value.length
+        : 0
+)
+
 
 /* ========= Local mask (Notify) ========= */
 const LS_NOTIFY_READ_KEY = 'notify_read_steps_v1'
@@ -450,17 +484,6 @@ const saveClientReadSteps = (setObj) => {
     try { localStorage.setItem(LS_NOTIFY_READ_KEY, JSON.stringify(Array.from(setObj))) } catch {}
 }
 const clientReadSteps = loadClientReadSteps()
-const rememberReadStep = (id) => { clientReadSteps.add(id); saveClientReadSteps(clientReadSteps) }
-const rememberReadMany = (ids = []) => { ids.forEach(id => clientReadSteps.add(id)); saveClientReadSteps(clientReadSteps) }
-
-/* ========= Server unread count for approvals ========= */
-const unreadNotifyCount = ref(0)
-const fetchNotifyUnreadCount = async () => {
-    try {
-        const { data } = await getApprovalUnreadCountAPI()
-        unreadNotifyCount.value = data?.unread || 0
-    } catch {}
-}
 
 /* ========= Computed: Breadcrumbs ========= */
 const breadcrumbs = computed(() => {
@@ -573,14 +596,15 @@ const unreadOnPage = computed(() => newInboxItems.value.length)
 const moreUnread = computed(() => Math.max(0, unreadChat.value - unreadOnPage.value))
 
 /* Notify groups + badge */
-const newNotifyItems = computed(() => notifyItems.value.filter(i => +i.is_unread === 1))
-const oldNotifyItems = computed(() => notifyItems.value.filter(i => +i.is_unread !== 1))
+
 const unreadNotifyOnPage = computed(() => newNotifyItems.value.length)
-const unreadNotifyBadge = computed(() => unreadNotifyCount.value)
-const moreNotifyUnread = computed(() => Math.max(0, (unreadNotifyCount.value || 0) - unreadNotifyOnPage.value))
+const unreadNotifyBadge = computed(() => notifyStore.unread)
 
 /* ========= Utilities ========= */
-const formatTime = (ts) => dayjs(ts).fromNow()
+const formatTime = (ts) => dayjs(ts).fromNow();
+
+
+
 const buildTaskDetailPath = (item) => {
     const type = (item.linked_type || '').toLowerCase()
     if (type.includes('bidding')) return `/bidding-tasks/${item.task_id}/info`
@@ -676,81 +700,83 @@ const openComment = async (item, e) => {
 }
 
 /* ========= Notify: API & Actions ========= */
-const fetchNotify = async (page = 1) => {
-    notifyLoading.value = true
-    try {
-        const { data } = await getApprovalInboxAPI({ per_page: 10, page })
-        let list = data?.data || []
-        list = list.map(it => clientReadSteps.has(it.step_id) ? ({ ...it, is_unread: 0 }) : it)
+const fetchNotify = async (page = 1, options = { replace: false }) => {
+    notifyLoading.value = true;
 
-        notifyItems.value = page === 1 ? list : notifyItems.value.concat(list)
-        const pager = data?.pager || {}
-        const cur = pager.current_page || page
-        const per = pager.per_page || 10
-        const total = pager.total || 0
-        notifyHasMore.value = cur * per < total
-        notifyPage.value = page
+    const { data } = await getNotificationAPI(userId.value, page);
+    const list = (data?.data || []).map(n => ({
+        ...n,
+        is_unread: !!Number(n.is_unread)
+    }));
 
-        await fetchNotifyUnreadCount()
-    } finally {
-        notifyLoading.value = false
+    if (options.replace || page === 1) {
+        // ghi đè toàn bộ
+        notifyStore.items = list;
+        notifyStore.unread = data?.pager?.unread || 0;
+    } else {
+        // load more
+        notifyStore.items.push(...list);
     }
-}
+
+    notifyPage.value = page;
+    notifyLoading.value = false;
+};
+
+
+
 const refreshNotify = () => fetchNotify(1)
 const loadMoreNotify = () => fetchNotify(notifyPage.value + 1)
 
 const markAllNotifyRead = async () => {
-    try {
-        const allUnreadSteps = []
-        let page = 1, hasMore = true
-        while (hasMore) {
-            const { data } = await getApprovalInboxAPI({ per_page: 50, page })
-            const list = data?.data || []
-            allUnreadSteps.push(...list.filter(i => +i.is_unread === 1).map(i => i.step_id))
-            const pager = data?.pager || {}
-            const cur = pager.current_page || page
-            const per = pager.per_page || 50
-            const total = pager.total || 0
-            hasMore = cur * per < total
-            page++
-        }
-        if (allUnreadSteps.length) {
-            await markApprovalReadAPI(allUnreadSteps)
-            rememberReadMany(allUnreadSteps)
-            notifyItems.value = notifyItems.value.map(i => ({ ...i, is_unread: 0 }))
-            unreadNotifyCount.value = 0
-            message.success('Đã đánh dấu tất cả thông báo là đã đọc')
-        } else {
-            message.info('Không còn thông báo chưa đọc')
-        }
-    } catch (e) {
-        console.error(e)
-        message.error('Không thể đánh dấu tất cả thông báo đã đọc')
+    const unreadItems = notifyStore.items.filter(i => i.is_unread);
+
+    for (const item of unreadItems) {
+        await markNotificationReadAPI(item.id);
+        item.is_unread = false;
     }
-}
+
+    notifyStore.unread = 0;
+    message.success("Đã đánh dấu tất cả đã đọc");
+};
+
 
 const isExternal = (u) => /^https?:\/\//i.test(u)
 
-const openApproval = async (item) => {
-    if (+item.is_unread === 1) {
-        item.is_unread = 0
-        const idx = notifyItems.value.findIndex(n => n.step_id === item.step_id)
-        if (idx > -1) notifyItems.value.splice(idx, 1, { ...notifyItems.value[idx], is_unread: 0 })
-        unreadNotifyCount.value = Math.max(0, unreadNotifyCount.value - 1)
-        rememberReadStep(item.step_id)
-        markApprovalReadAPI([item.step_id]).catch(console.error)
+async function openApproval(item) {
+    notifyOpen.value = false;
+
+    // 1️⃣ Đánh dấu đã đọc trước khi chuyển trang
+    if (item.is_unread) {
+        try {
+            await markNotificationReadAPI(item.id);
+
+            // Cập nhật trạng thái trong store
+            notifyStore.markRead(item.id);
+
+        } catch (err) {
+            console.error("❌ Mark read failed:", err);
+        }
     }
 
-    notifyOpen.value = false
+    // 2️⃣ Build URL từ type
+    const url = buildNotifyUrl(item);
 
-    // URL ngoài -> mở tab mới
-    if (isExternal(item.url)) {
-        window.open(item.url, '_blank', 'noopener,noreferrer')
-        return
+    if (!url) {
+        // fallback an toàn
+        return router.push("/task-approvals");
     }
 
-    // URL nội bộ -> router
-    await router.push({ path: item.url, query: { focus: 'approval', ai: item.instance_id } })
+    console.log("➡️ Điều hướng tới:", url);
+
+    console.log("Notify item:", item)
+    console.log("Type:", item.type)
+    console.log("Bid:", item.bid_id, "Step:", item.step_id, "Task:", item.task_id)
+
+    try {
+        await router.push(url);
+    } catch (err) {
+        console.error("❌ Router error:", err);
+    }
 }
 
 /* ========= Dropdown handlers ========= */
@@ -760,32 +786,37 @@ const onInboxOpenChange = async (open) => {
     await refreshInbox()
 }
 const onNotifyOpenChange = async (open) => {
-    notifyOpen.value = open
-    if (!open) return
-    await Promise.all([refreshNotify(), fetchNotifyUnreadCount()])
-}
+    notifyOpen.value = open;
+    if (!open) return;
 
-/* ========= Polling ========= */
-let poller = null
-const startPolling = () => {
-    stopPolling()
-    poller = setInterval(() => {
-        // gọi nhẹ, tách badge và danh sách để hạn chế tải
-        fetchUnread()
-        fetchNotifyUnreadCount()
-    }, 30000)
-}
-const stopPolling = () => {
-    if (poller) clearInterval(poller);
-    poller = null
-}
+    // LUÔN reload lại dữ liệu từ server
+    await fetchNotify(1, { replace: true });
+};
 
-/* ========= Lifecycle ========= */
-// onMounted(async () => {
-//     await Promise.all([ fetchUnread(), refreshNotify(), fetchNotifyUnreadCount() ])
-//     // startPolling()
-// })
-onBeforeUnmount(() => stopPolling())
+onMounted(() => {
+    setInterval(() => {
+        notifyStore.items = [...notifyStore.items];
+    }, 60000);
+});
+
+
+
+watch(
+    () => userStore.user?.id,
+    async (id) => {
+        if (!id) return;
+
+        connectNotifySocket(id);
+        onNotify((data) => notifyStore.addRealtime(data));
+
+        await fetchNotify(1, { replace: true });
+        await fetchUnread();  // chỉ gọi unread của inbox chat
+    },
+    { immediate: true }
+);
+
+
+
 </script>
 
 <style scoped>
@@ -865,4 +896,8 @@ onBeforeUnmount(() => stopPolling())
 /* Utils */
 .fw-600 { font-weight: 600; }
 .ellipsis-1 { white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+.ant-list-item {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+}
 </style>

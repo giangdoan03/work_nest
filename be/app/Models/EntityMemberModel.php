@@ -58,4 +58,29 @@ class EntityMemberModel extends Model
             'entity_id'   => $entityId
         ])->findAll();
     }
+
+    public function addMembersBulk(string $entityType, int $entityId, array $userIds): array
+    {
+        $rows = [];
+
+        foreach ($userIds as $uid) {
+            $uid = (int)$uid;
+            if ($uid > 0) {
+                $rows[] = [
+                    "entity_type" => $entityType,
+                    "entity_id"   => $entityId,
+                    "user_id"     => $uid,
+                    "created_at"  => date("Y-m-d H:i:s")
+                ];
+            }
+        }
+
+        if (empty($rows)) return [];
+
+        // Insert batch, ignore duplicate rows
+        $this->db->table($this->table)->ignore(true)->insertBatch($rows);
+
+        return $rows;
+    }
+
 }
