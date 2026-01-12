@@ -866,10 +866,7 @@ class ApprovalSessionController extends ResourceController
                 $userStats[$uid]['total_error']++;
 
                 // ❗ tránh trùng session
-                $exists = array_column(
-                    $userStats[$uid]['violation_sessions'],
-                    'session_id'
-                );
+                $exists = array_column($userStats[$uid]['violation_sessions'], 'session_id');
 
                 if (!in_array($sessionId, $exists, true)) {
                     $userStats[$uid]['violation_sessions'][] = [
@@ -891,9 +888,5 @@ class ApprovalSessionController extends ResourceController
 
         return $this->respond(array_values($userStats));
     }
-
-
-
-
 
 }

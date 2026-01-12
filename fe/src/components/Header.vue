@@ -12,30 +12,17 @@
             <!-- Breadcrumb -->
             <div class="hdr__crumb">
                 <a-breadcrumb :key="$route.fullPath" class="crumb">
-                    <a-breadcrumb-item
-                        v-for="(route, index) in breadcrumbs"
-                        :key="index"
-                    >
-                        <router-link
-                            v-if="route.name !== currentRoute.name && route.to"
-                            :to="route.to"
-                            class="crumb__link"
-                        >
+                    <a-breadcrumb-item v-for="(route, index) in breadcrumbs" :key="index">
+                        <router-link v-if="route.name !== currentRoute.name && route.to" :to="route.to" class="crumb__link">
                             {{ route.meta.breadcrumb }}
                         </router-link>
 
                         <template v-else>
-                          <span class="crumb__current">
-                            {{ route.meta.breadcrumb }}
-                            <a-button
-                                v-if="showCrumbCreateBtn"
-                                size="small"
-                                class="crumb__add"
-                                @click="onClickCreateTask"
-                            >
-                              <template #icon><PlusOutlined/></template>
-                            </a-button>
-                          </span>
+                            <span class="crumb__current">{{ route.meta.breadcrumb }}
+                                <a-button v-if="showCrumbCreateBtn" size="small" class="crumb__add" @click="onClickCreateTask">
+                                    <template #icon><PlusOutlined/></template>
+                                </a-button>
+                            </span>
                         </template>
                     </a-breadcrumb-item>
                 </a-breadcrumb>
@@ -66,7 +53,6 @@
                     <a-badge :count="commentStore.unread" size="small">
                         <MessageOutlined class="ha-icon" aria-label="Hộp thư bình luận"/>
                     </a-badge>
-
                     <template #overlay>
                         <a-card class="inbox-card" :bodyStyle="{ padding:'8px' }" style="width:380px;">
                             <div class="scroll">
@@ -90,21 +76,13 @@
                                     />
 
                                     <!-- Empty -->
-                                    <a-empty
-                                        v-if="!inboxItems.length && !inboxLoading"
-                                        description="Chưa có tin nhắn"
-                                    />
-
+                                    <a-empty v-if="!inboxItems.length && !inboxLoading" description="Chưa có tin nhắn"/>
                                     <!-- Groups -->
                                     <template v-else>
                                         <div v-if="newInboxItems.length" class="group-title">
                                             Mới ({{ newInboxItems.length }})
                                         </div>
-                                        <a-list
-                                            v-if="newInboxItems.length"
-                                            :data-source="newInboxItems"
-                                            item-layout="horizontal"
-                                        >
+                                        <a-list v-if="newInboxItems.length" :data-source="newInboxItems" item-layout="horizontal">
                                             <template #renderItem="{ item }">
                                                 <a-list-item
                                                     @click="(e) => openComment(item, e)"
@@ -221,10 +199,7 @@
                                         class="panel-alert"
                                     />
 
-                                    <a-empty
-                                        v-if="!notifyItems.length && !notifyLoading"
-                                        description="Không có mục chờ duyệt"
-                                    />
+                                    <a-empty v-if="!notifyItems.length && !notifyLoading" description="Không có mục chờ duyệt"/>
 
                                     <template v-else>
                                         <div v-if="newNotifyItems.length" class="group-title">
@@ -386,7 +361,7 @@
 /* ========= Imports ========= */
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -395,19 +370,14 @@ dayjs.extend(localizedFormat);
 import 'dayjs/locale/vi'
 dayjs.locale('vi')
 import { buildNotifyUrl } from "@/utils/build-notify-url";
-
-import { useNotifyStore } from '@/stores/notifyStore'
-import {
-    getNotificationAPI,
-    markNotificationReadAPI
-} from '@/api/notifications'
-
-const notifyStore = useNotifyStore()
-
-import { getMyRecentCommentsAPI, getMyUnreadCommentsCountAPI, markCommentsReadAPI } from '@/api/task'
+import { buildParamsMap } from '@/utils/breadcrumb-params'
+import {getNotificationAPI, markNotificationReadAPI} from '@/api/notifications'
+import { getMyRecentCommentsAPI, markCommentsReadAPI } from '@/api/task'
 
 import { useUserStore } from '@/stores/user'
 import { useCommonStore } from '@/stores/common'
+import { useNotifyStore } from '@/stores/notifyStore'
+const notifyStore = useNotifyStore()
 
 import { useCommentNotifyStore } from "@/stores/commentNotify";
 const commentStore = useCommentNotifyStore();
@@ -476,18 +446,6 @@ const moreNotifyUnread = computed(() =>
         : 0
 )
 
-
-/* ========= Local mask (Notify) ========= */
-const LS_NOTIFY_READ_KEY = 'notify_read_steps_v1'
-const loadClientReadSteps = () => {
-    try { return new Set(JSON.parse(localStorage.getItem(LS_NOTIFY_READ_KEY) || '[]')) }
-    catch { return new Set() }
-}
-const saveClientReadSteps = (setObj) => {
-    try { localStorage.setItem(LS_NOTIFY_READ_KEY, JSON.stringify(Array.from(setObj))) } catch {}
-}
-const clientReadSteps = loadClientReadSteps()
-
 /* ========= Computed: Breadcrumbs ========= */
 const breadcrumbs = computed(() => {
     const all = router.getRoutes()
@@ -496,74 +454,8 @@ const breadcrumbs = computed(() => {
     const cleanParams = (obj) =>
         Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined && v !== null))
 
-    const buildParams = {
-        // Dashboard & chung
-        'project-overview': () => ({}),
-        'dashboard': () => ({}),
+    const buildParams = buildParamsMap(p)
 
-        // Users
-        'persons-info': () => ({ id: p.id }),
-        'user-detail':  () => ({ id: p.id }),
-
-        // Internal Tasks (workflow)
-        'workflow': () => ({}),
-        'workflow-task-info': () => ({ id: p.id }),   // ✅ thêm dòng này
-        'workflow-info': () => ({ id: p.id }),
-
-        // Bidding
-        'bid-list': () => ({}),
-        'bid-detail': () => ({ id: p.id }),
-        'biddings-info': () => ({ id: p.id }),
-        'bidding-step-tasks': () => ({ bidId: p.bidId, stepId: p.stepId }),
-        'bidding-task-info-in-step': () => ({ bidId: p.bidId, stepId: p.stepId, id: p.id }),
-        'bidding-task-info': () => ({ id: p.id }),
-
-        // Contract
-        'contracts-tasks': () => ({}),
-        'contract-detail': () => ({ id: p.id ?? p.contractId }), // fallback từ contractId
-        'contract-step-tasks': () => ({ contractId: p.contractId, stepId: p.stepId }),
-        'contract-task-info-in-step': () => ({ contractId: p.contractId, stepId: p.stepId, id: p.id }),
-        'contract-task-info': () => ({ id: p.id }),
-
-        // Documents
-        'documents': () => ({}),
-        'documents-my': () => ({}),
-        'documents-shared': () => ({}),
-        'documents-department': () => ({}),
-        'documents-permission': () => ({}),
-        'documents-settings': () => ({}),
-        'documents-info': () => ({ id: p.id }),
-        'document.detail': () => ({ id: p.id }),
-
-        // Settings
-        'cau-hinh-dau-thau': () => ({}),
-        'cau-hinh-hop-dong': () => ({}),
-
-        // Customers
-        'customers': () => ({}),
-        'customer-detail': () => ({ id: p.id }),
-
-        // My Tasks
-        'my-tasks': () => ({}),
-        'task-approvals': () => ({}),
-
-        // Charts
-        'GanttChart': () => ({}),
-
-        // Steps detail
-        'BiddingStepDetail': () => ({ id: p.id }),
-        'ContractStepDetail': () => ({ id: p.id }),
-
-        // Non-workflow
-        'non-workflow': () => ({}),
-        'tasks-detail': () => ({ id: p.id }),
-
-        // Department task
-        'department-task-detail': () => ({ id: p.id }),
-
-    }
-
-    // Lấy danh sách param bắt buộc từ path (vd: '/contracts/:id' -> ['id'])
     const requiredParamsOf = (route) => {
         if (!route?.path) return []
         const matches = route.path.match(/:([A-Za-z0-9_]+)/g) || []
@@ -598,15 +490,7 @@ const oldInboxItems = computed(() => inboxItems.value.filter(i => +i.is_unread !
 const unreadOnPage = computed(() => newInboxItems.value.length)
 const moreUnread = computed(() => Math.max(0, unreadChat.value - unreadOnPage.value))
 
-/* Notify groups + badge */
-
-const unreadNotifyOnPage = computed(() => newNotifyItems.value.length)
-const unreadNotifyBadge = computed(() => notifyStore.unread)
-
-/* ========= Utilities ========= */
 const formatTime = (ts) => dayjs(ts).fromNow();
-
-
 
 const buildTaskDetailPath = (item) => {
     const type = (item.linked_type || '').toLowerCase()
@@ -633,14 +517,6 @@ const redirectToProfile = () => {
     router.push({ name: 'persons-info', params: { id: user.value.id } })
 }
 
-/* ========= Inbox: API & Actions ========= */
-const fetchUnread = async () => {
-    if (!userId.value) return
-    try {
-        const { data } = await getMyUnreadCommentsCountAPI(userId.value)
-        unreadChat.value = data?.unread || 0
-    } catch {}
-}
 const fetchInbox = async (page = 1) => {
     if (!userId.value) return
     inboxLoading.value = true
@@ -731,8 +607,6 @@ const fetchNotify = async (page = 1, { replace = false } = {}) => {
     notifyLoading.value = false;
 };
 
-
-
 const refreshNotify = () => fetchNotify(1)
 const loadMoreNotify = () => fetchNotify(notifyPage.value + 1)
 
@@ -748,18 +622,12 @@ const markAllNotifyRead = async () => {
     message.success("Đã đánh dấu tất cả đã đọc");
 };
 
-
-const isExternal = (u) => /^https?:\/\//i.test(u)
-
 async function openApproval(item) {
     notifyOpen.value = false;
-
-    // 1️⃣ Đánh dấu đã đọc trước khi chuyển trang
     if (item.is_unread) {
         try {
             await markNotificationReadAPI(item.id);
 
-            // Cập nhật trạng thái trong store
             notifyStore.markRead(item.id);
 
         } catch (err) {
@@ -776,7 +644,6 @@ async function openApproval(item) {
     }
 
     console.log("➡️ Điều hướng tới:", url);
-
     console.log("Notify item:", item)
     console.log("Type:", item.type)
     console.log("Bid:", item.bid_id, "Step:", item.step_id, "Task:", item.task_id)
@@ -810,7 +677,6 @@ onMounted(() => {
 });
 
 
-
 watch(
     () => userStore.user?.id,
     (id) => {
@@ -822,9 +688,6 @@ watch(
     },
     { immediate: true }
 );
-
-
-
 
 </script>
 

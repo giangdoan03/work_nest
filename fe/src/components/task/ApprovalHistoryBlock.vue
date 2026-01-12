@@ -466,8 +466,6 @@ const canReview = (session, reviewer) => {
 
     // Giám đốc (level 4) bỏ qua thứ tự
     return !(reviewer.level < 4 && previousNotApproved);
-
-
 }
 
 

@@ -62,6 +62,7 @@ class NotificationController extends ResourceController
     }
 
     /**
+     * @throws ReflectionException
      */
     public function send(): ResponseInterface
     {

@@ -84,7 +84,6 @@ export function connectChatChannel(userId) {
         listeners.chat.forEach(fn => fn(payload));
     });
 
-
     return chatSocket;
 }
 
