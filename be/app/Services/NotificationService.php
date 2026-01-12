@@ -63,7 +63,9 @@ class NotificationService
             ]);
     }
 
-    /** Tạo thông báo */
+    /** Tạo thông báo
+     * @throws ReflectionException
+     */
     public function create(int $userId, array $data): array
     {
         $insert = [

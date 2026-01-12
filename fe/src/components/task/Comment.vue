@@ -1,98 +1,5 @@
 <template>
     <div class="comment">
-        <!-- STICKY: Tài liệu ghim (trái) + Drawer người duyệt (phải) -->
-<!--        <div class="mention-chips sticky-mentions"-->
-<!--             v-if="(pinnedFiles && pinnedFiles.length) || (mentionsSelected && mentionsSelected.length)">-->
-<!--            <div class="sticky-head">-->
-<!--                &lt;!&ndash; LEFT: tổng số file ghim + arrow toggle &ndash;&gt;-->
-<!--                <div class="sticky-left">-->
-<!--                    <button-->
-<!--                        class="pinned-toggle"-->
-<!--                        :disabled="!hasPinnedOverflow"-->
-<!--                        @click="toggleSticky"-->
-<!--                        :title="hasPinnedOverflow ? (isStickyExpanded ? 'Thu gọn file ghim' : 'Hiện tất cả file ghim') : 'Không có thêm file để mở'"-->
-<!--                        role="button"-->
-<!--                        :aria-expanded="!!isStickyExpanded"-->
-<!--                        aria-controls="pinned-files-region"-->
-<!--                    >-->
-<!--                        <span class="sticky-title">Tài liệu ghim</span>-->
-<!--                        <span class="sticky-count">({{ pinnedTotal }} file)</span>-->
-<!--                        <component :is="arrowIcon" class="arrow"/>-->
-<!--                    </button>-->
-<!--                </div>-->
-
-<!--                &lt;!&ndash; RIGHT: Drawer người duyệt &ndash;&gt;-->
-<!--                <div class="sticky-actions">-->
-<!--                    <a-tooltip title="Danh sách người duyệt/ký">-->
-<!--                        <a-badge :count="mentionsSelected?.length || 0" :offset="[-2, 3]">-->
-<!--                            <a-button type="text" size="small" @click="openApproverDrawer = true" class="approver-btn">-->
-<!--                                <TeamOutlined/>-->
-<!--                                <span class="approver-text">Người duyệt</span>-->
-<!--                            </a-button>-->
-<!--                        </a-badge>-->
-<!--                    </a-tooltip>-->
-<!--                </div>-->
-<!--            </div>-->
-
-<!--            <div id="pinned-files-region"></div>-->
-
-<!--            &lt;!&ndash; Pinned files &ndash;&gt;-->
-<!--            <div v-if="pinnedGroupedByComment.length" class="pinned-files">-->
-
-<!--                <div-->
-<!--                    v-for="group in visiblePinnedGroups"-->
-<!--                    :key="group.comment_id"-->
-<!--                    class="pinned-batch"-->
-<!--                >-->
-<!--                    &lt;!&ndash; HEADER của batch &ndash;&gt;-->
-<!--                    <div class="batch-title">-->
-<!--                        <span>Lần {{ group.batch }}: {{ group.files.length }} file</span>-->
-<!--                        <small>{{ formatVi(group.created_at) }}</small>-->
-<!--                    </div>-->
-
-<!--                    &lt;!&ndash; FILES trong batch &ndash;&gt;-->
-<!--                    <div class="pinned-line">-->
-<!--                        <div-->
-<!--                            v-for="f in group.files"-->
-<!--                            :key="f.id || f.file_path"-->
-<!--                            class="pinned-pill"-->
-<!--                            :title="titleOf(f)"-->
-<!--                        >-->
-<!--                            <a-tooltip placement="top">-->
-<!--                                <template #title>-->
-<!--                                    <div v-html="pinTooltip(f)"></div>-->
-<!--                                </template>-->
-
-<!--                                <a-->
-<!--                                    :href="displayHrefOf(f)"-->
-<!--                                    target="_blank"-->
-<!--                                    rel="noopener"-->
-<!--                                    class="pill-link"-->
-<!--                                >-->
-<!--                                    <PaperClipOutlined class="pill-icon"/>-->
-<!--                                    <span class="pill-text">{{ titleOf(f) }}</span>-->
-<!--                                </a>-->
-<!--                            </a-tooltip>-->
-
-
-<!--                            <a-tooltip title="Bỏ ghim">-->
-<!--                                <button-->
-<!--                                    class="pill-x"-->
-<!--                                    type="button"-->
-<!--                                    @click.stop.prevent="unpinOnly(f)"-->
-<!--                                    :disabled="!canUnpinFile(f)"-->
-<!--                                >×-->
-<!--                                </button>-->
-<!--                            </a-tooltip>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-
-<!--            </div>-->
-
-
-<!--        </div>-->
-
         <!-- LIST COMMENT (bubbles) -->
         <div class="list-comment" v-if="listComment" ref="listEl">
             <a-spin :spinning="loadingComment">
@@ -118,14 +25,11 @@
                             <div class="author" v-if="String(item.user_id) !== String(currentUserId)">
                                 {{ getUserById(item.user_id)?.name || 'Không rõ' }}
                             </div>
-
-                            <!-- nội dung có thể chứa link -->
                             <div class="msg-content" v-html="formatMessage(item.content)"></div>
                         </div>
 
                         <!-- Attachments trong bubble -->
                         <div v-if="item.files && item.files.length" class="tg-attachments">
-
                             <a-tooltip
                                 v-for="f in item.files"
                                 :key="f.id || f.file_path || f.link_url"
@@ -134,7 +38,6 @@
                                 <template #title>
                                     {{ f.file_name || prettyUrl(hrefOf(f)) }}
                                 </template>
-
                                 <div class="tg-att-item">
                                     <!-- Image -->
                                     <a-image
@@ -206,17 +109,6 @@
                         </a-button>
                     </a-upload>
 
-<!--                    <a-tooltip title="Tạo phiên duyệt mới">-->
-<!--                        <a-button-->
-<!--                            type="text"-->
-<!--                            class="tg-attach-btn"-->
-<!--                            @click="uploadModalOpen = true"-->
-<!--                        >-->
-<!--                            <PlusOutlined />-->
-<!--                        </a-button>-->
-<!--                    </a-tooltip>-->
-
-
                     <UploadWithUserModal
                         v-model:open="uploadModalOpen"
                         :task-id="Number(route.params.id)"
@@ -225,18 +117,6 @@
                         mode="create"
                         @confirm="handleApprovalSessionCreated"
                     />
-
-
-                    <!-- Ô nhập -->
-<!--                    <a-textarea-->
-<!--                        v-model:value="inputValue"-->
-<!--                        class="tg-input"-->
-<!--                        :bordered="false"-->
-<!--                        :auto-size="{ minRows: 1, maxRows: 6 }"-->
-<!--                        :placeholder="isEditing ? 'Sửa bình luận… (Enter để lưu, Esc để hủy)' : 'Viết lời nhắn… (Enter để gửi, Shift+Enter để xuống dòng, gõ @ để thêm người duyệt)'"-->
-<!--                        @keydown="onComposerKeydown"-->
-<!--                        @input="onInputDetectMention"-->
-<!--                    />-->
 
                     <a-textarea
                         v-model:value="inputValue"
@@ -581,17 +461,6 @@
                                                     <template #icon><CheckOutlined /></template>
                                                     Đồng ý
                                                 </a-button>
-
-
-<!--                                                <a-button-->
-<!--                                                    size="small"-->
-<!--                                                    danger-->
-<!--                                                    :loading="approveLoading[m.user_id]?.[m.department_id]?.rejected"-->
-<!--                                                    @click="handleApproveAction(m, 'rejected')"-->
-<!--                                                >-->
-<!--                                                    <template #icon><CloseOutlined /></template>-->
-<!--                                                    Từ chối-->
-<!--                                                </a-button>-->
                                             </template>
                                             <!-- 4️⃣ Hiển thị “Lượt của ...” -->
                                             <template v-if="!canActOnChip(m) && m.status === 'pending'">
@@ -627,10 +496,8 @@
 import {computed, nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue'
 import _ from "lodash";
 import {
-    CaretDownOutlined,
-    CaretUpOutlined,
     CheckOutlined,
-    PlusOutlined,
+    CopyOutlined,
     FileExcelOutlined,
     FilePdfOutlined,
     FilePptOutlined,
@@ -638,31 +505,25 @@ import {
     FileWordOutlined,
     LinkOutlined,
     PaperClipOutlined,
-    SendOutlined,
-    TeamOutlined,
-    CopyOutlined
+    SendOutlined
 } from '@ant-design/icons-vue'
 
+import { connectChatChannel, onIncomingComment } from "@/utils/notify-socket";
+
 import {
-    approveRosterAPI,
     createComment,
     getComments,
-    getTaskRosterAPI,
     mergeTaskRosterAPI,
     updateComment,
 } from '@/api/task'
-import { signTaskForUserAPI } from "@/api/taskSign";
-
 import {
     adoptTaskFileFromPathAPI,
     getPinnedFilesAPI,
     getTaskFilesAPI,
-    pinTaskFileAPI, replaceMarkerInTaskFile,
-    unpinTaskFileAPI,
+    replaceMarkerInTaskFile,
     uploadTaskFileLinkAPI,
 } from '@/api/taskFiles'
 
-import {getUsers} from '@/api/user'
 import {useRoute} from 'vue-router'
 import {useUserStore} from '@/stores/user.js'
 import {message} from 'ant-design-vue'
@@ -673,58 +534,83 @@ import BaseAvatar from '@/components/common/BaseAvatar.vue'
 import Draggable from 'vuedraggable'
 import {addEntityMember} from "@/api/entityMembers.js";
 import UploadWithUserModal from '@/components/task/UploadWithUserModal.vue'
+import { sendCommentRealtime } from "@/utils/notify-socket";
 dayjs.extend(relativeTime)
 dayjs.locale('vi')
-const openUploadModal = ref(false)
+const store = useUserStore()
+const route = useRoute()
+
 const props = defineProps({
     departments: { type: Array, default: () => [] },
     users: { type: Array, default: () => [] },
     roster: { type: Array, default: () => [] }
 })
-const uploadModalOpen = ref(false)
-
-const emit = defineEmits(['approval-session-created'])
-
-const handleApprovalSessionCreated = (payload) => {
-    // payload có thể là { session_id: 29 }
-    emit('approval-session-created', payload)
-}
-
-
 const latestBatch = ref(null)
 const latestFiles = ref([])
 const latestBatchMeta = ref(null)
 const approveLoading = ref({})
-const signLoading = ref({})
+const taskId = computed(() => Number(route.params.taskId || route.params.id))
+const currentUserId = computed(() => store.currentUser?.id ?? null)
+const inputValue = ref('')
+const listComment = ref([])
+const listUser = ref([])
+const selectedFiles = ref([])
+const loadingComment = ref(false)
+const loadingUpdate = ref(false)
+const totalPage = ref(1)
+const currentPage = ref(1)
+const uploading = ref(false)
+/* ===== sticky + scroll helpers ===== */
+const listEl = ref(null)
+const footerEl = ref(null)
+const listPadBottom = ref('96px')
+let ro
+let t
 
-// bạn có thể lắng nghe sự kiện @update để cập nhật lại thứ tự
+/* ===== Drawer người duyệt ===== */
+const openApproverDrawer = ref(false)
+const filterPendingOnly = ref(false)
+const mentionsSelected = ref([])
+const pinnedFiles = ref([])
+const rosterProgress = ref(0)
+const rosterAllApproved = ref(false)
+const taskFileByPath = ref({})
+
+const dragList = ref([])
+const tick = ref(Date.now())
+const emit = defineEmits(['approval-session-created'])
+
+/* ===== file kind helpers ===== */
+const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'])
+const PDF_EXTS = new Set(['pdf'])
+const WORD_EXTS = new Set(['doc', 'docx'])
+const EXCEL_EXTS = new Set(['xls', 'xlsx', 'csv'])
+const PPT_EXTS = new Set(['ppt', 'pptx'])
+
+
+const uploadModalOpen = ref(false)
+
+const handleApprovalSessionCreated = (payload) => {
+    emit('approval-session-created', payload)
+}
+
 const handleReorder = async (evt) => {
     if (!canModifyRoster.value) {
         message.warning('Chỉ người tạo task mới được thay đổi thứ tự người duyệt')
-        // restore dragList từ mentionsSelected nếu cần
         dragList.value = Array.isArray(finalDrawerMentions.value) ? finalDrawerMentions.value.map(x => ({...x})) : []
         return
     }
 
-    // tiếp tục logic hiện có...
     console.log('drag end, new order', dragList.value)
     mentionsSelected.value = dragList.value.map(m => ({...m}))
 
     try {
-        await persistRoster('replace')
         message.success('Đã lưu thứ tự người duyệt')
     } catch (e) {
         console.error('save reorder failed', e)
         message.error('Không lưu được thứ tự')
     }
 }
-
-// new reactive list for draggable
-const dragList = ref([])
-
-/* ===== time helpers (VI) ===== */
-const tick = ref(Date.now())
-let t
 
 function fromNowVi(dt) {
     tick.value
@@ -743,128 +629,10 @@ function formatVi(dt) {
     return d.isValid() ? d.format('HH:mm DD/MM/YYYY') : ''
 }
 
-/* ===== state ===== */
-const store = useUserStore()
-const route = useRoute()
-
-const taskId = computed(() => Number(route.params.taskId || route.params.id))
-const currentUserId = computed(() => store.currentUser?.id ?? null)
-const canEditOrDelete = (item) =>
-    String(item.user_id) === String(currentUserId.value) || !!store.currentUser?.is_admin
-
-
-const pinnedGroupedByComment = computed(() => {
-    if (!Array.isArray(pinnedFiles.value)) return [];
-
-    // group theo batch (null batch tách riêng)
-    const grouped = _.groupBy(pinnedFiles.value, f => {
-        return f.upload_batch != null ? Number(f.upload_batch) : -1;
-    });
-
-    return Object.entries(grouped)
-        .map(([batch, files]) => {
-            const createdAt = _.minBy(files, f => new Date(f.created_at).getTime())?.created_at;
-            return {
-                batch: Number(batch),
-                created_at: createdAt,
-                files
-            };
-        })
-        .filter(g => g.batch !== -1)   // bỏ group rác
-        .sort((a, b) => a.batch - b.batch);
-});
-
-
-const inputValue = ref('')
-const listComment = ref([])
-const listUser = ref([])
-
-const selectedFiles = ref([])
-
-const loadingComment = ref(false)
-const loadingUpdate = ref(false)
-
-const totalPage = ref(1)
-const currentPage = ref(1)
-const uploading = ref(false)
-
-/* ===== sticky + scroll helpers ===== */
-const listEl = ref(null)
-const footerEl = ref(null)
-const listPadBottom = ref('96px')
-let ro
-
 function measureFooter() {
     const h = footerEl.value?.offsetHeight || 96
     listPadBottom.value = `${h + 8}px`
 }
-
-const currentUserRole = computed(() => store.currentUser?.role || '')
-
-// cho file object f (có pinned_by)
-function canUnpinFile(f) {
-    if (!f) return false
-    // super admin hoặc chính người đã ghim
-    return String(currentUserRole.value) === 'super admin' || Number(f.pinned_by) === Number(currentUserId.value)
-}
-
-async function unpinOnly(file) {
-    if (!file) return;
-
-    const userId = Number(currentUserId.value);
-    const userRole = currentUserRole.value;
-    let tfId = getTaskFileId(file);
-    const pathKey = normalizePath(file.file_path || file.link_url || '');
-
-    if (!tfId) {
-        const byPath = taskFileByPath.value[pathKey];
-        tfId = byPath?.id ? Number(byPath.id) : null;
-    }
-
-    if (!tfId) {
-        message.error('Không tìm thấy ID để bỏ ghim');
-        return;
-    }
-
-    if (!canUnpinFile(file)) {
-        message.warning('Bạn không có quyền bỏ ghim file này');
-        return;
-    }
-
-    const lockKey = `unpin:${tfId}`
-    if (pendingPinOps.has(lockKey)) return
-    pendingPinOps.add(lockKey)
-
-    // ===== optimistic remove from UI =====
-    const prevPinned = (pinnedFiles.value || []).slice()
-    pinnedFiles.value = (pinnedFiles.value || []).filter(p => {
-        const pid = Number(p.id || p.task_file_id || 0)
-        const sameId = pid && pid === Number(tfId)
-        const samePath = normalizePath(p.file_path || p.link_url || '') === pathKey
-        return !(sameId || samePath)
-    })
-
-    try {
-        const res = await unpinTaskFileAPI(tfId, {user_id: userId, user_role: userRole})
-        // success: keep optimistic removal, optionally show message from server
-        message.success(res?.data?.message || 'Đã bỏ ghim')
-        // don't immediately call loadPinnedFiles() — avoid re-adding during backend delay
-    } catch (e) {
-        console.error('unpin failed', e)
-        // rollback: restore previous pinned list (or reload from server)
-        pinnedFiles.value = prevPinned
-        // if server returned 403/permission -> show nice msg
-        const status = e?.response?.status
-        if (status === 403) {
-            message.warning(e.response?.data?.messages?.error || 'Bạn không có quyền')
-        } else {
-            message.error('Không thể bỏ ghim — thử lại')
-        }
-    } finally {
-        pendingPinOps.delete(lockKey)
-    }
-}
-
 
 function scrollToBottom() {
     const el = listEl.value
@@ -873,16 +641,10 @@ function scrollToBottom() {
 }
 
 /* ===== task_files index để map file_path -> task_files.id ===== */
-const taskFileByPath = ref({})
 const normalizePath = (u = '') => {
     const s = String(u).split('?')[0]
     return s.replace(/\/+$/, '')
 }
-
-/* ===== Drawer người duyệt ===== */
-const openApproverDrawer = ref(false)
-const filterPendingOnly = ref(false)
-const mentionsSelected = ref([])
 
 const drawerMentions = computed(() => {
     const arr = mentionsSelected.value || []
@@ -891,88 +653,14 @@ const drawerMentions = computed(() => {
         : arr
 })
 
-/* ===== sticky expand/collapse ===== */
-const isStickyExpanded = ref(false)
-const MAX_FILES_COLLAPSED = 1
-const pinnedFiles = ref([])
-
-const hasPinnedOverflow = computed(() => (pinnedFiles.value?.length || 0) > MAX_FILES_COLLAPSED)
-
-const toggleSticky = () => {
-    if (!hasPinnedOverflow.value) return
-    isStickyExpanded.value = !isStickyExpanded.value
-}
-const pinnedTotal = computed(() => pinnedFiles.value?.length || 0)
-
-const visiblePinnedGroups = computed(() => {
-    if (isStickyExpanded.value) {
-        return pinnedGroupedByComment.value;
-    }
-    // collapsed → chỉ hiển thị batch mới nhất
-    return pinnedGroupedByComment.value.slice(-1);
-});
-
-const arrowIcon = computed(() =>
-    isStickyExpanded.value ? CaretUpOutlined : CaretDownOutlined
-)
-// store id/name người tạo task trả từ API /tasks/{id}/roster
 const rosterCreatedBy = ref(null)
 const rosterCreatedByName = ref(null)
 const canModifyRoster = computed(() => {
     if (rosterCreatedBy.value == null) return false
     return String(rosterCreatedBy.value) === String(currentUserId.value)
 })
-const rosterProgress = ref(0)
-const rosterAllApproved = ref(false)
-
-// role code của current user — lấy từ store.currentUser.role_code hoặc session fallback
-const currentRoleCode = computed(() => {
-    // nếu store.currentUser có role_code thì dùng luôn
-    const r = store?.currentUser?.role_code ?? store?.currentUser?.role
-    return r ? String(r) : null
-})
-
-// helper: mapping role_code -> rank (số càng lớn = quyền càng cao)
-function normalizeRoleCode(c = '') {
-    return String(c || '').toLowerCase().replace(/\s+/g, '_') // 'super admin' -> 'super_admin'
-}
-
-function roleRank(code = '') {
-    switch (normalizeRoleCode(code)) {
-        case 'super_admin':
-            return 3
-        case 'admin':
-            return 2
-        case 'user':
-            return 1
-        default:
-            return 0
-    }
-}
-
-/* ===== task file helpers ===== */
-function getTaskFileId(f = {}) {
-    if (f.task_file_id || f.taskFileId) return Number(f.task_file_id || f.taskFileId)
-    if (typeof f.id === 'number' && (f.file_path || f.link_url)) {
-        const key = normalizePath(f.file_path || f.link_url)
-        if (taskFileByPath.value[key]?.id === f.id) return f.id
-    }
-    const byPath = taskFileByPath.value[normalizePath(f.file_path || f.link_url || '')]
-    return byPath?.id ? Number(byPath.id) : null
-}
 
 async function ensureTaskFileId(file, {autoPin = false} = {}) {
-    const existed = getTaskFileId(file)
-    if (existed) {
-        if (autoPin) {
-            try {
-                await pinTaskFileAPI(existed, {user_id: store.currentUser.id});
-                await loadPinnedFiles();
-            } catch (e) { /* ignore pin error */
-            }
-        }
-        return existed
-    }
 
     const path = String(file.file_path ?? file.url ?? '')
     const name = file.file_name || file.name || prettyUrl(path)
@@ -987,16 +675,7 @@ async function ensureTaskFileId(file, {autoPin = false} = {}) {
             const created = Array.isArray(data) ? data[0] : data?.data || data
             const key = normalizePath(created?.file_path || created?.link_url || path)
             taskFileByPath.value[key] = {...(created || {}), file_path: created?.file_path || created?.link_url || path}
-
-            const newId = Number(created?.id)
-            if (autoPin && newId) {
-                try {
-                    await pinTaskFileAPI(newId, {user_id: store.currentUser.id});
-                    await loadPinnedFiles();
-                } catch (e) { /* handle pin error silently */
-                }
-            }
-            return newId
+            return Number(created?.id)
         } else {
             const {data} = await adoptTaskFileFromPathAPI(taskId.value, {
                 task_id: Number(taskId.value),
@@ -1007,15 +686,7 @@ async function ensureTaskFileId(file, {autoPin = false} = {}) {
             const created = data?.data || data
             const key = normalizePath(created?.file_path || path)
             taskFileByPath.value[key] = created
-            const newId = Number(created?.id)
-            if (autoPin && newId) {
-                try {
-                    await pinTaskFileAPI(newId, {user_id: store.currentUser.id});
-                    await loadPinnedFiles();
-                } catch (e) { /* ignore */
-                }
-            }
-            return newId
+            return Number(created?.id)
         }
     } catch (e) {
         console.error('ensureTaskFileId error', e?.response?.data || e)
@@ -1041,14 +712,6 @@ async function loadTaskFiles() {
     }
 }
 
-const pendingPinOps = new Set()
-
-/* ===== file kind helpers ===== */
-const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'])
-const PDF_EXTS = new Set(['pdf'])
-const WORD_EXTS = new Set(['doc', 'docx'])
-const EXCEL_EXTS = new Set(['xls', 'xlsx', 'csv'])
-const PPT_EXTS = new Set(['ppt', 'pptx'])
 
 const extOf = (name = '') => {
     const n = String(name).split('?')[0]
@@ -1101,61 +764,11 @@ function prettyUrl(u) {
 }
 
 const hrefOf = (f = {}) => f.file_path || f.link_url || ''
-const titleOf = (f = {}) => f.file_name || f.title || prettyUrl(hrefOf(f))
 const kindOfCommentFile = (f = {}) => detectKind({name: f.file_name, url: hrefOf(f), file_type: f.file_type})
-
-function isOfficeKind(kind) {
-    return kind === 'word' || kind === 'excel' || kind === 'ppt'
-}
-
-function absUrl(u = '') {
-    try {
-        const url = new URL(u, window.location.origin)
-        return url.toString()
-    } catch {
-        return u
-    }
-}
-
-function officeViewerUrl(u = '') {
-    const absolute = absUrl(u)
-    return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(absolute)}`
-}
 
 function displayHrefOf(f = {}) {
     return f.file_path || f.link_url || '';
 }
-
-// format date helper (sử dụng dayjs đã import)
-const formatDate = (v) => {
-    try {
-        return v ? dayjs(v).format('DD/MM/YYYY HH:mm') : 'Không rõ thời gian'
-    } catch {
-        return 'Không rõ thời gian'
-    }
-}
-
-// Lấy tên người ghim: ưu tiên trường pinned_by_name, fallback dùng danh sách user
-function nameOfPinnedBy(f) {
-    if (!f) return 'Không rõ'
-    if (f.pinned_by_name) return f.pinned_by_name
-    const id = Number(f.pinned_by || 0)
-    if (id && getUserById(id)?.name) return getUserById(id).name
-    // nếu uploaded_by có tên hữu ích
-    if (f.uploaded_by && getUserById(Number(f.uploaded_by))?.name) return getUserById(Number(f.uploaded_by)).name
-    return f.pinned_by ? String(f.pinned_by) : 'Không rõ'
-}
-
-// xây tooltip — trả chuỗi nhiều dòng (Antd sẽ hiển thị \n như xuống dòng)
-const pinTooltip = (f) => {
-    if (!f) return ''
-    const by = nameOfPinnedBy(f)
-    const at = formatDate(f.pinned_at || f.updated_at || f.created_at)
-
-    return `<div><strong>Ghim bởi:</strong> ${by}<br><strong>Thời gian:</strong> ${at}</div>`
-}
-
-
 
 /* ===== Roster actions (Drawer) ===== */
 async function handleApproveAction(m, status) {
@@ -1170,33 +783,18 @@ async function handleApproveAction(m, status) {
     const uid  = Number(m.user_id);
     const dept = Number(m.department_id);
 
-    // loading
-    if (!approveLoading.value[uid]) approveLoading.value[uid] = {};
-    if (!approveLoading.value[uid][dept]) approveLoading.value[uid][dept] = {};
-    approveLoading.value[uid][dept][status] = true;
 
     try {
-
-        await approveRosterAPI(taskId.value, m.note ?? null);
-
-        // ⭐ Replace marker cho người đang duyệt
         await replaceMarkerInTaskFile(taskId.value, uid, dept);
-
-        // ⭐ đồng bộ lại
-        await syncRosterFromServer();
-
         message.success("Đã duyệt");
-
     } catch (e) {
         console.error("handleApproveAction error", e);
         message.error("Xử lý không thành công");
-
     } finally {
-        approveLoading.value[uid][dept][status] = false;
+
     }
 }
 
-// wrapper: persist roster by replace (calls mergeTaskRosterAPI or direct axios)
 async function persistRosterWithPayload(payload) {
     try {
         const mentions = Array.isArray(payload.mentions)
@@ -1220,8 +818,6 @@ async function persistRosterWithPayload(payload) {
         throw e;
     }
 }
-
-
 
 
 /* users & mentions add/remove */
@@ -1283,13 +879,8 @@ const multiRoles = {
 let addMentionOpen = ref(false)
 const mentionForm = ref({
     userId: null,
-    role: null   // role = "bgd" | "kt" | "tm"
+    role: null
 });
-function resetMentionForm() {
-    mentionForm.value.userId = null
-    mentionForm.value.role = 'approve'
-    closeMentionPopover()
-}
 
 const addAccess = async (entityType, entityId, userId) => {
     if (!entityType || !entityId || !userId) return;
@@ -1308,16 +899,11 @@ const addAccess = async (entityType, entityId, userId) => {
 const addMention = async () => {
     const uid = mentionForm.value.userId;
     if (!uid) return;
-
     const user = listUser.value.find(u => String(u.id) === String(uid));
     const displayName = user?.name || `#${uid}`;
-
     let departmentId = null;
     let signatureCode = null;
 
-    // ======================================================
-    // ⭐ XÁC ĐỊNH department_id + signature_code
-    // ======================================================
     if (Number(user?.is_multi_role) === 1) {
 
         const roleKey = mentionForm.value.role;         // "bgd" | "kt" | "tm"
@@ -1381,9 +967,9 @@ const addMention = async () => {
     mentionsSelected.value.push({
         user_id: Number(uid),
         name: displayName,
-        role: "approve",                          // ⭐ FE luôn gửi approve
-        department_id: departmentId,              // ⭐ đúng
-        signature_code: signatureCode,            // ⭐ đúng marker_code
+        role: "approve",
+        department_id: departmentId,
+        signature_code: signatureCode,
         status: "pending",
         added_at: new Date().toISOString().slice(0,19).replace("T"," ")
     });
@@ -1394,7 +980,6 @@ const addMention = async () => {
 
     try {
         await persistRoster("merge");
-        await syncRosterFromServer();
         message.success("Đã thêm người duyệt");
 
         // ==================================================
@@ -1430,12 +1015,6 @@ const addMention = async () => {
     document.querySelector(".tg-input textarea.ant-input")?.focus?.();
 };
 
-
-
-function closeMentionPopover() {
-    addMentionOpen.value = false
-}
-
 function insertMention(displayName) {
     let v = String(inputValue.value || '')
     v = v.replace(/[ \t]+$/u, '')
@@ -1469,8 +1048,6 @@ function removeMention(m) {
     persistRosterWithPayload(payload);
 }
 
-
-
 const metaTime = (m) =>
     m.status === 'approved' || m.status === 'rejected'
         ? m.acted_at_vi || formatVi(m.acted_at)
@@ -1494,12 +1071,6 @@ watch(finalDrawerMentions, (v) => {
     dragList.value = Array.isArray(v) ? v.map(x => ({...x})) : []
 }, {immediate: true, deep: true})
 
-
-/* input mention detect */
-// function onInputDetectMention(e) {
-//     const v = String(e?.target?.value ?? '')
-//     if (v.endsWith('@')) addMentionOpen.value = true
-// }
 
 /* ===== upload handlers (single file) ===== */
 async function handleBeforeUpload(file) {
@@ -1543,7 +1114,6 @@ const userNameMap = computed(() => {
     }
     return map
 })
-
 
 const copyTag = async (text) => {
     if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
@@ -1607,13 +1177,19 @@ function dedupeMentions(arr = []) {
     return res
 }
 
-async function createNewComment({keepMentions = false} = {}) {
-    if (!canSend.value || uploading.value) return;
+import { useTaskUsersStore } from "@/stores/taskUsersStore";
+const taskUsers = useTaskUsersStore();
 
-    uploading.value = true;
+const receiversArray = computed(() => taskUsers.users);
+
+async function createNewComment({ keepMentions = false } = {}) {
+
+    const hasFiles = selectedFiles.value.length > 0;
+    if (!canSend.value || (hasFiles && uploading.value)) return;
+
+    if (hasFiles) uploading.value = true;
 
     try {
-        // ==== 1) Gom mentions trong UI + mentions lấy từ text ====
         const textMentions = extractMentionsFromInput(inputValue.value);
         const mergedMentions = dedupeMentions([
             ...(mentionsSelected.value || []),
@@ -1627,14 +1203,15 @@ async function createNewComment({keepMentions = false} = {}) {
             status: m.status || "pending",
         }));
 
-        // ==== 2) Build FormData ====
         const form = new FormData();
         form.append("user_id", store.currentUser.id);
         form.append("content", inputValue.value || "");
         form.append("mentions", JSON.stringify(mentionsPayload));
 
-        // ==== 3) Multi-file upload ====
-        if (selectedFiles.value.length) {
+        // ================================
+        // 1️⃣ VALIDATE FILE (nếu có)
+        // ================================
+        if (hasFiles) {
 
             if (rosterAllApproved.value) {
                 message.warning("Hồ sơ đã duyệt xong — không thể đính kèm file.");
@@ -1642,9 +1219,8 @@ async function createNewComment({keepMentions = false} = {}) {
                 return;
             }
 
-            // 🚫 CHẶN FILE PDF
             for (const f of selectedFiles.value) {
-                const ext = f.name.split('.').pop().toLowerCase();
+                const ext = f.name.split(".").pop().toLowerCase();
                 if (ext === "pdf") {
                     uploading.value = false;
                     message.error("Không được phép upload file PDF.");
@@ -1652,60 +1228,66 @@ async function createNewComment({keepMentions = false} = {}) {
                 }
             }
 
-            // → Nếu hợp lệ thì append
             for (const f of selectedFiles.value) {
                 form.append("attachments[]", f, f.name);
             }
         }
 
+        // ==================================
+        // 2️⃣ THÊM COMMENT TẠM VÀO UI
+        // ==================================
+        const tempId = "tmp-" + Date.now();
 
-        // ==== 4) Gửi comment ====
+        listComment.value.push({
+            id: tempId,
+            user_id: store.currentUser.id,
+            content: inputValue.value,
+            user_name: store.currentUser.name,
+            created_at: new Date().toISOString(),
+            files: [] // file có thể load lại sau
+        });
+
+        await nextTick(() => scrollToBottom());
+
+
+        // ==================================
+        // 3️⃣ GỌI API LƯU COMMENT
+        // ==================================
         const res = await createComment(taskId.value, form);
 
-        // ==== 5) Auto-pin file backend trả về ====
-        try {
-            const commentData = res?.data?.comment || res?.data || {};
+        const created = res?.data?.comment || res.data?.data;
 
-            const files = Array.isArray(commentData?.files) ? commentData.files : [];
+        sendCommentRealtime({
+            event: "task:new_comment",
+            users: receiversArray.value,
+            task_id: taskId.value,
+            author_id: store.currentUser.id,
+            author_name: store.currentUser.name,
+            content: inputValue.value,
+            comment_id: created?.id ?? null,
+            created_at: new Date().toISOString(),
+        });
 
-            if (files.length) {
-                for (const f of files) {
-                    try {
-                        await ensureTaskFileId(
-                            {
-                                file_name: f.file_name,
-                                file_path: f.file_path,
-                                link_url: f.public_url || f.file_path,
-                            },
-                            {autoPin: true}
-                        );
-                    } catch (e) {
-                        console.warn("Auto-pin file failed:", f, e);
-                    }
-                }
 
-                await loadPinnedFiles();
-            }
-        } catch (e) {
-            console.warn("Auto-pin stage failed:", e);
-        }
 
-        // ==== 6) Reset UI ====
         inputValue.value = "";
         selectedFiles.value = [];
         mentionsSelected.value = keepMentions ? mergedMentions : [];
 
-        // ==== 7) Refresh UI ====
+        // ==================================
+        // 5️⃣ Reload comment để sync DB (optional)
+        // ==================================
         await getListComment(1);
-        await syncRosterFromServer();
-        await loadPinnedFiles();
 
-        await nextTick();
-        scrollToBottom();
-
-        message.success("Đã gửi bình luận");
+        // ==================================
+        // 6️⃣ CHỈ báo success nếu có file
+        // ==================================
+        if (hasFiles) {
+            message.success("Đã gửi bình luận");
+        }
 
         return res;
+
     } catch (err) {
         console.error("createNewComment error", err);
 
@@ -1715,15 +1297,15 @@ async function createNewComment({keepMentions = false} = {}) {
             err?.response?.data?.errors ||
             "Không gửi được bình luận";
 
-        message.error(
-            typeof msg === "string" ? msg : "Không gửi được bình luận"
-        );
+        message.error(typeof msg === "string" ? msg : "Không gửi được bình luận");
 
         throw err;
+
     } finally {
-        uploading.value = false;
+        if (hasFiles) uploading.value = false;
     }
 }
+
 
 
 // helper: sắp xếp mảng comment theo created_at tăng dần (cũ -> mới)
@@ -1741,36 +1323,26 @@ async function getListComment(page = 1) {
     loadingComment.value = true
     try {
         const res = await getComments(taskId.value, {page})
-        // change here depending on API shape:
         const rawComments = res?.data?.comments ?? []
-        // ensure comments are sorted oldest -> newest
         const sorted = sortCommentsAsc(Array.isArray(rawComments) ? rawComments : [])
 
         const el = listEl.value
 
         if (page === 1) {
-            // page 1: replace whole list and scroll to bottom so newest visible
             listComment.value = sorted
             await nextTick()
             measureFooter()
             scrollToBottom()
         } else {
-            // page > 1: assume API returned older messages for this page.
-            // We want to prepend older messages to the top and keep scroll position stable.
             const prevScrollHeight = el ? el.scrollHeight : 0
-
-            // prepend older items
             listComment.value = [...sorted, ...(listComment.value || [])]
 
             await nextTick()
             measureFooter()
             if (el) {
-                // keep viewport at the same visual message:
                 el.scrollTop = (el.scrollTop || 0) + (el.scrollHeight - prevScrollHeight)
             }
         }
-
-        // update paging info (unchanged)
         totalPage.value = Number(res?.data?.pagination?.totalPages ?? 1)
         currentPage.value = page
     } catch (e) {
@@ -1784,7 +1356,6 @@ async function getListComment(page = 1) {
 function formatMessage(content = '') {
     if (!content) return ''
     const text = String(content)
-    // regex nhận link: bắt https:// hoặc www.
     const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi
     return text.replace(urlRegex, (url) => {
         const href = url.startsWith('http') ? url : `https://${url}`
@@ -1816,17 +1387,6 @@ function faviconOf(u = '') {
     }
 }
 
-/* ===== users ===== */
-// async function getUser() {
-//     try {
-//         const {data} = await getUsers()
-//         listUser.value = Array.isArray(data) ? data : data?.data ?? []
-//     } catch (e) {
-//         message.error('Không thể tải người dùng')
-//     }
-// }
-
-/* ===== roster sync/persist ===== */
 async function persistRoster(mode = 'merge') {
     try {
         const payload = mentionsSelected.value.map((m) => ({
@@ -1839,39 +1399,11 @@ async function persistRoster(mode = 'merge') {
         }))
 
         await mergeTaskRosterAPI(taskId.value, payload, mode)
-        await syncRosterFromServer()
+        // await syncRosterFromServer()
 
     } catch (e) {
         console.error('persistRoster error', e)
         message.error('Không thể lưu danh sách người duyệt/ký')
-    }
-}
-
-
-async function loadPinnedFiles() {
-    try {
-        const res = await getPinnedFilesAPI(taskId.value)
-        let arr = []
-        if (Array.isArray(res.data)) arr = res.data
-        else if (Array.isArray(res.data?.pinned_files)) arr = res.data.pinned_files
-        else if (Array.isArray(res.data?.files)) arr = res.data.files.filter((x) => Number(x.is_pinned) === 1)
-        else {
-            const filesRes = await getTaskFilesAPI(taskId.value)
-            const filesArr = Array.isArray(filesRes.data)
-                ? filesRes.data
-                : Array.isArray(filesRes.data?.data)
-                    ? filesRes.data.data
-                    : []
-            arr = filesArr.filter((x) => Number(x.is_pinned) === 1)
-        }
-        pinnedFiles.value = (arr || []).map((x) => ({
-            ...x,
-            file_path: x.file_path || x.link_url || '',
-            title: x.title || x.file_name || '',
-        }))
-    } catch (e) {
-        console.error('loadPinnedFiles error', e)
-        pinnedFiles.value = []
     }
 }
 
@@ -1882,38 +1414,6 @@ function prettySize(bytes) {
     return (kb / 1024).toFixed(1) + ' MB'
 }
 
-async function syncRosterFromServer() {
-    try {
-        const {data} = await getTaskRosterAPI(taskId.value)
-        const roster = data?.roster || data || []
-
-        rosterCreatedBy.value = data?.created_by ?? null
-        rosterCreatedByName.value = data?.created_by_name ?? null
-
-        latestBatch.value = data.latest_upload_batch || null
-        latestFiles.value = data.latest_files || []
-        latestBatchMeta.value = data.latest_batch_meta || null
-
-        // 👉 thêm 2 dòng này
-        rosterProgress.value = data?.progress ?? 0
-        rosterAllApproved.value = data?.all_approved ?? false
-
-        mentionsSelected.value = (Array.isArray(roster) ? roster : []).map((r) => ({
-            user_id: String(r.user_id),
-            name: r.name,
-            role: r.role,
-            status: r.status || 'processing',
-            acted_at: r.acted_at || null,
-            acted_at_vi: r.acted_at_vi || null,
-            added_at: r.added_at || null,
-            added_at_vi: r.added_at_vi || null,
-            department_id: r.department_id ?? null,   // ⭐ đảm bảo giữ phòng ban
-            signature_code: r.signature_code ?? null, // ⭐ GIỮ MÃ KÝ
-        }))
-    } catch (e) {
-        console.error('syncRosterFromServer failed', e)
-    }
-}
 
 /* ===== composer behavior: Enter/Shift+Enter + Esc ===== */
 function onComposerKeydown(e) {
@@ -1935,17 +1435,6 @@ const isEditing = computed(() => !!editingCommentId.value)
 function cancelEdit() {
     editingCommentId.value = null
     inputValue.value = ''
-}
-
-
-function getRank(member) {
-    // role_code lấy từ API (đã có trong roster)
-    const role = (member.role_code || member.role || '').toLowerCase();
-
-    if (role === 'super_admin') return 3;
-    if (role === 'admin') return 2;
-
-    return 1; // user
 }
 
 const normalizePositionCode = (code) => (code || '').toLowerCase()
@@ -2059,8 +1548,6 @@ function canActOnChip(m) {
 }
 
 
-
-
 async function handleUpdateCommentInline() {
     if (!editingCommentId.value) return
     const newContent = String(inputValue.value || '').trim()
@@ -2101,57 +1588,54 @@ function srcWithBustIfImage(f) {
         : u
 }
 
-const canFinalSign = computed(() => {
-    if (!rosterAllApproved.value) return false;
+onIncomingComment((payload) => {
+    console.log("🔥 realtime:", payload);
 
-    const myRank = roleRank(currentRoleCode.value);
+    if (Number(payload.task_id) !== Number(taskId.value)) return;
+    if (Number(payload.author_id) === Number(store.currentUser.id)) return;
 
-    // super_admin hoặc admin được ký
-    if (myRank >= roleRank("admin")) return true;
+    listComment.value.push({
+        id: payload.comment_id,
+        user_id: payload.author_id,
+        content: payload.content,
+        user_name: payload.author_name,
+        created_at: payload.created_at,
+        files: []
+    });
 
-    // Hoặc chính người cuối cùng trong danh sách được ký
-    const last = [...(mentionsSelected.value || [])].reverse().find(m => true);
-    if (!last) return false;
-
-    return String(last.user_id) === String(currentUserId.value);
+    nextTick(() => scrollToBottom());
 });
-
-function canSign(m) {
-    // chỉ cho ký khi đã duyệt xong toàn bộ
-    if (!rosterAllApproved.value) return false;
-
-    // user chỉ ký nếu họ là người cuối cùng
-    const isMe = String(m.user_id) === String(currentUserId.value);
-
-    // hoặc Admin/Super admin ký thay
-    const myRank = roleRank(currentRoleCode.value);
-    if (myRank >= roleRank("admin")) return true;
-
-    return isMe;
-}
-const handleUploadConfirm = ({ files, userIds }) => {
-    // 1️⃣ Gắn file vào logic hiện tại
-    selectedFiles.value.push(...files)
-
-    // 2️⃣ Nếu muốn auto mention / auto assign user
-    userIds.forEach(uid => {
-        const u = listUser.value.find(x => x.id === uid)
-        if (u) {
-            insertMention(u.name)
-        }
-    })
-}
-
 
 /* ===== lifecycle ===== */
 onMounted(async () => {
     t = setInterval(() => (tick.value = Date.now()), 60_000)
-    // await getUser()
     await getListComment(1)
     await loadTaskFiles()
-    await loadPinnedFiles()
-    await syncRosterFromServer()
     measureFooter()
+
+    // Kết nối socket theo user hiện tại
+    connectChatChannel(store.currentUser.id);
+
+    onIncomingComment((payload) => {
+        if (
+            payload.event === "task:new_comment" &&
+            Number(payload.task_id) === Number(taskId.value) &&
+            Number(payload.author_id) !== Number(store.currentUser.id)
+        ) {
+            listComment.value.push({
+                id: payload.comment_id,
+                user_id: payload.author_id,
+                content: payload.content,
+                user_name: payload.author_name,
+                created_at: payload.created_at,
+                files: []
+            });
+
+            nextTick(() => scrollToBottom());
+        }
+    });
+
+
     if ('ResizeObserver' in window) {
         ro = new ResizeObserver(() => measureFooter())
         footerEl.value && ro.observe(footerEl.value)
@@ -2166,10 +1650,6 @@ watch(
 )
 
 const localRoster = ref([])
-
-watch(() => props.roster, (v) => {
-    console.log("🔥 props.roster:", v)
-})
 
 // đồng bộ khi prop thay đổi
 watch(
@@ -2213,95 +1693,6 @@ onBeforeUnmount(() => {
     height: 100%;
     min-height: 0;
 }
-
-/* Sticky header */
-.sticky-mentions {
-    position: sticky;
-    top: 0;
-    z-index: 9;
-    background: var(--bg-surface);
-    border-bottom: 1px solid #eef1f3;
-    backdrop-filter: saturate(1.2) blur(0px);
-}
-
-.sticky-head {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    padding-left: 0;
-    border-bottom: 1px solid #eef1f3;
-    background: var(--bg-surface);
-}
-
-.pinned-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    background: transparent;
-    cursor: pointer;
-    line-height: 1;
-    transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .04s ease;
-}
-
-.pinned-toggle:hover:not(:disabled) {
-    background: #f6f9ff;
-    border-color: #e6efff;
-}
-
-.pinned-toggle:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(45, 140, 240, .2);
-}
-
-.pinned-toggle:disabled {
-    cursor: default;
-    opacity: .6;
-}
-
-.sticky-title {
-    font-weight: 600;
-    color: #1f2937;
-}
-
-.sticky-count {
-    color: #64748b;
-    font-size: 12px;
-}
-
-.arrow {
-    font-size: 12px;
-    opacity: .9;
-    transform: translateY(1px);
-}
-
-.sticky-actions {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.approver-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0 8px !important;
-    height: 28px;
-    border-radius: 6px;
-}
-
-.approver-btn:hover {
-    background: #f6f9ff;
-}
-
-.approver-text {
-    margin-left: 4px;
-}
-
 /* List comments */
 .list-comment {
     height: 45vh;
@@ -2441,16 +1832,6 @@ onBeforeUnmount(() => {
     justify-content: space-between;
     margin-top: 6px;
     gap: 8px;
-}
-
-.pin-btn {
-    font-size: 16px;
-    cursor: pointer;
-    transition: color 0.2s;
-}
-
-.pin-btn:hover {
-    color: #faad14;
 }
 
 /* Footer composer */
@@ -2652,86 +2033,10 @@ onBeforeUnmount(() => {
     background: rgba(0, 0, 0, 0.1);
 }
 
-/* điều chỉnh khoảng padding phần nội dung để không bị nút che */
 .chip-body {
     padding-right: 28px;
 }
 
-/* Pinned files → pill */
-.pinned-files {
-    border-radius: 12px;
-    margin: 8px 0;
-    padding: 0;
-}
-
-.pinned-pill {
-    margin-right: 5px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    max-width: 320px;
-    padding: 6px 10px;
-    border: 1px solid var(--bd-soft);
-    background: #fff6cc;
-    border-radius: 999px;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
-    transition: box-shadow 0.16s, transform 0.04s, border-color 0.16s;
-}
-
-.pinned-pill:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    border-color: #cfd8e3;
-}
-
-.pill-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    color: #1f75ff;
-    min-width: 0;
-}
-
-.pill-icon {
-    font-size: 14px;
-    opacity: 0.9;
-}
-
-.pill-text {
-    display: inline-block;
-    max-width: 200px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    vertical-align: bottom;
-}
-
-.pill-x {
-    border: 0;
-    background: transparent;
-    color: #9aa4b2;
-    font-size: 14px;
-    line-height: 1;
-    padding: 0 4px;
-    cursor: pointer;
-    border-radius: 6px;
-}
-
-.pill-x:hover {
-    color: #ff4d4f;
-    background: #fff1f0;
-}
-
-.more-pill {
-    border-radius: 999px !important;
-    padding: 2px 8px !important;
-    border: 1px solid var(--blue-2);
-    background: var(--blue-1);
-    color: var(--blue-3);
-    cursor: pointer;
-}
-
-/* ==== Drawer người duyệt – skin hiện đại, nhịp độ thoáng ==== */
 .approver-drawer :deep(.ant-drawer-body) {
     padding: 12px 12px 16px;
     background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
@@ -2764,17 +2069,13 @@ onBeforeUnmount(() => {
     color: #2563eb;
 }
 
-/* proc */
 .drawer-stats .stat-ok b {
     color: #16a34a;
 }
-
-/* ok */
 .drawer-stats .stat-err b {
     color: #dc2626;
 }
 
-/* err */
 
 .drawer-legend {
     display: inline-flex;
@@ -2906,7 +2207,6 @@ onBeforeUnmount(() => {
     text-overflow: ellipsis;
 }
 
-/* Dòng 2: trạng thái + thời gian trên một dòng */
 .meta-row {
     display: inline-flex;
     align-items: center;
@@ -2917,22 +2217,20 @@ onBeforeUnmount(() => {
 }
 
 .meta-row .chip-time {
-    white-space: nowrap; /* tránh xuống hàng giữa giờ & ngày */
+    white-space: nowrap;
 }
 
 .meta-sep {
     opacity: .55;
 }
 
-/* Dòng 3: actions cùng một dòng, tự wrap khi thiếu chỗ */
 .actions-row {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    flex-wrap: wrap; /* nếu quá hẹp thì các nút tự xuống hàng */
+    flex-wrap: wrap;
 }
 
-/* Giữ màu dot như trước */
 .dot.ok {
     background: #52c41a;
 }
@@ -2945,7 +2243,6 @@ onBeforeUnmount(() => {
     background: #ff4d4f;
 }
 
-/* Nền theo trạng thái (đã có ở bạn), giữ lại */
 .drawer-chip .chip-card.is-approved {
     background: #f6ffed;
     border-color: #b7eb8f;
@@ -2961,7 +2258,6 @@ onBeforeUnmount(() => {
     border-color: #ffccc7;
 }
 
-/* ===== Mention Popover ===== */
 .mention-pop {
     display: flex;
     flex-direction: column;
@@ -2989,13 +2285,11 @@ onBeforeUnmount(() => {
     text-align: right;
 }
 
-/* Select & Segmented alignment */
 .mention-pop .ant-select,
 .mention-pop .ant-segmented {
     flex: 1;
 }
 
-/* Segmented buttons subtle style */
 .mention-pop .ant-segmented {
     background: #f6f7fb;
     border-radius: 8px;

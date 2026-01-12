@@ -63,7 +63,7 @@
                     @openChange="onInboxOpenChange"
                     :destroyPopupOnHide="true"
                 >
-                    <a-badge :count="unreadChat" size="small">
+                    <a-badge :count="commentStore.unread" size="small">
                         <MessageOutlined class="ha-icon" aria-label="Hộp thư bình luận"/>
                     </a-badge>
 
@@ -396,7 +396,7 @@ import 'dayjs/locale/vi'
 dayjs.locale('vi')
 import { buildNotifyUrl } from "@/utils/build-notify-url";
 
-import { useNotifyStore } from '@/stores/notifications'
+import { useNotifyStore } from '@/stores/notifyStore'
 import {
     getNotificationAPI,
     markNotificationReadAPI
@@ -409,6 +409,9 @@ import { getMyRecentCommentsAPI, getMyUnreadCommentsCountAPI, markCommentsReadAP
 import { useUserStore } from '@/stores/user'
 import { useCommonStore } from '@/stores/common'
 
+import { useCommentNotifyStore } from "@/stores/commentNotify";
+const commentStore = useCommentNotifyStore();
+
 import {
     LogoutOutlined, UserOutlined, PlusOutlined, HomeOutlined, MessageOutlined,
     BellOutlined, SettingOutlined, QuestionCircleOutlined, BgColorsOutlined,
@@ -417,7 +420,7 @@ import {
 
 import ChangePasswordModal from '../components/common/ChangePasswordModal.vue'
 import BaseAvatar from '../components/common/BaseAvatar.vue'
-import {connectNotifySocket, onNotify} from "@/utils/notify-socket.js";
+import {connectNotifyChannel, onNotifyEvent} from "@/utils/notify-socket.js";
 
 /* ========= dayjs ========= */
 dayjs.extend(relativeTime)
@@ -700,25 +703,31 @@ const openComment = async (item, e) => {
 }
 
 /* ========= Notify: API & Actions ========= */
-const fetchNotify = async (page = 1, options = { replace: false }) => {
+const fetchNotify = async (page = 1, { replace = false } = {}) => {
     notifyLoading.value = true;
-
     const { data } = await getNotificationAPI(userId.value, page);
+
     const list = (data?.data || []).map(n => ({
         ...n,
         is_unread: !!Number(n.is_unread)
     }));
 
-    if (options.replace || page === 1) {
-        // ghi đè toàn bộ
-        notifyStore.items = list;
-        notifyStore.unread = data?.pager?.unread || 0;
+    if (replace) {
+        notifyStore.setList(list);
     } else {
-        // load more
-        notifyStore.items.push(...list);
+        if (page === 1) {
+            // merge đầu danh sách
+            notifyStore.items = [...list, ...notifyStore.items];
+        } else {
+            // append cuối
+            notifyStore.items = [...notifyStore.items, ...list];
+        }
     }
 
+    notifyStore.unread = notifyStore.items.filter(i => i.is_unread).length;
+
     notifyPage.value = page;
+    notifyHasMore.value = data?.pager?.hasMore || false;
     notifyLoading.value = false;
 };
 
@@ -789,9 +798,10 @@ const onNotifyOpenChange = async (open) => {
     notifyOpen.value = open;
     if (!open) return;
 
-    // LUÔN reload lại dữ liệu từ server
-    await fetchNotify(1, { replace: true });
+    // GHÉP dữ liệu API với realtime, không ghi đè
+    await fetchNotify(1, { replace: false });
 };
+
 
 onMounted(() => {
     setInterval(() => {
@@ -803,17 +813,16 @@ onMounted(() => {
 
 watch(
     () => userStore.user?.id,
-    async (id) => {
+    (id) => {
         if (!id) return;
+        connectNotifyChannel(id);
 
-        connectNotifySocket(id);
-        onNotify((data) => notifyStore.addRealtime(data));
-
-        await fetchNotify(1, { replace: true });
-        await fetchUnread();  // chỉ gọi unread của inbox chat
+        // chỉ lắng nghe realtime
+        onNotifyEvent((data) => notifyStore.addRealtime(data));
     },
     { immediate: true }
 );
+
 
 
 
@@ -899,5 +908,6 @@ watch(
 .ant-list-item {
     padding-left: 10px !important;
     padding-right: 10px !important;
+    margin-bottom: 10px;
 }
 </style>

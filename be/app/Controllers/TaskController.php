@@ -158,28 +158,28 @@ class TaskController extends ResourceController
         // 5) SELECT + JOIN USER AVATAR
         // ==========================
         $builder->select("
-        tasks.*,
-        tasks.id AS task_id,
-
-        u_assign.id     AS assignee_id,
-        u_assign.name   AS assignee_name,
-        u_assign.avatar AS assignee_avatar,
-
-        u_ab.id         AS assigned_by_id,
-        u_ab.name       AS assigned_by_name,
-        u_ab.avatar     AS assigned_by_avatar,
-
-        u_pb.id         AS proposed_by_id,
-        u_pb.name       AS proposed_by_name,
-        u_pb.avatar     AS proposed_by_avatar,
-
-        u_creator.id     AS created_by_id,
-        u_creator.name   AS created_by_name,
-        u_creator.avatar AS created_by_avatar,
-
-        parent.title AS parent_title,
-        {$linkedTitleExpr}
-    ", false);
+            tasks.*,
+            tasks.id AS task_id,
+    
+            u_assign.id     AS assignee_id,
+            u_assign.name   AS assignee_name,
+            u_assign.avatar AS assignee_avatar,
+    
+            u_ab.id         AS assigned_by_id,
+            u_ab.name       AS assigned_by_name,
+            u_ab.avatar     AS assigned_by_avatar,
+    
+            u_pb.id         AS proposed_by_id,
+            u_pb.name       AS proposed_by_name,
+            u_pb.avatar     AS proposed_by_avatar,
+    
+            u_creator.id     AS created_by_id,
+            u_creator.name   AS created_by_name,
+            u_creator.avatar AS created_by_avatar,
+    
+            parent.title AS parent_title,
+            {$linkedTitleExpr}
+        ", false);
 
         // ---- JOIN user mapping ----
         $builder->join('users u_assign',  'u_assign.id = tasks.assigned_to', 'left');
@@ -267,7 +267,7 @@ class TaskController extends ResourceController
 
             unset(
                 $task['assignee_id'], $task['assignee_name'], $task['assignee_avatar'],
-                $task['assigned_by_id'], $task['assigned_by_name'], $task['assigned_by_avatar'],
+              $task['assigned_by_name'], $task['assigned_by_avatar'],
                 $task['proposed_by_id'], $task['proposed_by_name'], $task['proposed_by_avatar'],
                 $task['created_by_id'], $task['created_by_name'], $task['created_by_avatar']
             );

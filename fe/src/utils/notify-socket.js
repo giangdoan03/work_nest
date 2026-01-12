@@ -1,49 +1,111 @@
 import { io } from "socket.io-client";
 
-let socket = null;
-let currentUserId = null;
-let notifyCallbacks = [];
+let notifySocket = null;
+let chatSocket = null;
 
-export function connectNotifySocket(userId) {
+let notifyUserId = null;
+let chatUserId = null;
+
+// listener list
+const listeners = {
+    notify: new Set(),
+    chat: new Set()
+};
+
+// ==============================
+// 1) SOCKET THÔNG BÁO
+// ==============================
+export function connectNotifyChannel(userId) {
     if (!userId) return null;
     userId = String(userId);
 
-    // Nếu socket tồn tại và đã đúng user → dùng lại
-    if (socket && currentUserId === userId) return socket;
+    if (notifySocket && notifyUserId === userId) return notifySocket;
 
-    // Nếu đổi user → reset
-    if (socket && currentUserId !== userId) {
-        socket.disconnect();
-        socket = null;
-        notifyCallbacks = [];
+    // nếu user đổi -> disconnect socket cũ
+    if (notifySocket && notifyUserId !== userId) {
+        notifySocket.disconnect();
+        notifySocket = null;
     }
 
-    currentUserId = userId;
+    notifyUserId = userId;
 
-    socket = io("https://notify.bee-soft.net", {
+    notifySocket = io("https://notify.bee-soft.net/notify", {
         path: "/socket.io/",
         transports: ["websocket"],
         auth: { userId },
-        reconnection: true
+        reconnection: true,
+        reconnectionDelay: 3000
     });
 
-    socket.on("connect", () => {
-        console.log("⚡ Socket connected:", socket.id);
-        socket.emit("register", currentUserId);
+    notifySocket.on("connect", () => {
+        console.log("🔔 Notify connected:", notifySocket.id);
+        notifySocket.emit("register", userId);
     });
 
-    socket.on("notify", (data) => {
-        console.log("🔔 Notify received:", data);
-
-        // gửi cho tất cả callback đã đăng ký
-        notifyCallbacks.forEach(fn => fn(data));
+    notifySocket.on("notify", (payload) => {
+        listeners.notify.forEach(fn => fn(payload));
     });
 
-    return socket;
+    return notifySocket;
 }
 
-export function onNotify(cb) {
-    if (typeof cb === "function") {
-        notifyCallbacks.push(cb);
+
+// ==============================
+// 2) SOCKET COMMENT REALTIME
+// ==============================
+export function connectChatChannel(userId) {
+    if (!userId) return null;
+    userId = String(userId);
+
+    if (chatSocket && chatUserId === userId) return chatSocket;
+
+    if (chatSocket && chatUserId !== userId) {
+        chatSocket.disconnect();
+        chatSocket = null;
     }
+
+    chatUserId = userId;
+
+    chatSocket = io("https://notify.bee-soft.net/chat", {
+        path: "/socket.io/",
+        transports: ["websocket"],
+        auth: { userId },
+        reconnection: true,
+        reconnectionDelay: 3000
+    });
+
+    chatSocket.on("connect", () => {
+        console.log("💬 Chat connected:", chatSocket.id);
+        chatSocket.emit("register", userId);
+    });
+
+    chatSocket.on("task:new_comment", (payload) => {
+        console.log("📥 Realtime comment:", payload);
+        listeners.chat.forEach(fn => fn(payload));
+    });
+
+
+    return chatSocket;
+}
+
+
+// ==============================
+// 3) REGISTER EVENT  (có auto-remove)
+// ==============================
+export function onNotifyEvent(callback) {
+    listeners.notify.add(callback);
+    return () => listeners.notify.delete(callback);
+}
+
+export function onIncomingComment(callback) {
+    listeners.chat.add(callback);
+    return () => listeners.chat.delete(callback);
+}
+
+
+// ==============================
+// 4) GỬI COMMENT REALTIME
+// ==============================
+export function sendCommentRealtime(payload) {
+    if (chatSocket) chatSocket.emit("task:new_comment", payload);
 }

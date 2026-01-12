@@ -5,47 +5,41 @@
 </template>
 
 <script setup>
-import { onMounted, watch } from 'vue'
-import { useUserStore } from '@/stores/user'
-import { useNotifyStore } from '@/stores/notifications'
-import { checkSession } from '@/api/auth'
+import { onMounted, watch } from "vue";
+import { useUserStore } from "@/stores/user";
+import { useNotifyStore } from "@/stores/notifyStore";
+import { checkSession } from "@/api/auth";
 
-import { connectNotifySocket, onNotify } from '@/utils/notify-socket.js'
+import { connectNotifyChannel } from "@/utils/notify-socket.js";
 
-const userStore = useUserStore()
-const notifyStore = useNotifyStore()
+const userStore = useUserStore();
+const notifyStore = useNotifyStore();
 
 onMounted(async () => {
-    const res = await checkSession().catch(() => null)
-    if (res?.data?.status === 'success') {
-        userStore.setUser(res.data.user)
+    const res = await checkSession().catch(() => null);
+
+    if (res?.data?.status === "success") {
+        userStore.setUser(res.data.user);
     } else {
-        userStore.clearUser()
+        userStore.clearUser();
     }
-})
+});
 
-// Khi user.id xuất hiện → mở socket
-watch(() => userStore.user?.id, (id) => {
-    if (!id) return;
+/**
+ * Khi user.id xuất hiện → mở socket
+ * KHÔNG đặt handler onNotify ở đây
+ * → tránh đăng ký nhiều lần
+ */
+watch(
+    () => userStore.user?.id,
+    (id) => {
+        if (!id) return;
 
-    const sock = connectNotifySocket(String(id));
-
-    // Lắng nghe realtime notify từ server
-    onNotify((data) => {
-        console.log("STORE ADD:", data);
-
-        // chuẩn hóa và thêm vào store
-        notifyStore.addRealtime({
-            id: data.id,
-            title: data.title,
-            content: data.message ?? data.content,
-            url: data.url,
-            created_at: data.created_at
-        });
-    });
-
-    window.__sock = sock; // để debug
-}, { immediate: true });
+        console.log("🔌 Init socket for user:", id);
+        notifyStore.initSocket(); // gọi trong store, không xử lý ở App.vue
+    },
+    { immediate: true }
+);
 </script>
 
 <style>

@@ -134,11 +134,11 @@
                                                         <a-col :span="12">
                                                             <a-form-item label="Người giao việc" name="assigned_by">
                                                                 <a-typography-text v-if="!isEditMode">
-                                                                    {{ getUserById(formData.assigned_by) }}
+                                                                    {{ getUserById(formData.proposed_by) }}
                                                                 </a-typography-text>
                                                                 <a-select
                                                                     v-else
-                                                                    v-model:value="formData.assigned_by"
+                                                                    v-model:value="formData.proposed_by"
                                                                     :options="userOption"
                                                                     placeholder="Chọn người dùng"
                                                                 />
@@ -424,7 +424,7 @@
     </div>
 </template>
 <script setup>
-import {EllipsisOutlined, DeleteOutlined, HistoryOutlined} from '@ant-design/icons-vue'
+import {EllipsisOutlined, DeleteOutlined} from '@ant-design/icons-vue'
 import {computed, nextTick, onMounted, reactive, ref, watch} from 'vue'
 import {message} from 'ant-design-vue'
 import 'dayjs/locale/vi'
@@ -433,6 +433,8 @@ import viVN from 'ant-design-vue/es/locale/vi_VN'
 import {getUsers} from '@/api/user'
 import {useRoute, useRouter} from 'vue-router'
 import {formatDate} from '@/utils/formUtils'
+import { useTaskUsersStore } from '@/stores/taskUsersStore'
+const taskUsersStore = useTaskUsersStore()
 import {
     getTaskDetail,
     getTaskFilesAPI,
@@ -456,12 +458,9 @@ import {getDepartments} from '@/api/department'
 import Comment from './Comment.vue'
 import SubTasks from './SubTasks.vue'
 import {useUserStore} from '@/stores/user'
-import {getApprovalHistoryByTask} from '@/api/taskApproval'
-import {useTaskDrawerStore} from '@/stores/taskDrawerStore'
 import {useCommonStore} from '@/stores/common'
 import debounce from 'lodash-es/debounce'
 import AttachmentsCard from '@/components/AttachmentsCard.vue'
-import ApprovalStatus from '@/components/Approval/ApprovalStatus.vue'
 import ApprovalHistoryBlock from "@/components/task/ApprovalHistoryBlock.vue";
 import ApprovalStatisticsBlock from "@/components/task/ApprovalStatisticsBlock.vue";
 import {getApprovalSessionsByTask, getApprovalStatisticsByTask} from "@/api/approvalSessions.js";
@@ -517,7 +516,6 @@ const formData = ref({
     approval_status: '',
 })
 
-// 🔥 ref để gọi hàm reload bên ApprovalHistoryBlock
 const handleTabChange = async (key) => {
     if (key === 'approval-history') {
         await loadApprovalCount()
@@ -532,10 +530,18 @@ const handleTabChange = async (key) => {
     }
 }
 
+const loadReviewers = async () => {
+    try {
+        const res = await getApprovalSessionsByTask(route.params.id)
+        const sessions = res.data || []
+        taskUsersStore.setReviewers(sessions)
+    } catch (err) {
+        console.error("Lỗi load reviewers: ", err)
+    }
+}
 
-// hàm gọi khi tạo phiên duyệt xong
 const handleApprovalSessionCreated = async () => {
-    approvalCount.value++            // ⭐ badge nhảy số ngay
+    approvalCount.value++
     activeTab.value = 'approval-history'
     await nextTick()
     approvalHistoryRef.value?.reload()
@@ -693,17 +699,7 @@ const approvedMap = computed(() => {
     return m
 })
 
-const approverRows = computed(() =>
-    approverIds.value.map(idStr => ({
-        id: idStr,
-        name: getUserName(idStr),
-        status: approvedMap.value.get(idStr) || 'pending',
-    }))
-)
 
-const isApproved = (uid) => logData.value.some(l => l.approved_by === uid && l.status === 'approved')
-
-// ===== Linked name / steps =====
 const linkedName = ref('')
 
 const getNameLinked = async (id) => {
@@ -749,8 +745,6 @@ const loadViolationCount = async () => {
         violationCount.value = 0
     }
 }
-
-
 
 
 watch(
@@ -916,7 +910,6 @@ const editTask = () => {
 
 const store = useUserStore()
 const fileList = ref([])
-const loadingUploadFile = ref(false)
 const pendingFiles = ref([])
 
 const saveEditTask = async () => {
@@ -1003,7 +996,7 @@ const getDetailTaskById = async () => {
         const res = await getTaskDetail(route.params.id)
         formData.value = res.data
 
-        // 🔧 Ép formData khớp context URL để UI/Watcher không gọi sai API
+        // đồng bộ context bidding/contract
         if (isContractCtx.value) {
             formData.value.linked_type = 'contract'
             formData.value.linked_id = String(route.params.contractId)
@@ -1012,8 +1005,10 @@ const getDetailTaskById = async () => {
             formData.value.linked_id = String(route.params.bidId)
         }
 
-        const parentId = Number(route.params.id)
-        commonStore.setParentTaskId(parentId)
+        // 🔥 Lưu user liên quan vào store
+        taskUsersStore.setTaskBaseUsers(route.params.id, formData.value)
+
+        commonStore.setParentTaskId(Number(route.params.id))
     } catch (err) {
         console.error(err)
     }
@@ -1067,38 +1062,6 @@ const fetchExtensionHistory = async () => {
         extensionHistory.value = []
     }
 }
-
-const logColumns = [
-    {title: 'Cấp', dataIndex: 'level'},
-    {title: 'Trạng thái', dataIndex: 'status'},
-    {title: 'Người duyệt', dataIndex: 'approved_by_name'},
-    {title: 'Ghi chú', dataIndex: 'comment'},
-]
-
-const getStatusColor = (status) => {
-    switch (status) {
-        case 'pending':
-            return 'orange'
-        case 'approved':
-            return 'green'
-        case 'rejected':
-            return 'red'
-        default:
-            return ''
-    }
-}
-const getStatusText = (status) => {
-    switch (status) {
-        case 'pending':
-            return 'Đang chờ'
-        case 'approved':
-            return 'Đã duyệt'
-        case 'rejected':
-            return 'Từ chối'
-        default:
-            return 'Không xác định'
-    }
-}
 // thay thế function fetchLogHistory cũ
 const fetchLogHistory = async () => {
     const taskId = route.params.id;
@@ -1148,9 +1111,6 @@ const fetchLogHistory = async () => {
         logData.value = [];
     }
 };
-
-const manualLink = reactive({title: '', url: ''})
-const manualLinks = ref([])
 
 const getDepartment = async () => {
     try {
@@ -1257,10 +1217,6 @@ const goBack = () => {
     else router.push('/non-workflow')
 }
 
-const goToTask = (id) => {
-    if (!id) return
-    router.push({name: 'non-workflow-info', params: {id}})
-}
 
 // ===== Watchers =====
 watch(() => formData.value.step_code, (newCode) => {
@@ -1295,7 +1251,7 @@ onMounted(async () => {
     try {
         await getDepartment()
         await getDetailTaskById()
-        // Ép theo context ngay sau khi load để tránh gọi nhầm API
+        await loadReviewers()
         if (isContractCtx.value) {
             formData.value.linked_type = 'contract'
             formData.value.linked_id = String(route.params.contractId)

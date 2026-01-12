@@ -62,10 +62,10 @@ class CommentController extends ResourceController
         // 2) Query comments
         $builder = $db->table('task_comments c');
         $builder->select("
-        c.*,
-        u.name AS user_name,
-        COALESCE(f.files_json, '[]') AS files_json
-    ", false);
+            c.*,
+            u.name AS user_name,
+            COALESCE(f.files_json, '[]') AS files_json
+        ", false);
 
         $builder->join('users u', 'u.id = c.user_id', 'left');
         $builder->join("($subQuery) f", 'f.comment_id = c.id', 'left');
@@ -520,6 +520,59 @@ class CommentController extends ResourceController
             log_message('error', '[SNAPSHOT] ' . $e->getMessage());
         }
 
+        // ==========================================
+        // 🚀 BẮN REALTIME COMMENT TỚI SOCKET SERVER
+        // ==========================================
+
+        try {
+            $http = Services::curlrequest();
+            $taskModel = new TaskModel();
+            $task = $taskModel->find($task_id);
+
+            if ($task) {
+
+                // Lấy danh sách user liên quan
+                $receivers = [
+                    (int)($task['assigned_to'] ?? 0),
+                    (int)($task['collaborated_by'] ?? 0),
+                    (int)($task['proposed_by'] ?? 0),
+                    (int)($task['created_by'] ?? 0),
+                ];
+
+                // Loại bỏ null/0 + unique
+                $receivers = array_values(array_filter(array_unique($receivers)));
+
+                foreach ($receivers as $uid) {
+                    if (!$uid) continue;
+
+                    try {
+                        $http->post('https://notify.bee-soft.net/chat', [
+                            'json' => [
+                                'user_id' => $uid,
+                                'payload' => [
+                                    'event' => 'task:new_comment',
+                                    'task_id'     => $task_id,
+                                    'comment_id'  => $commentId,
+                                    'author_id'   => $userId,
+                                    'author_name' => $createdComment['user_name'] ?? null,
+                                    'content'     => $createdComment['content'],
+                                    'created_at'  => date('c'),
+                                ],
+                            ],
+                            'timeout' => 1.5,
+                        ]);
+                    } catch (Throwable $e2) {
+                        log_message('error', "Notify failed for user {$uid}: ".$e2->getMessage());
+                    }
+                }
+            }
+
+        } catch (Throwable $e) {
+            log_message('error', 'Realtime notify main block failed: ' . $e->getMessage());
+        }
+
+
+
         return $this->respondCreated(['comment' => $createdComment]);
     }
 
@@ -747,4 +800,34 @@ class CommentController extends ResourceController
         $taskModel = new TaskModel();
         $taskModel->upsertRosterMembers($taskId, $norm);
     }
+
+    private function getTaskRelatedUsers(int $taskId): array
+    {
+        $task = (new TaskModel())->find($taskId);
+        if (!$task) return [];
+
+        $ids = [];
+
+        // Người chính
+        $ids[] = (int)$task['assigned_to'];
+        $ids[] = (int)$task['collaborated_by'];
+        $ids[] = (int)$task['proposed_by'];
+        $ids[] = (int)$task['created_by'];
+
+        // Mentions trong comment
+        $mentions = json_decode($task['approver_ids'] ?? '[]', true);
+        if (is_array($mentions)) {
+            foreach ($mentions as $m) {
+                if (!empty($m['user_id'])) {
+                    $ids[] = (int)$m['user_id'];
+                }
+            }
+        }
+
+        // Unique non-zero
+        $ids = array_filter(array_unique($ids));
+
+        return array_values($ids);
+    }
+
 }

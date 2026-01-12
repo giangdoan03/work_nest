@@ -39,10 +39,7 @@
                 </a-form>
 
                 <div class="app-download">
-<!--                    <p>Cài đặt ứng dụng trên điện thoại</p>-->
                     <div class="store-links">
-<!--                        <img src="/google-play.png" alt="Google Play" />-->
-<!--                        <img src="/app-store.png" alt="App Store" />-->
                     </div>
                 </div>
             </a-card>
@@ -50,15 +47,13 @@
     </div>
 </template>
 
-
-
 <script setup>
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { login as loginApi } from '../api/auth'
 import { useUserStore } from '../stores/user'
 import { message } from 'ant-design-vue'
-import { connectNotifySocket, onNotify } from '@/utils/notify-socket.js'
+import { connectNotifyChannel } from '@/utils/notify-socket.js'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -83,7 +78,7 @@ const onFinish = async () => {
             userStore.setUser(user)
 
             // ⬇️ chỉ connect socket, KHÔNG gắn onNotify ở đây
-            connectNotifySocket(String(user.id))
+            connectNotifyChannel(String(user.id))
 
             await router.push('/project-overview')
         } else {
