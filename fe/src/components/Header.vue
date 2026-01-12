@@ -225,9 +225,8 @@
                                                         </template>
                                                         <template #description>
                                                             <div class="item-desc">
-                                                                <div>Gửi bởi: {{ item.submitted_by_name || '—' }}</div>
+                                                                <div class="title_auth">Gửi bởi: {{ item.submitted_by_name || '—' }}</div>
                                                                 <div class="meta-sub">{{ formatTime(item.created_at) }}</div>
-
                                                             </div>
                                                         </template>
                                                     </a-list-item-meta>
@@ -359,38 +358,50 @@
 
 <script setup>
 /* ========= Imports ========= */
-import { useRoute, useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
-import { ref, computed, onMounted, watch } from 'vue'
-import { storeToRefs } from 'pinia'
+import {useRoute, useRouter} from 'vue-router'
+import {message} from 'ant-design-vue'
+import {computed, onMounted, ref, watch} from 'vue'
+import {storeToRefs} from 'pinia'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import localizedFormat from "dayjs/plugin/localizedFormat";
-dayjs.extend(localizedFormat);
 import 'dayjs/locale/vi'
-dayjs.locale('vi')
-import { buildNotifyUrl } from "@/utils/build-notify-url";
-import { buildParamsMap } from '@/utils/breadcrumb-params'
+import {buildNotifyUrl} from "@/utils/build-notify-url";
+import {buildParamsMap} from '@/utils/breadcrumb-params'
 import {getNotificationAPI, markNotificationReadAPI} from '@/api/notifications'
-import { getMyRecentCommentsAPI, markCommentsReadAPI } from '@/api/task'
+import {getMyRecentCommentsAPI, getMyUnreadCommentsCountAPI, markCommentsReadAPI} from '@/api/task'
 
-import { useUserStore } from '@/stores/user'
-import { useCommonStore } from '@/stores/common'
-import { useNotifyStore } from '@/stores/notifyStore'
-const notifyStore = useNotifyStore()
-
-import { useCommentNotifyStore } from "@/stores/commentNotify";
-const commentStore = useCommentNotifyStore();
-
+import {useUserStore} from '@/stores/user'
+import {useCommonStore} from '@/stores/common'
+import {useNotifyStore} from '@/stores/notifyStore'
+import {useCommentNotifyStore} from "@/stores/commentNotify";
 import {
-    LogoutOutlined, UserOutlined, PlusOutlined, HomeOutlined, MessageOutlined,
-    BellOutlined, SettingOutlined, QuestionCircleOutlined, BgColorsOutlined,
-    GlobalOutlined, KeyOutlined, IdcardOutlined, TeamOutlined, MenuFoldOutlined, MenuUnfoldOutlined
+    BellOutlined,
+    BgColorsOutlined,
+    GlobalOutlined,
+    HomeOutlined,
+    IdcardOutlined,
+    KeyOutlined,
+    LogoutOutlined,
+    MenuFoldOutlined,
+    MenuUnfoldOutlined,
+    MessageOutlined,
+    PlusOutlined,
+    QuestionCircleOutlined,
+    SettingOutlined,
+    TeamOutlined,
+    UserOutlined
 } from '@ant-design/icons-vue'
 
 import ChangePasswordModal from '../components/common/ChangePasswordModal.vue'
 import BaseAvatar from '../components/common/BaseAvatar.vue'
 import {connectNotifyChannel, onNotifyEvent} from "@/utils/notify-socket.js";
+
+dayjs.extend(localizedFormat);
+dayjs.locale('vi')
+const notifyStore = useNotifyStore()
+
+const commentStore = useCommentNotifyStore();
 
 /* ========= dayjs ========= */
 dayjs.extend(relativeTime)
@@ -517,13 +528,24 @@ const redirectToProfile = () => {
     router.push({ name: 'persons-info', params: { id: user.value.id } })
 }
 
+const fetchUnread = async () => {
+    const { data } = await getMyUnreadCommentsCountAPI(userId.value)
+    commentStore.unread = data.unread ?? 0
+}
+
 const fetchInbox = async (page = 1) => {
     if (!userId.value) return
     inboxLoading.value = true
     try {
         const { data } = await getMyRecentCommentsAPI({ user_id: userId.value, page, limit: 10 })
         const list = data?.comments || []
+
+        // Cập nhật items
         inboxItems.value = page === 1 ? list : inboxItems.value.concat(list)
+
+        // Cập nhật unread trong commentStore
+        commentStore.unread = list.filter(i => +i.is_unread === 1).length
+
         const cur = data?.pagination?.currentPage || page
         const total = data?.pagination?.totalPages || cur
         inboxHasMore.value = cur < total
@@ -532,6 +554,7 @@ const fetchInbox = async (page = 1) => {
         inboxLoading.value = false
     }
 }
+
 const refreshInbox = () => fetchInbox(1)
 const loadMoreInbox = () => fetchInbox(inboxPage.value + 1)
 
@@ -579,7 +602,7 @@ const openComment = async (item, e) => {
 }
 
 /* ========= Notify: API & Actions ========= */
-const fetchNotify = async (page = 1, { replace = false } = {}) => {
+const fetchNotify = async (page = 1) => {
     notifyLoading.value = true;
     const { data } = await getNotificationAPI(userId.value, page);
 
@@ -588,16 +611,12 @@ const fetchNotify = async (page = 1, { replace = false } = {}) => {
         is_unread: !!Number(n.is_unread)
     }));
 
-    if (replace) {
+    if (page === 1) {
+        // page 1: luôn ghi đè để tránh trùng
         notifyStore.setList(list);
     } else {
-        if (page === 1) {
-            // merge đầu danh sách
-            notifyStore.items = [...list, ...notifyStore.items];
-        } else {
-            // append cuối
-            notifyStore.items = [...notifyStore.items, ...list];
-        }
+        // page > 1: nối thêm vào cuối
+        notifyStore.items = [...notifyStore.items, ...list];
     }
 
     notifyStore.unread = notifyStore.items.filter(i => i.is_unread).length;
@@ -606,6 +625,7 @@ const fetchNotify = async (page = 1, { replace = false } = {}) => {
     notifyHasMore.value = data?.pager?.hasMore || false;
     notifyLoading.value = false;
 };
+
 
 const refreshNotify = () => fetchNotify(1)
 const loadMoreNotify = () => fetchNotify(notifyPage.value + 1)
@@ -659,14 +679,15 @@ async function openApproval(item) {
 const onInboxOpenChange = async (open) => {
     inboxOpen.value = open
     if (!open) return
-    await refreshInbox()
+
+    await fetchUnread()  // cập nhật badge
+    await refreshInbox() // load danh sách
 }
 const onNotifyOpenChange = async (open) => {
     notifyOpen.value = open;
     if (!open) return;
 
-    // GHÉP dữ liệu API với realtime, không ghi đè
-    await fetchNotify(1, { replace: false });
+    await fetchNotify(1); // không cần replace flag nữa
 };
 
 
@@ -677,17 +698,29 @@ onMounted(() => {
 });
 
 
+let unRegisterNotify = null;
+
 watch(
     () => userStore.user?.id,
-    (id) => {
+    async (id) => {
         if (!id) return;
+
         connectNotifyChannel(id);
 
-        // chỉ lắng nghe realtime
-        onNotifyEvent((data) => notifyStore.addRealtime(data));
+        // hủy listener cũ (nếu có)
+        if (unRegisterNotify) unRegisterNotify();
+
+        // đăng ký lại listener
+        unRegisterNotify = onNotifyEvent((data) => {
+            notifyStore.addRealtime(data);
+        });
+
+        await fetchNotify(1);
     },
     { immediate: true }
 );
+
+
 
 </script>
 

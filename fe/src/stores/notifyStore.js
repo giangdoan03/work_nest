@@ -38,8 +38,14 @@ export const useNotifyStore = defineStore("notifyStore", {
         },
 
         addRealtime(data) {
+            const id = data.id ?? data.notify_id ?? Date.now();
+
+            // Kiểm tra trùng ID
+            const exists = this.items.some(i => i.id === id);
+            if (exists) return; // không thêm
+
             const item = {
-                id: data.id ?? Date.now(),
+                id,
                 title: data.title,
                 content: data.message ?? data.content ?? "",
                 url: data.url ?? null,
@@ -47,17 +53,27 @@ export const useNotifyStore = defineStore("notifyStore", {
                 is_unread: true
             };
 
-            // ⚡ dùng spread để trigger reactive 100%
+            // Thêm vào đầu, không duplicate
             this.items = [item, ...this.items];
-            this.unread = this.unread + 1;
+
+            // Cập nhật unread chuẩn
+            this.unread = this.items.filter(i => i.is_unread).length;
         },
 
         setList(list) {
-            this.items = list.map(i => ({
+            const map = new Map();
+
+            // API list trước
+            list.forEach(i => map.set(i.id, {
                 ...i,
                 is_unread: !!Number(i.is_unread)
             }));
 
+            // Merge realtime (loại trùng ID tự động)
+            this.items.forEach(i => map.set(i.id, i));
+
+            // Cập nhật store
+            this.items = Array.from(map.values());
             this.unread = this.items.filter(x => x.is_unread).length;
         },
 

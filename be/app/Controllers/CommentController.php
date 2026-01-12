@@ -532,39 +532,27 @@ class CommentController extends ResourceController
             if ($task) {
 
                 // Lấy danh sách user liên quan
-                $receivers = [
-                    (int)($task['assigned_to'] ?? 0),
-                    (int)($task['collaborated_by'] ?? 0),
-                    (int)($task['proposed_by'] ?? 0),
-                    (int)($task['created_by'] ?? 0),
-                ];
+                $receivers = $this->getTaskRelatedUsers($task_id);
 
                 // Loại bỏ null/0 + unique
                 $receivers = array_values(array_filter(array_unique($receivers)));
 
-                foreach ($receivers as $uid) {
-                    if (!$uid) continue;
+                $http->post('https://notify.bee-soft.net/chat', [
+                    'json' => [
+                        'user_id'  => $receivers,
+                        'payload'  => [
+                            'event'       => 'task:new_comment',
+                            'users'       => $receivers,  // socket sẽ broadcast từ đây
+                            'task_id'     => $task_id,
+                            'comment_id'  => $commentId,
+                            'author_id'   => $userId,
+                            'author_name' => $createdComment['user_name'] ?? null,
+                            'content'     => $createdComment['content'],
+                            'created_at'  => date('c'),
+                        ],
+                    ],
+                ]);
 
-                    try {
-                        $http->post('https://notify.bee-soft.net/chat', [
-                            'json' => [
-                                'user_id' => $uid,
-                                'payload' => [
-                                    'event' => 'task:new_comment',
-                                    'task_id'     => $task_id,
-                                    'comment_id'  => $commentId,
-                                    'author_id'   => $userId,
-                                    'author_name' => $createdComment['user_name'] ?? null,
-                                    'content'     => $createdComment['content'],
-                                    'created_at'  => date('c'),
-                                ],
-                            ],
-                            'timeout' => 1.5,
-                        ]);
-                    } catch (Throwable $e2) {
-                        log_message('error', "Notify failed for user {$uid}: ".$e2->getMessage());
-                    }
-                }
             }
 
         } catch (Throwable $e) {
@@ -600,9 +588,7 @@ class CommentController extends ResourceController
     public function inbox(): ResponseInterface
     {
         $uid = (int)($this->request->getGet('user_id') ?? 0);
-        if (!$uid) {
-            return $this->fail('Missing user_id', 400);
-        }
+        if (!$uid) return $this->fail('Missing user_id', 400);
 
         $page = max(1, (int)($this->request->getGet('page') ?? 1));
         $limit = min(50, (int)($this->request->getGet('limit') ?? 10));
@@ -610,50 +596,55 @@ class CommentController extends ResourceController
 
         $db = db_connect();
 
+        // Lấy toàn bộ task có liên quan user
+        $taskIds = $this->getTaskIdsOfUser($uid);
+
+        if (empty($taskIds)) {
+            return $this->respond([
+                'comments' => [],
+                'pagination' => [
+                    'currentPage' => $page,
+                    'totalPages' => 0,
+                    'totalItems' => 0,
+                    'perPage' => $limit,
+                ],
+            ]);
+        }
+
         try {
+            // MAIN QUERY
             $builder = $db->table('task_comments c');
-            $builder
-                ->select(
-                    'c.id,
-                     c.task_id,
-                     c.user_id AS author_id,
-                     c.content,
-                     c.created_at,
-                     t.title AS task_title,
-                     t.linked_type,
-                     u.name  AS author_name,
-                     u.avatar AS author_avatar,
-                     CASE WHEN cr.id IS NULL THEN 1 ELSE 0 END AS is_unread'
-                )
-                ->join('tasks t', 't.id = c.task_id', 'inner')
-                ->join('users u', 'u.id = c.user_id', 'left')
-                ->join(
-                    'comment_reads cr',
-                    'cr.comment_id = c.id AND cr.user_id = ' . $db->escape($uid),
-                    'left',
-                    false
-                )
-                ->groupStart()
-                ->where('t.assigned_to', $uid)
-                ->orWhere('t.created_by', $uid)
-                ->groupEnd()
-                ->orderBy('c.created_at', 'DESC')
-                ->limit($limit, $offset);
+
+            $builder->select("
+            c.id,
+            c.task_id,
+            c.user_id AS author_id,
+            c.content,
+            c.created_at,
+            t.title AS task_title,
+            t.linked_type,
+            u.name AS author_name,
+            u.avatar AS author_avatar,
+            CASE WHEN cr.id IS NULL THEN 1 ELSE 0 END AS is_unread
+        ", false);
+
+            $builder->join('tasks t', 't.id = c.task_id', 'inner');
+            $builder->join('users u', 'u.id = c.user_id', 'left');
+            $builder->join('comment_reads cr', "cr.comment_id = c.id AND cr.user_id = {$uid}", 'left');
+
+            $builder->whereIn('c.task_id', $taskIds);
+
+            $builder->orderBy('c.created_at', 'DESC');
+            $builder->limit($limit, $offset);
 
             $rows = $builder->get()->getResultArray();
 
-            // Đếm tổng
+            // COUNT QUERY
             $countBuilder = $db->table('task_comments c');
-            $countBuilder
-                ->select('COUNT(*) AS cnt')
-                ->join('tasks t', 't.id = c.task_id', 'inner')
-                ->groupStart()
-                ->where('t.assigned_to', $uid)
-                ->orWhere('t.created_by', $uid)
-                ->groupEnd();
+            $countBuilder->select('COUNT(*) AS cnt');
+            $countBuilder->whereIn('c.task_id', $taskIds);
 
-            $totalRow = $countBuilder->get()->getRow();
-            $total = (int)($totalRow->cnt ?? 0);
+            $total = (int)$countBuilder->get()->getRow('cnt');
 
             return $this->respond([
                 'comments' => $rows,
@@ -664,11 +655,13 @@ class CommentController extends ResourceController
                     'perPage' => $limit,
                 ],
             ]);
-        } catch (Throwable $e) {
-            log_message('error', 'Inbox query failed: {msg}', ['msg' => $e->getMessage()]);
+
+        } catch (\Throwable $e) {
+            log_message('error', 'Inbox query failed: ' . $e->getMessage());
             return $this->failServerError('Failed to load inbox');
         }
     }
+
 
     /**
      * GET /my/comments/unread-count?user_id=123
@@ -828,6 +821,27 @@ class CommentController extends ResourceController
         $ids = array_filter(array_unique($ids));
 
         return array_values($ids);
+    }
+
+    private function getTaskIdsOfUser(int $uid): array
+    {
+        $db = db_connect();
+        $uidStr = '"' . $uid . '"';
+
+        $rows = $db->table('tasks')
+            ->select('id')
+            ->groupStart()
+            ->where('assigned_to', $uid)
+            ->orWhere('created_by', $uid)
+            ->orWhere('proposed_by', $uid)
+            ->orWhere("JSON_CONTAINS(COALESCE(collaborated_by, '[]'), {$uidStr}, '$')", null, false)
+            // Người đã comment trong task cũng được tính là liên quan
+            ->orWhere("id IN (SELECT task_id FROM task_comments WHERE user_id = {$uid})", null, false)
+            ->groupEnd()
+            ->get()
+            ->getResultArray();
+
+        return array_column($rows, 'id');
     }
 
 }
