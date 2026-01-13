@@ -357,253 +357,292 @@
 </template>
 
 <script setup>
-/* ========= Imports ========= */
-import {useRoute, useRouter} from 'vue-router'
-import {message} from 'ant-design-vue'
-import {computed, onMounted, ref, watch} from 'vue'
-import {storeToRefs} from 'pinia'
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
+/* ---------------------------------------------
+| Imports
+--------------------------------------------- */
+import { useRoute, useRouter } from "vue-router";
+import { message } from "ant-design-vue";
+import { computed, onMounted, ref, watch } from "vue";
+import { storeToRefs } from "pinia";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import localizedFormat from "dayjs/plugin/localizedFormat";
-import 'dayjs/locale/vi'
-import {buildNotifyUrl} from "@/utils/build-notify-url";
-import {buildParamsMap} from '@/utils/breadcrumb-params'
-import {getNotificationAPI, markNotificationReadAPI} from '@/api/notifications'
-import {getMyRecentCommentsAPI, getMyUnreadCommentsCountAPI, markCommentsReadAPI} from '@/api/task'
+import "dayjs/locale/vi";
 
-import {useUserStore} from '@/stores/user'
-import {useCommonStore} from '@/stores/common'
-import {useNotifyStore} from '@/stores/notifyStore'
-import {useCommentNotifyStore} from "@/stores/commentNotify";
+import { buildNotifyUrl } from "@/utils/build-notify-url";
+import { buildParamsMap } from "@/utils/breadcrumb-params";
+
 import {
-    BellOutlined,
-    BgColorsOutlined,
-    GlobalOutlined,
-    HomeOutlined,
-    IdcardOutlined,
-    KeyOutlined,
-    LogoutOutlined,
-    MenuFoldOutlined,
-    MenuUnfoldOutlined,
-    MessageOutlined,
-    PlusOutlined,
-    QuestionCircleOutlined,
-    SettingOutlined,
-    TeamOutlined,
-    UserOutlined
-} from '@ant-design/icons-vue'
+    getNotificationAPI,
+    markNotificationReadAPI
+} from "@/api/notifications";
 
-import ChangePasswordModal from '../components/common/ChangePasswordModal.vue'
-import BaseAvatar from '../components/common/BaseAvatar.vue'
-import {connectNotifyChannel, onNotifyEvent} from "@/utils/notify-socket.js";
+import {
+    getMyRecentCommentsAPI,
+    getMyUnreadCommentsCountAPI,
+    markCommentsReadAPI
+} from "@/api/task";
 
+import { useUserStore } from "@/stores/user";
+import { useCommonStore } from "@/stores/common";
+import { useNotifyStore } from "@/stores/notifyStore";
+import { useCommentNotifyStore } from "@/stores/commentNotify";
+
+import {
+    BellOutlined, BgColorsOutlined, GlobalOutlined, HomeOutlined, IdcardOutlined,
+    KeyOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined,
+    MessageOutlined, PlusOutlined, QuestionCircleOutlined,
+    SettingOutlined, TeamOutlined, UserOutlined
+} from "@ant-design/icons-vue";
+
+import ChangePasswordModal from "../components/common/ChangePasswordModal.vue";
+import BaseAvatar from "../components/common/BaseAvatar.vue";
+
+import {
+    connectChatChannel,
+    connectNotifyChannel,
+    onIncomingComment,
+    onNotifyEvent
+} from "@/utils/notify-socket.js";
+
+/* ---------------------------------------------
+| DayJS Setup
+--------------------------------------------- */
+dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
-dayjs.locale('vi')
-const notifyStore = useNotifyStore()
+dayjs.locale("vi");
 
+/* ---------------------------------------------
+| Stores & Router
+--------------------------------------------- */
+const userStore = useUserStore();
+const notifyStore = useNotifyStore();
 const commentStore = useCommentNotifyStore();
 
-/* ========= dayjs ========= */
-dayjs.extend(relativeTime)
-dayjs.locale('vi')
+const { user } = storeToRefs(userStore);
 
-/* ========= Stores / Router ========= */
-const common = useCommonStore()
-const userStore = useUserStore()
-const { user } = storeToRefs(userStore)
-const currentRoute = useRoute()
-const router = useRouter()
+const router = useRouter();
+const currentRoute = useRoute();
+const common = useCommonStore();
 
-const isNonWorkflow = computed(() => currentRoute.path.startsWith('/non-workflow'))
-const showCrumbCreateBtn = computed(() => currentRoute.path === '/non-workflow')
+/* ---------------------------------------------
+| Props & Emits
+--------------------------------------------- */
+defineProps({ collapsed: Boolean });
+defineEmits(["toggle", "logout"]);
 
-/* ========= Emits / Props ========= */
-defineEmits(['toggle', 'logout'])
-defineProps({ collapsed: Boolean })
+/* ---------------------------------------------
+| Computed
+--------------------------------------------- */
+const userId = computed(() => userStore.user?.id);
 
-/* ========= State (Inbox) ========= */
-const userId = computed(() => userStore.user?.id)
-const unreadChat = ref(0)
-const inboxItems = ref([])
-const inboxPage = ref(1)
-const inboxHasMore = ref(false)
-const inboxLoading = ref(false)
-const inboxOpen = ref(false)
+const isNonWorkflow = computed(() =>
+    currentRoute.path.startsWith("/non-workflow")
+);
 
-/* ========= State (Notify) ========= */
-const notifyOpen = ref(false)
-const notifyPage = ref(1)
-const notifyHasMore = ref(false)
-const notifyLoading = ref(false)
-const changePwdOpen = ref(false)
+const showCrumbCreateBtn = computed(
+    () => currentRoute.path === "/non-workflow"
+);
 
+/* ---------------------------------------------
+| Inbox State
+--------------------------------------------- */
+const inboxItems = ref([]);
+const inboxOpen = ref(false);
+const unreadChat = ref(0);
+const inboxPage = ref(1);
+const inboxHasMore = ref(false);
+const inboxLoading = ref(false);
 
-const notifyItems = computed(() => notifyStore.items)
+const newInboxItems = computed(() =>
+    inboxItems.value.filter(i => +i.is_unread === 1)
+);
+const oldInboxItems = computed(() =>
+    inboxItems.value.filter(i => +i.is_unread !== 1)
+);
+const unreadOnPage = computed(() => newInboxItems.value.length);
+const moreUnread = computed(
+    () => Math.max(0, unreadChat.value - unreadOnPage.value)
+);
 
-// Lọc mới (chưa đọc)
+/* ---------------------------------------------
+| Notify State
+--------------------------------------------- */
+const notifyOpen = ref(false);
+const notifyLoading = ref(false);
+const notifyPage = ref(1);
+const notifyHasMore = ref(false);
+const changePwdOpen = ref(false);
+
+const notifyItems = computed(() => notifyStore.items);
 const newNotifyItems = computed(() =>
     notifyStore.items.filter(i => i.is_unread)
-)
-
-// Lọc cũ (đã đọc)
+);
 const oldNotifyItems = computed(() =>
     notifyStore.items.filter(i => !i.is_unread)
-)
-
-// Đếm số chưa đọc còn dư
+);
 const moreNotifyUnread = computed(() =>
-    notifyStore.unread > newNotifyItems.value.length
-        ? notifyStore.unread - newNotifyItems.value.length
-        : 0
-)
+    Math.max(0, notifyStore.unread - newNotifyItems.value.length)
+);
 
-/* ========= Computed: Breadcrumbs ========= */
+/* ---------------------------------------------
+| Helper Functions
+--------------------------------------------- */
+const formatTime = ts => dayjs(ts).fromNow();
+
+const buildTaskDetailPath = item => {
+    const type = (item.linked_type || "").toLowerCase();
+    if (type.includes("bidding")) return `/bidding-tasks/${item.task_id}/info`;
+    if (type.includes("contract")) return `/contract-tasks/${item.task_id}/info`;
+    if (type.includes("non-workflow"))
+        return `/non-workflow/tasks/${item.task_id}/info`;
+    return `/tasks/${item.task_id}/info`;
+};
+
+/* ---------------------------------------------
+| Breadcrumb Generator
+--------------------------------------------- */
 const breadcrumbs = computed(() => {
-    const all = router.getRoutes()
-    const p = currentRoute.params
+    const allRoutes = router.getRoutes();
+    const params = currentRoute.params;
+    const buildParams = buildParamsMap(params);
 
-    const cleanParams = (obj) =>
-        Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined && v !== null))
+    const cleanParams = obj =>
+        Object.fromEntries(
+            Object.entries(obj).filter(([, v]) => v !== undefined && v !== null)
+        );
 
-    const buildParams = buildParamsMap(p)
+    const requiredParamsOf = route =>
+        route?.path?.match(/:([A-Za-z0-9_]+)/g)?.map(s => s.slice(1)) || [];
 
-    const requiredParamsOf = (route) => {
-        if (!route?.path) return []
-        const matches = route.path.match(/:([A-Za-z0-9_]+)/g) || []
-        return matches.map(s => s.slice(1))
-    }
+    const trail = [];
+    let cursor = allRoutes.find(r => r.name === currentRoute.name);
 
-    const trail = []
-    let cur = all.find(r => r.name === currentRoute.name)
-
-    while (cur) {
-        if (cur.meta?.breadcrumb) {
-            const target = cur
-            const params = cleanParams(buildParams[target.name]?.() || {})
-            const required = requiredParamsOf(target)
-            const hasAll = required.every(k => params[k] !== undefined && params[k] !== null)
+    while (cursor) {
+        if (cursor.meta?.breadcrumb) {
+            const paramMap = cleanParams(buildParams[cursor.name]?.() || {});
+            const required = requiredParamsOf(cursor);
 
             trail.unshift({
-                name: target.name,
-                meta: target.meta,
-                to: hasAll ? { name: target.name, params } : null
-            })
+                name: cursor.name,
+                meta: cursor.meta,
+                to: required.every(k => paramMap[k] != null)
+                    ? { name: cursor.name, params: paramMap }
+                    : null
+            });
         }
-        const parentName = cur.meta?.parent
-        cur = parentName ? all.find(r => r.name === parentName) : null
+        cursor = cursor.meta?.parent
+            ? allRoutes.find(r => r.name === cursor.meta.parent)
+            : null;
     }
-    return trail
-})
+    return trail;
+});
 
-/* Inbox groups */
-const newInboxItems = computed(() => inboxItems.value.filter(i => +i.is_unread === 1))
-const oldInboxItems = computed(() => inboxItems.value.filter(i => +i.is_unread !== 1))
-const unreadOnPage = computed(() => newInboxItems.value.length)
-const moreUnread = computed(() => Math.max(0, unreadChat.value - unreadOnPage.value))
-
-const formatTime = (ts) => dayjs(ts).fromNow();
-
-const buildTaskDetailPath = (item) => {
-    const type = (item.linked_type || '').toLowerCase()
-    if (type.includes('bidding')) return `/bidding-tasks/${item.task_id}/info`
-    if (type.includes('contract')) return `/contract-tasks/${item.task_id}/info`
-    if (type.includes('non-workflow')) return `/non-workflow/tasks/${item.task_id}/info`
-    return `/tasks/${item.task_id}/info`
-}
-
-/* ========= Navigation / User ========= */
-const goHome = () => router.push('/project-overview')
-const onClickCreateTask = () => {
-    if (isNonWorkflow.value) {
-        common.triggerCreateTask('non-workflow')
-    } else if (currentRoute.name === 'tasks') {
-        common.triggerCreateTask('internal')
-    }
-}
-const handleLogout = () => {
-    userStore.clearUser();
-    router.push('/')
-}
-const redirectToProfile = () => {
-    router.push({ name: 'persons-info', params: { id: user.value.id } })
-}
-
+/* ---------------------------------------------
+| Inbox: API & Actions
+--------------------------------------------- */
 const fetchUnread = async () => {
-    const { data } = await getMyUnreadCommentsCountAPI(userId.value)
-    commentStore.unread = data.unread ?? 0
-}
+    const { data } = await getMyUnreadCommentsCountAPI(userId.value);
+    commentStore.unread = data.unread ?? 0;
+};
 
 const fetchInbox = async (page = 1) => {
-    if (!userId.value) return
-    inboxLoading.value = true
+    if (!userId.value) return;
+    inboxLoading.value = true;
+
     try {
-        const { data } = await getMyRecentCommentsAPI({ user_id: userId.value, page, limit: 10 })
-        const list = data?.comments || []
+        const { data } = await getMyRecentCommentsAPI({
+            user_id: userId.value,
+            page,
+            limit: 10
+        });
 
-        // Cập nhật items
-        inboxItems.value = page === 1 ? list : inboxItems.value.concat(list)
+        const list = data?.comments || [];
+        inboxItems.value = page === 1 ? list : [...inboxItems.value, ...list];
 
-        // Cập nhật unread trong commentStore
-        commentStore.unread = list.filter(i => +i.is_unread === 1).length
+        commentStore.unread = list.filter(i => +i.is_unread === 1).length;
 
-        const cur = data?.pagination?.currentPage || page
-        const total = data?.pagination?.totalPages || cur
-        inboxHasMore.value = cur < total
-        inboxPage.value = page
+        const cur = data?.pagination?.currentPage || page;
+        const total = data?.pagination?.totalPages || cur;
+        inboxHasMore.value = cur < total;
+        inboxPage.value = page;
     } finally {
-        inboxLoading.value = false
+        inboxLoading.value = false;
     }
-}
+};
 
-const refreshInbox = () => fetchInbox(1)
-const loadMoreInbox = () => fetchInbox(inboxPage.value + 1)
+const refreshInbox = () => fetchInbox(1);
+const loadMoreInbox = () => fetchInbox(inboxPage.value + 1);
 
 const markAllInboxRead = async () => {
-    if (!userId.value) return
+    if (!userId.value) return;
+
     try {
-        const allUnreadIds = []
-        let page = 1, hasMore = true
+        const unreadIds = [];
+        let page = 1;
+        let hasMore = true;
+
         while (hasMore) {
-            const { data } = await getMyRecentCommentsAPI({ user_id: userId.value, page, limit: 50 })
-            const list = data?.comments || []
-            allUnreadIds.push(...list.filter(i => +i.is_unread === 1).map(i => i.id))
-            const cur = data?.pagination?.currentPage || page
-            const total = data?.pagination?.totalPages || cur
-            hasMore = cur < total
-            page++
+            const { data } = await getMyRecentCommentsAPI({
+                user_id: userId.value,
+                page,
+                limit: 50
+            });
+
+            const list = data?.comments || [];
+            unreadIds.push(
+                ...list.filter(i => +i.is_unread === 1).map(i => i.id)
+            );
+
+            const cur = data?.pagination?.currentPage || page;
+            const total = data?.pagination?.totalPages || cur;
+            hasMore = cur < total;
+            page++;
         }
-        if (allUnreadIds.length) {
-            await markCommentsReadAPI(userId.value, allUnreadIds)
-            unreadChat.value = 0
-            inboxItems.value = inboxItems.value.map(i => ({ ...i, is_unread: 0 }))
-            message.success('Đã đánh dấu tất cả tin nhắn là đã đọc')
+
+        if (unreadIds.length) {
+            await markCommentsReadAPI(userId.value, unreadIds);
+            unreadChat.value = 0;
+            inboxItems.value = inboxItems.value.map(i => ({
+                ...i,
+                is_unread: 0
+            }));
+            message.success("Đã đánh dấu tất cả tin nhắn là đã đọc");
         } else {
-            message.info('Không còn tin nhắn chưa đọc')
+            message.info("Không còn tin nhắn chưa đọc");
         }
-    } catch (e) {
-        console.error(e)
-        message.error('Không thể đánh dấu tất cả đã đọc')
+    } catch (err) {
+        console.error(err);
+        message.error("Không thể đánh dấu tất cả đã đọc");
     }
-}
+};
+
 const openComment = async (item, e) => {
-    e?.stopPropagation?.()
-    inboxOpen.value = false
-    const path = buildTaskDetailPath(item)
-    await router.push({ path, query: { focus: 'comments', c: item.id } })
+    e?.stopPropagation?.();
+    inboxOpen.value = false;
+
+    await router.push({
+        path: buildTaskDetailPath(item),
+        query: { focus: "comments", c: item.id }
+    });
+
     if (+item.is_unread === 1) {
         try {
-            await markCommentsReadAPI(userId.value, [item.id])
-            item.is_unread = 0
-            unreadChat.value = Math.max(0, unreadChat.value - 1)
+            await markCommentsReadAPI(userId.value, [item.id]);
+            item.is_unread = 0;
+            unreadChat.value = Math.max(0, unreadChat.value - 1);
         } catch (err) {
-            console.error(err)
+            console.error(err);
         }
     }
-}
+};
 
-/* ========= Notify: API & Actions ========= */
+/* ---------------------------------------------
+| Notify: API & Actions
+--------------------------------------------- */
 const fetchNotify = async (page = 1) => {
     notifyLoading.value = true;
+
     const { data } = await getNotificationAPI(userId.value, page);
 
     const list = (data?.data || []).map(n => ({
@@ -612,23 +651,20 @@ const fetchNotify = async (page = 1) => {
     }));
 
     if (page === 1) {
-        // page 1: luôn ghi đè để tránh trùng
         notifyStore.setList(list);
     } else {
-        // page > 1: nối thêm vào cuối
         notifyStore.items = [...notifyStore.items, ...list];
     }
 
     notifyStore.unread = notifyStore.items.filter(i => i.is_unread).length;
-
     notifyPage.value = page;
     notifyHasMore.value = data?.pager?.hasMore || false;
+
     notifyLoading.value = false;
 };
 
-
-const refreshNotify = () => fetchNotify(1)
-const loadMoreNotify = () => fetchNotify(notifyPage.value + 1)
+const refreshNotify = () => fetchNotify(1);
+const loadMoreNotify = () => fetchNotify(notifyPage.value + 1);
 
 const markAllNotifyRead = async () => {
     const unreadItems = notifyStore.items.filter(i => i.is_unread);
@@ -642,87 +678,110 @@ const markAllNotifyRead = async () => {
     message.success("Đã đánh dấu tất cả đã đọc");
 };
 
-async function openApproval(item) {
+const openApproval = async item => {
     notifyOpen.value = false;
+
     if (item.is_unread) {
         try {
             await markNotificationReadAPI(item.id);
-
             notifyStore.markRead(item.id);
-
         } catch (err) {
             console.error("❌ Mark read failed:", err);
         }
     }
 
-    // 2️⃣ Build URL từ type
     const url = buildNotifyUrl(item);
 
-    if (!url) {
-        // fallback an toàn
-        return router.push("/task-approvals");
-    }
-
-    console.log("➡️ Điều hướng tới:", url);
-    console.log("Notify item:", item)
-    console.log("Type:", item.type)
-    console.log("Bid:", item.bid_id, "Step:", item.step_id, "Task:", item.task_id)
-
     try {
-        await router.push(url);
+        await router.push(url || "/task-approvals");
     } catch (err) {
         console.error("❌ Router error:", err);
     }
-}
-
-/* ========= Dropdown handlers ========= */
-const onInboxOpenChange = async (open) => {
-    inboxOpen.value = open
-    if (!open) return
-
-    await fetchUnread()  // cập nhật badge
-    await refreshInbox() // load danh sách
-}
-const onNotifyOpenChange = async (open) => {
-    notifyOpen.value = open;
-    if (!open) return;
-
-    await fetchNotify(1); // không cần replace flag nữa
 };
 
+/* ---------------------------------------------
+| Dropdown handlers
+--------------------------------------------- */
+const onInboxOpenChange = async open => {
+    inboxOpen.value = open;
+    if (open) {
+        await fetchUnread();
+        await refreshInbox();
+    }
+};
 
+const onNotifyOpenChange = async open => {
+    notifyOpen.value = open;
+    if (open) await fetchNotify(1);
+};
+
+/* ---------------------------------------------
+| Realtime Connections
+--------------------------------------------- */
+let unRegisterNotify = null;
+
+watch(
+    () => userStore.user?.id,
+    async id => {
+        if (!id) return;
+
+        /* Notify realtime */
+        connectNotifyChannel(id);
+
+        if (unRegisterNotify) unRegisterNotify();
+        unRegisterNotify = onNotifyEvent(data =>
+            notifyStore.addRealtime(data)
+        );
+
+        /* Comment realtime */
+        connectChatChannel(id);
+
+        onIncomingComment(payload => {
+            const senderId = payload.user_id || payload.author_id;
+            if (senderId === userStore.user.id) return;
+
+            commentStore.unread++;
+
+            if (inboxOpen.value) refreshInbox();
+        });
+
+        /* Initial sync */
+        await fetchNotify(1);
+        await fetchUnread();
+        await fetchInbox(1);
+    },
+    { immediate: true }
+);
+
+/* ---------------------------------------------
+| Auto refresh notify list every 60s
+--------------------------------------------- */
 onMounted(() => {
     setInterval(() => {
         notifyStore.items = [...notifyStore.items];
     }, 60000);
 });
 
+/* ---------------------------------------------
+| Misc Actions
+--------------------------------------------- */
+const goHome = () => router.push("/project-overview");
 
-let unRegisterNotify = null;
+const redirectToProfile = () =>
+    router.push({ name: "persons-info", params: { id: user.value.id } });
 
-watch(
-    () => userStore.user?.id,
-    async (id) => {
-        if (!id) return;
+const onClickCreateTask = () => {
+    if (isNonWorkflow.value) common.triggerCreateTask("non-workflow");
+    else if (currentRoute.name === "tasks")
+        common.triggerCreateTask("internal");
+};
 
-        connectNotifyChannel(id);
-
-        // hủy listener cũ (nếu có)
-        if (unRegisterNotify) unRegisterNotify();
-
-        // đăng ký lại listener
-        unRegisterNotify = onNotifyEvent((data) => {
-            notifyStore.addRealtime(data);
-        });
-
-        await fetchNotify(1);
-    },
-    { immediate: true }
-);
-
-
-
+const handleLogout = () => {
+    userStore.clearUser();
+    router.push("/");
+};
 </script>
+
 
 <style scoped>
 .header {
