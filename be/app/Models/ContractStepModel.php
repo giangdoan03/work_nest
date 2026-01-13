@@ -22,6 +22,7 @@ class ContractStepModel extends Model
         'end_date',
         'completed_at',
         'department',
+        'is_locked',
 
         // ✅ SKIP WORKFLOW
         'skip_status',

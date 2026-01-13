@@ -118,30 +118,18 @@
                                 <div class="steps-line" v-if="stepsOf(item).length">
                                     <span class="steps-label">Chuỗi ký:</span>
                                     <template v-for="(s, idx) in stepsOf(item)" :key="s.id || s.step_id || idx">
-                                        <a-tag
-                                            :class="[
-        pillClass(s),
-        {
-            skipped: s.status === 'skipped' && !isVisuallyCompleted(s, stepsOf(item)),
-            'auto-signed': isVisuallyCompleted(s, stepsOf(item))
-        }
-    ]"
-                                            :color="isVisuallyCompleted(s, stepsOf(item)) ? 'green' : undefined"
-                                        >
-
+                                        <a-tag :class="[  pillClass(s), { skipped: s.status === 'skipped' && !isVisuallyCompleted(s, stepsOf(item)), 'auto-signed': isVisuallyCompleted(s, stepsOf(item))} ]" :color="isVisuallyCompleted(s, stepsOf(item)) ? 'green' : undefined">
                                         {{ s.approver_name }}
                                             <span>
-    ({{ displayStepStatus(s, stepsOf(item)) }})
-</span>
+                                                ({{ displayStepStatus(s, stepsOf(item)) }})
+                                            </span>
                                         </a-tag>
                                     </template>
                                 </div>
                             </div>
 
                             <div class="file-actions">
-                                <a-tooltip
-                                    :title="mySignatureUrl ? signTooltip(item) : 'Bạn chưa tải chữ ký số'"
-                                >
+                                <a-tooltip :title="mySignatureUrl ? signTooltip(item) : 'Bạn chưa tải chữ ký số'">
                                     <a-button
                                         size="large"
                                         shape="circle"
@@ -214,14 +202,12 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/vi'
 import {
     DeleteOutlined,
-    DownloadOutlined,
     EyeOutlined,
     FileExcelOutlined,
     FilePdfOutlined,
     FilePptOutlined,
     FileTextOutlined,
     FileWordOutlined,
-    LinkOutlined,
     ReloadOutlined,
     SearchOutlined,
     UserOutlined,
@@ -233,9 +219,7 @@ import {message, Modal} from 'ant-design-vue'
 import SignPdfModal from '../components/SignPdfModal.vue'
 import {checkSession} from '@/api/auth.js'
 import {approveExternalDocument, uploadSignedPdf} from '@/api/document'
-import { approveDocument } from '@/api/document'
 
-// 🔥 API mới cho quy trình ký
 import {deleteSignStep, getMySignInbox, getDocumentSignDetail, signDocument} from '@/api/documentSign'
 
 dayjs.locale('vi')
@@ -266,10 +250,6 @@ const EXCEL = new Set(['xls', 'xlsx', 'csv'])
 const PPT = new Set(['ppt', 'pptx'])
 const PDF = new Set(['pdf'])
 
-
-const signMode = ref('sign') // 'sign' | 'approve'
-
-
 async function openApprove(item) {
     confirm({
         title: 'Xác nhận duyệt',
@@ -280,7 +260,7 @@ async function openApprove(item) {
             try {
                 const payload = {
                     task_file_id: item.task_file_id || item.id,
-                    document_id: item.converted_id,   // hoặc item.document_id nếu có
+                    document_id: item.converted_id,
                     signed_by: currentUserId.value,
                     signed_at: new Date().toISOString(),
                     status: 'signed',

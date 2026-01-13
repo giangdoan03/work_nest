@@ -103,20 +103,18 @@
 
                         <!-- Duyệt -->
                         <template v-else-if="column.key === 'approval_status'">
-                            <div class="approval-cell" @click.self="openSendApproval(record)" style="cursor:pointer">
+                            <div class="approval-cell">
                                 <a-space :size="8" align="center">
                                     <template v-if="record.status === 'done' && record.approval_status === 'approved'">
                                         <a-tag color="green">Hoàn thành & Đã duyệt</a-tag>
                                     </template>
                                     <template v-else>
-                                        <a-tag :color="record._meta.approvalColor" @click.stop="openSendApproval(record)">
+                                        <a-tag :color="record._meta.approvalColor">
                                             {{ record._meta.approvalText }}
                                         </a-tag>
 
                                         <!-- Chỉ hiện nút khi đang pending & tôi là người duyệt -->
-                                        <template
-                                            v-if="String(record.approval_status || '').toLowerCase() === 'pending' && isMyApprover(record)"
-                                        >
+                                        <template v-if="String(record.approval_status || '').toLowerCase() === 'pending' && isMyApprover(record)">
                                             <a-button size="small" type="primary" @click.stop="approveTask(record)">Duyệt</a-button>
                                             <a-button size="small" danger @click.stop="rejectTask(record)">Từ chối</a-button>
                                         </template>

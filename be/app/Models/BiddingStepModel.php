@@ -21,6 +21,7 @@ class BiddingStepModel extends Model
         'approval_steps',
         'current_level',
         'approval_status',
+        'is_locked',
 
         // 👇 THÊM ĐẦY ĐỦ CHO SKIP
         'skip_status',

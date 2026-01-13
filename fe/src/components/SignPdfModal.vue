@@ -34,24 +34,24 @@
         </div>
 
         <template #footer>
-            <a-tooltip title="Dành cho văn bản phát hành">
-                <a-button :loading="savingApprove" :disabled="approveDisabled" @click="finalizeApproval">
-                    <template #icon><CheckCircleOutlined class="icon-btn" /></template>
-                    Duyệt văn bản
-                </a-button>
-            </a-tooltip>
+<!--            <a-tooltip title="Dành cho văn bản phát hành">-->
+<!--                <a-button :loading="savingApprove" :disabled="approveDisabled" @click="finalizeApproval">-->
+<!--                    <template #icon><CheckCircleOutlined class="icon-btn" /></template>-->
+<!--                    Duyệt văn bản-->
+<!--                </a-button>-->
+<!--            </a-tooltip>-->
 
-            <a-tooltip title="Dành cho văn bản nội bộ">
-                <a-button
-                    type="primary"
-                    :loading="saving"
-                    :disabled="!isPdfReady || saving || disableSignByDocType"
-                    @click="handleSave"
-                >
-                    <template #icon><EditOutlined class="icon-btn" /></template>
-                    Ký văn bản
-                </a-button>
-            </a-tooltip>
+<!--            <a-tooltip title="Dành cho văn bản nội bộ">-->
+<!--                <a-button-->
+<!--                    type="primary"-->
+<!--                    :loading="saving"-->
+<!--                    :disabled="!isPdfReady || saving || disableSignByDocType"-->
+<!--                    @click="handleSave"-->
+<!--                >-->
+<!--                    <template #icon><EditOutlined class="icon-btn" /></template>-->
+<!--                    Ký văn bản-->
+<!--                </a-button>-->
+<!--            </a-tooltip>-->
 
             <a-button @click="downloadSigned">
                 <template #icon><DownloadOutlined class="icon-btn" /></template>
@@ -104,7 +104,7 @@ const props = defineProps({
     signatureUrl: { type: String, default: '' },
 
     autoPlace: { type: Boolean, default: true },
-    markers: { type: [String, Array], default: () => ['dinhvanvinh', 'nguyencanhhop', 'taquytho', 'chuky3'] },
+    markers: { type: [String, Array], default: () => ['dinhvanvinh', 'nguyencanhhop', 'taquytho', 'vuthithuy', 'luongducthuy'] },
     markerWidthPct: { type: Number, default: 25 },
     yOffsetPct: { type: Number, default: -18 },
     centerOnMarker: { type: Boolean, default: true },
@@ -121,7 +121,7 @@ const props = defineProps({
 })
 const emits = defineEmits(['update:open', 'done', 'refresh'])
 
-/* Refs / state */
+
 const canvasRef = ref(null)
 const stageRef = ref(null)
 const sigRef = ref(null)
@@ -137,7 +137,6 @@ const sigW = ref(200)
 const opacity = ref(100)
 
 const saving = ref(false)
-const savingApprove = ref(false)
 const isPdfReady = ref(false)
 const currentUser = ref(null)
 
@@ -731,8 +730,6 @@ function getApprovedStep(signTarget, currentUserId) {
 }
 
 
-
-
 async function drawApproveFooterPreview(ctx, canvas, pageIndex) {
 
     console.log('xxxxxxx')
@@ -1137,377 +1134,6 @@ async function handleSave() {
     }
 }
 
-function normalizeStatus(v) {
-    try {
-        if (v === null || typeof v === 'undefined') return ''
-        return String(v).trim().toLowerCase()
-    } catch {
-        return ''
-    }
-}
-
-const approveDisabled = computed(() => {
-    // nếu parent truyền signTarget prop, ưu tiên dùng props.signTarget; else dùng local computed targetForDoc
-    const t = props.signTarget || targetForDoc.value || null
-
-    // trạng thái đã duyệt ở nhiều chỗ: item.status | approval.status | document.status
-    const s = normalizeStatus(t?.status || t?.approval?.status || t?.document?.status)
-
-    // disable nếu đang lưu, đang duyệt, pdf chưa sẵn, doc type cấm duyệt, hoặc đã duyệt rồi
-    return Boolean(
-        saving.value ||
-        savingApprove.value ||
-        !isPdfReady.value ||
-        disableApproveByDocType.value ||
-        s === 'approved'
-    )
-})
-
-/* finalizeApproval: logic preserved, code structured */
-async function finalizeApproval() {
-    /* -------------------------------------------
-       1) VALIDATION
-    -------------------------------------------- */
-    if (!props.pdfUrl)
-        return message.warning("Không có file PDF để duyệt.");
-
-    if (!pdfDoc.value)
-        return message.warning("Vui lòng chờ PDF tải xong.");
-
-    const target = props.signTarget || null;
-
-    const normalizeStatus = (v) => {
-        try {
-            if (v == null) return "";
-            return String(v).trim().toLowerCase();
-        } catch {
-            return "";
-        }
-    };
-
-    /* -------------------------------------------
-       2) CHECK ALREADY APPROVED
-    -------------------------------------------- */
-    let alreadyApproved = false;
-
-    if (target) {
-        const s1 = normalizeStatus(target.status);
-        const s2 = normalizeStatus(target.approval?.status);
-        const s3 = normalizeStatus(target.document?.status);
-
-        if (s1 === "approved" || s2 === "approved" || s3 === "approved") {
-            alreadyApproved = true;
-        } else if (target.approval_id) {
-            try {
-                const detRes = await getApprovalDetail(target.approval_id);
-                const det = detRes?.data || {};
-
-                const apvStatus = normalizeStatus(det.approval?.status);
-                const docStatus = normalizeStatus(det.document?.status);
-
-                let sigs =
-                    det.signatures ||
-                    det.file_signatures ||
-                    det.file_signature ||
-                    [];
-
-                if (!Array.isArray(sigs) && typeof sigs === "object") {
-                    sigs = Object.values(sigs);
-                }
-
-                sigs = Array.isArray(sigs) ? sigs : [];
-
-                const hasApprovedSig = sigs.some(
-                    (s) =>
-                        normalizeStatus(s?.status || s?.state || s) ===
-                        "approved"
-                );
-
-                if (
-                    apvStatus === "approved" ||
-                    docStatus === "approved" ||
-                    hasApprovedSig
-                ) {
-                    alreadyApproved = true;
-                }
-
-                const steps = Array.isArray(det.steps) ? det.steps : [];
-
-                if (!alreadyApproved && steps.length) {
-                    const unfinished = new Set([
-                        "active",
-                        "pending",
-                        "waiting",
-                        "in_progress",
-                        "todo",
-                        "running",
-                    ]);
-
-                    const anyUnfinished = steps.some((s) =>
-                        unfinished.has(
-                            normalizeStatus(
-                                s?.status ||
-                                s?.step_status ||
-                                s?.state ||
-                                ""
-                            )
-                        )
-                    );
-
-                    if (!anyUnfinished) alreadyApproved = true;
-                }
-            } catch (e) {
-                console.warn("getApprovalDetail failed:", e);
-                alreadyApproved = false;
-            }
-        }
-    }
-
-    if (alreadyApproved) {
-        return message.info("Tài liệu này đã được duyệt trước đó.");
-    }
-
-    /* -------------------------------------------
-       3) BEGIN APPROVE
-    -------------------------------------------- */
-    savingApprove.value = true;
-
-    try {
-        const pdfRes = await safeFetch(props.pdfUrl);
-
-        if (!pdfRes.ok)
-            throw new Error("Không tải được file PDF");
-
-        const pdfBytes = await pdfRes.arrayBuffer();
-
-        if (!PDFLib) await loadPdfLib();
-
-        const { PDFDocument, rgb, StandardFonts } = PDFLib;
-
-        const pdfDocW = await PDFDocument.load(pdfBytes, {
-            updateMetadata: false
-        });
-
-        // try enable fontkit
-        try {
-            const fontkitMod = await import("@pdf-lib/fontkit");
-            pdfDocW.registerFontkit(fontkitMod.default || fontkitMod);
-        } catch (e) {
-            console.warn("fontkit not available:", e);
-        }
-
-        /* -------------------------------------------
-           4) BUILD APPROVAL TEXT
-        -------------------------------------------- */
-        const rawApprover =
-            currentUser.value?.full_name ||
-            currentUser.value?.name ||
-            currentUser.value?.username ||
-            "NguoiDuyet";
-
-        const sanitizeToAscii = (s) => {
-            try {
-                const nd = s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
-                return nd
-                    .replace(/Đ/g, "D")
-                    .replace(/đ/g, "d")
-                    .replace(/[^\x00-\x7F ]/g, "");
-            } catch {
-                return String(s)
-                    .replace(/[Đđ]/g, (c) => (c === "Đ" ? "D" : "d"))
-                    .replace(/[^\x00-\x7F ]/g, "");
-            }
-        };
-
-        const approverDisplay = sanitizeToAscii(rawApprover);
-
-        const now = new Date();
-        const pad = (n) => String(n).padStart(2, "0");
-
-        const vnTime =
-            `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}, ` +
-            `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-
-        const approveText = `${approverDisplay} — Date: ${vnTime}`;
-
-        /* -------------------------------------------
-           5) LOAD FONT FOR WRITING
-        -------------------------------------------- */
-        let usedFont = await loadFontIfAvailable(pdfDocW);
-
-        if (!usedFont) {
-            usedFont = await pdfDocW.embedFont(StandardFonts.Helvetica);
-        }
-
-        /* -------------------------------------------
-           6) DRAW APPROVAL TEXT ON ALL PAGES
-        -------------------------------------------- */
-        const pageTotal = pdfDocW.getPageCount();
-
-        for (let i = 0; i < pageTotal; i++) {
-            const page = pdfDocW.getPage(i);
-            const pdfW = page.getWidth();
-
-            const fontSize = 6;
-            const margin = 20;
-
-            const textWidth = usedFont.widthOfTextAtSize(
-                approveText,
-                fontSize
-            );
-
-            const textHeight =
-                typeof usedFont.heightAtSize === "function"
-                    ? usedFont.heightAtSize(fontSize)
-                    : fontSize;
-
-            const x = Math.max(margin, pdfW - margin - textWidth);
-            const y = margin;
-
-            const lineY = y + textHeight + 2;
-
-            // draw underline
-            page.drawRectangle({
-                x,
-                y: lineY,
-                width: textWidth,
-                height: 0.7,
-                color: rgb(0, 0, 0)
-            });
-
-            // draw text
-            page.drawText(approveText, {
-                x,
-                y,
-                size: fontSize,
-                font: usedFont,
-                color: rgb(0, 0, 0)
-            });
-        }
-
-        /* -------------------------------------------
-           7) SAVE & RELOAD PREVIEW
-        -------------------------------------------- */
-        const out = await pdfDocW.save({
-            useObjectStreams: false
-        });
-
-        const outBlob = new Blob([out], {
-            type: "application/pdf"
-        });
-
-        if (signedBlobUrl.value) {
-            try {
-                URL.revokeObjectURL(signedBlobUrl.value);
-            } catch {}
-        }
-
-        signedBlobUrl.value = URL.createObjectURL(outBlob);
-
-        // reload PDF preview
-        try {
-            const doc = await pdfjsLib.getDocument({
-                data: out
-            }).promise;
-
-            await nextTick();
-
-            pdfDoc.value = markRaw(doc);
-            pageCount.value = doc.numPages;
-
-            pageNum.value = Math.max(
-                1,
-                Math.min(pageNum.value || 1, doc.numPages)
-            );
-
-            queueRender();
-        } catch (e) {
-            console.warn("reload preview failed:", e);
-        }
-
-        emits("done", outBlob);
-        emits("refresh");
-
-        message.success("Thông tin duyệt đã được cập nhật vào tài liệu.");
-        await loadPdf();
-
-        /* -------------------------------------------
-           8) UPDATE BACKEND
-        -------------------------------------------- */
-        const payload = {
-            task_file_id: target?.id || target?.source_task_id || target?.file_id || null,
-            approval_id: target?.approval_id || null,
-            note: `Duyệt bởi ${approverDisplay} lúc ${vnTime}`,
-            signed_by: currentUser.value?.id || null,
-            signed_at: new Date().toISOString(),
-            status: "approved",
-            approver_display: approverDisplay,
-            signed_file_name: target?.title || null,
-            signed_file_path: target?.signed_pdf_url || null,
-            signed_file_size: target?.file_size || null,
-            document_id: target?.document_id || target?.document?.id || null,
-        };
-
-        let res;
-
-        try {
-            res = await approveDocument(payload)
-
-            if (target) {
-                target.status = 'approved'
-                target.approved_at = new Date().toISOString()
-            }
-
-
-        } catch (e) {
-            const msg = e?.response?.data?.message || e.message;
-            return message.error(
-                msg || "Lỗi khi lưu thông tin duyệt."
-            );
-        }
-
-        const serverData = res?.data || {};
-
-        if (
-            serverData?.message &&
-            /được duyệt trước/i.test(serverData.message)
-        ) {
-            message.info(serverData.message);
-
-            const existingSig = serverData?.data;
-
-            if (target) {
-                target.status = "approved";
-                if (target.approval)
-                    target.approval.status = "approved";
-
-                target.file_signature = existingSig;
-            }
-
-            savingApprove.value = false;
-            return;
-        }
-
-        message.success(
-            serverData?.message || "Duyệt thành công."
-        );
-
-        if (target) {
-            target.status = "approved";
-
-            if (target.approval)
-                target.approval.status = "approved";
-
-            target.file_signature = serverData?.data || null;
-        }
-    } catch (err) {
-        console.error("[finalizeApproval] error:", err);
-        message.error("Duyệt thất bại.");
-    } finally {
-        savingApprove.value = false;
-    }
-}
-
 
 /* target/docType logic preserved */
 const targetForDoc = computed(() => {
@@ -1521,8 +1147,6 @@ const docType = computed(() => {
         return String(t.document?.doc_type || t.doc_type || t?.document_type || '').trim().toLowerCase() || null
     } catch { return null }
 })
-const disableApproveByDocType = computed(() => docType.value === 'internal')
-const disableSignByDocType = computed(() => { if (!docType.value) return false; return docType.value !== 'internal' })
 
 /* preview spinning boolean */
 const previewSpinning = computed(() => props.open && (props.parentLoading || !isPdfReady.value))
