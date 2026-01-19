@@ -10,43 +10,58 @@
                 :key="doc.id"
                 :doc="doc"
                 :highlight="String(doc.id) === String(focusTaskId)"
+                @approve="approveTask"
+                @reject="rejectTask"
+                @return="returnTask"
             />
         </div>
     </a-card>
 </template>
 
+
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import WorkflowCard from './WorkflowCard.vue'
-import { getWorkflowTasks } from '@/api/workflow' // 👈 API của bạn
+import { getWorkflowTasks, approveWorkflowTask, rejectWorkflowTask, returnWorkflowTask } from '@/api/workflow'
 
 const props = defineProps({
     column: Object,
     focusTaskId: [String, Number],
 })
 
+
 const tasks = ref([])
 
 const loadTasks = async () => {
-    const col = props.column
+    const res = await getWorkflowTasks({
+        department_id: props.column.department_id,
+        position_code: props.column.position_code,
+        level: props.column.level,
+    })
 
-    try {
-        const res = await getWorkflowTasks({
-            department_id: col.department_id,
-            position_code: col.position_code,
-            level: col.level,
-        })
+    tasks.value = res.data?.data || []
+}
 
-        tasks.value = res.data || []
-    } catch (e) {
-        tasks.value = []
-    }
+/* ================== ACTION HANDLERS ================== */
+const approveTask = async (task) => {
+    await approveWorkflowTask(task.id)
+    await loadTasks() // reload cột hiện tại
+}
+
+const rejectTask = async (task) => {
+    await rejectWorkflowTask(task.id)
+    await loadTasks()
+}
+
+const returnTask = async (task) => {
+    await returnWorkflowTask(task.id)
+    await loadTasks()
 }
 
 onMounted(loadTasks)
-
 watch(() => props.column, loadTasks, { deep: true })
 </script>
+
 
 <style scoped>
 .workflow-column {

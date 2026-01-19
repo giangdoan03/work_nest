@@ -29,6 +29,15 @@ $routes->group('api', function ($routes) {
         $routes->get("can-access", "DocLibraryController::checkAccess");
     });
 
+    $routes->group('workflow', function ($routes) {
+        $routes->get('board', 'WorkflowController::board');
+
+        $routes->post('submit', 'WorkflowController::submit');
+        $routes->post('(:num)/approve', 'WorkflowController::approve/$1');
+        $routes->post('(:num)/reject', 'WorkflowController::reject/$1');
+        $routes->post('(:num)/return', 'WorkflowController::return/$1');
+    });
+
 
     // notifications
     $routes->group('notifications', function($routes) {

@@ -15,7 +15,8 @@ class TaskModel extends Model
         'linked_type', 'linked_id', 'step_code', 'created_by', 'proposed_by',
         'priority', 'comments_count', 'parent_id', 'step_id', 'approval_status',
         'approval_steps', 'current_level', 'title', 'updated_at', 'id_department', 'progress', 'overdue_reason',
-        'approver_ids', 'needs_approval', 'approval_roster_json', 'latest_upload_batch', 'latest_files_json'
+        'approver_ids', 'needs_approval', 'approval_roster_json', 'latest_upload_batch', 'latest_files_json',
+        'workflow_id', 'workflow_step_id', 'workflow_step_id'
     ];
 
     protected $useTimestamps = true;

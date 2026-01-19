@@ -477,7 +477,7 @@ class Auth extends Controller
             ')
                 ->join('roles', 'roles.id = users.role_id', 'left')
                 ->join('departments', 'departments.id = users.department_id', 'left')
-                ->join('positions', 'positions.id = users.position_id', 'left')   // 🔥 thêm JOIN này
+                ->join('positions', 'positions.id = users.position_id', 'left')
                 ->find($userId);
 
             if ($user) {
