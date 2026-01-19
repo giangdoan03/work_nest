@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jan 13, 2026 at 07:28 AM
+-- Generation Time: Jan 19, 2026 at 09:15 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -6747,7 +6747,16 @@ INSERT INTO `task_snapshots` (`id`, `task_id`, `snapshot_at`, `title`, `descript
 (2049, 323, '2026-01-13 10:33:23', 'nhiêm vụ con 13/12/2025', 'ok test', '2025-12-13', '2026-01-31', 'done', 'normal', 'approved', 100, 6, 9, NULL, 3, 3, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 3, \"acted_at\": \"2025-12-13 15:46:26\", \"added_at\": \"2025-12-13 15:42:21\", \"department_id\": 1, \"signature_code\": null}, {\"name\": \"Nguyễn Thị Hạnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 14, \"acted_at\": \"2025-12-13 15:46:07\", \"added_at\": \"2025-12-13 15:42:29\", \"department_id\": 4, \"signature_code\": null}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 10, \"acted_at\": \"2025-12-13 15:46:07\", \"added_at\": \"2025-12-13 15:44:10\", \"department_id\": 6, \"signature_code\": \"vu_thi_thuy_bgd\"}]', 1, '[{\"id\": \"238\", \"title\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1fPyG1SZR-Inw5y2CD98NTgs3yockC62FY-5aJjsLg68/edit\", \"file_size\": \"84480\", \"google_file_id\": \"1fPyG1SZR-Inw5y2CD98NTgs3yockC62FY-5aJjsLg68\"}]', '2026-01-13 10:33:23', '2026-01-13 10:33:23'),
 (2050, 323, '2026-01-13 10:33:29', 'nhiêm vụ con 13/12/2025', 'ok test', '2025-12-13', '2026-01-31', 'done', 'normal', 'approved', 100, 6, 9, NULL, 3, 3, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 3, \"acted_at\": \"2025-12-13 15:46:26\", \"added_at\": \"2025-12-13 15:42:21\", \"department_id\": 1, \"signature_code\": null}, {\"name\": \"Nguyễn Thị Hạnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 14, \"acted_at\": \"2025-12-13 15:46:07\", \"added_at\": \"2025-12-13 15:42:29\", \"department_id\": 4, \"signature_code\": null}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 10, \"acted_at\": \"2025-12-13 15:46:07\", \"added_at\": \"2025-12-13 15:44:10\", \"department_id\": 6, \"signature_code\": \"vu_thi_thuy_bgd\"}]', 1, '[{\"id\": \"238\", \"title\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1fPyG1SZR-Inw5y2CD98NTgs3yockC62FY-5aJjsLg68/edit\", \"file_size\": \"84480\", \"google_file_id\": \"1fPyG1SZR-Inw5y2CD98NTgs3yockC62FY-5aJjsLg68\"}]', '2026-01-13 10:33:29', '2026-01-13 10:33:29'),
 (2051, 337, '2026-01-13 11:11:25', 'nhiệm vụ 10/01/2026', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 9, '[{\"id\": \"267\", \"title\": \"Converted_20251110_TTrHCNS_Test Phan mem.docx\", \"file_path\": \"https://docs.google.com/document/d/1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4/edit\", \"file_size\": \"206100\", \"google_file_id\": \"1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4\"}, {\"id\": \"268\", \"title\": \"new_file_ex.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8/edit\", \"file_size\": \"152505\", \"google_file_id\": \"1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8\"}]', '2026-01-13 11:11:25', '2026-01-13 11:11:25'),
-(2052, 338, '2026-01-13 11:26:16', 'nhiệm vụ hợp đồng', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 1, '[]', NULL, '[]', '2026-01-13 11:26:16', '2026-01-13 11:26:16');
+(2052, 338, '2026-01-13 11:26:16', 'nhiệm vụ hợp đồng', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 1, '[]', NULL, '[]', '2026-01-13 11:26:16', '2026-01-13 11:26:16'),
+(2053, 337, '2026-01-19 15:49:19', 'nhiệm vụ 10/01/2026', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 9, '[{\"id\": \"267\", \"title\": \"Converted_20251110_TTrHCNS_Test Phan mem.docx\", \"file_path\": \"https://docs.google.com/document/d/1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4/edit\", \"file_size\": \"206100\", \"google_file_id\": \"1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4\"}, {\"id\": \"268\", \"title\": \"new_file_ex.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8/edit\", \"file_size\": \"152505\", \"google_file_id\": \"1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8\"}]', '2026-01-19 15:49:19', '2026-01-19 15:49:19'),
+(2054, 337, '2026-01-19 16:01:46', 'nhiệm vụ 10/01/2026', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 9, '[{\"id\": \"267\", \"title\": \"Converted_20251110_TTrHCNS_Test Phan mem.docx\", \"file_path\": \"https://docs.google.com/document/d/1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4/edit\", \"file_size\": \"206100\", \"google_file_id\": \"1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4\"}, {\"id\": \"268\", \"title\": \"new_file_ex.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8/edit\", \"file_size\": \"152505\", \"google_file_id\": \"1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8\"}]', '2026-01-19 16:01:46', '2026-01-19 16:01:46'),
+(2055, 337, '2026-01-19 16:04:25', 'nhiệm vụ 10/01/2026', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 9, '[{\"id\": \"267\", \"title\": \"Converted_20251110_TTrHCNS_Test Phan mem.docx\", \"file_path\": \"https://docs.google.com/document/d/1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4/edit\", \"file_size\": \"206100\", \"google_file_id\": \"1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4\"}, {\"id\": \"268\", \"title\": \"new_file_ex.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8/edit\", \"file_size\": \"152505\", \"google_file_id\": \"1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8\"}]', '2026-01-19 16:04:25', '2026-01-19 16:04:25'),
+(2056, 337, '2026-01-19 16:04:38', 'nhiệm vụ 10/01/2026', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 9, '[{\"id\": \"267\", \"title\": \"Converted_20251110_TTrHCNS_Test Phan mem.docx\", \"file_path\": \"https://docs.google.com/document/d/1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4/edit\", \"file_size\": \"206100\", \"google_file_id\": \"1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4\"}, {\"id\": \"268\", \"title\": \"new_file_ex.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8/edit\", \"file_size\": \"152505\", \"google_file_id\": \"1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8\"}]', '2026-01-19 16:04:38', '2026-01-19 16:04:38'),
+(2057, 337, '2026-01-19 16:05:15', 'nhiệm vụ 10/01/2026', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 9, '[{\"id\": \"267\", \"title\": \"Converted_20251110_TTrHCNS_Test Phan mem.docx\", \"file_path\": \"https://docs.google.com/document/d/1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4/edit\", \"file_size\": \"206100\", \"google_file_id\": \"1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4\"}, {\"id\": \"268\", \"title\": \"new_file_ex.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8/edit\", \"file_size\": \"152505\", \"google_file_id\": \"1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8\"}]', '2026-01-19 16:05:15', '2026-01-19 16:05:15'),
+(2058, 337, '2026-01-19 16:08:44', 'nhiệm vụ 10/01/2026', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 9, '[{\"id\": \"267\", \"title\": \"Converted_20251110_TTrHCNS_Test Phan mem.docx\", \"file_path\": \"https://docs.google.com/document/d/1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4/edit\", \"file_size\": \"206100\", \"google_file_id\": \"1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4\"}, {\"id\": \"268\", \"title\": \"new_file_ex.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8/edit\", \"file_size\": \"152505\", \"google_file_id\": \"1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8\"}]', '2026-01-19 16:08:44', '2026-01-19 16:08:44'),
+(2059, 337, '2026-01-19 16:08:55', 'nhiệm vụ 10/01/2026', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 9, '[{\"id\": \"267\", \"title\": \"Converted_20251110_TTrHCNS_Test Phan mem.docx\", \"file_path\": \"https://docs.google.com/document/d/1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4/edit\", \"file_size\": \"206100\", \"google_file_id\": \"1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4\"}, {\"id\": \"268\", \"title\": \"new_file_ex.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8/edit\", \"file_size\": \"152505\", \"google_file_id\": \"1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8\"}]', '2026-01-19 16:08:55', '2026-01-19 16:08:55'),
+(2060, 337, '2026-01-19 16:10:26', 'nhiệm vụ 10/01/2026', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 9, '[{\"id\": \"267\", \"title\": \"Converted_20251110_TTrHCNS_Test Phan mem.docx\", \"file_path\": \"https://docs.google.com/document/d/1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4/edit\", \"file_size\": \"206100\", \"google_file_id\": \"1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4\"}, {\"id\": \"268\", \"title\": \"new_file_ex.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8/edit\", \"file_size\": \"152505\", \"google_file_id\": \"1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8\"}]', '2026-01-19 16:10:26', '2026-01-19 16:10:26'),
+(2061, 337, '2026-01-19 16:11:42', 'nhiệm vụ 10/01/2026', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 9, '[{\"id\": \"267\", \"title\": \"Converted_20251110_TTrHCNS_Test Phan mem.docx\", \"file_path\": \"https://docs.google.com/document/d/1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4/edit\", \"file_size\": \"206100\", \"google_file_id\": \"1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4\"}, {\"id\": \"268\", \"title\": \"new_file_ex.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8/edit\", \"file_size\": \"152505\", \"google_file_id\": \"1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8\"}]', '2026-01-19 16:11:42', '2026-01-19 16:11:42');
 
 -- --------------------------------------------------------
 
@@ -6793,6 +6802,42 @@ INSERT INTO `users` (`id`, `email`, `password`, `created_at`, `updated_at`, `nam
 (15, 'hcns1@ttid.vn', '$2y$10$e6z52SuVrQnDyPITVROlq.lbJF3uj1xrb0redSB.B7mvhd3uKNBUG', '2025-06-04 16:15:57', '2025-12-11 10:23:44', 'Trần Thị Hiền', '0945317398', 'uploads/avatars/1765035350_f4d84714ad46fbca6283.jpg', NULL, 0, 'tranthihien', 'tran_thi_hien', 1, 3, 4),
 (29, 'doangiang665@gmail.com', '$2y$10$3QhZCEuukB7nT.XEnDE9BO5E/nlbvKK.KujtmALEdqPlQvA7X7A/q', '2025-12-04 10:38:41', '2025-12-11 10:23:44', 'Đoàn Văn Giang', '0988888888', NULL, 'https://assets.develop.io.vn/wp-content/uploads/2025/12/photo_2025-10-17_10-08-52-1.jpg', 0, 'doanvangiang', 'doan_van_giang', 1, 2, 4),
 (30, 'hieu.le@ttid.vn', '$2y$10$PepN43S0NERKBT.w4jPlt.BnXb26Uf6xkpiGPW/9bVfSo0ce6Wb9W', '2025-12-06 22:24:56', '2025-12-11 10:23:44', 'Lê Minh Hiếu', '0335201151', NULL, NULL, 0, 'leminhhieu', 'le_minh_hieu', 3, 3, 4);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_roles`
+--
+
+CREATE TABLE `user_roles` (
+  `id` int UNSIGNED NOT NULL,
+  `user_id` int UNSIGNED NOT NULL,
+  `department_id` int UNSIGNED NOT NULL,
+  `position_id` int UNSIGNED NOT NULL,
+  `is_primary` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `user_roles`
+--
+
+INSERT INTO `user_roles` (`id`, `user_id`, `department_id`, `position_id`, `is_primary`, `created_at`) VALUES
+(1, 1, 6, 1, 1, '2026-01-19 15:37:15'),
+(2, 3, 1, 4, 1, '2026-01-19 15:37:15'),
+(3, 4, 3, 3, 1, '2026-01-19 15:37:15'),
+(4, 5, 3, 4, 1, '2026-01-19 15:37:15'),
+(5, 6, 3, 4, 1, '2026-01-19 15:37:15'),
+(6, 7, 6, 2, 1, '2026-01-19 15:37:15'),
+(7, 8, 3, 4, 1, '2026-01-19 15:37:15'),
+(8, 9, 3, 4, 1, '2026-01-19 15:37:15'),
+(9, 10, 6, 2, 1, '2026-01-19 15:37:15'),
+(10, 11, 2, 4, 1, '2026-01-19 15:37:15'),
+(11, 13, 4, 4, 1, '2026-01-19 15:37:15'),
+(12, 14, 4, 4, 1, '2026-01-19 15:37:15'),
+(13, 15, 1, 4, 1, '2026-01-19 15:37:15'),
+(14, 29, 1, 4, 1, '2026-01-19 15:37:15'),
+(15, 30, 3, 4, 1, '2026-01-19 15:37:15');
 
 -- --------------------------------------------------------
 
@@ -7196,6 +7241,16 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `email` (`email`);
 
 --
+-- Indexes for table `user_roles`
+--
+ALTER TABLE `user_roles`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_user_dept_position` (`user_id`,`department_id`,`position_id`),
+  ADD KEY `idx_user` (`user_id`),
+  ADD KEY `idx_department` (`department_id`),
+  ADD KEY `idx_position` (`position_id`);
+
+--
 -- Indexes for table `user_signatures`
 --
 ALTER TABLE `user_signatures`
@@ -7521,13 +7576,19 @@ ALTER TABLE `task_sign_logs`
 -- AUTO_INCREMENT for table `task_snapshots`
 --
 ALTER TABLE `task_snapshots`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2053;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2062;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
   MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+
+--
+-- AUTO_INCREMENT for table `user_roles`
+--
+ALTER TABLE `user_roles`
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `user_signatures`

@@ -24,6 +24,18 @@
                 <!-- LEFT: 2/3 — Thông tin nhiệm vụ -->
                 <a-col :span="13" :xs="24" :lg="13" :xl="13">
                     <a-card title="Chi tiết nhiệm vụ" bordered>
+                        <template #extra>
+                            <a-tooltip title="Xem bảng luồng duyệt">
+                                <a-button
+                                    type="default"
+                                    size="small"
+                                    @click="goWorkflowBoard"
+                                >
+                                    <ApartmentOutlined />
+                                    Workflow
+                                </a-button>
+                            </a-tooltip>
+                        </template>
                         <div>
                             <a-tabs
                                 v-model:activeKey="activeTab"
@@ -424,7 +436,7 @@
     </div>
 </template>
 <script setup>
-import {EllipsisOutlined, DeleteOutlined} from '@ant-design/icons-vue'
+import {EllipsisOutlined, DeleteOutlined, ApartmentOutlined } from '@ant-design/icons-vue'
 import {computed, nextTick, onMounted, reactive, ref, watch} from 'vue'
 import {message} from 'ant-design-vue'
 import 'dayjs/locale/vi'
@@ -1215,6 +1227,15 @@ const approvedNames = computed(() =>
 const goBack = () => {
     if (window.history.length > 1) router.back()
     else router.push('/non-workflow')
+}
+
+const goWorkflowBoard = () => {
+    router.push({
+        name: 'workflow-board', // 👈 tên route bạn sẽ khai báo
+        query: {
+            task_id: route.params.id, // 👈 truyền task đang xem
+        },
+    })
 }
 
 

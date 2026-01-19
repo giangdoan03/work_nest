@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\UserModel;
+use App\Models\UserRoleModel;
 use App\Models\UserSignatureModel;
 use CodeIgniter\Controller;
 use CodeIgniter\Files\File;
@@ -33,35 +34,59 @@ class Auth extends Controller
     {
         $departmentId = $this->request->getGet('department_id');
 
+        /** ================== LIST USERS + ROLE CHÍNH ================== */
         $builder = $this->model
             ->select('
-        users.*,
-        users.is_multi_role,
-        roles.name AS role_name,
-        roles.code AS role_code,
-        roles.description AS role_description,
-        positions.name AS position_name,
-        positions.level AS position_level
-    ')
-            ->join('roles', 'roles.id = users.role_id', 'left')
-            ->join('positions', 'positions.id = users.position_id', 'left');
-
+            users.*,
+            ur.department_id,
+            ur.position_id,
+            d.name AS department_name,
+            p.name AS position_name,
+            p.level AS position_level
+        ')
+            ->join(
+                'user_roles ur',
+                'ur.user_id = users.id AND ur.is_primary = 1',
+                'left'
+            )
+            ->join('departments d', 'd.id = ur.department_id', 'left')
+            ->join('positions p', 'p.id = ur.position_id', 'left');
 
         if ($departmentId) {
-            $builder->where('users.department_id', $departmentId);
+            $builder->where('ur.department_id', $departmentId);
         }
 
         $users = $builder->findAll();
 
-        $users = array_map(function ($u) {
-            $sigModel = new UserSignatureModel();
+        if (empty($users)) {
+            return $this->respond([]);
+        }
+
+        /** ================== MAP USERS ================== */
+        $userIds = array_column($users, 'id');
+
+        /** ================== LOAD MULTI ROLES (1 QUERY) ================== */
+        $userRoleModel = new UserRoleModel();
+        $multiRoles = $userRoleModel
+            ->whereIn('user_id', $userIds)
+            ->where('is_primary', 0)
+            ->findAll();
+
+        /** ================== GROUP BY user_id ================== */
+        $multiRoleMap = [];
+        foreach ($multiRoles as $r) {
+            $multiRoleMap[$r['user_id']][] = $r;
+        }
+
+        /** ================== MERGE DATA ================== */
+        foreach ($users as &$u) {
             unset($u['password']);
-            $u['multi_roles'] = $sigModel->getActiveByUser($u['id']);
-            return $u;
-        }, $users);
+            $u['multi_roles'] = $multiRoleMap[$u['id']] ?? [];
+        }
 
         return $this->respond($users);
     }
+
 
 
     public function show($id = null): ResponseInterface
@@ -69,12 +94,19 @@ class Auth extends Controller
         $user = $this->model
             ->select('
             users.*,
-            users.is_multi_role,
-            roles.name AS role_name,
-            roles.code AS role_code,
-            roles.description AS role_description
+            ur.department_id,
+            ur.position_id,
+            d.name AS department_name,
+            p.name AS position_name,
+            p.level AS position_level
         ')
-            ->join('roles', 'roles.id = users.role_id', 'left')
+            ->join(
+                'user_roles ur',
+                'ur.user_id = users.id AND ur.is_primary = 1',
+                'left'
+            )
+            ->join('departments d', 'd.id = ur.department_id', 'left')
+            ->join('positions p', 'p.id = ur.position_id', 'left')
             ->find($id);
 
         if (!$user) {
@@ -83,18 +115,17 @@ class Auth extends Controller
 
         unset($user['password']);
 
-        $sigModel = new UserSignatureModel();
-        $user['multi_roles'] = $sigModel->getActiveByUser($id);
+        $userRoleModel = new UserRoleModel();
+
+        $user['multi_roles'] = $userRoleModel
+            ->where('user_id', $id)
+            ->where('is_primary', 0)
+            ->findAll();
 
         return $this->respond($user);
     }
 
 
-
-
-    /**
-     * @throws ReflectionException
-     */
     /**
      * @throws ReflectionException
      */
@@ -102,7 +133,6 @@ class Auth extends Controller
     {
         $data = $this->request->getJSON(true);
         $validation = Services::validation();
-        $sigModel = new UserSignatureModel();
 
         $rules = [
             'name'              => 'required',
@@ -110,7 +140,8 @@ class Auth extends Controller
             'phone'             => 'required',
             'password'          => 'required|min_length[6]',
             'confirm_password'  => 'required|matches[password]',
-            'role_id'           => 'required|integer',
+            'department_id'     => 'required|integer',
+            'position_id'       => 'required|integer',
         ];
 
         if (!$this->validate($rules)) {
@@ -120,39 +151,44 @@ class Auth extends Controller
         unset($data['confirm_password']);
         $data['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
 
-        // Tạo user
-        $id = $this->model->insert($data);
-        if (!$id) {
-            return $this->fail("Cannot create user");
+        /** ================== CREATE USER ================== */
+        $userId = $this->model->insert($data);
+        if (!$userId) {
+            return $this->fail('Cannot create user');
         }
 
-        /* ==========================================================
-         * XỬ LÝ MULTI ROLE (KIÊM NHIỆM)
-         * ========================================================== */
+        /** ================== USER ROLES ================== */
+        $userRoleModel = new UserRoleModel();
 
-        $isMulti = (int)($data['is_multi_role'] ?? 0);
+        // 1️⃣ ROLE CHÍNH
+        $userRoleModel->insert([
+            'user_id'       => $userId,
+            'department_id' => $data['department_id'],
+            'position_id'   => $data['position_id'],
+            'is_primary'    => 1,
+        ]);
 
-        if ($isMulti === 1) {
-            $sigModel->insert([
-                'user_id'          => $id,
-                'role_name'        => $data['role_name'] ?? null,
-                'department_id'    => $data['department_id'] ?? null,
-                'preferred_marker' => $data['preferred_marker'] ?? null,
-                'approval_marker'  => $data['approval_marker'] ?? null,
-                'signature_url'    => $data['signature_url'] ?? null,
-                'approval_order'   => 1,
-                'active'           => 1
+        // 2️⃣ ROLE KIÊM NHIỆM
+        foreach ($data['multi_roles'] ?? [] as $mr) {
+            if (
+                empty($mr['department_id']) ||
+                empty($mr['position_id'])
+            ) {
+                continue;
+            }
+
+            $userRoleModel->insert([
+                'user_id'       => $userId,
+                'department_id' => $mr['department_id'],
+                'position_id'   => $mr['position_id'],
+                'is_primary'    => 0,
             ]);
         }
 
-        return $this->respondCreated(['id' => $id]);
+        return $this->respondCreated(['id' => $userId]);
     }
 
 
-
-    /**
-     * @throws ReflectionException
-     */
     /**
      * @throws ReflectionException
      */
@@ -165,74 +201,113 @@ class Auth extends Controller
             return $this->failNotFound('User not found');
         }
 
-        $sigModel = new UserSignatureModel();
+        $userRoleModel = new UserRoleModel();
 
-        /** ================== PASSWORD ================== */
+        /* ================== PASSWORD ================== */
         if (!empty($data['password'])) {
             $data['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
         } else {
             unset($data['password']);
         }
+        unset($data['confirm_password']);
 
-        /** ================== MULTI ROLE FLAG ================== */
-        $oldFlag = (int)($user['is_multi_role'] ?? 0);
-        $newFlag = array_key_exists('is_multi_role', $data) ? (int)$data['is_multi_role'] : $oldFlag;
-
-        /** ================== SIGNATURE URL ================== */
-        $newSignature = array_key_exists('signature_url', $data) ? $data['signature_url'] : ($user['signature_url'] ?? null);
-
-        /** ================== UPDATE USER (cơ bản) ================== */
+        /* ================== UPDATE USER ================== */
         $this->model->update($id, $data);
 
-        /** ===============================================================
-         *  MULTI ROLES (danh sách phòng ban + marker)
-         * =============================================================== */
+        /* =====================================================
+         * ROLE LOGIC – user_roles
+         * ===================================================== */
+
+        $isMulti = (int)($data['is_multi_role'] ?? 0);
+
+        // FE bắt buộc gửi department_id + position_id cho role chính
+        $primaryDept = $data['department_id'] ?? null;
+        $primaryPos  = $data['position_id'] ?? null;
+
+        if (!$primaryDept || !$primaryPos) {
+            return $this->failValidationErrors('Thiếu department_id hoặc position_id');
+        }
+
+        /* 1️⃣ Reset toàn bộ role về non-primary */
+        $userRoleModel
+            ->where('user_id', $id)
+            ->set(['is_primary' => 0])
+            ->update();
+
+        /* 2️⃣ Upsert ROLE CHÍNH */
+        $existingPrimary = $userRoleModel
+            ->where([
+                'user_id'       => $id,
+                'department_id' => $primaryDept,
+                'position_id'   => $primaryPos,
+            ])
+            ->first();
+
+        if ($existingPrimary) {
+            $userRoleModel->update($existingPrimary['id'], [
+                'is_primary' => 1
+            ]);
+            $keepIds[] = $existingPrimary['id'];
+        } else {
+            $keepIds[] = $userRoleModel->insert([
+                'user_id'       => $id,
+                'department_id' => $primaryDept,
+                'position_id'   => $primaryPos,
+                'is_primary'    => 1,
+            ]);
+        }
+
+        /* 3️⃣ MULTI ROLES */
         $multiRoles = $data['multi_roles'] ?? [];
 
-        if ($newFlag === 0) {
-            // về đơn nhiệm => tắt hết multi role
-            $sigModel->where('user_id', $id)->set(['active' => 0])->update();
-            return $this->respond(['status' => 'success']);
-        }
+        if ($isMulti === 1 && is_array($multiRoles)) {
+            foreach ($multiRoles as $mr) {
+                if (empty($mr['department_id']) || empty($mr['position_id'])) {
+                    continue;
+                }
 
-        $keepIds = [];
-        $order   = 1;
+                // bỏ trùng với role chính
+                if (
+                    (int)$mr['department_id'] === (int)$primaryDept &&
+                    (int)$mr['position_id'] === (int)$primaryPos
+                ) {
+                    continue;
+                }
 
-        foreach ($multiRoles as $role) {
-            $row = [
-                'department_id'    => $role['department_id'] ?? null,
-                'role_name'        => $role['role_name'] ?? null,
-                'preferred_marker' => $role['preferred_marker'] ?? null,
-                'approval_marker'  => $role['approval_marker'] ?? null,
-                'signature_url'    => $role['signature_url'] ?? $newSignature,
-                'approval_order'   => $order,
-                'active'           => 1,
-            ];
+                $exist = $userRoleModel
+                    ->where([
+                        'user_id'       => $id,
+                        'department_id' => $mr['department_id'],
+                        'position_id'   => $mr['position_id'],
+                    ])
+                    ->first();
 
-            if (!empty($role['id'])) {
-                // update bản ghi cũ
-                $sigModel->update($role['id'], $row);
-                $keepIds[] = $role['id'];
-            } else {
-                // insert mới
-                $row['user_id'] = $id;
-                $newId = $sigModel->insert($row);
-                $keepIds[] = $newId;
+                if ($exist) {
+                    $keepIds[] = $exist['id'];
+                } else {
+                    $keepIds[] = $userRoleModel->insert([
+                        'user_id'       => $id,
+                        'department_id' => $mr['department_id'],
+                        'position_id'   => $mr['position_id'],
+                        'is_primary'    => 0,
+                    ]);
+                }
             }
-
-            $order++;
         }
 
-        // disable những vai trò không còn gửi từ FE
+        /* 4️⃣ Xoá role KHÔNG còn trong payload */
         if (!empty($keepIds)) {
-            $sigModel->where('user_id', $id)
+            $userRoleModel
+                ->where('user_id', $id)
                 ->whereNotIn('id', $keepIds)
-                ->set(['active' => 0])
-                ->update();
+                ->delete();
         }
 
-        return $this->respond(['status' => 'success']);
+        return $this->respond([
+            'status' => 'success'
+        ]);
     }
+
 
 
 

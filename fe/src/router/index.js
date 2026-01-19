@@ -29,6 +29,7 @@ import BiddingStepTasks from '../components/BiddingStepTask/BiddingStepTasks.vue
 import ContractStepTasks from '../components/ContractStepTask/ContractStepTasks.vue'
 import UserGuide from '../components/UserGuide.vue'
 import DocumentInfoPage from '../page/documents/DocumentInfoPage.vue'
+import WorkflowBoard from '../page/workflow-board/WorkflowBoard.vue'
 import Forbidden403 from "@/page/Forbidden403.vue"
 import { message } from "ant-design-vue";
 import { canAccessEntity } from "@/api/entityMembers";
@@ -336,6 +337,14 @@ const routes = [
                 meta: { breadcrumb: 'Hướng dẫn sử dụng' }
             },
 
+            {
+                path: '/workflow-board',
+                name: 'workflow-board',
+                component: WorkflowBoard,
+                meta: {
+                    breadcrumb: 'Bảng luồng duyệt',
+                },
+            },
 
 
         ]
@@ -374,6 +383,7 @@ const routePermissionMap = {
     'non-workflow': 'task',
     'department-task-detail': 'task',
     'user-guide': 'guide',
+    'workflow-board': 'task',
 }
 
 router.beforeEach(async (to, from, next) => {
