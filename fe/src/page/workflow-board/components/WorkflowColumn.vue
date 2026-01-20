@@ -18,17 +18,20 @@
     </a-card>
 </template>
 
-
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import WorkflowCard from './WorkflowCard.vue'
-import { getWorkflowTasks, approveWorkflowTask, rejectWorkflowTask, returnWorkflowTask } from '@/api/workflow'
+import {
+    getWorkflowTasks,
+    approveWorkflowTask,
+    rejectWorkflowTask,
+    returnWorkflowTask,
+} from '@/api/workflow'
 
 const props = defineProps({
     column: Object,
     focusTaskId: [String, Number],
 })
-
 
 const tasks = ref([])
 
@@ -42,10 +45,10 @@ const loadTasks = async () => {
     tasks.value = res.data?.data || []
 }
 
-/* ================== ACTION HANDLERS ================== */
+/* ================== ACTION ================== */
 const approveTask = async (task) => {
     await approveWorkflowTask(task.id)
-    await loadTasks() // reload cột hiện tại
+    await loadTasks()
 }
 
 const rejectTask = async (task) => {
@@ -61,7 +64,6 @@ const returnTask = async (task) => {
 onMounted(loadTasks)
 watch(() => props.column, loadTasks, { deep: true })
 </script>
-
 
 <style scoped>
 .workflow-column {
