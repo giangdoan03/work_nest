@@ -266,3 +266,6 @@ export const getWorkflowStats = (params) =>
  */
 export const getWorkflowDetail = (workflowId) =>
     api.get(`/workflow/${workflowId}`)
+
+export const getWorkflowBoard = (params) =>
+    api.get('/workflow/board', { params })

@@ -17,10 +17,24 @@ export function useHorizontalScroll(options = {}) {
 
     /* ================= WHEEL ================= */
     const onWheel = (e) => {
-        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return
-        e.preventDefault()
-        containerRef.value.scrollLeft += e.deltaY
+        const el = containerRef.value
+        if (!el) return
+
+        let horizontalDelta = 0
+
+        // Trackpad (scroll ngang thật)
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+            horizontalDelta = e.deltaX
+        } else {
+            // Mouse wheel (map Y → X có chủ đích)
+            e.preventDefault()
+            horizontalDelta = e.deltaY
+        }
+
+        el.scrollLeft += horizontalDelta
     }
+
+
 
     /* ================= DRAG ================= */
     const startDrag = (e) => {

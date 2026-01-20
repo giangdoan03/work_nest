@@ -1,9 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jan 19, 2026 at 04:39 PM
+-- Generation Time: Jan 20, 2026 at 09:26 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -1748,7 +1748,9 @@ INSERT INTO `comment_reads` (`id`, `user_id`, `comment_id`, `read_at`) VALUES
 (739, 1, 399, '2026-01-13 10:33:18'),
 (740, 1, 398, '2026-01-13 10:33:23'),
 (741, 1, 401, '2026-01-13 10:33:28'),
-(742, 7, 373, '2026-01-19 19:27:52');
+(742, 7, 373, '2026-01-19 19:27:52'),
+(743, 3, 405, '2026-01-20 11:37:27'),
+(744, 3, 404, '2026-01-20 13:54:28');
 
 -- --------------------------------------------------------
 
@@ -3607,7 +3609,7 @@ CREATE TABLE `tasks` (
   `approval_roster_json` json NOT NULL DEFAULT (json_array()),
   `workflow_id` bigint DEFAULT NULL,
   `workflow_step_id` bigint DEFAULT NULL,
-  `workflow_status` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT 'draft'
+  `workflow_status` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'draft'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -6762,7 +6764,17 @@ INSERT INTO `task_snapshots` (`id`, `task_id`, `snapshot_at`, `title`, `descript
 (2060, 337, '2026-01-19 16:10:26', 'nhiệm vụ 10/01/2026', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 9, '[{\"id\": \"267\", \"title\": \"Converted_20251110_TTrHCNS_Test Phan mem.docx\", \"file_path\": \"https://docs.google.com/document/d/1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4/edit\", \"file_size\": \"206100\", \"google_file_id\": \"1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4\"}, {\"id\": \"268\", \"title\": \"new_file_ex.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8/edit\", \"file_size\": \"152505\", \"google_file_id\": \"1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8\"}]', '2026-01-19 16:10:26', '2026-01-19 16:10:26'),
 (2061, 337, '2026-01-19 16:11:42', 'nhiệm vụ 10/01/2026', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 9, '[{\"id\": \"267\", \"title\": \"Converted_20251110_TTrHCNS_Test Phan mem.docx\", \"file_path\": \"https://docs.google.com/document/d/1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4/edit\", \"file_size\": \"206100\", \"google_file_id\": \"1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4\"}, {\"id\": \"268\", \"title\": \"new_file_ex.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8/edit\", \"file_size\": \"152505\", \"google_file_id\": \"1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8\"}]', '2026-01-19 16:11:42', '2026-01-19 16:11:42'),
 (2062, 337, '2026-01-19 18:51:06', 'nhiệm vụ 10/01/2026', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 9, '[{\"id\": \"267\", \"title\": \"Converted_20251110_TTrHCNS_Test Phan mem.docx\", \"file_path\": \"https://docs.google.com/document/d/1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4/edit\", \"file_size\": \"206100\", \"google_file_id\": \"1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4\"}, {\"id\": \"268\", \"title\": \"new_file_ex.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8/edit\", \"file_size\": \"152505\", \"google_file_id\": \"1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8\"}]', '2026-01-19 18:51:06', '2026-01-19 18:51:06'),
-(2063, 345, '2026-01-19 19:27:53', 'test 23213', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 7, NULL, 1, 3, '[]', NULL, '[]', '2026-01-19 19:27:53', '2026-01-19 19:27:53');
+(2063, 345, '2026-01-19 19:27:53', 'test 23213', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 7, NULL, 1, 3, '[]', NULL, '[]', '2026-01-19 19:27:53', '2026-01-19 19:27:53'),
+(2064, 344, '2026-01-20 08:14:42', 'test nhiệm vụ mới 22', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 8, NULL, 1, 1, '[]', 2, '[{\"id\": \"272\", \"title\": \"20260110_Sơ đồ quy trình duyệt phần mềm.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/12TFUMuP2J0Luii4xe2ePv9R6cHniLg-_kHXCe8OZGdQ/edit\", \"file_size\": \"324647\", \"google_file_id\": \"12TFUMuP2J0Luii4xe2ePv9R6cHniLg-_kHXCe8OZGdQ\"}]', '2026-01-20 08:14:42', '2026-01-20 08:14:42'),
+(2065, 344, '2026-01-20 08:35:28', 'test nhiệm vụ mới 22', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 8, NULL, 1, 1, '[]', 2, '[{\"id\": \"272\", \"title\": \"20260110_Sơ đồ quy trình duyệt phần mềm.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/12TFUMuP2J0Luii4xe2ePv9R6cHniLg-_kHXCe8OZGdQ/edit\", \"file_size\": \"324647\", \"google_file_id\": \"12TFUMuP2J0Luii4xe2ePv9R6cHniLg-_kHXCe8OZGdQ\"}]', '2026-01-20 08:35:28', '2026-01-20 08:35:28'),
+(2066, 323, '2026-01-20 11:37:27', 'nhiêm vụ con 13/12/2025', 'ok test', '2025-12-13', '2026-01-31', 'done', 'normal', 'approved', 100, 6, 9, NULL, 3, 3, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 3, \"acted_at\": \"2025-12-13 15:46:26\", \"added_at\": \"2025-12-13 15:42:21\", \"department_id\": 1, \"signature_code\": null}, {\"name\": \"Nguyễn Thị Hạnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 14, \"acted_at\": \"2025-12-13 15:46:07\", \"added_at\": \"2025-12-13 15:42:29\", \"department_id\": 4, \"signature_code\": null}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 10, \"acted_at\": \"2025-12-13 15:46:07\", \"added_at\": \"2025-12-13 15:44:10\", \"department_id\": 6, \"signature_code\": \"vu_thi_thuy_bgd\"}]', 1, '[{\"id\": \"238\", \"title\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1fPyG1SZR-Inw5y2CD98NTgs3yockC62FY-5aJjsLg68/edit\", \"file_size\": \"84480\", \"google_file_id\": \"1fPyG1SZR-Inw5y2CD98NTgs3yockC62FY-5aJjsLg68\"}]', '2026-01-20 11:37:27', '2026-01-20 11:37:27'),
+(2067, 323, '2026-01-20 11:37:30', 'nhiêm vụ con 13/12/2025', 'ok test', '2025-12-13', '2026-01-31', 'done', 'normal', 'approved', 100, 6, 9, NULL, 3, 3, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 3, \"acted_at\": \"2025-12-13 15:46:26\", \"added_at\": \"2025-12-13 15:42:21\", \"department_id\": 1, \"signature_code\": null}, {\"name\": \"Nguyễn Thị Hạnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 14, \"acted_at\": \"2025-12-13 15:46:07\", \"added_at\": \"2025-12-13 15:42:29\", \"department_id\": 4, \"signature_code\": null}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 10, \"acted_at\": \"2025-12-13 15:46:07\", \"added_at\": \"2025-12-13 15:44:10\", \"department_id\": 6, \"signature_code\": \"vu_thi_thuy_bgd\"}]', 1, '[{\"id\": \"238\", \"title\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1fPyG1SZR-Inw5y2CD98NTgs3yockC62FY-5aJjsLg68/edit\", \"file_size\": \"84480\", \"google_file_id\": \"1fPyG1SZR-Inw5y2CD98NTgs3yockC62FY-5aJjsLg68\"}]', '2026-01-20 11:37:30', '2026-01-20 11:37:30'),
+(2068, 338, '2026-01-20 11:45:54', 'nhiệm vụ hợp đồng', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 1, '[]', NULL, '[]', '2026-01-20 11:45:54', '2026-01-20 11:45:54'),
+(2069, 323, '2026-01-20 13:54:28', 'nhiêm vụ con 13/12/2025', 'ok test', '2025-12-13', '2026-01-31', 'done', 'normal', 'approved', 100, 6, 9, NULL, 3, 3, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 3, \"acted_at\": \"2025-12-13 15:46:26\", \"added_at\": \"2025-12-13 15:42:21\", \"department_id\": 1, \"signature_code\": null}, {\"name\": \"Nguyễn Thị Hạnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 14, \"acted_at\": \"2025-12-13 15:46:07\", \"added_at\": \"2025-12-13 15:42:29\", \"department_id\": 4, \"signature_code\": null}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 10, \"acted_at\": \"2025-12-13 15:46:07\", \"added_at\": \"2025-12-13 15:44:10\", \"department_id\": 6, \"signature_code\": \"vu_thi_thuy_bgd\"}]', 1, '[{\"id\": \"238\", \"title\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1fPyG1SZR-Inw5y2CD98NTgs3yockC62FY-5aJjsLg68/edit\", \"file_size\": \"84480\", \"google_file_id\": \"1fPyG1SZR-Inw5y2CD98NTgs3yockC62FY-5aJjsLg68\"}]', '2026-01-20 13:54:28', '2026-01-20 13:54:28'),
+(2070, 323, '2026-01-20 13:54:32', 'nhiêm vụ con 13/12/2025', 'ok test', '2025-12-13', '2026-01-31', 'done', 'normal', 'approved', 100, 6, 9, NULL, 3, 3, '[{\"name\": \"Đinh Văn Vịnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 3, \"acted_at\": \"2025-12-13 15:46:26\", \"added_at\": \"2025-12-13 15:42:21\", \"department_id\": 1, \"signature_code\": null}, {\"name\": \"Nguyễn Thị Hạnh\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 14, \"acted_at\": \"2025-12-13 15:46:07\", \"added_at\": \"2025-12-13 15:42:29\", \"department_id\": 4, \"signature_code\": null}, {\"name\": \"Vũ Thị Thuỷ\", \"note\": null, \"role\": \"approve\", \"status\": \"approved\", \"user_id\": 10, \"acted_at\": \"2025-12-13 15:46:07\", \"added_at\": \"2025-12-13 15:44:10\", \"department_id\": 6, \"signature_code\": \"vu_thi_thuy_bgd\"}]', 1, '[{\"id\": \"238\", \"title\": \"20251110_TTrHCNS_Test Phan mem.doc\", \"file_path\": \"https://docs.google.com/document/d/1fPyG1SZR-Inw5y2CD98NTgs3yockC62FY-5aJjsLg68/edit\", \"file_size\": \"84480\", \"google_file_id\": \"1fPyG1SZR-Inw5y2CD98NTgs3yockC62FY-5aJjsLg68\"}]', '2026-01-20 13:54:32', '2026-01-20 13:54:32'),
+(2071, 1, '2026-01-20 14:17:31', 'Thiết kế hồ sơ thầu', 'Chuẩn bị file bản vẽ và hồ sơ năng lực', '2025-07-01', '2025-08-25', 'done', 'normal', 'approved', 100, 5, NULL, NULL, 4, 1, '[]', NULL, '[]', '2026-01-20 14:17:31', '2026-01-20 14:17:31'),
+(2072, 337, '2026-01-20 15:02:30', 'nhiệm vụ 10/01/2026', 'test', '2026-01-10', '2026-02-28', 'doing', 'normal', 'pending', 0, 3, 4, NULL, 1, 3, '[]', 9, '[{\"id\": \"267\", \"title\": \"Converted_20251110_TTrHCNS_Test Phan mem.docx\", \"file_path\": \"https://docs.google.com/document/d/1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4/edit\", \"file_size\": \"206100\", \"google_file_id\": \"1sXOOLtkoTn7HhGb_3atZhSUclupvo-OUkGpyBev16j4\"}, {\"id\": \"268\", \"title\": \"new_file_ex.xlsx\", \"file_path\": \"https://docs.google.com/spreadsheets/d/1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8/edit\", \"file_size\": \"152505\", \"google_file_id\": \"1gZuXqdExoNRrUed-SrttnEx2ZIi-UsT_Xfndv3zBog8\"}]', '2026-01-20 15:02:30', '2026-01-20 15:02:30'),
+(2073, 2, '2026-01-20 16:25:22', 'Thiết kế hồ sơ thầu', 'Mô tả công việc thiết kế hồ sơ thầu', '2025-06-25', '2025-07-31', 'done', 'high', 'approved', 100, 3, NULL, NULL, 2, 2, '[]', NULL, '[]', '2026-01-20 16:25:22', '2026-01-20 16:25:22');
 
 -- --------------------------------------------------------
 
@@ -6882,9 +6894,9 @@ INSERT INTO `user_signatures` (`id`, `user_id`, `role_name`, `department_id`, `p
 
 CREATE TABLE `workflow_definitions` (
   `id` bigint UNSIGNED NOT NULL,
-  `code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -6906,9 +6918,9 @@ INSERT INTO `workflow_definitions` (`id`, `code`, `name`, `description`, `create
 CREATE TABLE `workflow_documents` (
   `id` bigint UNSIGNED NOT NULL,
   `submission_id` bigint UNSIGNED NOT NULL,
-  `document_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'quotation, contract, appendix',
+  `document_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'quotation, contract, appendix',
   `document_id` bigint UNSIGNED NOT NULL COMMENT 'id bảng documents / contracts / bids',
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -6922,11 +6934,22 @@ CREATE TABLE `workflow_logs` (
   `id` bigint UNSIGNED NOT NULL,
   `submission_id` bigint UNSIGNED NOT NULL,
   `workflow_step_id` bigint UNSIGNED NOT NULL,
-  `action` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'approve, reject, return',
-  `comment` text COLLATE utf8mb4_unicode_ci,
+  `action` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'approve, reject, return',
+  `comment` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `actor_id` int UNSIGNED NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `workflow_logs`
+--
+
+INSERT INTO `workflow_logs` (`id`, `submission_id`, `workflow_step_id`, `action`, `comment`, `actor_id`, `created_at`) VALUES
+(1, 1, 1, 'approved', NULL, 8, '2026-01-20 16:11:59'),
+(2, 2, 4, 'approved', NULL, 8, '2026-01-20 16:12:06'),
+(3, 2, 5, 'approved', NULL, 8, '2026-01-20 16:16:04'),
+(4, 2, 6, 'returned', 'chưa dc, cần xem lại', 8, '2026-01-20 16:25:37'),
+(5, 1, 2, 'returned', 'chưa dc, xem lại nhé', 8, '2026-01-20 16:25:55');
 
 -- --------------------------------------------------------
 
@@ -6940,8 +6963,8 @@ CREATE TABLE `workflow_steps` (
   `level` int NOT NULL,
   `order_index` int NOT NULL,
   `department_id` int UNSIGNED DEFAULT NULL,
-  `position_code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `name` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `position_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -6967,13 +6990,13 @@ INSERT INTO `workflow_steps` (`id`, `workflow_id`, `level`, `order_index`, `depa
 CREATE TABLE `workflow_submissions` (
   `id` bigint UNSIGNED NOT NULL,
   `workflow_id` bigint UNSIGNED NOT NULL,
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên đợt trình',
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên đợt trình',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_by` int UNSIGNED NOT NULL COMMENT 'NV KD tạo',
   `department_id` int UNSIGNED NOT NULL COMMENT 'Phòng khởi tạo',
   `current_step_id` bigint UNSIGNED DEFAULT NULL,
   `current_level` int DEFAULT '1',
-  `status` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT 'draft' COMMENT 'draft, submitted, approving, approved, rejected, returned',
+  `status` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'draft' COMMENT 'draft, submitted, approving, approved, rejected, returned',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -6983,7 +7006,8 @@ CREATE TABLE `workflow_submissions` (
 --
 
 INSERT INTO `workflow_submissions` (`id`, `workflow_id`, `title`, `description`, `created_by`, `department_id`, `current_step_id`, `current_level`, `status`, `created_at`, `updated_at`) VALUES
-(1, 1, 'xxxxx', NULL, 1, 3, 1, 2, 'pending', '2026-01-19 23:38:22', '2026-01-19 23:38:22');
+(1, 1, 'xxxxx', NULL, 1, 3, 1, 2, 'pending', '2026-01-19 23:38:22', '2026-01-20 16:25:55'),
+(2, 2, 'xxxxx', NULL, 1, 4, 5, 3, 'pending', '2026-01-20 09:11:48', '2026-01-20 16:25:37');
 
 --
 -- Indexes for dumped tables
@@ -7484,7 +7508,7 @@ ALTER TABLE `comments`
 -- AUTO_INCREMENT for table `comment_reads`
 --
 ALTER TABLE `comment_reads`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=743;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=745;
 
 --
 -- AUTO_INCREMENT for table `contracts`
@@ -7730,7 +7754,7 @@ ALTER TABLE `task_sign_logs`
 -- AUTO_INCREMENT for table `task_snapshots`
 --
 ALTER TABLE `task_snapshots`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2064;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2074;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -7766,7 +7790,7 @@ ALTER TABLE `workflow_documents`
 -- AUTO_INCREMENT for table `workflow_logs`
 --
 ALTER TABLE `workflow_logs`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `workflow_steps`
@@ -7778,7 +7802,7 @@ ALTER TABLE `workflow_steps`
 -- AUTO_INCREMENT for table `workflow_submissions`
 --
 ALTER TABLE `workflow_submissions`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Constraints for dumped tables

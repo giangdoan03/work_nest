@@ -16,8 +16,13 @@ class WorkflowStepModel extends Model
         'department_id',
         'position_code',
         'name',
+        'created_at',
+        'updated_at',
     ];
 
     protected $useTimestamps = true;
-    protected $returnType    = 'array';
+    protected $createdField = 'created_at';
+    protected $updatedField = 'updated_at';
+
+    protected $returnType = 'array';
 }

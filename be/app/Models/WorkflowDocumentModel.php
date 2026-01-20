@@ -11,11 +11,17 @@ class WorkflowDocumentModel extends Model
 
     protected $allowedFields = [
         'submission_id',
-        'document_type', // quotation | contract | appendix | ...
+        'document_type',
         'document_id',
         'title',
+        'created_at',
+        'updated_at',
     ];
 
+
     protected $useTimestamps = true;
-    protected $returnType    = 'array';
+    protected $createdField = 'created_at';
+    protected $updatedField = 'updated_at';
+
+    protected $returnType = 'array';
 }

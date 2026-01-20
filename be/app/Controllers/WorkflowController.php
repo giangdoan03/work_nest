@@ -25,16 +25,15 @@ class WorkflowController extends ResourceController
      * BOARD – dữ liệu kanban
      * =======================
      */
+    // WorkflowController.php
     public function board(): ResponseInterface
     {
-        $params = [
-            'department_id' => $this->request->getGet('department_id'),
-            'position_code' => $this->request->getGet('position_code'),
-            'level'         => $this->request->getGet('level'),
-        ];
+        $user = currentUser();
+
+        $data = $this->service->getBoardDataForUser($user);
 
         return $this->respond([
-            'data' => $this->service->getBoardData($params),
+            'data' => $data,
         ]);
     }
 
@@ -88,7 +87,7 @@ class WorkflowController extends ResourceController
 
         $comment = $this->request->getPost('comment');
 
-        $this->service->approve((int)$id, (int)$user, $comment);
+        $this->service->approve((int)$id, (int)$user['id'], $comment);
 
         return $this->respond([
             'id'      => $id,
@@ -113,12 +112,15 @@ class WorkflowController extends ResourceController
             return $this->failValidationErrors('Thiếu submission_id');
         }
 
-        $comment = $this->request->getPost('comment');
+        // ✅ ĐỌC JSON + FORM
+        $data = $this->request->getJSON(true) ?? $this->request->getPost();
+        $comment = $data['comment'] ?? null;
+
         if (!$comment) {
             return $this->failValidationErrors('Cần lý do từ chối');
         }
 
-        $this->service->reject((int)$id, (int)$user, $comment);
+        $this->service->returnToPreviousStep((int)$id, (int)$user['id'], $comment);
 
         return $this->respond([
             'id'      => $id,

@@ -17,9 +17,17 @@ class WorkflowSubmissionModel extends Model
         'department_id',
         'current_step_id',
         'current_level',
-        'status', // draft | pending | approved | rejected
+        'status',
+
+        // 🔥 BẮT BUỘC KHI useTimestamps = true
+        'created_at',
+        'updated_at',
     ];
 
     protected $useTimestamps = true;
-    protected $returnType    = 'array';
+    protected $createdField  = 'created_at';
+    protected $updatedField  = 'updated_at';
+
+    protected $returnType = 'array';
 }
+

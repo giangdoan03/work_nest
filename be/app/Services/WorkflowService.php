@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Config\Database;
 use Exception;
 use ReflectionException;
 use App\Models\{
@@ -9,6 +10,7 @@ use App\Models\{
     WorkflowStepModel,
     WorkflowLogModel
 };
+use CodeIgniter\Database\Exceptions\DatabaseException;
 
 class WorkflowService
 {
@@ -23,11 +25,17 @@ class WorkflowService
         $this->logModel        = new WorkflowLogModel();
     }
 
-    /**
-     * =======================
+    /* ======================================================
+     * HELPER
+     * ====================================================== */
+    protected function now(): string
+    {
+        return date('Y-m-d H:i:s');
+    }
+
+    /* ======================================================
      * BOARD DATA
-     * =======================
-     */
+     * ====================================================== */
     public function getBoardData(array $filter): array
     {
         $builder = $this->submissionModel
@@ -39,41 +47,40 @@ class WorkflowService
                 workflow_steps.department_id,
                 workflow_steps.position_code
             ')
-            ->join('workflow_steps', 'workflow_steps.id = workflow_submissions.current_step_id')
+            ->join(
+                'workflow_steps',
+                'workflow_steps.id = workflow_submissions.current_step_id'
+            )
             ->where('workflow_submissions.status', 'pending');
 
-        if ($filter['department_id']) {
+        if (!empty($filter['department_id'])) {
             $builder->where('workflow_steps.department_id', $filter['department_id']);
         }
 
-        if ($filter['position_code']) {
+        if (!empty($filter['position_code'])) {
             $builder->where('workflow_steps.position_code', $filter['position_code']);
         }
 
-        if ($filter['level']) {
+        if (!empty($filter['level'])) {
             $builder->where('workflow_submissions.current_level', $filter['level']);
         }
 
-        return $builder->orderBy('workflow_submissions.created_at', 'DESC')->findAll();
+        return $builder
+            ->orderBy('workflow_submissions.created_at', 'DESC')
+            ->findAll();
     }
 
-    /**
-     * =======================
+    /* ======================================================
      * SUBMIT
-     * =======================
-     * @throws ReflectionException
-     * @throws Exception
-     */
+     * ====================================================== */
     public function submit(array $data, int $userId): int
     {
-        // 1️⃣ Map workflow_id theo phòng
         $workflowId = match ((int)$data['department_id']) {
-            3 => 1, // KD
-            4 => 2, // TM
+            3 => 1, // Kinh doanh
+            4 => 2, // Thương mại
             default => throw new Exception('Chưa cấu hình workflow cho phòng này'),
         };
 
-        // 2️⃣ Lấy step đầu tiên
         $firstStep = $this->stepModel
             ->where('workflow_id', $workflowId)
             ->orderBy('order_index', 'ASC')
@@ -83,7 +90,6 @@ class WorkflowService
             throw new Exception('Workflow chưa có step');
         }
 
-        // 3️⃣ Tạo submission
         return $this->submissionModel->insert([
             'workflow_id'     => $workflowId,
             'title'           => $data['title'],
@@ -96,88 +102,180 @@ class WorkflowService
         ]);
     }
 
-
+    /* ======================================================
+     * APPROVE
+     * ====================================================== */
     /**
      * @throws ReflectionException
-     * @throws Exception
      */
     public function approve(int $id, int $userId, ?string $comment): bool
     {
-        $submission = $this->submissionModel->find($id);
-        if (!$submission) throw new Exception('Không tồn tại hồ sơ');
+        $db = Database::connect();
+        $db->transStart();
 
-        $currentStep = $this->stepModel->find($submission['current_step_id']);
+        try {
+            $submission = $this->submissionModel->find($id);
+            if (!$submission) {
+                throw new Exception('Không tồn tại hồ sơ');
+            }
 
-        $this->logModel->insert([
-            'submission_id'    => $id,
-            'workflow_step_id' => $currentStep['id'],
-            'action'           => 'approved',
-            'comment'          => $comment,
-            'actor_id'         => $userId,
-        ]);
+            $currentStep = $this->stepModel->find($submission['current_step_id']);
 
-        $nextStep = $this->stepModel
-            ->where('workflow_id', $submission['workflow_id'])
-            ->where('order_index >', $currentStep['order_index'])
-            ->orderBy('order_index', 'ASC')
-            ->first();
-
-        if ($nextStep) {
-            return $this->submissionModel->update($id, [
-                'current_step_id' => $nextStep['id'],
-                'current_level'   => $nextStep['level'],
+            // LOG
+            $this->logModel->insert([
+                'submission_id'    => $id,
+                'workflow_step_id' => $currentStep['id'],
+                'action'           => 'approved',
+                'comment'          => $comment,
+                'actor_id'         => $userId,
+                'created_at'       => $this->now(),
             ]);
-        }
 
-        return $this->submissionModel->update($id, ['status' => 'approved']);
+            $nextStep = $this->stepModel
+                ->where('workflow_id', $submission['workflow_id'])
+                ->where('order_index >', $currentStep['order_index'])
+                ->orderBy('order_index', 'ASC')
+                ->first();
+
+            if ($nextStep) {
+                $this->submissionModel->update($id, [
+                    'current_step_id' => $nextStep['id'],
+                    'current_level'   => $nextStep['level'],
+                ]);
+            } else {
+                $this->submissionModel->update($id, [
+                    'status' => 'approved',
+                ]);
+            }
+
+            $db->transComplete();
+            return true;
+
+        } catch (Exception $e) {
+            $db->transRollback();
+            throw $e;
+        }
     }
 
+    /* ======================================================
+     * REJECT
+     * ====================================================== */
     /**
      * @throws ReflectionException
      */
     public function reject(int $id, int $userId, string $comment): bool
     {
-        $submission = $this->submissionModel->find($id);
+        $db = Database::connect();
+        $db->transStart();
 
-        $this->logModel->insert([
-            'submission_id'    => $id,
-            'workflow_step_id' => $submission['current_step_id'],
-            'action'           => 'rejected',
-            'comment'          => $comment,
-            'actor_id'         => $userId,
-        ]);
+        try {
+            $submission = $this->submissionModel->find($id);
+            if (!$submission) {
+                throw new Exception('Không tồn tại hồ sơ');
+            }
 
-        return $this->submissionModel->update($id, ['status' => 'rejected']);
+            $this->logModel->insert([
+                'submission_id'    => $id,
+                'workflow_step_id' => $submission['current_step_id'],
+                'action'           => 'rejected',
+                'comment'          => $comment,
+                'actor_id'         => $userId,
+                'created_at'       => $this->now(),
+            ]);
+
+            $this->submissionModel->update($id, [
+                'status' => 'rejected',
+            ]);
+
+            $db->transComplete();
+            return true;
+
+        } catch (Exception $e) {
+            $db->transRollback();
+            throw $e;
+        }
     }
 
+    /* ======================================================
+     * RETURN TO PREVIOUS STEP
+     * ====================================================== */
     /**
      * @throws ReflectionException
-     * @throws Exception
      */
     public function returnToPreviousStep(int $id, int $userId, ?string $comment): bool
     {
-        $submission = $this->submissionModel->find($id);
-        $currentStep = $this->stepModel->find($submission['current_step_id']);
+        $db = Database::connect();
+        $db->transStart();
 
-        $prevStep = $this->stepModel
-            ->where('workflow_id', $submission['workflow_id'])
-            ->where('order_index <', $currentStep['order_index'])
-            ->orderBy('order_index', 'DESC')
-            ->first();
+        try {
+            $submission = $this->submissionModel->find($id);
+            if (!$submission) {
+                throw new Exception('Không tồn tại hồ sơ');
+            }
 
-        if (!$prevStep) throw new Exception('Không có bước trước');
+            $currentStep = $this->stepModel->find($submission['current_step_id']);
 
-        $this->logModel->insert([
-            'submission_id'    => $id,
-            'workflow_step_id' => $currentStep['id'],
-            'action'           => 'returned',
-            'comment'          => $comment,
-            'actor_id'         => $userId,
-        ]);
+            $prevStep = $this->stepModel
+                ->where('workflow_id', $submission['workflow_id'])
+                ->where('order_index <', $currentStep['order_index'])
+                ->orderBy('order_index', 'DESC')
+                ->first();
 
-        return $this->submissionModel->update($id, [
-            'current_step_id' => $prevStep['id'],
-            'current_level'   => $prevStep['level'],
-        ]);
+            if (!$prevStep) {
+                throw new Exception('Không có bước trước');
+            }
+
+            $this->logModel->insert([
+                'submission_id'    => $id,
+                'workflow_step_id' => $currentStep['id'],
+                'action'           => 'returned',
+                'comment'          => $comment,
+                'actor_id'         => $userId,
+                'created_at'       => $this->now(),
+            ]);
+
+            $this->submissionModel->update($id, [
+                'current_step_id' => $prevStep['id'],
+                'current_level'   => $prevStep['level'],
+            ]);
+
+            $db->transComplete();
+            return true;
+
+        } catch (Exception $e) {
+            $db->transRollback();
+            throw $e;
+        }
+    }
+
+    /* ======================================================
+     * BOARD DATA FOR USER
+     * ====================================================== */
+    public function getBoardDataForUser(array $user): array
+    {
+        $builder = $this->submissionModel
+            ->select('
+                workflow_submissions.id,
+                workflow_submissions.title,
+                workflow_submissions.status,
+                workflow_submissions.current_level,
+                workflow_submissions.created_by,
+                workflow_submissions.created_at,
+                workflow_steps.department_id,
+                workflow_steps.position_code
+            ')
+            ->join(
+                'workflow_steps',
+                'workflow_steps.id = workflow_submissions.current_step_id'
+            )
+            ->where('workflow_submissions.status', 'pending');
+
+        if (!empty($user['id'])) {
+            $builder->orWhere('workflow_submissions.created_by', $user['id']);
+        }
+
+        return $builder
+            ->orderBy('workflow_submissions.created_at', 'DESC')
+            ->findAll();
     }
 }

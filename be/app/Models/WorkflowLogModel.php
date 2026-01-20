@@ -12,11 +12,15 @@ class WorkflowLogModel extends Model
     protected $allowedFields = [
         'submission_id',
         'workflow_step_id',
-        'action',     // approved | rejected | returned
+        'action',
         'comment',
         'actor_id',
+        'created_at',
     ];
 
-    protected $useTimestamps = true;
-    protected $returnType    = 'array';
+    // ❌ TẮT CI4 TIMESTAMP
+    protected $useTimestamps = false;
+
+    protected $returnType = 'array';
 }
+

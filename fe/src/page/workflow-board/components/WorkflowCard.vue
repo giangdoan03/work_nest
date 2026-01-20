@@ -6,16 +6,16 @@
         hoverable
         @click="goDetail"
     >
-        <!-- Title -->
+        <!-- TITLE -->
         <div class="title">{{ doc.title }}</div>
 
-        <!-- Meta -->
+        <!-- META -->
         <div class="meta">
-            <a-tag color="blue">{{ doc.department_name }}</a-tag>
+            <a-tag color="blue">Dept: {{ doc.department_id }}</a-tag>
             <a-tag>{{ doc.status }}</a-tag>
         </div>
 
-        <!-- Actions -->
+        <!-- ACTIONS -->
         <div class="actions" @click.stop>
             <a-space size="small">
                 <a-button
@@ -31,7 +31,7 @@
                     v-if="canApprove"
                     danger
                     size="small"
-                    @click="emitReject"
+                    @click="openRejectModal"
                 >
                     Từ chối
                 </a-button>
@@ -41,63 +41,58 @@
                     size="small"
                     @click="emitReturn"
                 >
-                    ↩ Trả về phòng
+                    ↩ Trả về
                 </a-button>
             </a-space>
         </div>
 
-        <!-- Footer -->
+        <!-- FOOTER -->
         <div class="footer">
             <span>#{{ doc.id }}</span>
-            <span>{{ doc.assigned_to_name }}</span>
         </div>
+
+        <!-- MODAL: REJECT -->
+        <a-modal
+            v-model:open="rejectOpen"
+            title="Từ chối hồ sơ"
+            ok-text="Xác nhận"
+            cancel-text="Hủy"
+            @ok="confirmReject"
+        >
+            <a-textarea
+                v-model:value="rejectReason"
+                placeholder="Nhập lý do từ chối..."
+                :rows="4"
+            />
+        </a-modal>
     </a-card>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
 import { useUserStore } from '@/stores/user'
 
-import {
-    approveWorkflow,
-    rejectWorkflow,
-    returnWorkflowToPreviousStep
-} from '@/api/workflow'
-
-await approveWorkflow(doc.id, { comment: 'OK' })
-await rejectWorkflow(doc.id, { reason: 'Thiếu hồ sơ' })
-await returnWorkflowToPreviousStep(doc.id, { reason: 'Bổ sung lại' })
-
+/* ================== PROPS & EMITS ================== */
 const props = defineProps({
-    doc: Object,
+    doc: { type: Object, required: true },
     highlight: Boolean,
 })
 
-const emit = defineEmits([
-    'approve',
-    'reject',
-    'return',
-])
+const emit = defineEmits(['approve', 'reject', 'return'])
 
+/* ================== STATE ================== */
+const rejectOpen = ref(false)
+const rejectReason = ref('')
+
+/* ================== STORE & ROUTER ================== */
 const router = useRouter()
 const userStore = useUserStore()
 
-/* ================== NAVIGATION ================== */
-const goDetail = () => {
-    router.push({
-        name: 'workflow-task-info',
-        params: { id: props.doc.id },
-    })
-}
-
 /* ================== PERMISSION ================== */
-/**
- * Gợi ý logic (tuỳ DB của bạn):
- * - manager / senior_manager / executive → được duyệt
- */
 const canApprove = computed(() =>
-    ['manager', 'senior_manager', 'executive']
+    ['staff', 'manager', 'senior_manager', 'executive']
         .includes(userStore.user?.position_code)
 )
 
@@ -106,10 +101,36 @@ const canReturn = computed(() =>
         .includes(userStore.user?.position_code)
 )
 
-/* ================== EMITS ================== */
+/* ================== ACTIONS ================== */
+const goDetail = () => {
+    router.push({
+        name: 'workflow-task-info',
+        params: { id: props.doc.id },
+    })
+}
+
 const emitApprove = () => emit('approve', props.doc)
-const emitReject  = () => emit('reject', props.doc)
-const emitReturn  = () => emit('return', props.doc)
+
+const openRejectModal = () => {
+    rejectReason.value = ''
+    rejectOpen.value = true
+}
+
+const confirmReject = () => {
+    if (!rejectReason.value.trim()) {
+        message.error('Vui lòng nhập lý do từ chối')
+        return
+    }
+
+    emit('reject', {
+        ...props.doc,
+        comment: rejectReason.value,
+    })
+
+    rejectOpen.value = false
+}
+
+const emitReturn = () => emit('return', props.doc)
 </script>
 
 <style scoped>
