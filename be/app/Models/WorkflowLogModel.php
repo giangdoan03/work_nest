@@ -18,7 +18,6 @@ class WorkflowLogModel extends Model
         'created_at',
     ];
 
-    // ❌ TẮT CI4 TIMESTAMP
     protected $useTimestamps = false;
 
     protected $returnType = 'array';

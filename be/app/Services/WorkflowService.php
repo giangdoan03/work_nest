@@ -10,7 +10,6 @@ use App\Models\{
     WorkflowStepModel,
     WorkflowLogModel
 };
-use CodeIgniter\Database\Exceptions\DatabaseException;
 
 class WorkflowService
 {
@@ -73,6 +72,10 @@ class WorkflowService
     /* ======================================================
      * SUBMIT
      * ====================================================== */
+    /**
+     * @throws ReflectionException
+     * @throws Exception
+     */
     public function submit(array $data, int $userId): int
     {
         $workflowId = match ((int)$data['department_id']) {
