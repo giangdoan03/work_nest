@@ -19,7 +19,6 @@ class WorkflowSubmissionModel extends Model
         'current_level',
         'status',
 
-        // 🔥 BẮT BUỘC KHI useTimestamps = true
         'created_at',
         'updated_at',
     ];

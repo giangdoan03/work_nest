@@ -112,7 +112,6 @@ class WorkflowController extends ResourceController
             return $this->failValidationErrors('Thiếu submission_id');
         }
 
-        // ✅ ĐỌC JSON + FORM
         $data = $this->request->getJSON(true) ?? $this->request->getPost();
         $comment = $data['comment'] ?? null;
 

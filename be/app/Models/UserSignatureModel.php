@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use ReflectionException;
 
 class UserSignatureModel extends Model
 {
@@ -46,7 +47,7 @@ class UserSignatureModel extends Model
     /**
      * Lấy tất cả chữ ký kiêm nhiệm của user (active = 1) + tên phòng ban
      */
-    public function getActiveByUser($userId)
+    public function getActiveByUser($userId): array
     {
         return $this->select('user_signatures.*, departments.name AS department_name')
             ->join('departments', 'departments.id = user_signatures.department_id', 'left')
@@ -64,11 +65,17 @@ class UserSignatureModel extends Model
             ->first();
     }
 
+    /**
+     * @throws ReflectionException
+     */
     public function deactivate($id): bool
     {
         return $this->update($id, ['active' => 0]);
     }
 
+    /**
+     * @throws ReflectionException
+     */
     public function activate($id): bool
     {
         return $this->update($id, ['active' => 1]);
